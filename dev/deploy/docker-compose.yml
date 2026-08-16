@@ -40,9 +40,7 @@ services:
       - "3000:3000"
     volumes:
       - /etc/wiki/.db-secret:/etc/wiki/.db-secret:ro
-      - wiki-data:/wiki/data/content
-      - wiki-assets:/wiki/assets
-      - wiki-server:/wiki/server
+      - wiki-data:/wiki/data
     networks:
       - wikinet
 
@@ -53,8 +51,6 @@ volumes:
   wiki-data:
     external: true
     name: wiki-data
-  wiki-assets:
-  wiki-server:
 
 networks:
   wikinet:

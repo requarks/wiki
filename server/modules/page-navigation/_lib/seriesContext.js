@@ -97,24 +97,13 @@ function resolveFromSeriesWithRegex (page, regex) {
 function resolveDownloadGroupWithRequiredTags (page, requiredTags) {
   const requiredTagSet = new Set(requiredTags)
 
-  const tagValues = page.tags
-    .filter(t => !t.tag.startsWith('nav:') && !t.tag.startsWith('embed:'))
-    .map(t => t.tag)
-
-  const categoryTags = page.tags
-    .filter(t =>
-      !t.tag.startsWith('nav:') &&
-      !t.tag.startsWith('embed:') &&
-      !requiredTagSet.has(t.tag)
-    )
-    .map(t => t.tag)
+  const tagValues = [...requiredTags]
 
   const upTags = page.tags.filter(t => requiredTagSet.has(t.tag) && /^up:/i.test(t.tag))
   const downloadTag = requiredTags.find(t => /^download$/i.test(t)) || 'download'
 
   const indexParts = [
     ...upTags.map(t => t.tag),
-    ...categoryTags,
     downloadTag
   ]
 
