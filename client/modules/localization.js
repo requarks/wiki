@@ -11,8 +11,8 @@ import localeQuery from 'gql/common/common-localization-query-translations.gql'
 
 export default {
   VueI18Next,
-  init() {
-    i18next
+  init () {
+    return i18next
       .use(Backend)
       .init({
         backend: {
@@ -73,6 +73,12 @@ export default {
         fallbackLng: 'en',
         ns: ['common', 'auth']
       })
-    return new VueI18Next(i18next)
+      .then(() => {
+        return new Promise((resolve) => {
+          i18next.loadNamespaces(['common', 'auth'], () => {
+            resolve(new VueI18Next(i18next))
+          })
+        })
+      })
   }
 }

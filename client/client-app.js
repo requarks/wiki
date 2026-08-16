@@ -145,7 +145,9 @@ window.graphQL = new ApolloClient({
 // Initialize Vue Modules
 // ====================================
 
-Vue.config.productionTip = false
+import { applyNavDrawerCssVars } from './components/common/nav-drawer-config'
+
+applyNavDrawerCssVars()
 
 Vue.use(VueRouter)
 Vue.use(VueApollo)
@@ -212,46 +214,46 @@ let bootstrap = () => {
   // Bootstrap Vue
   // ====================================
 
-  const i18n = localization.init()
-
-  let darkModeEnabled = siteConfig.darkMode
-  if ((store.get('user/appearance') || '').length > 0) {
-    darkModeEnabled = (store.get('user/appearance') === 'dark')
-  }
-
-  window.WIKI = new Vue({
-    el: '#root',
-    components: {},
-    mixins: [helpers],
-    apolloProvider,
-    store,
-    i18n,
-    vuetify: new Vuetify({
-      rtl: siteConfig.rtl,
-      theme: {
-        dark: darkModeEnabled
-      }
-    }),
-    mounted () {
-      this.$moment.locale(siteConfig.lang)
-      if ((store.get('user/dateFormat') || '').length > 0) {
-        this.$moment.updateLocale(this.$moment.locale(), {
-          longDateFormat: {
-            'L': store.get('user/dateFormat')
-          }
-        })
-      }
-      if ((store.get('user/timezone') || '').length > 0) {
-        this.$moment.tz.setDefault(store.get('user/timezone'))
-      }
+  localization.init().then((i18n) => {
+    let darkModeEnabled = siteConfig.darkMode
+    if ((store.get('user/appearance') || '').length > 0) {
+      darkModeEnabled = (store.get('user/appearance') === 'dark')
     }
+
+    window.WIKI = new Vue({
+      el: '#root',
+      components: {},
+      mixins: [helpers],
+      apolloProvider,
+      store,
+      i18n,
+      vuetify: new Vuetify({
+        rtl: siteConfig.rtl,
+        theme: {
+          dark: darkModeEnabled
+        }
+      }),
+      mounted () {
+        this.$moment.locale(siteConfig.lang)
+        if ((store.get('user/dateFormat') || '').length > 0) {
+          this.$moment.updateLocale(this.$moment.locale(), {
+            longDateFormat: {
+              'L': store.get('user/dateFormat')
+            }
+          })
+        }
+        if ((store.get('user/timezone') || '').length > 0) {
+          this.$moment.tz.setDefault(store.get('user/timezone'))
+        }
+      }
+    })
+
+    // ----------------------------------
+    // Dispatch boot ready
+    // ----------------------------------
+
+    boot.notify('vue')
   })
-
-  // ----------------------------------
-  // Dispatch boot ready
-  // ----------------------------------
-
-  boot.notify('vue')
 }
 
 boot.onDOMReady(bootstrap)

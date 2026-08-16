@@ -1,0 +1,13 @@
+// Keep in sync with client/components/common/nav-drawer-config.js
+$nav-drawer-desktop-width: 300px !default;
+$nav-drawer-footer-gutter: 16px !default;
+$nav-drawer-fab-inset: 21px !default;
+
+$nav-drawer-footer-offset: $nav-drawer-desktop-width + $nav-drawer-footer-gutter !default;
+$nav-drawer-fab-offset: $nav-drawer-desktop-width - $nav-drawer-fab-inset !default;
+
+:root {
+  --nav-drawer-desktop-width: #{$nav-drawer-desktop-width};
+  --nav-drawer-footer-offset: #{$nav-drawer-footer-offset};
+  --nav-drawer-fab-offset: #{$nav-drawer-fab-offset};
+}

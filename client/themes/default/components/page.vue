@@ -1,12 +1,11 @@
 <template lang="pug">
-  v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
+  v-app(:dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
     nav-mobile-drawer-host(v-if='!printView')
     nav-drawer-shell(
       v-if='navMode !== `NONE` && !printView && $vuetify.breakpoint.mdAndUp'
       permanent
       category='wiki'
-      :width='256'
       :scroll-style='scrollStyle'
       )
       nav-sidebar(
@@ -515,11 +514,6 @@ export default {
       navExpanded: false,
       upBtnShown: false,
       pageEditFab: false,
-      scrollOpts: {
-        duration: 1500,
-        offset: 0,
-        easing: 'easeInOutCubic'
-      },
       scrollStyle: {
         vuescroll: {},
         scrollPanel: {
@@ -551,6 +545,15 @@ export default {
     showMobileBottomNav () {
       return this.$vuetify.breakpoint.smAndDown
     },
+    scrollOpts () {
+      const wrap = this.getMainScrollWrap()
+      return {
+        duration: 1500,
+        offset: 0,
+        easing: 'easeInOutCubic',
+        ...(wrap ? { container: wrap } : {})
+      }
+    },
     mobileFabBottomOffset () {
       if (!this.showMobileBottomNav) { return {} }
       return { bottom: '72px' }
@@ -579,7 +582,7 @@ export default {
     pageUrl () { return window.location.href },
     upBtnPosition () {
       if (this.$vuetify.breakpoint.mdAndUp) {
-        return this.$vuetify.rtl ? `right: 235px;` : `left: 235px;`
+        return this.$vuetify.rtl ? `right: var(--nav-drawer-fab-offset);` : `left: var(--nav-drawer-fab-offset);`
       } else {
         return this.$vuetify.rtl ? `right: 65px;` : `left: 65px;`
       }
@@ -717,6 +720,12 @@ export default {
       this.goToComments()
     })
 
+    this._mainScrollWrap = this.getMainScrollWrap()
+    if (this._mainScrollWrap) {
+      this._mainScrollWrap.addEventListener('scroll', this.upBtnScroll, { passive: true })
+      this.upBtnScroll({ target: this._mainScrollWrap })
+    }
+
     // -> Check side navigation visibility
     this.navShown = true
 
@@ -757,9 +766,19 @@ export default {
     })
   },
   beforeDestroy () {
+    if (this._mainScrollWrap) {
+      this._mainScrollWrap.removeEventListener('scroll', this.upBtnScroll)
+    }
+    this.$root.$off('goToComments')
     this.destroyPageEmbed()
   },
   methods: {
+    getMainScrollWrap () {
+      const main = this.$refs.content
+      if (!main) { return null }
+      const el = main.$el || main
+      return el.querySelector('.v-main__wrap') || el
+    },
     mountPageEmbed () {
       this.destroyPageEmbed()
       if (this.printView || !this.pageEmbedData || !this.$refs.container) {
@@ -812,8 +831,9 @@ export default {
     toggleNavigation () {
       this.navOpen = !this.navOpen
     },
-    upBtnScroll () {
-      const scrollOffset = window.pageYOffset || document.documentElement.scrollTop
+    upBtnScroll (evt) {
+      const el = evt?.target || this.getMainScrollWrap()
+      const scrollOffset = el?.scrollTop ?? window.pageYOffset ?? document.documentElement.scrollTop ?? 0
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
     print () {
@@ -884,10 +904,16 @@ export default {
 .page-col-sd {
   align-self: flex-start;
   position: sticky;
-  top: 64px;
+  top: 0;
   max-height: calc(100vh - 64px);
   overflow-y: auto;
   -ms-overflow-style: none;
+
+  @media #{map-get($display-breakpoints, 'sm-and-down')} {
+    body.has-mobile-bottom-nav & {
+      max-height: calc(100vh - 64px - 56px);
+    }
+  }
 }
 
 .page-col-sd::-webkit-scrollbar {

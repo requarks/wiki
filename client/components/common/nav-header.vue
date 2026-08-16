@@ -10,37 +10,35 @@
             v-progress-circular(indeterminate, color='white', :size='18', :width='2')
           slot(name='actions')
 
-      //- Mobile view: menu | search | chat
+      //- Mobile view: menu | search | chat (+ shared actions in bottom bar)
       v-toolbar.nav-header-mobile(v-else-if='mobileViewport', :color='navBarColor', dark, flat)
-        v-btn.nav-header-mobile__menu(icon, @click='openMobileNav', :aria-label='$t(`common:sidebar.mainMenu`)')
-          v-icon(color='white') mdi-menu
-        v-text-field.nav-header-mobile__search(
-          ref='searchFieldMobile'
-          v-model='search'
-          clearable
-          background-color='white'
-          :color='navBarColor'
-          light
-          :label='$t(`common:header.search`)'
-          single-line
-          solo
-          flat
-          rounded
-          dense
-          hide-details
-          prepend-inner-icon='mdi-magnify'
-          :loading='searchIsLoading'
-          @keyup.enter='searchEnter'
-          @keyup.esc='searchClose'
-          @focus='searchFocus'
-          @blur='searchBlur'
-          @keyup.down='searchMove(`down`)'
-          @keyup.up='searchMove(`up`)'
-          autocomplete='off'
-        )
-
-        v-btn.nav-header-mobile__chat(v-if='showMobileChat', icon, @click='chatClick', :aria-label='$t(`common:comments.title`)')
-          v-icon(color='white') mdi-message-text-outline
+        nav-action-items(preset='mobile-top', layout='inline')
+          template(#search)
+            v-text-field.nav-header-mobile__search(
+              ref='searchFieldMobile'
+              v-model='search'
+              clearable
+              background-color='white'
+              :color='navBarColor'
+              light
+              :placeholder='searchLabel'
+              :aria-label='searchLabel'
+              single-line
+              solo
+              flat
+              rounded
+              dense
+              hide-details
+              prepend-inner-icon='mdi-magnify'
+              :loading='searchIsLoading'
+              @keyup.enter='searchEnter'
+              @keyup.esc='searchClose'
+              @focus='searchFocus'
+              @blur='searchBlur'
+              @keyup.down='searchMove(`down`)'
+              @keyup.up='searchMove(`up`)'
+              autocomplete='off'
+            )
 
         .navHeaderLoading.nav-header-mobile__loading(v-show='isLoading')
           v-progress-circular(indeterminate, color='white', :size='18', :width='2')
@@ -55,188 +53,55 @@
               v-toolbar-title.mx-3
                 span.subheading {{title}}
           v-flex(md4)
-            v-toolbar.nav-header-inner(:color='navBarColor', dark, flat)
-              slot(name='mid')
-                .nav-header-desktop__center
-                  transition(name='navHeaderSearch', v-if='searchIsShown')
-                    v-text-field.nav-header-desktop__search(
-                      ref='searchField',
-                      v-if='searchIsShown',
-                      v-model='search',
-                      background-color='white'
-                      :color='navBarColor'
-                      light
-                      :label='$t(`common:header.search`)',
-                      single-line,
-                      solo
-                      flat
-                      rounded
-                      dense
-                      hide-details,
-                      prepend-inner-icon='mdi-magnify',
-                      :loading='searchIsLoading',
-                      @keyup.enter='searchEnter'
-                      @keyup.esc='searchClose'
-                      @focus='searchFocus'
-                      @blur='searchBlur'
-                      @keyup.down='searchMove(`down`)'
-                      @keyup.up='searchMove(`up`)'
-                      autocomplete='off'
-                    )
+            v-toolbar.nav-header-inner.nav-header-inner--center(:color='navBarColor', dark, flat)
+              .nav-header-desktop__center
+                v-text-field.nav-header-desktop__search(
+                  v-if='searchIsShown',
+                  ref='searchField',
+                  v-model='search',
+                  background-color='white'
+                  :color='navBarColor'
+                  light
+                  :placeholder='searchLabel'
+                  :aria-label='searchLabel'
+                  single-line,
+                  solo
+                  flat
+                  rounded
+                  dense
+                  hide-details,
+                  prepend-inner-icon='mdi-magnify',
+                  :loading='searchIsLoading',
+                  @keyup.enter='searchEnter'
+                  @keyup.esc='searchClose'
+                  @focus='searchFocus'
+                  @blur='searchBlur'
+                  @keyup.down='searchMove(`down`)'
+                  @keyup.up='searchMove(`up`)'
+                  autocomplete='off'
+                )
+                slot(name='mid')
           v-flex(md4)
             v-toolbar.nav-header-inner.pr-4(:color='navBarColor', dark, flat)
               v-spacer
               .navHeaderLoading.mr-3
                 v-progress-circular(indeterminate, color='white', :size='22', :width='2' v-show='isLoading')
 
+              nav-action-items(v-if='!dense', preset='desktop', layout='desktop')
+
               slot(name='actions')
-
-              template(v-if='mode === `view` && locales.length > 0')
-                v-menu(offset-y, bottom, transition='slide-y-transition', max-height='320px', min-width='210px', left)
-                  template(v-slot:activator='{ on: menu, attrs }')
-                    v-tooltip(bottom)
-                      template(v-slot:activator='{ on: tooltip }')
-                        v-btn(
-                          icon
-                          v-bind='attrs'
-                          v-on='{ ...menu, ...tooltip }'
-                          :class='$vuetify.rtl ? `ml-3` : ``'
-                          tile
-                          height='64'
-                          :aria-label='$t(`common:header.language`)'
-                          )
-                          v-icon(color='white') mdi-web
-                      span {{$t('common:header.language')}}
-                  v-list(nav)
-                    template(v-for='(lc, idx) of locales')
-                      v-list-item(@click='changeLocale(lc)')
-                        v-list-item-action(style='min-width:auto;'): v-chip(:color='lc.code === locale ? `blue` : `grey`', small, label, dark) {{lc.code.toUpperCase()}}
-                        v-list-item-title {{lc.name}}
-                v-divider(vertical)
-
-              //- PAGE ACTIONS
-
-              template(v-if='hasAnyPagePermissions && path && mode !== `edit`')
-                v-menu(offset-y, bottom, transition='slide-y-transition', left)
-                  template(v-slot:activator='{ on: menu, attrs }')
-                    v-tooltip(bottom)
-                      template(v-slot:activator='{ on: tooltip }')
-                        v-btn(
-                          icon
-                          data-auth-required
-                          v-bind='attrs'
-                          v-on='{ ...menu, ...tooltip }'
-                          :class='$vuetify.rtl ? `ml-3` : ``'
-                          tile
-                          height='64'
-                          :aria-label='$t(`common:header.pageActions`)'
-                          )
-                          v-icon(color='white') mdi-file-document-edit-outline
-                      span {{$t('common:header.pageActions')}}
-                  v-list(nav, :light='!$vuetify.theme.dark', :dark='$vuetify.theme.dark', :class='$vuetify.theme.dark ? `grey darken-4` : ``')
-                    .overline.pa-4.grey--text {{$t('common:header.currentPage')}}
-                    v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
-                      v-list-item-title.body-2 {{$t('common:header.view')}}
-                    v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
-                      v-list-item-title.body-2 {{$t('common:header.edit')}}
-                    v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
-                      v-list-item-content
-                        v-list-item-title.body-2 {{$t('common:header.history')}}
-                    v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
-                      v-list-item-title.body-2 {{$t('common:header.viewSource')}}
-                    v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-lightning-bolt
-                      v-list-item-title.body-2 {{$t('common:header.convert')}}
-                    v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
-                      v-list-item-title.body-2 {{$t('common:header.duplicate')}}
-                    v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
-                      v-list-item-content
-                        v-list-item-title.body-2 {{$t('common:header.move')}}
-                    v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
-                      v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
-                      v-list-item-title.body-2 {{$t('common:header.delete')}}
-                v-divider(vertical)
-
-              //- NEW PAGE
-
-              template(v-if='hasNewPagePermission && path && mode !== `edit`')
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, height='64', data-auth-required, v-on='on', @click='pageNew', :aria-label='$t(`common:header.newPage`)')
-                      v-icon(color='white') mdi-text-box-plus-outline
-                  span {{$t('common:header.newPage')}}
-                v-divider(vertical)
-
-              //- ADMIN
-
-              template(v-if='isAuthenticated && isAdmin && mode !== `admin`')
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, height='64', data-auth-required, v-on='on', href='/a', :aria-label='$t(`common:header.admin`)')
-                      v-icon(color='white') mdi-cog
-                  span {{$t('common:header.admin')}}
-                v-divider(vertical)
-
-              //- ACCOUNT
-
-              v-menu(v-if='isAuthenticated', offset-y, bottom, min-width='300', transition='slide-y-transition', left)
-                template(v-slot:activator='{ on: menu, attrs }')
-                  v-tooltip(bottom)
-                    template(v-slot:activator='{ on: tooltip }')
-                      v-btn(
-                        icon
-                        v-bind='attrs'
-                        v-on='{ ...menu, ...tooltip }'
-                        :class='$vuetify.rtl ? `ml-0` : ``'
-                        tile
-                        height='64'
-                        :aria-label='$t(`common:header.account`)'
-                        )
-                        v-icon(v-if='picture.kind === `initials`', color='white') mdi-account-circle
-                        v-avatar(v-else-if='picture.kind === `image`', :size='34')
-                          v-img(:src='picture.url')
-                    span {{$t('common:header.account')}}
-                v-list(nav)
-                  v-list-item.py-3.grey(:class='$vuetify.theme.dark ? `darken-4-l5` : `lighten-5`')
-                    v-list-item-avatar
-                      v-avatar.blue(v-if='picture.kind === `initials`', :size='40')
-                        span.white--text.subheading {{picture.initials}}
-                      v-avatar(v-else-if='picture.kind === `image`', :size='40')
-                        v-img(:src='picture.url')
-                    v-list-item-content
-                      v-list-item-title {{name}}
-                      v-list-item-subtitle {{email}}
-                  v-list-item(href='/p')
-                    v-list-item-action: v-icon(color='blue-grey') mdi-face-profile
-                    v-list-item-content
-                      v-list-item-title(:class='$vuetify.theme.dark ? `blue-grey--text text--lighten-3` : `blue-grey--text`') {{$t('common:header.profile')}}
-                  v-list-item(@click='logout')
-                    v-list-item-action: v-icon(color='red') mdi-logout
-                    v-list-item-title.red--text {{$t('common:header.logout')}}
-
-              v-tooltip(v-else, left)
-                template(v-slot:activator='{ on }')
-                  v-btn(icon, v-on='on', href='/login', :aria-label='$t(`common:header.login`)')
-                    v-icon(color='white') mdi-account-circle
-                span {{$t('common:header.login')}}
-
-      page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
-      page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
-      page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
-      page-delete(v-model='deletePageModal', v-if='path && path.length')
-      page-convert(v-model='convertPageModal', v-if='path && path.length')
 
       .nav-header-dev(v-if='isDevMode')
         v-icon mdi-alert
         div
           .overline DEVELOPMENT VERSION
           .overline This code base is NOT for production use!
+
+    page-selector(mode='create', v-model='newPageModal', :open-handler='pageNewCreate', :locale='locale')
+    page-selector(mode='move', v-model='movePageModal', :open-handler='pageMoveRename', :path='path', :locale='locale')
+    page-selector(mode='create', v-model='duplicateOpts.modal', :open-handler='pageDuplicateHandle', :path='duplicateOpts.path', :locale='duplicateOpts.locale')
+    page-delete(v-model='deletePageModal', v-if='path && path.length')
+    page-convert(v-model='convertPageModal', v-if='path && path.length')
 
     nav-bottom-bar-host
 
@@ -245,9 +110,11 @@
 <script>
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
-import { getLogoutUrl } from '../../helpers/auth-session'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
+import NavActionItems from './nav-action-items.vue'
+import PageDelete from './page-delete.vue'
+import PageConvert from './page-convert.vue'
 
 /* global siteConfig, siteLangs */
 
@@ -255,8 +122,9 @@ const NAV_BAR_COLOR = '#192b85'
 
 export default {
   components: {
-    PageDelete: () => import('./page-delete.vue'),
-    PageConvert: () => import('./page-convert.vue')
+    NavActionItems,
+    PageDelete,
+    PageConvert
   },
   props: {
     dense: {
@@ -277,7 +145,6 @@ export default {
       movePageModal: false,
       convertPageModal: false,
       deletePageModal: false,
-      locales: siteLangs,
       isDevMode: siteConfig.devMode === true,
       duplicateOpts: {
         locale: 'en',
@@ -302,59 +169,19 @@ export default {
     path: get('page/path'),
     locale: get('page/locale'),
     mode: get('page/mode'),
-    name: get('user/name'),
-    email: get('user/email'),
-    pictureUrl: get('user/pictureUrl'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
-    picture () {
-      if (this.pictureUrl && this.pictureUrl.length > 1) {
-        return {
-          kind: 'image',
-          url: (this.pictureUrl === 'internal') ? `/_userav/${this.$store.get('user/id')}` : this.pictureUrl
-        }
-      } else {
-        const nameParts = this.name.toUpperCase().split(' ')
-        let initials = _.head(nameParts).charAt(0)
-        if (nameParts.length > 1) {
-          initials += _.last(nameParts).charAt(0)
-        }
-        return {
-          kind: 'initials',
-          initials
-        }
-      }
-    },
-    isAdmin () {
-      return _.intersection(this.permissions, ['manage:system', 'write:users', 'manage:users', 'write:groups', 'manage:groups', 'manage:navigation', 'manage:theme', 'manage:api']).length > 0
-    },
-    hasNewPagePermission () {
-      if (!this.isAuthenticated) {
-        return false
-      }
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
-    },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
-    hasAnyPagePermissions () {
-      if (!this.isAuthenticated) {
-        return false
-      }
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
-        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
-    },
-    mobileHeaderColor () {
-      return NAV_BAR_COLOR
-    },
-    showMobileChat () {
-      return siteConfig.mobileHeaderChatEnabled === true
-    },
     isEditorHeader () {
       return this.dense || this.mode === 'edit'
+    },
+    searchLabel () {
+      return this.$t('common:header.search')
     }
   },
   created () {
@@ -422,9 +249,6 @@ export default {
       this.search = ''
       this.searchBlur()
     },
-    openMobileNav () {
-      this.$root.$emit('openNavDrawer')
-    },
     focusMobileSearch () {
       this.searchIsShown = true
       this.$nextTick(() => {
@@ -433,15 +257,6 @@ export default {
           field.focus()
         }
       })
-    },
-    chatClick () {
-      if (this.mode === 'view') {
-        this.$root.$emit('goToComments')
-      } else if (this.isAuthenticated) {
-        window.location.assign('/p')
-      } else {
-        window.location.assign('/login')
-      }
     },
     searchEnter () {
       this.$root.$emit('searchEnter', true)
@@ -524,18 +339,6 @@ export default {
         icon: 'ferry'
       })
     },
-    async changeLocale (locale) {
-      await this.$i18n.i18next.changeLanguage(locale.code)
-      switch (this.mode) {
-        case 'view':
-        case 'history':
-          window.location.assign(`/${locale.code}/${this.path}`)
-          break
-      }
-    },
-    logout () {
-      window.location.assign(getLogoutUrl())
-    },
     getHomeLocale () {
       const urlSegment = _.get(window.location.pathname.split('/'), '[1]')
       if (urlSegment && siteLangs.some(lc => lc.code === urlSegment)) {
@@ -566,6 +369,11 @@ $nav-bar-color: #192b85;
 
   input {
     color: $nav-bar-color !important;
+  }
+
+  input::placeholder {
+    color: rgba($nav-bar-color, 0.6) !important;
+    opacity: 1;
   }
 
   .v-label {
@@ -601,6 +409,11 @@ $nav-bar-color: #192b85;
     .v-toolbar__content {
       padding: 0;
     }
+
+    &--center .v-toolbar__content {
+      justify-content: center;
+      align-items: center;
+    }
   }
 
   &-desktop {
@@ -608,6 +421,7 @@ $nav-bar-color: #192b85;
       width: 100%;
       display: flex;
       justify-content: center;
+      align-items: center;
     }
 
     &__search {
@@ -615,6 +429,17 @@ $nav-bar-color: #192b85;
 
       width: 100%;
       max-width: 420px;
+      padding-top: 0;
+      flex-shrink: 0;
+
+      .v-input__control {
+        min-height: 36px !important;
+      }
+
+      .v-input__slot {
+        min-height: 36px !important;
+        margin-bottom: 0;
+      }
     }
   }
 
@@ -626,6 +451,12 @@ $nav-bar-color: #192b85;
 
     .nav-header-inner .v-toolbar__content {
       width: 100%;
+      flex-wrap: nowrap;
+    }
+
+    .nav-header-inner.pr-4 .v-toolbar__content {
+      justify-content: flex-end;
+      gap: 4px;
     }
 
     .nav-header-inner .subheading {
@@ -661,7 +492,7 @@ $nav-bar-color: #192b85;
     background-color: mc('red', '600');
     position: absolute;
     top: 11px;
-    left: 255px;
+    left: var(--nav-drawer-desktop-width);
     padding: 5px 15px;
     border-radius: 5px;
     display: flex;
@@ -716,19 +547,6 @@ $nav-bar-color: #192b85;
   }
 }
 
-.navHeaderSearch {
-  &-enter-active, &-leave-active {
-    transition: opacity .25s ease, transform .25s ease;
-    opacity: 1;
-  }
-  &-enter-active {
-    transition-delay: .25s;
-  }
-  &-enter, &-leave-to {
-    opacity: 0;
-    transform: scale(.7, .7);
-  }
-}
 .navHeaderLoading { // To avoid search bar jumping
   width: 22px;
 }

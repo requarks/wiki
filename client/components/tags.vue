@@ -7,7 +7,6 @@
       v-model='tagsDrawerShown'
       permanent
       category='tags'
-      :width='300'
       )
       nav-drawer-content-tags
     v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
