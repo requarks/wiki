@@ -366,6 +366,7 @@ export default {
     if (this._onViewportResize) {
       window.removeEventListener('resize', this._onViewportResize)
     }
+    this.$root.$off('focusMobileSearch', this.focusMobileSearch)
   },
   mounted () {
     this.syncMobileViewport()
@@ -377,6 +378,7 @@ export default {
     this.$root.$on('pageNew', () => {
       this.pageNew()
     })
+    this.$root.$on('focusMobileSearch', this.focusMobileSearch)
     this.$root.$on('pageEdit', () => {
       this.pageEdit()
     })
@@ -422,6 +424,15 @@ export default {
     },
     openMobileNav () {
       this.$root.$emit('openNavDrawer')
+    },
+    focusMobileSearch () {
+      this.searchIsShown = true
+      this.$nextTick(() => {
+        const field = this.$refs.searchFieldMobile || this.$refs.searchField
+        if (field && typeof field.focus === 'function') {
+          field.focus()
+        }
+      })
     },
     chatClick () {
       if (this.mode === 'view') {
