@@ -4,6 +4,7 @@ const _ = require('lodash')
 const multer = require('multer')
 const path = require('path')
 const sanitize = require('sanitize-filename')
+const systemRoutes = require('../helpers/systemRoutes')
 
 /* global WIKI */
 
@@ -19,6 +20,12 @@ router.post('/u', (req, res, next) => {
     }
   }).array('mediaUpload')(req, res, next)
 }, async (req, res, next) => {
+  if (systemRoutes.isGuestUser(req.user)) {
+    return res.status(403).json({
+      succeeded: false,
+      message: 'You must be logged in to upload files.'
+    })
+  }
   if (!_.some(req.user.permissions, pm => _.includes(['write:assets', 'manage:system'], pm))) {
     return res.status(403).json({
       succeeded: false,
@@ -99,6 +106,12 @@ router.post('/u', (req, res, next) => {
 })
 
 router.get('/u', async (req, res, next) => {
+  if (systemRoutes.isGuestUser(req.user)) {
+    return res.status(403).json({
+      ok: false,
+      message: 'You must be logged in to access the upload endpoint.'
+    })
+  }
   res.json({
     ok: true
   })
