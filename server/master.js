@@ -145,6 +145,7 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(async (req, res, next) => {
+    const facebookStrategy = _.find(_.values(WIKI.auth.strategies), ['strategyKey', 'facebook'])
     res.locals.siteConfig = {
       title: WIKI.config.title,
       theme: WIKI.config.theming.theme,
@@ -156,6 +157,7 @@ module.exports = async () => {
       contentLicense: WIKI.config.contentLicense,
       footerOverride: WIKI.config.footerOverride,
       logoUrl: WIKI.config.logoUrl,
+      facebookAppId: facebookStrategy?.config?.clientId || '',
       mobileHeaderChatEnabled: false
     }
     res.locals.langs = await WIKI.models.locales.getNavLocales({ cache: true })
