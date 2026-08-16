@@ -2,22 +2,14 @@
   v-app(:dark='$vuetify.theme.dark').tags
     nav-header
     nav-mobile-drawer-host
-    v-navigation-drawer.pb-0.elevation-1.tags-sidebar(
+    nav-drawer-shell(
       v-if='$vuetify.breakpoint.mdAndUp'
       v-model='tagsDrawerShown'
-      :app='true'
-      fixed
-      :clipped='true'
-      :dark='tagsDrawerDark'
-      :right='$vuetify.rtl'
       permanent
-      width='300'
-      overlay-color='black'
-      :overlay-opacity='0.55'
-      :class='tagsDrawerClass'
+      category='tags'
+      :width='300'
       )
-      vue-scroll(:ops='scrollStyle')
-        nav-drawer-content-tags
+      nav-drawer-content-tags
     v-main.grey(:class='$vuetify.theme.dark ? `darken-4-d5` : `lighten-3`')
       v-toolbar.tags-selection-toolbar(color='primary', dark, flat, height='58', :class='{ "tags-selection-toolbar--active": hasSelection }')
         template(v-if='hasSelection')
@@ -176,7 +168,8 @@ const router = new VueRouter({
 export default {
   i18nOptions: { namespaces: 'tags' },
   components: {
-    NavDrawerContentTags: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-tags.vue')
+    NavDrawerContentTags: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-tags.vue'),
+    NavDrawerShell: () => import(/* webpackMode: "eager" */ './common/nav-drawer-shell.vue')
   },
   data() {
     return {
@@ -199,42 +192,12 @@ export default {
       pageTotal: 0,
       isLoading: true,
       tagsScrollFadeLeft: false,
-      tagsScrollFadeRight: false,
-      scrollStyle: {
-        vuescroll: {},
-        scrollPanel: {
-          initialScrollY: 0,
-          initialScrollX: 0,
-          scrollingX: false,
-          easing: 'easeOutQuad',
-          speed: 1000,
-          verticalNativeBarPos: this.$vuetify.rtl ? `left` : `right`
-        },
-        rail: {
-          gutterOfEnds: '2px'
-        },
-        bar: {
-          onlyShowBarOnScroll: false,
-          background: '#CCC',
-          hoverStyle: {
-            background: '#999'
-          }
-        }
-      }
+      tagsScrollFadeRight: false
     }
   },
   computed: {
     hasSelection () {
       return Array.isArray(this.selection) && this.selection.length > 0
-    },
-    tagsDrawerWidth () {
-      return 300
-    },
-    tagsDrawerClass () {
-      return ''
-    },
-    tagsDrawerDark () {
-      return this.$vuetify.theme.dark
     },
     showLocaleFilter () {
       return this.locales.length > 1 && this.$vuetify.breakpoint.mdAndUp
@@ -399,36 +362,6 @@ export default {
 </script>
 
 <style lang='scss'>
-.tags-sidebar-mobile {
-  padding-top: 0;
-
-  &.primary {
-    background-color: mc('theme', 'primary') !important;
-  }
-
-  &.blue.darken-4 {
-    background-color: mc('blue', '900') !important;
-  }
-
-  .v-divider {
-    border-color: rgba(255, 255, 255, 0.12) !important;
-  }
-
-  .v-list-item__title,
-  .v-list-item__content,
-  .v-subheader {
-    color: #fff !important;
-  }
-
-  .v-list-item__icon .v-icon {
-    color: #fff !important;
-  }
-
-  .v-list-item--active {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-  }
-}
-
 @media #{map-get($display-breakpoints, 'sm-and-down')} {
   .tags,
   .tags .v-main,

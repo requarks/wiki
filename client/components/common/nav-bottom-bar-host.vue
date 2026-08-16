@@ -84,61 +84,16 @@ body.has-mobile-bottom-nav {
   }
 
   @media #{map-get($display-breakpoints, 'sm-and-down')} {
-    .v-navigation-drawer--temporary,
-    .nav-drawer-mobile,
-    .admin-sidebar-mobile,
-    .tags-sidebar-mobile,
-    .profile-sidebar-mobile {
+    .nav-drawer-shell.v-navigation-drawer--temporary,
+    .v-navigation-drawer--temporary.nav-drawer-mobile,
+    .v-navigation-drawer--temporary.admin-sidebar-mobile,
+    .v-navigation-drawer--temporary.tags-sidebar-mobile,
+    .v-navigation-drawer--temporary.profile-sidebar-mobile {
       z-index: 240 !important;
       top: 0 !important;
       bottom: 0 !important;
       height: 100% !important;
       max-height: 100vh !important;
-
-      .v-navigation-drawer__content {
-        height: 100%;
-        max-height: 100vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .nav-drawer-mobile-header {
-        flex: 0 0 auto;
-      }
-
-      .__vuescroll {
-        flex: 1 1 auto;
-        min-height: 0;
-        height: auto !important;
-        max-height: none !important;
-      }
-
-      .__panel {
-        height: 100% !important;
-      }
-
-      &.primary {
-        background-color: mc('theme', 'primary') !important;
-      }
-
-      &.blue.darken-4 {
-        background-color: mc('blue', '900') !important;
-      }
-
-      .v-divider {
-        border-color: rgba(255, 255, 255, 0.12) !important;
-      }
-
-      .v-list-item__title,
-      .v-list-item__icon .v-icon:not(.red--text):not([class*='red--']),
-      .v-subheader {
-        color: #fff !important;
-      }
-
-      .v-list-item--active {
-        background-color: rgba(255, 255, 255, 0.12) !important;
-      }
     }
 
     .v-overlay--active {

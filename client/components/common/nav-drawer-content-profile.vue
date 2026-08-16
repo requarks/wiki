@@ -1,5 +1,5 @@
 <template lang='pug'>
-  v-list(dense, nav, :dark='drawerDark')
+  v-list(dense, nav, dark)
     v-list-item(to='/profile', color='primary', @click='onNavigate')
       v-list-item-action: v-icon mdi-face-profile
       v-list-item-content
@@ -13,11 +13,6 @@
 <script>
 export default {
   i18nOptions: { namespaces: 'profile' },
-  computed: {
-    drawerDark () {
-      return this.$vuetify.breakpoint.smAndDown || this.$vuetify.theme.dark
-    }
-  },
   methods: {
     onNavigate () {
       this.$emit('navigate')

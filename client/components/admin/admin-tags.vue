@@ -34,13 +34,15 @@
                     v-list-item-content
                       .caption.grey--text {{$t('tags.emptyList')}}
                   v-list-item(
-                    v-for='tag of filteredTags'
+                    v-for='tag of paginatedTags'
                     :key='tag.id'
                     :class='(tag.id === current.id) ? "teal" : ""'
                     @click='selectTag(tag)'
                     )
                     v-list-item-avatar(size='24', tile): v-icon(size='18', :color='tag.id === current.id ? `white` : `teal`') mdi-tag
                     v-list-item-title(:class='tag.id === current.id ? `white--text` : ``') {{tag.tag}}
+                .admin-tags-pagination.text-center.py-2(v-if='pageCount > 1')
+                  v-pagination(v-model='pagination', :length='pageCount', :total-visible='paginationTotalVisible')
             v-flex.animated.fadeInUp.wait-p2s
               template(v-if='current.id')
                 v-card
@@ -107,7 +109,9 @@ export default {
       tags: [],
       current: {},
       filter: '',
-      deleteTagDialog: false
+      deleteTagDialog: false,
+      pagination: 1,
+      itemsPerPage: 15
     }
   },
   computed: {
@@ -116,6 +120,26 @@ export default {
         return _.filter(this.tags, t => t.tag.indexOf(this.filter) >= 0 || t.title.indexOf(this.filter) >= 0)
       } else {
         return this.tags
+      }
+    },
+    paginatedTags () {
+      const start = (this.pagination - 1) * this.itemsPerPage
+      return this.filteredTags.slice(start, start + this.itemsPerPage)
+    },
+    pageCount () {
+      return Math.ceil(this.filteredTags.length / this.itemsPerPage)
+    },
+    paginationTotalVisible () {
+      return this.$vuetify.breakpoint.smAndDown ? 5 : 9
+    }
+  },
+  watch: {
+    filter () {
+      this.pagination = 1
+    },
+    pageCount (count) {
+      if (this.pagination > count && count > 0) {
+        this.pagination = count
       }
     }
   },
@@ -242,6 +266,13 @@ export default {
 
   &:hover {
     background-color: rgba(mc('blue', '500'), .25);
+  }
+}
+
+.admin-tags-pagination {
+  .v-pagination {
+    justify-content: center;
+    flex-wrap: wrap;
   }
 }
 

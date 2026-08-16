@@ -24,51 +24,37 @@
               span Visualize
         v-card(:class='isMobile ? `mt-2` : `mt-3`', flat, :outlined='isMobile')
           .admin-pages-toolbar.pa-2(:class='$vuetify.theme.dark ? `grey darken-3-d5` : `grey lighten-3`')
-            v-text-field.admin-pages-toolbar__search(
-              solo
-              flat
-              v-model='search'
-              prepend-inner-icon='mdi-file-search-outline'
-              label='Search Pages...'
-              hide-details
-              dense
-              )
+            .admin-pages-toolbar__search
+              v-text-field(
+                solo
+                flat
+                v-model='search'
+                prepend-inner-icon='mdi-file-search-outline'
+                label='Search Pages...'
+                hide-details
+                dense
+                )
             .admin-pages-toolbar__filters
-              v-select.admin-pages-toolbar__filter(
-                solo
-                flat
-                hide-details
-                dense
-                label='Locale'
-                :items='langs'
-                v-model='selectedLang'
-              )
-              v-select.admin-pages-toolbar__filter(
-                solo
-                flat
-                hide-details
-                dense
-                label='Publish State'
-                :items='states'
-                v-model='selectedState'
-              )
-              .admin-pages-toolbar__sort
-                v-select.admin-pages-toolbar__filter.admin-pages-toolbar__sort-select(
+              .admin-pages-toolbar__filter
+                v-select(
                   solo
                   flat
                   hide-details
                   dense
-                  label='Sort By'
-                  :items='sortOptions'
-                  v-model='sortBy'
+                  label='Locale'
+                  :items='langs'
+                  v-model='selectedLang'
                 )
-                v-btn.admin-pages-toolbar__sort-toggle(
-                  icon
-                  small
-                  :aria-label='sortDesc ? `Sort descending` : `Sort ascending`'
-                  @click='toggleSortDirection'
+              .admin-pages-toolbar__filter
+                v-select(
+                  solo
+                  flat
+                  hide-details
+                  dense
+                  label='Publish State'
+                  :items='states'
+                  v-model='selectedState'
                 )
-                  v-icon {{ sortDesc ? 'mdi-sort-descending' : 'mdi-sort-ascending' }}
           v-divider
           .admin-pages-table-wrap
             v-data-table.admin-pages-table(
@@ -79,9 +65,8 @@
               :items-per-page='15'
               :loading='loading'
               :mobile-breakpoint='0'
-              :disable-sort='isMobile'
-              :sort-by='sortBy'
-              :sort-desc='sortDesc'
+              :sort-by.sync='sortBy'
+              :sort-desc.sync='sortDesc'
               hide-default-footer
               @page-count="pageTotal = $event"
             )
@@ -92,8 +77,9 @@
                     .body-2: strong {{ props.item.title }}
                     .caption {{ props.item.description }}
                   td.admin-pages-path
-                    v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
-                    span.ml-2.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
+                    .admin-pages-path__content
+                      v-chip(label, small, :color='$vuetify.theme.dark ? `grey darken-4` : `grey lighten-4`') {{ props.item.locale }}
+                      span.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-2`') / {{ props.item.path }}
                   td {{ props.item.createdAt | moment('calendar') }}
                   td {{ props.item.updatedAt | moment('calendar') }}
               template(slot='no-data')
@@ -125,12 +111,6 @@ export default {
       selectedState: null,
       sortBy: 'updatedAt',
       sortDesc: true,
-      sortOptions: [
-        { text: 'Last Updated', value: 'updatedAt' },
-        { text: 'Created', value: 'createdAt' },
-        { text: 'Title', value: 'title' },
-        { text: 'ID', value: 'id' }
-      ],
       states: [
         { text: 'All Publishing States', value: null },
         { text: 'Published', value: true },
@@ -153,10 +133,10 @@ export default {
     tableHeaders () {
       if (this.isMobile) {
         return [
-          { text: 'Title', value: 'title', width: 280, sortable: false },
-          { text: 'Path', value: 'path', width: 200, sortable: false },
-          { text: 'Created', value: 'createdAt', width: 140, sortable: false },
-          { text: 'Last Updated', value: 'updatedAt', width: 140, sortable: false }
+          { text: 'Title', value: 'title', width: 280, sortable: true },
+          { text: 'Path', value: 'path', width: 200, sortable: true },
+          { text: 'Created', value: 'createdAt', width: 140, sortable: true },
+          { text: 'Last Updated', value: 'updatedAt', width: 140, sortable: true }
         ]
       }
       return this.headers
@@ -186,9 +166,6 @@ export default {
     }
   },
   methods: {
-    toggleSortDirection () {
-      this.sortDesc = !this.sortDesc
-    },
     async refresh() {
       await this.$apollo.queries.adminPagesList.refetch()
       this.$store.commit('showNotification', {
@@ -268,23 +245,38 @@ export default {
 }
 
 .admin-pages-path {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  font-family: 'Roboto Mono', monospace;
-  word-break: break-word;
+  vertical-align: middle;
+
+  &__content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    font-family: 'Roboto Mono', monospace;
+    word-break: break-word;
+  }
 }
 
 .admin-pages-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
+
+  &__search,
+  &__filter {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+
+    > .v-input {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+  }
 
   &__search {
     flex: 1 1 220px;
-    min-width: 0;
   }
 
   &__filters {
@@ -292,28 +284,16 @@ export default {
     flex: 1 1 320px;
     gap: 8px;
     min-width: 0;
+    align-items: stretch;
   }
 
   &__filter {
     flex: 1 1 140px;
-    min-width: 0;
   }
 
-  &__sort {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1 1 220px;
-    min-width: 0;
-  }
-
-  &__sort-select {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  &__sort-toggle {
-    flex-shrink: 0;
+  .v-input__control,
+  .v-input__slot {
+    min-height: 40px !important;
   }
 }
 
@@ -360,9 +340,18 @@ export default {
       opacity: 0.7;
     }
 
+    tbody tr {
+      border-bottom: 1px solid mc('blue-grey', '100');
+
+      @at-root .theme--dark & {
+        border-bottom-color: mc('grey', '700');
+      }
+    }
+
     tbody td {
       padding: 12px 16px !important;
-      vertical-align: top;
+      vertical-align: middle;
+      border-bottom: none !important;
     }
   }
 
@@ -402,12 +391,6 @@ export default {
     &__filters {
       flex-direction: column;
     }
-
-    &__sort {
-      width: 100%;
-      flex: 0 0 auto;
-      min-height: 0;
-    }
   }
 
   .admin-pages-table-wrap {
@@ -435,7 +418,7 @@ export default {
     th,
     td {
       white-space: normal;
-      vertical-align: top;
+      vertical-align: middle;
     }
 
     .admin-pages-title {

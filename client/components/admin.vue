@@ -6,22 +6,14 @@
         .overline.grey--text {{$t('admin:adminArea')}}
         v-spacer
     nav-mobile-drawer-host
-    v-navigation-drawer.pb-0.admin-sidebar(
+    nav-drawer-shell(
       v-if='$vuetify.breakpoint.mdAndUp'
       v-model='adminDrawerShown'
-      :app='true'
-      fixed
-      :clipped='true'
-      :dark='adminDrawerDark'
-      :right='$vuetify.rtl'
       permanent
-      width='300'
-      overlay-color='black'
-      :overlay-opacity='0.55'
-      :class='adminDrawerClass'
+      category='admin'
+      :width='300'
       )
-      vue-scroll(:ops='scrollStyle')
-        nav-drawer-content-admin
+      nav-drawer-content-admin
 
     v-main(:class='$vuetify.theme.dark ? "grey darken-5" : "grey lighten-5"')
       transition(name='admin-router')
@@ -88,42 +80,16 @@ const router = new VueRouter({
 export default {
   i18nOptions: { namespaces: 'admin' },
   components: {
-    NavDrawerContentAdmin: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-admin.vue')
+    NavDrawerContentAdmin: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-admin.vue'),
+    NavDrawerShell: () => import(/* webpackMode: "eager" */ './common/nav-drawer-shell.vue')
   },
   data() {
     return {
-      adminDrawerShown: true,
-      scrollStyle: {
-        vuescroll: {},
-        scrollPanel: {
-          initialScrollY: 0,
-          initialScrollX: 0,
-          scrollingX: false,
-          easing: 'easeOutQuad',
-          speed: 1000,
-          verticalNativeBarPos: this.$vuetify.rtl ? `left` : `right`
-        },
-        rail: {
-          gutterOfEnds: '2px'
-        },
-        bar: {
-          onlyShowBarOnScroll: false,
-          background: '#CCC',
-          hoverStyle: {
-            background: '#999'
-          }
-        }
-      }
+      adminDrawerShown: true
     }
   },
   computed: {
-    info: sync('admin/info'),
-    adminDrawerClass () {
-      return this.$vuetify.theme.dark ? 'grey darken-4' : ''
-    },
-    adminDrawerDark () {
-      return this.$vuetify.theme.dark
-    }
+    info: sync('admin/info')
   },
   router,
   created() {
@@ -168,20 +134,6 @@ export default {
   }
 }
 
-.admin-sidebar {
-  .v-list__tile--active {
-    background-color: rgba(mc('theme', 'primary'), .1);
-
-    .v-icon {
-      color: mc('theme', 'primary');
-    }
-  }
-
-  .v-list-group > .v-list-item {
-    padding-left: 0;
-  }
-}
-
 .admin-sidebar-mobile {
   padding-top: 0;
 }
@@ -196,17 +148,6 @@ export default {
 
   body.has-mobile-bottom-nav .admin .v-main {
     padding-bottom: 56px !important;
-  }
-}
-
-.theme--dark {
-  .admin-sidebar .v-list__tile--active {
-    background-color: rgba(0,0,0, .2);
-    color: mc('blue', '500') !important;
-
-    .v-icon {
-      color: mc('blue', '500');
-    }
   }
 }
 

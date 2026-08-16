@@ -2,19 +2,12 @@
   v-app(:dark='$vuetify.theme.dark').profile
     nav-header
     nav-mobile-drawer-host
-    v-navigation-drawer.pb-0.profile-sidebar(
+    nav-drawer-shell(
       v-if='$vuetify.breakpoint.mdAndUp'
       v-model='profileDrawerShown'
-      :app='true'
-      fixed
-      :clipped='true'
-      :dark='profileDrawerDark'
-      :right='$vuetify.rtl'
       permanent
-      width='256'
-      overlay-color='black'
-      :overlay-opacity='0.55'
-      :class='profileDrawerClass'
+      category='profile'
+      :width='256'
       )
       nav-drawer-content-profile
 
@@ -55,19 +48,12 @@ router.afterEach((to, from) => {
 export default {
   i18nOptions: { namespaces: 'profile' },
   components: {
-    NavDrawerContentProfile: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-profile.vue')
+    NavDrawerContentProfile: () => import(/* webpackMode: "eager" */ './common/nav-drawer-content-profile.vue'),
+    NavDrawerShell: () => import(/* webpackMode: "eager" */ './common/nav-drawer-shell.vue')
   },
   data() {
     return {
       profileDrawerShown: true
-    }
-  },
-  computed: {
-    profileDrawerClass () {
-      return ''
-    },
-    profileDrawerDark () {
-      return this.$vuetify.theme.dark
     }
   },
   router,
@@ -100,10 +86,6 @@ export default {
   &-title {
     margin-left: 1rem;
   }
-}
-
-.profile-sidebar-mobile {
-  padding-top: 0;
 }
 
 </style>

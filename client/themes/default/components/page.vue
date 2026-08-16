@@ -2,28 +2,19 @@
   v-app(v-scroll='upBtnScroll', :dark='$vuetify.theme.dark', :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(v-if='!printView')
     nav-mobile-drawer-host(v-if='!printView')
-    v-navigation-drawer(
+    nav-drawer-shell(
       v-if='navMode !== `NONE` && !printView && $vuetify.breakpoint.mdAndUp'
-      :class='navDrawerClass'
-      :dark='navDrawerDark'
-      :app='true'
-      :clipped='true'
       permanent
-      v-model='navShown'
-      :right='$vuetify.rtl'
-      width='256'
-      overlay-color='black'
-      :overlay-opacity='0.55'
+      category='wiki'
+      :width='256'
+      :scroll-style='scrollStyle'
       )
-      vue-scroll(:ops='scrollStyle')
-        nav-sidebar(
-          :color='navSidebarColor'
-          :dark='navSidebarDark'
-          :items='sidebarDecoded'
-          :nav-mode='navMode'
-          )
-
-    //- Mobile nav opens from profile icon in header (LinkedIn-style)
+      nav-sidebar(
+        :color='$vuetify.theme.dark ? `blue darken-4` : `primary`'
+        dark
+        :items='sidebarDecoded'
+        :nav-mode='navMode'
+        )
     v-main(ref='content')
       template(v-if='path !== `home`')
         v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense, v-if='$vuetify.breakpoint.smAndUp')
@@ -357,6 +348,7 @@
 import { StatusIndicator } from 'vue-status-indicator'
 import Tabset from './tabset.vue'
 import NavSidebar from './nav-sidebar.vue'
+import NavDrawerShell from '../../../components/common/nav-drawer-shell.vue'
 import Prism from 'prismjs'
 import mermaid from 'mermaid'
 import { get, sync } from 'vuex-pathify'
@@ -407,6 +399,7 @@ Prism.plugins.toolbar.registerButton('copy-to-clipboard', (env) => {
 export default {
   components: {
     NavSidebar,
+    NavDrawerShell,
     StatusIndicator
   },
   props: {
@@ -557,33 +550,6 @@ export default {
     },
     showMobileBottomNav () {
       return this.$vuetify.breakpoint.smAndDown
-    },
-    navDrawerWidth () {
-      return this.$vuetify.breakpoint.smAndDown ? Math.min(Math.round(window.innerWidth * 0.88), 320) : 256
-    },
-    navDrawerClass () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark ? 'nav-drawer-mobile blue darken-4' : 'nav-drawer-mobile primary'
-      }
-      return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
-    },
-    navDrawerDark () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        return true
-      }
-      return true
-    },
-    navSidebarColor () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        return this.$vuetify.theme.dark ? 'blue darken-4' : 'primary'
-      }
-      return this.$vuetify.theme.dark ? 'grey darken-4-d4' : 'primary'
-    },
-    navSidebarDark () {
-      if (this.$vuetify.breakpoint.smAndDown) {
-        return true
-      }
-      return true
     },
     mobileFabBottomOffset () {
       if (!this.showMobileBottomNav) { return {} }
@@ -1016,10 +982,6 @@ export default {
       margin-bottom: 0;
     }
   }
-}
-
-.nav-drawer-mobile {
-  padding-top: 0;
 }
 
 </style>
