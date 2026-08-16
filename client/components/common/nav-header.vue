@@ -245,6 +245,7 @@
 <script>
 import { get, sync } from 'vuex-pathify'
 import _ from 'lodash'
+import { getLogoutUrl } from '../../helpers/auth-session'
 
 import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 
@@ -522,7 +523,7 @@ export default {
       }
     },
     logout () {
-      window.location.assign('/logout')
+      window.location.assign(getLogoutUrl())
     },
     getHomeLocale () {
       const urlSegment = _.get(window.location.pathname.split('/'), '[1]')

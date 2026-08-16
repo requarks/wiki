@@ -18,6 +18,7 @@
 
 <script>
 import _ from 'lodash'
+import { getLogoutUrl } from '../../helpers/auth-session'
 import { get } from 'vuex-pathify'
 
 export default {
@@ -50,7 +51,7 @@ export default {
       window.location.assign('/p')
     },
     logout () {
-      window.location.assign('/logout')
+      window.location.assign(getLogoutUrl())
     }
   }
 }

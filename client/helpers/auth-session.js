@@ -74,6 +74,13 @@ export function getGuestEffectivePermissions () {
   return JSON.parse(JSON.stringify(GUEST_EFFECTIVE_PERMISSIONS))
 }
 
+let embeddedPermissionsEncoded = null
+let pagePermissionsStore = null
+
+export function registerEmbeddedPermissions (encodedPermissions) {
+  embeddedPermissionsEncoded = encodedPermissions || null
+}
+
 const ADMIN_ACCESS_PERMISSIONS = [
   'manage:system',
   'write:users',
@@ -84,6 +91,35 @@ const ADMIN_ACCESS_PERMISSIONS = [
   'manage:theme',
   'manage:api'
 ]
+
+export function syncPageEffectivePermissionsToStore (store) {
+  if (!embeddedPermissionsEncoded) {
+    return
+  }
+
+  const targetStore = store || pagePermissionsStore
+  if (!targetStore) {
+    return
+  }
+
+  const { authenticated } = getAuthSession()
+  const permissions = decodeEffectivePermissions(embeddedPermissionsEncoded, authenticated)
+  if (permissions) {
+    targetStore.set('page/effectivePermissions', permissions)
+  }
+}
+
+export function getJwtGlobalPermissions () {
+  const session = getAuthSession()
+  if (!session.authenticated || !session.jwtData) {
+    return []
+  }
+  return Array.isArray(session.jwtData.permissions) ? session.jwtData.permissions : []
+}
+
+export function hasJwtAdminAccess () {
+  return hasAnyJwtPermission(getJwtGlobalPermissions(), ADMIN_ACCESS_PERMISSIONS)
+}
 
 function hasJwtPermission (jwtPermissions, permission) {
   return Array.isArray(jwtPermissions) && jwtPermissions.includes(permission)
@@ -122,14 +158,14 @@ export function mergeJwtPermissions (embeddedPermissions, jwtPermissions) {
     },
     pages: {
       read: (embeddedPermissions.pages && embeddedPermissions.pages.read) || hasJwtPermission(jwtPermissions, 'read:pages'),
-      write: hasJwtPermission(jwtPermissions, 'write:pages') || hasJwtPermission(jwtPermissions, 'manage:pages') || isAdmin,
-      manage: hasJwtPermission(jwtPermissions, 'manage:pages') || isAdmin,
-      delete: hasJwtPermission(jwtPermissions, 'delete:pages') || isAdmin,
-      script: hasJwtPermission(jwtPermissions, 'write:scripts') || isAdmin,
-      style: hasJwtPermission(jwtPermissions, 'write:styles') || isAdmin
+      write: (embeddedPermissions.pages && embeddedPermissions.pages.write) || hasJwtPermission(jwtPermissions, 'write:pages') || hasJwtPermission(jwtPermissions, 'manage:pages') || isAdmin,
+      manage: (embeddedPermissions.pages && embeddedPermissions.pages.manage) || hasJwtPermission(jwtPermissions, 'manage:pages') || isAdmin,
+      delete: (embeddedPermissions.pages && embeddedPermissions.pages.delete) || hasJwtPermission(jwtPermissions, 'delete:pages') || isAdmin,
+      script: (embeddedPermissions.pages && embeddedPermissions.pages.script) || hasJwtPermission(jwtPermissions, 'write:scripts') || isAdmin,
+      style: (embeddedPermissions.pages && embeddedPermissions.pages.style) || hasJwtPermission(jwtPermissions, 'write:styles') || isAdmin
     },
     system: {
-      manage: hasJwtPermission(jwtPermissions, 'manage:system')
+      manage: (embeddedPermissions.system && embeddedPermissions.system.manage) || hasJwtPermission(jwtPermissions, 'manage:system') || isAdmin
     }
   }
 }
@@ -173,6 +209,15 @@ export function sanitizeEffectivePermissions (permissions, authenticated, jwtPer
   }
 }
 
+export function getLogoutUrl () {
+  if (typeof window === 'undefined') {
+    return '/logout'
+  }
+
+  const redirect = window.location.pathname + window.location.search
+  return `/logout?redirect=${encodeURIComponent(redirect)}`
+}
+
 export function decodeEffectivePermissions (encodedPermissions, authenticated) {
   if (!encodedPermissions) {
     return null
@@ -186,14 +231,17 @@ export function decodeEffectivePermissions (encodedPermissions, authenticated) {
   }
 }
 
-export function installAuthNavGuard () {
+export function installAuthNavGuard (store) {
   if (typeof document === 'undefined' || typeof MutationObserver === 'undefined') {
     return
   }
 
+  pagePermissionsStore = store || pagePermissionsStore
+
   const applyGuard = () => {
     const authenticated = getAuthSession().authenticated
     applyAuthDocumentClass(authenticated)
+    syncPageEffectivePermissionsToStore(pagePermissionsStore)
 
     document.querySelectorAll('[data-auth-required]').forEach((el) => {
       if (authenticated) {

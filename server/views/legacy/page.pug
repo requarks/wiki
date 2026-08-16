@@ -10,7 +10,7 @@ block body
           a(href='/login', title='Login')
             i.mdi.mdi-account-circle
         else
-          a(href='/logout', title='Logout')
+          a(href='#', onclick=`window.location.assign('/logout?redirect=' + encodeURIComponent(window.location.pathname + window.location.search)); return false;`, title='Logout')
             i.mdi.mdi-logout
     .main
       .sidebar

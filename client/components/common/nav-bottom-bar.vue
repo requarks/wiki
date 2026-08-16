@@ -23,27 +23,27 @@
             v-list-item.pl-4(@click='pageView', v-if='mode !== `view`')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-outline
               v-list-item-title.body-2 {{$t('common:header.view')}}
-            v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermission')
+            v-list-item.pl-4(@click='pageEdit', v-if='mode !== `edit` && hasWritePagesPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-file-document-edit-outline
               v-list-item-title.body-2 {{$t('common:header.edit')}}
-            v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermission')
+            v-list-item.pl-4(@click='pageHistory', v-if='mode !== `history` && hasReadHistoryPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-history
               v-list-item-content
                 v-list-item-title.body-2 {{$t('common:header.history')}}
-            v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermission')
+            v-list-item.pl-4(@click='pageSource', v-if='mode !== `source` && hasReadSourcePermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-code-tags
               v-list-item-title.body-2 {{$t('common:header.viewSource')}}
-            v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermission')
+            v-list-item.pl-4(@click='pageConvert', v-if='hasWritePagesPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-lightning-bolt
               v-list-item-title.body-2 {{$t('common:header.convert')}}
-            v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermission')
+            v-list-item.pl-4(@click='pageDuplicate', v-if='hasWritePagesPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-duplicate
               v-list-item-title.body-2 {{$t('common:header.duplicate')}}
-            v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermission')
+            v-list-item.pl-4(@click='pageMove', v-if='hasManagePagesPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='indigo') mdi-content-save-move-outline
               v-list-item-content
                 v-list-item-title.body-2 {{$t('common:header.move')}}
-            v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermission')
+            v-list-item.pl-4(@click='pageDelete', v-if='hasDeletePagesPermissionEffective')
               v-list-item-avatar(size='24', tile): v-icon(color='red darken-2') mdi-trash-can-outline
               v-list-item-title.body-2 {{$t('common:header.delete')}}
         v-btn.nav-bottom-bar__btn(v-else-if='isAdminArea && adminPageContext', icon, @click='viewAdminPage', :aria-label='$t(`common:header.view`)')
@@ -79,21 +79,9 @@
 <script>
 import { get } from 'vuex-pathify'
 import _ from 'lodash'
-import jwt from 'jsonwebtoken'
-import Cookies from 'js-cookie'
+import { getJwtGlobalPermissions, hasJwtAdminAccess } from '../../helpers/auth-session'
 
 /* global siteLangs, siteConfig */
-
-const ADMIN_ACCESS_PERMISSIONS = [
-  'manage:system',
-  'write:users',
-  'manage:users',
-  'write:groups',
-  'manage:groups',
-  'manage:navigation',
-  'manage:theme',
-  'manage:api'
-]
 
 export default {
   data() {
@@ -118,36 +106,17 @@ export default {
     pageDescription: get('page/description'),
     isAuthenticated: get('user/authenticated'),
     permissions: get('user/permissions'),
-    effectivePermissions () {
-      if (!this.isAuthenticated) {
-        return []
-      }
-      if (Array.isArray(this.permissions) && this.permissions.length > 0) {
-        return this.permissions
-      }
-      const jwtCookie = Cookies.get('jwt')
-      if (!jwtCookie) { return [] }
-      try {
-        const jwtData = jwt.decode(jwtCookie)
-        return Array.isArray(jwtData.permissions) ? jwtData.permissions : []
-      } catch (err) {
-        return []
-      }
+    jwtGlobalPermissions () {
+      return getJwtGlobalPermissions()
     },
     hasAdminAccess () {
       if (!this.isAuthenticated) {
         return false
       }
-      return _.intersection(this.effectivePermissions, ADMIN_ACCESS_PERMISSIONS).length > 0
+      return hasJwtAdminAccess()
     },
     showAdminSettings () {
       return this.isAuthenticated && (this.isAdminArea || this.hasAdminAccess)
-    },
-    hasNewPagePermission () {
-      if (!this.isAuthenticated) {
-        return false
-      }
-      return this.hasAdminPermission || _.intersection(this.permissions, ['write:pages']).length > 0
     },
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
@@ -155,12 +124,67 @@ export default {
     hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
+    hasWritePagesPermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasWritePagesPermission ||
+        _.intersection(this.jwtGlobalPermissions, ['write:pages', 'manage:pages']).length > 0 ||
+        this.hasAdminAccess
+    },
+    hasManagePagesPermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasManagePagesPermission ||
+        _.intersection(this.jwtGlobalPermissions, ['manage:pages']).length > 0 ||
+        this.hasAdminAccess
+    },
+    hasDeletePagesPermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasDeletePagesPermission ||
+        _.intersection(this.jwtGlobalPermissions, ['delete:pages']).length > 0 ||
+        this.hasAdminAccess
+    },
+    hasReadSourcePermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasReadSourcePermission ||
+        _.intersection(this.jwtGlobalPermissions, ['read:source']).length > 0 ||
+        this.hasAdminAccess
+    },
+    hasReadHistoryPermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasReadHistoryPermission ||
+        _.intersection(this.jwtGlobalPermissions, ['read:history']).length > 0 ||
+        this.hasAdminAccess
+    },
+    hasAdminPermissionEffective () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasAdminPermission || this.hasAdminAccess
+    },
+    hasNewPagePermission () {
+      if (!this.isAuthenticated) {
+        return false
+      }
+      return this.hasAdminPermissionEffective ||
+        _.intersection(this.jwtGlobalPermissions, ['write:pages', 'manage:pages']).length > 0 ||
+        _.intersection(this.permissions, ['write:pages', 'manage:pages']).length > 0
+    },
     hasAnyPagePermissions () {
       if (!this.isAuthenticated) {
         return false
       }
-      return this.hasAdminPermission || this.hasWritePagesPermission || this.hasManagePagesPermission ||
-        this.hasDeletePagesPermission || this.hasReadSourcePermission || this.hasReadHistoryPermission
+      return this.hasAdminPermissionEffective || this.hasWritePagesPermissionEffective ||
+        this.hasManagePagesPermissionEffective || this.hasDeletePagesPermissionEffective ||
+        this.hasReadSourcePermissionEffective || this.hasReadHistoryPermissionEffective
     },
     shareUrl () {
       if (this.adminPageContext && this.adminPageContext.locale && this.adminPageContext.path) {
