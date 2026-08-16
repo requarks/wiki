@@ -553,20 +553,36 @@ router.get('/*', async (req, res, next) => {
           let pageFilename = WIKI.config.lang.namespacing ? `${pageArgs.locale}/${page.path}` : page.path
           pageFilename += page.contentType === 'markdown' ? '.md' : '.html'
 
-          // -> Page navigation (server-side, no client GraphQL)
+          // -> Page customization (server-side, no client GraphQL)
           let pageNavigation = null
-          const pageNavigationConfig = WIKI.data.pageNavigation?.config || {}
-          const pageNavigationEnabled = WIKI.config.features.featurePageNavigation &&
-            WIKI.data.pageNavigation?.isEnabled &&
-            WIKI.data.pageNavigation?.resolve
-          if (pageNavigationEnabled) {
+          let relatedPages = null
+          let pageTelegramComments = null
+          const pageCustomizationEnabled = WIKI.config.features.featurePageNavigation
+          const seriesCache = new Map()
+          const navigationConfig = WIKI.data.pageNavigation?.config || {}
+
+          if (pageCustomizationEnabled && WIKI.data.pageNavigation?.isEnabled && WIKI.data.pageNavigation?.resolve) {
             if (WIKI.data.pageNavigation.css) {
               injectCode.css = `${injectCode.css}\n${WIKI.data.pageNavigation.css}`
             }
             try {
-              pageNavigation = await WIKI.data.pageNavigation.resolve(page, pageNavigationConfig)
+              pageNavigation = await WIKI.data.pageNavigation.resolve(page, navigationConfig, { seriesCache })
             } catch (err) {
               WIKI.logger.warn('Page navigation resolve failed: ', err)
+            }
+          }
+
+          if (pageCustomizationEnabled && WIKI.data.relatedPages?.isEnabled && WIKI.data.relatedPages?.resolve) {
+            if (WIKI.data.relatedPages.css) {
+              injectCode.css = `${injectCode.css}\n${WIKI.data.relatedPages.css}`
+            }
+            try {
+              relatedPages = await WIKI.data.relatedPages.resolve(page, WIKI.data.relatedPages.config || {}, {
+                seriesCache,
+                navigationConfig
+              })
+            } catch (err) {
+              WIKI.logger.warn('Related pages resolve failed: ', err)
             }
           }
 
@@ -575,13 +591,19 @@ router.get('/*', async (req, res, next) => {
             ? `${siteHost}/${page.localeCode}/${page.path}`
             : `${siteHost}/${page.path}`
 
+          if (pageCustomizationEnabled && WIKI.data.telegramComments?.isEnabled && WIKI.data.telegramComments?.resolve) {
+            try {
+              pageTelegramComments = WIKI.data.telegramComments.resolve(page, WIKI.data.telegramComments.config || {}, {
+                pageUrl: pageCanonicalUrl,
+                pageTitle: page.title
+              })
+            } catch (err) {
+              WIKI.logger.warn('Telegram comments resolve failed: ', err)
+            }
+          }
+
           // -> Embedded reader metadata (tags or legacy hidden-data block)
-          const pageEmbedResult = pageEmbedHelper.resolve(page, page.render, {
-            telegramWebsiteId: pageNavigationConfig.commentsAppWebsiteId || '',
-            telegramLimit: pageNavigationConfig.commentsAppLimit || 5,
-            pageUrl: pageCanonicalUrl,
-            pageTitle: page.title
-          })
+          const pageEmbedResult = pageEmbedHelper.resolve(page, page.render)
           page.render = pageEmbedResult.html
 
           // -> Render view
@@ -593,6 +615,8 @@ router.get('/*', async (req, res, next) => {
             effectivePermissions,
             pageFilename,
             pageNavigation,
+            relatedPages,
+            pageTelegramComments,
             pageEmbed: pageEmbedResult.embed
           })
         }

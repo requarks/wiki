@@ -1,60 +1,25 @@
 key: page_navigation
 title: Page Navigation
-description: 'Arrow-box prev/next navigation for tagged page series and download pages.'
+description: 'Arrow-box prev/next navigation and সূচী index for tagged page series.'
 author: sunninoor.com
 logo: https://static.requarks.io/logo/wikijs-butterfly.svg
 website: https://wiki.js.org
 isAvailable: true
 props:
-  fromTagPrefix:
+  pageGroupTagRegex:
     type: String
-    title: Series tag prefix (from:)
-    default: 'from:'
-    hint: 'Show navigation when a page has a tag starting with this prefix (e.g. from:Series Name).'
+    title: Page group tag regex
+    default: '^from:.+|^download$|^up:কিতাব$'
+    hint: 'Use | for alternates. ^from:… matches alone (series pages). All other alternates must match together (e.g. ^download$ and ^up:কিতাব$ with ^…$ for exact tags).'
     order: 1
-  downloadSeriesTag:
-    type: String
-    title: Download series tag
-    default: 'download'
-    hint: 'Show navigation when this tag is present together with an up: parent tag.'
-    order: 2
-  upTagPrefix:
-    type: String
-    title: Parent tag prefix (up:)
-    default: 'up:'
-    hint: 'Required with the download tag (e.g. up:কিতাব).'
-    order: 3
   disableNavTag:
     type: String
     title: Disable navigation tag
     default: 'nav:off'
-    hint: 'Pages with this exact tag never show navigation.'
-    order: 4
+    hint: 'Pages with this exact tag never show page navigation arrows.'
+    order: 2
   indexLabel:
     type: String
     title: Index button label (সূচী)
     default: 'সূচী'
-    order: 5
-  showRelatedCards:
-    type: Boolean
-    title: Show postal cards
-    default: true
-    hint: 'Display up to 3 upcoming pages from the same series below the arrow navigation.'
-    order: 6
-  relatedImageBaseUrl:
-    type: String
-    title: Postal card image base URL
-    default: 'https://sunninoor.com/images/related/'
-    hint: 'Images are loaded as {baseUrl}{0-39}.jpeg based on page path.'
-    order: 7
-  commentsAppWebsiteId:
-    type: String
-    title: Telegram Comments.app website ID
-    default: '-stRQcQh'
-    hint: 'Loaded below embed pages (iframe / Drive link). Leave empty to disable.'
-    order: 8
-  commentsAppLimit:
-    type: Number
-    title: Telegram comments limit
-    default: 5
-    order: 9
+    order: 3

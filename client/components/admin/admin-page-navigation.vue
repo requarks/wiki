@@ -3,10 +3,10 @@
     v-layout(row, wrap)
       v-flex(xs12)
         .admin-header
-          v-icon.animated.fadeInUp(color='primary', size='80') mdi-swap-horizontal
+          v-icon.animated.fadeInUp(color='primary', size='80') mdi-tune
           .admin-header-title
-            .headline.primary--text.animated.fadeInLeft Page Navigation
-            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Arrow-box prev/next navigation for tagged page series
+            .headline.primary--text.animated.fadeInLeft Page Customization
+            .subtitle-1.grey--text.animated.fadeInLeft.wait-p2s Page navigation, embeds, and comments settings
           v-spacer
           v-btn.animated.fadeInDown.wait-p2s.mr-3(icon, outlined, color='grey', @click='refresh')
             v-icon mdi-refresh
@@ -57,23 +57,60 @@
               .overline.pb-5 Configuration
               .body-1.ml-3(v-if='!provider.config || provider.config.length < 1'): em No configuration options available.
               template(v-else, v-for='cfg in provider.config')
-                v-text-field(
-                  outlined
+                div.page-customization-field(
+                  v-if='shouldShowConfigField(cfg)'
                   :key='cfg.key'
-                  :label='cfg.value.title'
-                  v-model='cfg.value.value'
-                  prepend-icon='mdi-cog-box'
-                  :hint='cfg.value.hint ? cfg.value.hint : ""'
-                  persistent-hint
-                  :class='cfg.value.hint ? "mb-2" : ""'
+                  :class='{ "page-customization-field--hint": cfg.value.hint }'
                   )
-            v-alert.mt-4(outlined, type='info', dense, icon='mdi-information-outline')
-              div The <strong>সূচী</strong> button, <strong>prev/next arrows</strong>, and <strong>postal cards</strong> appear only when either rule matches:
+                  v-switch(
+                    v-if='cfg.value.type === "boolean"'
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    color='primary'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    inset
+                    )
+                  v-textarea(
+                    v-else-if='cfg.value.type === "string" && cfg.value.multiline'
+                    outlined
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    auto-grow
+                    rows='3'
+                    )
+                  v-text-field(
+                    v-else
+                    outlined
+                    :label='cfg.value.title'
+                    v-model='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    )
+            v-alert.mt-4(v-if='provider.key === "page_navigation"', outlined, type='info', dense, icon='mdi-information-outline')
+              div The <strong>সূচী</strong> button and <strong>prev/next arrows</strong> appear when the page group regex matches:
               ul.mt-2.mb-0
-                li A tag starting with the configured <strong>from:</strong> prefix (series pages).
-                li The configured <strong>download</strong> tag plus a parent tag with the <strong>up:</strong> prefix (e.g. download + up:কিতাব).
-              div.mt-2 The <strong>আরও</strong> button is configured separately (not yet implemented here).
-              div.mt-2 Use <code>nav:off</code> on a page to hide all of the above. Also enable <strong>Page Navigation</strong> under Admin → General → Features.
+                li Use <code>|</code> for alternates (default <code>^from:.+|^download$|^up:কিতাব$</code>).
+                li <code>^from:…</code> alternates match alone — series pages sharing that tag.
+                li All other alternates must match together — e.g. <code>^download$</code> and <code>^up:কিতাব$</code>.
+              div.mt-2 Use <code>nav:off</code> on a page to hide arrows. Enable <strong>Page Customization</strong> under Admin → General → Features.
+            v-alert.mt-4(v-else-if='provider.key === "related_pages"', outlined, type='info', dense, icon='mdi-information-outline')
+              div <strong>Related page cards</strong> show upcoming pages from the same tagged series below the navigation area.
+              ul.mt-2.mb-0
+                li With <strong>Reuse page navigation group</strong> on (default), related cards use the Page Navigation regex and share one database query per page.
+                li Turn reuse off to configure a separate page group regex and disable tag for related cards only.
+                li Configure how many cards to show and the image base URL.
+            v-alert.mt-4(v-else-if='provider.key === "telegram_comments"', outlined, type='info', dense, icon='mdi-information-outline')
+              div The <strong>Telegram comment box</strong> (Comments.app) appears below page content when enabled.
+              ul.mt-2.mb-0
+                li Set the Comments.app website ID, or leave empty to disable.
+                li Optional page group regex limits which tagged pages show the widget; leave empty for all pages.
+              div.mt-2 Comments.app requires your production domain — it does not work on localhost.
 </template>
 
 <script>
@@ -102,10 +139,24 @@ export default {
     }
   },
   methods: {
+    shouldShowConfigField (cfg) {
+      if (this.provider.key !== 'related_pages') {
+        return true
+      }
+      if (cfg.key === 'reuseNavigationGroup') {
+        return true
+      }
+      const reuseCfg = _.find(this.provider.config, ['key', 'reuseNavigationGroup'])
+      const reuseEnabled = reuseCfg ? reuseCfg.value.value !== false : true
+      if (reuseEnabled && (cfg.key === 'pageGroupTagRegex' || cfg.key === 'disableNavTag')) {
+        return false
+      }
+      return true
+    },
     async refresh () {
       await this.$apollo.queries.providers.refetch()
       this.$store.commit('showNotification', {
-        message: 'Page navigation configuration refreshed.',
+        message: 'Page customization configuration refreshed.',
         style: 'success',
         icon: 'cached'
       })
@@ -125,7 +176,7 @@ export default {
         })
         if (_.get(resp, 'data.pageNavigation.updateProviders.responseResult.succeeded', false)) {
           this.$store.commit('showNotification', {
-            message: 'Page navigation configuration saved.',
+            message: 'Page customization configuration saved.',
             style: 'success',
             icon: 'check'
           })
@@ -147,8 +198,11 @@ export default {
         config: _.sortBy(str.config.map(cfg => ({
           ...cfg,
           value: JSON.parse(cfg.value)
-        })), [t => t.value.order])
-      })),
+        })), [t => t.value.order, t => t.key])
+      })).sort((a, b) => {
+        const order = { page_navigation: 1, related_pages: 2, telegram_comments: 3 }
+        return (order[a.key] || 100) - (order[b.key] || 100)
+      }),
       watchLoading (isLoading) {
         this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-page-navigation-refresh')
       }
@@ -156,3 +210,13 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.page-customization-field {
+  margin-bottom: 8px;
+}
+
+.page-customization-field--hint {
+  margin-bottom: 36px;
+}
+</style>

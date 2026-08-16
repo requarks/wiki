@@ -83,6 +83,10 @@ class Job {
       await this.finished
     } catch (err) {
       WIKI.logger.warn(err)
+    } finally {
+      if (this.name === 'rebuild-tree' && this.queue._rebuildTreeJob === this) {
+        this.queue._rebuildTreeJob = null
+      }
     }
     if (this.repeat && this.queue.jobs.includes(this)) {
       this.enqueue(data)
@@ -103,6 +107,7 @@ class Job {
 
 module.exports = {
   jobs: [],
+  _rebuildTreeJob: null,
   init() {
     return this
   },
@@ -124,7 +129,16 @@ module.exports = {
     })
   },
   registerJob(opts, data) {
+    if (opts.name === 'rebuild-tree' && this._rebuildTreeJob) {
+      return this._rebuildTreeJob
+    }
+
     const job = new Job(opts, this)
+
+    if (opts.name === 'rebuild-tree') {
+      this._rebuildTreeJob = job
+    }
+
     job.start(data)
     return job
   },

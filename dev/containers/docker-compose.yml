@@ -41,6 +41,7 @@ services:
     build:
       context: ../..
       dockerfile: dev/containers/Dockerfile
+    command: ["sh", "/wiki/dev/scripts/start-wiki-dev.sh"]
     ports:
       - "3000:3000"
     volumes:

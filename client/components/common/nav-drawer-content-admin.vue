@@ -57,9 +57,9 @@
       v-list-item(to='/comments', @click='onNavigate')
         v-list-item-avatar(size='24', tile): v-icon mdi-comment-text-outline
         v-list-item-title {{ $t('admin:comments.title') }}
-      v-list-item(to='/page-navigation', color='primary', @click='onNavigate')
-        v-list-item-avatar(size='24', tile): v-icon mdi-swap-horizontal
-        v-list-item-title Page Navigation
+      v-list-item(to='/page-customization', color='primary', @click='onNavigate')
+        v-list-item-avatar(size='24', tile): v-icon mdi-tune
+        v-list-item-title Page Customization
       v-list-item(to='/rendering', color='primary', @click='onNavigate')
         v-list-item-avatar(size='24', tile): v-icon mdi-cogs
         v-list-item-title {{ $t('admin:rendering.title') }}
