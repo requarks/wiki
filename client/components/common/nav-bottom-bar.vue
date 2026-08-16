@@ -196,7 +196,8 @@ export default {
       window.location.assign(`/${this.adminPageContext.locale}/${this.adminPageContext.path}`)
     },
     openSearch () {
-      this.$root.$emit('focusMobileSearch')
+      if (!this.requireAuth()) { return }
+      window.location.assign('/a/pages')
     },
     getPageContentText () {
       const contentsEl = document.querySelector('.v-main .contents')
