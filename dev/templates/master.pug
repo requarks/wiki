@@ -133,6 +133,11 @@ html(lang=siteConfig.lang)
       <% } %>
     <% } %>
 
+    if injectCode && injectCode.css
+      style(type='text/css')!= injectCode.css
+    if injectCode && injectCode.head
+      != injectCode.head
+
     //- JS
     <% for (var index in htmlWebpackPlugin.files.js) { %>
       <% if (htmlWebpackPlugin.files.jsIntegrity) { %>

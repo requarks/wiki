@@ -50,6 +50,11 @@ html
     )
     <% } %>
 
+    if injectCode && injectCode.css
+      style(type='text/css')!= injectCode.css
+    if injectCode && injectCode.head
+      != injectCode.head
+
     script(
       crossorigin='anonymous'
       src='https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=EventSource'
