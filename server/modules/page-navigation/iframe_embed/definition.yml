@@ -1,0 +1,32 @@
+key: iframe_embed
+title: Iframe Embeds
+description: 'Height settings for Google Drive and archive preview iframes on pages.'
+author: sunninoor.com
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://wiki.js.org
+isAvailable: true
+props:
+  desktopHeightPx:
+    type: Number
+    title: Desktop iframe height (px)
+    default: 1000
+    hint: 'Fixed iframe height on tablet and desktop (200–5000).'
+    order: 1
+  desktopMinHeightVh:
+    type: Number
+    title: Desktop minimum height (vh)
+    default: 75
+    hint: 'Minimum iframe height on tablet and desktop as a viewport percentage (0–100).'
+    order: 2
+  mobileHeightPx:
+    type: Number
+    title: Mobile iframe height (px)
+    default: 480
+    hint: 'Maximum iframe height on phones in pixels (120–2000).'
+    order: 3
+  mobileMaxHeightVh:
+    type: Number
+    title: Mobile maximum height (vh)
+    default: 60
+    hint: 'Mobile iframe height cap as a viewport percentage (10–100). Uses the smaller of this and mobile px height.'
+    order: 4

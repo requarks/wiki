@@ -557,6 +557,7 @@ router.get('/*', async (req, res, next) => {
           let pageNavigation = null
           let relatedPages = null
           let pageTelegramComments = null
+          let pageIframeSettings = null
           const pageCustomizationEnabled = WIKI.config.features.featurePageNavigation
           const seriesCache = new Map()
           const navigationConfig = WIKI.data.pageNavigation?.config || {}
@@ -602,6 +603,14 @@ router.get('/*', async (req, res, next) => {
             }
           }
 
+          if (pageCustomizationEnabled && WIKI.data.iframeEmbed?.isEnabled && WIKI.data.iframeEmbed?.resolve) {
+            try {
+              pageIframeSettings = WIKI.data.iframeEmbed.resolve(page, WIKI.data.iframeEmbed.config || {})
+            } catch (err) {
+              WIKI.logger.warn('Iframe embed settings resolve failed: ', err)
+            }
+          }
+
           // -> Embedded reader metadata (tags or legacy hidden-data block)
           const pageEmbedResult = pageEmbedHelper.resolve(page, page.render)
           page.render = pageEmbedResult.html
@@ -617,6 +626,7 @@ router.get('/*', async (req, res, next) => {
             pageNavigation,
             relatedPages,
             pageTelegramComments,
+            pageIframeSettings,
             pageEmbed: pageEmbedResult.embed
           })
         }

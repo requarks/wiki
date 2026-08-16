@@ -30,6 +30,7 @@ block body
       page-navigation=pageNavigation ? Buffer.from(JSON.stringify(pageNavigation)).toString('base64') : ''
       related-pages=relatedPages ? Buffer.from(JSON.stringify(relatedPages)).toString('base64') : ''
       page-telegram-comments=pageTelegramComments ? Buffer.from(JSON.stringify(pageTelegramComments)).toString('base64') : ''
+      page-iframe-settings=pageIframeSettings ? Buffer.from(JSON.stringify(pageIframeSettings)).toString('base64') : ''
       page-embed=pageEmbed ? Buffer.from(JSON.stringify(pageEmbed)).toString('base64') : ''
       )
       template(slot='contents')
