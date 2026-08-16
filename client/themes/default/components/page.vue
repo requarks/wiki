@@ -306,7 +306,11 @@
               .caption {{$t('common:page.unpublishedWarning')}}
             .contents.pt-4(ref='container')
               slot(name='contents')
-            page-embed(v-if='pageEmbedData && !printView', :embed='pageEmbedData')
+            page-embed(
+              v-if='pageEmbedData && !printView'
+              :embed='pageEmbedData'
+              :iframe-settings='pageIframeSettingsData'
+            )
             v-divider.my-3(v-if='(pageEmbedData || pageNavigationData || relatedPagesData) && !printView')
             page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
             page-related-pages(v-if='relatedPagesData && !printView', :related='relatedPagesData')
@@ -503,6 +507,10 @@ export default {
       type: String,
       default: ''
     },
+    pageIframeSettings: {
+      type: String,
+      default: ''
+    },
     pageEmbed: {
       type: String,
       default: ''
@@ -674,6 +682,16 @@ export default {
       }
       try {
         return JSON.parse(Buffer.from(this.pageTelegramComments, 'base64').toString())
+      } catch (err) {
+        return null
+      }
+    },
+    pageIframeSettingsData () {
+      if (!this.pageIframeSettings) {
+        return null
+      }
+      try {
+        return JSON.parse(Buffer.from(this.pageIframeSettings, 'base64').toString())
       } catch (err) {
         return null
       }

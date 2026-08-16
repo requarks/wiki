@@ -84,6 +84,16 @@
                     rows='3'
                     )
                   v-text-field(
+                    v-else-if='cfg.value.type === "number" || cfg.value.type === "Number"'
+                    outlined
+                    type='number'
+                    :label='cfg.value.title'
+                    v-model.number='cfg.value.value'
+                    prepend-icon='mdi-cog-box'
+                    :hint='cfg.value.hint ? cfg.value.hint : ""'
+                    persistent-hint
+                    )
+                  v-text-field(
                     v-else
                     outlined
                     :label='cfg.value.title'
@@ -105,6 +115,12 @@
                 li With <strong>Reuse page navigation group</strong> on (default), related cards use the Page Navigation regex and share one database query per page.
                 li Turn reuse off to configure a separate page group regex and disable tag for related cards only.
                 li Configure how many cards to show and the image base URL.
+            v-alert.mt-4(v-else-if='provider.key === "iframe_embed"', outlined, type='info', dense, icon='mdi-information-outline')
+              div <strong>Iframe embed heights</strong> apply to Google Drive and archive preview iframes on pages that include embed tags.
+              ul.mt-2.mb-0
+                li Desktop settings apply from the <code>md</code> breakpoint up (960px and wider).
+                li Mobile settings apply on phones and small tablets; the smaller of px and vh caps is used.
+                li Disable this module to fall back to built-in defaults in the component.
             v-alert.mt-4(v-else-if='provider.key === "telegram_comments"', outlined, type='info', dense, icon='mdi-information-outline')
               div The <strong>Telegram comment box</strong> (Comments.app) appears below page content when enabled.
               ul.mt-2.mb-0
@@ -200,7 +216,7 @@ export default {
           value: JSON.parse(cfg.value)
         })), [t => t.value.order, t => t.key])
       })).sort((a, b) => {
-        const order = { page_navigation: 1, related_pages: 2, telegram_comments: 3 }
+        const order = { page_navigation: 1, related_pages: 2, iframe_embed: 3, telegram_comments: 4 }
         return (order[a.key] || 100) - (order[b.key] || 100)
       }),
       watchLoading (isLoading) {

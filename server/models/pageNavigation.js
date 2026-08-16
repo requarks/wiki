@@ -19,6 +19,10 @@ const MODULE_KEYS = {
   telegram_comments: {
     resolvePath: '../modules/page-navigation/telegram_comments/telegramComments',
     cssPath: null
+  },
+  iframe_embed: {
+    resolvePath: '../modules/page-navigation/iframe_embed/iframeEmbed',
+    cssPath: null
   }
 }
 
@@ -162,6 +166,7 @@ module.exports = class PageNavigation extends Model {
   static async initModule () {
     WIKI.data.pageNavigation = await WIKI.models.pageNavigation.loadProviderRuntime('page_navigation')
     WIKI.data.relatedPages = await WIKI.models.pageNavigation.loadProviderRuntime('related_pages')
+    WIKI.data.iframeEmbed = await WIKI.models.pageNavigation.loadProviderRuntime('iframe_embed')
     WIKI.data.telegramComments = await WIKI.models.pageNavigation.loadProviderRuntime('telegram_comments')
   }
 }

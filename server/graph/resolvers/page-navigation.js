@@ -35,7 +35,7 @@ module.exports = {
           })
         }
       }), stg => {
-        const order = { page_navigation: 1, related_pages: 2, telegram_comments: 3 }
+        const order = { page_navigation: 1, related_pages: 2, iframe_embed: 3, telegram_comments: 4 }
         return order[stg.key] || 100
       })
       return providers
