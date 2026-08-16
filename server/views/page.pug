@@ -34,7 +34,7 @@ block body
       page-embed=pageEmbed ? Buffer.from(JSON.stringify(pageEmbed)).toString('base64') : ''
       )
       template(slot='contents')
-        div!= page.render
+        != page.render
       template(slot='comments')
         div!= comments.main
   if injectCode.body
