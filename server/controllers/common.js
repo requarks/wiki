@@ -610,6 +610,7 @@ router.get('/*', async (req, res, next) => {
           let relatedPages = null
           let pageTelegramComments = null
           let pageIframeSettings = null
+          let sideNavSettings = null
           const pageCustomizationEnabled = WIKI.config.features.featurePageNavigation
           const seriesCache = new Map()
           const navigationConfig = WIKI.data.pageNavigation?.config || {}
@@ -663,6 +664,17 @@ router.get('/*', async (req, res, next) => {
             }
           }
 
+          if (pageCustomizationEnabled && WIKI.data.sideNav?.isEnabled && WIKI.data.sideNav?.resolve) {
+            try {
+              sideNavSettings = {
+                enabled: true,
+                ...WIKI.data.sideNav.resolve(page, WIKI.data.sideNav.config || {})
+              }
+            } catch (err) {
+              WIKI.logger.warn('Side nav settings resolve failed: ', err)
+            }
+          }
+
           // -> Embedded reader metadata (tags or legacy hidden-data block)
           const pageEmbedResult = pageEmbedHelper.resolve(page, page.render)
           page.render = pageEmbedResult.html
@@ -679,7 +691,8 @@ router.get('/*', async (req, res, next) => {
             relatedPages,
             pageTelegramComments,
             pageIframeSettings,
-            pageEmbed: pageEmbedResult.embed
+            pageEmbed: pageEmbedResult.embed,
+            sideNavSettings
           })
         }
       } else if (pageArgs.path === 'home') {

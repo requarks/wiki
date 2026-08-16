@@ -1,0 +1,73 @@
+// Nav drawer list rows use dense Vuetify sizing; larger sidebar fonts (custom
+// fonts or inject CSS) need compact rows with room for Bengali glyph metrics.
+.v-application .v-navigation-drawer {
+  .v-list {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .v-list--dense .v-list-item,
+  .v-list-item--dense {
+    align-items: flex-start;
+    height: auto !important;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    overflow: visible;
+  }
+
+  .v-list-item__content {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    overflow: visible;
+    align-self: stretch;
+  }
+
+  .v-list-item__title {
+    line-height: 1.65;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .v-list-item__icon,
+  .v-list-item__avatar {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    margin-top: 1px;
+    margin-bottom: 0;
+    margin-right: 8px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    min-width: 28px !important;
+    width: auto !important;
+    overflow: visible;
+
+    &.v-avatar {
+      height: auto !important;
+      width: auto !important;
+    }
+
+    .v-icon {
+      font-family: 'Material Design Icons', sans-serif !important;
+      line-height: 1;
+      height: auto;
+    }
+  }
+
+  .v-subheader {
+    height: auto;
+    min-height: 0;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .nav-sidebar-parent {
+    cursor: pointer;
+
+    .v-list-item__action {
+      min-width: 28px;
+      margin: 0;
+    }
+  }
+}

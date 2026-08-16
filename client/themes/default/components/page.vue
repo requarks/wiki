@@ -509,6 +509,10 @@ export default {
     pageEmbed: {
       type: String,
       default: ''
+    },
+    sideNavSettings: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -691,6 +695,16 @@ export default {
       } catch (err) {
         return null
       }
+    },
+    sideNavSettingsData () {
+      if (!this.sideNavSettings) {
+        return null
+      }
+      try {
+        return JSON.parse(Buffer.from(this.sideNavSettings, 'base64').toString())
+      } catch (err) {
+        return null
+      }
     }
   },
   created() {
@@ -717,6 +731,16 @@ export default {
     this.$store.set('page/mode', 'view')
     this.$store.set('page/sidebar', this.sidebarDecoded)
     this.$store.set('page/navMode', this.navMode)
+    if (this.sideNavSettingsData) {
+      this.$store.set('page/sideNavSettings', this.sideNavSettingsData)
+    } else {
+      this.$store.set('page/sideNavSettings', {
+        enabled: false,
+        parentIconMatch: 'mdi-flower',
+        childIconMatch: 'mdi-chevron-right',
+        childIndentPx: 36
+      })
+    }
   },
   mounted () {
     if (this.$vuetify.theme.dark) {

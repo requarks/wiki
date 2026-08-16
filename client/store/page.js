@@ -52,7 +52,13 @@ const state = {
     editMenuExternalUrl: ''
   },
   sidebar: [],
-  navMode: 'NONE'
+  navMode: 'NONE',
+  sideNavSettings: {
+    enabled: false,
+    parentIconMatch: 'mdi-flower',
+    childIconMatch: 'mdi-chevron-right',
+    childIndentPx: 36
+  }
 }
 
 export default {

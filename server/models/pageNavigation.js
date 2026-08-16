@@ -23,6 +23,10 @@ const MODULE_KEYS = {
   iframe_embed: {
     resolvePath: '../modules/page-navigation/iframe_embed/iframeEmbed',
     cssPath: null
+  },
+  side_nav: {
+    resolvePath: '../modules/page-navigation/side_nav/sideNav',
+    cssPath: null
   }
 }
 
@@ -168,5 +172,6 @@ module.exports = class PageNavigation extends Model {
     WIKI.data.relatedPages = await WIKI.models.pageNavigation.loadProviderRuntime('related_pages')
     WIKI.data.iframeEmbed = await WIKI.models.pageNavigation.loadProviderRuntime('iframe_embed')
     WIKI.data.telegramComments = await WIKI.models.pageNavigation.loadProviderRuntime('telegram_comments')
+    WIKI.data.sideNav = await WIKI.models.pageNavigation.loadProviderRuntime('side_nav')
   }
 }

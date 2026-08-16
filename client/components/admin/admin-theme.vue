@@ -345,8 +345,14 @@ export default {
       }).join('\n')
 
       const stack = `${[...new Set(normalized.map(font => font.family))].join(', ')}, sans-serif`
+      const iconStack = `'Material Design Icons', sans-serif`
       const applyRule = (selector) => `${selector} *:not(.v-icon) {
   font-family: ${stack} !important;
+}
+
+${selector} .v-icon {
+  font-family: ${iconStack} !important;
+  line-height: 1;
 }`
       const applyRules = [
         applyRule('.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts)'),
