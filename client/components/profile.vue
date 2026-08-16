@@ -7,7 +7,6 @@
       v-model='profileDrawerShown'
       permanent
       category='profile'
-      :width='256'
       )
       nav-drawer-content-profile
 

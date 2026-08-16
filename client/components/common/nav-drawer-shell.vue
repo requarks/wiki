@@ -22,6 +22,7 @@
 
 <script>
 import NavDrawerMobileHeader from './nav-drawer-mobile-header.vue'
+import { NAV_DRAWER_DESKTOP_WIDTH } from './nav-drawer-config'
 
 export function createNavDrawerScrollStyle (rtl = false) {
   return {
@@ -81,7 +82,9 @@ export default {
     },
     width: {
       type: [Number, String],
-      default: 256
+      default () {
+        return NAV_DRAWER_DESKTOP_WIDTH
+      }
     },
     scrollStyle: {
       type: Object,

@@ -232,7 +232,7 @@ body {
 }
 
 .sidebar {
-  width: 256px;
+  width: var(--nav-drawer-desktop-width, 300px);
   background-color: mc('blue', '700');
   color: #FFF;
   padding: 8px 0;

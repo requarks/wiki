@@ -15,6 +15,7 @@
 import { get } from 'vuex-pathify'
 
 import { getNavDrawerCategory } from './nav-drawer-category'
+import { getNavDrawerMobileWidth } from './nav-drawer-config'
 import NavDrawerShell from './nav-drawer-shell.vue'
 import NavDrawerContentAdmin from './nav-drawer-content-admin.vue'
 import NavDrawerContentTags from './nav-drawer-content-tags.vue'
@@ -41,7 +42,7 @@ export default {
   computed: {
     printView: get('site/printView'),
     drawerWidth () {
-      return Math.min(Math.round(window.innerWidth * 0.88), 320)
+      return getNavDrawerMobileWidth()
     },
     contentComponent () {
       if (this.printView) { return null }

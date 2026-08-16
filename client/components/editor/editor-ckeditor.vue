@@ -206,7 +206,7 @@ $editor-height-mobile: calc(100vh - 56px - 16px);
     padding: 2rem;
     box-shadow: 0 0 5px hsla(0, 0, 0, .1);
     margin: 1rem auto 0;
-    width: calc(100vw - 256px - 16vw);
+    width: calc(100vw - var(--nav-drawer-desktop-width, 300px) - 16vw);
     min-height: calc(100vh - 64px - 24px - 1rem - 40px);
     border-radius: 5px;
 
