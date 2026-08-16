@@ -141,7 +141,7 @@ export default {
     max-width: 100vw;
   }
 
-  body.has-mobile-bottom-nav .admin .v-main {
+  body.has-mobile-bottom-nav .admin .v-main__wrap {
     padding-bottom: 56px !important;
   }
 }
