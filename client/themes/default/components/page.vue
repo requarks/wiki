@@ -832,8 +832,12 @@ export default {
       this.navOpen = !this.navOpen
     },
     upBtnScroll (evt) {
-      const el = evt?.target || this.getMainScrollWrap()
-      const scrollOffset = el?.scrollTop ?? window.pageYOffset ?? document.documentElement.scrollTop ?? 0
+      const el = (evt && evt.target) || this.getMainScrollWrap()
+      const scrollOffset = (el && el.scrollTop != null)
+        ? el.scrollTop
+        : (window.pageYOffset != null
+          ? window.pageYOffset
+          : (document.documentElement.scrollTop != null ? document.documentElement.scrollTop : 0))
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
     print () {
