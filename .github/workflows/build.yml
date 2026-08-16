@@ -22,6 +22,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
+      with:
+        fetch-depth: ${{ startsWith(github.ref, 'refs/tags/') && 0 || 1 }}
+
+    - name: Verify release tag is on main
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+        git fetch origin main
+        if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+          echo "::error::Release tags (v*) must point to a commit on main."
+          echo "Tagged commit: ${GITHUB_SHA}"
+          echo "Merge to main first, then tag the merge commit on main (not a feature branch)."
+          exit 1
+        fi
 
     - name: Set Build Variables
       run: |
