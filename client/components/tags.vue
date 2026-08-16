@@ -369,7 +369,7 @@ export default {
     max-width: 100vw;
   }
 
-  body.has-mobile-bottom-nav .tags .v-main {
+  body.has-mobile-bottom-nav .tags .v-main__wrap {
     padding-bottom: 56px !important;
   }
 

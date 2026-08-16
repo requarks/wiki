@@ -62,8 +62,8 @@ body.has-mobile-bottom-nav {
     max-width: 100vw;
   }
 
-  .v-main,
-  .v-content {
+  .v-main__wrap,
+  .v-content__wrap {
     padding-bottom: 56px !important;
   }
 
