@@ -140,7 +140,10 @@ export function sanitizeEffectivePermissions (permissions, authenticated, jwtPer
   }
 
   if (authenticated) {
-    const resolvedJwtPermissions = jwtPermissions || getAuthSession().jwtData?.permissions || []
+    const session = getAuthSession()
+    const resolvedJwtPermissions = jwtPermissions ||
+      (session.jwtData && session.jwtData.permissions) ||
+      []
     return mergeJwtPermissions(permissions, resolvedJwtPermissions)
   }
 
