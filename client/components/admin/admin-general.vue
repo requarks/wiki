@@ -165,11 +165,11 @@
                   v-divider.mt-3
                   v-switch.mt-0(
                     inset
-                    label='Page Navigation'
+                    label='Page Customization'
                     color='indigo'
                     v-model='config.featurePageNavigation'
                     persistent-hint
-                    hint='Show arrow-box prev/next navigation on pages tagged with a from: series tag.'
+                    hint='Show page navigation, embeds, and related page customizations on eligible pages.'
                     )
 
                   //- v-divider.mt-3

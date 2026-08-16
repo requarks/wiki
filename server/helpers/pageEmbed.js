@@ -121,21 +121,10 @@ module.exports = {
     }
 
     const hasReaderEmbed = !_.isEmpty(embed)
-    const hasTelegram = !_.isEmpty(options.telegramWebsiteId)
-    const resultEmbed = hasReaderEmbed ? { ...embed } : {}
-
-    if (hasTelegram) {
-      resultEmbed.telegram = {
-        websiteId: options.telegramWebsiteId,
-        limit: options.telegramLimit || 5,
-        pageUrl: options.pageUrl || null,
-        pageTitle: options.pageTitle || null
-      }
-    }
 
     return {
       html: renderParsed.html,
-      embed: (hasReaderEmbed || hasTelegram) ? resultEmbed : null
+      embed: hasReaderEmbed ? embed : null
     }
   }
 }

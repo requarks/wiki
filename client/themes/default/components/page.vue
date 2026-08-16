@@ -65,25 +65,7 @@
                       v-list-item-title.px-3.caption.grey--text(:class='$vuetify.theme.dark ? `text--lighten-1` : `text--darken-1`') {{tocSubItem.title}}
                     //- v-divider(inset, v-if='tocIdx < toc.length - 1')
 
-            v-card.page-tags-card.mb-5(v-if='tags.length > 0')
-              .pa-5
-                .overline.teal--text.pb-2(:class='$vuetify.theme.dark ? `text--lighten-3` : ``') {{$t('common:page.tags')}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  v-for='(tag, idx) in tags'
-                  :href='`/t/` + tag.tag'
-                  :key='`tag-` + tag.tag'
-                  )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', left, small) mdi-tag
-                  span(:class='$vuetify.theme.dark ? `teal--text text--lighten-5` : `teal--text text--darken-2`') {{tag.title}}
-                v-chip.mr-1.mb-1(
-                  label
-                  :color='$vuetify.theme.dark ? `teal darken-1` : `teal lighten-5`'
-                  :href='`/t/` + tags.map(t => t.tag).join(`/`)'
-                  :aria-label='$t(`common:page.tagsMatching`)'
-                  )
-                  v-icon(:color='$vuetify.theme.dark ? `teal lighten-3` : `teal`', size='20') mdi-tag-multiple
+            page-tags-card(v-if='tags.length > 0', :tags='tags')
 
             v-card.page-comments-card.mb-5(v-if='commentsEnabled && commentsPerms.read')
               .pa-5
@@ -325,8 +307,14 @@
             .contents.pt-4(ref='container')
               slot(name='contents')
             page-embed(v-if='pageEmbedData && !printView', :embed='pageEmbedData')
-            v-divider.my-3(v-if='(pageEmbedData || pageNavigationData) && !printView')
+            v-divider.my-3(v-if='(pageEmbedData || pageNavigationData || relatedPagesData) && !printView')
             page-navigation(v-if='pageNavigationData && !printView', :nav='pageNavigationData')
+            page-related-pages(v-if='relatedPagesData && !printView', :related='relatedPagesData')
+            page-tags-card(
+              v-if='tags.length > 0 && $vuetify.breakpoint.mdAndDown && !printView'
+              :tags='tags'
+              mobile
+            )
             page-telegram-comments(
               v-if='telegramCommentsConfig && !printView'
               id='discussion'
@@ -507,6 +495,14 @@ export default {
       type: String,
       default: ''
     },
+    relatedPages: {
+      type: String,
+      default: ''
+    },
+    pageTelegramComments: {
+      type: String,
+      default: ''
+    },
     pageEmbed: {
       type: String,
       default: ''
@@ -652,6 +648,16 @@ export default {
         return null
       }
     },
+    relatedPagesData () {
+      if (!this.relatedPages) {
+        return null
+      }
+      try {
+        return JSON.parse(Buffer.from(this.relatedPages, 'base64').toString())
+      } catch (err) {
+        return null
+      }
+    },
     pageEmbedData () {
       if (!this.pageEmbed) {
         return null
@@ -663,11 +669,14 @@ export default {
       }
     },
     telegramCommentsConfig () {
-      const telegram = _.get(this.pageEmbedData, 'telegram', null)
-      if (!telegram || !telegram.websiteId) {
+      if (!this.pageTelegramComments) {
         return null
       }
-      return telegram
+      try {
+        return JSON.parse(Buffer.from(this.pageTelegramComments, 'base64').toString())
+      } catch (err) {
+        return null
+      }
     }
   },
   created() {

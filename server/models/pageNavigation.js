@@ -7,8 +7,37 @@ const commonHelper = require('../helpers/common')
 
 /* global WIKI */
 
+const MODULE_KEYS = {
+  page_navigation: {
+    resolvePath: '../modules/page-navigation/page_navigation/navigation',
+    cssPath: 'page_navigation/assets/navigation.css'
+  },
+  related_pages: {
+    resolvePath: '../modules/page-navigation/related_pages/relatedPages',
+    cssPath: 'related_pages/assets/related-pages.css'
+  },
+  telegram_comments: {
+    resolvePath: '../modules/page-navigation/telegram_comments/telegramComments',
+    cssPath: null
+  }
+}
+
+function buildLegacyConfig (providerKey, legacyConfig = {}) {
+  const config = {}
+  if (providerKey === 'related_pages') {
+    if (legacyConfig.pageGroupTagRegex) { config.pageGroupTagRegex = legacyConfig.pageGroupTagRegex }
+    if (legacyConfig.disableNavTag) { config.disableNavTag = legacyConfig.disableNavTag }
+    if (legacyConfig.relatedImageBaseUrl) { config.relatedImageBaseUrl = legacyConfig.relatedImageBaseUrl }
+  }
+  if (providerKey === 'telegram_comments') {
+    if (legacyConfig.commentsAppWebsiteId) { config.commentsAppWebsiteId = legacyConfig.commentsAppWebsiteId }
+    if (legacyConfig.commentsAppLimit) { config.commentsAppLimit = legacyConfig.commentsAppLimit }
+  }
+  return config
+}
+
 /**
- * Page Navigation module model
+ * Page Customization module model
  */
 module.exports = class PageNavigation extends Model {
   static get tableName () { return 'pageNavigation' }
@@ -38,10 +67,14 @@ module.exports = class PageNavigation extends Model {
     let trx
     try {
       const dbProviders = await WIKI.models.pageNavigation.query()
+      const legacyConfig = _.get(_.find(dbProviders, ['key', 'page_navigation']), 'config', {})
 
       const moduleDirs = await fs.readdir(path.join(WIKI.SERVERPATH, 'modules/page-navigation'))
       const diskProviders = []
       for (const dir of moduleDirs) {
+        if (dir.startsWith('_')) {
+          continue
+        }
         const defPath = path.join(WIKI.SERVERPATH, 'modules/page-navigation', dir, 'definition.yml')
         if (!await fs.pathExists(defPath)) {
           continue
@@ -64,7 +97,7 @@ module.exports = class PageNavigation extends Model {
             config: _.transform(provider.props, (result, value, key) => {
               _.set(result, key, value.default)
               return result
-            }, {})
+            }, buildLegacyConfig(provider.key, legacyConfig))
           })
         } else {
           const providerConfig = _.get(_.find(dbProviders, ['key', provider.key]), 'config', {})
@@ -85,12 +118,12 @@ module.exports = class PageNavigation extends Model {
           await WIKI.models.pageNavigation.query(trx).insert(provider)
         }
         await trx.commit()
-        WIKI.logger.info(`Loaded ${newProviders.length} new page navigation providers: [ OK ]`)
+        WIKI.logger.info(`Loaded ${newProviders.length} new page customization providers: [ OK ]`)
       } else {
-        WIKI.logger.info('No new page navigation providers found: [ SKIPPED ]')
+        WIKI.logger.info('No new page customization providers found: [ SKIPPED ]')
       }
     } catch (err) {
-      WIKI.logger.error('Failed to scan or load page navigation providers: [ FAILED ]')
+      WIKI.logger.error('Failed to scan or load page customization providers: [ FAILED ]')
       WIKI.logger.error(err)
       if (trx) {
         trx.rollback()
@@ -98,22 +131,37 @@ module.exports = class PageNavigation extends Model {
     }
   }
 
-  static async initModule () {
-    const provider = await WIKI.models.pageNavigation.query().findOne({ key: 'page_navigation' })
-    const providerInfo = _.find(WIKI.data.pageNavigationProviders, ['key', 'page_navigation']) || {}
-
-    let css = ''
-    const cssPath = path.join(WIKI.SERVERPATH, 'modules/page-navigation/page_navigation/assets/navigation.css')
-    if (await fs.pathExists(cssPath)) {
-      css = await fs.readFile(cssPath, 'utf8')
+  static async loadProviderRuntime (key) {
+    const meta = MODULE_KEYS[key]
+    if (!meta) {
+      return null
     }
 
-    WIKI.data.pageNavigation = {
+    const provider = await WIKI.models.pageNavigation.query().findOne({ key })
+    const providerInfo = _.find(WIKI.data.pageNavigationProviders, ['key', key]) || {}
+
+    let css = ''
+    if (meta.cssPath) {
+      const cssPath = path.join(WIKI.SERVERPATH, 'modules/page-navigation', meta.cssPath)
+      if (await fs.pathExists(cssPath)) {
+        css = await fs.readFile(cssPath, 'utf8')
+      }
+    }
+
+    const mod = require(meta.resolvePath)
+
+    return {
       ...providerInfo,
       isEnabled: provider ? provider.isEnabled : false,
       config: provider ? provider.config : {},
       css,
-      resolve: require('../modules/page-navigation/page_navigation/navigation').resolve
+      resolve: mod.resolve
     }
+  }
+
+  static async initModule () {
+    WIKI.data.pageNavigation = await WIKI.models.pageNavigation.loadProviderRuntime('page_navigation')
+    WIKI.data.relatedPages = await WIKI.models.pageNavigation.loadProviderRuntime('related_pages')
+    WIKI.data.telegramComments = await WIKI.models.pageNavigation.loadProviderRuntime('telegram_comments')
   }
 }

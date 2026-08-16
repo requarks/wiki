@@ -1,0 +1,31 @@
+key: telegram_comments
+title: Telegram Comment Box
+description: 'Comments.app widget for Telegram-based page discussions.'
+author: sunninoor.com
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://comments.app/
+isAvailable: true
+props:
+  commentsAppWebsiteId:
+    type: String
+    title: Comments.app website ID
+    default: '-stRQcQh'
+    hint: 'Leave empty to disable the Telegram comment box.'
+    order: 1
+  commentsAppLimit:
+    type: Number
+    title: Comments limit
+    default: 5
+    order: 2
+  pageGroupTagRegex:
+    type: String
+    title: Page group tag regex
+    default: ''
+    hint: 'Optional. Leave empty to show on all pages. When set, only pages with matching tags show the comment box.'
+    order: 3
+  disableNavTag:
+    type: String
+    title: Disable tag
+    default: 'nav:off'
+    hint: 'Pages with this exact tag never show the Telegram comment box.'
+    order: 4

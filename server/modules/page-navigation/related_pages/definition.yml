@@ -1,0 +1,38 @@
+key: related_pages
+title: Related Pages
+description: 'Postal cards showing upcoming pages from the same tagged series.'
+author: sunninoor.com
+logo: https://static.requarks.io/logo/wikijs-butterfly.svg
+website: https://wiki.js.org
+isAvailable: true
+props:
+  reuseNavigationGroup:
+    type: Boolean
+    title: Reuse page navigation group
+    default: true
+    hint: 'Use the Page Navigation module regex and series query. Avoids duplicate database calls and duplicate settings.'
+    order: 1
+  pageGroupTagRegex:
+    type: String
+    title: Page group tag regex
+    default: '^from:.+|^download$|^up:কিতাব$'
+    hint: 'Only used when reuse is off. Same rules as page navigation.'
+    order: 2
+  disableNavTag:
+    type: String
+    title: Disable tag
+    default: 'nav:off'
+    hint: 'Only used when reuse is off. Pages with this exact tag never show related page cards.'
+    order: 3
+  cardCount:
+    type: Number
+    title: Number of related cards
+    default: 3
+    hint: 'How many upcoming pages from the series to show (1–12).'
+    order: 4
+  relatedImageBaseUrl:
+    type: String
+    title: Card image base URL
+    default: 'https://sunninoor.com/images/related/'
+    hint: 'Images are loaded as {baseUrl}{0-39}.jpeg based on page path.'
+    order: 5
