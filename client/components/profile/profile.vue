@@ -702,13 +702,6 @@ export default {
           }
         })
       }
-    },
-    'user.timezone': (newValue, oldValue) => {
-      if (newValue === '') {
-        WIKI.$moment.tz.setDefault()
-      } else {
-        WIKI.$moment.tz.setDefault(newValue)
-      }
     }
   },
   methods: {
