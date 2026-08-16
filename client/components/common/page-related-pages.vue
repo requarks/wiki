@@ -52,7 +52,7 @@ export default {
 }
 
 .related-posts .post-card img {
-  flex: 7 1 0;
+  flex: 6 1 0;
   min-height: 0;
   width: 100%;
   height: auto;
@@ -62,7 +62,7 @@ export default {
 }
 
 .related-posts .post-card-body {
-  flex: 3 1 0;
+  flex: 4 1 0;
   min-height: 0;
   overflow: hidden;
   display: flex;

@@ -42,7 +42,19 @@ window.WIKI = null
 window.boot = boot
 window.Hammer = Hammer
 
+function getBrowserTimezone () {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+  } catch (err) {
+    return ''
+  }
+}
+
 moment.locale(siteConfig.lang)
+const browserTimezone = getBrowserTimezone()
+if (browserTimezone) {
+  moment.tz.setDefault(browserTimezone)
+}
 
 store.commit('user/REFRESH_AUTH')
 installAuthNavGuard()
@@ -242,8 +254,8 @@ let bootstrap = () => {
             }
           })
         }
-        if ((store.get('user/timezone') || '').length > 0) {
-          this.$moment.tz.setDefault(store.get('user/timezone'))
+        if (browserTimezone) {
+          this.$moment.tz.setDefault(browserTimezone)
         }
       }
     })
