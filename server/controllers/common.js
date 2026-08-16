@@ -3,6 +3,7 @@ const router = express.Router()
 const pageHelper = require('../helpers/page')
 const customFonts = require('../helpers/customFonts')
 const pageEmbedHelper = require('../helpers/pageEmbed')
+const systemRoutes = require('../helpers/systemRoutes')
 const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
@@ -45,6 +46,9 @@ router.get('/healthz', (req, res, next) => {
  * Administration
  */
 router.get(['/a', '/a/*'], (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   if (!WIKI.auth.checkAccess(req.user, [
     'manage:system',
     'write:users',
@@ -68,6 +72,9 @@ router.get(['/a', '/a/*'], (req, res, next) => {
  * Download Page / Version
  */
 router.get(['/d', '/d/*'], async (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
@@ -111,6 +118,9 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
  * Create/Edit document
  */
 router.get(['/e', '/e/*'], async (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
@@ -243,6 +253,9 @@ router.get(['/e', '/e/*'], async (req, res, next) => {
  * History
  */
 router.get(['/h', '/h/*'], async (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
@@ -272,7 +285,7 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
 
   if (!effectivePermissions.history.read) {
     _.set(res.locals, 'pageMeta.title', 'Unauthorized')
-    return res.render('unauthorized', { action: 'history' })
+    return res.status(403).render('unauthorized', { action: 'history' })
   }
 
   if (page) {
@@ -289,6 +302,9 @@ router.get(['/h', '/h/*'], async (req, res, next) => {
  * Page ID redirection
  */
 router.get(['/i', '/i/:id'], async (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   const pageId = _.toSafeInteger(req.params.id)
   if (pageId <= 0) {
     return res.redirect('/')
@@ -323,8 +339,8 @@ router.get(['/i', '/i/:id'], async (req, res, next) => {
  * Profile
  */
 router.get(['/p', '/p/*'], (req, res, next) => {
-  if (!req.user || req.user.id < 1 || req.user.id === 2) {
-    return res.status(403).render('unauthorized', { action: 'view' })
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
   }
 
   res.locals.injectCode = buildInjectCode()
@@ -336,6 +352,9 @@ router.get(['/p', '/p/*'], (req, res, next) => {
  * Source
  */
 router.get(['/s', '/s/*'], async (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
   const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
   const versionId = (req.query.v) ? _.toSafeInteger(req.query.v) : 0
   const injectCode = buildInjectCode()
@@ -393,6 +412,39 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
   } else {
     res.redirect(`/${pageArgs.path}`)
   }
+})
+
+/**
+ * Comments (login required)
+ */
+router.get(['/c', '/c/*'], (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
+  _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+  return res.status(404).render('notfound', { action: 'view' })
+})
+
+/**
+ * Assets Manager (login required)
+ */
+router.get(['/f', '/f/*'], (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
+  _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+  return res.status(404).render('notfound', { action: 'view' })
+})
+
+/**
+ * Personal Wiki (login required)
+ */
+router.get(['/w', '/w/*'], (req, res, next) => {
+  if (systemRoutes.denyGuestSystemRoute(req, res)) {
+    return
+  }
+  _.set(res.locals, 'pageMeta.title', 'Page Not Found')
+  return res.status(404).render('notfound', { action: 'view' })
 })
 
 /**
