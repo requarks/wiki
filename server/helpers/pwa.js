@@ -45,10 +45,22 @@ function getWebAppManifest () {
 }
 
 function sendWebAppManifest (req, res) {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    Pragma: 'no-cache',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store'
+  })
   res.type('application/manifest+json').send(getWebAppManifest())
 }
 
 function sendServiceWorker (req, res) {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    Pragma: 'no-cache',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store'
+  })
   res.type('application/javascript').set('Service-Worker-Allowed', '/').send(PWA_SERVICE_WORKER_SOURCE)
 }
 

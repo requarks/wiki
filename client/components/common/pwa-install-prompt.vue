@@ -104,6 +104,7 @@ export default {
       if (!this.canOfferInstall || this.isVisible) {
         return
       }
+      this.markSessionShown()
       this.isVisible = true
     },
     onBeforeInstallPrompt (event) {

@@ -158,6 +158,7 @@ window.graphQL = new ApolloClient({
 // ====================================
 
 import { applyNavDrawerCssVars } from './components/common/nav-drawer-config'
+import PwaInstallPrompt from './components/common/pwa-install-prompt.vue'
 
 applyNavDrawerCssVars()
 
@@ -188,7 +189,6 @@ Vue.component('NavBottomBarHost', () => import(/* webpackMode: "eager" */ './com
 Vue.component('NavMobileDrawerHost', () => import(/* webpackMode: "eager" */ './components/common/nav-mobile-drawer-host.vue'))
 Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
 Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
-Vue.component('PwaInstallPrompt', () => import(/* webpackMode: "eager" */ './components/common/pwa-install-prompt.vue'))
 Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
 Vue.component('PageSelector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
 Vue.component('PageNavigation', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-navigation.vue'))
@@ -258,6 +258,19 @@ let bootstrap = () => {
         }
         if (browserTimezone) {
           this.$moment.tz.setDefault(browserTimezone)
+        }
+
+        if (!window.__wikiPwaInstallMounted) {
+          window.__wikiPwaInstallMounted = true
+          const PwaInstallCtor = Vue.extend(PwaInstallPrompt)
+          const pwaInstallVm = new PwaInstallCtor({
+            parent: this,
+            store,
+            i18n,
+            vuetify: this.$vuetify
+          })
+          pwaInstallVm.$mount()
+          document.body.appendChild(pwaInstallVm.$el)
         }
       }
     })
