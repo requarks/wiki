@@ -175,6 +175,15 @@ export default {
     color: #fff !important;
   }
 
+  .nav-drawer-mobile-header__links {
+    .v-list-item__title,
+    .v-list-item__content,
+    .v-list-item__icon,
+    .v-list-item__icon .v-icon:not(.red--text):not([class*='red--']) {
+      color: #1976d2 !important;
+    }
+  }
+
   .v-list-item--active {
     background-color: rgba(255, 255, 255, 0.12) !important;
   }

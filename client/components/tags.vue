@@ -133,11 +133,7 @@
                   :class='$vuetify.theme.dark ? `grey darken-4` : ``'
                   )
                   v-card-text
-                    .d-flex.flex-row.align-center
-                      .body-1: strong.primary--text {{item.title}}
-                      v-spacer
-                      i18next.caption(tag='div', path='tags:pageLastUpdated')
-                        span(place='date') {{item.updatedAt | moment('from')}}
+                    .body-1: strong.primary--text {{item.title}}
                     .body-2.grey--text {{item.description || '---'}}
                     v-divider.my-2
                     .d-flex.flex-row.align-center
