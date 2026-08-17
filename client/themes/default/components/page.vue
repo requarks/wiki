@@ -329,7 +329,6 @@
                 slot(name='comments')
     nav-footer
     notify
-    pwa-install-prompt
     search-results
     v-fab-transition
       v-btn(
