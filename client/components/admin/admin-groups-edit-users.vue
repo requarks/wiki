@@ -43,7 +43,7 @@
       template(slot='no-data')
         v-alert.ma-3(icon='mdi-alert', outlined) No users to display.
     .text-center.py-2(v-if='group.users.length > 15')
-      v-pagination(v-model='pagination', :length='pageCount')
+      v-pagination-bar(v-model='pagination', :length='pageCount')
 
     user-search(v-model='searchUserDialog', @select='assignUser')
 </template>

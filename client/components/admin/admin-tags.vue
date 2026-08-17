@@ -42,7 +42,7 @@
                     v-list-item-avatar(size='24', tile): v-icon(size='18', :color='tag.id === current.id ? `white` : `teal`') mdi-tag
                     v-list-item-title(:class='tag.id === current.id ? `white--text` : ``') {{tag.tag}}
                 .admin-tags-pagination.text-center.py-2(v-if='pageCount > 1')
-                  v-pagination(v-model='pagination', :length='pageCount', :total-visible='paginationTotalVisible')
+                  v-pagination-bar(v-model='pagination', :length='pageCount')
             v-flex.animated.fadeInUp.wait-p2s
               template(v-if='current.id')
                 v-card
@@ -128,9 +128,6 @@ export default {
     },
     pageCount () {
       return Math.ceil(this.filteredTags.length / this.itemsPerPage)
-    },
-    paginationTotalVisible () {
-      return this.$vuetify.breakpoint.smAndDown ? 5 : 9
     }
   },
   watch: {
@@ -266,13 +263,6 @@ export default {
 
   &:hover {
     background-color: rgba(mc('blue', '500'), .25);
-  }
-}
-
-.admin-tags-pagination {
-  .v-pagination {
-    justify-content: center;
-    flex-wrap: wrap;
   }
 }
 

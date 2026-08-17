@@ -144,7 +144,7 @@
                       v-chip(small, label, :color='$vuetify.theme.dark ? `grey darken-3-l5` : `grey lighten-4`').overline {{item.locale}}
                       .caption.ml-1 / {{item.path}}
         .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
-          v-pagination(v-model='pagination.page', :length='pageTotal')
+          v-pagination-bar(v-model='pagination.page', :length='pageTotal')
 
     nav-footer
     notify

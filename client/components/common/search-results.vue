@@ -28,7 +28,7 @@
               v-list-item-action
                 v-chip(label, outlined) {{item.locale.toUpperCase()}}
             v-divider(v-if='idx < results.length - 1')
-        v-pagination.mt-3(
+        v-pagination-bar.mt-3(
           v-if='paginationLength > 1'
           dark
           v-model='pagination'

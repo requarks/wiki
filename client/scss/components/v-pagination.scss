@@ -1,0 +1,26 @@
+.v-pagination-bar {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.v-card-actions:has(> .v-pagination-bar),
+.v-card-actions:has(> .v-pagination) {
+  justify-content: center;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  > .v-spacer {
+    display: none;
+  }
+}
+
+.text-center.py-2,
+.text-xs-center.py-2,
+.admin-tags-pagination {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
