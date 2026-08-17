@@ -188,6 +188,7 @@ Vue.component('NavBottomBarHost', () => import(/* webpackMode: "eager" */ './com
 Vue.component('NavMobileDrawerHost', () => import(/* webpackMode: "eager" */ './components/common/nav-mobile-drawer-host.vue'))
 Vue.component('NewPage', () => import(/* webpackChunkName: "new-page" */ './components/new-page.vue'))
 Vue.component('Notify', () => import(/* webpackMode: "eager" */ './components/common/notify.vue'))
+Vue.component('PwaInstallPrompt', () => import(/* webpackMode: "eager" */ './components/common/pwa-install-prompt.vue'))
 Vue.component('NotFound', () => import(/* webpackChunkName: "not-found" */ './components/not-found.vue'))
 Vue.component('PageSelector', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-selector.vue'))
 Vue.component('PageNavigation', () => import(/* webpackPrefetch: true, webpackChunkName: "ui-extra" */ './components/common/page-navigation.vue'))

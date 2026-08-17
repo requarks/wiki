@@ -144,6 +144,7 @@
 
     nav-footer
     notify
+    pwa-install-prompt
     search-results
 </template>
 

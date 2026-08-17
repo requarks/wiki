@@ -53,6 +53,15 @@ module.exports = async () => {
   // ----------------------------------------
 
   app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
+
+  const pwa = require('./helpers/pwa')
+  app.get('/install', (req, res) => {
+    res.redirect('/?install=1')
+  })
+  app.get('/manifest.webmanifest', pwa.sendWebAppManifest)
+  app.get('/manifest.json', pwa.sendWebAppManifest)
+  app.get('/_assets/manifest.json', pwa.sendWebAppManifest)
+  app.get('/sw.js', pwa.sendServiceWorker)
   app.use('/_assets/svg/twemoji', async (req, res, next) => {
     try {
       WIKI.asar.serve('twemoji', req, res, next)
