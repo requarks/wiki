@@ -115,7 +115,7 @@
                 template(slot='no-data')
                   v-alert.mt-3.radius-7(icon='mdi-folder-open-outline', :value='true', outlined, color='teal') {{$t('editor:assets.folderEmpty')}}
               .text-xs-center.py-2(v-if='this.pageTotal > 1')
-                v-pagination(v-model='pagination', :length='pageTotal', color='teal')
+                v-pagination-bar(v-model='pagination', :length='pageTotal', color='teal')
               .d-flex.mt-3
                 v-toolbar.radius-7(flat, :color='$vuetify.theme.dark ? `grey darken-2` : `grey lighten-4`', dense, height='44')
                   .body-2(:class='$vuetify.theme.dark ? `grey--text text--lighten-1` : `grey--text text--darken-1`') {{$t('editor:assets.fileCount', { count: assets.length })}}

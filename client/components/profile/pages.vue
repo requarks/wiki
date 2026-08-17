@@ -38,7 +38,7 @@
               v-alert.ma-3(icon='mdi-alert', :value='true', outlined, color='grey')
                 em.caption {{$t('profile:pages.emptyList')}}
           .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
-            v-pagination(v-model='pagination', :length='pageTotal')
+            v-pagination-bar(v-model='pagination', :length='pageTotal')
 </template>
 
 <script>

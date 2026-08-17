@@ -158,12 +158,17 @@
             :order-xs1='tocPosition === `right`'
             :order-xs2='tocPosition !== `right`'
             )
-            .page-header-block(v-if='path !== `home`')
+            .page-header-sentinel(ref='pageHeaderSentinel', v-if='path !== `home`')
+            .page-header-block(
+              v-if='path !== `home`'
+              ref='pageHeader'
+              :class='pageHeaderBlockClass'
+              )
               .page-header-section.is-page-header-title(
                 :class='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-4`'
                 )
                 .page-header-headings
-                  .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+                  .headline.page-header-title.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
                 .page-edit-shortcuts(
                   v-if='editShortcutsObj.editMenuBar'
                   :class='tocPosition === `right` ? `is-right` : ``'
@@ -186,6 +191,7 @@
                     )
                     v-icon.mr-2(small) {{ editShortcutsObj.editMenuExternalIcon }}
                     span.text-none {{$t(`common:page.editExternal`, { name: editShortcutsObj.editMenuExternalName })}}
+              v-divider.page-header-divider.my-0(v-if='description')
               .page-header-section.is-page-header-subtitle(
                 v-if='description'
                 :class='$vuetify.theme.dark ? `grey darken-4-l3` : `grey lighten-4`'
@@ -513,6 +519,7 @@ export default {
       navShown: false,
       navExpanded: false,
       upBtnShown: false,
+      pageHeaderStuck: false,
       pageEditFab: false,
       scrollStyle: {
         vuescroll: {},
@@ -557,6 +564,16 @@ export default {
     mobileFabBottomOffset () {
       if (!this.showMobileBottomNav) { return {} }
       return { bottom: '72px' }
+    },
+    pageHeaderBlockClass () {
+      if (!this.showMobileBottomNav || this.path === 'home') {
+        return {}
+      }
+
+      return {
+        'page-header-block--mobile': true,
+        'page-header-block--stuck': this.pageHeaderStuck
+      }
     },
     commentsCount: get('page/commentsCount'),
     commentsPerms: get('page/effectivePermissions@comments'),
@@ -726,6 +743,8 @@ export default {
       this.upBtnScroll({ target: this._mainScrollWrap })
     }
 
+    this.setupPageHeaderObserver()
+
     // -> Check side navigation visibility
     this.navShown = true
 
@@ -769,6 +788,7 @@ export default {
     if (this._mainScrollWrap) {
       this._mainScrollWrap.removeEventListener('scroll', this.upBtnScroll)
     }
+    this.teardownPageHeaderObserver()
     this.$root.$off('goToComments')
     this.destroyPageEmbed()
   },
@@ -839,6 +859,38 @@ export default {
           ? window.pageYOffset
           : (document.documentElement.scrollTop != null ? document.documentElement.scrollTop : 0))
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
+    },
+    setupPageHeaderObserver () {
+      this.teardownPageHeaderObserver()
+
+      if (!this.showMobileBottomNav || this.path === 'home' || !this._mainScrollWrap) {
+        return
+      }
+
+      this.$nextTick(() => {
+        const sentinel = this.$refs.pageHeaderSentinel
+        if (!sentinel) {
+          return
+        }
+
+        this._pageHeaderObserver = new IntersectionObserver(
+          ([entry]) => {
+            this.pageHeaderStuck = !entry.isIntersecting
+          },
+          {
+            root: this._mainScrollWrap,
+            threshold: 0
+          }
+        )
+        this._pageHeaderObserver.observe(sentinel)
+      })
+    },
+    teardownPageHeaderObserver () {
+      if (this._pageHeaderObserver) {
+        this._pageHeaderObserver.disconnect()
+        this._pageHeaderObserver = null
+      }
+      this.pageHeaderStuck = false
     },
     print () {
       if (this.printView) {
@@ -929,6 +981,46 @@ export default {
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.1);
 }
 
+.page-header-sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+@media #{map-get($display-breakpoints, 'sm-and-down')} {
+  .page-header-block--mobile {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    box-sizing: border-box;
+
+    &.page-header-block--stuck {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+
+      .page-header-divider,
+      .page-header-section.is-page-header-subtitle {
+        display: none;
+      }
+
+      .page-header-section.is-page-header-title {
+        min-height: 44px;
+        padding: 0 12px;
+      }
+
+      .page-header-title {
+        -webkit-line-clamp: 1;
+        font-size: 0.875rem !important;
+        line-height: 1.25rem !important;
+      }
+    }
+  }
+}
+
 .page-header-section.is-page-header-title {
   position: relative;
   min-height: 70px;
@@ -948,6 +1040,14 @@ export default {
       text-align: center;
       width: 100%;
       margin-bottom: 0;
+    }
+
+    .page-header-title {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
     }
   }
 
@@ -993,11 +1093,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-
-  @at-root .theme--dark & {
-    border-top-color: rgba(255, 255, 255, 0.08);
-  }
 
   .page-header-subheading {
     display: flex;

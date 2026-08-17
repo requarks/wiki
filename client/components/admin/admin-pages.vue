@@ -84,8 +84,10 @@
                   td {{ props.item.updatedAt | moment('calendar') }}
               template(slot='no-data')
                 v-alert.ma-3(icon='mdi-alert', :value='true', outlined) No pages to display.
-          .admin-pages-pagination.animated.fadeInDown(v-if='pageTotal > 1')
-            v-pagination(v-model='pagination', :length='pageTotal', :total-visible='paginationTotalVisible')
+          v-card-chin(v-if='pageTotal > 1')
+            v-spacer
+            v-pagination-bar(v-model='pagination', :length='pageTotal')
+            v-spacer
 </template>
 
 <script>
@@ -160,9 +162,6 @@ export default {
         text: pg.locale,
         value: pg.locale
       })))
-    },
-    paginationTotalVisible () {
-      return this.isMobile ? 5 : 9
     }
   },
   methods: {
@@ -360,20 +359,6 @@ export default {
   }
 }
 
-.admin-pages-pagination {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 8px 4px 12px;
-  overflow-x: hidden;
-
-  .v-pagination {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-}
-
 @media #{map-get($display-breakpoints, 'sm-and-down')} {
   .admin-pages-toolbar {
     flex-direction: column;
@@ -434,24 +419,6 @@ export default {
     th:nth-child(4),
     td:nth-child(4) {
       min-width: 140px;
-    }
-  }
-
-  .admin-pages-pagination {
-    padding-left: 0;
-    padding-right: 0;
-
-    .v-pagination__item,
-    .v-pagination__navigation {
-      min-width: 34px !important;
-      width: 34px !important;
-      height: 34px !important;
-      margin: 2px;
-      font-size: 0.8125rem !important;
-    }
-
-    .v-pagination__navigation .v-icon {
-      font-size: 18px !important;
     }
   }
 }

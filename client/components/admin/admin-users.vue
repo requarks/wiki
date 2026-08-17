@@ -72,7 +72,7 @@
                   em.body-2 No users to display!
           v-card-chin(v-if='pageCount > 1')
             v-spacer
-            v-pagination(v-model='pagination', :length='pageCount')
+            v-pagination-bar(v-model='pagination', :length='pageCount')
             v-spacer
 
     user-create(v-model='isCreateDialogShown', @refresh='refresh(false)')

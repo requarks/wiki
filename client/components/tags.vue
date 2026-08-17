@@ -133,18 +133,14 @@
                   :class='$vuetify.theme.dark ? `grey darken-4` : ``'
                   )
                   v-card-text
-                    .d-flex.flex-row.align-center
-                      .body-1: strong.primary--text {{item.title}}
-                      v-spacer
-                      i18next.caption(tag='div', path='tags:pageLastUpdated')
-                        span(place='date') {{item.updatedAt | moment('from')}}
+                    .body-1: strong.primary--text {{item.title}}
                     .body-2.grey--text {{item.description || '---'}}
                     v-divider.my-2
                     .d-flex.flex-row.align-center
                       v-chip(small, label, :color='$vuetify.theme.dark ? `grey darken-3-l5` : `grey lighten-4`').overline {{item.locale}}
                       .caption.ml-1 / {{item.path}}
         .text-center.py-2.animated.fadeInDown(v-if='this.pageTotal > 1')
-          v-pagination(v-model='pagination.page', :length='pageTotal')
+          v-pagination-bar(v-model='pagination.page', :length='pageTotal')
 
     nav-footer
     notify

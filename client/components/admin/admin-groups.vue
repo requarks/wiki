@@ -61,7 +61,7 @@
             template(slot='no-data')
               v-alert.ma-3(icon='mdi-alert', :value='true', outline) No groups to display.
           .text-xs-center.py-2(v-if='pageCount > 1')
-            v-pagination(v-model='pagination', :length='pageCount')
+            v-pagination-bar(v-model='pagination', :length='pageCount')
 </template>
 
 <script>
