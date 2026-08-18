@@ -18,7 +18,7 @@ self.addEventListener('fetch', (event) => {
 `.trim()
 
 function getWebAppManifest () {
-  const appName = WIKI.config.title || PWA_DEFAULT_APP_NAME
+  const appName = PWA_DEFAULT_APP_NAME
 
   return {
     name: appName,

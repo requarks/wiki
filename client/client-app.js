@@ -160,6 +160,15 @@ window.graphQL = new ApolloClient({
 import { applyNavDrawerCssVars } from './components/common/nav-drawer-config'
 import PwaInstallPrompt from './components/common/pwa-install-prompt.vue'
 
+if (!window.__wikiPwaInstallCaptureReady) {
+  window.__wikiPwaInstallCaptureReady = true
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault()
+    window.__wikiDeferredInstallPrompt = event
+    window.dispatchEvent(new Event('wiki-pwa-install-ready'))
+  })
+}
+
 applyNavDrawerCssVars()
 
 Vue.use(VueRouter)
@@ -170,6 +179,13 @@ Vue.use(helpers)
 Vue.use(Vuetify)
 Vue.use(VueMoment, { moment })
 Vue.use(Vuescroll)
+
+const pwaInstallVuetify = new Vuetify({
+  rtl: siteConfig.rtl,
+  theme: {
+    dark: false
+  }
+})
 
 Vue.prototype.Velocity = Velocity
 
@@ -210,6 +226,27 @@ Vue.component('Welcome', () => import(/* webpackChunkName: "welcome" */ './compo
 
 Vue.component('NavFooter', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/nav-footer.vue'))
 Vue.component('Page', () => import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/components/page.vue'))
+
+function mountWikiPwaInstallPrompt ({ parent, store, i18n }) {
+  if (window.__wikiPwaInstallVm) {
+    window.__wikiPwaInstallVm.$destroy()
+    const existingEl = window.__wikiPwaInstallVm.$el
+    if (existingEl && existingEl.parentNode) {
+      existingEl.parentNode.removeChild(existingEl)
+    }
+  }
+
+  const PwaInstallCtor = Vue.extend(PwaInstallPrompt)
+  const pwaInstallVm = new PwaInstallCtor({
+    parent,
+    store,
+    i18n,
+    vuetify: pwaInstallVuetify
+  })
+  pwaInstallVm.$mount()
+  document.body.appendChild(pwaInstallVm.$el)
+  window.__wikiPwaInstallVm = pwaInstallVm
+}
 
 let bootstrap = () => {
   // ====================================
@@ -260,18 +297,11 @@ let bootstrap = () => {
           this.$moment.tz.setDefault(browserTimezone)
         }
 
-        if (!window.__wikiPwaInstallMounted) {
-          window.__wikiPwaInstallMounted = true
-          const PwaInstallCtor = Vue.extend(PwaInstallPrompt)
-          const pwaInstallVm = new PwaInstallCtor({
-            parent: this,
-            store,
-            i18n,
-            vuetify: this.$vuetify
-          })
-          pwaInstallVm.$mount()
-          document.body.appendChild(pwaInstallVm.$el)
-        }
+        mountWikiPwaInstallPrompt({
+          parent: this,
+          store,
+          i18n
+        })
       }
     })
 
