@@ -92,4 +92,15 @@ export default {
 .nav-drawer-mobile-header__action:focus {
   background-color: rgba(25, 43, 133, 0.05) !important;
 }
+
+.nav-drawer-mobile-header__profile:active,
+.nav-drawer-mobile-header__action:active {
+  background-color: rgba(25, 43, 133, 0.08) !important;
+  color: #192b85 !important;
+
+  i,
+  span {
+    color: #192b85 !important;
+  }
+}
 </style>
