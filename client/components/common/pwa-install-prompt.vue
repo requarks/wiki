@@ -1,25 +1,25 @@
 <template lang='pug'>
-  transition(name='pwa-sheet')
-    .pwa-install-sheet(v-if='isVisible', role='dialog', aria-live='polite')
-      .pwa-install-sheet__panel
-        button.pwa-install-sheet__close(type='button', aria-label='No', @click='dismissNo')
-          v-icon(color='grey darken-1', small) mdi-close
-        .pwa-install-sheet__body
-          p.pwa-install-sheet__message
-            span আপনি কি&nbsp;
-            strong {{ appName }}
-            span &nbsp;এপলিকেশনটি ইন্সটল করতে চান?
-        .pwa-install-sheet__actions
-          v-btn.pwa-install-sheet__yes(block, large, color='primary', dark, depressed, @click='confirmInstall') অবশ্যই
-          button.pwa-install-sheet__never(type='button', @click='dismissNever') কখনই না
+  v-app.pwa-install-sheet-app(flat)
+    transition(name='pwa-sheet')
+      .pwa-install-sheet(v-if='isVisible', role='dialog', aria-live='polite')
+        .pwa-install-sheet__panel
+          button.pwa-install-sheet__close(type='button', aria-label='No', @click='dismissNo')
+            v-icon(color='grey darken-1', small) mdi-close
+          .pwa-install-sheet__body
+            p.pwa-install-sheet__message
+              span আপনি কি&nbsp;
+              strong {{ appName }}
+              span &nbsp;এপলিকেশনটি ইন্সটল করতে চান?
+          .pwa-install-sheet__actions
+            v-btn.pwa-install-sheet__yes(block, large, color='primary', depressed, @click='confirmInstall') অবশ্যই
+            button.pwa-install-sheet__never(type='button', @click='dismissNever') কখনই না
 </template>
 
 <script>
 import { get } from 'vuex-pathify'
 
-/* global siteConfig */
-
-const PWA_INSTALL_SESSION_SHOWN_KEY = 'wiki-pwa-install-session-shown'
+const PWA_INSTALL_APP_NAME = 'Sunni Noor'
+const PWA_INSTALL_SESSION_DISMISSED_KEY = 'wiki-pwa-install-session-dismissed'
 const PWA_INSTALL_NEVER_KEY = 'wiki-pwa-install-never'
 const PWA_INSTALL_INSTALLED_KEY = 'wiki-pwa-installed'
 
@@ -27,34 +27,47 @@ export default {
   data () {
     return {
       deferredPrompt: null,
-      isVisible: false
+      isVisible: false,
+      dismissedThisLoad: false
     }
   },
   computed: {
     printView: get('site/printView'),
     mode: get('page/mode'),
     appName () {
-      return siteConfig.title || 'Sunni Noor'
+      return PWA_INSTALL_APP_NAME
+    }
+  },
+  watch: {
+    printView () {
+      this.tryOpenSheet()
     },
+    mode () {
+      this.tryOpenSheet()
+    }
+  },
+  mounted () {
+    window.addEventListener('beforeinstallprompt', this.onBeforeInstallPrompt)
+    window.addEventListener('wiki-pwa-install-ready', this.onDeferredInstallReady)
+    window.addEventListener('appinstalled', this.onAppInstalled)
+    this.syncDeferredPrompt()
+  },
+  beforeDestroy () {
+    window.removeEventListener('beforeinstallprompt', this.onBeforeInstallPrompt)
+    window.removeEventListener('wiki-pwa-install-ready', this.onDeferredInstallReady)
+    window.removeEventListener('appinstalled', this.onAppInstalled)
+  },
+  methods: {
     canOfferInstall () {
       if (this.printView) { return false }
       if (this.mode === 'edit') { return false }
       if (this.isStandalone()) { return false }
       if (this.isAlreadyInstalled()) { return false }
       if (this.isNeverDismissed()) { return false }
-      if (this.isSessionShown()) { return false }
+      if (this.isSessionDismissed()) { return false }
+      if (this.dismissedThisLoad) { return false }
       return true
-    }
-  },
-  mounted () {
-    window.addEventListener('beforeinstallprompt', this.onBeforeInstallPrompt)
-    window.addEventListener('appinstalled', this.onAppInstalled)
-  },
-  beforeDestroy () {
-    window.removeEventListener('beforeinstallprompt', this.onBeforeInstallPrompt)
-    window.removeEventListener('appinstalled', this.onAppInstalled)
-  },
-  methods: {
+    },
     isStandalone () {
       return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
     },
@@ -68,20 +81,6 @@ export default {
     markInstalled () {
       try {
         window.localStorage.setItem(PWA_INSTALL_INSTALLED_KEY, '1')
-      } catch (err) {
-        // ignore storage failures
-      }
-    },
-    isSessionShown () {
-      try {
-        return window.sessionStorage.getItem(PWA_INSTALL_SESSION_SHOWN_KEY) === '1'
-      } catch (err) {
-        return false
-      }
-    },
-    markSessionShown () {
-      try {
-        window.sessionStorage.setItem(PWA_INSTALL_SESSION_SHOWN_KEY, '1')
       } catch (err) {
         // ignore storage failures
       }
@@ -100,20 +99,48 @@ export default {
         // ignore storage failures
       }
     },
+    isSessionDismissed () {
+      try {
+        return window.sessionStorage.getItem(PWA_INSTALL_SESSION_DISMISSED_KEY) === '1'
+      } catch (err) {
+        return false
+      }
+    },
+    markSessionDismissed () {
+      try {
+        window.sessionStorage.setItem(PWA_INSTALL_SESSION_DISMISSED_KEY, '1')
+      } catch (err) {
+        // ignore storage failures
+      }
+    },
     openSheet () {
-      if (!this.canOfferInstall || this.isVisible) {
+      this.tryOpenSheet()
+    },
+    tryOpenSheet () {
+      if (!this.deferredPrompt || !this.canOfferInstall() || this.isVisible) {
         return
       }
-      this.markSessionShown()
       this.isVisible = true
     },
-    onBeforeInstallPrompt (event) {
-      if (!this.canOfferInstall) {
-        return
+    syncDeferredPrompt () {
+      if (window.__wikiDeferredInstallPrompt) {
+        this.deferredPrompt = window.__wikiDeferredInstallPrompt
+        this.$nextTick(() => {
+          this.tryOpenSheet()
+        })
       }
-      event.preventDefault()
+    },
+    storeDeferredPrompt (event) {
+      window.__wikiDeferredInstallPrompt = event
       this.deferredPrompt = event
-      this.openSheet()
+      this.tryOpenSheet()
+    },
+    onBeforeInstallPrompt (event) {
+      event.preventDefault()
+      this.storeDeferredPrompt(event)
+    },
+    onDeferredInstallReady () {
+      this.syncDeferredPrompt()
     },
     onAppInstalled () {
       this.markInstalled()
@@ -136,16 +163,18 @@ export default {
       this.closeSheet(true)
     },
     dismissNo () {
-      this.closeSheet(true)
+      this.markSessionDismissed()
+      this.dismissedThisLoad = true
+      this.isVisible = false
     },
     dismissNever () {
       this.markNeverDismissed()
-      this.closeSheet(true)
-    },
-    closeSheet (markSession) {
       this.isVisible = false
-      if (markSession) {
-        this.markSessionShown()
+    },
+    closeSheet (markLoadDismissed) {
+      this.isVisible = false
+      if (markLoadDismissed) {
+        this.dismissedThisLoad = true
       }
     }
   }
@@ -153,12 +182,26 @@ export default {
 </script>
 
 <style lang='scss'>
+.pwa-install-sheet-app.v-application {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background: transparent !important;
+  min-height: 0 !important;
+
+  .v-application--wrap {
+    min-height: 0 !important;
+    background: transparent !important;
+  }
+}
+
 .pwa-install-sheet {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 1;
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -169,6 +212,7 @@ export default {
     width: 100%;
     max-width: 520px;
     background: #fff;
+    color: rgba(0, 0, 0, 0.87);
     border-radius: 16px 16px 0 0;
     padding: 12px 20px calc(20px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
@@ -199,7 +243,16 @@ export default {
     margin: 0;
     font-size: 0.9375rem;
     line-height: 1.45;
-    color: rgba(0, 0, 0, 0.62);
+    color: rgba(0, 0, 0, 0.87);
+
+    span,
+    strong {
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    strong {
+      font-weight: 700;
+    }
   }
 
   &__actions {
