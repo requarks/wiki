@@ -24,3 +24,9 @@ export const SCROLLBAR_BLUE_DEFAULT = '#42A5F5'
 
 /** mc('blue', '300') */
 export const SCROLLBAR_BLUE_HOVER = '#64b5f6'
+
+/** Side drawer header text on mc('blue', '100') background. */
+export const NAV_DRAWER_HEADER_FG = 'rgba(25, 43, 133, 0.82)'
+
+/** Muted header text (email, secondary). */
+export const NAV_DRAWER_HEADER_FG_MUTED = 'rgba(25, 43, 133, 0.58)'

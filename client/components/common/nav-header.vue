@@ -51,7 +51,7 @@
               v-avatar(tile, size='34', @click='goHome')
                 v-img.org-logo(:src='logoUrl')
               v-toolbar-title.mx-3
-                span.subheading {{title}}
+                span.subheading.nav-header__site-title {{title}}
           v-flex(md4)
             v-toolbar.nav-header-inner.nav-header-inner--center(:color='navBarColor', dark, flat)
               .nav-header-desktop__center
