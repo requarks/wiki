@@ -465,15 +465,15 @@ export default {
 
   &__share-icon {
     &--facebook {
-      color: #1877f2 !important;
+      color: mc('theme', 'primary') !important;
     }
 
     &--whatsapp {
-      color: #25d366 !important;
+      color: mc('theme', 'success') !important;
     }
 
     &--messenger {
-      color: #0084ff !important;
+      color: mc('theme', 'info') !important;
     }
   }
 }

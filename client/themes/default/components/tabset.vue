@@ -118,7 +118,7 @@ export default {
     display: flex;
     align-items: stretch;
     background: linear-gradient(to bottom, #FFF, #FAFAFA);
-    box-shadow: inset 0 -1px 0 0 #DDD;
+    box-shadow: inset 0 -1px 0 0 mc('grey', '300');
     border-radius: 5px 5px 0 0;
     overflow: auto;
 

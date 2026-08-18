@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sunninoor Light Theme Colors</title>
+  <style>
+    :root {
+      --page-bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --border: #e0e0e0;
+      --text: #424242;
+      --text-muted: #757575;
+      --text-heading: #212121;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px 64px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.75rem;
+      color: var(--text-heading);
+    }
+
+    .subtitle {
+      margin: 0 0 32px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    section { margin-bottom: 40px; }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+      color: var(--text-heading);
+      border-bottom: 2px solid #1976d2;
+      padding-bottom: 6px;
+    }
+
+    h2.migration-heading { border-bottom-color: #4caf50; }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 1rem;
+      color: var(--text-heading);
+    }
+
+    .section-note {
+      margin: 0 0 16px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 12px;
+    }
+
+    .swatch {
+      display: flex;
+      align-items: stretch;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 96px;
+    }
+
+    .swatch.migrated {
+      border-color: #a5d6a7;
+      background: #f9fff9;
+    }
+
+    .swatch-pair {
+      display: flex;
+      width: 88px;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .swatch-color {
+      flex: 1;
+      position: relative;
+    }
+
+    .swatch-color--old::after {
+      content: 'was';
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.6rem;
+      color: rgba(0, 0, 0, 0.45);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .swatch-color--new::after {
+      content: 'now';
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .swatch-color--single {
+      width: 72px;
+      flex-shrink: 0;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .swatch-body {
+      padding: 10px 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .swatch-hex {
+      font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+
+    .swatch-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .swatch-alias {
+      font-size: 0.78rem;
+      color: #1565c0;
+      margin-top: 4px;
+      font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+    }
+
+    .swatch-usage,
+    .swatch-files {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .swatch-files code {
+      font-size: 0.72rem;
+      word-break: break-all;
+    }
+
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.875rem;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .summary-table th {
+      background: #eeeeee;
+      font-weight: 600;
+      color: var(--text-heading);
+    }
+
+    .summary-table tr:last-child td { border-bottom: none; }
+
+    .migration-table td:nth-child(2),
+    .migration-table td:nth-child(3) {
+      font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.82rem;
+    }
+
+    .inline-swatch {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    code {
+      font-family: "Roboto Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 0.82rem;
+      background: #eceff1;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      margin-bottom: 32px;
+    }
+
+    .banner--warn {
+      background: #fff3e0;
+      border: 1px solid #ffcc80;
+    }
+
+    .banner--warn strong { color: #e65100; }
+
+    .banner--ok {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+    }
+
+    .banner--ok strong { color: #2e7d32; }
+
+    .group-count {
+      display: inline-block;
+      background: #e3f2fd;
+      color: #1565c0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .group-count--green {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+
+    .toc {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      font-size: 0.875rem;
+    }
+
+    .toc ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+
+    .toc a {
+      color: #1565c0;
+      text-decoration: none;
+    }
+
+    .toc a:hover { text-decoration: underline; }
+
+    .arrow-cell { color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Sunninoor Light Theme Colors</h1>
+    <p class="subtitle">Visual reference for the wiki light theme. Last updated after hardcoded hex migration to aliases.</p>
+
+    <nav class="toc">
+      <strong>On this page</strong>
+      <ul>
+        <li><a href="#migration">Hardcoded → alias migration</a></li>
+        <li><a href="#alias-systems">Alias systems overview</a></li>
+        <li><a href="#js-constants">JS constants (theme-colors.js)</a></li>
+        <li><a href="#brand-colors">Brand &amp; primary blues</a></li>
+        <li><a href="#theme-tokens">Theme semantic tokens</a></li>
+        <li><a href="#neutral-colors">Neutrals &amp; surfaces</a></li>
+        <li><a href="#accent-colors">Content &amp; UI accents</a></li>
+        <li><a href="#vuetify-classes">Vuetify class aliases</a></li>
+      </ul>
+    </nav>
+
+    <div class="banner banner--ok">
+      <strong>Migration complete:</strong> All previously hardcoded module colors now use <code>mc()</code> aliases in SCSS/Vue, resolved hex with comments in server CSS, or constants from <code>client/helpers/theme-colors.js</code>.
+    </div>
+
+    <div class="banner banner--ok">
+      <strong>Unified primary:</strong> Nav bar, Vuetify <code>primary</code>, PWA theme, and <code>NAV_BAR_COLOR</code> all resolve to <code>#1976D2</code> via <code>mc('theme', 'primary')</code>.
+    </div>
+
+    <section id="migration">
+      <h2 class="migration-heading">Hardcoded → alias migration</h2>
+      <p class="section-note">Former raw hex values and their replacements. Swatches show old (left) vs new (right).</p>
+      <table class="summary-table migration-table" style="margin-bottom: 24px;">
+        <thead>
+          <tr>
+            <th>Old hex</th>
+            <th>→</th>
+            <th>New hex</th>
+            <th>Alias used</th>
+            <th>Where applied</th>
+          </tr>
+        </thead>
+        <tbody id="migration-table-body"></tbody>
+      </table>
+      <div id="migration-groups"></div>
+    </section>
+
+    <section id="alias-systems">
+      <h2>Alias systems overview</h2>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>System</th>
+            <th>Example alias</th>
+            <th>Resolves to</th>
+            <th>Where defined</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JS constant</td>
+            <td><code>NAV_BAR_COLOR</code></td>
+            <td><span class="inline-swatch" style="background:#1976D2"></span><code>#1976D2</code> (= <code>THEME_PRIMARY</code>)</td>
+            <td><code>client/helpers/theme-colors.js</code></td>
+          </tr>
+          <tr>
+            <td>JS constant</td>
+            <td><code>THEME_PRIMARY</code>, <code>SCROLLBAR_*</code></td>
+            <td><span class="inline-swatch" style="background:#1976D2"></span><code>#1976D2</code> etc.</td>
+            <td><code>client/helpers/theme-colors.js</code></td>
+          </tr>
+          <tr>
+            <td>JS constant</td>
+            <td><code>PWA_THEME_COLOR</code></td>
+            <td><span class="inline-swatch" style="background:#1976d2"></span><code>#1976d2</code></td>
+            <td><code>server/helpers/pwa.js</code></td>
+          </tr>
+          <tr>
+            <td>SCSS variable</td>
+            <td><code>$nav-bar-color</code></td>
+            <td><span class="inline-swatch" style="background:#1976D2"></span><code>mc('theme', 'primary')</code></td>
+            <td><code>client/scss/global.scss</code></td>
+          </tr>
+          <tr>
+            <td>SCSS function</td>
+            <td><code>mc('theme', 'primary')</code></td>
+            <td><span class="inline-swatch" style="background:#1976D2"></span><code>#1976D2</code></td>
+            <td><code>client/scss/base/material.scss</code></td>
+          </tr>
+          <tr>
+            <td>Vuetify class</td>
+            <td><code>primary</code> / <code>primary--text</code></td>
+            <td><span class="inline-swatch" style="background:#1976D2"></span><code>#1976D2</code></td>
+            <td>Vuetify default theme</td>
+          </tr>
+          <tr>
+            <td>Theme config</td>
+            <td><code>accentColor</code> (default)</td>
+            <td><span class="inline-swatch" style="background:#1565c0"></span><code>blue darken-2</code></td>
+            <td><code>server/themes/default/theme.yml</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="js-constants">
+      <h2>JS constants (theme-colors.js)</h2>
+      <p class="section-note">Used where colors must be passed as JS strings (scrollbars, Vuetify props). Values mirror <code>mc()</code> in <code>material.scss</code>.</p>
+      <div class="grid" id="js-constants-grid"></div>
+    </section>
+
+    <section id="brand-colors">
+      <h2>Brand &amp; primary blues</h2>
+      <div class="grid" id="brand-colors-grid"></div>
+    </section>
+
+    <section id="theme-tokens">
+      <h2>Theme semantic tokens</h2>
+      <p class="section-note">From <code>mc('theme', …)</code> in <code>material.scss</code>.</p>
+      <div class="grid" id="theme-tokens-grid"></div>
+    </section>
+
+    <section id="neutral-colors">
+      <h2>Neutrals &amp; surfaces</h2>
+      <div class="grid" id="neutral-colors-grid"></div>
+    </section>
+
+    <section id="accent-colors">
+      <h2>Content &amp; UI accents</h2>
+      <div class="grid" id="accent-colors-grid"></div>
+    </section>
+
+    <section id="vuetify-classes">
+      <h2>Common Vuetify class aliases (light theme)</h2>
+      <div class="grid" id="vuetify-classes-grid"></div>
+    </section>
+  </div>
+
+  <script>
+    function swatch({ hex, name, alias, usage, files }) {
+      const aliasHtml = alias ? `<div class="swatch-alias">${alias}</div>` : '';
+      const filesHtml = files
+        ? `<div class="swatch-files">Files: ${files.map(f => `<code>${f}</code>`).join(', ')}</div>`
+        : '';
+
+      return `
+        <div class="swatch">
+          <div class="swatch-color--single" style="background:${hex}"></div>
+          <div class="swatch-body">
+            <div class="swatch-hex">${hex}</div>
+            <div class="swatch-name">${name}</div>
+            ${aliasHtml}
+            <div class="swatch-usage">${usage}</div>
+            ${filesHtml}
+          </div>
+        </div>`;
+    }
+
+    function migrationSwatch({ oldHex, newHex, name, alias, usage, files }) {
+      const filesHtml = files
+        ? `<div class="swatch-files">Files: ${files.map(f => `<code>${f}</code>`).join(', ')}</div>`
+        : '';
+
+      return `
+        <div class="swatch migrated">
+          <div class="swatch-pair">
+            <div class="swatch-color swatch-color--old" style="background:${oldHex}"></div>
+            <div class="swatch-color swatch-color--new" style="background:${newHex}"></div>
+          </div>
+          <div class="swatch-body">
+            <div class="swatch-hex">${oldHex} → ${newHex}</div>
+            <div class="swatch-name">${name}</div>
+            <div class="swatch-alias">${alias}</div>
+            <div class="swatch-usage">${usage}</div>
+            ${filesHtml}
+          </div>
+        </div>`;
+    }
+
+    function renderMigrationGroup(title, colors) {
+      return `
+        <h3>${title} <span class="group-count group-count--green">${colors.length} migrated</span></h3>
+        <div class="grid">${colors.map(migrationSwatch).join('')}</div>`;
+    }
+
+    const migrations = [
+      {
+        title: 'Nav bar unification',
+        items: [
+          { oldHex: '#192b85', newHex: '#1976D2', name: 'Nav bar / brand navy', alias: "primary · NAV_BAR_COLOR · $nav-bar-color · mc('theme', 'primary')", usage: 'Header background, search field text, editor title', files: ['nav-header.vue', 'editor.vue', 'global.scss', 'theme-colors.js'] }
+        ]
+      },
+      {
+        title: 'Page navigation module',
+        items: [
+          { oldHex: '#3b82f6', newHex: '#1976D2', name: 'Circle button fill', alias: "mc('theme', 'primary')", usage: 'Index / Related nav circles', files: ['page-navigation.vue', 'navigation.css'] },
+          { oldHex: '#bfdbfe', newHex: '#bbdefb', name: 'Arrow box background', alias: "mc('blue', '100')", usage: 'Prev / Next arrow backgrounds', files: ['page-navigation.vue', 'navigation.css'] },
+          { oldHex: '#4a6fa5', newHex: '#1565c0', name: 'Arrow box text', alias: "mc('blue', '800')", usage: 'Prev / Next link labels', files: ['page-navigation.vue', 'navigation.css'] },
+          { oldHex: '#7a9cc6', newHex: '#42a5f5', name: 'Empty arrow placeholder', alias: "mc('blue', '400')", usage: 'Disabled nav dash text', files: ['page-navigation.vue', 'navigation.css'] }
+        ]
+      },
+      {
+        title: 'Related posts module',
+        items: [
+          { oldHex: '#111111', newHex: '#212121', name: 'Card title text', alias: "mc('grey', '900')", usage: 'Related post headings', files: ['page-related-pages.vue', 'related-pages.css'] },
+          { oldHex: '#555555', newHex: '#616161', name: 'Card body text', alias: "mc('grey', '700')", usage: 'Related post descriptions', files: ['page-related-pages.vue', 'related-pages.css'] }
+        ]
+      },
+      {
+        title: 'Shared borders & text',
+        items: [
+          { oldHex: '#dddddd', newHex: '#e0e0e0', name: 'Border grey', alias: "mc('grey', '300')", usage: 'Page nav, related posts, tabset, page embed, edit shortcuts', files: ['page-navigation.vue', 'page-related-pages.vue', 'tabset.vue', 'page.vue', 'page-embed.vue'] },
+          { oldHex: '#777777', newHex: '#757575', name: 'Muted label text', alias: "mc('grey', '600')", usage: 'Page edit shortcut labels', files: ['page.vue'] },
+          { oldHex: '#444444', newHex: '#424242', name: 'Fallback text', alias: "mc('grey', '800')", usage: 'Google Drive embed fallback text', files: ['page-embed.vue'] }
+        ]
+      },
+      {
+        title: 'Scrollbars (JS constants)',
+        items: [
+          { oldHex: '#CCCCCC', newHex: '#bdbdbd', name: 'Drawer scrollbar default', alias: 'SCROLLBAR_GREY_DEFAULT · mc(\'grey\', \'400\')', usage: 'Nav drawer scroll thumb', files: ['nav-drawer-shell.vue'] },
+          { oldHex: '#999999', newHex: '#9e9e9e', name: 'Drawer / selector scrollbar', alias: 'SCROLLBAR_GREY_HOVER · mc(\'grey\', \'500\')', usage: 'Drawer hover; page-selector default thumb', files: ['nav-drawer-shell.vue', 'page-selector.vue'] },
+          { oldHex: '#42A5F5', newHex: '#42a5f5', name: 'Page sidebar scrollbar', alias: 'SCROLLBAR_BLUE_DEFAULT · mc(\'blue\', \'400\')', usage: 'Page TOC scroll thumb (was already near alias, now via constant)', files: ['page.vue'] },
+          { oldHex: '#64B5F6', newHex: '#64b5f6', name: 'Blue scrollbar hover', alias: 'SCROLLBAR_BLUE_HOVER · mc(\'blue\', \'300\')', usage: 'Page sidebar & page-selector hover', files: ['page.vue', 'page-selector.vue'] }
+        ]
+      },
+      {
+        title: 'Social share icons',
+        items: [
+          { oldHex: '#1877F2', newHex: '#1976D2', name: 'Facebook icon', alias: "mc('theme', 'primary')", usage: 'Share button (was Facebook brand blue)', files: ['nav-action-items.vue'] },
+          { oldHex: '#25D366', newHex: '#4CAF50', name: 'WhatsApp icon', alias: "mc('theme', 'success')", usage: 'Share button (was WhatsApp brand green)', files: ['nav-action-items.vue'] },
+          { oldHex: '#0084FF', newHex: '#2196F3', name: 'Messenger icon', alias: "mc('theme', 'info')", usage: 'Share button (was Messenger brand blue)', files: ['nav-action-items.vue'] }
+        ]
+      }
+    ];
+
+    const jsConstants = [
+      { hex: '#1976D2', name: 'NAV_BAR_COLOR', alias: 'THEME_PRIMARY · mc(\'theme\', \'primary\')', usage: 'Nav header, editor title field (alias of primary)' },
+      { hex: '#1976D2', name: 'THEME_PRIMARY', alias: "mc('theme', 'primary')", usage: 'Available for JS inline styles' },
+      { hex: '#2196F3', name: 'THEME_INFO', alias: "mc('theme', 'info')", usage: 'Available for JS inline styles' },
+      { hex: '#4CAF50', name: 'THEME_SUCCESS', alias: "mc('theme', 'success')", usage: 'Available for JS inline styles' },
+      { hex: '#bdbdbd', name: 'SCROLLBAR_GREY_DEFAULT', alias: "mc('grey', '400')", usage: 'Nav drawer scrollbar thumb' },
+      { hex: '#9e9e9e', name: 'SCROLLBAR_GREY_HOVER', alias: "mc('grey', '500')", usage: 'Nav drawer hover; page-selector default' },
+      { hex: '#42a5f5', name: 'SCROLLBAR_BLUE_DEFAULT', alias: "mc('blue', '400')", usage: 'Page sidebar scrollbar' },
+      { hex: '#64b5f6', name: 'SCROLLBAR_BLUE_HOVER', alias: "mc('blue', '300')", usage: 'Page sidebar / selector hover' }
+    ];
+
+    const brandColors = [
+      { hex: '#1976D2', name: 'Primary / nav bar', alias: 'primary · NAV_BAR_COLOR · $nav-bar-color · PWA_THEME_COLOR · mc(\'theme\', \'primary\')', usage: 'Header, buttons, links, PWA, search field accents' },
+      { hex: '#1565c0', name: 'Blue 800', alias: 'blue darken-2 · accentColor · mc(\'blue\', \'800\')', usage: 'H1 headings, sidebar nav, page nav arrow text' },
+      { hex: '#1976d2', name: 'Blue 700', alias: 'mc(\'blue\', \'700\')', usage: 'Body links, meta theme-color' },
+      { hex: '#bbdefb', name: 'Blue 100', alias: 'mc(\'blue\', \'100\')', usage: 'Page nav arrow backgrounds' },
+      { hex: '#42A5F5', name: 'Blue 400', alias: 'SCROLLBAR_BLUE_DEFAULT · mc(\'blue\', \'400\')', usage: 'Scrollbars, empty nav placeholder' },
+      { hex: '#64B5F6', name: 'Blue 300', alias: 'SCROLLBAR_BLUE_HOVER · mc(\'blue\', \'300\')', usage: 'Scrollbar hover states' },
+      { hex: '#82B1FF', name: 'Accent blue', alias: 'mc(\'theme\', \'accent\')', usage: 'Theme accent highlights' }
+    ];
+
+    const themeTokens = [
+      { hex: '#1976D2', name: 'primary', alias: 'mc(\'theme\', \'primary\')', usage: 'Main brand actions, page nav circles' },
+      { hex: '#424242', name: 'secondary', alias: 'mc(\'theme\', \'secondary\')', usage: 'Secondary UI, embed fallback text' },
+      { hex: '#82B1FF', name: 'accent', alias: 'mc(\'theme\', \'accent\')', usage: 'Accent elements' },
+      { hex: '#FF5252', name: 'error', alias: 'mc(\'theme\', \'error\')', usage: 'Errors, destructive states' },
+      { hex: '#2196F3', name: 'info', alias: 'mc(\'theme\', \'info\') · THEME_INFO', usage: 'Messenger share icon' },
+      { hex: '#4CAF50', name: 'success', alias: 'mc(\'theme\', \'success\') · THEME_SUCCESS', usage: 'WhatsApp share icon' },
+      { hex: '#FFC107', name: 'warning', alias: 'mc(\'theme\', \'warning\')', usage: 'Warning states' }
+    ];
+
+    const neutralColors = [
+      { hex: '#FFFFFF', name: 'White', alias: 'white', usage: 'Cards, search fields, content background' },
+      { hex: '#FAFAFA', name: 'Grey 50', alias: 'grey lighten-5 · mc(\'grey\', \'50\')', usage: 'Subtle backgrounds' },
+      { hex: '#F5F5F5', name: 'Grey 100', alias: 'mc(\'grey\', \'100\')', usage: 'Admin / profile main area' },
+      { hex: '#EEEEEE', name: 'Grey 200', alias: 'grey lighten-4 · mc(\'grey\', \'200\')', usage: 'Sidebars, chips' },
+      { hex: '#E0E0E0', name: 'Grey 300', alias: 'grey lighten-3 · mc(\'grey\', \'300\')', usage: 'Borders: page nav, related posts, tabset, embed' },
+      { hex: '#BDBDBD', name: 'Grey 400', alias: 'SCROLLBAR_GREY_DEFAULT · mc(\'grey\', \'400\')', usage: 'Drawer scrollbar; dark-mode edit shortcut text' },
+      { hex: '#9E9E9E', name: 'Grey 500', alias: 'SCROLLBAR_GREY_HOVER · mc(\'grey\', \'500\')', usage: 'Drawer scrollbar hover; page-selector thumb' },
+      { hex: '#757575', name: 'Grey 600', alias: 'mc(\'grey\', \'600\')', usage: 'Page edit shortcut label text' },
+      { hex: '#616161', name: 'Grey 700', alias: 'mc(\'grey\', \'700\')', usage: 'Related post body text' },
+      { hex: '#424242', name: 'Grey 800', alias: 'grey darken-3 · mc(\'grey\', \'800\')', usage: 'Main body text, embed fallback' },
+      { hex: '#212121', name: 'Grey 900', alias: 'mc(\'grey\', \'900\')', usage: 'Related post titles' }
+    ];
+
+    const accentColors = [
+      { hex: '#009688', name: 'Teal 500', alias: 'teal · mc(\'teal\', \'500\')', usage: 'Tag icons and text' },
+      { hex: '#E0F2F1', name: 'Teal 50', alias: 'teal lighten-5 · mc(\'teal\', \'50\')', usage: 'Tag chip background' },
+      { hex: '#607D8B', name: 'Blue-grey 500', alias: 'mc(\'blue-grey\', \'500\')', usage: 'Blockquote borders' },
+      { hex: '#ECEFF1', name: 'Blue-grey 50', alias: 'mc(\'blue-grey\', \'50\')', usage: 'Blockquote background' },
+      { hex: '#455A64', name: 'Blue-grey 700', alias: 'blue-grey darken-2 · mc(\'blue-grey\', \'700\')', usage: 'Table headers, captions' },
+      { hex: '#E8EAF6', name: 'Indigo 50', alias: 'mc(\'indigo\', \'50\')', usage: 'Inline code background' },
+      { hex: '#283593', name: 'Indigo 800', alias: 'mc(\'indigo\', \'800\')', usage: 'Inline code text' }
+    ];
+
+    const vuetifyClasses = [
+      { hex: '#1976D2', name: 'primary / primary--text', alias: 'Vuetify theme token', usage: 'Buttons, headings, active states' },
+      { hex: '#1565C0', name: 'blue darken-2', alias: 'Material + theme accentColor', usage: 'Sidebar buttons' },
+      { hex: '#E0E0E0', name: 'grey lighten-3', alias: 'mc(\'grey\', \'300\')', usage: 'Page toolbars, borders' },
+      { hex: '#EEEEEE', name: 'grey lighten-4', alias: 'mc(\'grey\', \'200\')', usage: 'Page header areas, chips' },
+      { hex: '#FAFAFA', name: 'grey lighten-5', alias: 'mc(\'grey\', \'50\')', usage: 'Admin main background' },
+      { hex: '#009688', name: 'teal', alias: 'mc(\'teal\', \'500\')', usage: 'Tag icons' },
+      { hex: '#E0F2F1', name: 'teal lighten-5', alias: 'mc(\'teal\', \'50\')', usage: 'Tag chip fill' },
+      { hex: '#455A64', name: 'blue-grey darken-2', alias: 'mc(\'blue-grey\', \'700\')', usage: 'Comment buttons, captions' }
+    ];
+
+    const allMigrationRows = migrations.flatMap(g => g.items);
+    document.getElementById('migration-table-body').innerHTML = allMigrationRows.map(row => `
+      <tr>
+        <td><span class="inline-swatch" style="background:${row.oldHex}"></span>${row.oldHex}</td>
+        <td class="arrow-cell">→</td>
+        <td><span class="inline-swatch" style="background:${row.newHex}"></span>${row.newHex}</td>
+        <td><code>${row.alias}</code></td>
+        <td>${row.name}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('migration-groups').innerHTML = migrations
+      .map(g => renderMigrationGroup(g.title, g.items))
+      .join('');
+
+    document.getElementById('js-constants-grid').innerHTML = jsConstants.map(c => swatch(c)).join('');
+    document.getElementById('brand-colors-grid').innerHTML = brandColors.map(c => swatch(c)).join('');
+    document.getElementById('theme-tokens-grid').innerHTML = themeTokens.map(c => swatch(c)).join('');
+    document.getElementById('neutral-colors-grid').innerHTML = neutralColors.map(c => swatch(c)).join('');
+    document.getElementById('accent-colors-grid').innerHTML = accentColors.map(c => swatch(c)).join('');
+    document.getElementById('vuetify-classes-grid').innerHTML = vuetifyClasses.map(c => swatch(c)).join('');
+  </script>
+</body>
+</html>

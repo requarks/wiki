@@ -11,8 +11,8 @@
  *   <div class="hidden-data" style="display: none;" ...></div>
  *
  * Usage (local dev container):
- *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/strip-hr-before-hidden-data.js --dry-run"
- *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/strip-hr-before-hidden-data.js"
+ *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/utils/strip-hr-before-hidden-data.js --dry-run"
+ *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/utils/strip-hr-before-hidden-data.js"
  *
  * Options:
  *   --dry-run    Print changes without writing
@@ -130,16 +130,16 @@ async function main () {
   }
 
   global.WIKI = {
-    ROOTPATH: path.resolve(__dirname, '../..'),
-    SERVERPATH: path.resolve(__dirname, '../../server'),
+    ROOTPATH: path.resolve(__dirname, '../../..'),
+    SERVERPATH: path.resolve(__dirname, '../../../server'),
     IS_DEBUG: false
   }
 
-  WIKI.configSvc = require('../../server/core/config')
+  WIKI.configSvc = require('../../../server/core/config')
   WIKI.configSvc.init()
-  WIKI.logger = require('../../server/core/logger').init('STRIP-HR-HIDDEN-DATA')
+  WIKI.logger = require('../../../server/core/logger').init('STRIP-HR-HIDDEN-DATA')
 
-  WIKI.models = require('../../server/core/db').init()
+  WIKI.models = require('../../../server/core/db').init()
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
 

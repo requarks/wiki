@@ -83,7 +83,7 @@ ${selector} .v-icon {
 
     return [
       applyRule('.v-main :is(.contents, .page-header-block, .page-col-sd, #arrow-boxes, .related-posts)'),
-      applyRule('.v-application .v-navigation-drawer')
+      applyRule('.v-application .v-navigation-drawer .__vuescroll')
     ].join('\n\n')
   },
 

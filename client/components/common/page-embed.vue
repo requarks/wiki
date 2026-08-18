@@ -107,7 +107,7 @@ export default {
   }
 
   &__gdrive-fallback {
-    border: 1px solid #ddd;
+    border: 1px solid mc('grey', '300');
     border-radius: 8px;
     padding: 20px 16px;
     text-align: center;
@@ -116,7 +116,7 @@ export default {
 
   &__gdrive-text {
     margin: 0 0 12px;
-    color: #444;
+    color: mc('grey', '800');
   }
 }
 </style>

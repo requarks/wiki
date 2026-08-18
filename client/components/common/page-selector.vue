@@ -102,6 +102,10 @@
 <script>
 import _ from 'lodash'
 import gql from 'graphql-tag'
+import {
+  SCROLLBAR_BLUE_HOVER,
+  SCROLLBAR_GREY_HOVER
+} from '../../helpers/theme-colors'
 
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
@@ -166,9 +170,9 @@ export default {
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: '#999',
+          background: SCROLLBAR_GREY_HOVER,
           hoverStyle: {
-            background: '#64B5F6'
+            background: SCROLLBAR_BLUE_HOVER
           }
         }
       }

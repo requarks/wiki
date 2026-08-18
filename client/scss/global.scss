@@ -3,6 +3,9 @@
 @import "base/material";
 @import "base/mixins";
 
+$nav-bar-color: mc('theme', 'brand');
+$brand-color: mc('theme', 'brand');
+
 $tablet: 769px !default;
 $desktop: 980px !default;
 $widescreen: 1180px !default;
