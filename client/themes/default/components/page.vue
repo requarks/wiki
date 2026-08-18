@@ -368,6 +368,8 @@ import {
 
 /* global siteLangs, siteConfig */
 
+const PAGE_HEADER_STUCK_HYSTERESIS_PX = 8
+
 Vue.component('Tabset', Tabset)
 
 Prism.plugins.autoloader.languages_path = '/_assets/js/prism/'
@@ -744,10 +746,11 @@ export default {
     this._mainScrollWrap = this.getMainScrollWrap()
     if (this._mainScrollWrap) {
       this._mainScrollWrap.addEventListener('scroll', this.upBtnScroll, { passive: true })
+      this._mainScrollWrap.addEventListener('scroll', this.pageHeaderScroll, { passive: true })
       this.upBtnScroll({ target: this._mainScrollWrap })
     }
 
-    this.setupPageHeaderObserver()
+    this.setupPageHeaderScroll()
 
     // -> Check side navigation visibility
     this.navShown = true
@@ -791,8 +794,9 @@ export default {
   beforeDestroy () {
     if (this._mainScrollWrap) {
       this._mainScrollWrap.removeEventListener('scroll', this.upBtnScroll)
+      this._mainScrollWrap.removeEventListener('scroll', this.pageHeaderScroll)
     }
-    this.teardownPageHeaderObserver()
+    this.teardownPageHeaderScroll()
     this.$root.$off('goToComments')
     this.destroyPageEmbed()
   },
@@ -864,35 +868,55 @@ export default {
           : (document.documentElement.scrollTop != null ? document.documentElement.scrollTop : 0))
       this.upBtnShown = scrollOffset > window.innerHeight * 0.33
     },
-    setupPageHeaderObserver () {
-      this.teardownPageHeaderObserver()
+    pageHeaderScroll () {
+      if (this._pageHeaderScrollRaf) {
+        return
+      }
+
+      this._pageHeaderScrollRaf = requestAnimationFrame(() => {
+        this._pageHeaderScrollRaf = null
+        this.updatePageHeaderStuck()
+      })
+    },
+    updatePageHeaderStuck () {
+      if (!this.showMobileBottomNav || this.path === 'home' || !this._mainScrollWrap) {
+        return
+      }
+
+      const sentinel = this.$refs.pageHeaderSentinel
+      if (!sentinel) {
+        return
+      }
+
+      const rootTop = this._mainScrollWrap.getBoundingClientRect().top
+      const sentinelBottom = sentinel.getBoundingClientRect().bottom
+
+      if (!this.pageHeaderStuck) {
+        if (sentinelBottom <= rootTop - PAGE_HEADER_STUCK_HYSTERESIS_PX) {
+          this.pageHeaderStuck = true
+        }
+        return
+      }
+
+      if (sentinelBottom > rootTop + PAGE_HEADER_STUCK_HYSTERESIS_PX) {
+        this.pageHeaderStuck = false
+      }
+    },
+    setupPageHeaderScroll () {
+      this.teardownPageHeaderScroll()
 
       if (!this.showMobileBottomNav || this.path === 'home' || !this._mainScrollWrap) {
         return
       }
 
       this.$nextTick(() => {
-        const sentinel = this.$refs.pageHeaderSentinel
-        if (!sentinel) {
-          return
-        }
-
-        this._pageHeaderObserver = new IntersectionObserver(
-          ([entry]) => {
-            this.pageHeaderStuck = !entry.isIntersecting
-          },
-          {
-            root: this._mainScrollWrap,
-            threshold: 0
-          }
-        )
-        this._pageHeaderObserver.observe(sentinel)
+        this.updatePageHeaderStuck()
       })
     },
-    teardownPageHeaderObserver () {
-      if (this._pageHeaderObserver) {
-        this._pageHeaderObserver.disconnect()
-        this._pageHeaderObserver = null
+    teardownPageHeaderScroll () {
+      if (this._pageHeaderScrollRaf) {
+        cancelAnimationFrame(this._pageHeaderScrollRaf)
+        this._pageHeaderScrollRaf = null
       }
       this.pageHeaderStuck = false
     },
@@ -945,6 +969,12 @@ export default {
 </script>
 
 <style lang="scss">
+
+$page-header-stuck-transition: 0.22s ease;
+$page-header-title-size-expanded: 1.5rem;
+$page-header-title-line-height-expanded: 2rem;
+$page-header-title-size-stuck: 0.875rem;
+$page-header-title-line-height-stuck: 1.25rem;
 
 .breadcrumbs-nav {
   .v-btn {
@@ -1002,13 +1032,42 @@ export default {
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
     box-sizing: border-box;
+    transition: box-shadow $page-header-stuck-transition;
+
+    .page-header-section.is-page-header-title {
+      transition: min-height $page-header-stuck-transition, padding $page-header-stuck-transition;
+    }
+
+    .page-header-divider,
+    .page-header-section.is-page-header-subtitle {
+      overflow: hidden;
+      opacity: 1;
+      transition: opacity $page-header-stuck-transition, max-height $page-header-stuck-transition,
+        min-height $page-header-stuck-transition, padding $page-header-stuck-transition,
+        margin $page-header-stuck-transition;
+    }
+
+    .page-header-divider {
+      max-height: 2px;
+    }
+
+    .page-header-section.is-page-header-subtitle {
+      max-height: 120px;
+    }
 
     &.page-header-block--stuck {
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 
       .page-header-divider,
       .page-header-section.is-page-header-subtitle {
-        display: none;
+        max-height: 0;
+        min-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        pointer-events: none;
       }
 
       .page-header-section.is-page-header-title {
@@ -1018,8 +1077,6 @@ export default {
 
       .page-header-title {
         -webkit-line-clamp: 1;
-        font-size: 0.875rem !important;
-        line-height: 1.25rem !important;
       }
     }
   }
@@ -1052,6 +1109,23 @@ export default {
       -webkit-box-orient: vertical;
       overflow: hidden;
       word-break: break-word;
+    }
+  }
+
+  @media #{map-get($display-breakpoints, 'sm-and-down')} {
+    .page-header-block--mobile & {
+      .page-header-headings .page-header-title.headline {
+        font-size: $page-header-title-size-expanded !important;
+        line-height: $page-header-title-line-height-expanded !important;
+        transition: font-size $page-header-stuck-transition, line-height $page-header-stuck-transition;
+      }
+    }
+
+    .page-header-block--mobile.page-header-block--stuck & {
+      .page-header-headings .page-header-title.headline {
+        font-size: $page-header-title-size-stuck !important;
+        line-height: $page-header-title-line-height-stuck !important;
+      }
     }
   }
 
