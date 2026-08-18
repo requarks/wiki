@@ -415,6 +415,55 @@
           </w-item>
         </w-card>
         <!-- ----------------------- -->
+        <!-- Site-wide Banner -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.general.banner') }}</w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="flag-filled" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.bannerEnabled`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.bannerEnabledHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.banner.isEnabled"
+                :aria-label="t(`admin.general.bannerEnabled`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="typography" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.bannerTitle`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.bannerTitleHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-input
+                outlined
+                v-model="state.config.banner.title"
+                dense
+                :aria-label="t(`admin.general.bannerTitle`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="markdown" class="self-start" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.bannerContent`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.bannerContentHint`) }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <w-item-section>
+              <util-code-editor
+                v-model="state.config.banner.content"
+                language="markdown"
+                :aria-label="t(`admin.general.bannerContent`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
         <!-- Discovery -->
         <!-- ----------------------- -->
         <w-card class="pb-2 mt-4">
@@ -538,6 +587,8 @@ import { loading } from '@/composables/loading'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
+import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
+
 import {
   clearSiteImage,
   isAcceptedSiteImage,
@@ -576,6 +627,11 @@ function defaultConfig() {
     company: '',
     contentLicense: '',
     footerExtra: '',
+    banner: {
+      isEnabled: false,
+      title: '',
+      content: ''
+    },
     pageExtensions: '',
     logoText: false,
     ratings: {
@@ -695,6 +751,11 @@ async function save() {
         company: state.config.company ?? '',
         contentLicense: state.config.contentLicense ?? '',
         footerExtra: state.config.footerExtra ?? '',
+        banner: {
+          isEnabled: state.config.banner?.isEnabled ?? false,
+          title: state.config.banner?.title ?? '',
+          content: state.config.banner?.content ?? ''
+        },
         pageExtensions: parsePageExtensions(state.config.pageExtensions),
         logoText: state.config.logoText ?? false,
         sitemap: state.config.sitemap ?? false,

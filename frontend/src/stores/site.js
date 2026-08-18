@@ -47,6 +47,16 @@ export const useSiteStore = defineStore('site', {
     company: '',
     contentLicense: '',
     footerExtra: '',
+    /**
+     * The notice an administrator can raise above the contents of every page — an outage, a freeze,
+     * a wiki being moved. `content` is markdown, rendered by `SiteBanner.vue` at display time rather
+     * than stored as HTML: it is site configuration, and never goes through the page renderer.
+     */
+    banner: {
+      isEnabled: false,
+      title: '',
+      content: ''
+    },
     dark: false,
     title: '',
     description: '',
@@ -191,6 +201,10 @@ export const useSiteStore = defineStore('site', {
         company: siteInfo.company,
         contentLicense: siteInfo.contentLicense,
         footerExtra: siteInfo.footerExtra,
+        banner: {
+          ...this.banner,
+          ...siteInfo.banner
+        },
         features: {
           ...this.features,
           ...siteInfo.features

@@ -128,6 +128,9 @@ import { useSiteStore } from '@/stores/site'
  * `<block-name prop="value">` — the element the component registers itself as.
  */
 
+/** Blocks the editor's side toolbar inserts directly, so the picker leaves them out. */
+const TOOLBAR_BLOCKS = ['tabs']
+
 // STORES
 
 const siteStore = useSiteStore()
@@ -148,8 +151,16 @@ const state = reactive({
 
 // COMPUTED
 
-/** Only blocks this site has switched on: the rest cannot render, so offering them is a trap. */
-const blocks = computed(() => state.blocks.filter((block) => block.isEnabled))
+/**
+ * Blocks offered here: the ones this site has switched on, minus the ones the editor inserts itself.
+ *
+ * A block that is off cannot render, so offering it is a trap. Tabs is on but has its own button in
+ * the editor's side toolbar, which inserts the very same markup — listing it here as well is a second
+ * way to the same place.
+ */
+const blocks = computed(() =>
+  state.blocks.filter((block) => block.isEnabled && !TOOLBAR_BLOCKS.includes(block.block))
+)
 
 const markdown = computed(() => (state.selected ? blockMarkdown(state.selected, state.values) : ''))
 

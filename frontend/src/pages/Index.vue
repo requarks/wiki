@@ -116,6 +116,11 @@
                   the stylesheet has `--content-bleed` to match -->
           <div class="page-container-body p-2 sm:p-4">
             <!--
+              Above the article rather than above the toolbars: what an administrator raises a banner
+              about is the content, and this is where a reader is already looking.
+            -->
+            <site-banner />
+            <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
             -->
@@ -363,6 +368,7 @@ import PageTags from '@/components/PageTags.vue'
 import PageToc from '@/components/PageToc.vue'
 import PageUnlockDialog from '@/components/PageUnlockDialog.vue'
 import SideDialog from '@/components/SideDialog.vue'
+import SiteBanner from '@/components/SiteBanner.vue'
 
 const editorComponents = {
   markdown: defineAsyncComponent({
@@ -1058,13 +1064,22 @@ $toc-overlay-max: 749.98px;
   }
 }
 
+/*
+  A hairline of the page's OWN background between the header and whatever the column starts with, in
+  each theme's colour -- so it is invisible against the article, which is that colour, and reads as one
+  pixel of daylight under anything that starts flush to the top of the column. A site banner does
+  exactly that, and against the header's bottom border it needs the gap.
+
+  Both themes: with the dark one left out the banner butted straight into the header there and not in
+  the light theme, which is the sort of difference that reads as a bug in whichever one you see second.
+*/
 .page-container {
   @at-root .body--light & {
     border-top: 1px solid #fff;
   }
-  // @at-root .body--dark & {
-  //   border-top: 1px solid $dark-6;
-  // }
+  @at-root .body--dark & {
+    border-top: 1px solid $dark-6;
+  }
 }
 /*
   The Tags heading's edit toggle. `visibility` is transitioned alongside the opacity so it still fades

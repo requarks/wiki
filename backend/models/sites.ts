@@ -99,6 +99,11 @@ class Sites {
             company: '',
             contentLicense: '',
             footerExtra: '',
+            banner: {
+              isEnabled: false,
+              title: '',
+              content: ''
+            },
             pageExtensions: ['md', 'html', 'txt'],
             discoverable: false,
             defaults: {
@@ -351,6 +356,11 @@ class Sites {
         company: '',
         contentLicense: '',
         footerExtra: '',
+        banner: {
+          isEnabled: false,
+          title: '',
+          content: ''
+        },
         pageExtensions: ['md', 'html', 'txt'],
         discoverable: false,
         defaults: {

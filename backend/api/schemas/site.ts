@@ -34,6 +34,24 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       footerExtra: {
         type: 'string'
       },
+      banner: {
+        type: 'object',
+        description:
+          'A notice shown above the contents of every page of this site, styled as a caution admonition. The content is markdown, and is rendered by the app rather than stored as HTML.',
+        properties: {
+          isEnabled: {
+            type: 'boolean'
+          },
+          title: {
+            type: 'string',
+            maxLength: 255
+          },
+          content: {
+            type: 'string',
+            maxLength: 8192
+          }
+        }
+      },
       pageExtensions: {
         type: 'array',
         items: {

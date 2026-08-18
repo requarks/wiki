@@ -18,6 +18,7 @@ const SITE_CONFIG_KEYS = [
   'company',
   'contentLicense',
   'footerExtra',
+  'banner',
   'pageExtensions',
   'logoText',
   'sitemap',
@@ -262,6 +263,7 @@ async function routes(app: FastifyInstance) {
       company?: string
       contentLicense?: string
       footerExtra?: string
+      banner?: { isEnabled?: boolean; title?: string; content?: string }
       pageExtensions?: string[]
       logoText?: boolean
       sitemap?: boolean
@@ -328,6 +330,9 @@ async function routes(app: FastifyInstance) {
             },
             footerExtra: {
               type: 'string'
+            },
+            banner: {
+              $ref: 'Site#/properties/banner'
             },
             pageExtensions: {
               type: 'array',

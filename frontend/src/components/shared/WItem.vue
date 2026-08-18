@@ -66,7 +66,14 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  /** Underlying element when this is not a link. */
+  /**
+   * Underlying element when this is not a link.
+   *
+   * Nullable, and null means the default rather than nothing. Callers write
+   * `:tag="condition ? 'label' : null"` to say "a label only when the row is operable", and a prop
+   * default does not cover that: Vue applies one for `undefined` alone, so the null arrived intact
+   * and `<component :is="null">` rendered the row away to nothing. See `tagName`.
+   */
   tag: {
     type: String,
     default: 'div'
@@ -105,7 +112,8 @@ const showsAffordance = computed(
 // -> A disabled link must stop being a link, or the browser will still navigate on click
 const tagName = computed(() => {
   if (!isAnchor.value) {
-    return props.tag
+    // -> `?? 'div'` rather than the prop default, which Vue only applies to `undefined`; see `tag`
+    return props.tag ?? 'div'
   }
   return props.to ? 'router-link' : 'a'
 })

@@ -162,18 +162,19 @@
             class="w-select-option flex w-full cursor-pointer flex-nowrap items-center gap-2 px-4 text-left hover:bg-black/5 dark:hover:bg-white/8"
             :class="[
               optionsDense ? 'min-h-8 py-1 text-body2' : 'min-h-10 py-2',
-              isSelected(opt.value) ? 'text-primary' : '',
+              isSelected(opt.value) ? selectedOptionClass : '',
               idx === activeIndex ? 'bg-black/8 dark:bg-white/12' : ''
             ]"
             @click.stop="select(opt.value)"
             @mousemove="activeIndex = idx">
             <!--
               A check, not a checkbox. The icon takes the row's own font size unless told otherwise,
-              which made a 14px square that read as a rendering fault rather than a control -- and the
-              row already announces its state by colouring itself. The column is held open when
-              nothing is drawn, so labels line up whatever is selected.
+              which made a 14px square that read as a rendering fault rather than a control. Drawn for
+              a single selection too: colour alone is a weak marker, and the one the row used to rely
+              on could not be strong enough on a dark panel to carry the state by itself. The column is
+              held open when nothing is drawn, so labels line up whatever is selected.
             -->
-            <span v-if="multiple" class="flex w-5 shrink-0 justify-center">
+            <span class="flex w-5 shrink-0 justify-center">
               <w-icon v-if="isSelected(opt.value)" name="mdi:check" size="20px" />
             </span>
             <span class="min-w-0 flex-1">
@@ -746,6 +747,17 @@ const floatColorClass = computed(() => {
   // -> Lightened brand blue on a dark field, matching WInput
   return isOpen.value ? 'text-primary dark:text-primary-light' : 'text-black/60 dark:text-white/70'
 })
+
+/*
+  Brand blue is a *dark* colour, so on the dark panel it sat at roughly 3:1 against `dark-3` and the
+  selected row read as the least legible one in the list. The lightened blue is the same colour the
+  floating label and `.w-section-header` switch to on dark, and it carries the emphasis without the
+  contrast loss. `dark` is checked separately from the `dark:` variant because a menu opened from a
+  dark surface renders dark whatever the app theme -- which is exactly the admin sidebar's case.
+*/
+const selectedOptionClass = computed(() =>
+  props.dark ? 'text-primary-light' : 'text-primary dark:text-primary-light'
+)
 
 const controlClasses = computed(() => [
   props.dense ? 'w-input-control--dense min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',

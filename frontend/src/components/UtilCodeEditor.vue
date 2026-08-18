@@ -49,6 +49,7 @@ import hljs from 'highlight.js/lib/core'
 import css from 'highlight.js/lib/languages/css'
 import javascript from 'highlight.js/lib/languages/javascript'
 import json from 'highlight.js/lib/languages/json'
+import markdown from 'highlight.js/lib/languages/markdown'
 import xml from 'highlight.js/lib/languages/xml'
 import yaml from 'highlight.js/lib/languages/yaml'
 
@@ -59,7 +60,10 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  /** `css` | `html` | `javascript` | `json` | `yaml`; anything else renders unhighlighted. */
+  /**
+   * `css` | `html` | `javascript` | `json` | `markdown` | `yaml`; anything else renders
+   * unhighlighted.
+   */
   language: {
     type: String,
     default: 'plaintext'
@@ -102,6 +106,7 @@ const inputEl = ref(null)
 hljs.registerLanguage('css', css)
 hljs.registerLanguage('javascript', javascript)
 hljs.registerLanguage('json', json)
+hljs.registerLanguage('markdown', markdown)
 hljs.registerLanguage('xml', xml)
 hljs.registerLanguage('yaml', yaml)
 
@@ -115,6 +120,7 @@ const HLJS_LANGUAGES = {
   html: 'xml',
   javascript: 'javascript',
   json: 'json',
+  markdown: 'markdown',
   yaml: 'yaml'
 }
 
