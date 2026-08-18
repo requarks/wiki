@@ -5,8 +5,8 @@
  * Both editors use contentType html, so only editorKey is updated — content is unchanged.
  *
  * Usage:
- *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/convert-pdf-pages-to-code-editor.js --dry-run"
- *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/convert-pdf-pages-to-code-editor.js"
+ *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/utils/convert-pdf-pages-to-code-editor.js --dry-run"
+ *   docker exec wiki-app sh -c "dockerdev=1 node dev/scripts/utils/convert-pdf-pages-to-code-editor.js"
  *
  * Options:
  *   --dry-run
@@ -37,16 +37,16 @@ async function main () {
   }
 
   global.WIKI = {
-    ROOTPATH: path.resolve(__dirname, '../..'),
-    SERVERPATH: path.resolve(__dirname, '../../server'),
+    ROOTPATH: path.resolve(__dirname, '../../..'),
+    SERVERPATH: path.resolve(__dirname, '../../../server'),
     IS_DEBUG: false
   }
 
-  WIKI.configSvc = require('../../server/core/config')
+  WIKI.configSvc = require('../../../server/core/config')
   WIKI.configSvc.init()
-  WIKI.logger = require('../../server/core/logger').init('CONVERT-PDF-EDITOR')
+  WIKI.logger = require('../../../server/core/logger').init('CONVERT-PDF-EDITOR')
 
-  WIKI.models = require('../../server/core/db').init()
+  WIKI.models = require('../../../server/core/db').init()
   await WIKI.configSvc.loadFromDb()
   await WIKI.configSvc.applyFlags()
 

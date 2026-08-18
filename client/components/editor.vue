@@ -9,7 +9,7 @@
           v-model='currentPageTitle'
           hide-details
           background-color='white'
-          color='#192b85'
+          :color='navBarColor'
           dense
           rounded
           full-width
@@ -66,6 +66,7 @@ import { AtomSpinner } from 'epic-spinners'
 import { Base64 } from 'js-base64'
 import { StatusIndicator } from 'vue-status-indicator'
 import { decodeEffectivePermissions } from '../helpers/auth-session'
+import { NAV_BAR_COLOR } from '../helpers/theme-colors'
 
 import editorStore from '../store/editor'
 
@@ -160,6 +161,7 @@ export default {
   },
   data() {
     return {
+      navBarColor: NAV_BAR_COLOR,
       isSaving: false,
       isConflict: false,
       dialogProps: false,
@@ -602,8 +604,8 @@ export default {
       }
 
       input {
-        color: #192b85 !important;
-        caret-color: #192b85;
+        color: mc('theme', 'brand') !important;
+        caret-color: mc('theme', 'brand');
         text-align: center;
       }
     }

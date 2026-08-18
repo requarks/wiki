@@ -33,7 +33,7 @@ export default {
 
 .related-posts .post-card {
   background: #fff;
-  border: 1px solid #ddd;
+  border: 1px solid mc('grey', '300');
   border-radius: 6px;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -72,7 +72,7 @@ export default {
 .related-posts .post-card h3 {
   font-size: 1rem;
   font-weight: 700;
-  color: #111;
+  color: mc('grey', '900');
   margin: 8px 4px 4px;
   line-height: 1.3;
   flex: 0 0 auto;
@@ -80,7 +80,7 @@ export default {
 
 .related-posts .post-card-divider {
   border: none;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid mc('grey', '300');
   margin: 0 4px 4px;
   flex: 0 0 auto;
 }
@@ -88,7 +88,7 @@ export default {
 .related-posts .post-card p {
   font-size: 0.88rem;
   font-weight: normal;
-  color: #555;
+  color: mc('grey', '700');
   margin: 0 4px 0;
   line-height: 1.35;
   min-height: 0;

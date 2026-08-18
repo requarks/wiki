@@ -1,19 +1,47 @@
 <template lang='pug'>
-  .nav-drawer-mobile-header
-    .nav-drawer-mobile-header__profile(v-if='isAuthenticated', role='button', tabindex='0', @click='goToProfile', @keyup.enter='goToProfile')
-      v-avatar.mr-3(size='48', :color='userPicture.kind === `initials` ? `blue` : ``')
-        span.white--text.subheading(v-if='userPicture.kind === `initials`') {{ userPicture.initials }}
-        v-img(v-else-if='userPicture.kind === `image`', :src='userPicture.url')
+  .nav-drawer-mobile-header(
+    style="flex:0 0 auto;padding:16px 16px 8px;background:#bbdefb;border-bottom:1px solid #64b5f6;color:#192b85;"
+  )
+    .nav-drawer-mobile-header__profile(
+      v-if='isAuthenticated',
+      role='button',
+      tabindex='0',
+      @click='goToProfile',
+      @keyup.enter='goToProfile',
+      style='display:flex;align-items:center;margin-bottom:8px;padding:6px 8px;border-radius:8px;cursor:pointer;'
+    )
+      span(
+        style='display:inline-flex;align-items:center;justify-content:center;flex:0 0 48px;min-width:48px;max-width:48px;width:48px;min-height:48px;max-height:48px;height:48px;border-radius:50%;background:#fff;color:#192b85;margin-inline-end:12px;overflow:hidden;'
+      )
+        span(v-if='userPicture.kind === `initials`', style='color:#192b85;') {{ userPicture.initials }}
+        img(
+          v-else-if='userPicture.kind === `image`',
+          :src='userPicture.url',
+          alt='',
+          style='width:48px;height:48px;object-fit:cover;display:block;'
+        )
       div
-        .subtitle-1.font-weight-medium.nav-drawer-mobile-header__name {{ userName }}
-        .caption.nav-drawer-mobile-header__email {{ userEmail }}
-    v-list.nav-drawer-mobile-header__links(dense)
-      v-list-item(v-if='isAuthenticated', @click='logout')
-        v-list-item-icon: v-icon mdi-logout
-        v-list-item-title {{$t('common:header.logout')}}
-      v-list-item(v-else, href='/login', @click='onNavigate')
-        v-list-item-icon: v-icon mdi-login
-        v-list-item-title {{$t('common:header.login')}}
+        div(style='font-size:18px;font-weight:600;line-height:1.45;color:#192b85;') {{ userName }}
+        div(style='font-size:15px !important;line-height:1.3 !important;color:rgba(25,43,133,0.75);') {{ userEmail }}
+    div(style='display:flex;flex-direction:column;gap:2px;')
+      button(
+        v-if='isAuthenticated',
+        class='nav-drawer-mobile-header__action',
+        type='button',
+        @click='logout',
+        style='display:flex;align-items:center;gap:12px;height:36px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:#192b85;cursor:pointer;text-align:left;'
+      )
+        i.mdi.mdi-logout(style='font-size:20px;line-height:1;')
+        span {{ $t('common:header.logout') }}
+      a(
+        v-else,
+        class='nav-drawer-mobile-header__action',
+        href='/login',
+        @click='onNavigate',
+        style='display:flex;align-items:center;gap:12px;height:36px;padding:0 8px;border-radius:8px;color:#192b85;text-decoration:none;'
+      )
+        i.mdi.mdi-login(style='font-size:20px;line-height:1;')
+        span {{ $t('common:header.login') }}
 </template>
 
 <script>
@@ -58,75 +86,10 @@ export default {
 </script>
 
 <style lang='scss'>
-.nav-drawer-mobile-header {
-  flex: 0 0 auto;
-  padding: 16px 16px 8px;
-
-  &__profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 4px;
-    outline: none;
-
-    &:hover,
-    &:focus {
-      background-color: rgba(0, 0, 0, 0.04);
-    }
-  }
-
-  &__links .v-list-item__icon {
-    margin-right: 16px;
-  }
-
-  &__email {
-    font-size: 0.6875rem;
-    line-height: 1.1rem;
-  }
-}
-
-#root .v-application .v-navigation-drawer .v-navigation-drawer__content {
-  .nav-drawer-mobile-header .caption.nav-drawer-mobile-header__email {
-    font-size: 0.6875rem !important;
-    line-height: 1.1rem !important;
-  }
-}
-
-.nav-drawer-shell.primary .nav-drawer-mobile-header {
-  background-color: mc('grey', '100');
-  border-bottom: 1px solid mc('grey', '300');
-
-  &__name {
-    color: mc('grey', '900');
-  }
-
-  &__email {
-    color: mc('grey', '600');
-  }
-
-  &__profile:hover,
-  &__profile:focus {
-    background-color: rgba(0, 0, 0, 0.05);
-  }
-}
-
-.nav-drawer-shell.blue.darken-4 .nav-drawer-mobile-header {
-  background-color: mc('grey', '800');
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-
-  &__name {
-    color: #fff;
-  }
-
-  &__email {
-    color: mc('grey', '400');
-  }
-
-  &__profile:hover,
-  &__profile:focus {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
+.nav-drawer-mobile-header__profile:hover,
+.nav-drawer-mobile-header__profile:focus,
+.nav-drawer-mobile-header__action:hover,
+.nav-drawer-mobile-header__action:focus {
+  background-color: rgba(25, 43, 133, 0.05) !important;
 }
 </style>

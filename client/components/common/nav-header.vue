@@ -115,10 +115,9 @@ import movePageMutation from 'gql/common/common-pages-mutation-move.gql'
 import NavActionItems from './nav-action-items.vue'
 import PageDelete from './page-delete.vue'
 import PageConvert from './page-convert.vue'
+import { NAV_BAR_COLOR } from '../../helpers/theme-colors'
 
 /* global siteConfig, siteLangs */
-
-const NAV_BAR_COLOR = '#192b85'
 
 export default {
   components: {
@@ -358,8 +357,6 @@ export default {
 </script>
 
 <style lang='scss'>
-
-$nav-bar-color: #192b85;
 
 %nav-header-search-field {
   .v-input__slot {

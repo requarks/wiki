@@ -361,6 +361,10 @@ import _ from 'lodash'
 import ClipboardJS from 'clipboard'
 import Vue from 'vue'
 import { registerEmbeddedPermissions, syncPageEffectivePermissionsToStore } from '../../../helpers/auth-session'
+import {
+  SCROLLBAR_BLUE_DEFAULT,
+  SCROLLBAR_BLUE_HOVER
+} from '../../../helpers/theme-colors'
 
 /* global siteLangs, siteConfig */
 
@@ -533,9 +537,9 @@ export default {
         },
         bar: {
           onlyShowBarOnScroll: false,
-          background: '#42A5F5',
+          background: SCROLLBAR_BLUE_DEFAULT,
           hoverStyle: {
-            background: '#64B5F6'
+            background: SCROLLBAR_BLUE_HOVER
           }
         }
       },
@@ -1057,17 +1061,17 @@ export default {
     right: 10px;
 
     .v-btn {
-      border-right: 1px solid #DDD !important;
-      border-bottom: 1px solid #DDD !important;
+      border-right: 1px solid mc('grey', '300') !important;
+      border-bottom: 1px solid mc('grey', '300') !important;
       border-radius: 0;
-      color: #777;
+      color: mc('grey', '600');
       background-color: #FFF !important;
 
       @at-root .theme--dark & {
         background-color: #222 !important;
         border-right-color: #444 !important;
         border-bottom-color: #444 !important;
-        color: #CCC;
+        color: mc('grey', '400');
       }
 
       .v-icon {

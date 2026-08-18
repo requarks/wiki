@@ -26,7 +26,7 @@ export default {
 #arrow-boxes {
   padding-left: 0;
   padding-right: 0;
-  border: 1px solid #ddd;
+  border: 1px solid mc('grey', '300');
 }
 
 #arrow-boxes .page-nav-row {
@@ -42,7 +42,7 @@ export default {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background-color: #3b82f6;
+  background-color: mc('theme', 'primary');
   color: #fff !important;
   display: flex;
   align-items: center;
@@ -62,7 +62,7 @@ export default {
 #arrow-boxes .arrow-left--empty,
 #arrow-boxes .arrow-right--empty {
   pointer-events: none;
-  color: #7a9cc6 !important;
+  color: mc('blue', '400') !important;
 }
 
 #arrow-boxes .circle--index {
@@ -70,8 +70,8 @@ export default {
 }
 
 #arrow-boxes .arrow-right {
-  background-color: #bfdbfe;
-  color: #4a6fa5 !important;
+  background-color: mc('blue', '100');
+  color: mc('blue', '800') !important;
   font-weight: 700;
   padding: 20px;
   display: flex;
@@ -87,8 +87,8 @@ export default {
 }
 
 #arrow-boxes .arrow-left {
-  background-color: #bfdbfe;
-  color: #4a6fa5 !important;
+  background-color: mc('blue', '100');
+  color: mc('blue', '800') !important;
   font-weight: 700;
   padding: 20px;
   display: flex;

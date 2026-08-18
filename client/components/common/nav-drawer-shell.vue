@@ -5,7 +5,6 @@
     :app='true'
     fixed
     :clipped='true'
-    dark
     :right='$vuetify.rtl'
     :permanent='permanent'
     :temporary='temporary'
@@ -16,13 +15,18 @@
     :class='drawerClass'
     )
     nav-drawer-mobile-header(@navigate='onNavigate')
-    vue-scroll(:ops='resolvedScrollStyle')
-      slot
+    .theme--dark.nav-drawer-shell__scroll
+      vue-scroll(:ops='resolvedScrollStyle')
+        slot
 </template>
 
 <script>
 import NavDrawerMobileHeader from './nav-drawer-mobile-header.vue'
 import { NAV_DRAWER_DESKTOP_WIDTH } from './nav-drawer-config'
+import {
+  SCROLLBAR_GREY_DEFAULT,
+  SCROLLBAR_GREY_HOVER
+} from '../../helpers/theme-colors'
 
 export function createNavDrawerScrollStyle (rtl = false) {
   return {
@@ -40,9 +44,9 @@ export function createNavDrawerScrollStyle (rtl = false) {
     },
     bar: {
       onlyShowBarOnScroll: false,
-      background: '#CCC',
+      background: SCROLLBAR_GREY_DEFAULT,
       hoverStyle: {
-        background: '#999'
+        background: SCROLLBAR_GREY_HOVER
       }
     }
   }
@@ -141,8 +145,11 @@ export default {
     flex-direction: column;
   }
 
-  .nav-drawer-mobile-header {
-    flex: 0 0 auto;
+  &__scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .__vuescroll {
@@ -154,38 +161,6 @@ export default {
 
   .__panel {
     height: 100% !important;
-  }
-
-  &.primary {
-    background-color: mc('theme', 'primary') !important;
-  }
-
-  &.blue.darken-4 {
-    background-color: mc('blue', '900') !important;
-  }
-
-  .v-divider {
-    border-color: rgba(255, 255, 255, 0.12) !important;
-  }
-
-  .v-list-item__title,
-  .v-list-item__content,
-  .v-list-item__icon .v-icon:not(.red--text):not([class*='red--']),
-  .v-subheader {
-    color: #fff !important;
-  }
-
-  .nav-drawer-mobile-header__links {
-    .v-list-item__title,
-    .v-list-item__content,
-    .v-list-item__icon,
-    .v-list-item__icon .v-icon:not(.red--text):not([class*='red--']) {
-      color: #1976d2 !important;
-    }
-  }
-
-  .v-list-item--active {
-    background-color: rgba(255, 255, 255, 0.12) !important;
   }
 }
 </style>

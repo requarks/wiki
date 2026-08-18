@@ -1,6 +1,6 @@
 // Nav drawer list rows use dense Vuetify sizing; larger sidebar fonts (custom
 // fonts or inject CSS) need compact rows with room for Bengali glyph metrics.
-.v-application .v-navigation-drawer {
+.v-application .v-navigation-drawer .__vuescroll {
   .v-list {
     padding-top: 4px !important;
     padding-bottom: 4px !important;
