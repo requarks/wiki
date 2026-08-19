@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const { buildTagIndexHref } = require('./urlHelpers')
 
 /* global WIKI */
 
@@ -90,7 +91,7 @@ function resolveFromSeriesWithRegex (page, regex) {
   return {
     mode: 'from',
     tagValues: [fromTag.tag],
-    indexHref: `/t/${fromTag.tag.replace(/,/g, '/')}`
+    indexHref: buildTagIndexHref(page, fromTag.tag.replace(/,/g, '/'))
   }
 }
 
@@ -110,7 +111,7 @@ function resolveDownloadGroupWithRequiredTags (page, requiredTags) {
   return {
     mode: 'download',
     tagValues,
-    indexHref: `/t/${indexParts.join('/')}`
+    indexHref: buildTagIndexHref(page, indexParts.join('/'))
   }
 }
 
