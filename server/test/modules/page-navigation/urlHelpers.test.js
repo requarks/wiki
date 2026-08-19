@@ -32,14 +32,10 @@ describe('page-navigation/_lib/urlHelpers', () => {
   })
 
   describe('shouldPrefixLocaleInPath', () => {
-    it('prefixes when namespacing is enabled', () => {
-      WIKI.config.lang.namespacing = true
+    it('prefixes whenever a locale code is present', () => {
       expect(shouldPrefixLocaleInPath('bn')).toBe(true)
-    })
-
-    it('prefixes non-default locale when namespacing is disabled', () => {
-      expect(shouldPrefixLocaleInPath('bn')).toBe(true)
-      expect(shouldPrefixLocaleInPath('en')).toBe(false)
+      expect(shouldPrefixLocaleInPath('en')).toBe(true)
+      expect(shouldPrefixLocaleInPath('')).toBe(false)
     })
   })
 
@@ -49,31 +45,29 @@ describe('page-navigation/_lib/urlHelpers', () => {
       expect(buildPageHref({ localeCode: 'bn' }, 'topic/01')).toBe('/bn/topic/01')
     })
 
+    it('includes locale prefix for default locale when namespacing is disabled', () => {
+      WIKI.config.lang.code = 'bn'
+      expect(buildPageHref({ localeCode: 'bn' }, 'topic/01')).toBe('/bn/topic/01')
+    })
+
     it('uses request locale fallback when page localeCode is missing', () => {
-      WIKI.config.lang.namespacing = true
+      WIKI.config.lang.code = 'bn'
       expect(buildPageHref({}, 'topic/01', { locale: 'bn' })).toBe('/bn/topic/01')
     })
 
     it('normalizes leading slashes in target paths', () => {
-      WIKI.config.lang.namespacing = true
       expect(buildPageHref({ localeCode: 'bn' }, '/topic/01')).toBe('/bn/topic/01')
-    })
-
-    it('omits locale for default locale when namespacing is disabled', () => {
-      expect(buildPageHref({ localeCode: 'en' }, 'topic/01')).toBe('/topic/01')
     })
   })
 
   describe('buildTagIndexHref', () => {
-    it('includes lang query when locale prefix is required', () => {
-      WIKI.config.lang.namespacing = true
+    it('includes lang query when locale is present', () => {
       expect(buildTagIndexHref({ localeCode: 'bn' }, 'up:series/download'))
         .toBe('/t/up:series/download?lang=bn')
     })
 
-    it('returns plain tag path for default locale without namespacing', () => {
-      expect(buildTagIndexHref({ localeCode: 'en' }, 'up:series/download'))
-        .toBe('/t/up:series/download')
+    it('returns plain tag path when locale is missing', () => {
+      expect(buildTagIndexHref({}, 'up:series/download')).toBe('/t/up:series/download')
     })
   })
 })

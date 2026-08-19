@@ -9,11 +9,10 @@ function normalizePagePath (targetPath) {
 }
 
 function shouldPrefixLocaleInPath (localeCode) {
-  if (WIKI.config.lang.namespacing) {
-    return true
-  }
-
-  return Boolean(localeCode && localeCode !== WIKI.config.lang.code)
+  // Always keep the active locale in navigation URLs. Wiki.js accepts explicit
+  // locale segments even when lang.namespacing is disabled (production often
+  // serves /home at / while local dev uses /bn/home with namespacing on).
+  return Boolean(localeCode)
 }
 
 function buildPageHref (page, targetPath, options = {}) {
