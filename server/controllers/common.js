@@ -620,7 +620,10 @@ router.get('/*', async (req, res, next) => {
               injectCode.css = `${injectCode.css}\n${WIKI.data.pageNavigation.css}`
             }
             try {
-              pageNavigation = await WIKI.data.pageNavigation.resolve(page, navigationConfig, { seriesCache })
+              pageNavigation = await WIKI.data.pageNavigation.resolve(page, navigationConfig, {
+                seriesCache,
+                locale: pageArgs.locale
+              })
             } catch (err) {
               WIKI.logger.warn('Page navigation resolve failed: ', err)
             }
@@ -633,7 +636,8 @@ router.get('/*', async (req, res, next) => {
             try {
               relatedPages = await WIKI.data.relatedPages.resolve(page, WIKI.data.relatedPages.config || {}, {
                 seriesCache,
-                navigationConfig
+                navigationConfig,
+                locale: pageArgs.locale
               })
             } catch (err) {
               WIKI.logger.warn('Related pages resolve failed: ', err)

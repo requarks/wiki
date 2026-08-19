@@ -3,8 +3,7 @@ const {
   resolveSeriesContext,
   querySeriesPages
 } = require('../_lib/seriesContext')
-
-/* global WIKI */
+const { buildPageHref } = require('../_lib/urlHelpers')
 
 function cleanTitle (title) {
   return title.replace(/\|\s*SUNNI NOOR/i, '').trim()
@@ -22,11 +21,6 @@ function imageIndexForPath (path) {
 function buildCardImage (path, config) {
   const base = (config.relatedImageBaseUrl || 'https://sunninoor.com/images/related/').replace(/\/?$/, '/')
   return `${base}${imageIndexForPath(path)}.jpeg`
-}
-
-function buildPageHref (page, targetPath) {
-  const localePrefix = WIKI.config.lang.namespacing ? `/${page.localeCode}` : ''
-  return `${localePrefix}/${targetPath}`
 }
 
 module.exports = {
@@ -67,7 +61,7 @@ module.exports = {
       .map(offset => series.pages[series.idx + offset])
       .filter(Boolean)
       .map(p => ({
-        href: buildPageHref(page, p.path),
+        href: buildPageHref(page, p.path, options),
         title: cleanTitle(p.title),
         description: p.description || '',
         image: buildCardImage(p.path, config)

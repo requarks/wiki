@@ -3,16 +3,10 @@ const {
   resolveSeriesContext,
   querySeriesPages
 } = require('../_lib/seriesContext')
-
-/* global WIKI */
+const { buildPageHref } = require('../_lib/urlHelpers')
 
 function cleanTitle (title) {
   return title.replace(/\|\s*SUNNI NOOR/i, '').trim()
-}
-
-function buildPageHref (page, targetPath) {
-  const localePrefix = WIKI.config.lang.namespacing ? `/${page.localeCode}` : ''
-  return `${localePrefix}/${targetPath}`
 }
 
 module.exports = {
@@ -51,8 +45,8 @@ module.exports = {
         href: seriesContext.indexHref,
         label: config.indexLabel || 'সূচী'
       },
-      prev: prev ? { href: buildPageHref(page, prev.path), title: cleanTitle(prev.title) } : null,
-      next: next ? { href: buildPageHref(page, next.path), title: cleanTitle(next.title) } : null,
+      prev: prev ? { href: buildPageHref(page, prev.path, options), title: cleanTitle(prev.title) } : null,
+      next: next ? { href: buildPageHref(page, next.path, options), title: cleanTitle(next.title) } : null,
       related: null
     }
   }
