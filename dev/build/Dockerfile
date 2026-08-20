@@ -1,7 +1,7 @@
 # ====================
 # --- Build Assets ---
 # ====================
-FROM node:20-alpine AS assets
+FROM node:24-alpine AS assets
 
 RUN apk add yarn g++ make cmake python3 --no-cache
 
@@ -25,7 +25,7 @@ RUN yarn patch-package
 # ===============
 # --- Release ---
 # ===============
-FROM node:20-alpine
+FROM node:24-alpine
 LABEL maintainer="requarks.io"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
@@ -53,4 +53,4 @@ EXPOSE 3443
 
 # HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD curl -f http://localhost:3000/healthz
 
-CMD ["node", "server"]
+CMD ["node", "--no-deprecation", "server"]

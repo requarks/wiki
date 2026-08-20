@@ -4,6 +4,8 @@ const https = require('https')
 const { ApolloServer } = require('apollo-server-express')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const jwt = require('jsonwebtoken')
+const cookie = require('cookie')
 
 /* global WIKI */
 
@@ -125,7 +127,35 @@ module.exports = {
       context: ({ req, res }) => ({ req, res }),
       subscriptions: {
         onConnect: (connectionParams, webSocket) => {
+          let token = _.get(connectionParams, 'token', null)
 
+          if (!token) {
+            const cookieHeader = _.get(webSocket, 'upgradeReq.headers.cookie', '')
+            if (cookieHeader) {
+              const cookies = cookie.parse(cookieHeader)
+              token = cookies.jwt || null
+            }
+          }
+
+          if (!token) {
+            throw new Error('Unauthorized')
+          }
+
+          try {
+            const user = jwt.verify(token, WIKI.config.certs.public, {
+              audience: WIKI.config.auth.audience,
+              issuer: 'urn:wiki.js',
+              algorithms: ['RS256']
+            })
+
+            if (!_.includes(user.permissions, 'manage:system')) {
+              throw new Error('Forbidden')
+            }
+
+            return { user }
+          } catch (err) {
+            throw new Error('Unauthorized')
+          }
         },
         path: '/graphql-subscriptions'
       }

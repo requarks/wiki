@@ -31,7 +31,6 @@
 - [Feature Requests](https://feedback.js.wiki/wiki)
 - Chat with us on [Discord](https://discord.gg/rcxt9QS2jd)
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
-- [E2E Testing Results](https://dashboard.cypress.io/projects/r7qxah/runs)
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
 
@@ -91,68 +90,74 @@ Support this project by becoming a sponsor. Your name will show up in the Contri
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://acceleanation.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/41210718?s=200&v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/alexksso" target="_blank">
           Alexander Casassovici<br />(@alexksso)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/broxen" target="_blank">
           Broxen<br />(@broxen)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/xDacon" target="_blank">
           Dacon<br />(@xDacon)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
+        <a href="https://github.com/DonNabla" target="_blank">
+          Maxime Pierre<br />(@DonNabla)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/GigabiteLabs" target="_blank">
           <img src="https://static.requarks.io/sponsors/gigabitelabs-148x129.png">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.hostwiki.com/" target="_blank">
           <img src="https://cdn.js.wiki/images/sponsors/hostwiki.png">
         </a>
       </td>
     </tr>
     <tr>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/JayDaley" target="_blank">
           Jay Daley<br />(@JayDaley)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://github.com/idokka" target="_blank">
           Oleksii<br />(@idokka)
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.openhost-network.com/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114218287?s=200&v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
         <a href="https://www.prevo.ch/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/114394792?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" width="148">
+      <td align="center" valign="middle" width="130">
+        <a href="https://github.com/shanekearney" target="_blank">
+          Shane Kearney<br />(@shanekearney)
+        </a>
+      </td>
+      <td align="center" valign="middle" width="130">
         <a href="http://www.taicep.org/" target="_blank">
           <img src="https://avatars.githubusercontent.com/u/160072306?v=4">
         </a>
       </td>
-      <td align="center" valign="middle" colspan="1">
-        <a href="https://github.com/sponsors/NGPixel" target="_blank">
-          <img src="https://static.requarks.io/sponsors/become-148x72.png">
-        </a>
-      </td>
+      <td align="center" valign="middle" width="130"></td>
     </tr>
   </tbody>
 </table>
@@ -505,9 +510,6 @@ This project exists thanks to all the people who contribute. [[Contribute]](http
 
 ![Icons8](https://static.requarks.io/logo/icons8-text-h40.png)  
 [Icons8](https://icons8.com/) for providing access to their beautiful icon sets.
-
-![Localazy](https://static.requarks.io/logo/localazy-h40.png)  
-[Localazy](https://localazy.com/) for providing access to their great localization service.
 
 ![Lokalise](https://static.requarks.io/logo/lokalise-text-h40.png)  
 [Lokalise](https://lokalise.com/) for providing access to their great localization tool.

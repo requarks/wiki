@@ -35,17 +35,17 @@ props:
   authorizationURL:
     type: String
     title: Authorization Endpoint URL
-    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/auth
+    hint: e.g. https://KEYCLOAK-HOST/realms/YOUR-REALM/protocol/openid-connect/auth
     order: 5
   tokenURL:
     type: String
     title: Token Endpoint URL
-    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/token
+    hint: e.g. https://KEYCLOAK-HOST/realms/YOUR-REALM/protocol/openid-connect/token
     order: 6
   userInfoURL:
     type: String
     title: User Info Endpoint URL
-    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/userinfo
+    hint: e.g. https://KEYCLOAK-HOST/realms/YOUR-REALM/protocol/openid-connect/userinfo
     order: 7
   logoutUpstream:
     type: Boolean
@@ -55,7 +55,7 @@ props:
   logoutURL:
     type: String
     title: Logout Endpoint URL
-    hint: e.g. https://KEYCLOAK-HOST/auth/realms/YOUR-REALM/protocol/openid-connect/logout
+    hint: e.g. https://KEYCLOAK-HOST/realms/YOUR-REALM/protocol/openid-connect/logout
     order: 9
   logoutUpstreamRedirectLegacy:
     type: Boolean

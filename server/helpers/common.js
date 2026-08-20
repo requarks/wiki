@@ -1,4 +1,7 @@
+/* global WIKI */
+
 const _ = require('lodash')
+const { DateTime } = require('luxon')
 
 module.exports = {
   /**
@@ -38,5 +41,11 @@ module.exports = {
       })
       return result
     }, {})
+  },
+  getCookieOpts () {
+    return {
+      expires: DateTime.utc().plus({ days: 365 }).toJSDate(),
+      ...(WIKI.config.host.startsWith('https://') ? { secure: true } : {})
+    }
   }
 }

@@ -1,7 +1,6 @@
 const { BlobServiceClient, StorageSharedKeyCredential } = require('@azure/storage-blob')
-const stream = require('stream')
-const Promise = require('bluebird')
-const pipeline = Promise.promisify(stream.pipeline)
+const { pipeline } = require('node:stream/promises')
+const { Transform } = require('node:stream')
 const pageHelper = require('../../../helpers/page.js')
 const _ = require('lodash')
 
@@ -129,7 +128,7 @@ module.exports = {
       WIKI.models.knex.column('path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt').select().from('pages').where({
         isPrivate: false
       }).stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (page, enc, cb) => {
           const filePath = getFilePath(page, 'path')
@@ -147,7 +146,7 @@ module.exports = {
 
     await pipeline(
       WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
-      new stream.Transform({
+      new Transform({
         objectMode: true,
         transform: async (asset, enc, cb) => {
           const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename

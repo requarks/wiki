@@ -502,7 +502,7 @@ module.exports = class User extends Model {
       if (!usr.isActive) {
         throw new WIKI.Error.AuthAccountBanned()
       }
-      
+
       await WIKI.models.users.query().patch({
         password: newPassword,
         mustChangePwd: false
