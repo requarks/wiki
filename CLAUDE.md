@@ -63,9 +63,8 @@ scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes
   `SystemIds` passed to each model's `init()` during first-run seeding.
 - `modules/` — pluggable extensions, discovered from disk. Each module is a directory with a
   `definition.yml` (key, title, props/config schema) plus its implementation — e.g.
-  `modules/authentication/local/`. `modules/storage/*` is definition-only so far: the admin area
-  stores a configuration per site and module, but no `storage.ts` exists yet and nothing reads or
-  writes content through a target — pages and assets go straight to the database.
+  `modules/authentication/local/`. `modules/storage/*` ships `db` and `disk` — see
+  [Storage targets](#storage-targets).
 - `tasks/simple/` — jobs run in-process by the scheduler; each exports `task()`. File name is
   kebab-case, the task key is its camelCase form.
 - `tasks/workers/` — CPU-bound jobs run in a worker thread via `worker.ts`, which boots a minimal
@@ -161,6 +160,23 @@ npm run build          # rollup → blocks/compiled/
 
 The API is browsable via Swagger UI at `http://localhost:3000/_api` in a running instance. Default
 admin login is `admin@example.com` / `12345678`.
+
+### How far to go verifying a change
+
+Match the check to the size of the change. `npm run build`, `npx oxlint` and `npm run typecheck` are
+seconds each and are the right check for nearly everything.
+
+**Do not stand up a throwaway instance and drive a headless browser to look at a small change.** That
+means booting a backend against a scratch database, seeding it, and screenshotting through
+`/usr/bin/chromium` — a good ten minutes of setup that a moved border, a colour, a spacing tweak or a
+renamed label does not earn. Read the rule you wrote, trust the build, and say what you changed.
+
+It is worth the setup for a **new** piece of UI whose markup has to meet a stylesheet written
+elsewhere, where being wrong means shipping something visibly broken — a component reusing existing
+content classes is the case that has actually gone wrong. Also for a flow with real state to exercise
+(a login, an upload, a save), where a screenshot answers a question reading cannot.
+
+See the `wikijs-isolated-test-instance` memory for how to boot one when it IS warranted.
 
 ## TypeScript (backend)
 
@@ -381,6 +397,111 @@ Consequences worth knowing:
 - State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
   [Utilities and dates](#utilities-and-dates); the `lodash-es` and `luxon` still present in older
   files are on their way out.
+
+### Storage targets
+
+A storage target is one module from `modules/storage/<key>/` configured for one site. Two modules
+ship, both with a real `storage.ts`: `db`, enabled on every site and impossible to turn off, and
+`disk`, which mirrors the wiki's tree at `<root>/<locale>/<folders…>/<file>` — the configured root is
+the site's own folder, since a target belongs to one site, so two sites must not share a path. S3,
+Azure, GCS, git and SFTP were removed rather than left as definitions with nothing behind them; a
+new module is a directory with a `definition.yml` and a `storage.ts` exporting the `StorageModule`
+contract, and `hasImplementation` gates both dispatch and the admin area's action buttons on the
+latter existing.
+
+**Content is written to every target that claims it, and read from one.** Those are two separate
+questions with two separate answers, and conflating them is the way to get this wrong:
+
+- **Written** — a target's `contentTypes.activeTypes` says what is stored there, and a site may store
+  the same kind in several places at once. An upload goes to *all* of them; the admin area's
+  **Targets** tab is where that is set, per target.
+- **Read** — `assetDelivery.servedTypes` names the content types a reader's request is answered from
+  that target, at most one target per type across the site. The **Content Delivery** tab sets it, and
+  a target may only be nominated for a type it also stores (`validateTarget` refuses the pair). Pages
+  are never nominated: a page is read from its own row, always.
+
+  **Only an explicit nomination moves delivery.** A type nobody has been nominated for is served
+  from the database (`deliveryTargetsFor`), never from whichever other target happens to be enabled
+  — enabling one says where content is *written*, and a target enabled after an upload holds none of
+  the existing files anyway. Disabling a target therefore puts delivery back, and `updateTarget`
+  clears `servedTypes` as it goes so that re-enabling it later does not silently take the content
+  type with it. The database gives the role up only by not holding the type at all.
+
+So neither an asset nor a page records where its bytes went — there is no single place — and each
+target derives where its own copy sits from the tree, the same way for both. `resolveTargetFor` and
+`assets.storageInfo` are gone; `writeTargetsFor` and `deliveryTargetsFor` replace them.
+
+**Which content type a file is, is one answer per site, not per target.** `large` is a category of
+its own rather than a modifier — that is what lets a target take the 40 MB video without also taking
+every thumbnail — and the size at which it starts lives in the site's config as
+`storage.largeThreshold` (`storage.largeThresholdFor`, the admin area's **Configuration** tab). It
+has to be shared: a file the disk target called large and the database called an image would be
+claimed by neither target, or by both. The whole storage configuration of a site — the site-wide
+settings and every target — is read and written as one, through `GET`/`PUT /sites/:siteId/storage`.
+
+Everything else follows from that:
+
+- **A write must succeed everywhere; a read may fall back.** `storage.putAsset` fans out and throws if
+  any target refuses, failing the upload — an asset may have no database copy, so a half-stored one
+  must not be reported as saved. `getAsset` tries the nominated source and then every other target
+  holding the content, database last, because a target enabled after an upload never received it.
+  Pages are gentler still: `mirrorPage` / `removePage` / `relocatePage` log a target that could not
+  keep up and carry on, since the database always has the page.
+- **The disk target's `exportAll` is a copy, not a move.** It writes out everything it is configured
+  to hold, overwriting, and touches neither the database nor any record — which is how content that
+  predates the target being enabled gets onto it.
+- **The move is the database target's `offloadUnchecked`.** Turning a target on only affects what is
+  uploaded from then on, so a site that unticks a content type on the database is still carrying
+  every file of that kind ever uploaded — and carrying it unreachably, since a target is only read
+  for a type it stores. That action reads each of those out of its row, writes it to every enabled
+  target holding the type, **reads it back to check** and only then clears the `data` column. An
+  asset with no destination keeps its copy and is reported as stranded: nothing is cleared that is
+  not known to be somewhere else, because this is the only copy of the bytes. Metadata is untouched
+  throughout — `data` is the one column it empties.
+- **Renames have files to move on every target.** `assets.relocateAssets` takes the old location from
+  the caller and reads the new one off the tree; `tree.renameFolder` does the same for everything
+  beneath a renamed folder, pages included (moved, not rewritten — nothing changed).
+- **Thumbnails always stay in the database** (`assets.preview`) — the file manager asks for a
+  screenful at a time, and a slow target must not cost a wiki its file browser.
+- **`pages.adoptStoredPage` and `assets.adoptStoredFile` are the way back in**, for the disk
+  target's two import actions. Both take an `overwrite` flag, and it is the only thing separating
+  them: `importAll` leaves a path the wiki already has alone, because reconciling a file changed on
+  both sides is a merge and belongs to a target with history, while `importAllOverwrite` lets the
+  folder win — for a restore, where there is nothing to reconcile. A page is replaced through
+  `updatePage`, so its previous version is in its history; an asset has none, and `replace` also
+  dispatches the new bytes to every write target, since the copy a reader is served is usually the
+  database's. Imported content is rendered with **no script or style permission** whoever ran the
+  import, since the file need not have been written by them.
+- **On import a file is a page if its extension is reserved, or if it declares an `editor`** in its
+  front matter. A text page is front matter plus the source; a **JSON** page — a redirection today —
+  is one JSON document with the metadata at its top level and the source under `content`.
+
+**Pages and assets share one folder, and the site's `pageExtensions` is what keeps them apart.** A
+page is stored under its editor's extension (`md`, `html`, `adoc`, `json`), while the tree holds its
+name without one — so page `notes/readme` and an attachment called `readme.md` are different names to
+the wiki and the same file on disk. Three rules stop them ever meeting, and all three live in the
+models rather than in the storage module:
+
+- **`pageExtensions` are reserved.** `assets.upload` refuses an attachment using one — a `.md` file is
+  a page, so uploading it as an attachment is a mistake rather than a collision. This is the whole of
+  it on a default site (`md,html,txt`).
+- **Both sides check anyway.** For an extension a site has taken *off* that list,
+  `assets.guardAgainstPageCollision` and `pages.guardAgainstAssetCollision` refuse whichever arrives
+  second. Extensions must match to collide: `readme.pdf` sits happily beside the page `readme`.
+- **Nothing guesses at a name.** `StoragePageRef` carries `contentType`, so a delete or a move touches
+  exactly one file — a target that tried each extension in turn would delete the attachment next door.
+
+**A target's `state` column is how it is behaving, not how it is configured.** `{ status: 'healthy' |
+'warning' | 'error', message, updatedAt }`, written only by `storage.recordState` as the model
+dispatches to a module, absent from `StorageTargetInput`, and reported by the Status card. `error` is
+a failure that was raised to whoever asked (a refused upload); `warning` is one that was swallowed
+because the request succeeded anyway (a page copy that could not be written). The last operation
+wins — a later success clears an earlier failure, which is what makes a full disk that gets emptied
+stop reporting itself without anybody dismissing anything. Nothing probes a target proactively, so a
+misconfigured one reads healthy until something is actually asked of it.
+
+Not to be confused with `<dataPath>/cache/files`, the serving cache in the assets model. That one is
+derived and swept; a storage target is where content actually lives.
 
 ### Icons
 

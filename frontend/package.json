@@ -56,7 +56,6 @@
     "temporal-polyfill": "1.0.2",
     "twemoji-assets": "https://codeload.github.com/jdecked/twemoji/tar.gz/refs/tags/v17.0.3",
     "uuid": "14.0.1",
-    "v-network-graph": "0.9.23",
     "vue": "3.5.40",
     "vue-i18n": "11.4.8",
     "vue-router": "5.2.0",

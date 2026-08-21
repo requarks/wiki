@@ -652,19 +652,6 @@
       "table": "assets"
     },
     {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "storageInfo",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "assets"
-    },
-    {
       "type": "uuid",
       "typeSchema": null,
       "notNull": true,
@@ -3302,19 +3289,6 @@
       "generated": null,
       "identity": null,
       "name": "assetDelivery",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "storage"
-    },
-    {
-      "type": "jsonb",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'{}'",
-      "generated": null,
-      "identity": null,
-      "name": "versioning",
       "entityType": "columns",
       "schema": "public",
       "table": "storage"

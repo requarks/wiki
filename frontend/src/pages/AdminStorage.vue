@@ -23,7 +23,8 @@
           :color="dark.isActive ? `dark-1` : `white`"
           :options="[
             { label: t('admin.storage.targets'), value: 'targets' },
-            { label: t('admin.storage.deliveryPaths'), value: 'delivery' }
+            { label: t('admin.storage.delivery'), value: 'delivery' },
+            { label: t('admin.storage.config'), value: 'config' }
           ]" />
         <w-separator class="mr-4" vertical />
         <w-btn
@@ -86,156 +87,6 @@
         <div class="flex flex-wrap gap-4">
           <div class="min-w-0 flex-1">
             <!-- ----------------------- -->
-            <!-- Setup -->
-            <!-- ----------------------- -->
-            <w-card
-              class="pb-2 mb-4"
-              v-if="
-                state.target.setup &&
-                state.target.setup.handler &&
-                state.target.setup.state !== `configured`
-              ">
-              <w-card-header>
-                {{ t('admin.storage.setup') }}
-                <template #hint>{{ t('admin.storage.setupHint') }}</template>
-              </w-card-header>
-              <template
-                v-if="
-                  state.target.setup.handler === `github` &&
-                  state.target.setup.state === `notconfigured`
-                ">
-                <w-item>
-                  <blueprint-icon icon="test-account" />
-                  <w-item-section>
-                    <w-item-label>GitHub Account Type</w-item-label>
-                    <w-item-label caption
-                      >Whether to use an organization or personal GitHub account during
-                      setup.</w-item-label
-                    >
-                  </w-item-section>
-                  <w-item-section class="flex-none">
-                    <w-btn-toggle
-                      v-model="state.target.setup.values.accountType"
-                      push
-                      glossy
-                      no-caps
-                      toggle-color="primary"
-                      :options="[
-                        { label: t('admin.storage.githubAccTypeOrg'), value: 'org' },
-                        { label: t('admin.storage.githubAccTypePersonal'), value: 'personal' }
-                      ]" />
-                  </w-item-section>
-                </w-item>
-                <w-separator class="my-2" inset />
-                <template v-if="state.target.setup.values.accountType === `org`">
-                  <w-item>
-                    <blueprint-icon icon="github" />
-                    <w-item-section>
-                      <w-item-label>{{ t('admin.storage.githubOrg') }}</w-item-label>
-                      <w-item-label caption>{{ t('admin.storage.githubOrgHint') }}</w-item-label>
-                    </w-item-section>
-                    <w-item-section>
-                      <w-input
-                        outlined
-                        v-model="state.target.setup.values.org"
-                        dense
-                        :aria-label="t(`admin.storage.githubOrg`)" />
-                    </w-item-section>
-                  </w-item>
-                  <w-separator class="my-2" inset />
-                </template>
-                <w-item>
-                  <blueprint-icon icon="dns" />
-                  <w-item-section>
-                    <w-item-label>{{ t('admin.storage.githubPublicUrl') }}</w-item-label>
-                    <w-item-label caption>{{
-                      t('admin.storage.githubPublicUrlHint')
-                    }}</w-item-label>
-                  </w-item-section>
-                  <w-item-section>
-                    <w-input
-                      outlined
-                      v-model="state.target.setup.values.publicUrl"
-                      dense
-                      :aria-label="t(`admin.storage.githubPublicUrl`)" />
-                  </w-item-section>
-                </w-item>
-                <w-card-section class="pt-2 text-right">
-                  <form ref="githubSetupForm" method="POST" :action="state.setupCfg.action">
-                    <input type="hidden" name="manifest" :value="state.setupCfg.manifest" />
-                    <w-btn
-                      unelevated
-                      icon="la:angle-double-right"
-                      :label="t(`admin.storage.startSetup`)"
-                      color="secondary"
-                      @click="setupGitHub"
-                      :loading="state.setupCfg.loading" />
-                  </form>
-                </w-card-section>
-              </template>
-              <template
-                v-else-if="
-                  state.target.setup.handler === `github` &&
-                  state.target.setup.state === `pendinginstall`
-                ">
-                <w-card-section class="py-0">
-                  <w-banner
-                    :class="dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`"
-                    >{{ t('admin.storage.githubFinish') }}</w-banner
-                  >
-                </w-card-section>
-                <w-card-section class="pt-2 text-right">
-                  <w-btn
-                    class="mr-2"
-                    unelevated
-                    icon="la:times-circle"
-                    :label="t(`admin.storage.cancelSetup`)"
-                    color="negative"
-                    @click="setupDestroy" />
-                  <w-btn
-                    unelevated
-                    icon="la:angle-double-right"
-                    :label="t(`admin.storage.finishSetup`)"
-                    color="secondary"
-                    @click="setupGitHubStep(`verify`)"
-                    :loading="state.setupCfg.loading" />
-                </w-card-section>
-              </template>
-            </w-card>
-            <w-card
-              class="pb-2 mb-4"
-              v-if="
-                state.target.setup &&
-                state.target.setup.handler &&
-                state.target.setup.state === `configured`
-              ">
-              <w-card-header>
-                {{ t('admin.storage.setup') }}
-                <template #hint>{{ t('admin.storage.setupConfiguredHint') }}</template>
-              </w-card-header>
-              <w-item>
-                <blueprint-icon class="self-start" icon="matches" :hue-rotate="140" />
-                <w-item-section>
-                  <w-item-label>Uninstall</w-item-label>
-                  <w-item-label caption
-                    >Delete the active configuration and start over the setup process.</w-item-label
-                  >
-                  <w-item-label class="text-red" caption>
-                    <strong>This action cannot be undone!</strong>
-                  </w-item-label>
-                </w-item-section>
-                <w-item-section side>
-                  <w-btn
-                    class="acrylic-btn"
-                    flat
-                    icon="la:arrow-circle-right"
-                    color="negative"
-                    @click="setupDestroy"
-                    :label="t(`admin.storage.uninstall`)" />
-                </w-item-section>
-              </w-item>
-            </w-card>
-            <!-- ----------------------- -->
             <!-- Content Types -->
             <!-- ----------------------- -->
             <w-card class="pb-2">
@@ -243,7 +94,7 @@
                 {{ t('admin.storage.contentTypes') }}
                 <template #hint>{{ t('admin.storage.contentTypesHint') }}</template>
               </w-card-header>
-              <w-item tag="label">
+              <w-item :tag="state.target.module === `db` ? null : `label`">
                 <w-item-section avatar>
                   <w-checkbox
                     v-model="state.target.contentTypes.activeTypes"
@@ -255,154 +106,52 @@
                 <w-item-section>
                   <w-item-label>{{ t(`admin.storage.contentTypePages`) }}</w-item-label>
                   <w-item-label caption>{{ t(`admin.storage.contentTypePagesHint`) }}</w-item-label>
-                </w-item-section>
-              </w-item>
-              <w-item tag="label">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.contentTypes.activeTypes"
-                    color="primary"
-                    val="images"
-                    :aria-label="t(`admin.storage.contentTypeImages`)" />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.contentTypeImages`) }}</w-item-label>
-                  <w-item-label caption>{{
-                    t(`admin.storage.contentTypeImagesHint`)
-                  }}</w-item-label>
-                </w-item-section>
-              </w-item>
-              <w-item tag="label">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.contentTypes.activeTypes"
-                    color="primary"
-                    val="documents"
-                    :aria-label="t(`admin.storage.contentTypeDocuments`)" />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.contentTypeDocuments`) }}</w-item-label>
-                  <w-item-label caption>{{
-                    t(`admin.storage.contentTypeDocumentsHint`)
-                  }}</w-item-label>
-                </w-item-section>
-              </w-item>
-              <w-item tag="label">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.contentTypes.activeTypes"
-                    color="primary"
-                    val="others"
-                    :aria-label="t(`admin.storage.contentTypeOthers`)" />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.contentTypeOthers`) }}</w-item-label>
-                  <w-item-label caption>{{
-                    t(`admin.storage.contentTypeOthersHint`)
-                  }}</w-item-label>
-                </w-item-section>
-              </w-item>
-              <w-item tag="label">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.contentTypes.activeTypes"
-                    color="primary"
-                    val="large"
-                    :aria-label="t(`admin.storage.contentTypeLargeFiles`)" />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.contentTypeLargeFiles`) }}</w-item-label>
-                  <w-item-label caption>{{
-                    t(`admin.storage.contentTypeLargeFilesHint`)
-                  }}</w-item-label>
+                  <!-- -> Only where it explains a control that cannot be used: on the database
+                       target the checkbox is locked on, and that is worth saying. Anywhere else
+                       storing pages is an ordinary choice with nothing to warn about. -->
                   <w-item-label
                     class="text-deep-orange"
                     v-if="state.target.module === `db`"
                     caption
-                    >{{ t(`admin.storage.contentTypeLargeFilesDBWarn`) }}</w-item-label
-                  >
-                </w-item-section>
-                <w-item-section side>
-                  <w-input
-                    outlined
-                    :label="t(`admin.storage.contentTypeLargeFilesThreshold`)"
-                    v-model="state.target.contentTypes.largeThreshold"
-                    style="min-width: 150px"
-                    dense />
-                </w-item-section>
-              </w-item>
-            </w-card>
-            <!-- ----------------------- -->
-            <!-- Content Delivery -->
-            <!-- ----------------------- -->
-            <w-card class="pb-2 mt-4">
-              <w-card-header>
-                {{ t('admin.storage.assetDelivery') }}
-                <template #hint>{{ t('admin.storage.assetDeliveryHint') }}</template>
-              </w-card-header>
-              <w-item :tag="state.target.assetDelivery.isStreamingSupported ? `label` : null">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.assetDelivery.streaming"
-                    :color="
-                      state.target.module === `db` ||
-                      !state.target.assetDelivery.isStreamingSupported
-                        ? `grey`
-                        : `primary`
-                    "
-                    :aria-label="t(`admin.storage.contentTypePages`)"
-                    :disable="
-                      state.target.module === `db` ||
-                      !state.target.assetDelivery.isStreamingSupported
-                    " />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.assetStreaming`) }}</w-item-label>
-                  <w-item-label caption>{{ t(`admin.storage.assetStreamingHint`) }}</w-item-label>
-                  <w-item-label
-                    class="text-deep-orange"
-                    v-if="!state.target.assetDelivery.isStreamingSupported"
-                    caption
-                    >{{ t(`admin.storage.assetStreamingNotSupported`) }}</w-item-label
+                    >{{ t(`admin.storage.contentTypePagesSource`) }}</w-item-label
                   >
                 </w-item-section>
               </w-item>
-              <w-item :tag="state.target.assetDelivery.isDirectAccessSupported ? `label` : null">
-                <w-item-section avatar>
-                  <w-checkbox
-                    v-model="state.target.assetDelivery.directAccess"
-                    :color="
-                      !state.target.assetDelivery.isDirectAccessSupported ? `grey` : `primary`
-                    "
-                    :aria-label="t(`admin.storage.contentTypePages`)"
-                    :disable="!state.target.assetDelivery.isDirectAccessSupported" />
-                </w-item-section>
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.assetDirectAccess`) }}</w-item-label>
-                  <w-item-label caption>{{
-                    t(`admin.storage.assetDirectAccessHint`)
-                  }}</w-item-label>
-                  <w-item-label
-                    class="text-deep-orange"
-                    v-if="!state.target.assetDelivery.isDirectAccessSupported"
-                    caption
-                    >{{ t(`admin.storage.assetDirectAccessNotSupported`) }}</w-item-label
-                  >
-                </w-item-section>
-              </w-item>
+              <template v-for="ct in assetContentTypes" :key="ct.key">
+                <w-item tag="label">
+                  <w-item-section avatar>
+                    <w-checkbox
+                      v-model="state.target.contentTypes.activeTypes"
+                      color="primary"
+                      :val="ct.key"
+                      :aria-label="t(ct.label)" />
+                  </w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{ t(ct.label) }}</w-item-label>
+                    <w-item-label caption>{{ t(ct.hint) }}</w-item-label>
+                    <w-item-label
+                      class="text-deep-orange"
+                      v-if="ct.key === `large` && state.target.module === `db`"
+                      caption
+                      >{{ t(`admin.storage.contentTypeLargeFilesDBWarn`) }}</w-item-label
+                    >
+                  </w-item-section>
+                </w-item>
+              </template>
             </w-card>
             <!-- ----------------------- -->
             <!-- Configuration -->
             <!-- ----------------------- -->
             <w-card class="pb-2 mt-4">
               <w-card-header>{{ t('admin.storage.config') }}</w-card-header>
-              <w-card-section>
-                <w-banner
-                  class="mt-4"
-                  v-if="!state.target.config || Object.keys(state.target.config).length < 1"
-                  :class="dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`"
-                  >{{ t('admin.storage.noConfigOption') }}</w-banner
-                >
+              <!--
+                The condition belongs on the section, not on the banner inside it: a section is a
+                padded band whether or not anything renders in it, so leaving it unconditional put
+                32px of empty space between the header and the first setting.
+              -->
+              <w-card-section
+                v-if="!state.target.config || Object.keys(state.target.config).length < 1">
+                <div class="text-body2 text-grey">{{ t('admin.storage.noConfigOption') }}</div>
               </w-card-section>
               <template v-for="(cfg, cfgKey, idx) in state.target.config">
                 <template v-if="configIfCheck(cfg.if)">
@@ -463,40 +212,19 @@
               </template>
             </w-card>
             <!-- ----------------------- -->
-            <!-- Sync -->
-            <!-- ----------------------- -->
-            <w-card
-              class="pb-2 mt-4"
-              v-if="state.target.sync && Object.keys(state.target.sync).length > 0">
-              <w-card-header>{{ t('admin.storage.sync') }}</w-card-header>
-              <w-card-section>
-                <w-banner
-                  class="mt-4"
-                  :class="dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`"
-                  >{{ t('admin.storage.noSyncModes') }}</w-banner
-                >
-              </w-card-section>
-            </w-card>
-            <!-- ----------------------- -->
             <!-- Actions -->
             <!-- ----------------------- -->
             <w-card class="pb-2 mt-4">
               <w-card-header>{{ t('admin.storage.actions') }}</w-card-header>
-              <w-card-section>
-                <w-banner
-                  class="mt-4"
-                  v-if="!state.target.actions || state.target.actions.length < 1"
-                  :class="dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`"
-                  >{{ t('admin.storage.noActions') }}</w-banner
-                >
-                <w-banner
-                  class="mt-4"
-                  v-else-if="!state.target.isEnabled"
-                  :class="dark.isActive ? `bg-negative text-white` : `bg-grey-2 text-grey-7`"
-                  >{{ t('admin.storage.actionsInactiveWarn') }}</w-banner
-                >
+              <!-- -> Same as the configuration card above: the band is only there when it says
+                   something, otherwise it is padding above the first action -->
+              <w-card-section v-if="actionsNotice">
+                <div class="text-body2 text-grey">{{ actionsNotice }}</div>
               </w-card-section>
-              <template v-if="state.target.isEnabled" v-for="(act, idx) in state.target.actions">
+              <!-- -> `savedEnabled`, not `state.target.isEnabled`: an action runs on the server
+                   against the configuration the server has, so offering one for a target that is
+                   only enabled in this form would be offering something that cannot work -->
+              <template v-if="savedEnabled" v-for="(act, idx) in state.target.actions">
                 <w-separator class="my-2" inset v-if="idx > 0" />
                 <w-item>
                   <blueprint-icon class="self-start" :icon="act.icon" :hue-rotate="45" />
@@ -522,110 +250,75 @@
               </template>
             </w-card>
           </div>
-          <div class="flex-none">
+          <div class="flex-none" style="width: 300px">
+            <!-- ----------------------- -->
+            <!-- Enable / Disable -->
+            <!-- ----------------------- -->
+            <!--
+              A button that saves, rather than the toggle this used to be inside the status card
+              below. The toggle only changed the form: a target switched on and left unapplied
+              already showed its actions and a "storing content" status for something it was not
+              doing yet. Turning a target on and writing that down are one step here, so what the
+              two cards report cannot drift from what the server holds.
+
+              Absent on the database target rather than disabled, since it is not a choice that
+              exists: the content types card already says pages are always served from there, and a
+              greyed-out button invites a click that could never do anything.
+            -->
+            <w-btn
+              v-if="state.target.module !== `db`"
+              class="w-full"
+              unelevated
+              :icon="savedEnabled ? `mdi:highlight-off` : `mdi:power`"
+              :label="savedEnabled ? t(`common.actions.disable`) : t(`common.actions.enable`)"
+              :color="savedEnabled ? `negative` : `positive`"
+              :loading="state.loading > 0"
+              @click="promptToggleEnabled" />
             <!-- ----------------------- -->
             <!-- Infobox -->
             <!-- ----------------------- -->
-            <w-card class="rounded pb-4" style="width: 300px">
+            <!-- -> No `pb-4`: the card ends in a section, which pads itself -->
+            <w-card class="rounded" :class="{ 'mt-4': state.target.module !== `db` }">
               <w-card-header>{{ state.target.title }}</w-card-header>
               <w-card-section>
                 <img class="w-full object-cover rounded" :src="state.target.banner" />
                 <div class="text-body2 mt-4">{{ state.target.description }}</div>
               </w-card-section>
-              <w-separator class="mb-2" inset />
-              <w-item>
-                <w-item-section>
-                  <w-item-label class="text-grey">{{ t(`admin.storage.vendor`) }}</w-item-label>
-                  <w-item-label>{{ state.target.vendor }}</w-item-label>
-                </w-item-section>
-              </w-item>
-              <w-separator class="my-2" inset />
-              <w-item>
-                <w-item-section>
-                  <w-item-label class="text-grey">{{
-                    t(`admin.storage.vendorWebsite`)
-                  }}</w-item-label>
-                  <w-item-label>
-                    <a :href="state.target.website" target="_blank" rel="noreferrer">{{
-                      state.target.website
-                    }}</a>
-                  </w-item-label>
-                </w-item-section>
-              </w-item>
             </w-card>
             <!-- ----------------------- -->
             <!-- Status -->
             <!-- ----------------------- -->
-            <w-card class="rounded pb-4 mt-4" style="width: 300px">
+            <!--
+              `pb-2`, arrived at rather than picked: the row centres its own line of text in a 48px
+              box, so it contributes 14px above and below it either way. What is NOT symmetric is
+              the heading, which ends in a hairline 2px past its own box and then 8px of trailing
+              margin -- 22px over the status. `pb-4` overshot that by 8px, and nothing at all
+              undershot by the same, so the card's own bottom edge owes it exactly the 8px the
+              heading spends on its margin.
+            -->
+            <w-card class="rounded pb-2 mt-4">
               <w-card-header>{{ t('admin.storage.status') }}</w-card-header>
-              <template v-if="state.target.module !== `db`">
-                <w-item tag="label">
-                  <w-item-section>
-                    <w-item-label>{{ t(`admin.storage.enabled`) }}</w-item-label>
-                    <w-item-label caption>{{ t(`admin.storage.enabledHint`) }}</w-item-label>
-                    <w-item-label
-                      class="text-deep-orange"
-                      v-if="state.target.module === `db`"
-                      caption
-                      >{{ t(`admin.storage.enabledForced`) }}</w-item-label
-                    >
-                  </w-item-section>
-                  <w-item-section avatar>
-                    <w-toggle
-                      v-model="state.target.isEnabled"
-                      :disable="state.target.module === `db` || isSetupNeeded"
-                      :aria-label="t(`admin.storage.enabled`)" />
-                  </w-item-section>
-                  <w-inner-loading :showing="isSetupNeeded">
-                    <w-icon name="la:exclamation-triangle" size="sm" color="negative" />
-                    <div class="text-body2 text-negative">
-                      {{ t('admin.storage.setupRequired') }}
-                    </div>
-                  </w-inner-loading>
-                </w-item>
-                <w-separator class="my-2" inset />
-              </template>
               <w-item>
                 <w-item-section>
-                  <w-item-label class="text-grey">{{
-                    t(`admin.storage.currentState`)
-                  }}</w-item-label>
-                  <w-item-label class="text-positive">No issues detected.</w-item-label>
-                </w-item-section>
-              </w-item>
-            </w-card>
-            <!-- ----------------------- -->
-            <!-- Versioning -->
-            <!-- ----------------------- -->
-            <w-card class="rounded pb-4 mt-4" style="width: 300px">
-              <w-card-header>
-                {{ t(`admin.storage.versioning`) }}
-                <template #hint>{{ t(`admin.storage.versioningHint`) }}</template>
-              </w-card-header>
-              <w-item :tag="state.target.versioning.isSupported ? `label` : null">
-                <w-item-section>
-                  <w-item-label>{{ t(`admin.storage.useVersioning`) }}</w-item-label>
-                  <w-item-label caption>{{ t(`admin.storage.useVersioningHint`) }}</w-item-label>
-                  <w-item-label
-                    class="text-deep-orange"
-                    v-if="!state.target.versioning.isSupported"
-                    caption
-                    >{{ t(`admin.storage.versioningNotSupported`) }}</w-item-label
-                  >
-                  <w-item-label
-                    class="text-deep-orange"
-                    v-if="state.target.versioning.isForceEnabled"
-                    caption
-                    >{{ t(`admin.storage.versioningForceEnabled`) }}</w-item-label
-                  >
-                </w-item-section>
-                <w-item-section avatar>
-                  <w-toggle
-                    v-model="state.target.versioning.enabled"
-                    :disable="
-                      !state.target.versioning.isSupported || state.target.versioning.isForceEnabled
-                    "
-                    :aria-label="t(`admin.storage.useVersioning`)" />
+                  <!-- -> A dot, not the `status-light` bar the target list uses: that one is a rule
+                       drawn down the full height of its row, which suits a list of targets and not a
+                       single line of text.
+
+                       Inside the label rather than in a leading section of its own, which is what
+                       sets the spacing: a flanking section carries a 16px gutter meant for a 24px
+                       icon, far too much air for a 10px dot. -->
+                  <w-item-label class="flex items-center gap-2" :class="currentState.text">
+                    <span class="size-2.5 shrink-0 rounded-full" :class="currentState.dot" />
+                    {{ currentState.label }}
+                  </w-item-label>
+                  <!-- -> What actually went wrong, which is the whole use of the two unhealthy
+                       states: "Error" on its own only sends an administrator to the server log -->
+                  <w-item-label caption v-if="currentState.message">
+                    {{ currentState.message }}
+                  </w-item-label>
+                  <w-item-label caption v-if="currentState.since">
+                    {{ relativeDate(currentState.since) }}
+                  </w-item-label>
                 </w-item-section>
               </w-item>
             </w-card>
@@ -634,110 +327,98 @@
       </div>
     </div>
     <!-- ========================================== -->
-    <!-- DELIVERY PATHS -->
+    <!-- CONTENT DELIVERY -->
     <!-- ========================================== -->
     <div class="flex flex-wrap p-4 gap-4" v-if="state.displayMode === `delivery`">
       <div class="min-w-0 flex-1">
-        <w-card class="rounded">
-          <w-card-section class="flex items-center">
-            <div class="text-caption mr-2">{{ t('admin.storage.deliveryPathsLegend') }}</div>
-            <w-chip square dense color="blue-1" text-color="blue-8">
-              <w-avatar icon="la:ellipsis-h" color="blue" text-color="white" />
-              <span class="text-caption px-2">{{
-                t('admin.storage.deliveryPathsUserRequest')
-              }}</span>
-            </w-chip>
-            <w-chip square dense color="teal-1" text-color="teal-8">
-              <w-avatar icon="la:ellipsis-h" color="positive" text-color="white" />
-              <span class="text-caption px-2">{{
-                t('admin.storage.deliveryPathsPushToOrigin')
-              }}</span>
-            </w-chip>
-            <w-chip square dense color="red-1" text-color="red-8">
-              <w-avatar icon="la:minus" color="negative" text-color="white" />
-              <span class="text-caption px-2">{{ t('admin.storage.missingOrigin') }}</span>
-            </w-chip>
+        <w-card class="pb-2">
+          <w-card-header>
+            {{ t('admin.storage.delivery') }}
+            <template #hint>{{ t('admin.storage.deliveryHint') }}</template>
+          </w-card-header>
+          <w-item>
+            <blueprint-icon class="self-start" icon="new-document" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.contentTypePages`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.deliveryPagesHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side style="min-width: 240px">
+              <w-select
+                outlined
+                dense
+                options-dense
+                emit-value
+                map-options
+                :model-value="dbTargetId"
+                :options="[{ label: dbTargetTitle, value: dbTargetId }]"
+                :aria-label="t(`admin.storage.contentTypePages`)"
+                disable />
+            </w-item-section>
+          </w-item>
+          <template v-for="ct in assetContentTypes" :key="ct.key">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon class="self-start" :icon="ct.icon" />
+              <w-item-section>
+                <w-item-label>{{ t(ct.label) }}</w-item-label>
+                <w-item-label caption>{{ t(ct.hint) }}</w-item-label>
+                <w-item-label
+                  class="text-deep-orange"
+                  v-if="!sourceOptions(ct.key).length"
+                  caption
+                  >{{ t(`admin.storage.deliveryNoTarget`) }}</w-item-label
+                >
+              </w-item-section>
+              <w-item-section side style="min-width: 240px">
+                <w-select
+                  outlined
+                  dense
+                  options-dense
+                  emit-value
+                  map-options
+                  :model-value="sourceFor(ct.key)"
+                  :options="sourceOptions(ct.key)"
+                  :disable="!sourceOptions(ct.key).length"
+                  :aria-label="t(ct.label)"
+                  @update:model-value="setSource(ct.key, $event)" />
+              </w-item-section>
+            </w-item>
+          </template>
+          <w-card-section>
+            <w-banner :class="dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`">{{
+              t('admin.storage.deliveryRelationHint')
+            }}</w-banner>
           </w-card-section>
-          <w-separator />
-          <v-network-graph
-            :zoom-level="2"
-            :configs="state.deliveryConfig"
-            :nodes="state.deliveryNodes"
-            :edges="state.deliveryEdges"
-            :paths="state.deliveryPaths"
-            :layouts="state.deliveryLayouts"
-            style="height: 600px; background-color: #fff">
-            <template #override-node="{ nodeId, scale, config, ...slotProps }">
-              <rect
-                :rx="config.borderRadius * scale"
-                :x="-config.radius * scale"
-                :y="-config.radius * scale"
-                :width="config.radius * scale * 2"
-                :height="config.radius * scale * 2"
-                :fill="config.color"
-                v-bind="slotProps" />
-              <image
-                v-if="
-                  state.deliveryNodes[nodeId].icon &&
-                  state.deliveryNodes[nodeId].icon.endsWith(`.svg`)
-                "
-                :x="(-config.radius + 5) * scale"
-                :y="(-config.radius + 5) * scale"
-                :width="(config.radius - 5) * scale * 2"
-                :height="(config.radius - 5) * scale * 2"
-                :xlink:href="state.deliveryNodes[nodeId].icon" />
-              <text
-                v-if="state.deliveryNodes[nodeId].icon && state.deliveryNodes[nodeId].iconText"
-                :class="state.deliveryNodes[nodeId].icon"
-                :font-size="22 * scale"
-                fill="#ffffff"
-                text-anchor="middle"
-                dominant-baseline="central"
-                v-html="state.deliveryNodes[nodeId].iconText" />
-            </template>
-          </v-network-graph>
         </w-card>
       </div>
     </div>
-    <!-- .overline.my-5 {{t('admin.storage.syncDirection')}} -->
-    <!-- .body-2.ml-3 {{t('admin.storage.syncDirectionSubtitle')}} -->
-    <!-- .pr-3.pt-3 -->
-    <!-- v-radio-group.ml-3.py-0(v-model='target.mode') -->
-    <!-- v-radio( -->
-    <!-- :label='t(`admin.storage.syncDirBi`)' -->
-    <!-- color='primary' -->
-    <!-- value='sync' -->
-    <!-- :disabled='target.supportedModes.indexOf(`sync`) < 0' -->
-    <!-- ) -->
-    <!-- v-radio( -->
-    <!-- :label='t(`admin.storage.syncDirPush`)' -->
-    <!-- color='primary' -->
-    <!-- value='push' -->
-    <!-- :disabled='target.supportedModes.indexOf(`push`) < 0' -->
-    <!-- ) -->
-    <!-- v-radio( -->
-    <!-- :label='t(`admin.storage.syncDirPull`)' -->
-    <!-- color='primary' -->
-    <!-- value='pull' -->
-    <!-- :disabled='target.supportedModes.indexOf(`pull`) < 0' -->
-    <!-- ) -->
-    <!-- .body-2.ml-3 -->
-    <!-- strong {{t('admin.storage.syncDirBi')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`sync`) < 0') {{t('admin.storage.unsupported')}}] -->
-    <!-- .pb-3 {{t('admin.storage.syncDirBiHint')}} -->
-    <!-- strong {{t('admin.storage.syncDirPush')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`push`) < 0') {{t('admin.storage.unsupported')}}] -->
-    <!-- .pb-3 {{t('admin.storage.syncDirPushHint')}} -->
-    <!-- strong {{t('admin.storage.syncDirPull')}} #[em.red--text.text--lighten-2(v-if='target.supportedModes.indexOf(`pull`) < 0') {{t('admin.storage.unsupported')}}] -->
-    <!-- .pb-3 {{t('admin.storage.syncDirPullHint')}} -->
-    <!-- template(v-if='target.hasSchedule') -->
-    <!-- v-divider.mt-3 -->
-    <!-- .overline.my-5 {{t('admin.storage.syncSchedule')}} -->
-    <!-- .body-2.ml-3 {{t('admin.storage.syncScheduleHint')}} -->
-    <!-- .pa-3 -->
-    <!-- duration-picker(v-model='target.syncInterval') -->
-    <!-- i18next.caption.mt-3(path='admin.storage.syncScheduleCurrent', tag='div') -->
-    <!-- strong(place='schedule') {{getDefaultSchedule(target.syncInterval)}} -->
-    <!-- i18next.caption(path='admin.storage.syncScheduleDefault', tag='div') -->
-    <!-- strong(place='schedule') {{getDefaultSchedule(target.syncIntervalDefault)}} -->
+    <!-- ========================================== -->
+    <!-- CONFIGURATION -->
+    <!-- ========================================== -->
+    <div class="flex flex-wrap p-4 gap-4" v-if="state.displayMode === `config`">
+      <div class="min-w-0 flex-1">
+        <w-card class="pb-2">
+          <w-card-header>
+            {{ t('admin.storage.config') }}
+            <template #hint>{{ t('admin.storage.configHint') }}</template>
+          </w-card-header>
+          <w-item>
+            <blueprint-icon class="self-start" icon="open-box" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.largeThreshold`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.largeThresholdHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side style="min-width: 150px">
+              <w-input
+                outlined
+                dense
+                v-model="state.largeThreshold"
+                :aria-label="t(`admin.storage.largeThreshold`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+    </div>
   </w-page>
 </template>
 
@@ -750,14 +431,13 @@ import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { confirm, dialog } from '@/composables/dialog'
+import { confirm } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 
-import * as VNG from 'v-network-graph'
-import GithubSetupInstallDialog from '../components/GithubSetupInstallDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { relativeDate } from '@/helpers/datetime'
 
 // COMPOSABLES
 
@@ -794,82 +474,121 @@ const state = reactive({
   desiredTarget: '',
   target: null,
   targets: [],
-  setupCfg: {
-    action: '',
-    manifest: '',
-    loading: false
-  },
-  deliveryNodes: {},
-  deliveryEdges: {},
-  deliveryLayouts: {
-    nodes: {}
-  },
-  deliveryPaths: [],
-  deliveryConfig: VNG.defineConfigs({
-    view: {
-      layoutHandler: new VNG.GridLayout({ grid: 15 }),
-      fit: true,
-      mouseWheelZoomEnabled: false,
-      grid: {
-        visible: true,
-        interval: 2.5,
-        thickIncrements: 0
-      }
-    },
-    node: {
-      draggable: false,
-      selectable: true,
-      normal: {
-        type: 'rect',
-        color: (node) => node.color || '#1976D2',
-        borderRadius: (node) => node.borderRadius || 5
-      },
-      label: {
-        margin: 8
-      }
-    },
-    edge: {
-      normal: {
-        width: 3,
-        dasharray: (edge) => (edge.animate === false ? 20 : 3),
-        animate: (edge) => !(edge.animate === false),
-        animationSpeed: (edge) => edge.animationSpeed || 50,
-        color: (edge) => edge.color || '#1976D2'
-      },
-      type: 'straight',
-      gap: 7,
-      margin: 4,
-      marker: {
-        source: {
-          type: 'none'
-        },
-        target: {
-          type: 'none'
-        }
-      }
-    },
-    path: {
-      visible: true,
-      end: 'edgeOfNode',
-      margin: 4,
-      path: {
-        width: 7,
-        color: (p) => p.color,
-        linecap: 'square'
-      }
-    }
-  })
+  /** Site-wide, hence not on a target: see the Configuration tab. */
+  largeThreshold: ''
 })
 
-// REFS
+// CONSTANTS
 
-const githubSetupForm = ref(null)
+/**
+ * The content types an asset can fall into, in the order both forms list them.
+ *
+ * Pages are not among them. They are stored wherever a target asks to keep a copy, like anything
+ * else, but they are always *read* from the database — so the sources form shows that row fixed and
+ * the per-target form keeps its own checkbox.
+ */
+const assetContentTypes = [
+  {
+    key: 'images',
+    icon: 'image',
+    label: 'admin.storage.contentTypeImages',
+    hint: 'admin.storage.contentTypeImagesHint'
+  },
+  {
+    key: 'documents',
+    icon: 'data-sheet',
+    label: 'admin.storage.contentTypeDocuments',
+    hint: 'admin.storage.contentTypeDocumentsHint'
+  },
+  {
+    key: 'others',
+    icon: 'binary-file',
+    label: 'admin.storage.contentTypeOthers',
+    hint: 'admin.storage.contentTypeOthersHint'
+  },
+  {
+    key: 'large',
+    icon: 'open-box',
+    label: 'admin.storage.contentTypeLargeFiles',
+    hint: 'admin.storage.contentTypeLargeFilesHint'
+  }
+]
 
 // COMPUTED
 
-const isSetupNeeded = computed(() => {
-  return state.target?.setup?.handler && state.target.setup.state !== 'configured'
+/**
+ * What the selected target is doing right now, as opposed to how it is configured.
+ *
+ * Two questions in one line, in the order they matter. **Configuration** first, because it is a
+ * precondition: a target that is off, or on but claiming no content type, is not doing anything, and
+ * how it would behave if asked is beside the point. Only past that does the target's own reported
+ * **health** get a say — `state`, which the server writes as it dispatches to the module, and the one
+ * thing here not derived from the form. A disk that has filled up is otherwise invisible: the upload
+ * it refused reported itself to whoever was uploading, and a page copy it could not write reported
+ * itself to the server log alone.
+ *
+ * The configuration half reflects the SAVED form, not the unapplied edits in front of it. The health
+ * half has no such distinction — it is an observation, and only a reload brings a newer one.
+ *
+ * Each state carries its own two class names in full rather than a palette name the template
+ * interpolates: Tailwind generates a utility only where it can see it written, so `bg-${color}` would
+ * produce a dot with no colour at all.
+ */
+const currentState = computed(() => {
+  const saved = state.target?.saved
+  if (!saved?.isEnabled) {
+    return { label: t('admin.storage.stateInactive'), text: 'text-grey', dot: 'bg-grey-5' }
+  }
+  if (saved.activeTypes.length < 1) {
+    return {
+      label: t('admin.storage.stateNoContentTypes'),
+      text: 'text-negative',
+      dot: 'bg-negative'
+    }
+  }
+  const health = state.target.state ?? {}
+  if (health.status === 'error') {
+    return {
+      label: t('admin.storage.stateError'),
+      text: 'text-negative',
+      dot: 'bg-negative',
+      message: health.message,
+      since: health.updatedAt
+    }
+  }
+  if (health.status === 'warning') {
+    return {
+      label: t('admin.storage.stateWarning'),
+      text: 'text-warning',
+      dot: 'bg-warning',
+      message: health.message,
+      since: health.updatedAt
+    }
+  }
+  return { label: t('admin.storage.stateActive'), text: 'text-positive', dot: 'bg-positive' }
 })
+
+/** Whether the selected target is enabled *as saved* — see `savedSnapshot`. */
+const savedEnabled = computed(() => state.target?.saved?.isEnabled === true)
+
+/**
+ * What the actions card says when it has nothing to offer, or null when it is listing actions.
+ *
+ * The two reasons read as one line rather than as two branches in the template, and the card's own
+ * section keys off the same value — the condition for showing the band and the conditions for each
+ * message inside it were otherwise the same thing written twice.
+ */
+const actionsNotice = computed(() => {
+  if (!state.target?.actions || state.target.actions.length < 1) {
+    return t('admin.storage.noActions')
+  }
+  return savedEnabled.value ? null : t('admin.storage.actionsInactiveWarn')
+})
+
+/** The database target, which pages are always read from. */
+const dbTarget = computed(() => state.targets.find((tgt) => tgt.module === 'db') ?? null)
+const dbTargetId = computed(() => dbTarget.value?.id ?? null)
+const dbTargetTitle = computed(() => dbTarget.value?.title ?? '')
 
 // WATCHERS
 
@@ -880,14 +599,6 @@ watch(
     nextTick(() => {
       router.replace(`/_admin/${newValue}/storage/${state.selectedTarget}`)
     })
-  }
-)
-watch(
-  () => state.displayMode,
-  (newValue) => {
-    if (newValue === 'delivery') {
-      generateGraph()
-    }
   }
 )
 watch(
@@ -912,7 +623,6 @@ watch(
           router.replace(`/_admin/${adminStore.currentSiteId}/storage/${state.selectedTarget}`)
         }
       }
-      handleSetupCallback()
     }
   }
 )
@@ -931,6 +641,62 @@ watch(
 )
 
 // METHODS
+
+/**
+ * The targets that may be nominated to serve a content type.
+ *
+ * Only the ones that are turned on and are configured to *store* it: serving is reading back what
+ * was written here, so a target that never receives the content has nothing to answer with. This is
+ * the whole of the relationship between the two tabs — ticking a content type on a target's own
+ * panel is what makes it appear here.
+ */
+function sourceOptions(type) {
+  return state.targets
+    .filter((tgt) => tgt.isEnabled && tgt.contentTypes.activeTypes.includes(type))
+    .map((tgt) => ({ label: tgt.title, value: tgt.id }))
+}
+
+/**
+ * Which target a content type is served from today, read the same way the server reads it.
+ *
+ * A type nobody has been nominated for is answered from the **database**, and this form says so.
+ * Never from whichever other target happens to be enabled: enabling a target is a statement about
+ * where content is written, and letting it quietly become the delivery source as well would move
+ * every reader's request onto a target that was not chosen for it — and, since a target enabled
+ * after an upload holds none of the existing files, onto one that mostly has to fall through anyway.
+ * Moving a content type is what the select next to it is for.
+ *
+ * The database only loses that role by not holding the type at all, in which case it is not among the
+ * options and the first target that does hold it answers.
+ */
+function sourceFor(type) {
+  const nominated = state.targets.find(
+    (tgt) =>
+      tgt.isEnabled &&
+      tgt.contentTypes.activeTypes.includes(type) &&
+      (tgt.assetDelivery.servedTypes ?? []).includes(type)
+  )
+  if (nominated) {
+    return nominated.id
+  }
+  const options = sourceOptions(type)
+  return (options.find((opt) => opt.value === dbTargetId.value) ?? options[0])?.value ?? null
+}
+
+/**
+ * Nominate one target to serve a content type, and take the nomination off every other.
+ *
+ * Exclusive because the question is singular: a file is read from one place. It says nothing about
+ * where the file is *written* — that is the target's own content types, and unticking one there is
+ * what removes it from this form's options.
+ */
+function setSource(type, targetId) {
+  for (const tgt of state.targets) {
+    const served = tgt.assetDelivery.servedTypes ?? []
+    tgt.assetDelivery.servedTypes =
+      tgt.id === targetId ? [...new Set([...served, type])] : served.filter((t) => t !== type)
+  }
+}
 
 /**
  * Turn a module prop declaration and its stored value into the shape the config editor renders,
@@ -953,6 +719,21 @@ function buildConfigEditor(props, values) {
   return config
 }
 
+/**
+ * What the server holds for a target, as far as the status and the actions cards are concerned.
+ *
+ * Both of them report what a target is *doing*, which is a question about the saved configuration
+ * rather than about the form — an unticked content type is a plan until it is applied. Only the two
+ * fields that answer it are kept: everything else in the panel describes how a target is set up,
+ * where showing the edit as it is made is the point.
+ */
+function savedSnapshot(tgt) {
+  return {
+    isEnabled: tgt.isEnabled,
+    activeTypes: [...(tgt.contentTypes?.activeTypes ?? [])]
+  }
+}
+
 function inputTypeFor(cfg) {
   if (cfg.multiline) {
     return 'textarea'
@@ -967,10 +748,12 @@ async function load() {
   state.loading++
   loading.show()
   try {
-    const targets = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/storage/targets`).json()
-    state.targets = (targets ?? []).map((tgt) => ({
+    const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/storage`).json()
+    state.largeThreshold = resp?.largeThreshold ?? ''
+    state.targets = (resp?.targets ?? []).map((tgt) => ({
       ...tgt,
-      config: buildConfigEditor(tgt.props, tgt.config)
+      config: buildConfigEditor(tgt.props, tgt.config),
+      saved: savedSnapshot(tgt)
     }))
   } catch (err) {
     notify({
@@ -1007,47 +790,53 @@ function payloadFor(tgt) {
     id: tgt.id,
     isEnabled: tgt.isEnabled,
     contentTypes: {
-      activeTypes: tgt.contentTypes.activeTypes,
-      largeThreshold: tgt.contentTypes.largeThreshold
+      activeTypes: tgt.contentTypes.activeTypes
     },
     assetDelivery: {
-      streaming: tgt.assetDelivery.streaming,
-      directAccess: tgt.assetDelivery.directAccess
-    },
-    versioning: {
-      enabled: tgt.versioning.enabled
+      // -> `streaming` and `directAccess` are deliberately not sent: nothing in this page edits them
+      //    any more, and the server keeps whatever it has for a field a patch leaves out
+      //
+      // -> Kept in step with the content types on the way out: a target that stopped storing a kind
+      //    cannot go on being the source for it, and the server refuses the pair outright
+      servedTypes: (tgt.assetDelivery.servedTypes ?? []).filter((type) =>
+        tgt.contentTypes.activeTypes.includes(type)
+      )
     },
     config
   }
 }
 
 /**
- * Save every target at once, the way the API takes them — a target is only meaningful next to the
- * others, e.g. which of them holds a given content type.
+ * Save the whole storage configuration at once, the way the API takes it — a target is only
+ * meaningful next to the others, e.g. which of them holds a given content type, and the site-wide
+ * settings decide what each of them is offered.
  *
- * @param silent Skip the loading overlay and the success notification, for a save made on the way to
- *   something else, such as the GitHub setup flow.
+ * Returns whether it succeeded, which `setEnabled` needs: a target must not be left flagged as
+ * enabled by a write that never landed.
  */
-async function save({ silent = false } = {}) {
-  let saveSuccess = false
+async function save() {
+  let saved = false
   state.loading++
-  if (!silent) {
-    loading.show()
-  }
+  loading.show()
   try {
-    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/storage/targets`, {
-      json: { targets: state.targets.map(payloadFor) }
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/storage`, {
+      json: {
+        largeThreshold: state.largeThreshold,
+        targets: state.targets.map(payloadFor)
+      }
     }).json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    saveSuccess = true
-    if (!silent) {
-      notify({
-        type: 'positive',
-        message: t('admin.storage.saveSuccess')
-      })
+    // -> The form is now what the server has, so the status and actions cards may report it
+    for (const tgt of state.targets) {
+      tgt.saved = savedSnapshot(tgt)
     }
+    notify({
+      type: 'positive',
+      message: t('admin.storage.saveSuccess')
+    })
+    saved = true
   } catch (err) {
     notify({
       type: 'negative',
@@ -1055,11 +844,48 @@ async function save({ silent = false } = {}) {
       caption: apiErrorMessage(err)
     })
   }
-  if (!silent) {
-    loading.hide()
-  }
+  loading.hide()
   state.loading--
-  return saveSuccess
+  return saved
+}
+
+/**
+ * Turn the selected target on or off, as one step with saving it.
+ *
+ * The whole page is written either way — there is one endpoint for the site's storage configuration
+ * and a target only means anything beside the others — so anything else the administrator has
+ * changed goes with it, which is what the confirmation says.
+ */
+function promptToggleEnabled() {
+  const enabling = !savedEnabled.value
+  confirm({
+    title: enabling ? t('common.actions.enable') : t('common.actions.disable'),
+    message: enabling ? t('admin.storage.confirmEnable') : t('admin.storage.confirmDisable'),
+    caption: t('admin.storage.confirmToggleHint'),
+    cancel: true,
+    color: enabling ? 'positive' : 'negative',
+    okLabel: t('common.actions.confirm'),
+    cancelLabel: t('common.actions.discard')
+  }).onOk(() => setEnabled(enabling))
+}
+
+async function setEnabled(isEnabled) {
+  const target = state.target
+  const previous = target.isEnabled
+  const previouslyServed = target.assetDelivery.servedTypes ?? []
+  target.isEnabled = isEnabled
+  // -> Turning a target off gives up whatever it was serving, which the Content Delivery tab then
+  //    shows as the database again. The server enforces the same thing for any other client, but it
+  //    has to happen here too: leaving the nomination on the form would send it back and hand the
+  //    content type over again the moment the target was re-enabled.
+  if (!isEnabled) {
+    target.assetDelivery.servedTypes = []
+  }
+  if (!(await save())) {
+    // -> Nothing was written, so neither may be left claiming otherwise
+    target.isEnabled = previous
+    target.assetDelivery.servedTypes = previouslyServed
+  }
 }
 
 function getTargetSubtitle(target) {
@@ -1102,7 +928,11 @@ async function executeAction(act) {
       }
       notify({
         type: 'positive',
-        message: t('admin.storage.actionSuccess', { action: act.label })
+        message: t('admin.storage.actionSuccess', { action: act.label }),
+        // -> What an action reports is a count of what it did, which is the only way to tell a run
+        //    that moved a thousand files from one that found nothing to move
+        caption: resp.message,
+        timeout: 10000
       })
     } catch (err) {
       notify({
@@ -1130,366 +960,6 @@ async function executeAction(act) {
   }
 }
 
-/**
- * Pick up a setup flow that took the administrator to a provider and back, the provider having
- * returned them here with a code in the query string.
- */
-async function handleSetupCallback() {
-  if (state.targets.length < 1 || !state.selectedTarget) {
-    return
-  }
-
-  nextTick(() => {
-    if (state.target?.setup?.handler === 'github' && route.query.code) {
-      setupGitHubStep('connect', route.query.code)
-    }
-  })
-}
-
-async function setupDestroy() {
-  confirm({
-    title: t('admin.storage.destroyConfirm'),
-    message: t('admin.storage.destroyConfirmInfo'),
-    cancel: true,
-    persistent: true
-  }).onOk(async () => {
-    loading.show({
-      message: t('admin.storage.destroyingSetup')
-    })
-
-    try {
-      const resp = await API_CLIENT.delete(
-        `sites/${adminStore.currentSiteId}/storage/targets/${state.selectedTarget}/setup`
-      ).json()
-      if (!resp?.ok) {
-        throw new Error(resp?.message || 'An unexpected error occured.')
-      }
-      state.target.setup.state = 'notconfigured'
-      // -> GitHub needs a moment to settle before the setup can be started over
-      setTimeout(() => {
-        loading.hide()
-        notify({
-          type: 'positive',
-          message: t('admin.storage.githubSetupDestroySuccess')
-        })
-      }, 2000)
-    } catch (err) {
-      loading.hide()
-      notify({
-        type: 'negative',
-        message: t('admin.storage.githubSetupDestroyFailed'),
-        caption: apiErrorMessage(err)
-      })
-    }
-  })
-}
-
-async function setupGitHub() {
-  // -> Format values
-  state.target.setup.values.publicUrl = state.target.setup.values.publicUrl.toLowerCase()
-
-  // -> Basic input check
-  if (state.target.setup.values.accountType === 'org' && state.target.setup.values.org.length < 1) {
-    return notify({
-      type: 'negative',
-      message: 'Invalid GitHub Organization',
-      caption: 'Enter a valid github organization.'
-    })
-  }
-  if (
-    state.target.setup.values.publicUrl.length < 11 ||
-    !/^https?:\/\/.{4,}$/.test(state.target.setup.values.publicUrl)
-  ) {
-    return notify({
-      type: 'negative',
-      message: 'Invalid Wiki Public URL',
-      caption: 'Enter a valid public URL for your wiki.'
-    })
-  }
-
-  if (state.target.setup.values.publicUrl.endsWith('/')) {
-    state.target.setup.values.publicUrl = state.target.setup.values.publicUrl.slice(0, -1)
-  }
-
-  // -> Generate manifest
-  state.setupCfg.loading = true
-  if (state.target.setup.values.accountType === 'org') {
-    state.setupCfg.action = `https://github.com/organizations/${state.target.setup.values.org}/settings/apps/new`
-  } else {
-    state.setupCfg.action = 'https://github.com/settings/apps/new'
-  }
-  state.setupCfg.manifest = JSON.stringify({
-    name: `Wiki.js - ${adminStore.currentSiteId.slice(-12)}`,
-    description: 'Connects your Wiki.js to GitHub repositories and synchronize their contents.',
-    url: state.target.setup.values.publicUrl,
-    hook_attributes: {
-      url: `${state.target.setup.values.publicUrl}/_github/${adminStore.currentSiteId}/events`
-    },
-    redirect_url: `${state.target.setup.values.publicUrl}/_admin/${adminStore.currentSiteId}/storage/${state.target.id}`,
-    callback_urls: [
-      `${state.target.setup.values.publicUrl}/_admin/${adminStore.currentSiteId}/storage/${state.target.id}`
-    ],
-    public: false,
-    default_permissions: {
-      contents: 'write',
-      metadata: 'read',
-      members: 'read'
-    },
-    default_events: ['create', 'delete', 'push']
-  })
-  loading.show({
-    message: t('admin.storage.githubPreparingManifest')
-  })
-  // -> The values typed into the setup form are stored as config, since GitHub sends the
-  //    administrator back here and the flow has to resume from them
-  if (await save({ silent: true })) {
-    githubSetupForm.value.submit()
-  } else {
-    state.setupCfg.loading = false
-    loading.hide()
-  }
-}
-
-async function setupGitHubStep(step, code) {
-  loading.show({
-    message: t('admin.storage.githubVerifying')
-  })
-
-  try {
-    const resp = await API_CLIENT.post(
-      `sites/${adminStore.currentSiteId}/storage/targets/${state.selectedTarget}/setup`,
-      {
-        json: {
-          step,
-          ...(code && { code })
-        }
-      }
-    ).json()
-    if (!resp?.ok) {
-      throw new Error(resp?.message || 'An unexpected error occured.')
-    }
-    switch (resp.state?.nextStep) {
-      case 'installApp': {
-        router.replace({ query: null })
-        loading.hide()
-
-        dialog({
-          component: GithubSetupInstallDialog,
-          persistent: true
-        })
-          .onOk(() => {
-            loading.show({
-              message: t('admin.storage.githubRedirecting')
-            })
-            window.location.assign(resp.state?.url)
-          })
-          .onCancel(() => {
-            throw new Error('Setup was aborted prematurely.')
-          })
-        break
-      }
-      case 'completed': {
-        state.target.isEnabled = true
-        state.target.setup.state = 'configured'
-        setTimeout(() => {
-          loading.hide()
-          notify({
-            type: 'positive',
-            message: t('admin.storage.githubSetupSuccess')
-          })
-        }, 2000)
-        break
-      }
-      default: {
-        throw new Error('Unknown Setup Step')
-      }
-    }
-  } catch (err) {
-    loading.hide()
-    notify({
-      type: 'negative',
-      message: t('admin.storage.githubSetupFailed'),
-      caption: apiErrorMessage(err)
-    })
-  }
-}
-
-function generateGraph() {
-  const types = [
-    {
-      key: 'images',
-      label: t('admin.storage.contentTypeImages'),
-      icon: 'las',
-      iconText: '&#xf1c5;'
-    },
-    {
-      key: 'documents',
-      label: t('admin.storage.contentTypeDocuments'),
-      icon: 'las',
-      iconText: '&#xf1c1;'
-    },
-    {
-      key: 'others',
-      label: t('admin.storage.contentTypeOthers'),
-      icon: 'las',
-      iconText: '&#xf15b;'
-    },
-    {
-      key: 'large',
-      label: t('admin.storage.contentTypeLargeFiles'),
-      icon: 'las',
-      iconText: '&#xf1c6;'
-    }
-  ]
-
-  // -> Create PagesNodes
-
-  state.deliveryNodes = {
-    user: {
-      name: t('admin.storage.deliveryPathsUser'),
-      borderRadius: 16,
-      icon: '/_assets/icons/fluent-account.svg'
-    },
-    pages: {
-      name: t('admin.storage.contentTypePages'),
-      color: '#3f51b5',
-      icon: 'las',
-      iconText: '&#xf15c;'
-    },
-    pages_wiki: { name: 'Wiki.js', icon: '/_assets/logo-wikijs.svg', color: '#161b22' }
-  }
-  state.deliveryEdges = {
-    user_pages: { source: 'user', target: 'pages' },
-    pages_in: { source: 'pages', target: 'pages_wiki' },
-    pages_out: { source: 'pages_wiki', target: 'pages' }
-  }
-  state.deliveryLayouts.nodes = {
-    user: { x: -30, y: 30 },
-    pages: { x: 0, y: 0 },
-    pages_wiki: { x: 60, y: 0 }
-  }
-  state.deliveryPaths = []
-
-  // -> Create Asset Nodes
-
-  for (const [i, tp] of types.entries()) {
-    state.deliveryNodes[tp.key] = {
-      name: tp.label,
-      color: '#3f51b5',
-      icon: tp.icon,
-      iconText: tp.iconText
-    }
-    state.deliveryEdges[`user_${tp.key}`] = { source: 'user', target: tp.key }
-    state.deliveryLayouts.nodes[tp.key] = { x: 0, y: (i + 1) * 15 }
-
-    // -> Find target with direct access
-    const dt = state.targets.find((tgt) => {
-      return (
-        tgt.module !== 'db' &&
-        tgt.contentTypes.activeTypes.includes(tp.key) &&
-        tgt.isEnabled &&
-        tgt.assetDelivery.isDirectAccessSupported &&
-        tgt.assetDelivery.directAccess
-      )
-    })
-
-    if (dt) {
-      state.deliveryNodes[`${tp.key}_${dt.module}`] = { name: dt.title, icon: dt.icon }
-      state.deliveryNodes[`${tp.key}_wiki`] = {
-        name: 'Wiki.js',
-        icon: '/_assets/logo-wikijs.svg',
-        color: '#161b22'
-      }
-      state.deliveryLayouts.nodes[`${tp.key}_${dt.module}`] = { x: 60, y: (i + 1) * 15 }
-      state.deliveryLayouts.nodes[`${tp.key}_wiki`] = { x: 120, y: (i + 1) * 15 }
-      state.deliveryEdges[`${tp.key}_${dt.module}_in`] = {
-        source: tp.key,
-        target: `${tp.key}_${dt.module}`
-      }
-      state.deliveryEdges[`${tp.key}_${dt.module}_out`] = {
-        source: `${tp.key}_${dt.module}`,
-        target: tp.key
-      }
-      state.deliveryEdges[`${tp.key}_${dt.module}_wiki`] = {
-        source: `${tp.key}_wiki`,
-        target: `${tp.key}_${dt.module}`,
-        color: '#02c39a',
-        animationSpeed: 25
-      }
-      continue
-    }
-
-    // -> Find target with streaming
-
-    const st = state.targets.find((tgt) => {
-      return (
-        tgt.module !== 'db' &&
-        tgt.contentTypes.activeTypes.includes(tp.key) &&
-        tgt.isEnabled &&
-        tgt.assetDelivery.isStreamingSupported &&
-        tgt.assetDelivery.streaming
-      )
-    })
-
-    if (st) {
-      state.deliveryNodes[`${tp.key}_${st.module}`] = { name: st.title, icon: st.icon }
-      state.deliveryNodes[`${tp.key}_wiki`] = {
-        name: 'Wiki.js',
-        icon: '/_assets/logo-wikijs.svg',
-        color: '#161b22'
-      }
-      state.deliveryLayouts.nodes[`${tp.key}_${st.module}`] = { x: 120, y: (i + 1) * 15 }
-      state.deliveryLayouts.nodes[`${tp.key}_wiki`] = { x: 60, y: (i + 1) * 15 }
-      state.deliveryEdges[`${tp.key}_wiki_in`] = { source: tp.key, target: `${tp.key}_wiki` }
-      state.deliveryEdges[`${tp.key}_wiki_out`] = { source: `${tp.key}_wiki`, target: tp.key }
-      state.deliveryEdges[`${tp.key}_${st.module}_out`] = {
-        source: `${tp.key}_${st.module}`,
-        target: `${tp.key}_wiki`
-      }
-      state.deliveryEdges[`${tp.key}_${st.module}_in`] = {
-        source: `${tp.key}_wiki`,
-        target: `${tp.key}_${st.module}`
-      }
-      state.deliveryEdges[`${tp.key}_${st.module}_wiki`] = {
-        source: `${tp.key}_wiki`,
-        target: `${tp.key}_${st.module}`,
-        color: '#02c39a',
-        animationSpeed: 25
-      }
-      continue
-    }
-
-    // -> Check DB fallback
-
-    const dbt = state.targets.find((tgt) => tgt.module === 'db')
-    if (dbt?.contentTypes?.activeTypes?.includes(tp.key)) {
-      state.deliveryNodes[`${tp.key}_wiki`] = {
-        name: 'Wiki.js',
-        icon: '/_assets/logo-wikijs.svg',
-        color: '#161b22'
-      }
-      state.deliveryLayouts.nodes[`${tp.key}_wiki`] = { x: 60, y: (i + 1) * 15 }
-      state.deliveryEdges[`${tp.key}_db_in`] = { source: tp.key, target: `${tp.key}_wiki` }
-      state.deliveryEdges[`${tp.key}_db_out`] = { source: `${tp.key}_wiki`, target: tp.key }
-    } else {
-      state.deliveryNodes[`${tp.key}_wiki`] = {
-        name: t('admin.storage.missingOrigin'),
-        color: '#f03a47',
-        icon: 'las',
-        iconText: '&#xf071;'
-      }
-      state.deliveryLayouts.nodes[`${tp.key}_wiki`] = { x: 60, y: (i + 1) * 15 }
-      state.deliveryEdges[`${tp.key}_db_in`] = {
-        source: tp.key,
-        target: `${tp.key}_wiki`,
-        color: '#f03a47',
-        animate: false
-      }
-      state.deliveryPaths.push({ edges: [`${tp.key}_db_in`], color: '#f03a4755' })
-    }
-  }
-}
-
 // MOUNTED
 
 onMounted(() => {
@@ -1503,7 +973,6 @@ onMounted(() => {
   if (adminStore.currentSiteId) {
     load()
   }
-  handleSetupCallback()
 })
 </script>
 

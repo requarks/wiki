@@ -99,9 +99,11 @@ export const assets = pgTable(
     meta: jsonb().notNull().default({}),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow(),
+    // -> Set only while the database is one of the targets configured to store this kind of file.
+    //    An asset is written to every target that claims it, and each derives where its own copy
+    //    sits from the tree, so there is nothing to record here about where the bytes went.
     data: bytea(),
     preview: bytea(),
-    storageInfo: jsonb(),
     authorId: uuid()
       .notNull()
       .references(() => users.id),
@@ -652,16 +654,19 @@ export const storage = pgTable(
     // -> Directory name under `modules/storage`, one row per module per site
     module: varchar({ length: 255 }).notNull(),
     isEnabled: boolean().notNull().default(false),
-    // -> `{ activeTypes: string[], largeThreshold: string }`
+    // -> `{ activeTypes: string[] }`, i.e. which kinds of content are written here. What counts as a
+    //    large file is not among them: that is one answer per site, in the site's own config.
     contentTypes: jsonb().notNull().default({}),
-    // -> `{ streaming: boolean, directAccess: boolean }`
+    // -> `{ streaming: boolean, directAccess: boolean, servedTypes: string[] }`. `servedTypes` names
+    //    the content types a reader's request is answered from this target, and is a subset of
+    //    `contentTypes.activeTypes` — a target can only serve back what it was asked to store.
     assetDelivery: jsonb().notNull().default({}),
-    // -> `{ enabled: boolean }`
-    versioning: jsonb().notNull().default({}),
     // -> Values for the props the module declares in its `definition.yml`
     config: jsonb().notNull().default({}),
-    // -> Where the module stands, as opposed to how it is configured: `{ setup: 'notconfigured' |
-    //    'pendinginstall' | 'configured' }` for a module that has a setup process to go through.
+    // -> `{ status: 'healthy' | 'warning' | 'error', message: string, updatedAt: string | null }`:
+    //    how the target is actually behaving, as opposed to how it is configured. Written by the
+    //    storage model as it dispatches to the module — never by the admin area, which is why it is
+    //    absent from the storage PUT — and reported by the Status card on the target's page.
     state: jsonb().notNull().default({}),
     siteId: uuid()
       .notNull()

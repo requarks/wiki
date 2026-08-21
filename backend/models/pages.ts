@@ -8,6 +8,7 @@ import {
 } from '../helpers/common.ts'
 import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
+import type { StoragePageContent, StoragePageRef } from './storage.ts'
 
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
@@ -15,6 +16,45 @@ const EDITOR_CONTENT_TYPES: Record<string, string> = {
   asciidoc: 'asciidoc',
   wysiwyg: 'html',
   redirect: 'redirect'
+}
+
+/**
+ * The extension a page's source is written under, by the content type its editor produces.
+ *
+ * A page is addressed without one — its path is a URL — so this only ever appears where a page has to
+ * be a file: a storage target laying content out by path. It lives here rather than in that module
+ * because it is a fact about the page, and because it is what decides whether an uploaded file would
+ * land on top of one. See `storageFileName`.
+ */
+export const PAGE_FILE_EXTENSIONS: Record<string, string> = {
+  markdown: 'md',
+  html: 'html',
+  asciidoc: 'adoc',
+  redirect: 'json'
+}
+
+/** For a content type added since this was written. */
+const DEFAULT_PAGE_FILE_EXTENSION = 'txt'
+
+export function pageFileExtension(contentType: string): string {
+  return PAGE_FILE_EXTENSIONS[contentType] ?? DEFAULT_PAGE_FILE_EXTENSION
+}
+
+/**
+ * Which editor writes a given file extension.
+ *
+ * For a page being imported that did not say which editor it belongs to, which is allowed only where
+ * the site reserves the extension for pages — see `importAll` in the local disk module.
+ *
+ * @returns Null when no editor produces that extension, which for a reserved one means the site
+ *   reserved something this wiki has no editor for
+ */
+export function pageEditorForExtension(ext: string): string | null {
+  const contentType = Object.entries(PAGE_FILE_EXTENSIONS).find(([, e]) => e === ext)?.[0]
+  if (!contentType) {
+    return null
+  }
+  return Object.entries(EDITOR_CONTENT_TYPES).find(([, ct]) => ct === contentType)?.[0] ?? null
 }
 
 /**
@@ -486,6 +526,15 @@ class Pages {
       throw new CustomError('pageDuplicatePath', 'A page already exists at this path.', 409)
     }
 
+    const pathParts = path.split('/')
+    await this.guardAgainstAssetCollision({
+      siteId,
+      locale,
+      parentPath: pathParts.slice(0, -1).join('/'),
+      fileName: pathParts.at(-1)!,
+      contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text'
+    })
+
     const alias = await this.validateAlias(siteId, input.alias)
     const { render, toc, text } = await WIKI.models.rendering.postProcess(
       siteId,
@@ -496,7 +545,6 @@ class Pages {
       }
     )
 
-    const pathParts = path.split('/')
     const inserted = await WIKI.db
       .insert(pagesTable)
       .values({
@@ -559,6 +607,9 @@ class Pages {
       authorId: actor.id,
       reason: input.reasonForChange
     })
+
+    const stored = this.toStoragePage(siteId, page, page.content ?? '')
+    await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
     await WIKI.models.search.indexPage(page.id, locale)
     await WIKI.models.hooks.emit('page:create', {
@@ -708,6 +759,11 @@ class Pages {
         .where(eq(treeTable.id, id))
     }
 
+    // -> The source is whatever this save set it to, else whatever it already was: a save that only
+    //    changed the title still rewrites the copy, since the title is in its front matter
+    const stored = this.toStoragePage(siteId, updated, values.content ?? existing.content ?? '')
+    await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
+
     await WIKI.models.search.indexPage(id, updated.locale)
     await WIKI.models.hooks.emit('page:edit', {
       id,
@@ -730,10 +786,13 @@ class Pages {
     { path, title }: { path: string; title?: string },
     actor: PageActor
   ): Promise<Page | null> {
-    const page = await this.getPage({ siteId, id })
+    // -> With the source, which the move itself does not need: it is what the copy kept by a storage
+    //    target is rewritten from once the page has landed at its new path
+    const page = await this.getPage({ siteId, id, withContent: true })
     if (!page) {
       return null
     }
+    const existingContent = page.content
     const newPath = normalizePath(path)
     if (newPath === page.path && (title === undefined || title === page.title)) {
       return page
@@ -755,6 +814,13 @@ class Pages {
       if (duplicate.length > 0) {
         throw new CustomError('pageDuplicatePath', 'A page already exists at this path.', 409)
       }
+      await this.guardAgainstAssetCollision({
+        siteId,
+        locale: page.locale,
+        parentPath: newPath.split('/').slice(0, -1).join('/'),
+        fileName: newPath.split('/').at(-1)!,
+        contentType: page.contentType
+      })
     }
 
     await WIKI.db
@@ -798,6 +864,13 @@ class Pages {
       ]
     })
 
+    // -> Moved and then rewritten, rather than deleted and written afresh: the move is what keeps a
+    //    versioned target's history of the file attached to it, and the rewrite is because a move may
+    //    carry a new title and always carries a new modification time, both of which are in the copy
+    const stored = this.toStoragePage(siteId, moved, existingContent ?? '')
+    await WIKI.models.storage.relocatePage(stored.ref, page.path)
+    await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
+
     await WIKI.models.hooks.emit('page:rename', {
       id,
       path: moved.path,
@@ -832,6 +905,13 @@ class Pages {
     // -> A page that overrode the sidebar owns a menu keyed by its own id, which nothing could reach
     //    once the page is gone
     await WIKI.models.navigation.deleteNavForEntries([id])
+    await WIKI.models.storage.removePage({
+      id,
+      siteId,
+      locale: page.locale,
+      path: page.path,
+      contentType: page.contentType
+    })
 
     await WIKI.models.hooks.emit('page:delete', {
       id,
@@ -867,6 +947,21 @@ class Pages {
         authorId: actor.id
       })
     }
+    // -> Read before the rows go: what a target filed each page under is decided by its content type,
+    //    and guessing would mean reaching for names that may belong to the assets beside them
+    const contentTypes = new Map(
+      (
+        await WIKI.db
+          .select({ id: pagesTable.id, contentType: pagesTable.contentType })
+          .from(pagesTable)
+          .where(
+            inArray(
+              pagesTable.id,
+              entries.map((entry) => entry.id)
+            )
+          )
+      ).map((row) => [row.id, row.contentType])
+    )
     await WIKI.db.delete(pagesTable).where(
       inArray(
         pagesTable.id,
@@ -877,15 +972,335 @@ class Pages {
     // -> One per page, as deleting them one at a time would have sent: a subscriber mirroring the
     //    wiki has to hear about each page, not about the folder it happened to sit in
     for (const entry of entries) {
+      const path = entry.folderPath ? `${entry.folderPath}/${entry.fileName}` : entry.fileName
+      const contentType = contentTypes.get(entry.id)
+      if (contentType) {
+        await WIKI.models.storage.removePage({
+          id: entry.id,
+          siteId,
+          locale: entry.locale,
+          path,
+          contentType
+        })
+      }
       await WIKI.models.hooks.emit('page:delete', {
         id: entry.id,
-        path: entry.folderPath ? `${entry.folderPath}/${entry.fileName}` : entry.fileName,
+        path,
         locale: entry.locale,
         siteId,
         authorId: actor.id
       })
     }
     WIKI.logger.debug(`Deleted ${entries.length} page(s) that went with a deleted folder.`)
+  }
+
+  // == STORAGE ========================
+
+  /**
+   * The file name a page occupies on a target that lays content out by path.
+   *
+   * The name a page and an asset can collide on, and so the thing both of them are checked against
+   * before either is written — see `guardAgainstAssetCollision` here and its opposite number in the
+   * assets model.
+   */
+  storageFileName(fileName: string, contentType: string): string {
+    return `${fileName}.${pageFileExtension(contentType)}`
+  }
+
+  /**
+   * The file name an existing page occupies, or null if there is no such page.
+   */
+  async storageFileNameOf(id: string): Promise<string | null> {
+    const results = await WIKI.db
+      .select({ path: pagesTable.path, contentType: pagesTable.contentType })
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1)
+    const row = results[0]
+    return row ? this.storageFileName(row.path.split('/').at(-1)!, row.contentType) : null
+  }
+
+  /**
+   * Refuse a page whose stored file would land on an asset that is already there.
+   *
+   * The page and the asset have different names as far as the tree is concerned — a page is `readme`
+   * and the asset is `readme.md` — so nothing in the tree stops the two coexisting. They only meet
+   * once the page has to be a file, and by then one of them would be overwriting the other.
+   *
+   * Normally unreachable, because the site's `pageExtensions` keeps assets off these extensions in
+   * the first place. It is the backstop for a site that has removed one from that list, and for
+   * content that predates its being on it.
+   *
+   * @throws `pageNameTakenByAsset` when the name is not free
+   */
+  private async guardAgainstAssetCollision({
+    siteId,
+    locale,
+    parentPath,
+    fileName,
+    contentType
+  }: {
+    siteId: string
+    locale: string
+    parentPath: string
+    fileName: string
+    contentType: string
+  }): Promise<void> {
+    const storedName = this.storageFileName(fileName, contentType)
+    const occupant = await WIKI.models.tree.getEntryAt({
+      siteId,
+      locale,
+      parentPath,
+      fileName: storedName
+    })
+    if (occupant?.type === 'asset') {
+      throw new CustomError(
+        'pageNameTakenByAsset',
+        `A file named ${storedName} already exists here, which is where this page would be stored.`,
+        409
+      )
+    }
+  }
+
+  /*
+    A page always lives in its own row, and none of what follows changes that. What it does is keep a
+    copy of the page on every storage target configured to hold `pages` — the local disk, today —
+    which is a backup of content the database owns rather than a place it has moved to. Nothing here
+    is ever read back: `getPage` goes to the row, as it always has.
+
+    That is why every one of these calls is fired after the database write has succeeded and none of
+    them is allowed to fail the operation; `WIKI.models.storage` swallows and logs a target that could
+    not keep up. A wiki whose backup disk filled up is a wiki with a stale backup, not one that has
+    stopped accepting edits.
+  */
+
+  /**
+   * A page in the shape a storage target takes it.
+   *
+   * @param content The source, which the caller has to hand: it is not on the `Page` a mutation
+   *   returns unless the read asked for it, and re-reading the row to get it back would cost a query
+   *   per save for something the caller just wrote.
+   */
+  private toStoragePage(
+    siteId: string,
+    page: {
+      id: string
+      locale: string
+      path: string
+      title: string
+      description?: string | null
+      editor: string
+      contentType: string
+      tags?: string[]
+      publishState: string
+      createdAt: Date
+      updatedAt: Date
+    },
+    content: string
+  ): { ref: StoragePageRef; content: StoragePageContent } {
+    return {
+      ref: {
+        id: page.id,
+        siteId,
+        locale: page.locale,
+        path: page.path,
+        contentType: page.contentType
+      },
+      content: {
+        title: page.title,
+        description: page.description ?? '',
+        editor: page.editor,
+        tags: page.tags ?? [],
+        // -> A scheduled page is not published yet, whatever its dates say it will be
+        isPublished: page.publishState === 'published',
+        createdAt: page.createdAt,
+        updatedAt: page.updatedAt,
+        content
+      }
+    }
+  }
+
+  /**
+   * Every page of a site, in the shape a storage target takes them.
+   *
+   * What a target's `dump` action walks in order to write copies of content that predates it being
+   * enabled. Reads the source of every page at once, which is what makes this a maintenance action
+   * rather than something to call on a request.
+   */
+  async listForStorage(
+    siteId: string
+  ): Promise<{ ref: StoragePageRef; content: StoragePageContent }[]> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        description: pagesTable.description,
+        editor: pagesTable.editor,
+        contentType: pagesTable.contentType,
+        tags: pagesTable.tags,
+        publishState: pagesTable.publishState,
+        createdAt: pagesTable.createdAt,
+        updatedAt: pagesTable.updatedAt,
+        content: pagesTable.content
+      })
+      .from(pagesTable)
+      .where(eq(pagesTable.siteId, siteId))
+
+    return rows.map((row) => this.toStoragePage(siteId, row, row.content ?? ''))
+  }
+
+  /**
+   * Take a page a storage target holds and the wiki does not into the database.
+   *
+   * The direction that makes a target a peer store rather than a write-only backup: pages arrive here
+   * from a folder restored onto the disk, and — once a module exists that can hear about them — from
+   * commits somebody else pushed. What comes back is an ordinary page, because that is the only kind
+   * there is: it lands in `pages`, gets a tree entry and is served from the row like every other.
+   *
+   * A path the wiki already has a page at is left alone rather than overwritten, unless `overwrite`
+   * says the file is to win. Off, this is the safe direction: the wiki's copy is the one an author has
+   * been editing, and reconciling a file that changed on both sides is a merge, which is a target's
+   * business and not this model's. On, the file is taken as the authority — for a restore, where what
+   * is in the folder is what the wiki is supposed to say.
+   *
+   * An overwrite is an ordinary save, not a special path: it records a version like any other, so the
+   * copy it replaced is in the page's history and an administrator who did not mean it can put it
+   * back. Two things it does not take from the file, both because a save anywhere else in this model
+   * does not either — the page's **editor**, so a `.md` file cannot turn a redirection into markdown
+   * by landing on it, and its **path**, since that is what identified it in the first place.
+   *
+   * @param overwrite Replace a page already at this path instead of leaving it alone
+   * @returns The imported page, or null when there is already one at that path and `overwrite` is not
+   *   set
+   */
+  async adoptStoredPage({
+    siteId,
+    locale,
+    path,
+    title,
+    description,
+    editor,
+    tags,
+    isPublished,
+    content,
+    createdAt,
+    updatedAt,
+    authorId,
+    overwrite
+  }: {
+    siteId: string
+    locale: string
+    path: string
+    title: string
+    description?: string
+    editor: string
+    tags?: string[]
+    isPublished?: boolean
+    content: string
+    createdAt?: Date
+    updatedAt?: Date
+    authorId: string
+    overwrite?: boolean
+  }): Promise<Page | null> {
+    const normalized = normalizePath(path)
+    const existing = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale),
+          eq(pagesTable.path, normalized)
+        )
+      )
+      .limit(1)
+    if (existing.length > 0 && !overwrite) {
+      return null
+    }
+
+    /*
+      Imported content is rendered with NO script or style permission, whoever ran the import.
+
+      What those two allow is a `<script>` or a `<style>` surviving sanitization, and the file this
+      came out of was not necessarily written by the administrator who pressed the button — the whole
+      point of the feature is content arriving from somewhere else, which for a future git target
+      means commits from whoever can push. Granting the importer's own privileges to it would turn
+      "restore my pages" into stored XSS for every reader. An administrator who does want scripts on
+      an imported page saves it once themselves, deliberately.
+    */
+    const actor = { id: authorId, permissions: [] }
+    // -> The one difference between the two directions, and deliberately the only one: a page that is
+    //    there is *saved*, through the same method an editor saves through, so it gets a history entry
+    //    and a re-render and a mirrored copy without any of that being reimplemented here
+    const page = existing[0]
+      ? await this.updatePage(
+          siteId,
+          existing[0].id,
+          {
+            title,
+            description,
+            content,
+            tags,
+            publishState: isPublished === false ? 'draft' : 'published',
+            render: ''
+          } as Partial<PageInput>,
+          actor
+        )
+      : await this.createPage(
+          siteId,
+          {
+            path: normalized,
+            locale,
+            title,
+            description,
+            editor,
+            content,
+            tags,
+            publishState: isPublished === false ? 'draft' : 'published',
+            // -> No stored HTML: the source is all a file carries, and what a reader sees is produced
+            //    from it by the render queue below
+            render: ''
+          } as PageInput,
+          actor
+        )
+    // -> Only if the page went away between the two statements above
+    if (!page) {
+      return null
+    }
+
+    // -> A restore should not report every page as written today. Applied after the fact because the
+    //    two dates are not something an API client may set, only something a file can carry back.
+    if (createdAt || updatedAt) {
+      await WIKI.db
+        .update(pagesTable)
+        .set({
+          ...(createdAt ? { createdAt } : {}),
+          ...(updatedAt ? { updatedAt } : {})
+        })
+        .where(eq(pagesTable.id, page.id))
+      // -> Writing the page already put a copy on every target holding pages, stamped with the dates
+      //    it had for the moment it existed with the wrong ones
+      const restored = this.toStoragePage(
+        siteId,
+        { ...page, createdAt: createdAt ?? page.createdAt, updatedAt: updatedAt ?? page.updatedAt },
+        content
+      )
+      await WIKI.models.storage.mirrorPage(restored.ref, restored.content)
+    }
+
+    // -> An imported page has no HTML until something renders it, which takes a headless browser this
+    //    instance may not have. Best effort: the page is in the wiki either way, and a re-render can
+    //    be asked for from the admin area once one is available.
+    try {
+      await this.queueRerender(siteId, page.id, actor)
+    } catch (err: any) {
+      WIKI.logger.warn(`Could not queue a render for the imported page ${normalized} [ SKIPPED ]`)
+      WIKI.logger.warn(err.message)
+    }
+
+    return page
   }
 
   /**

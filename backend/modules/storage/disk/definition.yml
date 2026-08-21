@@ -3,43 +3,32 @@ title: Local File System
 icon: '/_assets/icons/ultraviolet-hdd.svg'
 banner: '/_assets/storage/disk.jpg'
 description: Store files on the local file system or over network attached storage. Note that you must use replicated storage if using high-availability instances.
-vendor: Wiki.js
-website: 'https://js.wiki'
 assetDelivery:
   isStreamingSupported: true
   isDirectAccessSupported: false
   defaultStreamingEnabled: true
   defaultDirectAccessEnabled: false
 contentTypes:
-  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
-  defaultLargeThreshold: '5MB'
-versioning:
-  isSupported: false
-  defaultEnabled: false
+  defaultTypesEnabled: ['pages', 'images', 'documents', 'others', 'large']
 props:
   path:
     type: String
     title: Path
-    hint: Absolute path without a trailing slash (e.g. /home/wiki/backup, C:\wiki\backup)
+    hint: Where this site's folder tree is written, directly into the path given with no folder for the site inside it - so give each site its own path. Relative paths are resolved from the Wiki.js install directory (e.g. ./data/content, /home/wiki/content, C:\wiki\content)
     icon: symlink-directory
     order: 1
-  createDailyBackups:
-    type: Boolean
-    default: false
-    title: Create Daily Backups
-    hint: A tar.gz archive containing all content will be created daily in subfolder named _daily. Archives are kept for a month.
-    icon: archive-folder
-    order: 2
+    default: ./data/content
 actions:
-  dump:
-    label: Dump all content to disk
-    hint: Output all content from the DB to the local disk. If you enabled this module after content was created or you temporarily disabled this module, you'll want to execute this action to add the missing files.
+  exportAll:
+    label: Export Everything
+    hint: Write a copy of every page and asset this target is configured to hold to the file system, overwriting whatever is already there. Nothing in the database is changed and nothing is moved.
     icon: downloads
-  backup:
-    label: Create Backup
-    hint: Will create a manual backup archive at this point in time, in a subfolder named _manual, from the contents currently on disk.
-    icon: archive-folder
   importAll:
     label: Import Everything
-    hint: Will import all content currently in the local disk folder.
+    hint: Take every page and asset in the folder that the wiki does not have yet into the wiki. A file is imported as a page if its extension is one of the site's Page Extensions, or if it declares an editor in its front matter (or, for JSON, an editor property); everything else is imported as an asset. Anything already at the same path is left alone on both sides, so this is safe to run again and will not pick up a file that was edited on disk.
+    icon: database-restore
+  importAllOverwrite:
+    label: Import Everything and Overwrite
+    hint: Take every page and asset in the folder, overwriting existing entries. A file is imported as a page if its extension is one of the site's Page Extensions, or if it declares an editor in its front matter (or, for JSON, an editor property); everything else is imported as an asset.
+    warn: This replaces what the wiki currently has wherever a file in the folder lands on it. An overwritten page keeps its previous version in its history, but a file has none - the bytes it replaces are gone from every storage target holding them.
     icon: database-daily-import

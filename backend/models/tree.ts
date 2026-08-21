@@ -927,7 +927,56 @@ class Tree {
       .where(eq(treeTable.id, folder.id))
       .returning()
 
-    await this.refreshDescendantPaths(folder.siteId, newPath)
+    const movedPages = await this.refreshDescendantPaths(folder.siteId, newPath)
+
+    // -> Only moved, never rewritten: none of these pages changed, so the copy a target holds is
+    //    still the right contents at the wrong name
+    for (const page of movedPages) {
+      await WIKI.models.storage.relocatePage(
+        {
+          id: page.id,
+          siteId: folder.siteId,
+          locale: page.locale,
+          path: page.path,
+          contentType: page.contentType
+        },
+        page.previousPath
+      )
+    }
+
+    // -> A storage target that lays its content out by path has every one of those files to move.
+    //    Asked for after the rows are correct, so that where each file belongs is read off the tree
+    //    rather than recomputed from the rename.
+    const movedAssets = await WIKI.db
+      .select({
+        id: treeTable.id,
+        locale: treeTable.locale,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName
+      })
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.type, 'asset'),
+          sql`${treeTable.folderPath} <@ ${newPath}::ltree`
+        )
+      )
+    await WIKI.models.assets.relocateAssets(
+      folder.siteId,
+      movedAssets.map((row) => ({
+        id: row.id,
+        previous: {
+          locale: row.locale,
+          // -> Where it was: the same place it is now, with the renamed segment put back
+          folderPath: (decodeTreePath(row.folderPath ?? '') ?? '').replace(
+            decodeTreePath(newPath)!,
+            decodeTreePath(oldPath)!
+          ),
+          fileName: row.fileName
+        }
+      }))
+    )
 
     // -> Every asset under it is served from a different path now, and nothing about the assets
     //    themselves changed for the file cache to notice
@@ -952,19 +1001,31 @@ class Tree {
    * The two hashes are not the same function and neither exists in postgres, so each row is rewritten
    * from here. What is deliberately not touched is `updatedAt`: the folder moved, the pages under it
    * did not change, and marking a few hundred of them as freshly edited would say otherwise.
+   *
+   * @returns Where each page moved from and to, for the copies a storage target keeps of them. The
+   *   old path is only knowable from here — a moment later the row no longer says where it was.
    */
-  private async refreshDescendantPaths(siteId: string, path: string): Promise<void> {
+  private async refreshDescendantPaths(
+    siteId: string,
+    path: string
+  ): Promise<
+    { id: string; locale: string; previousPath: string; path: string; contentType: string }[]
+  > {
     const rows = await WIKI.db
       .select({
         id: treeTable.id,
         type: treeTable.type,
         folderPath: treeTable.folderPath,
-        fileName: treeTable.fileName
+        fileName: treeTable.fileName,
+        locale: treeTable.locale,
+        previousPath: pagesTable.path,
+        contentType: pagesTable.contentType
       })
       .from(treeTable)
+      .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
       .where(and(eq(treeTable.siteId, siteId), sql`${treeTable.folderPath} <@ ${path}::ltree`))
 
-    let pageCount = 0
+    const movedPages = []
     for (const row of rows) {
       const folderPath = decodeTreePath(row.folderPath ?? '')
       const fullPath = folderPath ? `${folderPath}/${row.fileName}` : row.fileName
@@ -977,14 +1038,21 @@ class Tree {
           .update(pagesTable)
           .set({ path: fullPath, hash: generatePathHash(fullPath) })
           .where(eq(pagesTable.id, row.id))
-        pageCount++
+        movedPages.push({
+          id: row.id,
+          locale: row.locale,
+          previousPath: row.previousPath ?? fullPath,
+          path: fullPath,
+          contentType: row.contentType ?? 'markdown'
+        })
       }
     }
     if (rows.length > 0) {
       WIKI.logger.debug(
-        `Refreshed the path of ${rows.length} moved entrie(s), ${pageCount} of them page(s).`
+        `Refreshed the path of ${rows.length} moved entrie(s), ${movedPages.length} of them page(s).`
       )
     }
+    return movedPages
   }
 
   /**

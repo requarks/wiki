@@ -1,4 +1,4 @@
-import { CONTENT_TYPES } from '../../models/storage.ts'
+import { CONTENT_TYPES, STORAGE_TARGET_STATUSES } from '../../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
@@ -40,7 +40,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       contentTypes: {
         type: 'object',
-        description: 'Which kinds of content this target holds.',
+        description:
+          'Which kinds of content are written to this target. Not a choice between targets: a site may store the same kind in several places at once, and every one of them receives a copy.',
         properties: {
           activeTypes: {
             type: 'array',
@@ -48,10 +49,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
               type: 'string',
               enum: [...CONTENT_TYPES]
             }
-          },
-          largeThreshold: {
-            type: 'string',
-            description: 'Size above which an asset counts as a large file, e.g. `5MB`.'
           }
         }
       },
@@ -71,42 +68,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           directAccess: {
             type: 'boolean'
-          }
-        }
-      },
-      versioning: {
-        type: 'object',
-        description:
-          'Whether past versions are kept. `isForceEnabled` marks a module where versioning is inherent, such as git.',
-        properties: {
-          isSupported: {
-            type: 'boolean'
           },
-          isForceEnabled: {
-            type: 'boolean'
-          },
-          enabled: {
-            type: 'boolean'
-          }
-        }
-      },
-      setup: {
-        type: 'object',
-        description:
-          'Only present for a module that has a setup process and an implementation to run it.',
-        properties: {
-          handler: {
-            type: 'string',
-            description: 'Which setup flow the admin area should walk through, e.g. `github`.'
-          },
-          state: {
-            type: 'string',
-            enum: ['notconfigured', 'pendinginstall', 'configured']
-          },
-          values: {
-            type: 'object',
-            additionalProperties: true,
-            description: 'Values the setup form starts from.'
+          servedTypes: {
+            type: 'array',
+            description:
+              'The content types a request for a file is answered from this target. A subset of `contentTypes.activeTypes`, since a target can only serve back what it was asked to store, and across a site each type names at most one target.',
+            items: {
+              type: 'string',
+              enum: [...CONTENT_TYPES]
+            }
           }
         }
       },
@@ -147,6 +117,26 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             }
           }
         }
+      },
+      state: {
+        type: 'object',
+        description:
+          'How the target is behaving, as opposed to how it is configured. Read-only and absent from `StorageTargetInput`: it records the outcome of the last operation the wiki asked of this target, not anything an administrator sets. `warning` is an operation that failed without being refused - a page copy that could not be written - and `error` is one that was reported to whoever asked, such as a failed upload. A subsequent success clears either.',
+        properties: {
+          status: {
+            type: 'string',
+            enum: [...STORAGE_TARGET_STATUSES]
+          },
+          message: {
+            type: 'string',
+            description: 'What went wrong. Empty when healthy.'
+          },
+          updatedAt: {
+            type: ['string', 'null'],
+            description:
+              'When the status was last written, or null for a target that has not been asked to do anything yet.'
+          }
+        }
       }
     }
   })
@@ -166,7 +156,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       isEnabled: {
         type: 'boolean',
         description:
-          'The database target cannot be disabled, and a target with a pending setup cannot be enabled.'
+          'The database target cannot be disabled, and a module without an implementation cannot be enabled.'
       },
       contentTypes: {
         type: 'object',
@@ -177,10 +167,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
               type: 'string',
               enum: [...CONTENT_TYPES]
             }
-          },
-          largeThreshold: {
-            type: 'string',
-            maxLength: 32
           }
         }
       },
@@ -193,16 +179,14 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           directAccess: {
             type: 'boolean'
-          }
-        }
-      },
-      versioning: {
-        type: 'object',
-        description:
-          'Ignored by a module that does not support versioning or that forces it on — the module decides, not the client.',
-        properties: {
-          enabled: {
-            type: 'boolean'
+          },
+          servedTypes: {
+            type: 'array',
+            description: 'Refused for a content type this target is not also configured to store.',
+            items: {
+              type: 'string',
+              enum: [...CONTENT_TYPES]
+            }
           }
         }
       },

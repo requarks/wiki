@@ -41,7 +41,6 @@ CREATE TABLE "assets" (
 	"updatedAt" timestamp DEFAULT now() NOT NULL,
 	"data" bytea,
 	"preview" bytea,
-	"storageInfo" jsonb,
 	"authorId" uuid NOT NULL,
 	"siteId" uuid NOT NULL
 );
@@ -316,7 +315,6 @@ CREATE TABLE "storage" (
 	"isEnabled" boolean DEFAULT false NOT NULL,
 	"contentTypes" jsonb DEFAULT '{}' NOT NULL,
 	"assetDelivery" jsonb DEFAULT '{}' NOT NULL,
-	"versioning" jsonb DEFAULT '{}' NOT NULL,
 	"config" jsonb DEFAULT '{}' NOT NULL,
 	"state" jsonb DEFAULT '{}' NOT NULL,
 	"siteId" uuid NOT NULL

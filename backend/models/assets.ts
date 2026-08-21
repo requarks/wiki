@@ -1,12 +1,13 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import mime from 'mime'
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
 import { assets as assetsTable, tree as treeTable } from '../db/schema.ts'
 import { CustomError, decodeTreePath, encodeTreePath } from '../helpers/common.ts'
 import { makeImageThumbnail } from '../helpers/images.ts'
 import type { Readable } from 'node:stream'
 import type { DeletedEntry } from './tree.ts'
+import type { StorageAssetRef } from './storage.ts'
 
 /** How large the file manager renders a preview. Generated once, at upload time. */
 const THUMBNAIL_SIZE = { width: 320, height: 200 }
@@ -161,20 +162,28 @@ function kindOf(mimeType: string, fileExt: string): AssetKind {
 /**
  * Assets model
  *
- * An asset is a file a user uploaded: its bytes live in the `assets` table, while its name and place
- * in the site live in the matching `tree` row, which shares its ID. Both are written together — an
- * asset with no tree row would be unreachable, and a tree row with no asset would be a broken link.
+ * An asset is a file a user uploaded: its name and its place in the site live in the `tree` row, its
+ * metadata in the matching `assets` row, which shares its ID. Both are written together — an asset
+ * with no tree row would be unreachable, and a tree row with no asset would be a broken link.
  *
- * Storage targets are not implemented yet, so the database is the only copy — but not the one that
- * answers a request for a file. Serving goes through two caches, because `/_files/` is hit by every
- * image on every page view and neither half of that lookup needs the database twice:
+ * Where the *bytes* live is a third thing, and not necessarily the database: they go to whichever
+ * storage target the site has configured for a file of that kind and size, and the row records which
+ * one took them in `storageInfo`. Nothing here knows what that means for a given target — writing,
+ * reading, moving and deleting all go through `WIKI.models.storage`, and the database is simply the
+ * target every site starts with. What never leaves this model is the metadata: renaming a file is a
+ * database write plus a request to the target to follow it.
+ *
+ * Serving goes through two caches, because `/_files/` is hit by every image on every page view and
+ * neither half of that lookup needs to reach the target twice:
  *
  * 1. **memory**, holding path → metadata for `PATH_CACHE_TTL_MS`, which is what decides the ETag and
  *    answers the conditional requests a browser sends once its own copy goes stale
  * 2. **disk**, under `<dataPath>/cache/files`, holding the bytes, streamed straight to the response
  *
- * Only the database is permanent; both caches are derived and can be deleted at any point, which is
- * also what makes a cold instance correct rather than empty-handed.
+ * Neither cache is storage: both are derived and can be deleted at any point, which is also what
+ * makes a cold instance correct rather than empty-handed. The one under `<dataPath>/cache/files` is
+ * not to be confused with the local file system storage target, which is a place content actually
+ * lives and is never swept.
  */
 class Assets {
   /** Path resolutions, keyed `siteId:path`. Insertion-ordered, so the oldest entry is evictable. */
@@ -195,6 +204,75 @@ class Assets {
   conflictBehaviorFor(siteId: string): UploadConflictBehavior {
     const configured = WIKI.sites[siteId]?.config?.uploads?.conflictBehavior
     return UPLOAD_CONFLICT_BEHAVIORS.has(configured) ? configured : 'overwrite'
+  }
+
+  /**
+   * Refuse an upload that is really a page, or that would land on one.
+   *
+   * A page and an asset occupy the same folder and are stored as the same kind of file, so the two
+   * name spaces are one. Nothing in the tree sees that — a page is `readme` and the file is
+   * `readme.md`, two different names — so it is enforced here, on the way in, and by
+   * `guardAgainstAssetCollision` coming the other way.
+   *
+   * Two rules, in the order an administrator would expect them:
+   *
+   * 1. **The site's `pageExtensions` are reserved.** They are the extensions that address a page by
+   *    URL, so a file with one of them is a page, and uploading it as an attachment is a mistake
+   *    rather than a collision — refused whether or not a page happens to be there today. This is
+   *    what keeps `.md` out of the file manager on a default site.
+   * 2. **Otherwise, no landing on a page that is there.** For an extension a site has taken off that
+   *    list, the two can legitimately coexist right up until one would overwrite the other's file.
+   *
+   * @throws `assetIsPageExtension` or `assetNameTakenByPage`
+   */
+  private async guardAgainstPageCollision({
+    siteId,
+    locale,
+    folderId,
+    folderPath,
+    fileName,
+    fileExt
+  }: {
+    siteId: string
+    locale: string
+    folderId?: string | null
+    folderPath?: string | null
+    fileName: string
+    fileExt: string
+  }): Promise<void> {
+    const reserved: string[] = WIKI.sites[siteId]?.config?.pageExtensions ?? []
+    if (fileExt && reserved.includes(fileExt)) {
+      throw new CustomError(
+        'assetIsPageExtension',
+        `.${fileExt} is a page extension on this site, so a file with it cannot be uploaded as an attachment. Create a page instead, or remove ${fileExt} from the site's page extensions.`,
+        409
+      )
+    }
+
+    // -> The page this would be the file of, if there is one: same folder, same name without the
+    //    extension. Its own extension has to match too — `readme.pdf` is not the file of the
+    //    markdown page `readme`, and sits happily beside it.
+    const stem = fileName.slice(0, fileName.length - (fileExt ? fileExt.length + 1 : 0))
+    if (!stem) {
+      return
+    }
+    const occupant = await WIKI.models.tree.getEntryAt({
+      siteId,
+      locale,
+      parentId: folderId,
+      parentPath: folderPath,
+      fileName: stem
+    })
+    if (
+      occupant?.type === 'page' &&
+      (await WIKI.models.pages.storageFileNameOf(occupant.id)) === fileName
+    ) {
+      throw new CustomError(
+        'assetNameTakenByPage',
+        `The page "${stem}" is stored as ${fileName} here, so a file cannot be uploaded under that name.`,
+        409
+      )
+    }
   }
 
   /**
@@ -230,6 +308,7 @@ class Assets {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
     const fileExt = extensionOf(safeName)
+    await this.guardAgainstPageCollision({ siteId, locale, folderId, fileName: safeName, fileExt })
     // -> The extension decides the type, not the request: the declared one is whatever the client felt
     //    like sending, and this value is what gets served back to a browser later
     const resolvedMime = mime.getType(safeName) ?? mimeType ?? 'application/octet-stream'
@@ -272,6 +351,7 @@ class Assets {
       return this.replace({
         id: occupant.id,
         siteId,
+        locale,
         folderPath: decodeTreePath(occupant.folderPath ?? '') ?? '',
         fileName: occupant.fileName,
         title: occupant.title,
@@ -300,8 +380,10 @@ class Assets {
       }
     })
     const storedName = entry.fileName
+    const folderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
 
     try {
+      // -> The metadata row goes in before the bytes, since the database target writes them into it
       await WIKI.db.insert(assetsTable).values({
         id: entry.id,
         fileName: storedName,
@@ -309,13 +391,25 @@ class Assets {
         kind,
         mimeType: resolvedMime,
         fileSize: data.length,
-        data,
         preview,
         authorId,
         siteId
       })
+      await WIKI.models.storage.putAsset(
+        {
+          id: entry.id,
+          siteId,
+          locale,
+          folderPath,
+          fileName: storedName,
+          kind,
+          fileSize: data.length
+        },
+        data
+      )
     } catch (err) {
-      // -> Nothing points at the tree row now, and leaving it would show a file the site cannot serve
+      // -> Nothing points at these now, and leaving them would show a file the site cannot serve
+      await WIKI.db.delete(assetsTable).where(eq(assetsTable.id, entry.id))
       await WIKI.db.delete(treeTable).where(eq(treeTable.id, entry.id))
       throw err
     }
@@ -323,7 +417,7 @@ class Assets {
     WIKI.models.hooks.emit('asset:upload', {
       id: entry.id,
       fileName: storedName,
-      folderPath: decodeTreePath(entry.folderPath ?? '') ?? '',
+      folderPath,
       siteId,
       authorId,
       metadata: { fileSize: data.length, mimeType: resolvedMime, kind }
@@ -336,7 +430,7 @@ class Assets {
       kind,
       mimeType: resolvedMime,
       fileSize: data.length,
-      folderPath: decodeTreePath(entry.folderPath ?? '') ?? '',
+      folderPath,
       title: entry.title,
       hasPreview: Boolean(preview),
       createdAt: entry.createdAt,
@@ -355,10 +449,15 @@ class Assets {
    * The name it keeps is the stored one, which is why the extension and type are the incoming file's:
    * the two only differ when a browser sent `Photo.PNG` for what is stored as `photo.png`, and the
    * sanitized name is what both agree on.
+   *
+   * Which targets hold it are worked out again from the incoming file rather than inherited, since
+   * the two may not be the same size — replacing a thumbnail with a 40 MB one is how a file crosses
+   * the large-file threshold and starts being stored somewhere else entirely.
    */
   private async replace({
     id,
     siteId,
+    locale,
     folderPath,
     fileName,
     title,
@@ -371,6 +470,7 @@ class Assets {
   }: {
     id: string
     siteId: string
+    locale: string
     folderPath: string
     fileName: string
     title: string
@@ -381,6 +481,10 @@ class Assets {
     preview: Buffer | null
     authorId: string
   }): Promise<Asset> {
+    await WIKI.models.storage.putAsset(
+      { id, siteId, locale, folderPath, fileName, kind, fileSize: data.length },
+      data
+    )
     await WIKI.db
       .update(assetsTable)
       .set({
@@ -388,7 +492,6 @@ class Assets {
         kind,
         mimeType,
         fileSize: data.length,
-        data,
         preview,
         authorId,
         updatedAt: sql`now()`
@@ -536,27 +639,297 @@ class Assets {
    * An asset's bytes, along with what to serve them as. Null if there is no such asset.
    *
    * Not scoped to a site, unlike the rest: the ID is a UUID nobody can guess, and the routes that use
-   * this are the public ones, which have no site of their own to check against.
+   * this are the public ones, which have no site of their own to check against. Where the file sits
+   * is read off the tree, since that — not a record of where it was put — is how every target
+   * addresses its copy.
    */
   async getContent(
     id: string
   ): Promise<{ data: Buffer; mimeType: string; fileName: string } | null> {
     const results = await WIKI.db
       .select({
-        data: assetsTable.data,
+        id: assetsTable.id,
+        siteId: assetsTable.siteId,
+        kind: assetsTable.kind,
+        fileSize: assetsTable.fileSize,
         mimeType: assetsTable.mimeType,
-        fileName: assetsTable.fileName
+        fileName: assetsTable.fileName,
+        locale: treeTable.locale,
+        folderPath: treeTable.folderPath
       })
       .from(assetsTable)
+      .innerJoin(treeTable, eq(treeTable.id, assetsTable.id))
       .where(eq(assetsTable.id, id))
       .limit(1)
     const row = results[0]
-    return row?.data ? { data: row.data, mimeType: row.mimeType, fileName: row.fileName } : null
+    if (!row) {
+      return null
+    }
+    const data = await WIKI.models.storage.getAsset({
+      id: row.id,
+      siteId: row.siteId,
+      locale: row.locale,
+      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      fileName: row.fileName,
+      kind: row.kind,
+      fileSize: row.fileSize ?? 0
+    })
+    return data ? { data, mimeType: row.mimeType, fileName: row.fileName } : null
+  }
+
+  // == STORAGE ========================
+
+  /**
+   * Where each of these assets sits, as a storage target addresses one.
+   */
+  async getStorageRefs(siteId: string, ids: string[]): Promise<StorageAssetRef[]> {
+    if (ids.length < 1) {
+      return []
+    }
+    const rows = await WIKI.db
+      .select({
+        id: assetsTable.id,
+        kind: assetsTable.kind,
+        fileSize: assetsTable.fileSize,
+        locale: treeTable.locale,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName
+      })
+      .from(assetsTable)
+      .innerJoin(treeTable, eq(treeTable.id, assetsTable.id))
+      .where(and(eq(assetsTable.siteId, siteId), inArray(assetsTable.id, ids)))
+
+    return rows.map((row) => ({
+      id: row.id,
+      siteId,
+      locale: row.locale,
+      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      fileName: row.fileName,
+      kind: row.kind,
+      fileSize: row.fileSize ?? 0
+    }))
+  }
+
+  /**
+   * Every asset of a site, addressed the way a storage target addresses one.
+   *
+   * What a target's export action walks in order to find the files it should be holding and is not.
+   * Metadata only — the bytes of each are fetched one at a time, since the point of moving them off
+   * the database is that they do not all fit in memory at once.
+   *
+   * @param withDatabaseCopy Only the assets whose bytes are in their own row, which is what the
+   *   database target holds. For the offload action, which has nothing to move for the rest.
+   */
+  async listStoredAssets(
+    siteId: string,
+    { withDatabaseCopy }: { withDatabaseCopy?: boolean } = {}
+  ): Promise<StorageAssetRef[]> {
+    const rows = await WIKI.db
+      .select({
+        id: assetsTable.id,
+        kind: assetsTable.kind,
+        fileSize: assetsTable.fileSize,
+        locale: treeTable.locale,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName
+      })
+      .from(assetsTable)
+      .innerJoin(treeTable, eq(treeTable.id, assetsTable.id))
+      .where(
+        withDatabaseCopy
+          ? and(eq(assetsTable.siteId, siteId), isNotNull(assetsTable.data))
+          : eq(assetsTable.siteId, siteId)
+      )
+
+    return rows.map((row) => ({
+      id: row.id,
+      siteId,
+      locale: row.locale,
+      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      fileName: row.fileName,
+      kind: row.kind,
+      fileSize: row.fileSize ?? 0
+    }))
+  }
+
+  /**
+   * Ask the target holding each of these assets to follow where the tree has since put them.
+   *
+   * Called after a rename, the tree rows already being correct: `getStorageRefs` reads the
+   * destination off them, and the caller says where each one came from. Every target holding the
+   * asset moves its own copy.
+   */
+  async relocateAssets(
+    siteId: string,
+    moves: { id: string; previous: { locale: string; folderPath: string; fileName: string } }[]
+  ): Promise<void> {
+    const refs = await this.getStorageRefs(
+      siteId,
+      moves.map((move) => move.id)
+    )
+    for (const ref of refs) {
+      const previous = moves.find((move) => move.id === ref.id)?.previous
+      if (previous) {
+        await WIKI.models.storage.relocateAsset(ref, previous)
+      }
+    }
+  }
+
+  /**
+   * Take a file a storage target already holds into the wiki, without writing it anywhere.
+   *
+   * The other direction from an upload: the bytes are already in place — restored from a backup,
+   * dropped into the folder by another tool — and what is missing is the wiki's record of them. A file
+   * the wiki has no entry for is adopted where it lies rather than written out again, which is why
+   * nothing is dispatched to the storage layer for it. Any *other* target configured to hold that kind
+   * will not have a copy until its own export action runs.
+   *
+   * `overwrite` turns the case the wiki DOES have an entry for from a skip into a replacement, for a
+   * restore where the folder is meant to be the authority. That one is dispatched, and has to be: the
+   * wiki's copy of those bytes may be what a reader is served — from the database target, typically —
+   * so leaving the other targets on the old file would make the import appear to have done nothing.
+   * There is no history behind an asset, so unlike an overwritten page the bytes it replaces are gone.
+   *
+   * Whatever `overwrite` says, only an *asset* is ever replaced. A page or a folder owning the name is
+   * left alone: a page's own file belongs to the other half of the import, and neither is something a
+   * loose file in a folder may take over.
+   *
+   * @param overwrite Replace an asset already at this path instead of leaving it alone
+   * @returns The asset, or null for a file this passed over
+   */
+  async adoptStoredFile({
+    siteId,
+    locale,
+    folderPath,
+    fileName,
+    data,
+    authorId,
+    overwrite
+  }: {
+    siteId: string
+    locale: string
+    folderPath: string
+    fileName: string
+    data: Buffer
+    authorId: string
+    overwrite?: boolean
+  }): Promise<Asset | null> {
+    const safeName = sanitizeFileName(fileName)
+    if (!safeName) {
+      return null
+    }
+
+    // -> Read in full rather than as an existence check, since replacing one needs its ID and the
+    //    name and title it is already filed under
+    const occupant = await WIKI.models.tree.getEntryAt({
+      siteId,
+      locale,
+      parentPath: folderPath,
+      fileName: safeName
+    })
+    if (occupant && (!overwrite || occupant.type !== 'asset')) {
+      return null
+    }
+
+    const fileExt = extensionOf(safeName)
+    try {
+      await this.guardAgainstPageCollision({
+        siteId,
+        locale,
+        folderPath,
+        fileName: safeName,
+        fileExt
+      })
+    } catch {
+      // -> Skipped rather than reported, as everything else this passes over is: the caller is
+      //    walking a folder, and a file that is really a page belongs to the other half of the import
+      return null
+    }
+    const mimeType = mime.getType(safeName) ?? 'application/octet-stream'
+    const kind = kindOf(mimeType, fileExt)
+    const preview =
+      kind === 'image'
+        ? await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
+        : null
+
+    if (occupant) {
+      return this.replace({
+        id: occupant.id,
+        siteId,
+        locale,
+        folderPath: decodeTreePath(occupant.folderPath ?? '') ?? '',
+        // -> The names it is already filed under, not the ones off the file: they only differ by
+        //    sanitization, and the entry is the authority on what it is actually called
+        fileName: occupant.fileName,
+        title: occupant.title,
+        fileExt,
+        kind,
+        mimeType,
+        data,
+        preview,
+        authorId
+      })
+    }
+
+    const entry = await WIKI.models.tree.addAsset({
+      parentPath: folderPath,
+      fileName: safeName,
+      title: safeName,
+      locale,
+      siteId,
+      meta: { fileSize: data.length, fileExt, mimeType }
+    })
+
+    try {
+      await WIKI.db.insert(assetsTable).values({
+        id: entry.id,
+        fileName: entry.fileName,
+        fileExt,
+        kind,
+        mimeType,
+        fileSize: data.length,
+        preview,
+        authorId,
+        siteId
+      })
+    } catch (err) {
+      await WIKI.db.delete(treeTable).where(eq(treeTable.id, entry.id))
+      throw err
+    }
+
+    const importedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
+    WIKI.models.hooks.emit('asset:upload', {
+      id: entry.id,
+      fileName: entry.fileName,
+      folderPath: importedFolderPath,
+      siteId,
+      authorId,
+      metadata: { fileSize: data.length, mimeType, kind }
+    })
+
+    return {
+      id: entry.id,
+      fileName: entry.fileName,
+      fileExt,
+      kind,
+      mimeType,
+      fileSize: data.length,
+      folderPath: importedFolderPath,
+      title: entry.title,
+      hasPreview: Boolean(preview),
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt
+    }
   }
 
   /**
    * An asset's thumbnail, or null when it has none — which is the normal state for anything that is
    * not an image, and for images uploaded while Sharp was unavailable.
+   *
+   * Always read from the database, whichever target holds the file itself. A preview is a few
+   * kilobytes generated by this model rather than anything a user uploaded, and the file manager asks
+   * for a screenful of them at a time — there is nothing to gain by sending that around a storage
+   * module, and a target being slow or misconfigured would cost a wiki its whole file browser.
    */
   async getThumbnail(id: string): Promise<Buffer | null> {
     const results = await WIKI.db
@@ -837,6 +1210,18 @@ class Assets {
     if (!fileExt) {
       throw new CustomError('assetInvalidFileName', 'The file name must keep a file extension.')
     }
+    // -> The same two rules an upload is held to: renaming is another way of arriving at a name, and
+    //    `readme.pdf` renamed to `readme.md` would land on the page of that name just as squarely
+    const entry = await WIKI.models.tree.getById(id)
+    if (entry) {
+      await this.guardAgainstPageCollision({
+        siteId,
+        locale: entry.locale,
+        folderPath: decodeTreePath(entry.folderPath ?? '') ?? '',
+        fileName: safeName,
+        fileExt
+      })
+    }
     const resolvedMime = mime.getType(safeName) ?? asset.mimeType
 
     await WIKI.models.tree.renameEntry({ id, fileName: safeName, title: safeName })
@@ -855,6 +1240,21 @@ class Assets {
       .update(treeTable)
       .set({ meta: { fileSize: asset.fileSize, fileExt, mimeType: resolvedMime } })
       .where(eq(treeTable.id, id))
+
+    // -> Every target holding this asset lays its copy out by path, so each of them has a file to
+    //    move now that the tree rows have been rewritten
+    if (entry) {
+      await this.relocateAssets(siteId, [
+        {
+          id,
+          previous: {
+            locale: entry.locale,
+            folderPath: asset.folderPath,
+            fileName: asset.fileName
+          }
+        }
+      ])
+    }
 
     // -> Both ends of the move: the name it left, and the name it took, which something else may have
     //    been resolved at before it was freed up
@@ -883,8 +1283,14 @@ class Assets {
     if (!asset) {
       return false
     }
+    // -> Read before the rows go: where an asset sits is the tree's to say, and the tree row is
+    //    about to be deleted along with it
+    const [ref] = await this.getStorageRefs(siteId, [id])
     await WIKI.db.delete(assetsTable).where(eq(assetsTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
+    if (ref) {
+      await WIKI.models.storage.removeAsset(ref)
+    }
 
     this.forgetPath(siteId, asset.folderPath, asset.fileName)
     await this.dropCachedContent([id])
@@ -907,7 +1313,36 @@ class Assets {
       return
     }
     const ids = entries.map((entry) => entry.id)
+    /*
+      Where each asset sat is rebuilt from what the folder deletion reported, not looked up: the tree
+      rows went with the folder, and they were the only thing that placed these assets. What is still
+      here is the `assets` row, which is where the kind and size come from — a target needs both to
+      work out whether it was holding the file at all.
+    */
+    const stored = new Map(
+      (
+        await WIKI.db
+          .select({ id: assetsTable.id, kind: assetsTable.kind, fileSize: assetsTable.fileSize })
+          .from(assetsTable)
+          .where(inArray(assetsTable.id, ids))
+      ).map((row) => [row.id, row])
+    )
     await WIKI.db.delete(assetsTable).where(inArray(assetsTable.id, ids))
+
+    for (const entry of entries) {
+      const row = stored.get(entry.id)
+      if (row) {
+        await WIKI.models.storage.removeAsset({
+          id: entry.id,
+          siteId,
+          locale: entry.locale,
+          folderPath: entry.folderPath,
+          fileName: entry.fileName,
+          kind: row.kind,
+          fileSize: row.fileSize ?? 0
+        })
+      }
+    }
 
     // -> Which paths they sat at is no longer knowable from the tree: those rows went with the folder
     this.forgetAllPaths()

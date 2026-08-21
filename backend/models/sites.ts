@@ -193,6 +193,9 @@ class Sites {
             },
             uploads: {
               conflictBehavior: 'overwrite'
+            },
+            storage: {
+              largeThreshold: '25MB'
             }
           },
           config
@@ -448,6 +451,9 @@ class Sites {
         },
         uploads: {
           conflictBehavior: 'overwrite'
+        },
+        storage: {
+          largeThreshold: '25MB'
         }
       }
     })
