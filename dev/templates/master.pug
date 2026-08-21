@@ -5,7 +5,7 @@ html(lang=siteConfig.lang)
     meta(charset='UTF-8')
     meta(name='viewport', content='user-scalable=yes, width=device-width, initial-scale=1, maximum-scale=5')
     meta(name='theme-color', content='#1976d2')
-    meta(name='apple-mobile-web-app-title', content='Sunni Noor')
+    meta(name='apple-mobile-web-app-title', content=siteConfig.pwaAppName)
     style.
       @media (max-width: 959.99px) {
         .v-app-bar.nav-header,
@@ -43,7 +43,7 @@ html(lang=siteConfig.lang)
     meta(name='msapplication-TileColor', content='#1976d2')
     meta(name='msapplication-TileImage', content='/_assets/favicons/mstile-150x150.png')
 
-    title= pageMeta.title + ' | ' + config.title
+    title= pageMeta.title + ' | ' + siteConfig.title
 
     //- SEO / OpenGraph
     meta(name='description', content=pageMeta.description)
@@ -52,7 +52,7 @@ html(lang=siteConfig.lang)
     meta(property='og:description', content=pageMeta.description)
     meta(property='og:image', content=pageMeta.image)
     meta(property='og:url', content=pageMeta.url)
-    meta(property='og:site_name', content=config.title)
+    meta(property='og:site_name', content=siteConfig.title)
 
     //- Favicon
     link(rel='apple-touch-icon', sizes='180x180', href='/_assets/favicons/apple-touch-icon.png')

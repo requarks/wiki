@@ -55,6 +55,7 @@ module.exports = async () => {
   app.use(favicon(path.join(WIKI.ROOTPATH, 'assets', 'favicon.ico')))
 
   const pwa = require('./helpers/pwa')
+  const { getSiteDisplayName, getPwaAppName } = require('./helpers/siteDisplayName')
   app.get('/install', (req, res) => {
     res.redirect('/?install=1')
   })
@@ -156,7 +157,8 @@ module.exports = async () => {
   app.use(async (req, res, next) => {
     const facebookStrategy = _.find(_.values(WIKI.auth.strategies), ['strategyKey', 'facebook'])
     res.locals.siteConfig = {
-      title: WIKI.config.title,
+      title: getSiteDisplayName(),
+      pwaAppName: getPwaAppName(),
       theme: WIKI.config.theming.theme,
       darkMode: WIKI.config.theming.darkMode,
       tocPosition: WIKI.config.theming.tocPosition || 'left',

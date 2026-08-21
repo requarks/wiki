@@ -1,7 +1,9 @@
 /* global WIKI */
 
+const { getPwaAppName, PWA_APP_NAME } = require('./siteDisplayName')
+
 const PWA_THEME_COLOR = '#1976d2'
-const PWA_DEFAULT_APP_NAME = 'Sunni Noor'
+const PWA_DEFAULT_APP_NAME = PWA_APP_NAME
 
 const PWA_SERVICE_WORKER_SOURCE = `
 self.addEventListener('install', (event) => {
@@ -18,7 +20,7 @@ self.addEventListener('fetch', (event) => {
 `.trim()
 
 function getWebAppManifest () {
-  const appName = PWA_DEFAULT_APP_NAME
+  const appName = getPwaAppName()
 
   return {
     name: appName,

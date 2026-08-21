@@ -18,7 +18,6 @@
 <script>
 import { get } from 'vuex-pathify'
 
-const PWA_INSTALL_APP_NAME = 'Sunni Noor'
 const PWA_INSTALL_SESSION_DISMISSED_KEY = 'wiki-pwa-install-session-dismissed'
 const PWA_INSTALL_NEVER_KEY = 'wiki-pwa-install-never'
 const PWA_INSTALL_INSTALLED_KEY = 'wiki-pwa-installed'
@@ -34,9 +33,7 @@ export default {
   computed: {
     printView: get('site/printView'),
     mode: get('page/mode'),
-    appName () {
-      return PWA_INSTALL_APP_NAME
-    }
+    appName: get('site/pwaAppName')
   },
   watch: {
     printView () {

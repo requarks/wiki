@@ -10,6 +10,7 @@ const state = {
   tocPosition: siteConfig.tocPosition,
   mascot: true,
   title: siteConfig.title,
+  pwaAppName: siteConfig.pwaAppName,
   logoUrl: siteConfig.logoUrl,
   search: '',
   searchIsFocused: false,
