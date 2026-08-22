@@ -25,8 +25,8 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
-    "start": "cd .. && node backend",
-    "dev": "cd .. && nodemon backend --watch backend --ext js,ts,json",
+    "start": "cd .. && node --no-experimental-webstorage backend",
+    "dev": "cd .. && nodemon --no-experimental-webstorage backend --watch backend --ext js,ts,json",
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch",
     "ncu": "ncu -i",

@@ -45,6 +45,13 @@ from inside `backend/`. It boots in three phases: `preBoot()` (config → db →
 scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes), `postBoot()`
 (refresh locales/strategies/sites from disk & db, start scheduler).
 
+Started with **`--no-experimental-webstorage`** — by the npm scripts and by the production image's
+`CMD`, which is the only reason a bare `node backend` still opens with an experimental warning about
+`localStorage`. Nothing here uses Web Storage; `lib0`, under yjs, probes for it as it loads the way a
+library that runs in a browser too has to, and Node 26 answers that probe with a warning instead of a
+value unless `--localstorage-file` is given. Off, the global is absent and the probe takes its node
+path in silence.
+
 - `api/` — REST route plugins, one file per resource (`sites.ts`, `users.ts`, `pages.ts`,
   `system.ts`, `locales.ts`, `authentication.ts`), registered by `api/index.ts` under the `/_api`
   prefix.

@@ -1,0 +1,6 @@
+project_id: '921805'
+preserve_hierarchy: false
+files:
+  - source: 'backend/locales/en.json'
+    dest: 'app.json'
+    update_option: 'update_as_unapproved'

@@ -58,4 +58,11 @@ VOLUME ["/wiki/data/content"]
 EXPOSE 3000
 EXPOSE 3443
 
-CMD ["node", "backend"]
+# Web Storage off, which is what it was before Node 26 turned it on by default.
+#
+# Nothing here uses `localStorage`, but `lib0` -- under yjs, which is what makes an editing session
+# collaborative -- probes for it as it loads, the way a library that runs in both a browser and node
+# has to. Without `--localstorage-file` that probe is answered with an experimental warning rather
+# than a value, so the first line of every container's log was a warning about a feature the server
+# does not use. Off, the global is absent and the probe takes its node path in silence.
+CMD ["node", "--no-experimental-webstorage", "backend"]

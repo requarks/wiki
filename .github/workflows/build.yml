@@ -29,6 +29,7 @@ jobs:
       run: |
         yq -iP '.version = strenv(REL_VERSION)' backend/package.json -o json
         yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
+
     - name: Build Assets
       working-directory: frontend
       run: |
@@ -57,8 +58,8 @@ jobs:
         context: .
         file: dev/build/Dockerfile
         push: true
-        platforms: linux/amd64
-        # platforms: linux/amd64,linux/arm64
+        # platforms: linux/amd64
+        platforms: linux/amd64,linux/arm64
         tags: |
           ghcr.io/requarks/wiki:3.0.0-alpha
           ghcr.io/requarks/wiki:${{ env.REL_VERSION }}
@@ -81,4 +82,12 @@ jobs:
       with:
         name: build
         path: wiki-js.tar.gz
+
+    - name: Upload translations source file
+      uses: crowdin/github-action@v2
+      env:
+        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+      with:
+        command: 'upload'
+        command_args: '--config dev/crowdin.yml'
 

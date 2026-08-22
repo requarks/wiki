@@ -13,6 +13,16 @@ import { DarkMode } from '../shared/theme.js'
 const REVEAL_EVENT = 'block-reveal'
 
 /**
+ * The room a heading in an article is given above it when it is scrolled to, in pixels.
+ *
+ * The article scrolls in its own column inside a fixed shell, so a heading brought into view stops
+ * clear of the column's top edge rather than flush against it. Written out because a block cannot read
+ * the app's stylesheet: this is the `scroll-margin-top: 1.25rem` that `_page-contents.scss` puts on
+ * every heading, and the two have to be kept in step.
+ */
+const HEADING_CLEARANCE = 20
+
+/**
  * Block Tabs
  */
 export class BlockTabsElement extends LitElement {
@@ -230,27 +240,40 @@ Content of the second tab.
   }
 
   /**
-   * Keep the strip on screen when something inside a panel is scrolled to.
+   * Keep the whole block on screen when something inside a panel is scrolled to.
    *
    * A heading carries a `scroll-margin-top` so it does not land flush against the top edge, but that
    * margin knows nothing about the strip standing above it — following a link to a heading in a tab
    * would scroll the tabs themselves out of view, leaving the reader in a panel with no way to see
    * which one they were in. Set on the elements because the content is slotted, and measured because
-   * the strip is as tall as the labels wrapped onto however many rows.
+   * a block cannot be told in CSS how tall its own strip is.
+   *
+   * Measured from the panel back up to the block, so that what a scroll clears is everything above
+   * the panel rather than the strip alone: the strip may have wrapped onto two rows, the frame draws
+   * a border, and the panel pads itself. Clearing only the strip's height put the tabs *just* on the
+   * edge of the column with nothing above them, and a tab acting as a page heading — `header` on
+   * `block-tab`, anchored on the panel because the label is an attribute and no heading in the page
+   * carries it — is aimed at from the contents list, so it landed with its own label against the
+   * edge. `HEADING_CLEARANCE` on top is what every heading in an article gets, so a tab arrived at
+   * from the contents list sits where a section heading would.
    */
   _applyScrollMargin() {
     const strip = this.renderRoot.querySelector('.strip')
     if (!strip) {
       return
     }
-    const margin = `${strip.offsetHeight + 20}px`
+    /*
+      From the open panel, which is the only one with a box to measure. They all sit in the same
+      place, so its offset is every panel's — and a block inside a panel that is not showing measures
+      nothing at all, which is why the strip's height stands in until there is something to read.
+    */
+    const open = this._tabs[this.active]?.panel
+    const above = open
+      ? Math.round(open.getBoundingClientRect().top - this.getBoundingClientRect().top)
+      : strip.offsetHeight
+    const margin = `${above + HEADING_CLEARANCE}px`
     for (const { panel } of this._tabs) {
-      /*
-        The panel as well as what is in it. A tab whose label is a page heading — `header` on
-        `block-tab` — is anchored on the panel element itself, since the label is an attribute and
-        there is no heading in the page to carry the anchor, so the panel is what a contents click
-        scrolls to and it needs the same margin as any heading in it.
-      */
+      // -> The panel as well as what is in it: either can be what a link or the contents list aims at
       panel.style.setProperty('scroll-margin-top', margin)
       for (const child of panel.children) {
         child.style.setProperty('scroll-margin-top', margin)
