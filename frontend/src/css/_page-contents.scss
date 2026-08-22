@@ -888,6 +888,54 @@
     }
   }
 
+  /*
+    Definition lists, from the `term` / `: definition` notation (`markdown-it-deflist`).
+
+    Drawn as a term in the heading weight with its definitions indented under it, which is the
+    treatment every documentation platform has settled on -- and deliberately NOT with a rule down
+    the left of the definition: in this stylesheet a left bar means a quote, and the links-list
+    description a few rules up gives up its own rule on a phone for exactly that reason.
+
+    The indent is the one `ul` and `ol` use and the spacing is `li`'s, so a definition list sitting
+    between two ordinary lists lines up with them rather than reading as a different kind of thing.
+  */
+  dl {
+    margin: 0 0 1.15em;
+  }
+
+  dt {
+    margin-top: 1em;
+    font-weight: 600;
+
+    /* -> The first term opens the list; the space above it belongs to whatever came before */
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  dd {
+    /* -> Also what separates two definitions of the same term, which markdown allows */
+    margin: 0.35em 0 0 1.6em;
+
+    /*
+      A one-paragraph definition is tight; a multi-paragraph one spaces its own paragraphs. Markdown
+      produces either shape depending on whether the list is "loose", exactly as it does for `li`.
+    */
+    > p {
+      margin: 0;
+
+      + p {
+        margin-top: 0.6em;
+      }
+    }
+
+    /* A list inside a definition belongs to it, so it sits closer than a sibling would */
+    > ul,
+    > ol {
+      margin: 0.35em 0 0;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // QUOTES AND ADMONITIONS
   // ---------------------------------------------------------------------------

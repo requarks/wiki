@@ -39,6 +39,11 @@
             t('editor.markup.insertBlock')
           }}</w-tooltip>
         </w-btn>
+        <w-btn icon="mdi:format-list-group-plus" padding="sm sm" flat @click="insertDefinitionList">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertDefinitionList')
+          }}</w-tooltip>
+        </w-btn>
         <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertFootnote')
@@ -94,6 +99,15 @@
             @click="toggleMarkup({ start: `~~` })">
             <w-tooltip anchor="top middle" self="bottom middle">{{
               t('editor.markup.strikethrough')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-color-highlight"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `==` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.highlight')
             }}</w-tooltip>
           </w-btn>
           <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
@@ -574,7 +588,8 @@ async function insertTabset() {
       })
       return
     }
-    insertBlockClb(blockMarkdown(tabs))
+    const markdown = blockMarkdown(tabs)
+    selectFirstTabLabel(markdown, insertBlockClb(markdown))
   } catch (err) {
     notify({
       type: 'negative',
@@ -596,6 +611,44 @@ function insertBlockClb(markdown) {
   const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n\n' : ''
   const after = line.slice(position.column - 1).trim().length > 0 ? '\n\n' : '\n'
   insertAtCursor({ content: `${before}${markdown}${after}` })
+  /*
+    Where the markup itself begins, for a caller that wants to put the cursor inside what it just
+    inserted. Two lines below the cursor when it had to break out of a sentence first; otherwise on
+    the cursor's own line, starting at the cursor's own column — which is column 1 only if nothing at
+    all, indentation included, came before it.
+  */
+  return {
+    lineNumber: position.lineNumber + (before ? 2 : 0),
+    column: before ? 1 : position.column
+  }
+}
+
+/**
+ * Select the first tab's label in a tabset that has just been inserted.
+ *
+ * The tabset arrives with two tabs called "First tab" and "Second tab" (the block's own starter body,
+ * see `block-tabs`), and naming them is the first thing anybody does — so the first of those is left
+ * selected, to be typed over rather than hunted down and cleaned up.
+ *
+ * Located in the markup rather than in the document: the string is what this function was handed and
+ * knows the shape of, whereas searching the model would find whichever copy came first — a page may
+ * already hold a tabset whose first tab is still called "First tab". `d` is what makes the match
+ * report where the label VALUE sits rather than where `label="…"` starts.
+ *
+ * Does nothing for a starter body with no label in it, which is a block template's to decide.
+ */
+function selectFirstTabLabel(markdown, start) {
+  const match = markdown.match(/label="([^"]*)"/d)
+  if (!match) {
+    return
+  }
+  const [from, to] = match.indices[1]
+  const lines = markdown.slice(0, from).split('\n')
+  const lineNumber = start.lineNumber + lines.length - 1
+  // -> Only the first line of the insert begins at the cursor's column; every later one begins at 1
+  const column = (lines.length > 1 ? 1 : start.column) + lines.at(-1).length
+  editor.setSelection(new Range(lineNumber, column, lineNumber, column + (to - from)))
+  editor.revealLineInCenterIfOutsideViewport(lineNumber)
 }
 
 function insertTable() {
@@ -904,6 +957,35 @@ function insertBeforeEachLine({ content, before, focus = true }) {
  */
 function insertHorizontalBar() {
   insertAfter({ content: '---', newLine: true })
+}
+
+/**
+ * A definition list skeleton, on lines of its own.
+ *
+ * Two entries rather than one, because the blank line BETWEEN them is the part of the notation nobody
+ * guesses: a term is only a term when the next line starts with `: `, and two entries with no blank
+ * line between them collapse into one term with two definitions.
+ *
+ * Placeholder words rather than empty lines for a related reason — an empty term and an empty
+ * definition render as nothing at all, so the button would look like it had done nothing — and the
+ * first of them is left selected, so the skeleton is typed over rather than cleaned up.
+ */
+function insertDefinitionList() {
+  const term = t('editor.markup.definitionListTerm')
+  const definition = t('editor.markup.definitionListDefinition')
+  const skeleton = `${term}\n: ${definition}\n\n${term}\n: ${definition}`
+
+  const model = editor.getModel()
+  const position = editor.getPosition()
+  const line = model.getLineContent(position.lineNumber)
+  // -> A term has to start its own line, so a cursor mid-sentence breaks out of it first — the same
+  //    rule the table and the blocks follow
+  const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n\n' : ''
+  const after = line.slice(position.column - 1).trim().length > 0 ? '\n\n' : '\n'
+  insertAtCursor({ content: `${before}${skeleton}${after}` })
+
+  const firstTermLine = position.lineNumber + (before ? 2 : 0)
+  editor.setSelection(new Range(firstTermLine, 1, firstTermLine, term.length + 1))
 }
 
 /**

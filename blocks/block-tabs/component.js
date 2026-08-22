@@ -245,6 +245,13 @@ Content of the second tab.
     }
     const margin = `${strip.offsetHeight + 20}px`
     for (const { panel } of this._tabs) {
+      /*
+        The panel as well as what is in it. A tab whose label is a page heading — `header` on
+        `block-tab` — is anchored on the panel element itself, since the label is an attribute and
+        there is no heading in the page to carry the anchor, so the panel is what a contents click
+        scrolls to and it needs the same margin as any heading in it.
+      */
+      panel.style.setProperty('scroll-margin-top', margin)
       for (const child of panel.children) {
         child.style.setProperty('scroll-margin-top', margin)
       }

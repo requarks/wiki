@@ -5,6 +5,12 @@
  * `icon`, builds the strip from them and shows or hides it. Its content is ordinary page content,
  * left in the light DOM so the article's own stylesheet reaches it.
  *
+ * `header` is read by neither of them. A tab's label is an attribute rather than text, so there is no
+ * heading in the render for a contents list to find, and the server closes that gap when the page is
+ * saved: it anchors this element and lists the label at the level asked for (`anchorHeadings` in
+ * `models/rendering.ts`). A reader clicking that row is sent here, and the panel is opened on the way
+ * by the `block-reveal` every anchor already asks for.
+ *
  * It is registered as an element of its own so that the page view, which fetches a component for
  * every undefined element it finds in a page, has something to fetch.
  */
@@ -37,6 +43,12 @@ export class BlockTabElement extends HTMLElement {
         type: 'string',
         label: 'Icon',
         hint: 'Iconify reference drawn to the left of the label, e.g. mdi:language-python.'
+      },
+      {
+        name: 'header',
+        type: 'number',
+        label: 'Header Level',
+        hint: 'A level from 1 to 6 lists this tab in the page contents under its label, and a reader clicking it there opens the tab. Empty for an ordinary tab.'
       }
     ]
   }

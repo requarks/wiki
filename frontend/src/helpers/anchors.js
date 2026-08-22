@@ -139,11 +139,28 @@ function whenScrollEnded(scroller) {
   })
 }
 
+/** Mark where the reader is being sent and take them there, if it is on the page to be taken to. */
+function land(el, smooth) {
+  if (!isVisible(el)) {
+    return false
+  }
+  markLanded(el)
+  scrollTo(el, smooth)
+  return true
+}
+
 /**
  * Scroll a heading into view, asking whatever is above it to reveal it first.
  *
  * For a page that is already settled — a click on the contents list, say. See
  * `scrollToAnchorWhenReady` for one that has only just been rendered.
+ *
+ * A block asked to reveal something does not do it in this tick: `block-tabs` sets which panel is
+ * open and Lit draws that on its own update cycle, so the target still has no box to scroll to by the
+ * time the event handler returns. Hence the second attempt a frame later — by then the panel is
+ * showing — and hence the answer being yes before it has happened: the caller is asking whether the
+ * reader is being taken somewhere, which decides whether it claims the click, and a target that had
+ * to be revealed is still somewhere to go.
  *
  * @returns Whether there was a heading to scroll to
  */
@@ -153,11 +170,9 @@ export function scrollToAnchor(hash, { smooth = false } = {}) {
     return false
   }
   reveal(target)
-  if (!isVisible(target)) {
-    return false
+  if (!land(target, smooth)) {
+    requestAnimationFrame(() => land(target, smooth))
   }
-  markLanded(target)
-  scrollTo(target, smooth)
   return true
 }
 

@@ -8,6 +8,7 @@ import mdAbbr from 'markdown-it-abbr'
 import mdSup from 'markdown-it-sup'
 import mdSub from 'markdown-it-sub'
 import mdMark from 'markdown-it-mark'
+import mdDeflist from 'markdown-it-deflist'
 import mdMultiTable from 'markdown-it-multimd-table'
 import mdFootnote from 'markdown-it-footnote'
 import mdMdc from 'markdown-it-mdc'
@@ -275,6 +276,7 @@ export class MarkdownRenderer {
       .use(mdSup)
       .use(mdSub)
       .use(mdMark)
+      .use(mdDeflist)
       .use(mdFootnote)
       .use(mdImsize)
       .use(mdGithubAlerts)

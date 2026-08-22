@@ -327,6 +327,26 @@ export function slugifyHeading(text: string): string {
   )
 }
 
+/**
+ * The child block a tab is, named here because `anchorHeadings` has to ask about it by tag.
+ *
+ * The one block this file knows about by name. Everything else it does to blocks is a question about
+ * the manifest — which are installed, which are children — whereas a tab standing in for a heading is
+ * a property of that block's own markup.
+ */
+const TAB_TAG = 'block-tab'
+
+/**
+ * The heading level a tab asked to be listed at, or null for one that is not a heading.
+ *
+ * Strict about the value: `header` reaches this as whatever an author typed, and a level is one digit
+ * from 1 to 6. Anything else — a typo, `0`, `7`, `2px` — means an ordinary tab rather than an error,
+ * since the page has to render either way and a tab is perfectly usable without being in the contents.
+ */
+export function tabHeadingLevel(value: string | undefined): number | null {
+  return /^[1-6]$/.test((value ?? '').trim()) ? Number.parseInt(value!.trim(), 10) : null
+}
+
 class Rendering {
   /**
    * Clean up a render that came from a client, and pull out what is derived from it.
@@ -690,15 +710,37 @@ class Rendering {
    *
    * The markdown renderer does not emit heading anchors, so this is where a page becomes deep
    * linkable — and the ids have to exist before the contents tree can point at them.
+   *
+   * **A tab can be a heading too.** `::block-tab{label="Foo" header="2"}` asks for its label to be
+   * listed as an h2 would be, which nothing else can do for it: the label is an attribute rather than
+   * text, so there is no heading element in the render to find, and the panel is not showing unless
+   * it is the open tab. The anchor therefore goes on the `block-tab` element itself, and the reader
+   * who clicks that row is taken there by the same path as a heading inside a closed tab — the app
+   * asks whatever is above the target to reveal it, and `block-tabs` answers by opening the panel.
+   *
+   * They are matched in one pass rather than two, because a heading written inside a panel has to
+   * nest under the tab it is in, and that is only true if both arrive in document order.
    */
   private anchorHeadings($: cheerio.CheerioAPI): TocNode[] {
     const used = new Map<string, number>()
     const flat: { level: number; node: TocNode }[] = []
 
-    $('h1, h2, h3, h4, h5, h6').each((_, el) => {
-      const heading = $(el)
-      const label = heading.text().trim()
-      let key = heading.attr('id') || slugifyHeading(label)
+    $(`h1, h2, h3, h4, h5, h6, ${TAB_TAG}[header]`).each((_, el) => {
+      const element = $(el)
+      const isTab = el.tagName === TAB_TAG
+      const level = isTab
+        ? tabHeadingLevel(element.attr('header'))
+        : Number.parseInt(el.tagName.slice(1), 10)
+      const label = (isTab ? element.attr('label') : element.text())?.trim() ?? ''
+      /*
+        A tab that asked for a level it cannot have, or that has nothing to be called, stays an
+        ordinary tab. Both are the author's mistakes rather than the page's, and a page has to render
+        either way — an unlabelled tab is drawn as "Tab 2" by the block, which is not a section title.
+      */
+      if (!level || (isTab && !label)) {
+        return
+      }
+      let key = element.attr('id') || slugifyHeading(label)
 
       // -> Two headings can legitimately read the same; the second one becomes `-1`, as anchors
       //    generally do, so that both remain addressable
@@ -708,8 +750,7 @@ class Rendering {
         key = `${key}-${seen}`
       }
 
-      heading.attr('id', key)
-      const level = Number.parseInt(el.tagName.slice(1), 10)
+      element.attr('id', key)
       flat.push({
         level,
         node: { key: `#${key}`, label, level, children: [] }

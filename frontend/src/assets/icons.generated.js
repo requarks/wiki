@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  266 icons.
+  268 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-right": {"body":"<path fill=\"currentColor\" d=\"M12.969 4.281L11.53 5.72L21.812 16l-10.28 10.281l1.437 1.438l11-11l.687-.719l-.687-.719z\"/>","width":32,"height":32},
@@ -196,6 +196,7 @@ export const BUNDLED_ICONS = {
   "mdi:format-align-right": {"body":"<path fill=\"currentColor\" d=\"M3 3h18v2H3zm6 4h12v2H9zm-6 4h18v2H3zm6 4h12v2H9zm-6 4h18v2H3z\"/>","width":24,"height":24},
   "mdi:format-bold": {"body":"<path fill=\"currentColor\" d=\"M13.5 15.5H10v-3h3.5A1.5 1.5 0 0 1 15 14a1.5 1.5 0 0 1-1.5 1.5m-3.5-9h3A1.5 1.5 0 0 1 14.5 8A1.5 1.5 0 0 1 13 9.5h-3m5.6 1.29c.97-.68 1.65-1.79 1.65-2.79c0-2.26-1.75-4-4-4H7v14h7.04c2.1 0 3.71-1.7 3.71-3.79c0-1.52-.86-2.82-2.15-3.42\"/>","width":24,"height":24},
   "mdi:format-clear": {"body":"<path fill=\"currentColor\" d=\"M6 5v.18L8.82 8h2.4l-.72 1.68l2.1 2.1L14.21 8H20V5zM3.27 5L2 6.27l6.97 6.97L6.5 19h3l1.57-3.66L16.73 21L18 19.73L3.55 5.27z\"/>","width":24,"height":24},
+  "mdi:format-color-highlight": {"body":"<path fill=\"currentColor\" d=\"m4 17l2.75-2.75l-.03-.02c-.58-.59-.58-1.54 0-2.12l4.74-4.74l4.24 4.24l-4.74 4.74c-.57.58-1.5.58-2.09.02l-.63.63zM15.91 2.91c.59-.58 1.54-.58 2.12 0l2.13 2.12c.58.59.58 1.54 0 2.13l-3.3 3.29l-4.24-4.24z\"/>","width":24,"height":24},
   "mdi:format-font": {"body":"<path fill=\"currentColor\" d=\"M17 8h3v12h1v1h-4v-1h1v-3h-4l-1.5 3H14v1h-4v-1h1zm1 1l-3.5 7H18zM5 3h5c1.11 0 2 .89 2 2v11H9v-5H6v5H3V5c0-1.11.89-2 2-2m1 2v4h3V5z\"/>","width":24,"height":24},
   "mdi:format-header-1": {"body":"<path fill=\"currentColor\" d=\"M3 4h2v6h4V4h2v14H9v-6H5v6H3zm11 14v-2h2V6.31l-2.5 1.44V5.44L16 4h2v12h2v2z\"/>","width":24,"height":24},
   "mdi:format-header-2": {"body":"<path fill=\"currentColor\" d=\"M3 4h2v6h4V4h2v14H9v-6H5v6H3zm18 14h-6a2 2 0 0 1-2-2c0-.53.2-1 .54-1.36l4.87-5.23c.37-.36.59-.86.59-1.41a2 2 0 0 0-2-2a2 2 0 0 0-2 2h-2a4 4 0 0 1 4-4a4 4 0 0 1 4 4c0 1.1-.45 2.1-1.17 2.83L15 16h6z\"/>","width":24,"height":24},
@@ -209,6 +210,7 @@ export const BUNDLED_ICONS = {
   "mdi:format-italic": {"body":"<path fill=\"currentColor\" d=\"M10 4v3h2.21l-3.42 8H6v3h8v-3h-2.21l3.42-8H18V4z\"/>","width":24,"height":24},
   "mdi:format-list-bulleted": {"body":"<path fill=\"currentColor\" d=\"M7 5h14v2H7zm0 8v-2h14v2zM4 4.5A1.5 1.5 0 0 1 5.5 6A1.5 1.5 0 0 1 4 7.5A1.5 1.5 0 0 1 2.5 6A1.5 1.5 0 0 1 4 4.5m0 6A1.5 1.5 0 0 1 5.5 12A1.5 1.5 0 0 1 4 13.5A1.5 1.5 0 0 1 2.5 12A1.5 1.5 0 0 1 4 10.5M7 19v-2h14v2zm-3-2.5A1.5 1.5 0 0 1 5.5 18A1.5 1.5 0 0 1 4 19.5A1.5 1.5 0 0 1 2.5 18A1.5 1.5 0 0 1 4 16.5\"/>","width":24,"height":24},
   "mdi:format-list-checks": {"body":"<path fill=\"currentColor\" d=\"M3 5h6v6H3zm2 2v2h2V7zm6 0h10v2H11zm0 8h10v2H11zm-6 5l-3.5-3.5l1.41-1.41L5 17.17l4.59-4.58L11 14z\"/>","width":24,"height":24},
+  "mdi:format-list-group-plus": {"body":"<path fill=\"currentColor\" d=\"M17 14v3h-3v2h3v3h2v-3h3v-2h-3v-3m1-3v1.3c-.6-.2-1.3-.3-2-.3c-1.2 0-2.4.4-3.3 1H7v-2zm-7.9 6H7v-2h5.8c-.3.6-.6 1.3-.7 2M7 7h13v2H7zM5 19h2v2H3V3h4v2H5z\"/>","width":24,"height":24},
   "mdi:format-list-numbered": {"body":"<path fill=\"currentColor\" d=\"M7 13v-2h14v2zm0 6v-2h14v2zM7 7V5h14v2zM3 8V5H2V4h2v4zm-1 9v-1h3v4H2v-1h2v-.5H3v-1h1V17zm2.25-7a.75.75 0 0 1 .75.75c0 .2-.08.39-.21.52L3.12 13H5v1H2v-.92L4 11H2v-1z\"/>","width":24,"height":24},
   "mdi:format-page-break": {"body":"<path fill=\"currentColor\" d=\"M18 20H6v-2H4v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2h-2zM14 2H6a2 2 0 0 0-2 2v8h2V4h8v4h4v4h2V8zm-3 14H8v-2h3zm5 0h-3v-2h3zM3 14h3v2H3zm18 2h-3v-2h3z\"/>","width":24,"height":24},
   "mdi:format-paragraph": {"body":"<path fill=\"currentColor\" d=\"M13 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4h-2v6H9V4zm0 6a2 2 0 0 0 2-2a2 2 0 0 0-2-2h-2v4z\"/>","width":24,"height":24},
