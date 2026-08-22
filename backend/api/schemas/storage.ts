@@ -36,12 +36,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       banner: {
         type: 'string'
       },
-      vendor: {
-        type: 'string'
-      },
-      website: {
-        type: 'string'
-      },
       contentTypes: {
         type: 'object',
         description:
@@ -108,7 +102,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'object',
         additionalProperties: true,
         description:
-          'Values for the module props, completed with the module defaults for any prop that has none stored yet.'
+          'Values for the module props, completed with the module defaults for any prop that has none stored yet. A prop declared `sensitive` is write-only: where one holds a value it reads as a fixed mask instead, and sending that mask back leaves the stored secret alone.'
       },
       actions: {
         type: 'array',
@@ -220,7 +214,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'object',
         additionalProperties: true,
         description:
-          'Values for the module props. Validated against what the module declares: an unknown key is dropped, a wrong type is refused, and a read-only prop keeps its stored value.'
+          'Values for the module props. Validated against what the module declares: an unknown key is dropped, a wrong type is refused, and a read-only prop keeps its stored value. A sensitive prop sent back as the mask it was read as keeps its stored value too; send a new value to replace the secret, or an empty string to remove it.'
       }
     }
   })

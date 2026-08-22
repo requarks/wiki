@@ -110,7 +110,7 @@
           v-if="userStore.authenticated && !isRedirect"
           flat
           dense
-          :icon="pageStore.isWatching ? `mdi:bell` : `mdi:bell-outline`"
+          :icon="pageStore.isWatching ? `mdi:bell` : `la:bell`"
           :color="pageStore.isWatching ? `deep-orange-9` : `grey`"
           :aria-label="pageStore.isWatching ? t(`common.page.unwatch`) : t(`common.page.watch`)"
           :aria-pressed="pageStore.isWatching"

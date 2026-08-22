@@ -1,3 +1,4 @@
+import { maskSensitiveProps } from '../helpers/common.ts'
 import { STORAGE_DIRECT_ACCESS_FALLBACKS, STORAGE_TARGET_STATUSES } from '../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
 import type { StorageSiteConfigInput, StorageTargetInput } from '../models/storage.ts'
@@ -18,7 +19,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the storage configuration of a site',
         description:
-          'The site-wide settings, plus one target per storage module installed in `modules/storage`, whether or not it has ever been enabled. Configuration values include any credentials a module stores, hence the `manage:system` requirement. Where a given file is written and where it is read from are both derived from this configuration rather than recorded per file, so changing it changes where content is looked for, not where it already sits.',
+          'The site-wide settings, plus one target per storage module installed in `modules/storage`, whether or not it has ever been enabled. A configuration value belonging to a prop marked `sensitive` is write-only and comes back masked, never as the stored secret. Where a given file is written and where it is read from are both derived from this configuration rather than recorded per file, so changing it changes where content is looked for, not where it already sits.',
         tags: ['Storage'],
         params: {
           type: 'object',
@@ -82,7 +83,18 @@ async function routes(app: FastifyInstance) {
         localePrefix: layout.localePrefix,
         syncInterval: `${WIKI.models.storage.syncIntervalFor(req.params.siteId)}m`,
         directAccessFallback: WIKI.models.storage.directAccessFallbackFor(req.params.siteId),
-        targets: await WIKI.models.storage.getSiteTargets(req.params.siteId)
+        /*
+          Masked here rather than in the model: the targets the model hands out are the ones the
+          storage modules read their credentials from, so this is the last point at which a secret
+          can be taken out without taking it away from the code that needs it.
+
+          A prop declared `sensitive` is write-only. The mask comes back with the rest of the
+          configuration on a save and is understood as "unchanged" — see `buildConfig`.
+        */
+        targets: (await WIKI.models.storage.getSiteTargets(req.params.siteId)).map((target) => ({
+          ...target,
+          config: maskSensitiveProps(target.props, target.config)
+        }))
       }
     }
   )

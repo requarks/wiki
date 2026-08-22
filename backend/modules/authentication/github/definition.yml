@@ -5,8 +5,6 @@ author: requarks.io
 logo: https://static.requarks.io/logo/github.svg
 icon: /_assets/icons/ultraviolet-github.svg
 color: dark-4
-vendor: 'GitHub, Inc.'
-website: 'https://docs.github.com/en/apps/oauth-apps'
 isAvailable: true
 useForm: false
 usernameType: email

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
 import { asc, eq } from 'drizzle-orm'
-import { parseModuleProps } from '../helpers/common.ts'
+import { isSensitiveMask, parseModuleProps } from '../helpers/common.ts'
 import { authentication as authenticationTable, groups as groupsTable } from '../db/schema.ts'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { SystemIds } from './types.ts'
@@ -15,8 +15,6 @@ export interface AuthModule {
   logo?: string
   icon?: string
   color?: string
-  vendor?: string
-  website?: string
   isAvailable: boolean
   useForm: boolean
   usernameType: string
@@ -124,6 +122,10 @@ class Authentication {
    *
    * Config values are completed from the module's declared defaults, so a prop added to a module
    * after a strategy was configured is returned with its default rather than as a missing key.
+   *
+   * **These are the real values, client secrets included** — they are what a module is handed when it
+   * authenticates somebody. A route answering with them owes the client `maskSensitiveProps` first;
+   * see `api/authentication.ts`.
    */
   async getActiveStrategies(): Promise<AuthStrategy[]> {
     const strategies = await WIKI.db
@@ -151,6 +153,12 @@ class Authentication {
    *
    * Read-only props are never taken from the client: they are declarations of something the server
    * does not support changing, so the stored value (or the module default) always wins.
+   *
+   * A sensitive prop that comes back as the mask is left alone for the same reason — that is the
+   * value the client was handed in place of the secret, so sending it back says "unchanged" and
+   * storing it would overwrite a client secret with a row of dots. An empty string is not the mask
+   * and does clear it. On a *create* there is nothing to keep, so a masked value stays unset, which
+   * is the right answer for a form that was never given a secret to send.
    */
   buildConfig(
     moduleKey: string,
@@ -161,7 +169,9 @@ class Authentication {
     const config: Record<string, any> = {}
     for (const [key, prop] of Object.entries(props)) {
       const current = existing[key] !== undefined ? existing[key] : prop.default
-      config[key] = prop.readOnly || incoming[key] === undefined ? current : incoming[key]
+      const keep =
+        prop.readOnly || incoming[key] === undefined || isSensitiveMask(prop, incoming[key])
+      config[key] = keep ? current : incoming[key]
     }
     return config
   }
@@ -179,8 +189,9 @@ class Authentication {
     for (const [key, value] of Object.entries(incoming)) {
       const prop = props[key]
       // -> Unknown keys are dropped by buildConfig rather than refused: a module losing a prop must
-      //    not make the admin area unable to save
-      if (!prop || prop.readOnly || value === undefined) {
+      //    not make the admin area unable to save, and the mask is the value a client is given for a
+      //    secret rather than one it is setting — `buildConfig` keeps what is stored for both
+      if (!prop || prop.readOnly || value === undefined || isSensitiveMask(prop, value)) {
         continue
       }
       if (prop.enum) {

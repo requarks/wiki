@@ -29,13 +29,20 @@ props:
     hint: The bucket to store content in. It must already exist - this target will not create it.
     icon: open-box
     order: 3
+  pathPrefix:
+    type: String
+    title: Path Prefix
+    default: ''
+    hint: Store content under this folder inside the bucket rather than at its root, e.g. wiki or apps/docs. Leave empty for the root.
+    icon: symlink-directory
+    order: 4
   accessKeyId:
     type: String
     title: Access Key ID
     default: ''
     hint: Leave both this and the secret empty to use the credentials the machine already has - an IAM role, or the standard AWS environment variables.
     icon: 3d-touch
-    order: 4
+    order: 5
   secretAccessKey:
     type: String
     title: Secret Access Key
@@ -43,14 +50,14 @@ props:
     hint: The secret for the access key above.
     icon: key
     sensitive: true
-    order: 5
+    order: 6
   storageClass:
     type: String
     title: Storage Class
     default: STANDARD
     hint: What new objects are stored as. An AWS concept - most compatible stores ignore it, and leaving it at Standard is always safe.
     icon: scan-stock
-    order: 6
+    order: 7
     enum:
       - STANDARD|Standard
       - STANDARD_IA|Standard Infrequent Access

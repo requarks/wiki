@@ -321,7 +321,8 @@
                     dense
                     :type="inputTypeFor(cfg)"
                     :aria-label="cfg.title"
-                    :disable="cfg.readOnly" />
+                    :disable="cfg.readOnly"
+                    @focus="(ev) => selectStoredSecret(ev, cfg)" />
                 </w-item-section>
               </w-item>
             </template>
@@ -373,14 +374,6 @@
               style="height: 100px; max-width: 300px" />
             <div class="text-subtitle2 mt-2">{{ state.strategy.strategy.title }}</div>
             <div class="text-caption mt-2">{{ state.strategy.strategy.description }}</div>
-            <div class="text-caption mt-2">
-              <strong>{{ state.strategy.strategy.vendor }}</strong>
-            </div>
-            <div class="text-caption">
-              <a :href="state.strategy.strategy.website" target="_blank" rel="noreferrer">{{
-                state.strategy.strategy.website
-              }}</a>
-            </div>
           </w-card-section>
         </w-card>
         <div class="flex mt-4">
@@ -516,6 +509,14 @@ function buildConfigEditor(props, values) {
     config[key] = {
       ...prop,
       value: values?.[key] ?? prop.default,
+      /*
+        What the server sent, kept only for a sensitive prop.
+
+        The server never sends a stored secret back — the field arrives holding a mask instead — so
+        this is how the form tells a value that is still the server's from one somebody has typed.
+        See `selectStoredSecret`.
+      */
+      ...(prop.sensitive && { stored: values?.[key] ?? prop.default }),
       ...(prop.enum && {
         enum: prop.enum.map((entry) => {
           const [value, label] = entry.split('|')
@@ -525,6 +526,24 @@ function buildConfigEditor(props, values) {
     }
   }
   return config
+}
+
+/**
+ * Select the whole of a masked secret as soon as its field is focused.
+ *
+ * A sensitive prop reads as a row of dots rather than as what is stored, in a field that is
+ * otherwise an ordinary text box: clicking into it and pasting a new client secret would append it
+ * to the mask and save the pair of them. Selecting the mask makes the first thing typed replace it.
+ *
+ * Only while the field still holds what the server sent, so that a value being edited is not
+ * repeatedly selected out from under whoever is editing it. Selecting changes nothing on its own —
+ * focusing the field and leaving sends the mask back, which the server reads as "unchanged" — and
+ * emptying the field still means the secret is to be removed.
+ */
+function selectStoredSecret(ev, cfg) {
+  if (cfg.sensitive && cfg.value === cfg.stored) {
+    ev.target.select()
+  }
 }
 
 function inputTypeFor(cfg) {

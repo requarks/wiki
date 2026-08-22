@@ -201,8 +201,8 @@ const s3Client: ObjectStoreClient = {
  * endpoint and a region, and treating that as a preset meant a new module for every service that
  * appeared. Empty endpoint is AWS; anything else is whichever store the URL points at.
  *
- * The keys are the same paths the disk target writes, so a bucket and a folder hold the wiki's content
- * laid out identically, and the shape of both is the site's `pathPrefixFor` to decide. See
+ * The keys are the same paths the disk target writes, under whatever `pathPrefix` this target starts
+ * at, so a bucket and a folder hold the wiki's content laid out identically. See
  * `helpers/storageObjects.ts` for everything above the four calls below.
  */
 export default objectStorageModule(s3Client)

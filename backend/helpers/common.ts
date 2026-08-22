@@ -254,6 +254,54 @@ export interface ModuleProp {
   if: unknown[]
 }
 
+/**
+ * What a sensitive prop's value is replaced with on its way to a client.
+ *
+ * A prop marked `sensitive` is write-only: an API key or a password an administrator has entered is
+ * never sent back out, not even to somebody who could read it from the database anyway — a form that
+ * carries it is a form that leaks it into a browser cache, a proxy log or a screen share. The prop is
+ * still editable, so something has to occupy the field, and a fixed placeholder is what lets a client
+ * round-trip the whole configuration back without having to know which fields it was not given.
+ *
+ * A value the client sends unchanged therefore means "leave it alone", and `isSensitiveMask` is the
+ * check every writer has to make. Emptying the field is still how a stored secret is removed, since
+ * an empty string is not the mask.
+ */
+export const SENSITIVE_MASK = '••••••••'
+
+/**
+ * Whether an incoming value is the mask, i.e. a value the client was never given in the first place.
+ *
+ * Only for a prop declared sensitive: the mask is an ordinary string, and a prop that is not
+ * write-only may legitimately be set to it.
+ */
+export function isSensitiveMask(prop: ModuleProp, value: unknown): boolean {
+  return prop.sensitive && value === SENSITIVE_MASK
+}
+
+/**
+ * A module's stored config with every sensitive value replaced by the mask.
+ *
+ * What a route answers with, rather than what a module is given — the modules read the real values
+ * out of the same objects, so this has to be the last thing that happens on the way out.
+ *
+ * An empty value is left empty rather than masked, because the mask is a statement that something is
+ * stored: dots over nothing would have an administrator believe a credential is set and hide the
+ * fact that the target is running on the machine's own identity.
+ */
+export function maskSensitiveProps(
+  props: Record<string, ModuleProp>,
+  config: Record<string, any>
+): Record<string, any> {
+  const masked: Record<string, any> = { ...config }
+  for (const [key, prop] of Object.entries(props)) {
+    if (prop.sensitive && typeof masked[key] === 'string' && masked[key].length > 0) {
+      masked[key] = SENSITIVE_MASK
+    }
+  }
+  return masked
+}
+
 export function parseModuleProps(
   props: Record<string, ModulePropDeclaration>
 ): Record<string, ModuleProp> {

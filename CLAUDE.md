@@ -370,6 +370,17 @@ Consequences worth knowing:
   failures into `{ ok, error, statusCode, message }` JSON.
 - **Schema changes**: edit `db/schema.ts`, then `npm run db-generate` and commit the generated
   migration. Never hand-edit an existing migration.
+- **A module prop marked `sensitive` is write-only.** A route answering with a module's stored config
+  runs it through `maskSensitiveProps` (`helpers/common.ts`) first, which replaces every non-empty
+  sensitive value with `SENSITIVE_MASK`; the client posts the whole configuration back, and
+  `isSensitiveMask` is what makes the mask mean "unchanged" rather than a new value. Masking belongs
+  at the API boundary and nowhere earlier — the config the models hand out is what the modules read
+  their credentials from. An empty value is never masked, so dots always mean something is stored,
+  and clearing the field is how a stored secret is removed — except on a create, where there is
+  nothing to keep and the mask leaves the prop unset. `manage:system` on the route is not a reason to
+  skip this: the secret still ends up in a browser, a cache and a screen share. Both module-prop
+  surfaces do it — storage targets (`api/storage.ts`) and authentication strategies
+  (`withoutSecrets` in `api/authentication.ts`) — so a new one is expected to as well.
 - **Dates use the native `Temporal` API**, not luxon (no longer a backend dependency). `Temporal` is a
   global in Node 26 and is typed by the TS 7 lib, so it needs no import. Four things to know:
   - `Temporal.Instant` accepts **exact time units only** — `add({ days: 1 })` throws. Since these are
@@ -431,8 +442,15 @@ import a tree that was put there from outside.
 `ObjectStoreClient` in `helpers/storageObjects.ts` — and `objectStorageModule` builds the whole
 `StorageModule` from them. An object key *is* a path, the same one `disk` would write, so a bucket and
 a folder hold a site's content laid out identically and `pathPrefixFor` decides the shape of both.
-Object stores have no rename, so `moveObject` copies and then deletes, in that order, and never
-deletes on a copy that failed. Credentials are optional on all three: left empty, each SDK falls back
+Each of the three also takes a **`pathPrefix`**, which is the segments that key starts with — empty by
+default, so the tree sits at the root of the bucket, and set when the bucket has to be shared with
+something else, since an object store has no folders to keep two tenants apart. It is per target,
+unlike everything `pathPrefixFor` answers, for the same reason the bucket name is: *which* store the
+tree goes in and *how* the tree is laid out are different questions. It is normalized rather than
+validated — surrounding and doubled slashes go, and so do `.` and `..` segments, which name a literal
+object in a bucket rather than a relative path. A custom `baseUrl` still stands in for the bucket and
+not for the prefix, because the key is signed prefix and all. Object stores have no rename, so
+`moveObject` copies and then deletes, in that order, and never deletes on a copy that failed. Credentials are optional on all three: left empty, each SDK falls back
 to the machine's own identity (an IAM role, a managed identity, a workload identity), which is how a
 deployment keeps a long-lived secret out of the database. Only `exportAll` is offered — there is no
 `importAll`, because nothing but the wiki writes into these buckets, which is exactly what makes git

@@ -5,8 +5,6 @@ author: requarks.io
 logo: https://static.requarks.io/logo/oidc.svg
 icon: /_assets/icons/ultraviolet-openid.svg
 color: blue-grey-8
-vendor: 'OpenID Foundation'
-website: 'https://openid.net/connect/'
 isAvailable: true
 useForm: false
 usernameType: email
@@ -40,27 +38,35 @@ props:
   authorizationURL:
     type: String
     title: Authorization Endpoint URL
-    hint: Ignored while discovery is on.
+    hint: Where the browser is sent to log in.
     icon: enter
     order: 5
+    if:
+      - { key: 'useDiscovery', eq: false }
   tokenURL:
     type: String
     title: Token Endpoint URL
-    hint: Ignored while discovery is on.
+    hint: Where the authorization code is exchanged for tokens.
     icon: exit
     order: 6
+    if:
+      - { key: 'useDiscovery', eq: false }
   userInfoURL:
     type: String
     title: User Info Endpoint URL
-    hint: Ignored while discovery is on. Optional even without it — the ID token alone can carry everything needed.
+    hint: Optional - the ID token alone can carry everything needed.
     icon: contact
     order: 7
+    if:
+      - { key: 'useDiscovery', eq: false }
   jwksURL:
     type: String
     title: JSON Web Key Set URL
-    hint: Ignored while discovery is on. Where the keys that signed the ID token are published; without it the ID token cannot be verified and logins are refused.
+    hint: Where the keys that signed the ID token are published. Without it the ID token cannot be verified and logins are refused.
     icon: fingerprint-scan
     order: 8
+    if:
+      - { key: 'useDiscovery', eq: false }
   scopes:
     type: String
     title: Scopes

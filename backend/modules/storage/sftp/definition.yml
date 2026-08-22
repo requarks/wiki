@@ -3,8 +3,6 @@ title: SFTP
 icon: '/_assets/icons/ultraviolet-nas.svg'
 banner: '/_assets/storage/ssh.jpg'
 description: Store the wiki's content as ordinary files on a remote server over SSH. The same tree the local disk target writes, on a machine that is not this one. Meant as a copy rather than a source, so it cannot be chosen under Content Delivery.
-vendor: 'Wiki.js'
-website: 'https://js.wiki'
 assetDelivery:
   isDirectAccessSupported: false
   # -> A place to keep a copy of the site's content, not one to serve it from: every image on every

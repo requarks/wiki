@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
 import { and, eq, inArray } from 'drizzle-orm'
-import { CustomError, parseModuleProps } from '../helpers/common.ts'
+import { CustomError, isSensitiveMask, parseModuleProps } from '../helpers/common.ts'
 import { sites as sitesTable, storage as storageTable } from '../db/schema.ts'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { AssetKind } from './assets.ts'
@@ -164,8 +164,6 @@ export interface StorageDefinition {
   description: string
   icon: string
   banner: string
-  vendor: string
-  website: string
   contentTypes: {
     defaultTypesEnabled: string[]
   }
@@ -211,8 +209,6 @@ export interface StorageTarget {
   description: string
   icon: string
   banner: string
-  vendor: string
-  website: string
   contentTypes: {
     activeTypes: string[]
   }
@@ -236,6 +232,10 @@ export interface StorageTarget {
      * whichever store it is, and the signature is made *for that host* rather than translated onto
      * it afterwards — see each module's `presignAsset`, because S3 and GCS sign the host and Azure
      * does not. Empty means the store's own address.
+     *
+     * It stands in for the bucket, not for whatever the target's `pathPrefix` starts at: the key is
+     * signed prefix and all, so a domain pointed at the prefix rather than at the root of the bucket
+     * asks for a path the signature was not made over.
      */
     baseUrl: string
     /** How long a direct-access URL stays valid, as `5m` or `2h`. See `parseInterval`. */
@@ -661,6 +661,9 @@ class Storage {
    *
    * Config values are completed from the module's declared defaults, so a prop added to a module
    * after a target was configured is returned with its default rather than as a missing key.
+   *
+   * **These are the real values, credentials included** — they are what the modules are handed. A
+   * route answering with them owes the client `maskSensitiveProps` first; see `api/storage.ts`.
    */
   async getSiteTargets(siteId: string): Promise<StorageTarget[]> {
     const rows = await this.getTargets({ siteId })
@@ -684,8 +687,6 @@ class Storage {
         description: definition.description,
         icon: definition.icon,
         banner: definition.banner,
-        vendor: definition.vendor,
-        website: definition.website,
         contentTypes: {
           activeTypes: contentTypes.activeTypes ?? []
         },
@@ -744,6 +745,11 @@ class Storage {
    *
    * Read-only props are never taken from the client: they are declarations of something the server
    * does not support changing, so the stored value (or the module default) always wins.
+   *
+   * A sensitive prop that comes back as the mask is left alone for the same reason — that is the
+   * value the client was handed in place of the secret, so sending it back says "unchanged" and
+   * storing it would overwrite the credential with a row of dots. An empty string is not the mask
+   * and does clear it, which is how an administrator moves a target onto the machine's own identity.
    */
   buildConfig(
     moduleKey: string,
@@ -754,7 +760,9 @@ class Storage {
     const config: Record<string, any> = {}
     for (const [key, prop] of Object.entries(props)) {
       const current = existing[key] !== undefined ? existing[key] : prop.default
-      config[key] = prop.readOnly || incoming[key] === undefined ? current : incoming[key]
+      const keep =
+        prop.readOnly || incoming[key] === undefined || isSensitiveMask(prop, incoming[key])
+      config[key] = keep ? current : incoming[key]
     }
     return config
   }
@@ -772,8 +780,9 @@ class Storage {
     for (const [key, value] of Object.entries(incoming)) {
       const prop = props[key]
       // -> Unknown keys are dropped by buildConfig rather than refused: a module losing a prop must
-      //    not make the admin area unable to save
-      if (!prop || prop.readOnly || value === undefined) {
+      //    not make the admin area unable to save, and the mask is the value a client is given for a
+      //    secret rather than one it is setting — `buildConfig` keeps what is stored for both
+      if (!prop || prop.readOnly || value === undefined || isSensitiveMask(prop, value)) {
         continue
       }
       if (prop.enum) {

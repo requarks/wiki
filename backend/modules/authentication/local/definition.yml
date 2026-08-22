@@ -5,8 +5,6 @@ author: requarks.io
 logo: https://static.requarks.io/logo/wikijs.svg
 icon: /_assets/icons/ultraviolet-data-protection.svg
 color: primary
-vendor: 'Wiki.js'
-website: 'https://js.wiki'
 isAvailable: true
 useForm: true
 usernameType: email

@@ -126,8 +126,8 @@ const gcsClient: ObjectStoreClient = {
 /**
  * Google Cloud Storage module
  *
- * Object names are the same paths the disk target writes, so a bucket and a folder hold the wiki's
- * content laid out identically, and the shape of both is the site's `pathPrefixFor` to decide. See
+ * Object names are the same paths the disk target writes, under whatever `pathPrefix` this target
+ * starts at, so a bucket and a folder hold the wiki's content laid out identically. See
  * `helpers/storageObjects.ts` for everything above the four calls below.
  */
 export default objectStorageModule(gcsClient)

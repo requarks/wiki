@@ -5,8 +5,6 @@ author: requarks.io
 logo: https://static.requarks.io/logo/google.svg
 icon: /_assets/icons/ultraviolet-google.svg
 color: red-6
-vendor: 'Google LLC'
-website: 'https://developers.google.com/identity/openid-connect/openid-connect'
 isAvailable: true
 useForm: false
 usernameType: email

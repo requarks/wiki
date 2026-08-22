@@ -1,6 +1,6 @@
 import mime from 'mime'
 import { assetRelPath, pageRelPath, serializePage } from './storageFiles.ts'
-import type { StorageModule, StorageTarget } from '../models/storage.ts'
+import type { StorageModule, StoragePageRef, StorageTarget } from '../models/storage.ts'
 
 /**
  * The shared half of every object-store target — S3, Azure Blob Storage, Google Cloud Storage.
@@ -10,10 +10,10 @@ import type { StorageModule, StorageTarget } from '../models/storage.ts'
  * rename is done where there is no rename, what a bulk export walks. That part lives here, so a
  * module is its client and nothing else.
  *
- * **A key is a path**, the same one the disk target would write — `pathPrefixFor` decides what
- * brackets it, and pages and assets sit beside each other in it exactly as they do in a folder. An
- * object store has no directories, so the slashes are just characters in a name, which is why there is
- * nothing here about creating or pruning them.
+ * **A key is a path**, the same one the disk target would write — the target's own `pathPrefix` and
+ * then whatever `pathPrefixFor` brackets the tree with, and pages and assets sit beside each other in
+ * it exactly as they do in a folder. An object store has no directories, so the slashes are just
+ * characters in a name, which is why there is nothing here about creating or pruning them.
  *
  * Not under `modules/storage/`, for the reason `storageFiles.ts` gives: a directory there without a
  * `definition.yml` takes every storage module down with it.
@@ -43,6 +43,58 @@ export interface PresignRequest {
 export function signingBaseUrl(target: StorageTarget): string | null {
   const configured = target.assetDelivery.baseUrl?.trim()
   return configured ? configured.replace(/\/+$/, '') : null
+}
+
+/**
+ * The target's own prefix inside the bucket, as path segments.
+ *
+ * Empty by default — the wiki's tree starts at the root of the bucket, which is what a bucket made
+ * for it should look like. A prefix is what lets one bucket hold this wiki beside something else, or
+ * beside another wiki: an object store has no folders to keep two of them apart, so the only thing
+ * that can is the keys agreeing to stay on their own side.
+ *
+ * Normalized rather than rejected. Leading, trailing and doubled slashes all mean the same folder to
+ * anybody typing one, and `.` and `..` segments are dropped rather than resolved, because a key is a
+ * literal name and neither of them means in a bucket what it means in a path — `a/../b` and `b` are
+ * two different objects to every one of these stores.
+ */
+function prefixSegments(target: StorageTarget): string[] {
+  return String(target.config.pathPrefix ?? '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length > 0 && segment !== '.' && segment !== '..')
+}
+
+/**
+ * The key an object takes: this target's prefix, then the path the disk target would have written.
+ *
+ * Two prefixes rather than one because they answer different questions. Where the tree sits *within*
+ * a location is the site's answer and the same for every target of it, which is `pathPrefixFor`;
+ * which subdirectory of this bucket that tree starts in is this target's alone, the same way the
+ * bucket itself is. Object stores only — a path-based target has a configured root to be the
+ * equivalent, and the leading segments of a key are the closest a flat namespace comes to one.
+ *
+ * @returns Null for content this site's layout has no place for, exactly as the relative path does
+ */
+function objectKey(target: StorageTarget, relPath: string | null): string | null {
+  if (!relPath) {
+    return null
+  }
+  const prefix = prefixSegments(target)
+  return prefix.length > 0 ? `${prefix.join('/')}/${relPath}` : relPath
+}
+
+/** Where an asset's object sits in this target's bucket. */
+function assetKey(
+  target: StorageTarget,
+  ref: { locale: string; folderPath: string; fileName: string }
+): string | null {
+  return objectKey(target, assetRelPath(target, ref))
+}
+
+/** Where a page's object sits in this target's bucket. */
+function pageKey(target: StorageTarget, ref: StoragePageRef): string | null {
+  return objectKey(target, pageRelPath(target, ref))
 }
 
 /** What a store has to be able to do for `objectStorageModule` to build a target out of it. */
@@ -93,7 +145,7 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
     },
 
     async putAsset(target, ref, data) {
-      const key = assetRelPath(target, ref)
+      const key = assetKey(target, ref)
       // -> Guarded rather than skipped: the model asks `canStore` before dispatching a write, so
       //    reaching this means somebody wrote without asking, and an asset's bytes may exist nowhere
       //    else
@@ -106,12 +158,12 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
     },
 
     async getAsset(target, ref) {
-      const key = assetRelPath(target, ref)
+      const key = assetKey(target, ref)
       return key ? client.get(target, key) : null
     },
 
     async deleteAsset(target, ref) {
-      const key = assetRelPath(target, ref)
+      const key = assetKey(target, ref)
       if (key) {
         await client.remove(target, key)
       }
@@ -121,13 +173,13 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
       await moveObject(
         client,
         target,
-        assetRelPath(target, { ...ref, ...previous }),
-        assetRelPath(target, ref)
+        assetKey(target, { ...ref, ...previous }),
+        assetKey(target, ref)
       )
     },
 
     async putPage(target, ref, page) {
-      const key = pageRelPath(target, ref)
+      const key = pageKey(target, ref)
       // -> Unlike an asset, a page with no place here is not worth failing over: it is in the
       //    database, which is where a page always is, and this copy is the thing the site declined
       if (!key) {
@@ -142,7 +194,7 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
     },
 
     async deletePage(target, ref) {
-      const key = pageRelPath(target, ref)
+      const key = pageKey(target, ref)
       if (key) {
         await client.remove(target, key)
       }
@@ -152,15 +204,15 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
       await moveObject(
         client,
         target,
-        pageRelPath(target, { ...ref, path: previousPath }),
-        pageRelPath(target, ref)
+        pageKey(target, { ...ref, path: previousPath }),
+        pageKey(target, ref)
       )
     },
 
     ...(client.presign
       ? {
           async presignAsset(target, ref, options) {
-            const key = assetRelPath(target, ref)
+            const key = assetKey(target, ref)
             if (!key) {
               return null
             }
@@ -191,7 +243,7 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
         if (!target.contentTypes.activeTypes.includes(contentType)) {
           continue
         }
-        if (!assetRelPath(target, asset)) {
+        if (!assetKey(target, asset)) {
           unstored++
           continue
         }
@@ -207,7 +259,7 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
       let pages = 0
       if (target.contentTypes.activeTypes.includes('pages')) {
         for (const { ref, content } of await WIKI.models.pages.listForStorage(target.siteId)) {
-          if (!pageRelPath(target, ref)) {
+          if (!pageKey(target, ref)) {
             unstored++
             continue
           }

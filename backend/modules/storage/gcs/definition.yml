@@ -31,13 +31,20 @@ props:
     hint: The bucket to store content in. It must already exist - this target will not create it.
     icon: open-box
     order: 3
+  pathPrefix:
+    type: String
+    title: Path Prefix
+    default: ''
+    hint: Store content under this folder inside the bucket rather than at its root, e.g. wiki or apps/docs. Leave empty for the root.
+    icon: symlink-directory
+    order: 4
   storageClass:
     type: String
     title: Storage Class
     default: STANDARD
     hint: What new objects are stored as. The colder classes cost less to keep and more to read, and charge for a minimum storage duration.
     icon: scan-stock
-    order: 4
+    order: 5
     enum:
       - STANDARD|Standard
       - NEARLINE|Nearline
@@ -49,7 +56,7 @@ props:
     default: ''
     hint: Leave empty for Google Cloud Storage itself. Only set this to point at an emulator or a private service endpoint.
     icon: api
-    order: 5
+    order: 6
 actions:
   exportAll:
     label: Export Everything

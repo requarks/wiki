@@ -1,5 +1,7 @@
 import { nanoid } from 'nanoid'
+import { maskSensitiveProps } from '../helpers/common.ts'
 import { limitAuthAttempts } from '../helpers/rateLimit.ts'
+import type { AuthStrategy } from '../models/authentication.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 /**
@@ -35,6 +37,23 @@ function loginErrorUrl(redirect: string, code: string): string {
     params.set('redirect', redirect)
   }
   return `/login?${params.toString()}`
+}
+
+/**
+ * A strategy as it may be sent to a client: everything about it, minus the secrets.
+ *
+ * A prop the module declares `sensitive` — an OAuth client secret, an LDAP bind password — is
+ * write-only, and reads as a mask standing in for whatever is stored. The admin area sends the whole
+ * configuration back when it saves, and `buildConfig` understands the mask as "leave this alone".
+ *
+ * Done here rather than in the model because the model's strategies are the ones a login runs on: the
+ * secret has to stay in the object the module authenticates with, so this is the last point at which
+ * it can be taken out. `manage:system` on the route is not a reason to skip it — the secret would
+ * still end up in a browser's memory, its cache and whatever is on the administrator's screen.
+ */
+function withoutSecrets(strategy: AuthStrategy): AuthStrategy {
+  const props = WIKI.models.authentication.getModule(strategy.module)?.props ?? {}
+  return { ...strategy, config: maskSensitiveProps(props, strategy.config) }
 }
 
 /**
@@ -886,7 +905,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'List the configured authentication strategies',
         description:
-          'Instance-wide, i.e. every strategy regardless of which sites offer it. Which of them a given site shows on its login screen, and in what order, is part of that site’s configuration. Configuration values include any secrets a module stores, hence the `manage:system` requirement.',
+          'Instance-wide, i.e. every strategy regardless of which sites offer it. Which of them a given site shows on its login screen, and in what order, is part of that site’s configuration. A configuration value belonging to a prop marked `sensitive` is write-only and comes back masked, never as the stored secret.',
         tags: ['Authentication'],
         response: {
           200: {
@@ -898,7 +917,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
-      return WIKI.models.authentication.getActiveStrategies()
+      return (await WIKI.models.authentication.getActiveStrategies()).map(withoutSecrets)
     }
   )
 
@@ -934,7 +953,7 @@ async function routes(app: FastifyInstance) {
       if (!strategy) {
         return reply.notFound('Authentication strategy does not exist.')
       }
-      return strategy
+      return withoutSecrets(strategy)
     }
   )
 

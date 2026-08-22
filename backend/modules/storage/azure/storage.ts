@@ -164,8 +164,8 @@ const azureClient: ObjectStoreClient = {
 /**
  * Azure Blob Storage module
  *
- * Blob names are the same paths the disk target writes, so a container and a folder hold the wiki's
- * content laid out identically, and the shape of both is the site's `pathPrefixFor` to decide. See
+ * Blob names are the same paths the disk target writes, under whatever `pathPrefix` this target starts
+ * at, so a container and a folder hold the wiki's content laid out identically. See
  * `helpers/storageObjects.ts` for everything above the four calls below.
  */
 export default objectStorageModule(azureClient)

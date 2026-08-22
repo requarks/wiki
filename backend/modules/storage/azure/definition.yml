@@ -30,13 +30,20 @@ props:
     hint: The container to store content in. It is created on first use if it does not exist yet.
     icon: shipping-container
     order: 3
+  pathPrefix:
+    type: String
+    title: Path Prefix
+    default: ''
+    hint: Store content under this folder inside the container rather than at its root, e.g. wiki or apps/docs. Leave empty for the root.
+    icon: symlink-directory
+    order: 4
   accessTier:
     type: String
     title: Access Tier
     default: Cool
     hint: What new blobs are stored as. Cool costs less to keep and more to read, which suits content that is served from another target and kept here as a copy.
     icon: scan-stock
-    order: 4
+    order: 5
     enum:
       - Hot|Hot
       - Cool|Cool
