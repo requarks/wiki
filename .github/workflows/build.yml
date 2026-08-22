@@ -30,6 +30,15 @@ jobs:
         yq -iP '.version = strenv(REL_VERSION)' backend/package.json -o json
         yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
 
+    - name: Upload translations source file
+      uses: crowdin/github-action@v2
+      env:
+        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        CROWDIN_BASE_PATH: ${{ githug.workspace }}
+      with:
+        command: 'upload'
+        command_args: '--config dev/crowdin.yml'
+
     - name: Build Assets
       working-directory: frontend
       run: |
@@ -83,11 +92,4 @@ jobs:
         name: build
         path: wiki-js.tar.gz
 
-    - name: Upload translations source file
-      uses: crowdin/github-action@v2
-      env:
-        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-      with:
-        command: 'upload'
-        command_args: '--config dev/crowdin.yml'
 
