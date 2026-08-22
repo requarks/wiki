@@ -34,7 +34,7 @@ jobs:
       uses: crowdin/github-action@v2
       env:
         CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        CROWDIN_BASE_PATH: ${{ githug.workspace }}
+        CROWDIN_BASE_PATH: ${{ github.workspace }}
       with:
         command: 'upload'
         command_args: '--config dev/crowdin.yml'
