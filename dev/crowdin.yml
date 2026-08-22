@@ -1,6 +1,7 @@
 project_id: '921805'
-preserve_hierarchy: false
+preserve_hierarchy: true
 files:
   - source: 'backend/locales/en.json'
     dest: 'app.json'
+    translation: '%locale%.json'
     update_option: 'update_as_unapproved'
