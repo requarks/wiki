@@ -1,5 +1,6 @@
+import { STORAGE_DIRECT_ACCESS_FALLBACKS, STORAGE_TARGET_STATUSES } from '../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
-import type { StorageTargetInput } from '../models/storage.ts'
+import type { StorageSiteConfigInput, StorageTargetInput } from '../models/storage.ts'
 
 /**
  * Storage API Routes
@@ -39,6 +40,27 @@ async function routes(app: FastifyInstance) {
                 description:
                   'Size at or above which an asset counts as a large file, e.g. `5MB`. One answer for the whole site: a file has to be the same kind of thing to every target.'
               },
+              sitePrefix: {
+                type: 'boolean',
+                description:
+                  'Whether the paths a target stores content under are filed inside a folder named after the site. Off by default, since a target belongs to one site and its configured root is therefore already the folder of that site; turn it on for two sites sharing a location.'
+              },
+              localePrefix: {
+                type: 'boolean',
+                description:
+                  'Whether the paths a target stores content under are bracketed by locale. On by default. Off, the site stores its primary locale only, directly under the root - content in any other locale has no path and is not written to a path-based target at all.'
+              },
+              syncInterval: {
+                type: 'string',
+                description:
+                  'How often a target with a remote is synchronized, e.g. `5m` or `1h`. Applies to every target of the site that has a remote at all; the others have nothing to synchronize with and ignore it.'
+              },
+              directAccessFallback: {
+                type: 'string',
+                enum: [...STORAGE_DIRECT_ACCESS_FALLBACKS],
+                description:
+                  'What happens when a target set to hand out direct links cannot sign one. `stream` serves the bytes through the wiki instead, so a signing misconfiguration costs performance rather than breaking every image; `error` fails the request, so it cannot go unnoticed. Either way the target records a warning.'
+              },
               targets: {
                 type: 'array',
                 items: { $ref: 'StorageTarget#' }
@@ -53,10 +75,81 @@ async function routes(app: FastifyInstance) {
       if (!site) {
         return reply.notFound('Site does not exist.')
       }
+      const layout = WIKI.models.storage.pathLayoutFor(req.params.siteId)
       return {
         largeThreshold: WIKI.models.storage.largeThresholdFor(req.params.siteId),
+        sitePrefix: layout.sitePrefix,
+        localePrefix: layout.localePrefix,
+        syncInterval: `${WIKI.models.storage.syncIntervalFor(req.params.siteId)}m`,
+        directAccessFallback: WIKI.models.storage.directAccessFallbackFor(req.params.siteId),
         targets: await WIKI.models.storage.getSiteTargets(req.params.siteId)
       }
+    }
+  )
+
+  /**
+   * GET SITE STORAGE STATUS
+   */
+  app.get<{ Params: { siteId: string } }>(
+    '/sites/:siteId/storage/status',
+    {
+      config: {
+        // -> Deliberately not `manage:system`, unlike the rest of this file: this answers a status
+        //    light in the admin sidebar, which anybody who can see the storage section at all needs,
+        //    and it carries none of the configuration that makes the rest of these privileged
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: "Get the health of a site's storage targets",
+        description:
+          'How each enabled target is behaving, and nothing else - no configuration and no credentials. A target that is disabled is absent rather than reported: it is not being asked to do anything, so what it last recorded is history. Answered from the same cache the upload path resolves through, so it is current without costing a query.',
+        tags: ['Storage'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        response: {
+          200: {
+            description: 'Health of the site storage targets',
+            type: 'object',
+            properties: {
+              targets: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    title: { type: 'string' },
+                    isEnabled: { type: 'boolean' },
+                    state: {
+                      type: 'object',
+                      properties: {
+                        status: {
+                          type: 'string',
+                          enum: [...STORAGE_TARGET_STATUSES]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+      return { targets: await WIKI.models.storage.healthFor(req.params.siteId) }
     }
   )
 
@@ -65,7 +158,7 @@ async function routes(app: FastifyInstance) {
    */
   app.put<{
     Params: { siteId: string }
-    Body: { largeThreshold?: string; targets?: StorageTargetInput[] }
+    Body: StorageSiteConfigInput & { targets?: StorageTargetInput[] }
   }>(
     '/sites/:siteId/storage',
     {
@@ -75,7 +168,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update the storage configuration of a site',
         description:
-          'Only the targets listed are affected, and within each of them only the fields provided. Everything is validated before any of it is written, so a rejected request changes nothing.',
+          'Only the targets listed are affected, and within each of them only the fields provided. Everything is validated before any of it is written, so a rejected request changes nothing. Changing the path layout moves nothing: content already stored stays where the previous layout put it, and a target holding it has export and import actions for putting that right.',
         tags: ['Storage'],
         params: {
           type: 'object',
@@ -94,6 +187,26 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               maxLength: 32,
               description: 'A size such as `5MB`. Applies to every target of the site.'
+            },
+            sitePrefix: {
+              type: 'boolean',
+              description: 'Prepend the site id to every path. Applies to every target of the site.'
+            },
+            localePrefix: {
+              type: 'boolean',
+              description:
+                'Prepend the locale to every path. Applies to every target of the site. Turning it off leaves every locale but the primary one without a path to be stored under.'
+            },
+            syncInterval: {
+              type: 'string',
+              maxLength: 32,
+              description:
+                'A whole number of minutes or hours, such as `5m` or `1h`. The scheduler ticks once a minute, so this is honoured to the minute and cannot be shorter than one.'
+            },
+            directAccessFallback: {
+              type: 'string',
+              enum: [...STORAGE_DIRECT_ACCESS_FALLBACKS],
+              description: 'What to do when a direct link cannot be signed.'
             },
             targets: {
               type: 'array',

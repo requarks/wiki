@@ -1,0 +1,49 @@
+key: azure
+title: Azure Blob Storage
+icon: '/_assets/icons/ultraviolet-azure.svg'
+banner: '/_assets/storage/azure.jpg'
+description: Azure Blob Storage is Microsoft's object storage solution for the cloud, optimized for storing large amounts of unstructured data.
+assetDelivery:
+  isDirectAccessSupported: true
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+props:
+  accountName:
+    type: String
+    title: Account Name
+    default: ''
+    hint: Your unique storage account name.
+    icon: 3d-touch
+    order: 1
+  accountKey:
+    type: String
+    title: Account Access Key
+    default: ''
+    hint: Either key 1 or key 2 from the storage account. Leave empty to use the credentials the machine already has, such as a managed identity.
+    icon: key
+    sensitive: true
+    order: 2
+  containerName:
+    type: String
+    title: Container Name
+    default: wiki
+    hint: The container to store content in. It is created on first use if it does not exist yet.
+    icon: shipping-container
+    order: 3
+  accessTier:
+    type: String
+    title: Access Tier
+    default: Cool
+    hint: What new blobs are stored as. Cool costs less to keep and more to read, which suits content that is served from another target and kept here as a copy.
+    icon: scan-stock
+    order: 4
+    enum:
+      - Hot|Hot
+      - Cool|Cool
+      - Cold|Cold
+      - Archive|Archive
+actions:
+  exportAll:
+    label: Export Everything
+    hint: Write a copy of every page and asset this target is configured to hold to the container, overwriting whatever is already there. Nothing in the database is changed and nothing is moved, so this is how content created before the target was enabled gets onto it.
+    icon: this-way-up

@@ -71,7 +71,8 @@ scheduler → event emitters), `initHTTPServer()` (Fastify plugins, auth, routes
   `WIKI` global (config + logger + lazy `ensureDb()`) and dynamically imports the task.
 - `base.yml` — system defaults for every config key. Do not edit as a user-facing config; it defines
   the shape merged with `config.yml` and the db `settings` table.
-- `helpers/` — small pure utilities (`common.ts`, `config.ts`).
+- `helpers/` — small pure utilities (`common.ts`, `config.ts`), plus `storageFiles.ts`, which is the
+  file-tree half of the storage modules that address content by path (see [Storage targets](#storage-targets)).
 - `types/` — ambient declarations: `global.d.ts` (the `WIKI` global) and `fastify.d.ts` (session +
   route-permission augmentations).
 - `locales/` — `en.json` source strings (Localazy-managed) + `metadata.js` language table (the one
@@ -400,14 +401,48 @@ Consequences worth knowing:
 
 ### Storage targets
 
-A storage target is one module from `modules/storage/<key>/` configured for one site. Two modules
-ship, both with a real `storage.ts`: `db`, enabled on every site and impossible to turn off, and
-`disk`, which mirrors the wiki's tree at `<root>/<locale>/<folders…>/<file>` — the configured root is
-the site's own folder, since a target belongs to one site, so two sites must not share a path. S3,
-Azure, GCS, git and SFTP were removed rather than left as definitions with nothing behind them; a
-new module is a directory with a `definition.yml` and a `storage.ts` exporting the `StorageModule`
+A storage target is one module from `modules/storage/<key>/` configured for one site. Six ship, each
+with a real `storage.ts`:
+
+| Key | What it is |
+| --- | ---------- |
+| `db` | Enabled on every site and impossible to turn off — bytes in the asset's own row |
+| `disk` | The wiki's tree as files at `<root>/<locale>/<folders…>/<file>` |
+| `git` | That same tree in a repository, committed per change and synced with a remote |
+| `s3` | Amazon S3 **and anything speaking its API** — R2, Spaces, B2, Wasabi, MinIO |
+| `azure` | Azure Blob Storage |
+| `gcs` | Google Cloud Storage |
+| `sftp` | That tree again, on a remote host over SSH — a copy, never a delivery source |
+
+A new module is a directory with a `definition.yml` and a `storage.ts` exporting the `StorageModule`
 contract, and `hasImplementation` gates both dispatch and the admin area's action buttons on the
 latter existing.
+
+**`disk`, `git` and `sftp` are the same tree in three places**, and share `helpers/storageFiles.ts`
+for all of it: the layout, the front matter, what makes a file a page, and `importTree`'s adoption
+walk. `sftp` hands `importTree` its own `readFile` — the only thing that differs about a tree on
+another machine — and uses `path.posix` throughout, since a wiki on Windows still talks to sshd in
+slashes. Its connection is cached per target and serialized, because a single `ssh2-sftp-client` does
+not support concurrent operations, and dropped on a connection-shaped failure so the next operation
+reconnects. Unlike 2.x's SFTP module it reads as well as writes, so a site can serve from it and
+import a tree that was put there from outside.
+
+**The three object stores are one file of client calls each.** `put`, `get`, `remove` and `copy` — the
+`ObjectStoreClient` in `helpers/storageObjects.ts` — and `objectStorageModule` builds the whole
+`StorageModule` from them. An object key *is* a path, the same one `disk` would write, so a bucket and
+a folder hold a site's content laid out identically and `pathPrefixFor` decides the shape of both.
+Object stores have no rename, so `moveObject` copies and then deletes, in that order, and never
+deletes on a copy that failed. Credentials are optional on all three: left empty, each SDK falls back
+to the machine's own identity (an IAM role, a managed identity, a workload identity), which is how a
+deployment keeps a long-lived secret out of the database. Only `exportAll` is offered — there is no
+`importAll`, because nothing but the wiki writes into these buckets, which is exactly what makes git
+different.
+
+**Nothing else may live under `modules/storage/`.** `refreshFromDisk` reads every directory there and
+expects a `definition.yml` in it; one without takes *every* storage module down with it, since the
+read is wrapped in a single try/catch that empties `definitions`. This is why the tree logic shared by
+`disk` and `git` — the front matter, the file name a page is filed under, what makes a file a page
+rather than an attachment, and the walk an import does — sits in `helpers/storageFiles.ts` instead.
 
 **Content is written to every target that claims it, and read from one.** Those are two separate
 questions with two separate answers, and conflating them is the way to get this wrong:
@@ -420,6 +455,37 @@ questions with two separate answers, and conflating them is the way to get this 
   a target may only be nominated for a type it also stores (`validateTarget` refuses the pair). Pages
   are never nominated: a page is read from its own row, always.
 
+  **Direct access.** An object store can answer instead of being read through: `assetDelivery.mode`
+  is `streaming` (the default — bytes through the wiki) or `direct`, where both serving routes
+  (`controllers/files.ts` and the asset content API) answer **302 to a signed URL** and the bytes
+  never touch the server. `storage.directAccessUrlFor` is the whole decision and both routes call it.
+  Three things it insists on: the target must be the *nominated* source for that content type
+  (`deliveryTargetsFor`'s head standing in as the database is not a nomination), the module must
+  implement `presignAsset`, and the link's lifetime is capped at 7 days because no provider signs for
+  longer. The redirect is cached for **half** the link's life, so a cached redirect can never outlive
+  the URL in it.
+
+  **A signed link carries none of the wiki's page rules** — it works for whoever holds it until it
+  expires. That is what makes the store able to serve without asking the wiki, and it is why the
+  expiry defaults to `5m`. When signing fails, the site's `storage.directAccessFallback` decides:
+  `stream` (default) serves the bytes the slow way so a bad credential costs performance rather than
+  every image on every page, `error` fails the request so it cannot go unnoticed. The target records a
+  `warning` either way.
+
+  **A custom `baseUrl` is signed *for*, never swapped in afterwards.** S3 and GCS sign the host, so
+  rewriting it invalidates the signature: S3 builds a second client (`bucketEndpoint` with the URL as
+  the `Bucket` when the domain *is* the bucket, `forcePathStyle` when the bucket is a path segment),
+  GCS passes `cname`, and Azure alone can simply swap the origin because a SAS signs the
+  canonicalized resource and not the host. CloudFront is therefore out of scope — it needs its own
+  key pair and signing scheme.
+
+  **A module can decline to serve at all.** `assetDelivery.isDeliverySupported` (default true; false
+  only for `sftp`) keeps a target out of the Content Delivery tab, out of `sourceOptions`, and gets a
+  nomination refused by `validateTarget` and cleared by `updateTarget`. It is still written to,
+  exported to and imported from — the point is that every image on every page should not be an SSH
+  round trip. It does stay in the read fallback list, sorted behind even the database: `offloadUnchecked`
+  can leave a file whose only copy is there, and a slow answer beats telling a reader it is gone.
+
   **Only an explicit nomination moves delivery.** A type nobody has been nominated for is served
   from the database (`deliveryTargetsFor`), never from whichever other target happens to be enabled
   — enabling one says where content is *written*, and a target enabled after an upload holds none of
@@ -430,6 +496,23 @@ questions with two separate answers, and conflating them is the way to get this 
 So neither an asset nor a page records where its bytes went — there is no single place — and each
 target derives where its own copy sits from the tree, the same way for both. `resolveTargetFor` and
 `assets.storageInfo` are gone; `writeTargetsFor` and `deliveryTargetsFor` replace them.
+
+**Where a file sits under a target's root is one answer per site too**, and `storage.pathPrefixFor`
+is the only thing that gives it: the leading segments of every path any path-based module writes,
+with `parseStoredPath` as its exact inverse for reading a folder back in. Two site settings shape it,
+both on the **Configuration** tab and both read through `storage.pathLayoutFor`:
+
+- **`storage.sitePrefix`** (off) files the tree under a folder named after the site. Off because the
+  configured root already *is* that site's folder; on is what lets two sites share a location, each
+  ignoring the other's half of it.
+- **`storage.localePrefix`** (on) brackets the tree by locale, which is what keeps `guides/logo.png`
+  from being the same file in every locale. **Off, the site stores its primary locale and no other**
+  — there is nowhere to put the rest — so `pathPrefixFor` answers null for them and the target is
+  skipped: a page copy silently (the page is in the database either way), an asset copy after a
+  `canStore` check, so that the upload still succeeds as long as some *other* target takes the bytes.
+
+Neither setting moves anything already stored; the disk target's export and import actions are how
+content crosses from one layout to the next.
 
 **Which content type a file is, is one answer per site, not per target.** `large` is a category of
 its own rather than a modifier — that is what lets a target take the 40 MB video without also taking
@@ -443,7 +526,11 @@ Everything else follows from that:
 
 - **A write must succeed everywhere; a read may fall back.** `storage.putAsset` fans out and throws if
   any target refuses, failing the upload — an asset may have no database copy, so a half-stored one
-  must not be reported as saved. `getAsset` tries the nominated source and then every other target
+  must not be reported as saved. **Refusing is not the same as having nowhere to put it**: a target
+  whose `canStore` says no is never asked, because nothing has gone wrong and the file may well be
+  storable elsewhere. Only when *nothing* can hold it is the upload failed, and then with a
+  `CustomError` — a plain `Error` reaches the client as a bare 500, since the error handler in
+  `index.ts` only forwards a message that came with a `statusCode`. `getAsset` tries the nominated source and then every other target
   holding the content, database last, because a target enabled after an upload never received it.
   Pages are gentler still: `mirrorPage` / `removePage` / `relocatePage` log a target that could not
   keep up and carry on, since the database always has the page.
@@ -499,6 +586,56 @@ because the request succeeded anyway (a page copy that could not be written). Th
 wins — a later success clears an earlier failure, which is what makes a full disk that gets emptied
 stop reporting itself without anybody dismissing anything. Nothing probes a target proactively, so a
 misconfigured one reads healthy until something is actually asked of it.
+
+**The git target is the disk target plus history and a remote.** Same tree, same helpers, and then:
+
+- **Commits are local and immediate; the network is batched.** A page save writes, commits and
+  returns — `prepareRepo` deliberately never contacts a remote, so an unreachable one cannot make the
+  wiki slow to edit or fail an upload. `ensureRemote` is the half that does, and only `sync` calls it.
+- **`sync` runs on a schedule.** `tasks/simple/sync-storage-targets.ts`, on a `* * * * *`
+  `jobSchedule` row seeded by `jobs.init()`, walks every enabled target whose module declares a `sync`
+  handler (`storage.syncableTargets`) and runs it through `executeAction`, so a failure lands on the
+  target's Status card. The **Force Sync** action is the same call on demand. In an HA set the
+  scheduler hands the job to one instance, which is the one whose working copy syncs — each instance
+  keeps its own.
+- **How often is `storage.syncInterval`, per site** (the **Configuration** tab, `syncIntervalFor`,
+  default `5m`). Since it is per site, one cron row cannot express it: the tick is every minute — as
+  fine as the shortest interval anyone can set — and the task skips the sites whose turn it is not.
+  Due-ness is `epochMinute % intervalMinutes === 0` rather than a stored last-sync time, so nothing
+  has to be persisted, two instances agree without coordinating and a restart changes nothing. The
+  cost is that a missed tick is not caught up, which for something running all day is the right
+  trade. An interval that will not parse means *never*, not every minute.
+- **A pull is authoritative, and that includes deletions.** What comes back is applied to the wiki
+  with `overwrite`, and a commit that deleted a file deletes the page or asset here too. So push
+  access to the remote is effectively write access to the wiki. Which of the two a vanished path was
+  has to come off the tree rather than the file: the stem is looked up first and only counts as the
+  page if `pages.storageFileNameOf` matches the name that went, so a deleted `readme.pdf` never takes
+  the page `readme` with it.
+- **The diff, not the tree.** Incoming changes come from `git diff --name-status -M -z` between the
+  commit the branch was on and the one it is on now — a sync runs every few minutes and cannot read
+  every file each time. `-z` because a path may contain anything, newlines included.
+- **Every operation is serialized per target** by `withRepo`: git locks its index for the length of a
+  write, so two concurrent uploads would otherwise have one fail on `index.lock`.
+- **An empty commit is never made.** Most page saves do not change the stored form of the page (a
+  re-publish, a tag reordered into the same order), and `commitPaths` checks `diff --cached` before
+  committing so the history says what actually changed.
+- Operator git config is inherited on purpose — including `commit.gpgsign`, which will fail every
+  commit if it is on without a usable key. The failure surfaces as the target's recorded `error`.
+
+**A change carries who made it, and only git cares.** `StorageAssetRef` and `StoragePageRef` carry an
+optional `actorId`, which is the user id the models already had in hand at each dispatch site;
+`storage.actorFor` turns it into a name and an email, cached indefinitely because a page save is a hot
+path and a stale commit author costs nothing. Absent for a change no one person made — a folder rename
+that moved a hundred files, a scheduled sync — and the git target's configured default author stands
+in. A scheduled pull creates content, which needs an author, so it uses
+`users.getSystemActorId()`: the wiki's longest-standing active administrator.
+
+Git's **`alwaysUseDefaultAuthor`** makes that stand-in universal, for a repository whose history must
+not carry the wiki's accounts. `commitAuthor` then returns the default without calling `actorFor` at
+all — not looked up and discarded, so there is nothing to leak by mistake. Note the *committer* is the
+default author in every case regardless: it is the repository's own `user.name`/`user.email`, which
+`prepareRepo` writes from those same two settings, and which is why they are in
+`configFingerprint` — renaming the default author has to re-prepare the repository to take effect.
 
 Not to be confused with `<dataPath>/cache/files`, the serving cache in the assets model. That one is
 derived and swept; a storage target is where content actually lives.

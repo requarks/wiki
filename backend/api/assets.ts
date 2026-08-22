@@ -226,6 +226,20 @@ async function routes(app: FastifyInstance) {
       if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
         return reply.notFound('This asset does not exist.')
       }
+      const download = Boolean(
+        WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)
+      )
+
+      // -> The same redirect `/_files/` makes, for the same reason: where the site has nominated a
+      //    store to serve a content type directly, the bytes have no business coming through here
+      const directUrl = await WIKI.models.storage.directAccessUrlFor(
+        { ...asset, siteId: req.params.siteId },
+        { contentType: asset.mimeType, ...(download ? { downloadAs: asset.fileName } : {}) }
+      )
+      if (directUrl) {
+        return reply.redirect(directUrl.url, 302)
+      }
+
       // -> Through the same local disk cache `/_files/` serves from, since this is the download
       //    button in the file manager rather than an administrative route: anyone who may read a
       //    file may press it
@@ -234,7 +248,7 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This asset has no content.')
       }
 
-      if (WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)) {
+      if (download) {
         reply.header(
           'Content-Disposition',
           `attachment; filename="${encodeURIComponent(asset.fileName)}"`
@@ -347,7 +361,13 @@ async function routes(app: FastifyInstance) {
       if (!mayOnAsset(req, 'manage:assets', doomed)) {
         return reply.forbidden('You are not allowed to delete this file.')
       }
-      if (!(await WIKI.models.assets.deleteAsset(req.params.siteId, req.params.assetId))) {
+      if (
+        !(await WIKI.models.assets.deleteAsset(
+          req.params.siteId,
+          req.params.assetId,
+          req.session.user?.id
+        ))
+      ) {
         return reply.notFound('This asset does not exist.')
       }
       return reply.code(204).send()

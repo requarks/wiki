@@ -4,10 +4,7 @@ icon: '/_assets/icons/ultraviolet-hdd.svg'
 banner: '/_assets/storage/disk.jpg'
 description: Store files on the local file system or over network attached storage. Note that you must use replicated storage if using high-availability instances.
 assetDelivery:
-  isStreamingSupported: true
   isDirectAccessSupported: false
-  defaultStreamingEnabled: true
-  defaultDirectAccessEnabled: false
 contentTypes:
   defaultTypesEnabled: ['pages', 'images', 'documents', 'others', 'large']
 props:

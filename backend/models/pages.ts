@@ -608,7 +608,7 @@ class Pages {
       reason: input.reasonForChange
     })
 
-    const stored = this.toStoragePage(siteId, page, page.content ?? '')
+    const stored = this.toStoragePage(siteId, actor.id, page, page.content ?? '')
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
     await WIKI.models.search.indexPage(page.id, locale)
@@ -761,7 +761,12 @@ class Pages {
 
     // -> The source is whatever this save set it to, else whatever it already was: a save that only
     //    changed the title still rewrites the copy, since the title is in its front matter
-    const stored = this.toStoragePage(siteId, updated, values.content ?? existing.content ?? '')
+    const stored = this.toStoragePage(
+      siteId,
+      actor.id,
+      updated,
+      values.content ?? existing.content ?? ''
+    )
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
     await WIKI.models.search.indexPage(id, updated.locale)
@@ -867,7 +872,7 @@ class Pages {
     // -> Moved and then rewritten, rather than deleted and written afresh: the move is what keeps a
     //    versioned target's history of the file attached to it, and the rewrite is because a move may
     //    carry a new title and always carries a new modification time, both of which are in the copy
-    const stored = this.toStoragePage(siteId, moved, existingContent ?? '')
+    const stored = this.toStoragePage(siteId, actor.id, moved, existingContent ?? '')
     await WIKI.models.storage.relocatePage(stored.ref, page.path)
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
@@ -908,6 +913,7 @@ class Pages {
     await WIKI.models.storage.removePage({
       id,
       siteId,
+      actorId: actor.id,
       locale: page.locale,
       path: page.path,
       contentType: page.contentType
@@ -978,6 +984,7 @@ class Pages {
         await WIKI.models.storage.removePage({
           id: entry.id,
           siteId,
+          actorId: actor.id,
           locale: entry.locale,
           path,
           contentType
@@ -1083,6 +1090,7 @@ class Pages {
    */
   private toStoragePage(
     siteId: string,
+    actorId: string | undefined,
     page: {
       id: string
       locale: string
@@ -1102,6 +1110,7 @@ class Pages {
       ref: {
         id: page.id,
         siteId,
+        actorId,
         locale: page.locale,
         path: page.path,
         contentType: page.contentType
@@ -1148,7 +1157,7 @@ class Pages {
       .from(pagesTable)
       .where(eq(pagesTable.siteId, siteId))
 
-    return rows.map((row) => this.toStoragePage(siteId, row, row.content ?? ''))
+    return rows.map((row) => this.toStoragePage(siteId, undefined, row, row.content ?? ''))
   }
 
   /**
@@ -1284,6 +1293,7 @@ class Pages {
       //    it had for the moment it existed with the wrong ones
       const restored = this.toStoragePage(
         siteId,
+        actor.id,
         { ...page, createdAt: createdAt ?? page.createdAt, updatedAt: updatedAt ?? page.updatedAt },
         content
       )

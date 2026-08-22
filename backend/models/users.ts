@@ -238,6 +238,34 @@ class Users {
     return res?.[0] ?? null
   }
 
+  /**
+   * Who unattended work is recorded as having done it.
+   *
+   * Content arriving without a person behind it still has to name an author — a page pulled in by a
+   * scheduled storage sync lands in the wiki as an ordinary page, and an ordinary page has an author.
+   * The wiki's own longest-standing administrator is the least surprising answer: it is an account
+   * that exists on every instance, and one whose owner is entitled to have created the content.
+   *
+   * @returns The user id, or null on an instance with no active administrator at all
+   */
+  async getSystemActorId(): Promise<string | null> {
+    const rows = await WIKI.db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .innerJoin(userGroups, eq(userGroups.userId, usersTable.id))
+      .innerJoin(groupsTable, eq(groupsTable.id, userGroups.groupId))
+      .where(
+        and(
+          eq(usersTable.isActive, true),
+          eq(usersTable.isSystem, false),
+          sql`${groupsTable.permissions} @> '["manage:system"]'::jsonb`
+        )
+      )
+      .orderBy(usersTable.createdAt)
+      .limit(1)
+    return rows[0]?.id ?? null
+  }
+
   async getById(id: string) {
     const res = await WIKI.db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1)
     return res?.[0] ?? null

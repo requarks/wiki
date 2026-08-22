@@ -843,11 +843,14 @@ class Tree {
   async renameFolder({
     folderId,
     pathName,
-    title
+    title,
+    actorId
   }: {
     folderId: string
     pathName: string
     title: string
+    /** Who is renaming it, for a target that records who moved a file. */
+    actorId?: string
   }): Promise<TreeRow> {
     const folder = await this.getFolderById(folderId)
     if (!folder) {
@@ -936,6 +939,7 @@ class Tree {
         {
           id: page.id,
           siteId: folder.siteId,
+          actorId,
           locale: page.locale,
           path: page.path,
           contentType: page.contentType
@@ -975,7 +979,8 @@ class Tree {
           ),
           fileName: row.fileName
         }
-      }))
+      })),
+      actorId
     )
 
     // -> Every asset under it is served from a different path now, and nothing about the assets

@@ -598,7 +598,8 @@ async function routes(app: FastifyInstance) {
       const folder = await WIKI.models.tree.renameFolder({
         folderId: req.params.folderId,
         pathName: req.body.pathName,
-        title: req.body.title
+        title: req.body.title,
+        actorId: req.session.user?.id
       })
       return {
         ok: true,
@@ -653,7 +654,7 @@ async function routes(app: FastifyInstance) {
       // -> The tree entries are gone; these are the rows behind them, which is where a page and an
       //    asset actually live
       await WIKI.models.pages.deleteOrphaned(req.params.siteId, removed.pages, actor)
-      await WIKI.models.assets.deleteOrphaned(req.params.siteId, removed.assets)
+      await WIKI.models.assets.deleteOrphaned(req.params.siteId, removed.assets, actor.id)
       return reply.code(204).send()
     }
   )

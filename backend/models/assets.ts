@@ -92,6 +92,13 @@ export interface Asset {
   fileSize: number
   /** Slash-separated, without a leading or trailing slash. Empty at the site root. */
   folderPath: string
+  /**
+   * Which locale's tree it sits in.
+   *
+   * Part of where the file *is*, so anything addressing the stored copy needs it — a storage target
+   * brackets its tree by locale unless the site says otherwise.
+   */
+  locale: string
   title: string
   hasPreview: boolean
   createdAt: Date
@@ -99,12 +106,9 @@ export interface Asset {
 }
 
 /**
- * An asset found by its path, which is the one lookup that has to say which locale it landed on: the
- * URL in a page carries none, and the permission rules may be written against one.
+ * An asset found by its path, rather than by its ID.
  */
-export interface AssetAtPath extends Asset {
-  locale: string
-}
+export interface AssetAtPath extends Asset {}
 
 /**
  * Reduce whatever a client called the file to something safe to store, address and serve.
@@ -399,6 +403,7 @@ class Assets {
         {
           id: entry.id,
           siteId,
+          actorId: authorId,
           locale,
           folderPath,
           fileName: storedName,
@@ -431,6 +436,7 @@ class Assets {
       mimeType: resolvedMime,
       fileSize: data.length,
       folderPath,
+      locale,
       title: entry.title,
       hasPreview: Boolean(preview),
       createdAt: entry.createdAt,
@@ -482,7 +488,7 @@ class Assets {
     authorId: string
   }): Promise<Asset> {
     await WIKI.models.storage.putAsset(
-      { id, siteId, locale, folderPath, fileName, kind, fileSize: data.length },
+      { id, siteId, actorId: authorId, locale, folderPath, fileName, kind, fileSize: data.length },
       data
     )
     await WIKI.db
@@ -531,6 +537,7 @@ class Assets {
         mimeType,
         fileSize: data.length,
         folderPath,
+        locale,
         title,
         hasPreview: Boolean(preview),
         createdAt: new Date(),
@@ -554,6 +561,7 @@ class Assets {
         createdAt: assetsTable.createdAt,
         updatedAt: assetsTable.updatedAt,
         folderPath: treeTable.folderPath,
+        locale: treeTable.locale,
         title: treeTable.title,
         // -> Only whether there is one: the preview itself can be megabytes, and no caller of this
         //    wants it inlined
@@ -682,7 +690,11 @@ class Assets {
   /**
    * Where each of these assets sits, as a storage target addresses one.
    */
-  async getStorageRefs(siteId: string, ids: string[]): Promise<StorageAssetRef[]> {
+  async getStorageRefs(
+    siteId: string,
+    ids: string[],
+    actorId?: string
+  ): Promise<StorageAssetRef[]> {
     if (ids.length < 1) {
       return []
     }
@@ -702,6 +714,7 @@ class Assets {
     return rows.map((row) => ({
       id: row.id,
       siteId,
+      actorId,
       locale: row.locale,
       folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
       fileName: row.fileName,
@@ -761,11 +774,13 @@ class Assets {
    */
   async relocateAssets(
     siteId: string,
-    moves: { id: string; previous: { locale: string; folderPath: string; fileName: string } }[]
+    moves: { id: string; previous: { locale: string; folderPath: string; fileName: string } }[],
+    actorId?: string
   ): Promise<void> {
     const refs = await this.getStorageRefs(
       siteId,
-      moves.map((move) => move.id)
+      moves.map((move) => move.id),
+      actorId
     )
     for (const ref of refs) {
       const previous = moves.find((move) => move.id === ref.id)?.previous
@@ -915,6 +930,7 @@ class Assets {
       mimeType,
       fileSize: data.length,
       folderPath: importedFolderPath,
+      locale,
       title: entry.title,
       hasPreview: Boolean(preview),
       createdAt: entry.createdAt,
@@ -1278,14 +1294,14 @@ class Assets {
    *
    * @returns Whether an asset was deleted
    */
-  async deleteAsset(siteId: string, id: string): Promise<boolean> {
+  async deleteAsset(siteId: string, id: string, actorId?: string): Promise<boolean> {
     const asset = await this.getAsset(siteId, id)
     if (!asset) {
       return false
     }
     // -> Read before the rows go: where an asset sits is the tree's to say, and the tree row is
     //    about to be deleted along with it
-    const [ref] = await this.getStorageRefs(siteId, [id])
+    const [ref] = await this.getStorageRefs(siteId, [id], actorId)
     await WIKI.db.delete(assetsTable).where(eq(assetsTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
     if (ref) {
@@ -1308,7 +1324,7 @@ class Assets {
   /**
    * Delete the assets left behind by a folder deletion, which removed their tree entries already.
    */
-  async deleteOrphaned(siteId: string, entries: DeletedEntry[]): Promise<void> {
+  async deleteOrphaned(siteId: string, entries: DeletedEntry[], actorId?: string): Promise<void> {
     if (entries.length < 1) {
       return
     }
@@ -1335,6 +1351,7 @@ class Assets {
         await WIKI.models.storage.removeAsset({
           id: entry.id,
           siteId,
+          actorId,
           locale: entry.locale,
           folderPath: entry.folderPath,
           fileName: entry.fileName,

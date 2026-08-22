@@ -35,6 +35,10 @@
     "db-up": "drizzle-kit up --dialect=postgresql --out=./db/migrations"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1116.0",
+    "@aws-sdk/s3-request-presigner": "3.1116.0",
+    "@azure/identity": "4.13.2",
+    "@azure/storage-blob": "12.33.0",
     "@fastify/compress": "9.2.0",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
@@ -46,6 +50,7 @@
     "@fastify/swagger": "9.8.1",
     "@fastify/swagger-ui": "6.1.1",
     "@fastify/websocket": "11.3.0",
+    "@google-cloud/storage": "8.0.1",
     "@gquittet/graceful-server": "6.0.10",
     "@iconify/utils": "3.1.4",
     "@simplewebauthn/server": "13.3.2",
@@ -73,6 +78,8 @@
     "qrcode": "1.5.4",
     "sanitize-html": "2.17.6",
     "semver": "7.8.5",
+    "simple-git": "3.36.0",
+    "ssh2-sftp-client": "12.1.1",
     "uuid": "14.0.1",
     "y-protocols": "1.0.7",
     "yjs": "13.6.32"
@@ -88,6 +95,7 @@
     "@types/qrcode": "1.5.6",
     "@types/sanitize-html": "2.16.1",
     "@types/semver": "7.8.0",
+    "@types/ssh2-sftp-client": "9.0.6",
     "@types/ws": "8.18.1",
     "drizzle-kit": "1.0.0-rc.4",
     "nodemon": "3.1.14",

@@ -1,0 +1,74 @@
+key: s3
+title: S3 Object Storage
+icon: '/_assets/icons/ultraviolet-amazon-web-services.svg'
+banner: '/_assets/storage/s3.jpg'
+description: Amazon S3 and any store that speaks its API - Cloudflare R2, DigitalOcean Spaces, Backblaze B2, Wasabi, MinIO and the rest. Leave the endpoint empty for AWS itself, or point it at whichever service you use.
+assetDelivery:
+  isDirectAccessSupported: true
+contentTypes:
+  defaultTypesEnabled: ['images', 'documents', 'others', 'large']
+props:
+  endpoint:
+    type: String
+    title: Endpoint
+    default: ''
+    hint: Leave empty for AWS S3. Otherwise the full URL of the service, e.g. https://<account>.r2.cloudflarestorage.com for Cloudflare R2, https://nyc3.digitaloceanspaces.com for DigitalOcean Spaces.
+    icon: dns
+    order: 1
+  region:
+    type: String
+    title: Region
+    default: us-east-1
+    hint: The region the bucket lives in. Stores that do not have regions usually want "auto" (Cloudflare R2) or accept anything (MinIO).
+    icon: geography
+    order: 2
+  bucket:
+    type: String
+    title: Bucket Name
+    default: ''
+    hint: The bucket to store content in. It must already exist - this target will not create it.
+    icon: open-box
+    order: 3
+  accessKeyId:
+    type: String
+    title: Access Key ID
+    default: ''
+    hint: Leave both this and the secret empty to use the credentials the machine already has - an IAM role, or the standard AWS environment variables.
+    icon: 3d-touch
+    order: 4
+  secretAccessKey:
+    type: String
+    title: Secret Access Key
+    default: ''
+    hint: The secret for the access key above.
+    icon: key
+    sensitive: true
+    order: 5
+  storageClass:
+    type: String
+    title: Storage Class
+    default: STANDARD
+    hint: What new objects are stored as. An AWS concept - most compatible stores ignore it, and leaving it at Standard is always safe.
+    icon: scan-stock
+    order: 6
+    enum:
+      - STANDARD|Standard
+      - STANDARD_IA|Standard Infrequent Access
+      - INTELLIGENT_TIERING|Intelligent Tiering
+      - ONEZONE_IA|One Zone Infrequent Access
+      - REDUCED_REDUNDANCY|Reduced Redundancy
+      - GLACIER_IR|Glacier Instant Retrieval
+      - GLACIER|Glacier Flexible Retrieval
+      - DEEP_ARCHIVE|Glacier Deep Archive
+  forcePathStyle:
+    type: Boolean
+    title: Force Path Style
+    default: false
+    hint: Address the bucket as a path (endpoint/bucket/key) rather than as a subdomain. Needed by MinIO and some self-hosted stores; leave off for AWS, R2 and Spaces.
+    icon: filtration
+    order: 10
+actions:
+  exportAll:
+    label: Export Everything
+    hint: Write a copy of every page and asset this target is configured to hold to the bucket, overwriting whatever is already there. Nothing in the database is changed and nothing is moved, so this is how content created before the target was enabled gets onto it.
+    icon: this-way-up

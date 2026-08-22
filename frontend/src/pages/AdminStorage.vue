@@ -69,9 +69,7 @@
                 }}</w-item-label>
               </w-item-section>
               <w-item-section side>
-                <status-light
-                  :color="tgt.isEnabled ? `positive` : `negative`"
-                  :pulse="tgt.isEnabled" />
+                <status-light :color="targetLight(tgt).color" :pulse="targetLight(tgt).pulse" />
               </w-item-section>
             </w-item>
           </w-list>
@@ -140,10 +138,13 @@
               </template>
             </w-card>
             <!-- ----------------------- -->
-            <!-- Configuration -->
+            <!-- Target Configuration -->
             <!-- ----------------------- -->
+            <!-- -> Its own string rather than `config`, which the Configuration tab and its tab
+                 label also use: the two cards are both "Configuration" until one of them has to say
+                 which of the two it configures, and this is the one that does. -->
             <w-card class="pb-2 mt-4">
-              <w-card-header>{{ t('admin.storage.config') }}</w-card-header>
+              <w-card-header>{{ t('admin.storage.targetConfig') }}</w-card-header>
               <!--
                 The condition belongs on the section, not on the banner inside it: a section is a
                 padded band whether or not anything renders in it, so leaving it unconditional put
@@ -209,6 +210,91 @@
                     </w-item-section>
                   </w-item>
                 </template>
+              </template>
+            </w-card>
+            <!-- ----------------------- -->
+            <!-- Content Delivery Configuration -->
+            <!-- ----------------------- -->
+            <!-- -> Only for a module that can actually sign a URL. The rest have no second way to
+                 answer a request, so a card offering the choice would be offering nothing. -->
+            <w-card class="pb-2 mt-4" v-if="state.target.assetDelivery.isDirectAccessSupported">
+              <w-card-header>
+                {{ t('admin.storage.deliveryConfig') }}
+                <template #hint>{{ t('admin.storage.deliveryConfigHint') }}</template>
+              </w-card-header>
+              <w-item tag="label">
+                <blueprint-icon class="self-start" icon="download-from-cloud" />
+                <w-item-section>
+                  <w-item-label>{{ t(`admin.storage.deliveryModeStreaming`) }}</w-item-label>
+                  <w-item-label caption>{{
+                    t(`admin.storage.deliveryModeStreamingHint`)
+                  }}</w-item-label>
+                </w-item-section>
+                <w-item-section avatar>
+                  <w-radio
+                    v-model="state.target.assetDelivery.mode"
+                    val="streaming"
+                    :aria-label="t(`admin.storage.deliveryModeStreaming`)" />
+                </w-item-section>
+              </w-item>
+              <w-separator class="my-2" inset />
+              <w-item tag="label">
+                <blueprint-icon class="self-start" icon="lightning-bolt" />
+                <w-item-section>
+                  <w-item-label>{{ t(`admin.storage.deliveryModeDirect`) }}</w-item-label>
+                  <w-item-label caption>{{
+                    t(`admin.storage.deliveryModeDirectHint`)
+                  }}</w-item-label>
+                </w-item-section>
+                <w-item-section avatar>
+                  <w-radio
+                    v-model="state.target.assetDelivery.mode"
+                    val="direct"
+                    :aria-label="t(`admin.storage.deliveryModeDirect`)" />
+                </w-item-section>
+              </w-item>
+              <template v-if="state.target.assetDelivery.mode === `direct`">
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon class="self-start" icon="dns" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.storage.deliveryBaseUrl`) }}</w-item-label>
+                    <w-item-label caption>{{
+                      t(`admin.storage.deliveryBaseUrlHint`)
+                    }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section side style="min-width: 280px">
+                    <w-input
+                      outlined
+                      dense
+                      v-model="state.target.assetDelivery.baseUrl"
+                      placeholder="https://files.example.com"
+                      :aria-label="t(`admin.storage.deliveryBaseUrl`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon class="self-start" icon="timer" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.storage.deliveryExpiration`) }}</w-item-label>
+                    <w-item-label caption>{{
+                      t(`admin.storage.deliveryExpirationHint`)
+                    }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section side style="min-width: 150px">
+                    <w-input
+                      outlined
+                      dense
+                      v-model="state.target.assetDelivery.linkExpiration"
+                      :aria-label="t(`admin.storage.deliveryExpiration`)" />
+                  </w-item-section>
+                </w-item>
+                <w-card-section>
+                  <w-banner
+                    :class="dark.isActive ? `bg-orange-9 text-white` : `bg-orange-1 text-orange-9`"
+                    >{{ t('admin.storage.deliveryDirectWarn') }}</w-banner
+                  >
+                </w-card-section>
               </template>
             </w-card>
             <!-- ----------------------- -->
@@ -297,7 +383,25 @@
               heading spends on its margin.
             -->
             <w-card class="rounded pb-2 mt-4">
-              <w-card-header>{{ t('admin.storage.status') }}</w-card-header>
+              <w-card-header>
+                {{ t('admin.storage.status') }}
+                <!-- -> Nothing pushes a status to this page: it is written server-side as the wiki
+                     uses the target, so an administrator watching a sync or an export finish has no
+                     way to see the outcome without asking again. -->
+                <template #action>
+                  <w-btn
+                    class="acrylic-btn"
+                    icon="la:redo-alt"
+                    flat
+                    size="sm"
+                    color="secondary"
+                    :loading="state.refreshingState"
+                    :aria-label="t(`common.actions.refresh`)"
+                    @click="refreshState">
+                    <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
+                  </w-btn>
+                </template>
+              </w-card-header>
               <w-item>
                 <w-item-section>
                   <!-- -> A dot, not the `status-light` bar the target list uses: that one is a rule
@@ -308,15 +412,27 @@
                        sets the spacing: a flanking section carries a 16px gutter meant for a 24px
                        icon, far too much air for a 10px dot. -->
                   <w-item-label class="flex items-center gap-2" :class="currentState.text">
-                    <span class="size-2.5 shrink-0 rounded-full" :class="currentState.dot" />
+                    <span
+                      class="size-2.5 shrink-0 rounded-full"
+                      :class="[currentState.dot, currentState.flash && `status-dot--alert`]" />
                     {{ currentState.label }}
                   </w-item-label>
                   <!-- -> What actually went wrong, which is the whole use of the two unhealthy
-                       states: "Error" on its own only sends an administrator to the server log -->
-                  <w-item-label caption v-if="currentState.message">
+                       states: "Error" on its own only sends an administrator to the server log.
+
+                       The captions carry their own top margins rather than the section carrying a
+                       gap: a gap belongs to `WItemSection`, which every item in the admin area uses
+                       for the tight label-and-hint pairing that wants no space at all. Only the two
+                       unhealthy states set either of these, and they set both, so a one-line card
+                       never ends up with a margin hanging off it.
+
+                       Uneven on purpose. The wider gap under the status separates the heading from
+                       the detail, and the narrow one keeps the message and the moment it happened
+                       reading as the one thing they are. -->
+                  <w-item-label caption class="mt-3" v-if="currentState.message">
                     {{ currentState.message }}
                   </w-item-label>
-                  <w-item-label caption v-if="currentState.since">
+                  <w-item-label caption class="mt-1" v-if="currentState.since">
                     {{ relativeDate(currentState.since) }}
                   </w-item-label>
                 </w-item-section>
@@ -416,6 +532,69 @@
                 :aria-label="t(`admin.storage.largeThreshold`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon class="self-start" icon="schedule" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.syncInterval`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.syncIntervalHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side style="min-width: 150px">
+              <w-input
+                outlined
+                dense
+                v-model="state.syncInterval"
+                :aria-label="t(`admin.storage.syncInterval`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="website" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.sitePrefix`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.sitePrefixHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle v-model="state.sitePrefix" :aria-label="t(`admin.storage.sitePrefix`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="translation" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.localePrefix`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.localePrefixHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.localePrefix"
+                :aria-label="t(`admin.storage.localePrefix`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon class="self-start" icon="disconnected" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.directAccessFallback`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.directAccessFallbackHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side style="min-width: 240px">
+              <w-select
+                outlined
+                dense
+                options-dense
+                emit-value
+                map-options
+                v-model="state.directAccessFallback"
+                :options="directAccessFallbackOptions"
+                :aria-label="t(`admin.storage.directAccessFallback`)" />
+            </w-item-section>
+          </w-item>
+          <w-card-section>
+            <w-banner :class="dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`">{{
+              t('admin.storage.pathLayoutHint')
+            }}</w-banner>
+          </w-card-section>
         </w-card>
       </div>
     </div>
@@ -470,12 +649,17 @@ const state = reactive({
   displayMode: 'targets',
   runningAction: false,
   runningActionHandler: '',
+  refreshingState: false,
   selectedTarget: '',
   desiredTarget: '',
   target: null,
   targets: [],
-  /** Site-wide, hence not on a target: see the Configuration tab. */
-  largeThreshold: ''
+  /** Site-wide, hence not on a target: the three of them are the Configuration tab. */
+  largeThreshold: '',
+  syncInterval: '',
+  directAccessFallback: 'stream',
+  sitePrefix: false,
+  localePrefix: true
 })
 
 // CONSTANTS
@@ -552,6 +736,7 @@ const currentState = computed(() => {
       label: t('admin.storage.stateError'),
       text: 'text-negative',
       dot: 'bg-negative',
+      flash: true,
       message: health.message,
       since: health.updatedAt
     }
@@ -561,6 +746,7 @@ const currentState = computed(() => {
       label: t('admin.storage.stateWarning'),
       text: 'text-warning',
       dot: 'bg-warning',
+      flash: true,
       message: health.message,
       since: health.updatedAt
     }
@@ -584,6 +770,16 @@ const actionsNotice = computed(() => {
   }
   return savedEnabled.value ? null : t('admin.storage.actionsInactiveWarn')
 })
+
+/**
+ * What a site can do when a target set to hand out direct links cannot sign one.
+ *
+ * Computed rather than a constant so the labels follow the interface language.
+ */
+const directAccessFallbackOptions = computed(() => [
+  { value: 'stream', label: t('admin.storage.directAccessFallbackStream') },
+  { value: 'error', label: t('admin.storage.directAccessFallbackError') }
+])
 
 /** The database target, which pages are always read from. */
 const dbTarget = computed(() => state.targets.find((tgt) => tgt.module === 'db') ?? null)
@@ -652,7 +848,15 @@ watch(
  */
 function sourceOptions(type) {
   return state.targets
-    .filter((tgt) => tgt.isEnabled && tgt.contentTypes.activeTypes.includes(type))
+    .filter(
+      (tgt) =>
+        tgt.isEnabled &&
+        tgt.contentTypes.activeTypes.includes(type) &&
+        // -> A target may hold a content type without being somewhere to read it back from. SFTP is
+        //    the one: every image on every page would be an SSH round trip, so it is a copy of the
+        //    site's content rather than a source for it, and the server refuses the nomination too.
+        tgt.assetDelivery.isDeliverySupported !== false
+    )
     .map((tgt) => ({ label: tgt.title, value: tgt.id }))
 }
 
@@ -674,6 +878,7 @@ function sourceFor(type) {
     (tgt) =>
       tgt.isEnabled &&
       tgt.contentTypes.activeTypes.includes(type) &&
+      tgt.assetDelivery.isDeliverySupported !== false &&
       (tgt.assetDelivery.servedTypes ?? []).includes(type)
   )
   if (nominated) {
@@ -750,11 +955,16 @@ async function load() {
   try {
     const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/storage`).json()
     state.largeThreshold = resp?.largeThreshold ?? ''
+    state.syncInterval = resp?.syncInterval ?? ''
+    state.directAccessFallback = resp?.directAccessFallback ?? 'stream'
+    state.sitePrefix = resp?.sitePrefix ?? false
+    state.localePrefix = resp?.localePrefix ?? true
     state.targets = (resp?.targets ?? []).map((tgt) => ({
       ...tgt,
       config: buildConfigEditor(tgt.props, tgt.config),
       saved: savedSnapshot(tgt)
     }))
+    adminStore.applyStorageTargets(state.targets)
   } catch (err) {
     notify({
       type: 'negative',
@@ -765,6 +975,42 @@ async function load() {
   }
   loading.hide()
   state.loading--
+}
+
+/**
+ * Read every target's health back from the server, and nothing else.
+ *
+ * Deliberately not `load()`. What the Status card shows is the one part of this page the server
+ * writes on its own — `recordState`, as an upload is refused or a sync finishes — so that is the only
+ * part worth asking about again. Reloading the whole form would also throw away whatever content
+ * types or configuration the administrator has changed and not yet saved, which is a steep price for
+ * looking at a status line.
+ *
+ * `state.target` is a member of `state.targets` rather than a copy of one, so patching the array is
+ * what puts the new status in the card.
+ */
+async function refreshState() {
+  if (state.refreshingState) {
+    return
+  }
+  state.refreshingState = true
+  try {
+    const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}/storage`).json()
+    for (const fresh of resp?.targets ?? []) {
+      const tgt = state.targets.find((item) => item.id === fresh.id)
+      if (tgt) {
+        tgt.state = fresh.state
+      }
+    }
+    adminStore.applyStorageTargets(state.targets)
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.storage.loadFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  state.refreshingState = false
 }
 
 function configIfCheck(ifs) {
@@ -793,9 +1039,9 @@ function payloadFor(tgt) {
       activeTypes: tgt.contentTypes.activeTypes
     },
     assetDelivery: {
-      // -> `streaming` and `directAccess` are deliberately not sent: nothing in this page edits them
-      //    any more, and the server keeps whatever it has for a field a patch leaves out
-      //
+      mode: tgt.assetDelivery.mode,
+      baseUrl: tgt.assetDelivery.baseUrl ?? '',
+      linkExpiration: tgt.assetDelivery.linkExpiration ?? '',
       // -> Kept in step with the content types on the way out: a target that stopped storing a kind
       //    cannot go on being the source for it, and the server refuses the pair outright
       servedTypes: (tgt.assetDelivery.servedTypes ?? []).filter((type) =>
@@ -822,6 +1068,10 @@ async function save() {
     const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/storage`, {
       json: {
         largeThreshold: state.largeThreshold,
+        syncInterval: state.syncInterval,
+        directAccessFallback: state.directAccessFallback,
+        sitePrefix: state.sitePrefix,
+        localePrefix: state.localePrefix,
         targets: state.targets.map(payloadFor)
       }
     }).json()
@@ -888,6 +1138,28 @@ async function setEnabled(isEnabled) {
   }
 }
 
+/**
+ * The light beside a target in the list.
+ *
+ * Three states, and the first two are about configuration rather than health: a target that is off
+ * is dark and still, and an enabled one pulses to say it is in use. The third is the reason this is a
+ * function and not a ternary — an enabled target that last failed at something turns amber, so the
+ * list says which target to go and look at without every row having to be opened.
+ *
+ * Amber for `error` as well as `warning`, matching the sidebar: what failed was something the wiki
+ * tried to do, and the wiki is still serving. A dark red light here means "switched off", which is a
+ * different thing entirely and already has this colour.
+ */
+function targetLight(target) {
+  if (!target.isEnabled) {
+    return { color: 'negative', pulse: false }
+  }
+  if (['warning', 'error'].includes(target.state?.status)) {
+    return { color: 'warning', pulse: true }
+  }
+  return { color: 'positive', pulse: true }
+}
+
 function getTargetSubtitle(target) {
   if (!target.isEnabled) {
     return t('admin.storage.inactiveTarget')
@@ -943,6 +1215,9 @@ async function executeAction(act) {
     }
     state.runningAction = false
     state.runningActionHandler = ''
+    // -> An action is the heaviest thing a target is ever asked to do and the likeliest to change how
+    //    it is behaving, either way round: this is where a failure appears, and where one clears
+    await refreshState()
   }
 
   // -> An action that declares a warning destroys something, so it is never run on a single click
@@ -979,5 +1254,38 @@ onMounted(() => {
 <style lang="scss" scoped>
 .admin-storage-logo {
   border-radius: 5px;
+}
+
+/*
+  The dot fades away and back rather than growing a halo. Nothing about its size or position changes,
+  so it does not nudge the label beside it, and fading reads as a signal on a 10px dot in a way a 3px
+  glow could not -- the halo was competing with the coloured fill it sat around.
+
+  Never quite to nothing: a dot that disappears reads as one that has gone out, and half of the time
+  the card would be showing a status with no colour against it.
+*/
+.status-dot--alert {
+  animation: status-dot-alert 1.5s ease-in-out infinite;
+}
+
+@keyframes status-dot-alert {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/*
+  A flashing dot is the one thing on this page that moves on its own, so it is also the one thing
+  that has to stop when the reader has asked for less of that. Nothing is lost by holding still: the
+  colour and the word beside it say the same thing.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .status-dot--alert {
+    animation: none;
+  }
 }
 </style>

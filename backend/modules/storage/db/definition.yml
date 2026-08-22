@@ -4,10 +4,7 @@ icon: '/_assets/icons/ultraviolet-database.svg'
 banner: '/_assets/storage/database.jpg'
 description: 'The local PostgreSQL database can store any assets. It is however not recommended to store large files directly in the database as this can cause performance issues.'
 assetDelivery:
-  isStreamingSupported: true
   isDirectAccessSupported: false
-  defaultStreamingEnabled: true
-  defaultDirectAccessEnabled: false
 contentTypes:
   defaultTypesEnabled: ['pages', 'images', 'documents', 'others', 'large']
 props: {}

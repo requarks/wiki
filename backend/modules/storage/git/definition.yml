@@ -1,0 +1,157 @@
+key: git
+title: Git
+icon: '/_assets/icons/ultraviolet-git.svg'
+banner: '/_assets/storage/git.jpg'
+description: Keep this site's content in a Git repository, committed as it changes and synchronized with a remote. Every page and file is an ordinary versioned file, so the wiki's history is also the repository's.
+assetDelivery:
+  isDirectAccessSupported: false
+contentTypes:
+  defaultTypesEnabled: ['pages', 'images', 'documents', 'others']
+props:
+  authType:
+    type: String
+    default: 'ssh'
+    title: Authentication Type
+    hint: Use SSH for maximum security.
+    icon: security-configuration
+    enum:
+      - basic|Basic
+      - ssh|SSH
+    enumDisplay: buttons
+    order: 1
+  repoUrl:
+    type: String
+    title: Repository URI
+    hint: Git-compliant URI (e.g. git@server.com:org/repo.git for SSH, https://server.com/org/repo.git for basic). Leave empty to keep a purely local repository, committed but never pushed.
+    icon: dns
+    order: 2
+  branch:
+    type: String
+    default: 'main'
+    title: Branch
+    hint: The branch to use during pull / push. It must already exist on the remote.
+    icon: code-fork
+    order: 3
+  syncMode:
+    type: String
+    default: 'sync'
+    title: Sync Direction
+    hint: Sync pulls and then pushes. Push force-pushes the wiki's commits and never takes anything back, so the wiki always wins. Pull only takes changes in, and is what makes the remote the authority.
+    icon: synchronize
+    enum:
+      - sync|Sync
+      - push|Push only
+      - pull|Pull only
+    enumDisplay: buttons
+    order: 4
+  sshPrivateKeyMode:
+    type: String
+    title: SSH Private Key Mode
+    hint: The mode to use to load the private key. Fill in the corresponding field below.
+    icon: grand-master-key
+    order: 11
+    default: inline
+    enum:
+      - path|File Path
+      - inline|Inline Contents
+    enumDisplay: buttons
+    if:
+      - { key: 'authType', eq: 'ssh' }
+  sshPrivateKeyPath:
+    type: String
+    title: SSH Private Key Path
+    hint: Absolute path to the key. The key must NOT be passphrase-protected.
+    icon: key
+    order: 12
+    if:
+      - { key: 'authType', eq: 'ssh' }
+      - { key: 'sshPrivateKeyMode', eq: 'path' }
+  sshPrivateKeyContent:
+    type: String
+    title: SSH Private Key Contents
+    hint: Paste the contents of the private key. The key must NOT be passphrase-protected. It is written to a file readable only by the wiki's own user.
+    icon: key
+    multiline: true
+    sensitive: true
+    order: 13
+    if:
+      - { key: 'authType', eq: 'ssh' }
+      - { key: 'sshPrivateKeyMode', eq: 'inline' }
+  verifySSL:
+    type: Boolean
+    default: true
+    title: Verify SSL Certificate
+    hint: Some hosts require SSL certificate checking to be disabled. Leave enabled for proper security.
+    icon: security-ssl
+    order: 14
+  basicUsername:
+    type: String
+    title: Username
+    hint: Basic Authentication Only
+    icon: test-account
+    order: 20
+    if:
+      - { key: 'authType', eq: 'basic' }
+  basicPassword:
+    type: String
+    title: Password / PAT
+    hint: Basic Authentication Only
+    icon: password
+    sensitive: true
+    order: 21
+    if:
+      - { key: 'authType', eq: 'basic' }
+  alwaysUseDefaultAuthor:
+    type: Boolean
+    default: false
+    title: Always Commit as the Default Author
+    hint: Attribute every commit to the default author below instead of to the user who made the change, so that no account name or email address reaches the repository. Turn this on if the remote is somewhere your users' identities should not be published.
+    icon: data-protection
+    order: 29
+  defaultName:
+    type: String
+    title: Default Author Name
+    default: 'Wiki.js'
+    hint: The commit author when the change was not made by one person - a scheduled sync, or a folder rename that moved a hundred files - and every commit when the option above is on.
+    icon: customer
+    order: 30
+  defaultEmail:
+    type: String
+    title: Default Author Email
+    default: 'wiki@example.com'
+    hint: The commit author email in the same cases as the name above.
+    icon: email
+    order: 31
+  localRepoPath:
+    type: String
+    title: Local Repository Path
+    default: './data/repo'
+    hint: Where the working copy is kept. Give each site its own path unless you turn on Add Site ID Prefix under Configuration, since two sites sharing a repository would otherwise write over each other. Relative paths are resolved from the Wiki.js install directory.
+    icon: symlink-directory
+    order: 32
+  gitBinaryPath:
+    type: String
+    title: Git Binary Path
+    default: ''
+    hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
+    icon: run-command
+    order: 50
+actions:
+  sync:
+    label: Force Sync
+    hint: Run a sync straight away rather than waiting for the next scheduled one. The Sync Direction above is respected, and a pull applies what it brings in to the wiki.
+    icon: synchronize
+  syncUntracked:
+    label: Add Untracked Changes
+    hint: Write every page and file this target is configured to hold into the repository and commit whatever is missing. Content created before Git was enabled - or while it was turned off - is untracked until this is run.
+    icon: database-daily-export
+  importAll:
+    label: Import Everything
+    hint: Take everything currently in the local repository into the wiki, whatever the last commit did. For picking up content from a remote repository that existed before Git was enabled here.
+    warn: The repository wins every collision. A page it replaces keeps its previous version in its history, but a file has none - the bytes it replaces are gone from every storage target holding them.
+    icon: database-daily-import
+  purge:
+    label: Purge Local Repository
+    hint: Empty the local working copy and clone it again from the remote. This is the way out of unrelated merge histories or a working copy that git can no longer make sense of. The remote is not touched and nothing is committed.
+    warn: Any commit that exists only in the local repository and has never been pushed is lost. Run a Force Sync first if you are not sure.
+    icon: trash

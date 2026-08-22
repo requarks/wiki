@@ -195,7 +195,11 @@ class Sites {
               conflictBehavior: 'overwrite'
             },
             storage: {
-              largeThreshold: '25MB'
+              largeThreshold: '25MB',
+              sitePrefix: false,
+              localePrefix: true,
+              syncInterval: '5m',
+              directAccessFallback: 'stream'
             }
           },
           config
@@ -453,7 +457,11 @@ class Sites {
           conflictBehavior: 'overwrite'
         },
         storage: {
-          largeThreshold: '25MB'
+          largeThreshold: '25MB',
+          sitePrefix: false,
+          localePrefix: true,
+          syncInterval: '5m',
+          directAccessFallback: 'stream'
         }
       }
     })

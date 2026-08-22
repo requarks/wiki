@@ -1,4 +1,8 @@
-import { CONTENT_TYPES, STORAGE_TARGET_STATUSES } from '../../models/storage.ts'
+import {
+  CONTENT_TYPES,
+  STORAGE_DELIVERY_MODES,
+  STORAGE_TARGET_STATUSES
+} from '../../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
@@ -55,19 +59,33 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       assetDelivery: {
         type: 'object',
         description:
-          'How assets reach the user. The `is*Supported` flags come from the module and are read-only.',
+          'How assets reach the user. `isDirectAccessSupported` comes from the module and is read-only.',
         properties: {
-          isStreamingSupported: {
-            type: 'boolean'
-          },
           isDirectAccessSupported: {
-            type: 'boolean'
+            type: 'boolean',
+            description:
+              'Whether this module can sign a URL a reader fetches the file from directly. True for the object stores and nothing else.'
           },
-          streaming: {
-            type: 'boolean'
+          isDeliverySupported: {
+            type: 'boolean',
+            description:
+              "Whether a site may nominate this target to answer readers' requests. False for SFTP, which is a place to keep a copy of the content rather than one to serve it from - it is still written to, exported to and imported from. A nomination on such a target is refused, and it answers a read only as a last resort, once every target that may serve has been asked and had nothing."
           },
-          directAccess: {
-            type: 'boolean'
+          mode: {
+            type: 'string',
+            enum: [...STORAGE_DELIVERY_MODES],
+            description:
+              '`streaming` sends the bytes through the wiki; `direct` answers with a redirect to a URL the store signed. Only consulted on the target nominated for the content type being asked for. Stored as `streaming` on a module that cannot do the other.'
+          },
+          baseUrl: {
+            type: 'string',
+            description:
+              "The origin a direct link is built on, in place of the store's own - a CDN or custom domain in front of the bucket. The signature is made for that host rather than moved onto it afterwards, so it must be a domain that actually fronts the bucket."
+          },
+          linkExpiration: {
+            type: 'string',
+            description:
+              "How long a direct link stays valid, e.g. `5m` or `1h`. Capped at 7 days, which is as far as any of these providers will sign. Short by default: the link carries none of the wiki's page rules, so its lifetime is how long it can be passed on."
           },
           servedTypes: {
             type: 'array',
@@ -172,13 +190,21 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       assetDelivery: {
         type: 'object',
-        description: 'A delivery mode the module does not support is stored as off.',
+        description: 'Direct access asked of a module that cannot do it is stored as streaming.',
         properties: {
-          streaming: {
-            type: 'boolean'
+          mode: {
+            type: 'string',
+            enum: [...STORAGE_DELIVERY_MODES]
           },
-          directAccess: {
-            type: 'boolean'
+          baseUrl: {
+            type: 'string',
+            maxLength: 1024,
+            description: "A full http or https origin, or empty for the store's own address."
+          },
+          linkExpiration: {
+            type: 'string',
+            maxLength: 32,
+            description: 'A whole number of minutes or hours, at most 7 days.'
           },
           servedTypes: {
             type: 'array',

@@ -216,8 +216,12 @@
               </w-item-section>
               <w-item-section>{{ t('admin.storage.title') }}</w-item-section>
               <w-item-section side>
-                <!-- TODO: Reflect site storage status -->
-                <status-light :color="true ? `positive` : `warning`" :pulse="false" />
+                <!-- -> Warning rather than negative even for an `error` state, and pulsing to be
+                     noticed from a page that is not this one: something the wiki tried to do failed,
+                     which is worth going and looking at, but the wiki is still serving. -->
+                <status-light
+                  :color="storageHealthy ? `positive` : `warning`"
+                  :pulse="!storageHealthy" />
               </w-item-section>
             </w-item>
             <w-item
@@ -605,6 +609,14 @@ function countBadgeClass(count) {
   return count > 0 ? 'count-badge count-badge--filled' : 'count-badge'
 }
 
+/**
+ * Whether every enabled storage target of the current site is behaving.
+ *
+ * Read off the store rather than fetched here, so that the storage page can put the light right the
+ * moment it learns something without the sidebar having to ask again.
+ */
+const storageHealthy = computed(() => adminStore.storageHealth.status === 'healthy')
+
 // WATCHERS
 
 watch(
@@ -640,6 +652,10 @@ watch(
     if (newValue && route.params.siteid !== newValue) {
       router.push({ params: { siteid: newValue } })
     }
+    // -> Storage is configured per site, so the light belongs to whichever one is selected
+    if (newValue && userStore.can('manage:sites')) {
+      adminStore.fetchStorageStatus(newValue)
+    }
   }
 )
 
@@ -659,6 +675,10 @@ onMounted(async () => {
     })
   }
   adminStore.fetchInfo()
+  // -> Only for a role that can see the Storage item at all; anyone else would be asking for a 403
+  if (adminStore.currentSiteId && userStore.can('manage:sites')) {
+    adminStore.fetchStorageStatus(adminStore.currentSiteId)
+  }
 })
 </script>
 

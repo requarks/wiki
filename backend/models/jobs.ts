@@ -55,6 +55,13 @@ class Jobs {
         task: 'updateLocales',
         cron: '0 0 * * *',
         type: 'system'
+      },
+      {
+        // -> Every minute, and the task decides which sites are actually due: the interval is a
+        //    per-site setting, so the tick has to be as fine as the shortest one anybody can ask for
+        task: 'syncStorageTargets',
+        cron: '* * * * *',
+        type: 'system'
       }
     ])
 

@@ -12,6 +12,17 @@ import type { FastifyInstance } from 'fastify'
 const FILE_CACHE = 'private, max-age=600, must-revalidate'
 
 /**
+ * How long a browser may keep a redirect to a signed URL.
+ *
+ * Half of the link's own lifetime, so that a cached redirect cannot outlive the URL it points at — a
+ * reader holding one of those has a broken image until their cache gives it up, and no way to force
+ * the issue. Never longer than an ordinary file would have been cached for anyway.
+ */
+function directAccessCacheSeconds(expiresInSeconds: number): number {
+  return Math.max(1, Math.min(600, Math.floor(expiresInSeconds / 2)))
+}
+
+/**
  * _files Routes
  *
  * How a page's content points at an uploaded file: `/_files/<folder>/<name.ext>`, which is the path
@@ -48,6 +59,31 @@ async function routes(app: FastifyInstance) {
       return reply.notFound('File not found')
     }
 
+    const download = Boolean(
+      WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)
+    )
+
+    /*
+      Hand the reader straight to the store where the site has said to, which is the whole point of
+      keeping content in one: the bytes never touch this server. Resolved before the ETag below,
+      because the two are answers to different questions — an ETag says "you already have the bytes",
+      and there are no bytes here to have.
+    */
+    const directUrl = await WIKI.models.storage.directAccessUrlFor(
+      { ...asset, siteId: site.id },
+      { contentType: asset.mimeType, ...(download ? { downloadAs: asset.fileName } : {}) }
+    )
+    if (directUrl) {
+      // -> Cacheable, but for less than the link lives: a redirect kept past its URL's expiry is a
+      //    reader stuck on a dead link until their cache lets go of it. Half is the simple safe
+      //    fraction, and it still takes most of a page's images off this server on a reload.
+      reply.header(
+        'Cache-Control',
+        `private, max-age=${directAccessCacheSeconds(directUrl.expiresInSeconds)}`
+      )
+      return reply.redirect(directUrl.url, 302)
+    }
+
     /*
       The ID and the timestamp together, because either one alone lies: a file replaced at the same
       path is a different asset under the same URL, and one edited in place keeps its ID.
@@ -69,7 +105,7 @@ async function routes(app: FastifyInstance) {
       return reply.notFound('File not found')
     }
 
-    if (WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)) {
+    if (download) {
       reply.header(
         'Content-Disposition',
         `attachment; filename="${encodeURIComponent(asset.fileName)}"`

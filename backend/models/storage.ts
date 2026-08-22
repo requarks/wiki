@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
 import { and, eq, inArray } from 'drizzle-orm'
-import { parseModuleProps } from '../helpers/common.ts'
+import { CustomError, parseModuleProps } from '../helpers/common.ts'
 import { sites as sitesTable, storage as storageTable } from '../db/schema.ts'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { AssetKind } from './assets.ts'
@@ -25,6 +25,15 @@ const CONTENT_TYPE_BY_KIND: Record<AssetKind, ContentType> = {
   other: 'others'
 }
 
+/** What each content type is called in something an uploader reads. */
+const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
+  pages: 'pages',
+  images: 'images',
+  documents: 'documents',
+  others: 'other files',
+  large: 'large files'
+}
+
 /**
  * What counts as a large file on a site that has never said.
  *
@@ -33,6 +42,36 @@ const CONTENT_TYPE_BY_KIND: Record<AssetKind, ContentType> = {
  * the database does not would be claimed by neither, or by both.
  */
 const DEFAULT_LARGE_THRESHOLD = '25MB'
+
+/**
+ * Whether a site's tree is filed under a folder named after the site.
+ *
+ * Off, because a target belongs to exactly one site: the folder an administrator configured IS this
+ * site's folder, and a level for the site inside it would be a folder that never has a sibling. It is
+ * turned on for the one case where that stops being true — two sites pointed at the same place.
+ */
+const DEFAULT_SITE_PREFIX = false
+
+/**
+ * Whether a site's tree is bracketed by locale.
+ *
+ * On, because the tree repeats itself across locales: `guides/logo.png` can exist once in each, and
+ * without the folder all of them would be the same file. A single-locale wiki has no such collision
+ * and can turn it off to be rid of an `en` folder that never has a sibling either.
+ */
+const DEFAULT_LOCALE_PREFIX = true
+
+/**
+ * How often a target with a remote is synced, on a site that has never said.
+ *
+ * Five minutes, which is what the schedule was fixed at before it was configurable. Site-wide rather
+ * than per target for the same reason as everything else here: the schedule is a property of how
+ * often this site's content should reach the outside, not of any one place it reaches.
+ */
+const DEFAULT_SYNC_INTERVAL = '5m'
+
+/** A sync interval, as it is written: a whole number of minutes or hours. */
+const SYNC_INTERVAL = /^(\d+)\s?(m|h)$/i
 
 /** Bytes in each unit a size threshold may be written with. See `parseSize`. */
 const SIZE_UNIT_BYTES: Record<string, number> = {
@@ -63,6 +102,36 @@ const TARGET_CACHE_TTL_MS = 30_000
  * wiki carries on in that case, which is exactly why it needs saying somewhere an administrator will
  * see it.
  */
+export const STORAGE_DELIVERY_MODES = ['streaming', 'direct'] as const
+
+export type StorageDeliveryMode = (typeof STORAGE_DELIVERY_MODES)[number]
+
+/**
+ * How long a direct-access URL lasts on a target that has never said.
+ *
+ * Deliberately short. The link works for whoever holds it until it expires, with none of the wiki's
+ * page rules behind it, so its lifetime is the window in which a reader can pass a restricted file to
+ * somebody who could not have asked for it. Long enough to load a page and its images; not long
+ * enough to be worth sharing.
+ */
+const DEFAULT_LINK_EXPIRATION = '5m'
+
+/**
+ * The longest a direct-access URL may be asked to last.
+ *
+ * Seven days, which is not this wiki's opinion but every provider's limit: SigV4, a Google V4
+ * signature and an Azure user delegation SAS all refuse to sign for longer.
+ */
+const MAX_LINK_EXPIRATION_MINUTES = 7 * 24 * 60
+
+/** What a site does when a target that should sign a URL cannot. See `directAccessUrlFor`. */
+export const STORAGE_DIRECT_ACCESS_FALLBACKS = ['stream', 'error'] as const
+
+export type StorageDirectAccessFallback = (typeof STORAGE_DIRECT_ACCESS_FALLBACKS)[number]
+
+/** What a site does about a failed signature when it has never said. */
+const DEFAULT_DIRECT_ACCESS_FALLBACK: StorageDirectAccessFallback = 'stream'
+
 export const STORAGE_TARGET_STATUSES = ['healthy', 'warning', 'error'] as const
 
 export type StorageTargetStatus = (typeof STORAGE_TARGET_STATUSES)[number]
@@ -101,10 +170,24 @@ export interface StorageDefinition {
     defaultTypesEnabled: string[]
   }
   assetDelivery: {
-    isStreamingSupported: boolean
+    /**
+     * Whether this module can hand a reader a URL to fetch the file from directly.
+     *
+     * The object stores can — a presigned URL or a shared access signature — and nothing else does:
+     * a file on this machine's disk or in a git working copy has no address of its own that a
+     * browser could reach. There is no `isStreamingSupported` beside it, because every target can be
+     * read through the wiki; streaming is what a target does when it does not do this.
+     */
     isDirectAccessSupported: boolean
-    defaultStreamingEnabled: boolean
-    defaultDirectAccessEnabled: boolean
+    /**
+     * Whether a site may nominate this module to answer readers' requests at all.
+     *
+     * True for everything but SFTP, which is a place to *put* a copy of the wiki rather than a place
+     * to read one from: every image on every page would be an SSH round trip. A target like that is
+     * still written to, still exported to and still imported from — it is only the Content Delivery
+     * tab it stays out of.
+     */
+    isDeliverySupported: boolean
   }
   props: Record<string, ModuleProp>
   actions: StorageAction[]
@@ -134,10 +217,29 @@ export interface StorageTarget {
     activeTypes: string[]
   }
   assetDelivery: {
-    isStreamingSupported: boolean
     isDirectAccessSupported: boolean
-    streaming: boolean
-    directAccess: boolean
+    /** Whether this target may be nominated to serve content. See the definition's own field. */
+    isDeliverySupported: boolean
+    /**
+     * How a reader's request for a file is answered from this target.
+     *
+     * `streaming` reads the bytes and sends them through the wiki, which every target can do.
+     * `direct` answers with a redirect to a URL the store signed, so the bytes never pass through
+     * this server at all — faster, and much of the reason to put content in an object store. Only
+     * consulted on the target a site has nominated for the content type; see `servedTypes`.
+     */
+    mode: StorageDeliveryMode
+    /**
+     * The origin a direct-access URL is built on, in place of the store's own.
+     *
+     * A CDN or a custom domain in front of the bucket. The URL becomes `<baseUrl>/<key>?<signature>`
+     * whichever store it is, and the signature is made *for that host* rather than translated onto
+     * it afterwards — see each module's `presignAsset`, because S3 and GCS sign the host and Azure
+     * does not. Empty means the store's own address.
+     */
+    baseUrl: string
+    /** How long a direct-access URL stays valid, as `5m` or `2h`. See `parseInterval`. */
+    linkExpiration: string
     /**
      * The content types this target is the site's delivery source for, i.e. the ones a reader's
      * request for a file is answered from here.
@@ -166,11 +268,57 @@ export interface StorageTargetInput {
     activeTypes?: string[]
   }
   assetDelivery?: {
-    streaming?: boolean
-    directAccess?: boolean
+    mode?: StorageDeliveryMode
+    baseUrl?: string
+    linkExpiration?: string
     servedTypes?: string[]
   }
   config?: Record<string, any>
+}
+
+/**
+ * Who a change is attributed to, for a target that records authorship.
+ *
+ * Only git has any use for this today, as the author of the commit it makes. Resolved from a user id
+ * by `actorFor` rather than carried around as a name and an address, so that the models dispatching
+ * content pass what they already have and only a target that actually needs the identity pays for
+ * looking it up.
+ */
+export interface StorageActor {
+  name: string
+  email: string
+}
+
+/**
+ * How a target lays its tree out, which is the same answer for every target of a site.
+ *
+ * Two settings and the locale they are read against, resolved together because neither of them means
+ * anything on its own — see `pathPrefixFor`, which is the only thing that should be applying them,
+ * and `parseStoredPath`, which reads a path back the same way. Site-wide rather than per target for
+ * the same reason `largeThreshold` is: a file has to be at the same place in every target's tree, or
+ * a target enabled later would be looking for content under a layout the one before it never wrote.
+ */
+export interface StoragePathLayout {
+  /** Whether the tree is filed under a folder named after the site. */
+  sitePrefix: boolean
+  /**
+   * Whether the tree is bracketed by locale.
+   *
+   * Off means the site stores its primary locale only, at the root: there is nowhere else to put the
+   * others without a folder to tell them apart.
+   */
+  localePrefix: boolean
+  /** The locale that is stored at the root when `localePrefix` is off. */
+  primaryLocale: string
+}
+
+/** The site-wide half of the storage configuration, i.e. everything that is not on a target. */
+export interface StorageSiteConfigInput {
+  largeThreshold?: string
+  sitePrefix?: boolean
+  localePrefix?: boolean
+  syncInterval?: string
+  directAccessFallback?: StorageDirectAccessFallback
 }
 
 /**
@@ -184,6 +332,13 @@ export interface StorageTargetInput {
 export interface StorageAssetRef {
   id: string
   siteId: string
+  /**
+   * Who is making this change, for a target that records authorship — see `actorFor`.
+   *
+   * Absent for a change no one person made: a bulk action, or a folder rename that moved a hundred
+   * files. A target that cares falls back to whatever it is configured to attribute those to.
+   */
+  actorId?: string
   locale: string
   /** Slash-separated, without the file name. Empty at the site root. */
   folderPath: string
@@ -203,6 +358,8 @@ export interface StorageAssetLocation {
 export interface StoragePageRef {
   id: string
   siteId: string
+  /** Who is making this change. As on `StorageAssetRef`. */
+  actorId?: string
   locale: string
   /** Slash-separated, with no leading slash and no file extension. */
   path: string
@@ -240,6 +397,18 @@ export interface StoragePageContent {
  * database at all, so every target claiming it has to accept the write or the upload fails.
  */
 export interface StorageModule {
+  /**
+   * Whether this target has anywhere to put content in that locale, as the site is laid out now.
+   *
+   * Only a module addressing content by path has an answer worth giving, which is why it is optional:
+   * a target that stores by id — the database — holds every locale whatever the layout says. Asked
+   * *before* any of the fan-out is written, so that a target with no path for a file is skipped
+   * rather than failing an upload the rest of the site is perfectly able to store. Nothing has gone
+   * wrong when this answers false: it is the configuration saying so, so it costs the target no
+   * recorded state and the uploader no error — unless it is the last target left, which is
+   * `putAsset`'s to report.
+   */
+  canStore?: (target: StorageTarget, ref: { locale: string }) => boolean
   /** Store this target's copy of an asset's bytes, replacing any copy it already had. */
   putAsset: (target: StorageTarget, ref: StorageAssetRef, data: Buffer) => Promise<void>
   /** Read its copy back. Null when this target does not have one. */
@@ -258,6 +427,30 @@ export interface StorageModule {
   deletePage: (target: StorageTarget, ref: StoragePageRef) => Promise<void>
   /** Follow a move, `ref` being where the page now is. */
   movePage: (target: StorageTarget, ref: StoragePageRef, previousPath: string) => Promise<void>
+  /**
+   * A URL a reader can fetch this asset from directly, signed by the store.
+   *
+   * Only the object stores implement it, and only they declare `isDirectAccessSupported`. What comes
+   * back is handed to the reader as a redirect, so it has to carry everything the response needs —
+   * the type to serve it as, and whether the browser should display it or save it — because after
+   * the redirect the wiki is no longer in the conversation.
+   *
+   * @param expiresInSeconds How long the URL must stay valid. Never longer than seven days, which is
+   *   as far as any of these providers will sign.
+   * @returns Null when this target cannot sign for this file, which the caller treats the same way as
+   *   a failure — see `directAccessUrlFor`
+   */
+  presignAsset?: (
+    target: StorageTarget,
+    ref: StorageAssetRef,
+    options: {
+      expiresInSeconds: number
+      /** What to declare the response as, i.e. the asset's own mime type. */
+      contentType: string
+      /** Set when the browser should save the file rather than display it. The file name to save as. */
+      downloadAs?: string
+    }
+  ) => Promise<string | null>
   /** Handlers named by the definition's actions. */
   [handler: string]: any
 }
@@ -274,6 +467,21 @@ export function parseSize(value: string): number {
     return Number.POSITIVE_INFINITY
   }
   return Number(match[1]) * SIZE_UNIT_BYTES[match[2].toLowerCase()]
+}
+
+/**
+ * A sync interval as whole minutes.
+ *
+ * @returns 0 for anything unparseable, which the scheduled task reads as "never" — a site whose
+ *   interval nobody can make sense of is left alone rather than synced every tick
+ */
+export function parseInterval(value: string): number {
+  const match = SYNC_INTERVAL.exec(String(value ?? '').trim())
+  if (!match) {
+    return 0
+  }
+  const amount = Number(match[1])
+  return match[2].toLowerCase() === 'h' ? amount * 60 : amount
 }
 
 /**
@@ -302,6 +510,9 @@ class Storage {
 
   /** Configured targets, keyed by site. See `TARGET_CACHE_TTL_MS` for what keeps this honest. */
   targetCache = new Map<string, { targets: StorageTarget[]; cachedAt: number }>()
+
+  /** Resolved authors, keyed by user id. See `actorFor`. */
+  actorCache = new Map<string, StorageActor>()
 
   /**
    * Load the storage module definitions from disk.
@@ -391,8 +602,11 @@ class Storage {
           activeTypes: definition.contentTypes?.defaultTypesEnabled ?? []
         },
         assetDelivery: {
-          streaming: definition.assetDelivery?.defaultStreamingEnabled ?? false,
-          directAccess: definition.assetDelivery?.defaultDirectAccessEnabled ?? false,
+          // -> Streaming whatever the module can do: reading through the wiki is the behaviour that
+          //    needs no configuration and leaks no links, so direct access is opted into
+          mode: 'streaming' satisfies StorageDeliveryMode,
+          baseUrl: '',
+          linkExpiration: DEFAULT_LINK_EXPIRATION,
           // -> A new target serves nothing until a site says so: content already uploaded is not on
           //    it, so nominating it as a source on its own would answer 404 for every existing file
           servedTypes: definition.key === DB_MODULE ? [...CONTENT_TYPES] : []
@@ -476,10 +690,14 @@ class Storage {
           activeTypes: contentTypes.activeTypes ?? []
         },
         assetDelivery: {
-          isStreamingSupported: definition.assetDelivery?.isStreamingSupported ?? false,
           isDirectAccessSupported: definition.assetDelivery?.isDirectAccessSupported ?? false,
-          streaming: assetDelivery.streaming ?? false,
-          directAccess: assetDelivery.directAccess ?? false,
+          // -> Serving is the ordinary thing for a target to do, so a module has to opt *out*
+          isDeliverySupported: definition.assetDelivery?.isDeliverySupported ?? true,
+          mode: (STORAGE_DELIVERY_MODES as readonly string[]).includes(assetDelivery.mode)
+            ? (assetDelivery.mode as StorageDeliveryMode)
+            : 'streaming',
+          baseUrl: assetDelivery.baseUrl ?? '',
+          linkExpiration: assetDelivery.linkExpiration || DEFAULT_LINK_EXPIRATION,
           servedTypes: assetDelivery.servedTypes ?? []
         },
         props: definition.props,
@@ -627,6 +845,40 @@ class Storage {
         return `${definition.title} cannot serve ${unstored}, as it is not configured to store them.`
       }
     }
+    if (
+      servedTypes &&
+      servedTypes.length > 0 &&
+      definition.assetDelivery.isDeliverySupported === false
+    ) {
+      return `${definition.title} cannot be a delivery source: it is a place to keep a copy of this site's content, not one to serve it from.`
+    }
+    const delivery = patch.assetDelivery
+    if (delivery?.mode && !(STORAGE_DELIVERY_MODES as readonly string[]).includes(delivery.mode)) {
+      return `"${delivery.mode}" is not a valid delivery mode.`
+    }
+    if (delivery?.mode === 'direct' && !definition.assetDelivery.isDirectAccessSupported) {
+      return `${definition.title} cannot hand out direct links, so its content has to be streamed.`
+    }
+    if (delivery?.linkExpiration !== undefined) {
+      const minutes = parseInterval(delivery.linkExpiration)
+      if (minutes < 1) {
+        return `"${delivery.linkExpiration}" is not a valid link expiration. Use a whole number of minutes or hours, such as "5m" or "1h".`
+      }
+      if (minutes > MAX_LINK_EXPIRATION_MINUTES) {
+        return 'A direct link cannot be valid for more than 7 days, which is the longest any of these providers will sign for.'
+      }
+    }
+    if (delivery?.baseUrl) {
+      let parsed: URL
+      try {
+        parsed = new URL(delivery.baseUrl)
+      } catch {
+        return `"${delivery.baseUrl}" is not a valid Custom Base URL. Give the full origin, such as "https://files.example.com".`
+      }
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return 'The Custom Base URL must be an http or https address.'
+      }
+    }
     return this.validateConfig(target.module, patch.config)
   }
 
@@ -670,17 +922,19 @@ class Storage {
       nomination too, and a patch that nominates types while turning it off must not win.
     */
     const willBeEnabled = patch.isEnabled ?? target.isEnabled
-    const servedTypes = willBeEnabled
-      ? (patch.assetDelivery?.servedTypes ?? target.assetDelivery.servedTypes)
-      : []
+    const servedTypes =
+      willBeEnabled && definition.assetDelivery.isDeliverySupported
+        ? (patch.assetDelivery?.servedTypes ?? target.assetDelivery.servedTypes)
+        : []
     if (patch.assetDelivery || (!willBeEnabled && target.assetDelivery.servedTypes.length > 0)) {
+      const mode = patch.assetDelivery?.mode ?? target.assetDelivery.mode
       values.assetDelivery = {
-        streaming:
-          definition.assetDelivery.isStreamingSupported &&
-          (patch.assetDelivery?.streaming ?? target.assetDelivery.streaming),
-        directAccess:
-          definition.assetDelivery.isDirectAccessSupported &&
-          (patch.assetDelivery?.directAccess ?? target.assetDelivery.directAccess),
+        // -> A module that cannot sign a URL is stored as streaming whatever was asked for, the same
+        //    way an unsupported capability has always been handled here: it is the module's answer
+        //    to give, not the client's
+        mode: definition.assetDelivery.isDirectAccessSupported ? mode : 'streaming',
+        baseUrl: patch.assetDelivery?.baseUrl ?? target.assetDelivery.baseUrl,
+        linkExpiration: patch.assetDelivery?.linkExpiration ?? target.assetDelivery.linkExpiration,
         servedTypes
       }
     }
@@ -712,35 +966,147 @@ class Storage {
   }
 
   /**
-   * Check a site-wide storage setting.
-   *
-   * @returns The reason it is invalid, or null when it is fine
+   * How this site's targets lay their tree out. See `StoragePathLayout`.
    */
-  validateSiteConfig(patch: { largeThreshold?: string }): string | null {
+  pathLayoutFor(siteId: string): StoragePathLayout {
+    const config = WIKI.sites[siteId]?.config
+    return {
+      sitePrefix: config?.storage?.sitePrefix ?? DEFAULT_SITE_PREFIX,
+      localePrefix: config?.storage?.localePrefix ?? DEFAULT_LOCALE_PREFIX,
+      primaryLocale: config?.locales?.primary ?? 'en'
+    }
+  }
+
+  /**
+   * What this site does when a direct link cannot be signed. See `directAccessFailed`.
+   */
+  directAccessFallbackFor(siteId: string): StorageDirectAccessFallback {
+    const configured = WIKI.sites[siteId]?.config?.storage?.directAccessFallback
+    return (STORAGE_DIRECT_ACCESS_FALLBACKS as readonly string[]).includes(configured)
+      ? (configured as StorageDirectAccessFallback)
+      : DEFAULT_DIRECT_ACCESS_FALLBACK
+  }
+
+  /**
+   * How often this site's targets are synced, in whole minutes.
+   *
+   * Read by the scheduled task rather than by any module: a module is asked to sync and does, and how
+   * often that happens is not its business.
+   */
+  syncIntervalFor(siteId: string): number {
+    return parseInterval(WIKI.sites[siteId]?.config?.storage?.syncInterval ?? DEFAULT_SYNC_INTERVAL)
+  }
+
+  /**
+   * The leading segments of every path a target writes for this site.
+   *
+   * The one place the layout is applied, so that a page and an asset of the same folder land beside
+   * each other whatever it is set to, and so that a module reading a file back looks where the module
+   * that wrote it put it. What follows is the target's own business: the folders of the tree, and then
+   * a file name each kind of content decides for itself.
+   *
+   * @returns Null for content the layout has no place for — a secondary locale on a site storing only
+   *   its primary one. Not an error: it is what the site asked for, and each operation decides what
+   *   that means for it. A write is the one that cannot shrug (`putAsset` in the disk module).
+   */
+  pathPrefixFor(siteId: string, locale: string): string[] | null {
+    const layout = this.pathLayoutFor(siteId)
+    const prefix = layout.sitePrefix ? [siteId] : []
+    if (layout.localePrefix) {
+      return [...prefix, locale]
+    }
+    return locale === layout.primaryLocale ? prefix : null
+  }
+
+  /**
+   * Read a stored path back: which locale it belongs to, and where it sits under the prefix.
+   *
+   * The exact inverse of `pathPrefixFor`, and here rather than in the module that walks a folder
+   * because the two have to agree — an import that reads a path differently from the way it was
+   * written takes content in under the wrong name.
+   *
+   * @param segments The path relative to the target's root, already split, file name included
+   * @returns The remaining segments and the locale they are in, or null for a path that is not part
+   *   of this site's tree: another site's folder, or a file sitting where no locale can be read off it
+   */
+  parseStoredPath(
+    siteId: string,
+    segments: string[]
+  ): { locale: string; segments: string[] } | null {
+    const layout = this.pathLayoutFor(siteId)
+    let rest = segments
+    if (layout.sitePrefix) {
+      // -> Which is what makes two sites able to share a folder: each ignores the other's half of it
+      if (rest[0] !== siteId) {
+        return null
+      }
+      rest = rest.slice(1)
+    }
+    let locale = layout.primaryLocale
+    if (layout.localePrefix) {
+      // -> A file straight in the root is outside the layout and belongs to no locale
+      if (rest.length < 2) {
+        return null
+      }
+      locale = rest[0]
+      rest = rest.slice(1)
+    }
+    return rest.length > 0 ? { locale, segments: rest } : null
+  }
+
+  /**
+   * Check the site-wide storage settings.
+   *
+   * @returns The reason they are invalid, or null when they are fine
+   */
+  validateSiteConfig(patch: StorageSiteConfigInput): string | null {
     if (
       patch.largeThreshold !== undefined &&
       !/^\d+(\.\d+)?\s?(B|KB|MB|GB|TB)$/i.test(patch.largeThreshold)
     ) {
       return `"${patch.largeThreshold}" is not a valid size threshold. Use a size such as "5MB".`
     }
+    if (patch.syncInterval !== undefined && parseInterval(patch.syncInterval) < 1) {
+      return `"${patch.syncInterval}" is not a valid sync interval. Use a whole number of minutes or hours, such as "5m" or "1h".`
+    }
+    if (
+      patch.directAccessFallback !== undefined &&
+      !(STORAGE_DIRECT_ACCESS_FALLBACKS as readonly string[]).includes(patch.directAccessFallback)
+    ) {
+      return `"${patch.directAccessFallback}" is not a valid answer for a failed direct link.`
+    }
     return null
   }
 
   /**
-   * Write a site-wide storage setting.
+   * Write the site-wide storage settings.
    *
    * Goes through the sites model rather than the table, so that the sites cache — which is where
-   * `largeThresholdFor` reads it back from — is reloaded with it.
+   * `largeThresholdFor` and `pathLayoutFor` read them back from — is reloaded with them.
+   *
+   * Nothing is moved. The layout settings decide where content is written and looked for from now on,
+   * and every file already stored stays where the previous layout put it — which is what the disk
+   * target's export and import actions are for.
    *
    * @returns Whether anything was written
    */
-  async updateSiteConfig(siteId: string, patch: { largeThreshold?: string }): Promise<boolean> {
-    if (patch.largeThreshold === undefined) {
+  async updateSiteConfig(siteId: string, patch: StorageSiteConfigInput): Promise<boolean> {
+    const config: Record<string, any> = {}
+    for (const key of [
+      'largeThreshold',
+      'sitePrefix',
+      'localePrefix',
+      'syncInterval',
+      'directAccessFallback'
+    ] as const) {
+      if (patch[key] !== undefined) {
+        config[key] = patch[key]
+      }
+    }
+    if (Object.keys(config).length < 1) {
       return false
     }
-    const updated = await WIKI.models.sites.updateSite(siteId, {
-      config: { storage: { largeThreshold: patch.largeThreshold } }
-    })
+    const updated = await WIKI.models.sites.updateSite(siteId, { config: { storage: config } })
     // -> A target's content type depends on the threshold, so the resolved list is now stale
     this.targetCache.delete(siteId)
     return updated
@@ -816,8 +1182,23 @@ class Storage {
     kind: AssetKind,
     fileSize: number
   ): Promise<StorageTarget[]> {
-    const targets = await this.writeTargetsFor(siteId, kind, fileSize)
     const contentType = this.contentTypeFor(siteId, kind, fileSize)
+    /*
+      A target that may not be nominated goes to the very back, behind even the database.
+
+      It is still in the list, and deliberately: `offloadUnchecked` can leave a file whose only copy
+      is on one of these, and answering a reader that their image is gone when it is sitting on the
+      other end of an SSH connection would be worse than the round trip. Last resort is the whole of
+      the role — reached only once every target that is allowed to serve has been asked and had
+      nothing.
+    */
+    const targets = (await this.writeTargetsFor(siteId, kind, fileSize)).sort((a, b) =>
+      a.assetDelivery.isDeliverySupported === b.assetDelivery.isDeliverySupported
+        ? 0
+        : a.assetDelivery.isDeliverySupported
+          ? -1
+          : 1
+    )
     const source =
       targets.find((t) => (t.assetDelivery.servedTypes ?? []).includes(contentType)) ??
       targets.find((t) => t.module === DB_MODULE)
@@ -825,24 +1206,55 @@ class Storage {
   }
 
   /**
-   * Write an asset's bytes to every target that holds its kind.
+   * Write an asset's bytes to every target that holds its kind, and that has somewhere to put them.
    *
-   * @throws When any of them refuses, which fails the upload. Unlike a page, an asset may have no
-   *   copy in the database to fall back on, so a half-stored asset is not something to report as
-   *   success — the caller undoes the rest of the upload.
+   * Two different things can go wrong here and they are not the same failure. A target that
+   * **cannot** hold this file — the site's layout gives it no path for the locale, per `canStore` —
+   * is simply not asked: nothing is broken, and as long as one other target takes the bytes the
+   * upload succeeds and the asset is stored. A target that **refuses** the write it was given is a
+   * fault, and it fails the upload.
+   *
+   * @throws A `CustomError` when nothing can hold the file, which is a configuration the uploader
+   *   cannot be expected to work out from a failure — see `unstorableAssetError`. Also whatever a
+   *   target throws on a write: unlike a page, an asset may have no copy in the database to fall
+   *   back on, so a half-stored asset is not something to report as success and the caller undoes
+   *   the rest of the upload.
    */
   async putAsset(ref: StorageAssetRef, data: Buffer): Promise<void> {
+    const contentType = this.contentTypeFor(ref.siteId, ref.kind, ref.fileSize)
     const targets = await this.writeTargetsFor(ref.siteId, ref.kind, ref.fileSize)
     if (targets.length < 1) {
-      throw new Error(
-        `This site has no storage target configured to hold ${this.contentTypeFor(ref.siteId, ref.kind, ref.fileSize)}.`
+      throw new CustomError(
+        'assetNoStorageTarget',
+        `This site has no storage target configured to hold ${CONTENT_TYPE_LABELS[contentType]}. Enable one under Storage > Targets.`,
+        409
       )
     }
+
+    const accepting: { target: StorageTarget; mod: StorageModule }[] = []
+    const declining: StorageTarget[] = []
     for (const target of targets) {
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         throw new Error(`The ${target.title} storage module has no implementation installed.`)
       }
+      if (mod.canStore && !mod.canStore(target, ref)) {
+        declining.push(target)
+        continue
+      }
+      accepting.push({ target, mod })
+    }
+    if (accepting.length < 1) {
+      throw this.unstorableAssetError(ref, contentType, declining)
+    }
+    if (declining.length > 0) {
+      // -> Not a warning on the target: it did what the site configured it to do
+      WIKI.logger.debug(
+        `No path for ${ref.locale} content in ${declining.map((t) => t.title).join(', ')}, so ${ref.fileName} was not written there.`
+      )
+    }
+
+    for (const { target, mod } of accepting) {
       try {
         await mod.putAsset(target, ref, data)
       } catch (err: any) {
@@ -852,6 +1264,42 @@ class Storage {
       }
       await this.recordState(target, 'healthy')
     }
+  }
+
+  /**
+   * Why an asset has nowhere to go, as something the person uploading it can act on.
+   *
+   * Worth this much prose because nothing has failed: every target is healthy, the file is a
+   * perfectly ordinary one, and the site is simply configured so that no target will hold it. A
+   * generic "upload failed" leaves an administrator with nothing to look at, and the state cards
+   * with nothing to show — so the message has to name the setting that closed the door and the two
+   * ways of opening it.
+   *
+   * The locale is the reason today and `canStore` is only implemented for it, but the fallback is
+   * not decoration: a later module declining for a reason of its own would otherwise be reported as
+   * a locale problem it has nothing to do with.
+   */
+  private unstorableAssetError(
+    ref: StorageAssetRef,
+    contentType: ContentType,
+    declining: StorageTarget[]
+  ): CustomError {
+    const label = CONTENT_TYPE_LABELS[contentType]
+    const names = declining.map((t) => t.title).join(', ')
+    const them = declining.length > 1 ? 'those targets hold' : 'that target holds'
+    if (this.pathPrefixFor(ref.siteId, ref.locale) === null) {
+      const { primaryLocale } = this.pathLayoutFor(ref.siteId)
+      return new CustomError(
+        'assetLocaleNotStored',
+        `This site stores ${label} in ${names} only, and with "Add Locale Prefix" turned off ${them} the ${primaryLocale} locale and no other - so there is nowhere to put a file in ${ref.locale}. Turn "Add Locale Prefix" back on under Storage > Configuration, or have the database store ${label} as well.`,
+        409
+      )
+    }
+    return new CustomError(
+      'assetNoStorageTarget',
+      `No storage target on this site can hold ${ref.fileName}: ${names} store ${label} but declined it.`,
+      409
+    )
   }
 
   /**
@@ -884,6 +1332,99 @@ class Storage {
         WIKI.logger.warn(err.message)
         await this.recordState(target, 'warning', `Could not read ${ref.fileName}: ${err.message}`)
       }
+    }
+    return null
+  }
+
+  /**
+   * A URL to send the reader to instead of the bytes, or null to stream them as usual.
+   *
+   * The whole of the direct-access decision, in one place because two routes need exactly the same
+   * answer — the public `/_files/` path every page image goes through, and the file manager's
+   * download button.
+   *
+   * **Only the nominated delivery source counts.** `deliveryTargetsFor` answers with a fallback list
+   * whose head may be the database standing in for a type nobody nominated, and standing in is not
+   * the same as being chosen: a target only hands out links for a content type the site explicitly
+   * pointed at it, which is what the Content Delivery tab sets.
+   *
+   * A link works for whoever holds it until it expires, with none of the wiki's page rules behind it.
+   * That is inherent to the feature rather than an oversight — it is what makes the store able to
+   * serve the file without asking the wiki — and it is why the expiry defaults to minutes.
+   *
+   * @returns The URL and how long it lasts — the caller needs the second to keep a cached redirect
+   *   from outliving it — or null when the caller should stream the file itself
+   * @throws When signing failed and the site is configured to fail rather than fall back
+   */
+  async directAccessUrlFor(
+    ref: StorageAssetRef,
+    options: { contentType: string; downloadAs?: string }
+  ): Promise<{ url: string; expiresInSeconds: number } | null> {
+    const [source] = await this.deliveryTargetsFor(ref.siteId, ref.kind, ref.fileSize)
+    if (!source || source.assetDelivery.mode !== 'direct') {
+      return null
+    }
+    const contentType = this.contentTypeFor(ref.siteId, ref.kind, ref.fileSize)
+    if (!source.assetDelivery.servedTypes.includes(contentType)) {
+      return null
+    }
+    const mod = await this.ensureModule(source.module)
+    if (typeof mod?.presignAsset !== 'function') {
+      return this.directAccessFailed(
+        source,
+        ref,
+        `${source.title} is set to hand out direct links but cannot sign one.`
+      )
+    }
+
+    // -> Clamped rather than trusted: the stored value is validated on the way in, but a provider
+    //    refusing the whole request over an out-of-range expiry is a poor way to find that out
+    const minutes = Math.min(
+      Math.max(parseInterval(source.assetDelivery.linkExpiration), 1),
+      MAX_LINK_EXPIRATION_MINUTES
+    )
+    const expiresInSeconds = minutes * 60
+    try {
+      const url = await mod.presignAsset(source, ref, { expiresInSeconds, ...options })
+      if (!url) {
+        return this.directAccessFailed(
+          source,
+          ref,
+          `${source.title} could not sign a link for ${ref.fileName}.`
+        )
+      }
+      await this.recordState(source, 'healthy')
+      return { url, expiresInSeconds }
+    } catch (err: any) {
+      return this.directAccessFailed(
+        source,
+        ref,
+        `Could not sign a link for ${ref.fileName}: ${err.message}`
+      )
+    }
+  }
+
+  /**
+   * What a site does when the target that should have signed a link did not.
+   *
+   * Either answer is defensible, which is why it is a setting rather than a decision made here.
+   * Falling back keeps every image on every page loading while somebody fixes the credentials, at
+   * the cost of quietly serving everything the slow way; failing makes the misconfiguration
+   * impossible to miss, at the cost of a visibly broken wiki. The target records a warning
+   * regardless, so the Status card says so under either.
+   *
+   * @returns Null, meaning stream it
+   * @throws When the site asked to be told
+   */
+  private async directAccessFailed(
+    target: StorageTarget,
+    ref: StorageAssetRef,
+    message: string
+  ): Promise<null> {
+    WIKI.logger.warn(`${message} [ ${this.directAccessFallbackFor(ref.siteId).toUpperCase()} ]`)
+    await this.recordState(target, 'warning', message)
+    if (this.directAccessFallbackFor(ref.siteId) === 'error') {
+      throw new Error(message)
     }
     return null
   }
@@ -1042,6 +1583,33 @@ class Storage {
   }
 
   /**
+   * Who to attribute a change to, for the one kind of target that records it.
+   *
+   * Held indefinitely once looked up, which is the whole reason this is a method and not a join: a
+   * page save is a hot path, a name and an address change about never, and the cost of being a day
+   * out of date on a commit author is nothing at all.
+   *
+   * @returns Null for a change nothing attributed, or a user who has since been deleted. The caller
+   *   decides what to put in its place — for git, the target's configured default author.
+   */
+  async actorFor(actorId?: string | null): Promise<StorageActor | null> {
+    if (!actorId) {
+      return null
+    }
+    const cached = this.actorCache.get(actorId)
+    if (cached) {
+      return cached
+    }
+    const user = await WIKI.models.users.getById(actorId)
+    if (!user) {
+      return null
+    }
+    const actor: StorageActor = { name: user.name, email: user.email }
+    this.actorCache.set(actorId, actor)
+    return actor
+  }
+
+  /**
    * Ensure a module's implementation is loaded
    *
    * @returns The implementation, or null when the module has none or it failed to load
@@ -1098,6 +1666,54 @@ class Storage {
     // -> In place, so that every holder of this object — the cache above all — agrees with the row
     target.state = state
     await WIKI.db.update(storageTable).set({ state }).where(eq(storageTable.id, target.id))
+  }
+
+  /**
+   * How this site's storage is behaving, as little as a status indicator needs to know.
+   *
+   * Answered from the target cache rather than the table on purpose: `recordState` patches the cached
+   * object in place as it writes the row, so the cache is current for exactly the field this reads,
+   * and this is the one storage call something outside the storage page makes.
+   *
+   * **Only enabled targets count.** A target that is off is not being asked to do anything, so what
+   * it last recorded is history — and disabling a target is a perfectly ordinary way to deal with one
+   * that is broken, which must not leave the wiki reporting itself as degraded forever.
+   */
+  async healthFor(
+    siteId: string
+  ): Promise<{ id: string; title: string; isEnabled: boolean; state: { status: string } }[]> {
+    return (await this.getCachedSiteTargets(siteId))
+      .filter((t) => t.isEnabled)
+      .map((t) => ({
+        id: t.id,
+        title: t.title,
+        isEnabled: t.isEnabled,
+        state: { status: t.state.status }
+      }))
+  }
+
+  /**
+   * Every target across every site that has a `sync` to run, for the scheduled sync task.
+   *
+   * Driven off the sites cache rather than a query over the table, so that a site removed from this
+   * instance's view is not synced by it. A target whose module declares no `sync` handler — the
+   * database, the local disk — is not a target with a remote to fall out of step with, and is simply
+   * not in the list.
+   */
+  async syncableTargets(): Promise<StorageTarget[]> {
+    const syncable: StorageTarget[] = []
+    for (const siteId of Object.keys(WIKI.sites ?? {})) {
+      for (const target of await this.getCachedSiteTargets(siteId)) {
+        if (!target.isEnabled) {
+          continue
+        }
+        const mod = await this.ensureModule(target.module)
+        if (typeof mod?.sync === 'function') {
+          syncable.push(target)
+        }
+      }
+    }
+    return syncable
   }
 
   /**

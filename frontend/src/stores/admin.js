@@ -23,6 +23,14 @@ export const useAdminStore = defineStore('admin', {
       isMetricsEnabled: false,
       isSchedulerHealthy: false
     },
+    /**
+     * How the current site's storage is behaving, for the status light on the sidebar's Storage item.
+     *
+     * `degraded` names the targets that are not healthy, so the light can say more than that
+     * something is wrong somewhere. Kept here rather than on the storage page because the sidebar
+     * outlives it: the point of the light is to be visible from everywhere else in the admin area.
+     */
+    storageHealth: { status: 'healthy', degraded: [] },
     overlay: null,
     overlayOpts: {},
     sites: [],
@@ -68,6 +76,35 @@ export const useAdminStore = defineStore('admin', {
       this.info.isMetricsEnabled = resp?.isMetricsEnabled ?? false
       this.info.isMailConfigured = resp?.isMailConfigured ?? false
       this.info.isSchedulerHealthy = resp?.isSchedulerHealthy ?? false
+    },
+    /**
+     * Work out the site's storage health from a list of targets.
+     *
+     * The one place the rule lives, called both by `fetchStorageStatus` and by the storage page,
+     * which has the same target list in front of it already and no reason to ask again for what it
+     * just loaded. Both pass the same shape — `isEnabled` and `state.status` — which is why the
+     * status endpoint answers with those fields rather than with a verdict of its own.
+     */
+    applyStorageTargets(targets) {
+      const degraded = (targets ?? [])
+        .filter((tgt) => tgt.isEnabled && ['warning', 'error'].includes(tgt.state?.status))
+        .map((tgt) => ({ id: tgt.id, title: tgt.title, status: tgt.state.status }))
+      this.storageHealth = {
+        // -> Worst wins: one target that refused an upload is not softened by four that are fine
+        status: degraded.some((tgt) => tgt.status === 'error')
+          ? 'error'
+          : degraded.length > 0
+            ? 'warning'
+            : 'healthy',
+        degraded
+      }
+    },
+    async fetchStorageStatus(siteId) {
+      if (!siteId) {
+        return
+      }
+      const resp = await API_CLIENT.get(`sites/${siteId}/storage/status`).json()
+      this.applyStorageTargets(resp?.targets ?? [])
     },
     async fetchSites() {
       this.sites = (await API_CLIENT.get('sites').json()) ?? []
