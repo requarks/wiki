@@ -338,6 +338,7 @@ import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/compo
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
+import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
 import { blockOpeningLine, blockValues, findBlocks } from '@/helpers/markdownBlocks'
@@ -1085,29 +1086,80 @@ function markDisabledBlock(el) {
 }
 
 /**
- * Open the tabset panel the caret is in.
+ * Open the tabset panel the caret is in, and every panel that one sits inside.
  *
  * Which is the useful answer, and a different question from "which panel was open before": an author
  * writing inside the second panel of a tabset is telling us plainly which one they are looking at. The
  * source line is matched against the panel ranges of the same parse that built the preview -- see
- * `getTabAtLine` -- and the panel is opened through the block's own `active` property.
+ * `getTabsAtLine` -- and each panel is opened through its block's own `active` property.
  *
  * Silent about everything it does not find: a caret outside every tabset leaves them all as they were,
  * and so does a render that has not landed yet.
+ *
+ * @returns A promise settling once the blocks have drawn the panels. A block applies which panel is
+ *          open on its own update, so a caller about to scroll to something inside one has to wait:
+ *          until then the panel is still `display: none` and there is no box to scroll to.
  */
 function syncPreviewTabs() {
   const container = editorPreviewContainerRef.value
   if (!container) {
-    return
+    return Promise.resolve()
   }
-  const at = md.getTabAtLine(editor.getPosition().lineNumber)
-  if (!at) {
-    return
+  const tabsets = container.querySelectorAll('block-tabs')
+  const drawn = []
+  for (const at of md.getTabsAtLine(editor.getPosition().lineNumber)) {
+    const tabset = tabsets[at.tabset]
+    if (tabset) {
+      tabset.active = at.tab
+      // -> Absent until the component has been fetched and the element upgraded; setting `active` on
+      //    one that has not been is still worth doing, and is why `processContent` asks again later
+      drawn.push(tabset.updateComplete ?? Promise.resolve())
+    }
   }
-  const tabset = container.querySelectorAll('block-tabs')[at.tabset]
-  if (tabset) {
-    tabset.active = at.tab
+  return Promise.all(drawn)
+}
+
+/**
+ * The element in the preview to scroll to for a source line.
+ *
+ * Read off the DOM rather than from a map collected during the render, because what matters is what
+ * was actually drawn and where it ended up: a token can be parsed and then not rendered (a tight
+ * list's paragraphs), and a footnote's definition is rendered at the foot of the page rather than on
+ * the line it was written on. Lines are compared as numbers for the same reason -- the greatest line
+ * at or before the caret, wherever in the page its element happens to sit.
+ *
+ * Two things narrow the search, and both are about tabs:
+ *
+ * - **Scoped to the panel the line is in**, where it is in one. Every panel of a tabset covers the
+ *   same lines of the preview, and the panels that are closed hold most of the page's lines -- so a
+ *   search across the whole preview would answer a line inside a panel with an element outside the
+ *   tabset entirely, and scrolling there is what took the author away from what they were writing.
+ * - **Only what has a box.** A closed panel's content is stamped with its lines like everything else
+ *   and cannot be scrolled to; picking it would mean scrolling nowhere at all, having passed over the
+ *   element that could have been reached.
+ *
+ * The panel itself stands in when nothing inside it carries a line -- a lone paragraph, a table, a
+ * list -- which puts the top of the tabset in view, and is as close as there is to get.
+ */
+function previewAnchorFor(container, line) {
+  // -> The last of the chain is the panel the line is written in; the ones before it are its ancestors,
+  //    which `syncPreviewTabs` has already opened
+  const at = md.getTabsAtLine(line).at(-1)
+  const tabset = at ? container.querySelectorAll('block-tabs')[at.tabset] : null
+  const panel = tabset?.querySelectorAll(':scope > block-tab')[at.tab] ?? null
+
+  let best = null
+  let bestLine = 0
+  for (const el of (panel ?? container).querySelectorAll('[data-line]')) {
+    const elLine = Number(el.dataset.line)
+    // -> Strictly greater, so that of two elements starting on the same line -- a blockquote and the
+    //    paragraph opening it -- the outer one wins, which is the one whose top is the section's top
+    if (elLine <= line && elLine > bestLine && isVisible(el)) {
+      best = el
+      bestLine = elLine
+    }
   }
+  return best ?? panel
 }
 
 function processContent(newContent) {
@@ -1496,33 +1548,28 @@ onMounted(async () => {
 
   // -> Handle cursor movement
   editor.onDidChangeCursorPosition(
-    debounce((ev) => {
+    debounce(async (ev) => {
       if (!state.previewScrollSync || !state.previewShown) {
         return
       }
-      // -> Moving the caret into another panel opens it, the same as typing in one does
-      syncPreviewTabs()
+      /*
+        Moving the caret into another panel opens it, the same as typing in one does -- and is AWAITED,
+        because until the block has drawn it the panel is still `display: none`, and everything below
+        aims at an element inside it. Scrolling to something with no box does nothing whatsoever, which
+        is what made the sync appear to ignore a caret inside a tab that was not already open.
+      */
+      await syncPreviewTabs()
+      // -> Read again rather than reused from before the await: the caret is where it is now
       const currentLine = editor.getPosition().lineNumber
-      if (currentLine < 3) {
-        editorPreviewContainerRef.value.scrollTo({ top: 0, behavior: 'smooth' })
-      } else {
-        const exactEl = editorPreviewContainerRef.value.querySelector(
-          `[data-line='${currentLine}']`
-        )
-        if (exactEl) {
-          exactEl.scrollIntoView(SYNC_SCROLL)
-        } else {
-          const closestLine = md.getClosestPreviewLine(currentLine)
-          if (closestLine) {
-            const closestEl = editorPreviewContainerRef.value.querySelector(
-              `[data-line='${closestLine}']`
-            )
-            if (closestEl) {
-              closestEl.scrollIntoView(SYNC_SCROLL)
-            }
-          }
-        }
+      const container = editorPreviewContainerRef.value
+      if (!container) {
+        return
       }
+      if (currentLine < 3) {
+        container.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+      previewAnchorFor(container, currentLine)?.scrollIntoView(SYNC_SCROLL)
     }, 500)
   )
 

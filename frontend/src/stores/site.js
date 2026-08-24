@@ -123,7 +123,13 @@ export const useSiteStore = defineStore('site', {
         }
       ]
     },
+    /**
+     * Every tag any page of this site carries, most used first — the suggestions a tag field offers
+     * and the list the search page filters by. Derived from the pages rather than stored, so it goes
+     * out of date whenever one is saved; see `fetchTags` and `staleTags`.
+     */
     tags: [],
+    /** Whether `tags` holds a list that is known to be current. */
     tagsLoaded: false,
     theme: {
       dark: false,
@@ -301,6 +307,13 @@ export const useSiteStore = defineStore('site', {
         }
       })
     },
+    /**
+     * Load the site's tags, unless a current list is already held.
+     *
+     * Cached because it is not a cheap answer — the server counts every tag over every page the
+     * asker may read, page rules and all — and because the surfaces that want it (a tag field, the
+     * search filter, the header's popular tags) are opened over and over in one session.
+     */
     async fetchTags(forceRefresh = false) {
       if (this.tagsLoaded && !forceRefresh) {
         return
@@ -315,6 +328,24 @@ export const useSiteStore = defineStore('site', {
         console.warn(err.message)
         throw err
       }
+    },
+    /**
+     * Say that the tag list is out of date, so the next thing that wants it asks the server again.
+     *
+     * A tag is not a record anybody creates: it exists because a page carries it, so saving a page is
+     * what brings one into being — and the list cached here was fetched before that happened. Without
+     * this, a tag invented in the page properties panel was missing from every tag field for the rest
+     * of the session, and only a full reload of the application brought it back.
+     *
+     * The tags themselves are left in place rather than emptied: what is held is the last known list,
+     * which is a better thing to show than nothing while the next fetch is in flight.
+     *
+     * Deleting a page, or a folder of them, moves this list too and does not say so. That direction is
+     * survivable in a way this one is not: a tag no page carries any more is a suggestion that leads to
+     * an empty search, where a tag that cannot be suggested at all cannot be picked.
+     */
+    staleTags() {
+      this.tagsLoaded = false
     },
     /**
      * Load the sidebar menu a page resolves to.

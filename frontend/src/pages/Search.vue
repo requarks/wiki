@@ -184,7 +184,7 @@
             >
           </div>
           <w-list separator>
-            <w-item v-for="item of state.results" clickable :to="`/` + item.path">
+            <w-item v-for="item of state.results" clickable :to="pageUrl(item)">
               <w-item-section avatar>
                 <w-avatar color="primary" text-color="white" rounded>
                   <w-icon :name="item.icon || defaultPageIcon" size="24px" />
@@ -193,7 +193,9 @@
               <w-item-section>
                 <w-item-label>{{ item.title }}</w-item-label>
                 <w-item-label v-if="item.description" caption>{{ item.description }}</w-item-label>
-                <w-item-label class="text-grey" caption>/{{ item.path }}</w-item-label>
+                <!-- -> The address it leads to, not the bare tree path: on a site with locales
+                        the prefix is what tells two hits on the same path apart -->
+                <w-item-label class="text-grey" caption>{{ pageUrl(item) }}</w-item-label>
                 <w-item-label class="text-highlight" v-if="item.highlight" caption>
                   <span v-html="item.highlight" />
                 </w-item-label>
@@ -367,6 +369,18 @@ watch(
 watch(() => state.params, debounce(performSearch, 500), { deep: true })
 
 // METHODS
+
+/**
+ * Where a result leads.
+ *
+ * Worked out per row rather than once for the list: a search covers every locale unless one is
+ * filtered for, so two hits in the same set can be in different languages -- and a bare path is the
+ * primary locale's address, which is either the wrong page or no page at all. Each result carries the
+ * locale it was found in, so that is what the prefix comes from.
+ */
+function pageUrl(item) {
+  return `${siteStore.localeUrlPrefix(item.locale)}/${item.path}`
+}
 
 function humanizeDate(val) {
   return userStore.formatDateTime(t, val)

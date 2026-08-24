@@ -92,6 +92,27 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           additionalProperties: true
         }
       },
+      localeRelations: {
+        type: 'array',
+        description:
+          "This page's counterparts in other locales — the same page in another language, which is what the locale selector sends a reader to.\n\nThe list states the WHOLE set rather than adding to it: a locale left out has no counterpart, and a page that was in the set and is not listed leaves it. Leave the field out to keep the set as it is.\n\nNaming a page that already belongs to a set joins that set, bringing its other members along. It is refused with a 409 when that set already holds a page for a locale this list speaks for — including this page's own locale, which is the case of a page that is already another page's translation.",
+        items: {
+          type: 'object',
+          required: ['locale', 'path'],
+          properties: {
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: 'The locale this counterpart is written in.'
+            },
+            path: {
+              type: 'string',
+              maxLength: 255,
+              description: 'Path of the page in that locale, without a leading slash.'
+            }
+          }
+        }
+      },
       tags: {
         type: 'array',
         items: {
@@ -170,6 +191,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       relations: {
         type: 'array',
         items: { type: 'object', additionalProperties: true }
+      },
+      localeRelations: {
+        type: 'array',
+        description:
+          'The same page in other locales, one entry per locale, as far as this requester may see them — a draft translation is not offered to a reader who could not open it. Empty for a page with no counterparts.',
+        items: { $ref: 'PageLocaleRelation#' }
       },
       tags: { type: 'array', items: { type: 'string' } },
       toc: {
@@ -268,6 +295,29 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'string',
         format: 'date-time',
         description: 'When the caller started watching it.'
+      }
+    }
+  })
+
+  /**
+   * PAGE LOCALE RELATION - One page of a translation set: this page, in another language
+   */
+  app.addSchema({
+    $id: 'PageLocaleRelation',
+    type: 'object',
+    properties: {
+      locale: {
+        type: 'string',
+        description: 'The locale this counterpart is written in.'
+      },
+      path: {
+        type: 'string',
+        description:
+          "Slash-separated path of the page in that locale, without a leading slash and without the locale's URL prefix."
+      },
+      title: {
+        type: 'string',
+        description: 'Its title, for a surface that lists the set rather than navigating to it.'
       }
     }
   })

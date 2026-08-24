@@ -150,6 +150,21 @@
           @click="newRelation">
           <w-tooltip>{{ t('editor.props.relationAddHint') }}</w-tooltip>
         </w-btn>
+        <!--
+          A different kind of relation, which is why it is its own button rather than another position
+          in the one above: a page relation is a link this page draws in its footer, while a locale
+          relation says that another page IS this page, written in another language.
+        -->
+        <w-btn
+          class="mt-2 w-full"
+          :label="t(`editor.props.localeRelations`)"
+          icon="la:language"
+          no-caps
+          unelevated
+          color="secondary"
+          @click="state.showLocaleRelationsDialog = true">
+          <w-tooltip>{{ t('editor.props.localeRelationsHint') }}</w-tooltip>
+        </w-btn>
       </w-card-section>
       <w-card-section class="alt-card" id="refCardScripts">
         <div class="w-section-header">{{ t('editor.props.scripts') }}</div>
@@ -318,6 +333,9 @@
         </w-form>
       </w-card-section>
     </w-scroll-area>
+    <w-dialog v-model="state.showLocaleRelationsDialog">
+      <page-locale-relations-dialog @close="state.showLocaleRelationsDialog = false" />
+    </w-dialog>
     <w-dialog v-model="state.showRelationDialog">
       <page-relation-dialog
         :edit-id="state.editRelationId"
@@ -338,6 +356,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import IconPickerDialog from './IconPickerDialog.vue'
+import PageLocaleRelationsDialog from './PageLocaleRelationsDialog.vue'
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
 import PageTags from './PageTags.vue'
@@ -356,6 +375,7 @@ const { t } = useI18n()
 
 const state = reactive({
   showRelationDialog: false,
+  showLocaleRelationsDialog: false,
   showScriptsDialog: false,
   requirePassword: false,
   editRelationId: null,

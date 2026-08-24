@@ -6,9 +6,10 @@
         <span>{{ props.title ?? t('linkPicker.title') }}</span>
         <w-space />
         <!-- -> Only where there is a choice to make: one active locale is most wikis, and a button
-                that can only say `en` is noise on all of them -->
+                that can only say `en` is noise on all of them -- and never when the caller has asked
+                for one locale, where the picker is filling a slot that belongs to it -->
         <w-btn
-          v-if="siteStore.locales.active.length > 1"
+          v-if="siteStore.locales.active.length > 1 && !props.lockLocale"
           class="acrylic-btn -my-2"
           flat
           dense
@@ -201,6 +202,15 @@ const props = defineProps({
   locale: {
     type: String,
     default: null
+  },
+  /**
+   * Whether the locale above is fixed. For a caller picking the page that fills one locale's slot —
+   * the translation set in the page properties panel — where a page from another locale is not a
+   * different answer but a wrong one, so the switcher is not offered at all.
+   */
+  lockLocale: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -404,6 +414,13 @@ function selectItem(item) {
 function submit() {
   onDialogOK({
     href: href.value,
+    /*
+      The page as the wiki addresses it, beside the href built from it: a caller storing a relation to
+      a page needs the path and the locale as two values, and taking them back apart from an href means
+      knowing which prefixes are locales. Empty for the URL tab, which names no page of this wiki.
+    */
+    path: state.currentTab === 'page' ? state.path : '',
+    locale: state.currentTab === 'page' ? state.locale : '',
     /*
       Which tab answered, so a caller that stores the two kinds differently does not have to work it
       out from the string afterwards. It cannot be worked out reliably: `/help` is a page of this wiki

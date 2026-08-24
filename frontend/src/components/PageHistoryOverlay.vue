@@ -648,6 +648,9 @@ function branchFrom(version) {
         throw new Error(resp?.message || 'An unexpected error occured.')
       }
       notify({ type: 'positive', message: t('history.branchSuccess') })
+      // -> This page went up with the version's tags, so a tag no page carried any more is back; the
+      //    tag fields have to hear about it, the same as after a save
+      siteStore.staleTags()
       close()
       router.push(`/${page.path}`)
     } catch (err) {

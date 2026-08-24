@@ -46,7 +46,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Fetch the latest locales from the Wiki.js repository',
         description:
-          'Reads the published locale metadata and records any locale not seen before as available. An installed locale is re-downloaded only when its published hash differs from the one stored, so a run that finds nothing new costs a single request.',
+          "Reads the published locale metadata and records any locale not seen before as available. An installed locale is re-downloaded only when its published hash differs from the one stored, so a run that finds nothing new costs a single request.\n\n`en` is never fetched: it is the locale the interface is written in and ships with the wiki, loaded from `locales/en.json` on every boot. It counts as unchanged.",
         tags: ['Locales'],
         response: {
           200: {
@@ -86,7 +86,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Download the strings of an available locale',
         description:
-          'Downloads the published strings file for a locale that has a row but no strings, making it installable on a site. Fetch the locale list first: a locale nobody has heard of yet has no row to install.',
+          "Downloads the published strings file for a locale that has a row but no strings, making it installable on a site. Fetch the locale list first: a locale nobody has heard of yet has no row to install.\n\nRefused for `en`, which ships with the wiki and is always installed.",
         tags: ['Locales'],
         params: {
           type: 'object',

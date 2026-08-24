@@ -58,7 +58,7 @@
               <router-link
                 v-if="item.isPage"
                 class="browse-menu-target"
-                :to="`/${item.path}`"
+                :to="`${localePrefix}/${item.path}`"
                 @click="menu?.hide()">
                 <w-icon :name="item.icon || `la:file-alt`" size="xs" class="shrink-0 opacity-70" />
                 <span class="truncate">{{ item.title }}</span>
@@ -152,6 +152,11 @@ const EMPTY_LEVEL = { title: '', items: [], truncated: false }
 const state = reactive({
   /** Slash-separated path of the folder being listed. Empty at the site root. */
   path: '',
+  /**
+   * The locale the levels held here were listed in. Captured when the menu opens rather than read per
+   * row: a level is one locale's tree, so what it lists and where its rows lead have to agree on which.
+   */
+  locale: '',
   /** Which way the next level slides in from. */
   direction: 'forward',
   isLoading: false,
@@ -165,12 +170,23 @@ const level = computed(() => state.levels[state.path] ?? EMPTY_LEVEL)
 
 const isRoot = computed(() => !state.path)
 
+/**
+ * What a row's link starts with, for the locale this level was listed in.
+ *
+ * `tree/browse` answers for one locale, so every page here is read at that locale's address — which on
+ * a site that brackets its URLs by locale is a prefixed one. Without it each row pointed at the
+ * primary locale's copy of the path: a reader browsing the French tree was sent to the English page,
+ * or to a path that has no page in the primary locale at all.
+ */
+const localePrefix = computed(() => siteStore.localeUrlPrefix(state.locale))
+
 // METHODS
 
 /** Opens on the folder holding the current page, with whatever was cached from last time dropped. */
 function onShow() {
   state.levels = {}
   state.direction = 'forward'
+  state.locale = pageStore.locale
   state.path = pageStore.folderPath
   load(state.path)
 }
@@ -192,7 +208,7 @@ async function load(path) {
     const data = await API_CLIENT.get(`sites/${siteStore.id}/tree/browse`, {
       searchParams: {
         path,
-        locale: pageStore.locale
+        locale: state.locale
       }
     }).json()
     state.levels[path] = {

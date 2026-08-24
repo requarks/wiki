@@ -2745,6 +2745,19 @@
       "table": "pages"
     },
     {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "localeGroupId",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "pages"
+    },
+    {
       "type": "text",
       "typeSchema": null,
       "notNull": false,
@@ -4517,6 +4530,34 @@
       "method": "btree",
       "concurrently": false,
       "name": "pages_isSearchableComputed_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "pages"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "localeGroupId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "locale",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "pages_localeGroupId_locale_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "pages"

@@ -61,6 +61,12 @@ export const usePageStore = defineStore('page', {
     publishStartDate: '',
     publishState: '',
     relations: [],
+    /**
+     * The same page in other locales: `{ locale, path, title }`, one entry per locale, as the server
+     * knows them. What the locale selector sends a reader to instead of guessing at the same path in
+     * another language, and what the page properties panel edits as one set.
+     */
+    localeRelations: [],
     render: '',
     scriptJsLoad: '',
     scriptJsUnload: '',
@@ -174,6 +180,9 @@ export const usePageStore = defineStore('page', {
           relations: pageData.relations.map((r) =>
             pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
           ),
+          localeRelations: (pageData.localeRelations ?? []).map((r) =>
+            pick(r, ['locale', 'path', 'title'])
+          ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
         this.applyViewerState(pageData.viewer)
@@ -225,6 +234,9 @@ export const usePageStore = defineStore('page', {
         contentLoaded: Object.hasOwn(pageData, 'content'),
         relations: pageData.relations.map((r) =>
           pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+        ),
+        localeRelations: (pageData.localeRelations ?? []).map((r) =>
+          pick(r, ['locale', 'path', 'title'])
         ),
         tocDepth: pick(pageData.tocDepth, ['min', 'max'])
       })
@@ -312,6 +324,7 @@ export const usePageStore = defineStore('page', {
         toc: [],
         tags: [],
         relations: [],
+        localeRelations: [],
         scriptJsLoad: '',
         scriptJsUnload: '',
         scriptCss: '',
@@ -416,6 +429,9 @@ export const usePageStore = defineStore('page', {
         alias: '',
         publishState: 'published',
         relations: [],
+        // -> A page being created is in no translation set yet, whatever the page it was started from
+        //    belonged to
+        localeRelations: [],
         tags: [],
         content: content ?? '',
         // -> A page being created has no stored source to lose: whatever it starts with IS the source
@@ -654,6 +670,7 @@ export const usePageStore = defineStore('page', {
             'icon',
             'isBrowsable',
             'isSearchable',
+            'localeRelations',
             'password',
             'publishEndDate',
             'publishStartDate',
@@ -729,8 +746,25 @@ export const usePageStore = defineStore('page', {
           relations: (pageData.relations ?? []).map((r) =>
             pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
           ),
+          /*
+            What the server made of the set, not what was sent: joining another page's translations
+            brings its other members along, so the panel's own list is a request and this is the answer.
+          */
+          localeRelations: (pageData.localeRelations ?? []).map((r) =>
+            pick(r, ['locale', 'path', 'title'])
+          ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         })
+
+        /*
+          The site's tags are what its pages carry, so this save is what just changed them -- a tag
+          typed into the properties panel exists from here on, and one taken off the last page carrying
+          it does not. Unconditional: the tags that went up cannot be compared with the ones that were
+          on the page before, since the store held the author's edits long before the save.
+
+          Marked rather than fetched, so the cost falls on the next thing that actually wants the list.
+        */
+        siteStore.staleTags()
 
         if (editorStore.mode === 'create') {
           editorStore.$patch({ mode: 'edit' })

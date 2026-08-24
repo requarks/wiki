@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne, sql } from 'drizzle-orm'
+import { and, eq, inArray, ne, notInArray, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
 import {
   CustomError,
@@ -82,6 +82,31 @@ const CONFIG_FIELDS = [
   'tocDepth'
 ] as const
 
+/**
+ * One counterpart of a page in another locale: the same page, written in a different language.
+ *
+ * A page holds at most one per locale, and the whole set is what `pages.localeGroupId` names. What is
+ * carried is what a reader being sent there needs — the locale to prefix with and the path to go to —
+ * plus the title, which is what an editing surface lists.
+ */
+export interface PageLocaleRelation {
+  locale: string
+  path: string
+  title: string
+}
+
+/**
+ * A counterpart as it is asked for: a locale and the path of the page in it.
+ *
+ * By path rather than by id because that is what a page picker answers with, and because a path is
+ * what an API client writing a translation set already has in hand. Resolved to a page on the way in —
+ * see `applyLocaleRelations`.
+ */
+export interface PageLocaleRelationInput {
+  locale: string
+  path: string
+}
+
 /** A page as the API exposes it: the columns and both blobs, flattened into one object. */
 export interface Page {
   id: string
@@ -108,6 +133,11 @@ export interface Page {
   /** Whether the body was withheld because the page is password protected. See `getPage`. */
   isLocked: boolean
   relations: any[]
+  /**
+   * This page in the other locales, as far as the requester may see them. Empty for a page that is
+   * not part of a locale group, and for one whose whole group is pages this requester may not read.
+   */
+  localeRelations: PageLocaleRelation[]
   tags: string[]
   toc: TocNode[]
   render: string
@@ -153,6 +183,13 @@ export interface PageInput {
   isSearchable?: boolean
   password?: string
   relations?: any[]
+  /**
+   * The page's counterparts in other locales, stating the whole set rather than adding to it: a locale
+   * left out of the list is a locale this page has no counterpart in, and a page that was in the group
+   * and is not in the list leaves it. Absent means "leave the group alone", which is what a save that
+   * is not about translations sends.
+   */
+  localeRelations?: PageLocaleRelationInput[]
   tags?: string[]
   allowComments?: boolean
   allowContributions?: boolean
@@ -314,6 +351,9 @@ class Pages {
       ...(withPassword ? { password: row.password } : {}),
       isLocked: locked,
       relations: locked ? [] : (row.relations ?? []),
+      // -> Not withheld from a locked page: which languages a page exists in is not what a password
+      //    covers, and the lock screen is where a reader most needs to be able to switch to one
+      localeRelations: row.localeRelations ?? [],
       tags: row.tags ?? [],
       toc: locked ? [] : (row.toc ?? []),
       render: locked ? '' : (row.render ?? ''),
@@ -336,6 +376,295 @@ class Pages {
       authorName: row.authorName ?? '',
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
+    }
+  }
+
+  /**
+   * The other pages of a locale group: this page, written in every other language it exists in.
+   *
+   * Answered from the group id the page already carries, so a page that is not part of one costs no
+   * query at all — which is nearly every page on nearly every site.
+   *
+   * `publicOnly` narrows it the same way it narrows the page itself: a draft translation is not
+   * something to offer a reader who could not open it. It is what makes the locale selector's list of
+   * languages the list of languages this reader can actually reach.
+   */
+  async localeRelationsFor(
+    siteId: string,
+    {
+      localeGroupId,
+      id,
+      publicOnly = false
+    }: { localeGroupId: string | null; id: string; publicOnly?: boolean }
+  ): Promise<PageLocaleRelation[]> {
+    if (!localeGroupId) {
+      return []
+    }
+    const conditions = [
+      eq(pagesTable.siteId, siteId),
+      eq(pagesTable.localeGroupId, localeGroupId),
+      ne(pagesTable.id, id)
+    ]
+    if (publicOnly) {
+      conditions.push(eq(pagesTable.publishState, 'published'))
+    }
+    return await WIKI.db
+      .select({ locale: pagesTable.locale, path: pagesTable.path, title: pagesTable.title })
+      .from(pagesTable)
+      .where(and(...conditions))
+      .orderBy(pagesTable.locale)
+  }
+
+  /**
+   * The locale group a page addressed by path belongs to, for a client about to join it.
+   *
+   * What the page properties panel asks before it accepts a chosen page: a page that is already the
+   * French version of something comes back with the rest of that set, which is what the panel fills
+   * its other rows in from — and what tells it, before anything is saved, that the set already has a
+   * page for a locale it has spoken for.
+   *
+   * @returns The whole group INCLUDING the page asked about, or null when there is no page there.
+   *          A page with no counterparts answers with just itself.
+   */
+  async localeGroupAt(
+    siteId: string,
+    { locale, path }: { locale?: string; path: string }
+  ): Promise<{
+    page: PageLocaleRelation & { id: string }
+    relations: PageLocaleRelation[]
+  } | null> {
+    // -> The site's own default when the caller did not say, as everything else addressing a page by
+    //    path does: a path alone names the primary locale's page
+    const page = await this.findByPath(siteId, locale || this.defaultLocale(siteId), path)
+    if (!page) {
+      return null
+    }
+    return {
+      page: { id: page.id, locale: page.locale, path: page.path, title: page.title },
+      relations: await this.localeRelationsFor(siteId, {
+        localeGroupId: page.localeGroupId,
+        id: page.id
+      })
+    }
+  }
+
+  /** One page of a site, by the locale and path that address it. */
+  private async findByPath(
+    siteId: string,
+    locale: string,
+    path: string
+  ): Promise<{
+    id: string
+    locale: string
+    path: string
+    title: string
+    localeGroupId: string | null
+  } | null> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        localeGroupId: pagesTable.localeGroupId
+      })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale),
+          // -> By hash, which is the indexed way a page is addressed by path everywhere else here
+          eq(pagesTable.hash, generatePathHash(path || 'home'))
+        )
+      )
+      .limit(1)
+    return rows[0] ?? null
+  }
+
+  /**
+   * Set the locale group a page belongs to: which pages are this page in another language.
+   *
+   * **The list states the whole group, not this page's half of it.** The panel that sends it shows
+   * every active locale with the page filling that slot, so a locale left empty is a locale the set
+   * has no page for — and a page that was in the group and is not in the list leaves it. There is one
+   * group per set of translations and any member edits it, which is what makes "the same page in
+   * French" mean the same thing read from either side.
+   *
+   * **Picking a page that already belongs to a set joins that set**, bringing its other members with
+   * it: attaching an English page to an existing French/German pair is how the third language gets
+   * added, and requiring the pair to be broken up first would be a worse way to say it. The client is
+   * expected to have asked `localeGroupAt` and shown the author what they are joining.
+   *
+   * Which leaves one thing that cannot be reconciled and is refused: a set being joined that already
+   * holds a page for a locale this request speaks for — most importantly for the saving page's OWN
+   * locale, which is the case of a French page that is already some other English page's translation.
+   *
+   * @param page The page being saved, as it stands in the database.
+   * @param wanted Its counterparts. Empty dissolves the group, leaving every member unrelated.
+   */
+  private async applyLocaleRelations(
+    siteId: string,
+    page: { id: string; locale: string; localeGroupId: string | null },
+    wanted: PageLocaleRelationInput[]
+  ): Promise<void> {
+    /*
+      The group as it will stand, by locale. Seeded with the saving page, which occupies its own
+      locale's slot and is why nothing else may claim it.
+    */
+    const desired = new Map<string, { id: string; path: string; localeGroupId: string | null }>()
+    desired.set(page.locale, { id: page.id, path: '', localeGroupId: page.localeGroupId })
+
+    for (const entry of wanted ?? []) {
+      const locale = (entry?.locale ?? '').trim()
+      // -> A page is its own entry for its own locale, so a row naming it is agreement rather than an
+      //    instruction. The panel sends that row read-only for exactly this reason.
+      if (!locale || locale === page.locale) {
+        continue
+      }
+      const path = normalizePagePath(entry?.path ?? '')
+      const target = await this.findByPath(siteId, locale, path)
+      if (!target) {
+        throw new CustomError(
+          'pageLocaleRelationNotFound',
+          `There is no page at "${path}" in locale ${locale} to relate this page to.`
+        )
+      }
+      if (target.id === page.id) {
+        continue
+      }
+      const claimed = desired.get(locale)
+      if (claimed && claimed.id !== target.id) {
+        throw new CustomError(
+          'pageLocaleRelationDuplicate',
+          `Two different pages were given for locale ${locale}. A page has one counterpart per locale.`
+        )
+      }
+      desired.set(locale, { id: target.id, path: target.path, localeGroupId: target.localeGroupId })
+    }
+
+    /*
+      Every group this touches: the one the page is in, and the one behind each page it names. They are
+      about to become one group, or — where the page is leaving — none.
+
+      Held against the page that brought each one in, so a set that cannot be joined is refused by
+      naming the page the author actually chose rather than some third page they have never heard of.
+      Empty for the group this page is already in, which nobody chose.
+    */
+    const involved = new Map<string, string>()
+    if (page.localeGroupId) {
+      involved.set(page.localeGroupId, '')
+    }
+    for (const member of desired.values()) {
+      if (member.localeGroupId && !involved.has(member.localeGroupId)) {
+        involved.set(member.localeGroupId, member.path)
+      }
+    }
+
+    for (const [groupId, chosenPath] of involved) {
+      const members = await WIKI.db
+        .select({
+          id: pagesTable.id,
+          locale: pagesTable.locale,
+          path: pagesTable.path,
+          localeGroupId: pagesTable.localeGroupId
+        })
+        .from(pagesTable)
+        .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.localeGroupId, groupId)))
+      for (const member of members) {
+        const claimed = desired.get(member.locale)
+        if (claimed?.id === member.id) {
+          continue
+        }
+        if (groupId === page.localeGroupId) {
+          // -> A member of this page's own group that the request does not name: the author took it
+          //    out of the set, or pointed that locale at a different page, so it is dropped below
+          continue
+        }
+        if (claimed) {
+          throw new CustomError(
+            'pageLocaleRelationConflict',
+            `"${chosenPath}" already belongs to a set of translations whose ${member.locale} page is "${member.path}". A page can belong to only one set.`,
+            409
+          )
+        }
+        // -> The rest of the set being joined comes along: these pages and this one are the same page
+        desired.set(member.locale, {
+          id: member.id,
+          path: member.path,
+          localeGroupId: member.localeGroupId
+        })
+      }
+    }
+
+    /*
+      A group of one is no group. Written as null rather than left standing so that "this page has no
+      counterparts" is one state in the database instead of two, and so the unique index above never
+      has to hold a row nothing else can join.
+    */
+    const dissolve = desired.size < 2
+    const groupId = dissolve
+      ? null
+      : (page.localeGroupId ??
+        [...desired.values()].find((m) => m.localeGroupId)?.localeGroupId ??
+        crypto.randomUUID())
+
+    const memberIds = [...desired.values()].map((m) => m.id)
+
+    // -> Everything that was in one of these groups and is not in the set any more, first: the unique
+    //    index is on (group, locale), so a page has to vacate a slot before another can take it
+    const evicted = [...involved.keys()]
+    if (evicted.length > 0) {
+      await WIKI.db
+        .update(pagesTable)
+        .set({ localeGroupId: null })
+        .where(
+          and(
+            eq(pagesTable.siteId, siteId),
+            inArray(pagesTable.localeGroupId, evicted),
+            memberIds.length > 0 && !dissolve ? notInArray(pagesTable.id, memberIds) : sql`true`
+          )
+        )
+    }
+    if (!dissolve) {
+      await WIKI.db
+        .update(pagesTable)
+        .set({ localeGroupId: groupId })
+        .where(and(eq(pagesTable.siteId, siteId), inArray(pagesTable.id, memberIds)))
+    }
+  }
+
+  /**
+   * Take one page out of its locale group, leaving the rest of the set related to each other.
+   *
+   * For a page that stops being the version it was: a move across locales, where what it is the
+   * translation OF is no longer a question this group answers. Distinct from setting the relations to
+   * nothing, which is the group being dissolved by whoever was editing it.
+   */
+  private async detachFromLocaleGroup(siteId: string, id: string): Promise<void> {
+    const rows = await WIKI.db
+      .select({ localeGroupId: pagesTable.localeGroupId })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.id, id)))
+      .limit(1)
+    const groupId = rows[0]?.localeGroupId
+    if (!groupId) {
+      return
+    }
+    await WIKI.db
+      .update(pagesTable)
+      .set({ localeGroupId: null })
+      .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.id, id)))
+    // -> And the group goes with it if this was the last relation anybody had, for the same reason
+    //    `applyLocaleRelations` never writes a group of one
+    const remaining = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.localeGroupId, groupId)))
+    if (remaining.length < 2) {
+      await WIKI.db
+        .update(pagesTable)
+        .set({ localeGroupId: null })
+        .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.localeGroupId, groupId)))
     }
   }
 
@@ -423,7 +752,13 @@ class Pages {
         ...row.page,
         authorName: row.authorName,
         navigationId: row.navigationId,
-        navigationMode: row.navigationMode
+        navigationMode: row.navigationMode,
+        // -> A second query only for a page that is part of a set, which is a column read away
+        localeRelations: await this.localeRelationsFor(siteId, {
+          localeGroupId: row.page.localeGroupId,
+          id: row.page.id,
+          publicOnly
+        })
       },
       { withContent, withPassword, locked: Boolean(row.page.password) && !isUnlocked }
     )
@@ -583,6 +918,18 @@ class Pages {
     const page = inserted[0]
 
     try {
+      /*
+        Before the tree entry, so that both live inside the same rollback: a translation set that
+        cannot be joined -- the French page is already somebody else's French version -- has to refuse
+        the whole save, and an author told their page was not created must not find it created.
+      */
+      if (input.localeRelations !== undefined) {
+        await this.applyLocaleRelations(
+          siteId,
+          { id: page.id, locale, localeGroupId: null },
+          input.localeRelations
+        )
+      }
       await WIKI.models.tree.addPage({
         id: page.id,
         parentPath: pathParts.slice(0, -1).join('/'),
@@ -641,6 +988,19 @@ class Pages {
     const existing = results[0]
     if (!existing) {
       return null
+    }
+
+    /*
+      First, before a single column is written: joining a set can be refused, and a save that is going
+      to fail has to fail before it has changed the page. The two are independent otherwise -- a locale
+      group is not a field of the page it relates.
+    */
+    if (patch.localeRelations !== undefined) {
+      await this.applyLocaleRelations(
+        siteId,
+        { id: existing.id, locale: existing.locale, localeGroupId: existing.localeGroupId },
+        patch.localeRelations
+      )
     }
 
     const values: Record<string, any> = { updatedAt: sql`now()` }
@@ -833,6 +1193,16 @@ class Pages {
         fileName: newPath.split('/').at(-1)!,
         contentType: page.contentType
       })
+    }
+
+    /*
+      A page that changes locale stops being the version it was, so it leaves its translation set --
+      and has to, before the write: the set holds one page per locale, and the page arriving in a
+      locale another member already covers is a pair the unique index would refuse. The rest of the
+      set stays related to each other.
+    */
+    if (newLocale !== page.locale) {
+      await this.detachFromLocaleGroup(siteId, id)
     }
 
     await WIKI.db

@@ -58,8 +58,14 @@ export function anchorTarget(hash) {
   return id ? document.getElementById(id) : null
 }
 
-/** Whether an element has a box on the page — false while it sits in a panel that is not showing. */
-function isVisible(el) {
+/**
+ * Whether an element has a box on the page — false while it sits in a panel that is not showing.
+ *
+ * Exported because the contents list asks the same question of a heading before measuring where it is:
+ * one inside a closed tab measures nothing at all, which reads as the top of the page rather than as
+ * an absence. See `PageToc`.
+ */
+export function isVisible(el) {
   return Boolean(el.offsetParent ?? el.getClientRects().length)
 }
 

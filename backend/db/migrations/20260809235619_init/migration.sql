@@ -243,6 +243,7 @@ CREATE TABLE "pageWatching" (
 CREATE TABLE "pages" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"locale" varchar(255) NOT NULL,
+  "localeGroupId" uuid,
 	"path" varchar(255) NOT NULL,
 	"hash" varchar(255) NOT NULL,
 	"alias" varchar(255),
@@ -412,6 +413,7 @@ CREATE INDEX "pages_siteId_idx" ON "pages" ("siteId");--> statement-breakpoint
 CREATE INDEX "pages_ts_idx" ON "pages" USING gin ("ts");--> statement-breakpoint
 CREATE INDEX "pages_tags_idx" ON "pages" USING gin ("tags");--> statement-breakpoint
 CREATE INDEX "pages_isSearchableComputed_idx" ON "pages" ("isSearchableComputed");--> statement-breakpoint
+CREATE UNIQUE INDEX "pages_localeGroupId_locale_idx" ON "pages" ("localeGroupId","locale");
 CREATE INDEX "rateLimits_updatedAt_idx" ON "rateLimits" ("updatedAt");--> statement-breakpoint
 CREATE INDEX "sessions_userId_idx" ON "sessions" ("userId");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_composite_idx" ON "storage" ("siteId","module");--> statement-breakpoint

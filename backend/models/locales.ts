@@ -6,6 +6,21 @@ import { eq, sql } from 'drizzle-orm'
 /** Where the locale packages published for this major version live. */
 const REMOTE_BASE_URL = 'https://github.com/requarks/wiki-locales/raw/main'
 
+/**
+ * The locale this wiki's strings are WRITTEN in, as opposed to translated into.
+ *
+ * `locales/en.json` is the source: every string in the interface is added there first, and every
+ * other locale is a translation of it. That makes it the one locale the copy on disk is more
+ * authoritative than anything else — so it is loaded on every boot rather than only when the file
+ * looks newer, and it is never fetched from upstream, where it would be whatever was published for
+ * the last release rather than what this build actually says.
+ *
+ * The practical failure this avoids: a string added to `en.json` in a build was invisible to a wiki
+ * whose `en` row had been touched more recently — by an earlier update run, or by an administrator
+ * naming it — leaving the interface showing raw keys for anything new.
+ */
+const SOURCE_LOCALE = 'en'
+
 /** One entry of the remote `metadata.json`: a strings file and the hash of its contents. */
 interface RemoteLocale {
   file: string
@@ -111,6 +126,10 @@ function resolveDisplayNames(locales: NameableLocale[]) {
  * **available**, which is a row the update task created from the remote metadata so that the locale
  * can be offered without its strings having been downloaded. `isInstalled` is the difference, and
  * only an installed locale may be activated on a site.
+ *
+ * Two sources fill those rows, and they do not overlap: `locales/en.json` on disk, which is where the
+ * interface's strings are written, and the published packages every translation comes from. See
+ * `SOURCE_LOCALE` for why the first is never asked of the second.
  */
 class Locales {
   /**
@@ -125,6 +144,10 @@ class Locales {
    * updated in the db — by the update task, or by an administrator — must not be overwritten by the
    * copy that shipped with the release. The `hash` is left empty either way, since these strings did
    * not come from the remote metadata; that is what makes the first update run consider them stale.
+   *
+   * **`en` is exempt and always loaded**, because it is not a translation of anything — see
+   * `SOURCE_LOCALE`. Only the strings are written, so an administrator's `customName` or `customCode`
+   * survives the reload.
    */
   async refreshFromDisk({ force = false }: { force?: boolean } = {}): Promise<false | void> {
     try {
@@ -152,13 +175,19 @@ class Locales {
           continue
         }
 
-        // -> Skip a locale that was updated in the DB after the file was last written
+        /*
+          Skip a locale that was updated in the DB after the file was last written -- except the
+          source locale, whose file is the authority on what the interface says and is therefore
+          loaded every time. Its mtime is not even read: a checkout, a container build or a copy can
+          leave the shipped file older than a row it must still replace.
+        */
         const flPath = path.join(localesPath, localeFile)
         const flUpdatedAt = (await stat(flPath)).mtime.toTemporalInstant()
         const dbLang = dbLocales.find((l) => l.code === code)
         if (
           dbLang &&
           !force &&
+          code !== SOURCE_LOCALE &&
           Temporal.Instant.compare(dbLang.updatedAt.toTemporalInstant(), flUpdatedAt) >= 0
         ) {
           WIKI.logger.info(`Locale ${code} is newer in the DB. Skipping disk version. [ OK ]`)
@@ -244,6 +273,12 @@ class Locales {
    *
    * A locale that fails is counted and logged rather than taking the rest of the run down with it:
    * one unreachable file should not leave the other fifty stale.
+   *
+   * **The source locale is left alone entirely** — see `SOURCE_LOCALE`. Upstream publishes an `en`
+   * package like any other, and it holds the strings of whatever release it was built from; taking it
+   * would overwrite the ones this build ships with, which is how an interface ends up missing the
+   * strings for its own features. It is counted as unchanged, because from the run's point of view
+   * there was nothing to do.
    */
   async updateFromRemote(): Promise<LocaleUpdateResult> {
     WIKI.logger.info('Fetching latest localization data...')
@@ -260,6 +295,10 @@ class Locales {
     const result: LocaleUpdateResult = { added: 0, updated: 0, unchanged: 0, failed: 0 }
     for (const entry of metadata) {
       const code = path.basename(entry.file, '.json')
+      if (code === SOURCE_LOCALE) {
+        result.unchanged++
+        continue
+      }
       try {
         const localeInfo = localeInfoFor(code)
         const dbLang = dbLocales.find((l) => l.code === code)
@@ -303,6 +342,11 @@ class Locales {
    * hash recorded is the one the downloaded file was published with.
    */
   async install(code: string): Promise<void> {
+    // -> There is nothing to install: it ships with the wiki and is loaded from disk on every boot,
+    //    and downloading over it would replace this build's strings with an older release's
+    if (code === SOURCE_LOCALE) {
+      throw new Error(`Locale ${code} ships with the wiki and cannot be downloaded.`)
+    }
     const metadata = await this.fetchRemoteMetadata()
     const entry = metadata.find((e) => path.basename(e.file, '.json') === code)
     if (!entry) {

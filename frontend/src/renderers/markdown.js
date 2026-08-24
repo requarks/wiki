@@ -466,20 +466,53 @@ export class MarkdownRenderer {
     // Inject line numbers for preview scroll sync
     // --------------------------------
 
-    this.linesMap = []
+    /*
+      Stamped at every depth, not only on the tokens sitting at the top level of the document. The
+      editor finds the line the caret is on by this attribute and nothing else, so a token without one
+      is a line the preview cannot be scrolled to -- and everything written inside a block was such a
+      line, `::block-tab` panels most of all. What that looked like: the nearest line the editor could
+      find for a caret inside a panel was the last paragraph ABOVE the whole tabset, so the preview
+      scrolled up out of the panel being written in, however long its content was.
+
+      A hidden token is skipped. A tight list's paragraphs are parsed and then not rendered, and a
+      single-paragraph block body is unwrapped the same way, so stamping one would leave the editor
+      looking for an element that was never drawn -- worse than not knowing the line, since it would
+      stop looking for something it could have scrolled to instead.
+    */
     const injectLineNumbers = (tokens, idx, options, env, slf) => {
-      let line
-      if (tokens[idx].map && tokens[idx].level === 0) {
-        line = tokens[idx].map[0] + 1
-        tokens[idx].attrJoin('class', 'line')
-        tokens[idx].attrSet('data-line', String(line))
-        this.linesMap.push(line)
+      const token = tokens[idx]
+      if (token.map && !token.hidden) {
+        token.attrJoin('class', 'line')
+        token.attrSet('data-line', String(token.map[0] + 1))
       }
       return slf.renderToken(tokens, idx, options, env, slf)
     }
     this.md.renderer.rules.paragraph_open = injectLineNumbers
     this.md.renderer.rules.heading_open = injectLineNumbers
     this.md.renderer.rules.blockquote_open = injectLineNumbers
+
+    /*
+      A fence carries its line in the markup rather than on the token, because the `highlight` option
+      above returns the whole `<pre>` and markdown-it hands a highlighted fence straight back: the
+      token's attributes are rendered by nobody, so `attrSet` would reach nothing.
+
+      Worth the string surgery for the case this whole mechanism exists for. A tabset whose panels each
+      hold one long code sample -- per language, per platform -- is the commonest tabset there is, and
+      it is exactly the one where the caret has no anchor of its own to be scrolled to.
+
+      The attribute only, without the `line` class the tokens above join: the class would have to go on
+      a tag that already carries one, and two `class` attributes on the same tag is not markup.
+    */
+    const renderFence =
+      this.md.renderer.rules.fence ??
+      ((tokens, idx, options, env, slf) => slf.renderToken(tokens, idx, options, env, slf))
+    this.md.renderer.rules.fence = (tokens, idx, options, env, slf) => {
+      const html = renderFence(tokens, idx, options, env, slf)
+      const map = tokens[idx].map
+      // -> Every branch of `highlight` opens with `<pre`, and so does the wrapper markdown-it puts
+      //    around a fence it did not highlight
+      return map ? html.replace(/^<pre/, `<pre data-line="${map[0] + 1}"`) : html
+    }
 
     // --------------------------------
     // Where the tabsets are, for the editor's preview
@@ -527,28 +560,28 @@ export class MarkdownRenderer {
    *                            a relative image resolves against -- see `fileSrc`.
    */
   render(src, { pagePath = '' } = {}) {
-    this.linesMap = []
     // -> A fresh env every time, whatever the caller passed: markdown-it keeps per-render state in it
     //    (footnotes and references), and one shared between renders would carry the last one's
     return this.md.render(src, { pagePath })
   }
 
-  getClosestPreviewLine(line) {
-    return this.linesMap.findLast((n) => n <= line)
-  }
-
   /**
-   * Which tabset panel a source line is inside, as the pair of indices that finds it in the render.
+   * Which tabset panels a source line is inside, as the pairs of indices that find them in the render.
    *
-   * The innermost panel wins, so a tabset within a tabset answers for its own lines: the map is built
-   * outermost-first, and a later match is therefore a deeper one.
+   * Every panel that contains the line, outermost first, rather than only the one it is written in: a
+   * tabset nested in another one is drawn inside a panel, and opening the inner panel while the panel
+   * holding it stays closed reveals nothing at all. The last entry is therefore the panel the line is
+   * actually in, and the ones before it are what has to be opened for it to be on the page.
+   *
+   * Ordered by construction: `tabsMap` is built in document order, so a tabset that encloses another
+   * is always the earlier of the two.
    *
    * @param {number} line A 1-based editor line, as Monaco counts them.
-   * @returns {{tabset: number, tab: number}|null} Indices among the document's tabsets and that
-   *          tabset's panels, or null when the line is not inside one.
+   * @returns {Array<{tabset: number, tab: number}>} Indices among the document's tabsets and each
+   *          tabset's panels, outermost first. Empty when the line is not inside one.
    */
-  getTabAtLine(line) {
-    let found = null
+  getTabsAtLine(line) {
+    const found = []
     for (const [tabset, tabs] of this.tabsMap.entries()) {
       for (const [tab, map] of tabs.entries()) {
         /*
@@ -557,7 +590,7 @@ export class MarkdownRenderer {
           a panel still counts as being in it.
         */
         if (line - 1 >= map[0] && line - 1 <= map[1]) {
-          found = { tabset, tab }
+          found.push({ tabset, tab })
         }
       }
     }

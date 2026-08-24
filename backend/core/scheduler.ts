@@ -519,45 +519,39 @@ export default {
                   .toString({ smallestUnit: 'millisecond' }),
                 tz: 'UTC'
               })
-              // -> Add a maximum of 10 future iterations for a single task
-              let addedFutureJobs = 0
-              while (true) {
-                try {
-                  // FIXME: pre-existing bug — cron-parser v5's `next()` returns a `CronDate`, not an
-                  // ES iterator result, so `next.value` and `next.done` below are both `undefined`.
-                  // `next.value.getTime()` therefore throws (swallowed by the `catch { break }`)
-                  // whenever `existingJobs` is non-empty, and `next.done` is never true so the loop
-                  // only ever stops at the 10-iteration cap. Cast to `any` to keep the migration
-                  // behavior-neutral; the fix is `next.getTime()` + `plannedIterations.hasNext()`.
-                  const next = plannedIterations.next() as any
-                  // -> Ensure this iteration isn't already scheduled
-                  if (
-                    !existingJobs.some(
-                      (j: any) =>
-                        j.task === job.task && j.waitUntil.getTime() === next.value.getTime()
-                    )
-                  ) {
-                    // FIXME: `useWorker` is not an `addJob` option (it is derived inside `addJob`)
-                    // and `waitUntil` is handed an ISO string rather than a Date. Cast preserves
-                    // the existing call verbatim.
-                    this.addJob({
-                      task: job.task,
-                      useWorker: !(typeof this.tasks![job.task] === 'function'),
-                      payload: job.payload,
-                      isScheduled: true,
-                      waitUntil: next.toISOString(),
-                      notify: false
-                    } as any)
-                    addedFutureJobs++
-                    totalAdded++
-                  }
-                  // -> No more iterations for this period or max iterations count reached
-                  if (next.done || addedFutureJobs >= 10) {
-                    break
-                  }
-                } catch {
-                  break
+              /*
+                At most 6 iterations of a task are queued ahead, and `take` is what stops there --
+                and stops early where the window above holds fewer, since it gives back what it
+                reached rather than throwing at the end of it.
+
+                The cap is a horizon rather than a quota: an iteration already queued still spends
+                one of the six, so what is pending for a task never runs further ahead than its next
+                six runs however often this runs. Counting only the ones added would push that
+                horizon out on every pass, until a minute-by-minute task had the whole window queued.
+              */
+              for (const iteration of plannedIterations.take(6)) {
+                const waitUntil = iteration.toDate()
+                // -> Ensure this iteration isn't already scheduled
+                if (
+                  existingJobs.some(
+                    (j) => j.task === job.task && j.waitUntil?.getTime() === waitUntil.getTime()
+                  )
+                ) {
+                  continue
                 }
+                /*
+                  Awaited, because `totalAdded` is reported as what was scheduled: left to run on its
+                  own, the line below says so before the rows exist, and a failure to insert one is
+                  swallowed inside `addJob` with nothing to correct the count.
+                */
+                await this.addJob({
+                  task: job.task,
+                  payload: job.payload,
+                  isScheduled: true,
+                  waitUntil,
+                  notify: false
+                })
+                totalAdded++
               }
             }
             if (totalAdded > 0) {

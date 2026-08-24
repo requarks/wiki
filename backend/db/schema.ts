@@ -366,6 +366,15 @@ export const pages = pgTable(
     publishEndDate: timestamp(),
     config: jsonb().notNull().default({}),
     relations: jsonb().notNull().default([]),
+    /**
+     * The set of pages this one is a translation of: every page sharing this id is the same page in
+     * another locale, and the locale selector uses it to send a reader to the right one.
+     *
+     * Null for a page with no counterparts, which is most of them — a null is what makes the unique
+     * index below tolerate any number of unrelated pages, since postgres counts nulls as distinct.
+     * The group has no row of its own: it is an identity, and its membership IS this column.
+     */
+    localeGroupId: uuid(),
     content: text(),
     render: text(),
     searchContent: text(),
@@ -411,7 +420,10 @@ export const pages = pgTable(
     index('pages_siteId_idx').on(table.siteId),
     index('pages_ts_idx').using('gin', table.ts),
     index('pages_tags_idx').using('gin', table.tags),
-    index('pages_isSearchableComputed_idx').on(table.isSearchableComputed)
+    index('pages_isSearchableComputed_idx').on(table.isSearchableComputed),
+    // -> One page per locale in a group, enforced here rather than in the model: a group is edited
+    //    from any of its members, so two saves racing each other are two writers of the same set
+    uniqueIndex('pages_localeGroupId_locale_idx').on(table.localeGroupId, table.locale)
   ]
 )
 

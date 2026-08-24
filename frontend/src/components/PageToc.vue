@@ -26,7 +26,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 
-import { scrollToAnchor } from '@/helpers/anchors'
+import { isVisible, scrollToAnchor } from '@/helpers/anchors'
 import { flattenToc } from '@/helpers/toc'
 
 /**
@@ -80,6 +80,12 @@ const SPY_LINE = 120
   heading is meant. Long enough for a scroll of any length to settle.
 */
 const CLICK_SETTLE_MS = 1200
+
+/*
+  The tab block, named here because the spy has to leave its rows alone — see `spyableRows`. Uppercase
+  because `tagName` is, for an HTML element in an HTML document.
+*/
+const TAB_TAG = 'BLOCK-TAB'
 
 let spyFrame = null
 let spySuspendedUntil = 0
@@ -135,31 +141,61 @@ function scrollportTop(heading) {
 }
 
 /**
+ * The rows the spy may mark, paired with the element each one points at.
+ *
+ * Two kinds are left out, both because where they sit says nothing about what is being read:
+ *
+ * - **A row pointing at a tab.** A tab is somewhere a reader is sent, not somewhere they arrive by
+ *   scrolling: every panel of a block starts at the same offset, so a reader passing the block passes
+ *   all of them at once and the marker has no reason to prefer any one. `block-tab` is also the only
+ *   row whose target is the container of a whole section of page rather than a line at the top of one.
+ * - **Anything inside a panel that is not showing.** A closed tab is `display: none`, so its contents
+ *   measure nothing at all — `top: 0`, which reads as a heading the reader has long since passed
+ *   rather than as one that is not on the page. Since the last match in document order wins, the
+ *   deepest hidden row held the marker whatever the reader did.
+ *
+ * Neither is excluded from the list itself: both are still drawn, and clicking either still opens the
+ * panel and scrolls to it, which is `scrollToAnchor`'s job rather than the spy's.
+ */
+function spyableRows() {
+  const rows = []
+  for (const item of visibleItems.value) {
+    const heading = headingFor(item.key)
+    if (heading && heading.tagName !== TAB_TAG && isVisible(heading)) {
+      rows.push({ key: item.key, heading })
+    }
+  }
+  return rows
+}
+
+/**
  * Mark whichever heading the reader has reached.
  *
  * Positions are read fresh each time rather than cached: the render is replaced wholesale while
  * editing, and images settling in shift every heading below them.
  */
 function syncSpy() {
-  if (performance.now() < spySuspendedUntil || visibleItems.value.length === 0) {
+  if (performance.now() < spySuspendedUntil) {
     return
   }
 
+  const rows = spyableRows()
+  if (rows.length === 0) {
+    // -> Nothing on the page to measure against — a page that is all tabs, or a render still arriving.
+    //    The marker stays where it was, rather than moving to a row nobody is reading.
+    return
+  }
+
+  const line = scrollportTop(rows[0].heading) + SPY_LINE
   let current = null
-  let line = null
-  for (const item of visibleItems.value) {
-    const heading = headingFor(item.key)
-    if (!heading) {
-      continue
-    }
-    line ??= scrollportTop(heading) + SPY_LINE
-    if (heading.getBoundingClientRect().top <= line) {
-      current = item.key
+  for (const row of rows) {
+    if (row.heading.getBoundingClientRect().top <= line) {
+      current = row.key
     }
   }
 
   // -> Above the first heading, the first section is still the one being read
-  const next = current ?? visibleItems.value[0].key
+  const next = current ?? rows[0].key
   if (next !== props.selected) {
     emit('update:selected', next)
   }

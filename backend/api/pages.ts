@@ -414,6 +414,79 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * GET LOCALE RELATIONS OF A PAGE, BY PATH
+   *
+   * No route-level permissions: this answers about one page, so what governs it is `read:pages` on
+   * that page rather than anything site-wide.
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
+    '/sites/:siteId/pages/locale-relations',
+    {
+      schema: {
+        summary: 'Get the translation set a page belongs to',
+        description:
+          'The pages that are the same page as this one, in other locales, addressed by path rather than by ID — which is what a page picker has in hand.\n\nWhat the page properties panel asks before it accepts a chosen page. A page that is already part of a set answers with the rest of it, so the panel can fill its other rows in and say what set is being joined; a page with no counterparts answers with an empty list. Saving is what actually joins them — see `localeRelations` on `PageInput`.\n\nThe set comes back whole, unfiltered by publish state: an author choosing a translation has to be told about a draft one, or they would be shown an empty row and refused on save.',
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          required: ['path'],
+          properties: {
+            path: {
+              type: 'string',
+              maxLength: 255,
+              description:
+                'Slash-separated path of the page to ask about. The home page when empty.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The page, and the rest of its translation set',
+            type: 'object',
+            properties: {
+              page: { $ref: 'PageLocaleRelation#' },
+              relations: {
+                type: 'array',
+                description: 'Every other page of the set. Empty when the page is in none.',
+                items: { $ref: 'PageLocaleRelation#' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const path = normalizePagePath(req.query.path)
+      const group = await WIKI.models.pages.localeGroupAt(req.params.siteId, {
+        locale: req.query.locale,
+        path
+      })
+      if (!group) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'read:pages', { path: group.page.path, locale: group.page.locale })) {
+        return reply.forbidden('You are not allowed to read this page.')
+      }
+      return {
+        page: { locale: group.page.locale, path: group.page.path, title: group.page.title },
+        /*
+          Filtered by what the asker may read, one page at a time: the set is a list of pages, and a
+          page they have no access to is not one to name at them — even to explain a refusal.
+        */
+        relations: group.relations.filter((rel) =>
+          mayOnPage(req, 'read:pages', { path: rel.path, locale: rel.locale })
+        )
+      }
+    }
+  )
+
+  /**
    * GET PAGE
    */
   app.get<{
