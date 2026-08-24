@@ -95,5 +95,5 @@ props:
   scope:
     type: String
     title: Scope
-    hint: (optional) Additional permission scopes to request. 'openid profile email' are always included.
+    hint: (optional) Additional permission scopes to request. 'openid profile email' are always included. Add extra scopes here, e.g. 'roles'.
     order: 15
