@@ -13,11 +13,21 @@
       <div class="flex-none flex">
         <w-btn
           class="mr-2 acrylic-btn"
+          flat
+          icon="la:cloud-download-alt"
+          color="purple"
+          :label="t(`admin.locale.fetch`)"
+          @click="fetchLocales">
+          <w-tooltip>{{ t(`admin.locale.fetchHint`) }}</w-tooltip>
+        </w-btn>
+        <w-separator class="mr-2" vertical />
+        <w-btn
+          class="mr-2 acrylic-btn"
           icon="la:question-circle"
           flat
           color="grey"
           :aria-label="t(`common.actions.viewDocs`)"
-          :href="siteStore.docsBase + `/admin/localisation`"
+          :href="siteStore.docsBase + `/admin/locale`"
           target="_blank">
           <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
         </w-btn>
@@ -58,7 +68,7 @@
               <w-select
                 outlined
                 v-model="state.primary"
-                :options="state.locales"
+                :options="primaryOptions"
                 option-value="code"
                 option-label="name"
                 emit-value
@@ -98,30 +108,55 @@
         <w-card class="pb-2 mt-4">
           <w-card-header>
             {{ t('admin.locale.active') }}
-            <template #hint>Select the locales that can be used on this site.</template>
+            <template #hint>{{ t('admin.locale.activeHint') }}</template>
           </w-card-header>
-          <w-item
-            v-for="lc of state.locales"
-            :key="lc.code"
-            :tag="lc.code !== state.selectedLocale ? `label` : null">
-            <blueprint-icon :text="lc.language" />
-            <w-item-section>
-              <w-item-label>{{ lc.nativeName }}</w-item-label>
-              <w-item-label caption>{{ lc.name }} ({{ lc.code }})</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                :disable="lc.code === state.primary"
-                v-model="state.active"
-                :val="lc.code"
-                :aria-label="lc.name" />
-            </w-item-section>
-          </w-item>
+          <template v-for="(lc, idx) of orderedLocales" :key="lc.code">
+            <w-separator v-if="idx === dividerIndex" class="my-2" inset />
+            <!-- -> Only an installed row is a label: there is no toggle behind the Install button
+                    for the click to be forwarded to -->
+            <w-item :tag="lc.isInstalled ? `label` : null">
+              <blueprint-icon :text="lc.language" />
+              <w-item-section>
+                <w-item-label>{{ lc.name }}</w-item-label>
+                <w-item-label caption>{{ lc.nativeName }} ({{ lc.displayCode }})</w-item-label>
+              </w-item-section>
+              <w-item-section v-if="lc.isInstalled" side>
+                <w-btn
+                  flat
+                  dense
+                  color="grey"
+                  icon="la:pen"
+                  :aria-label="t(`admin.locale.editAliases`)"
+                  @click="editAliases(lc)">
+                  <w-tooltip>{{ t(`admin.locale.editAliases`) }}</w-tooltip>
+                </w-btn>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-toggle
+                  v-if="lc.isInstalled"
+                  :disable="lc.code === state.primary"
+                  v-model="state.active"
+                  :val="lc.code"
+                  :aria-label="lc.name" />
+                <w-btn
+                  v-else
+                  flat
+                  color="primary"
+                  icon="la:download"
+                  :label="t(`admin.locale.install`)"
+                  :loading="state.installing === lc.code"
+                  :disabled="state.loading > 0 || Boolean(state.installing)"
+                  @click="install(lc.code)" />
+              </w-item-section>
+            </w-item>
+          </template>
         </w-card>
       </div>
       <div class="col-span-12 lg:col-span-5">
-        <div class="p-4 text-center">
-          <img src="/_assets/illustrations/undraw_world.svg" style="width: 80%" />
+        <div class="p-4">
+          <!-- -> `mx-auto`, not the `text-center` that was here: preflight makes an img a block, so
+                  centring it is a margin question rather than a text-align one -->
+          <img src="/_assets/illustrations/undraw_world.svg" class="mx-auto" style="width: 80%" />
         </div>
       </div>
     </div>
@@ -130,12 +165,17 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
+import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+
+import LocaleAliasesDialog from '@/components/LocaleAliasesDialog.vue'
+import LocaleFetchDialog from '@/components/LocaleFetchDialog.vue'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -165,11 +205,35 @@ useMeta({
 
 const state = reactive({
   loading: 0,
+  installing: null,
   locales: [],
   primary: 'en',
   forcePrefix: false,
   showMenu: true,
   active: []
+})
+
+// COMPUTED
+
+// -> Installed first, so that the handful of locales this site can actually use is not buried among
+//    the fifty-odd it merely could install. Each half keeps the alphabetical order `load` sorted it
+//    into.
+// -> A locale can only be the fallback for pages this site actually serves, so the choice is the
+//    active ones — which are installed by definition, since only an installed locale may be activated
+const primaryOptions = computed(() =>
+  state.locales.filter((lc) => lc.isInstalled && state.active.includes(lc.code))
+)
+
+const orderedLocales = computed(() => [
+  ...state.locales.filter((lc) => lc.isInstalled),
+  ...state.locales.filter((lc) => !lc.isInstalled)
+])
+
+// -> The row the divider sits above; -1 when one of the two halves is empty and there is nothing to
+//    divide
+const dividerIndex = computed(() => {
+  const idx = orderedLocales.value.findIndex((lc) => !lc.isInstalled)
+  return idx > 0 ? idx : -1
 })
 
 // WATCHERS
@@ -200,7 +264,7 @@ async function load() {
       API_CLIENT.get('locales').json(),
       API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
     ])
-    state.locales = sortBy(locales ?? [], ['nativeName', 'name'])
+    state.locales = sortBy(locales ?? [], ['name', 'nativeName'])
     state.primary = site?.locales?.primary ?? 'en'
     state.forcePrefix = site?.locales?.forcePrefix ?? false
     state.showMenu = site?.locales?.showMenu ?? true
@@ -263,6 +327,45 @@ async function save() {
     })
   }
   state.loading--
+}
+
+function fetchLocales() {
+  dialog({
+    component: LocaleFetchDialog
+  }).onOk(() => {
+    load()
+  })
+}
+
+function editAliases(locale) {
+  dialog({
+    component: LocaleAliasesDialog,
+    componentProps: { locale }
+  }).onOk(() => {
+    load()
+  })
+}
+
+async function install(code) {
+  if (state.installing) {
+    return
+  }
+  state.installing = code
+  try {
+    await API_CLIENT.post(`locales/${code}/install`)
+    notify({
+      type: 'positive',
+      message: t('admin.locale.installSuccess')
+    })
+    await load()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.locale.installFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  state.installing = null
 }
 
 // MOUNTED

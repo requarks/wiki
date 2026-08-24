@@ -59,7 +59,13 @@ export const useAdminStore = defineStore('admin', {
   actions: {
     async fetchLocales() {
       const resp = await API_CLIENT.get('locales').json()
-      this.locales = sortBy(cloneDeep(resp ?? []), ['nativeName', 'name'])
+      // -> Installed only: everything reading this offers a locale to *use* — the interface language
+      //    menu, a group's page rules — and one with no strings downloaded has nothing to offer.
+      //    The locale admin page fetches the full list itself, since installing is what it is for.
+      this.locales = sortBy(
+        cloneDeep(resp ?? []).filter((lc) => lc.isInstalled),
+        ['nativeName', 'name']
+      )
     },
     async fetchInfo() {
       const resp = await API_CLIENT.get('system/info').json()

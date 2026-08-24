@@ -1,17 +1,33 @@
 <template>
   <w-dialog v-model="dialogVisible" @hide="onDialogHide">
     <w-card class="page-save-dialog" style="width: 860px; max-width: 90vw">
-      <w-card-section v-if="props.mode === `savePage`" class="card-header">
-        <w-icon name="img:/_assets/icons/fluent-save-as.svg" size="sm" class="mr-2" />
-        <span>{{ t('pageSaveDialog.title') }}</span>
-      </w-card-section>
-      <w-card-section v-else-if="props.mode === `duplicatePage`" class="card-header">
-        <w-icon name="img:/_assets/icons/color-documents.svg" size="sm" class="mr-2" />
-        <span>{{ t('pageDuplicateDialog.title') }}</span>
-      </w-card-section>
-      <w-card-section v-else-if="props.mode === `renamePage`" class="card-header">
-        <w-icon name="img:/_assets/icons/fluent-rename.svg" size="sm" class="mr-2" />
-        <span>{{ t('pageRenameDialog.title') }}</span>
+      <!--
+        One header rather than one per mode: the locale picker sits in it, and three copies of the
+        same button is three places to keep in step.
+      -->
+      <w-card-section class="card-header">
+        <w-icon :name="header.icon" size="sm" class="mr-2" />
+        <span>{{ t(header.title) }}</span>
+        <w-space />
+        <!-- -> Only where there is a choice to make: one active locale is most wikis, and a button
+                that can only say `en` is noise on all of them -->
+        <w-btn
+          v-if="siteStore.locales.active.length > 1"
+          class="acrylic-btn -my-2"
+          flat
+          dense
+          padding="xs md"
+          color="white"
+          :label="siteStore.localeAlias(state.locale)"
+          :aria-label="siteStore.localeAlias(state.locale)">
+          <w-tooltip>{{ t(`pageSaveDialog.localeHint`) }}</w-tooltip>
+          <locale-selector-menu
+            :selected="state.locale"
+            :navigate="false"
+            anchor="bottom right"
+            self="top right"
+            @select="switchLocale" />
+        </w-btn>
       </w-card-section>
       <div class="page-save-dialog-browser flex flex-nowrap">
         <div class="page-save-dialog-tree w-1/3">
@@ -151,6 +167,7 @@ import slugify from 'slugify'
 import fileTypes from '../helpers/fileTypes'
 
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
+import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 import Tree from '@/components/TreeNav.vue'
 
 import { useSiteStore } from '@/stores/site'
@@ -184,6 +201,16 @@ const props = defineProps({
     type: String,
     required: false,
     default: ''
+  },
+  /**
+   * The locale to browse, and — where the mode allows it — the one the page ends up in. The caller's
+   * to give: the page view means the page on screen, the file manager means whichever locale it is
+   * listing. The site's primary when absent.
+   */
+  locale: {
+    type: String,
+    required: false,
+    default: null
   }
 })
 
@@ -207,6 +234,7 @@ const { t } = useI18n()
 
 const state = reactive({
   displayMode: 'title',
+  locale: props.locale || siteStore.locales.primary,
   currentFolderId: null,
   currentFileId: null,
   isFetching: false,
@@ -224,6 +252,20 @@ const state = reactive({
 const treeComp = ref(null)
 
 // COMPUTED
+
+const header = computed(() => {
+  switch (props.mode) {
+    case 'duplicatePage': {
+      return { icon: 'img:/_assets/icons/color-documents.svg', title: 'pageDuplicateDialog.title' }
+    }
+    case 'renamePage': {
+      return { icon: 'img:/_assets/icons/fluent-rename.svg', title: 'pageRenameDialog.title' }
+    }
+    default: {
+      return { icon: 'img:/_assets/icons/fluent-save-as.svg', title: 'pageSaveDialog.title' }
+    }
+  }
+})
 
 const currentFolderPath = computed(() => {
   const folderNode = state.currentFolderId ? state.treeNodes[state.currentFolderId] : null
@@ -300,11 +342,32 @@ async function save() {
   }
   onDialogOK({
     title: state.title.trim(),
+    locale: state.locale,
     path:
       currentFolderPath.value.length > 1
         ? `${currentFolderPath.value.substring(1)}${state.path}`
         : state.path
   })
+}
+
+/**
+ * Browse another locale.
+ *
+ * Back to its root: the folder that was open belongs to the tree being left, and a folder id from it
+ * would list somebody else's contents under this locale's name.
+ */
+async function switchLocale(locale) {
+  if (locale === state.locale) {
+    return
+  }
+  state.locale = locale
+  state.treeNodes = {}
+  state.treeRoots = []
+  state.currentFolderId = null
+  state.currentFileId = null
+  state.fileList = []
+  treeComp.value?.resetLoaded()
+  await loadTree({ initLoad: true })
 }
 
 async function treeLazyLoad(nodeId, isCurrent, { done }) {
@@ -335,6 +398,7 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
   try {
     const items = await API_CLIENT.get(`sites/${siteStore.id}/tree`, {
       searchParams: {
+        locale: state.locale,
         ...(parentId ? { parentId } : {}),
         ...(parentPath ? { parentPath } : {}),
         ...(state.typesToFetch?.length > 0 ? { types: state.typesToFetch.join(',') } : {}),
@@ -448,7 +512,8 @@ function newFolder(parentId) {
   dialog({
     component: FolderCreateDialog,
     componentProps: {
-      parentId
+      parentId,
+      locale: state.locale
     }
   }).onOk(() => {
     loadTree({ parentId })

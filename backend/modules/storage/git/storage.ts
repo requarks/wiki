@@ -687,8 +687,8 @@ const gitStorage: StorageModule = {
     )
   },
 
-  async movePage(target, ref, previousPath) {
-    const from = pageRelPath(target, { ...ref, path: previousPath })
+  async movePage(target, ref, previous) {
+    const from = pageRelPath(target, { ...ref, ...previous })
     const to = pageRelPath(target, ref)
     await withRepo(target, async (repo) => {
       const outcome = await moveStored(repo.root, from, to)
@@ -704,8 +704,8 @@ const gitStorage: StorageModule = {
         target,
         paths,
         outcome === 'moved'
-          ? `docs: rename ${pageLabel({ ...ref, path: previousPath })} to ${pageLabel(ref)}`
-          : `docs: delete ${pageLabel({ ...ref, path: previousPath })}`,
+          ? `docs: rename ${pageLabel({ ...ref, ...previous })} to ${pageLabel(ref)}`
+          : `docs: delete ${pageLabel({ ...ref, ...previous })}`,
         ref.actorId
       )
     })

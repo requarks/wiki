@@ -327,13 +327,15 @@ function duplicatePage() {
       folderPath: '',
       itemId: pageStore.id,
       itemTitle: pageStore.title,
-      itemFileName: pageStore.path
+      itemFileName: pageStore.path,
+      locale: pageStore.locale
     }
   }).onOk((newPageOpts) => {
     pageStore.pageDuplicate({
       sourcePageId: pageStore.id,
       path: newPageOpts.path,
-      title: newPageOpts.title
+      title: newPageOpts.title,
+      locale: newPageOpts.locale
     })
   })
 }
@@ -346,11 +348,13 @@ function renamePage() {
       folderPath: '',
       itemId: pageStore.id,
       itemTitle: pageStore.title,
-      itemFileName: pageStore.path
+      itemFileName: pageStore.path,
+      locale: pageStore.locale
     }
   }).onOk(async (renamedPageOpts) => {
     try {
-      if (renamedPageOpts.path === pageStore.path) {
+      // -> The destination is a locale as well as a path: the same path in another locale is a move
+      if (renamedPageOpts.path === pageStore.path && renamedPageOpts.locale === pageStore.locale) {
         await pageStore.pageRename({ id: pageStore.id, title: renamedPageOpts.title })
         notify({
           type: 'positive',
@@ -360,7 +364,8 @@ function renamePage() {
         await pageStore.pageMove({
           id: pageStore.id,
           path: renamedPageOpts.path,
-          title: renamedPageOpts.title
+          title: renamedPageOpts.title,
+          locale: renamedPageOpts.locale
         })
         notify({
           type: 'positive',

@@ -73,5 +73,10 @@ export default {
     WIKI.events.inbound.on('flushCaches', async () => {
       await this.flushCaches()
     })
+    // -> The locale list is cached per instance, so an install or an update on one of them is only
+    //    visible everywhere once the others read it back
+    WIKI.events.inbound.on('reloadLocales', async () => {
+      await WIKI.models.locales.reloadCache()
+    })
   }
 }

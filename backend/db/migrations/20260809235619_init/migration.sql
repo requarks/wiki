@@ -174,6 +174,10 @@ CREATE TABLE "locales" (
 	"region" varchar(3) NOT NULL,
 	"script" varchar(4) NOT NULL,
 	"isRTL" boolean DEFAULT false NOT NULL,
+	"isInstalled" boolean DEFAULT false NOT NULL,
+	"hash" varchar(64) DEFAULT '' NOT NULL,
+	"customCode" varchar(255) UNIQUE,
+	"customName" varchar(255),
 	"strings" jsonb DEFAULT '[]' NOT NULL,
 	"completeness" integer DEFAULT 0 NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
@@ -183,6 +187,7 @@ CREATE TABLE "locales" (
 CREATE TABLE "navigation" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"items" jsonb DEFAULT '[]' NOT NULL,
+	"locale" varchar(255),
 	"siteId" uuid NOT NULL
 );
 --> statement-breakpoint
@@ -389,6 +394,7 @@ CREATE INDEX "assets_siteId_idx" ON "assets" ("siteId");--> statement-breakpoint
 CREATE INDEX "blocks_siteId_idx" ON "blocks" ("siteId");--> statement-breakpoint
 CREATE INDEX "locales_language_idx" ON "locales" ("language");--> statement-breakpoint
 CREATE INDEX "navigation_siteId_idx" ON "navigation" ("siteId");--> statement-breakpoint
+CREATE UNIQUE INDEX "navigation_siteId_locale_key" ON "navigation" ("siteId","locale");--> statement-breakpoint
 CREATE INDEX "pageEditSubmissions_pageId_idx" ON "pageEditSubmissions" ("pageId");--> statement-breakpoint
 CREATE INDEX "pageEditSubmissions_siteId_idx" ON "pageEditSubmissions" ("siteId");--> statement-breakpoint
 CREATE INDEX "pageEditSubmissions_authorId_idx" ON "pageEditSubmissions" ("authorId");--> statement-breakpoint

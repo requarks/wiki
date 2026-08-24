@@ -14,19 +14,28 @@ import { useUserStore } from './user'
  * were each reading `.code` / `.language` / `.nativeName` off a string, so every one of them rendered
  * blank -- the locale menu showed an empty row rather than "English".
  *
- * Resolved here rather than server-side so the write shape stays a plain list of codes, and with
- * `Intl.DisplayNames` rather than a table, which gives the name in the reader's own language for
- * free. Asking for a code's name IN that code is what produces the native spelling.
+ * The descriptors come from the server -- `bootstrap` hands the installed list over with the site,
+ * so it costs no request of its own -- because half of what they say cannot be worked out from a
+ * code here: whether the short form is `fr` or `fr-FR` depends on which OTHER locales exist, and an
+ * administrator can rename either. `Intl` still answers for a code the server did not, which is a
+ * locale the site has active and the wiki no longer has installed.
  */
-function describeLocales(codes) {
-  const localized = new Intl.DisplayNames(undefined, { type: 'language' })
+function describeLocales(codes, installed) {
+  const known = new Map((installed ?? []).map((lc) => [lc.code, lc]))
+  // -> `languageDisplay: 'standard'` names the language first -- "Portuguese (Brazil)" rather than
+  //    Intl's default "Brazilian Portuguese" -- matching how the server names them
+  const nameOptions = { type: 'language', languageDisplay: 'standard' }
+  const localized = new Intl.DisplayNames(undefined, nameOptions)
 
   return (codes ?? []).map((code) => {
+    if (known.has(code)) {
+      return known.get(code)
+    }
     let name = code
     let nativeName = code
     try {
       name = localized.of(code) ?? code
-      nativeName = new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code
+      nativeName = new Intl.DisplayNames([code], nameOptions).of(code) ?? code
     } catch {
       // -> An unregistered or malformed tag throws rather than returning nothing; show the code
     }
@@ -35,7 +44,9 @@ function describeLocales(codes) {
       // -> The bare language, for the two-letter badge beside each entry
       language: code.split('-')[0],
       name,
-      nativeName
+      nativeName,
+      displayCode: code,
+      displayName: nativeName
     }
   })
 }
@@ -98,6 +109,8 @@ export const useSiteStore = defineStore('site', {
       markdown: false,
       wysiwyg: false
     },
+    /** Every installed locale, as this wiki refers to it. Empty until the app has bootstrapped. */
+    installedLocales: [],
     locales: {
       primary: 'en',
       showMenu: true,
@@ -136,6 +149,32 @@ export const useSiteStore = defineStore('site', {
     }
   }),
   getters: {
+    /** How a locale is referred to — `fr` for `fr-FR` — falling back to the code until read. */
+    localeAlias: (state) => (code) =>
+      state.installedLocales.find((lc) => lc.code === code)?.displayCode ?? code,
+    /**
+     * The segments a locale-prefixed URL may start with, mapped to the locale each names.
+     *
+     * Every code a locale answers to, not only the short one it is addressed by now: an alias an
+     * administrator changed leaves the links people have already saved pointing at the old segment,
+     * and a wiki that 404s them has broken them. Mirrors `localePrefixesFor` on the server.
+     *
+     * Recognised whatever `forcePrefix` says. That setting decides only whether an UNPREFIXED path is
+     * sent to the primary locale; a prefix is how any other locale is addressed at all, so a site with
+     * it off still has to answer `/fr/...`. The cost is that a site with a locale active cannot also
+     * have a page whose first path segment is that locale's short code.
+     */
+    localePrefixes: (state) => {
+      const prefixes = new Map()
+      for (const lc of state.locales.active) {
+        for (const segment of [lc.displayCode, lc.derivedCode, lc.code]) {
+          if (segment) {
+            prefixes.set(segment, lc.code)
+          }
+        }
+      }
+      return prefixes
+    },
     overlayIsShown: (state) => Boolean(state.overlay),
     sideNavIsDisabled: (state) => Boolean(state.theme.sidebarPosition === 'off'),
     scrollStyle: (state) => {
@@ -161,8 +200,24 @@ export const useSiteStore = defineStore('site', {
         }
       }
     },
-    useLocales: (state) => {
-      return state.locales?.active?.length > 1
+    /**
+     * The leading segment a page URL in this locale carries, empty where it needs none.
+     *
+     * The one place that answers it: the router reads a prefix back with `localePrefixes`, and
+     * everything that builds a page URL — a breadcrumb, the way out of the editor, the logo, the
+     * locale selector — has to write the same one. The short code, as the prefix and the storage
+     * folder both are.
+     *
+     * A locale that is not the site's primary always carries one, `forcePrefix` or not: there is no
+     * other way to address it. The primary carries one only when the setting is on, which is what
+     * that setting is — with it off, `/notes/one` is the canonical address of the primary locale's
+     * page and prefixing it would be noise on the single-locale wikis that are most of them.
+     */
+    localeUrlPrefix() {
+      return (code) =>
+        this.locales.forcePrefix || code !== this.locales.primary
+          ? `/${this.localeAlias(code)}`
+          : ''
     }
   },
   actions: {
@@ -176,9 +231,20 @@ export const useSiteStore = defineStore('site', {
     },
     async loadSite(hostname) {
       try {
-        const siteInfo = await API_CLIENT.get(`sites/${hostname}`).json()
+        // -> The locale descriptors come alongside rather than after, so the selector's label is
+        //    right on the first paint instead of flicking from `fr-FR` to `fr`
+        const [siteInfo, locales] = await Promise.all([
+          API_CLIENT.get(`sites/${hostname}`).json(),
+          // -> Not worth failing a page load over; `describeLocales` falls back to `Intl`
+          API_CLIENT.get('locales')
+            .json()
+            .catch(() => null)
+        ])
         if (!siteInfo) {
           throw new Error('Invalid Site')
+        }
+        if (locales) {
+          this.installedLocales = locales.filter((lc) => lc.isInstalled)
         }
         this.applySiteInfo(siteInfo)
       } catch (err) {
@@ -223,7 +289,9 @@ export const useSiteStore = defineStore('site', {
         locales: {
           ...this.locales,
           ...siteInfo.locales,
-          active: sortBy(describeLocales(siteInfo.locales.active), ['nativeName', 'name'])
+          active: sortBy(describeLocales(siteInfo.locales.active, this.installedLocales), [
+            'displayName'
+          ])
         },
         tags: [],
         tagsLoaded: false,

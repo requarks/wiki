@@ -724,7 +724,7 @@ async function routes(app: FastifyInstance) {
    */
   app.put<{
     Params: { siteId: string; pageId: string }
-    Body: { path: string; title?: string }
+    Body: { path: string; locale?: string; title?: string }
   }>(
     '/sites/:siteId/pages/:pageId/path',
     {
@@ -736,7 +736,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Move a page to another path',
         description:
-          'Also renames it when a title is given. The tree entry moves with it, and any folder the new path needs is created.',
+          'Also renames it when a title is given, and moves it to another locale when one is given. The tree entry moves with it, any folder the new path needs is created, and the copy on every storage target follows.\n\nMoving between locales needs `manage:pages` at the destination as well as at the source, since page rules are granted per locale.',
         tags: ['Pages'],
         params: pageIdParam,
         body: {
@@ -747,6 +747,11 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               maxLength: 255,
               pattern: '^/?[a-zA-Z0-9-_/]*$'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 255,
+              description: 'The locale to move it to. Stays in its own when absent.'
             },
             title: {
               type: 'string',
@@ -782,6 +787,22 @@ async function routes(app: FastifyInstance) {
       }
       if (!mayOnPage(req, 'manage:pages', target)) {
         return reply.forbidden('You are not allowed to move this page.')
+      }
+      /*
+        And at the destination, when that is somewhere else: rules are granted per path AND per
+        locale, so a move is a write to a place the mover may have no say over — which without this
+        is a way to put a page somewhere they could not have created one.
+      */
+      const destination = {
+        path: req.body.path.replace(/^\/+/, ''),
+        locale: req.body.locale || target.locale,
+        tags: target.tags
+      }
+      if (
+        (destination.path !== target.path || destination.locale !== target.locale) &&
+        !mayOnPage(req, 'manage:pages', destination)
+      ) {
+        return reply.forbidden('You are not allowed to move this page there.')
       }
       const page = await WIKI.models.pages.movePage(
         req.params.siteId,
@@ -1062,7 +1083,7 @@ async function routes(app: FastifyInstance) {
   /**
    * PAGE USER PERMISSIONS
    */
-  app.post<{ Params: { siteId: string }; Body: { path: string } }>(
+  app.post<{ Params: { siteId: string }; Body: { path: string; locale?: string } }>(
     '/sites/:siteId/pages/userPermissions',
     {
       schema: {
@@ -1079,11 +1100,18 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               minLength: 1,
               maxLength: 255
+            },
+            locale: {
+              type: 'string',
+              maxLength: 255,
+              description:
+                "The locale the path is in. Rules are granted per locale, so a path answers differently in each. The site's primary one when absent."
             }
           },
           examples: [
             {
-              path: 'foo/bar'
+              path: 'foo/bar',
+              locale: 'en'
             }
           ]
         },
@@ -1097,7 +1125,10 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      return pagePermissionsFor(req, { path: req.body.path.replace(/^\/+/, '') })
+      return pagePermissionsFor(req, {
+        path: req.body.path.replace(/^\/+/, ''),
+        locale: req.body.locale
+      })
     }
   )
 }

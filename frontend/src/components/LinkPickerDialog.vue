@@ -4,6 +4,26 @@
       <w-card-section class="card-header">
         <w-icon name="la:link" size="sm" class="mr-2" />
         <span>{{ props.title ?? t('linkPicker.title') }}</span>
+        <w-space />
+        <!-- -> Only where there is a choice to make: one active locale is most wikis, and a button
+                that can only say `en` is noise on all of them -->
+        <w-btn
+          v-if="siteStore.locales.active.length > 1"
+          class="acrylic-btn -my-2"
+          flat
+          dense
+          padding="xs md"
+          color="white"
+          :label="siteStore.localeAlias(state.locale)"
+          :aria-label="siteStore.localeAlias(state.locale)">
+          <w-tooltip>{{ t(`linkPicker.localeHint`) }}</w-tooltip>
+          <locale-selector-menu
+            :selected="state.locale"
+            :navigate="false"
+            anchor="bottom right"
+            self="top right"
+            @select="switchLocale" />
+        </w-btn>
       </w-card-section>
       <!-- -> Inset from the card's edges, as in the icon picker: the strip is a segmented control with
               a track of its own, so it sits ON the card rather than spanning it edge to edge -->
@@ -128,7 +148,9 @@ import { notify } from '@/composables/notify'
 
 import { apiErrorMessage } from '@/helpers/apiError'
 import fileTypes from '@/helpers/fileTypes'
+import { splitLocalePath } from '@/helpers/pagePaths'
 
+import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 import Tree from '@/components/TreeNav.vue'
 
 import { usePageStore } from '@/stores/page'
@@ -170,6 +192,15 @@ const props = defineProps({
   newTabOption: {
     type: Boolean,
     default: true
+  },
+  /**
+   * The locale to browse, and the one a chosen page's link is prefixed for. The page the picker was
+   * opened from by default, which is what every caller is editing — its content, its relations, its
+   * redirect target, its sidebar.
+   */
+  locale: {
+    type: String,
+    default: null
   }
 })
 
@@ -199,6 +230,12 @@ const iptUrl = ref(null)
 
 const state = reactive({
   currentTab: 'page',
+  /*
+    Which locale's pages are listed, and what a chosen one's link is prefixed for. The tree holds
+    every translation side by side, so unfiltered this listed all of them at once and linked to
+    whichever page of that name the PRIMARY locale had.
+  */
+  locale: props.locale || pageStore.locale,
   /** Folder whose contents the right-hand pane lists. Null is the site root. */
   currentFolderId: null,
   treeNodes: {},
@@ -215,9 +252,14 @@ const state = reactive({
 
 // COMPUTED
 
-const href = computed(() =>
-  state.currentTab === 'page' ? (state.path ? `/${state.path}` : '') : state.url.trim()
-)
+const href = computed(() => {
+  if (state.currentTab !== 'page') {
+    return state.url.trim()
+  }
+  // -> Prefixed for the locale being browsed: an unprefixed path addresses the PRIMARY locale's page
+  //    of that name, which for a link picked out of the French tree is a different page or none
+  return state.path ? `${siteStore.localeUrlPrefix(state.locale)}/${state.path}` : ''
+})
 
 const canSubmit = computed(() => {
   if (state.currentTab === 'page') {
@@ -235,6 +277,27 @@ watch(
 )
 
 // METHODS
+
+/**
+ * Browse another locale.
+ *
+ * Back to its root, and the chosen page is dropped with it: the tree being left and the one being
+ * entered share no ids, and a path picked out of one names a different page — or none — in the other.
+ */
+async function switchLocale(locale) {
+  if (locale === state.locale) {
+    return
+  }
+  state.locale = locale
+  state.treeNodes = {}
+  state.treeRoots = []
+  state.currentFolderId = null
+  state.items = []
+  state.path = ''
+  state.pageTitle = ''
+  treeComp.value?.resetLoaded()
+  await loadTree({ initLoad: true })
+}
 
 /**
  * Loads one folder into the tree, and — when that folder is the selected one — into the list beside it.
@@ -255,6 +318,7 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
   try {
     const entries = await API_CLIENT.get(`sites/${siteStore.id}/tree`, {
       searchParams: {
+        locale: state.locale,
         ...(parentId ? { parentId } : {}),
         ...(parentPath ? { parentPath } : {}),
         types: 'folder,page',
@@ -365,7 +429,15 @@ onMounted(async () => {
       state.currentTab = 'url'
       state.url = props.initialHref
     } else {
-      state.path = props.initialHref.replace(/^\/+/, '')
+      /*
+        Re-opening on a link that already carries a prefix: the locale comes off it, so the picker
+        starts in the tree the link points into rather than in the page's own.
+      */
+      const split = splitLocalePath(props.initialHref, siteStore.localePrefixes)
+      if (split) {
+        state.locale = split.locale
+      }
+      state.path = (split?.path ?? props.initialHref).replace(/^\/+/, '')
     }
   }
 

@@ -615,7 +615,8 @@ function branchFrom(version) {
       folderPath: '',
       itemId: pageStore.id,
       itemTitle: version.title,
-      itemFileName: pageStore.path
+      itemFileName: pageStore.path,
+      locale: pageStore.locale
     }
   }).onOk(async (target) => {
     const full = await withVersion(version)

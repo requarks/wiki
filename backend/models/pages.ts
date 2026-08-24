@@ -788,7 +788,7 @@ class Pages {
   async movePage(
     siteId: string,
     id: string,
-    { path, title }: { path: string; title?: string },
+    { path, locale, title }: { path: string; locale?: string; title?: string },
     actor: PageActor
   ): Promise<Page | null> {
     // -> With the source, which the move itself does not need: it is what the copy kept by a storage
@@ -799,11 +799,18 @@ class Pages {
     }
     const existingContent = page.content
     const newPath = normalizePath(path)
-    if (newPath === page.path && (title === undefined || title === page.title)) {
+    /*
+      A move may cross locales — the same page, translated, is the same page moved — so the
+      destination is a locale AND a path, and everything below asks about the pair rather than about
+      the path alone. Absent, it stays where it is: a rename is a move that changes neither.
+    */
+    const newLocale = locale || page.locale
+    const isRelocated = newPath !== page.path || newLocale !== page.locale
+    if (!isRelocated && (title === undefined || title === page.title)) {
       return page
     }
 
-    if (newPath !== page.path) {
+    if (isRelocated) {
       const duplicate = await WIKI.db
         .select({ id: pagesTable.id })
         .from(pagesTable)
@@ -811,7 +818,7 @@ class Pages {
           and(
             ne(pagesTable.id, id),
             eq(pagesTable.siteId, siteId),
-            eq(pagesTable.locale, page.locale),
+            eq(pagesTable.locale, newLocale),
             eq(pagesTable.path, newPath)
           )
         )
@@ -821,7 +828,7 @@ class Pages {
       }
       await this.guardAgainstAssetCollision({
         siteId,
-        locale: page.locale,
+        locale: newLocale,
         parentPath: newPath.split('/').slice(0, -1).join('/'),
         fileName: newPath.split('/').at(-1)!,
         contentType: page.contentType
@@ -832,6 +839,7 @@ class Pages {
       .update(pagesTable)
       .set({
         path: newPath,
+        locale: newLocale,
         hash: generatePathHash(newPath),
         ...(title !== undefined ? { title: title.trim() } : {}),
         authorId: actor.id,
@@ -848,10 +856,10 @@ class Pages {
       parentPath: pathParts.slice(0, -1).join('/'),
       fileName: pathParts.at(-1)!,
       title: title !== undefined ? title.trim() : page.title,
-      locale: page.locale,
+      locale: newLocale,
       siteId,
       tags: page.tags,
-      meta: this.treeMeta({ ...page, path: newPath })
+      meta: this.treeMeta({ ...page, path: newPath, locale: newLocale })
     })
 
     const moved = (await this.getPage({ siteId, id })) as Page
@@ -865,15 +873,23 @@ class Pages {
       authorId: actor.id,
       changedFields: [
         ...(newPath !== page.path ? ['path'] : []),
+        ...(newLocale !== page.locale ? ['locale'] : []),
         ...(title !== undefined && title.trim() !== page.title ? ['title'] : [])
       ]
     })
+
+    /*
+      The search vector is built with the dictionary of the page's locale and holds its title, so
+      both halves of a move can invalidate it. Rebuilt here rather than left to the next edit, which
+      for a page nobody edits again is never.
+    */
+    await WIKI.models.search.indexPage(id, newLocale)
 
     // -> Moved and then rewritten, rather than deleted and written afresh: the move is what keeps a
     //    versioned target's history of the file attached to it, and the rewrite is because a move may
     //    carry a new title and always carries a new modification time, both of which are in the copy
     const stored = this.toStoragePage(siteId, actor.id, moved, existingContent ?? '')
-    await WIKI.models.storage.relocatePage(stored.ref, page.path)
+    await WIKI.models.storage.relocatePage(stored.ref, { locale: page.locale, path: page.path })
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
     await WIKI.models.hooks.emit('page:rename', {

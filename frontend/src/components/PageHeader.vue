@@ -539,12 +539,17 @@ async function discardChanges() {
       editor: ''
     })
 
-    // Is it the home page in create mode?
-    if ((pageStore.path === '' || pageStore.path === 'home') && pageStore.locale === 'en') {
+    /*
+      Is it the home page in create mode? In whichever locale it was being written -- the test used to
+      name `en`, which meant abandoning the FRENCH home page dropped the reader onto the English site
+      root with no welcome screen and no explanation.
+    */
+    const localeRoot = siteStore.localeUrlPrefix(pageStore.locale) || '/'
+    if (pageStore.path === '' || pageStore.path === 'home') {
       siteStore.overlay = 'Welcome'
     }
 
-    router.replace('/')
+    router.replace(localeRoot)
     return
   }
 
@@ -655,7 +660,9 @@ async function createPage() {
       editorStore.$patch({
         isActive: false
       })
-      router.replace('/')
+      // -> The home page that was just written, not the site root: unprefixed, the router sends it to
+      //    the PRIMARY locale, so creating the French home page landed on the English one
+      router.replace(pageStore.editorExitPath)
     } catch (err) {
       notify({
         type: 'negative',
@@ -674,16 +681,20 @@ async function createPage() {
       mode: 'savePage',
       folderPath: '',
       itemTitle: pageStore.title,
-      itemFileName: pageStore.path
+      itemFileName: pageStore.path,
+      locale: pageStore.locale
     }
-  }).onOk(async ({ path, title }) => {
+  }).onOk(async ({ path, title, locale }) => {
     await processPendingAssets()
 
     loading.show()
     try {
       pageStore.$patch({
         title,
-        path
+        path,
+        // -> The dialog is where the locale is settled for a page that has none yet, so what it
+        //    hands back is what the page is written in
+        locale
       })
       await pageStore.pageSave()
       notify({

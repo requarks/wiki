@@ -2,7 +2,7 @@
   <div class="site-header bg-header text-white">
     <div class="flex flex-nowrap">
       <w-toolbar style="height: 64px">
-        <w-btn dense flat to="/">
+        <w-btn dense flat :to="homePath">
           <w-avatar v-if="siteStore.logoText" size="34px" square>
             <img :src="`/_site/current/logo`" />
           </w-avatar>
@@ -137,6 +137,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useMinWidth } from '@/composables/screen'
+import { splitLocalePath } from '@/helpers/pagePaths'
 
 import { useCommonStore } from '@/stores/common'
 import { useSiteStore } from '@/stores/site'
@@ -185,6 +186,17 @@ const searchRowIsOpen = ref(false)
  * site title and the actions and becomes a button that opens a row of its own.
  */
 const isAtLeastSm = useMinWidth(600)
+/*
+  Home, in the locale being read: `/fr/...` goes back to `/fr`, not to the English site root. Taken
+  off the route rather than off the page store, because the logo is the way out of a screen where
+  there may be no page -- a path with nothing behind it, a locale whose home page is not written yet.
+  Empty prefix on a site that does not bracket its URLs, which leaves the root as it was.
+*/
+const homePath = computed(() => {
+  const current = splitLocalePath(route.path, siteStore.localePrefixes)
+  return (current && siteStore.localeUrlPrefix(current.locale)) || '/'
+})
+
 const isSearchCollapsed = computed(() => !isAtLeastSm.value)
 
 /**

@@ -9,8 +9,9 @@ import type { FastifyInstance } from 'fastify'
  * the login flow asks who is logged in once that has changed — but a full load needs all three at
  * once, and asking for them one at a time is three round trips before the first pixel.
  *
- * None of them touches the database: the site configurations and the flags are in memory, and the
- * session carries the user. So what this saves is the round trips, which is the whole cost.
+ * None of them touches the database: the site configurations, the flags and the locale list are in
+ * memory, and the session carries the user. So what this saves is the round trips, which is the whole
+ * cost.
  */
 async function routes(app: FastifyInstance) {
   app.get<{ Querystring: { hostname?: string } }>(
@@ -46,6 +47,12 @@ async function routes(app: FastifyInstance) {
                 description:
                   'As `users/whoami` answers it: `authenticated: false` alone for a guest, otherwise the account and its group-wide permissions.',
                 additionalProperties: true
+              },
+              locales: {
+                type: 'array',
+                description:
+                  'Every installed locale, named and coded as this wiki refers to it. None of it can be worked out from a code alone: the short forms depend on which other locales exist, and an administrator can override either. Sent here because the locale selector needs it to label itself on the first paint.',
+                items: { $ref: 'Locale#' }
               }
             }
           }
@@ -69,7 +76,8 @@ async function routes(app: FastifyInstance) {
           isEnabled: site.isEnabled
         },
         flags: WIKI.models.flags.getFlags(),
-        user: whoAmI(req)
+        user: whoAmI(req),
+        locales: await WIKI.models.locales.getInstalledLocales()
       }
     }
   )

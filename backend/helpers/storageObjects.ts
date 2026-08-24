@@ -200,11 +200,11 @@ export function objectStorageModule(client: ObjectStoreClient): StorageModule {
       }
     },
 
-    async movePage(target, ref, previousPath) {
+    async movePage(target, ref, previous) {
       await moveObject(
         client,
         target,
-        pageKey(target, { ...ref, path: previousPath }),
+        pageKey(target, { ...ref, ...previous }),
         pageKey(target, ref)
       )
     },

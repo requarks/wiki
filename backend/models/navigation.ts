@@ -38,10 +38,14 @@ function isVisibleTo(item: NavigationItem, userGroups: string[]): boolean {
 /**
  * Navigation model
  *
- * A navigation menu is a row of `items` keyed by the id of whatever it belongs to: a tree entry that
- * overrides the menu below it, or — for the site-wide menu every page falls back to — the site's own
- * id. That double use of the key is why the id alone is enough to fetch a menu, and why the home page
- * edits the site menu rather than one of its own.
+ * A navigation menu is a row of `items` belonging either to a tree entry that overrides the menu below
+ * it — keyed by that entry's id, which is why an id alone is enough to fetch a menu — or to a site AND
+ * A LOCALE, which is the menu every page in that locale falls back to and what the locale's home page
+ * edits rather than one of its own.
+ *
+ * Per locale because a sidebar is written in a language: a French page showing the English menu is the
+ * one thing a translated wiki cannot do. Which is also why the ancestor walk below is locale-scoped —
+ * an override on the English `/guides` says nothing about the French one.
  *
  * Which menu a page gets is decided when the mode is saved rather than when the page is rendered:
  * every tree entry carries the resolved `navigationId`, so drawing a sidebar is one lookup.
@@ -80,24 +84,45 @@ class Navigation {
   }
 
   /**
-   * The menu the site as a whole uses, which is the one every page inherits by default.
+   * The menu a site uses for one locale, which is the one every page in it inherits by default.
    *
-   * Created empty on demand: a site made before this row existed, or one whose menu was never edited,
-   * has nothing stored, and an absent menu is an empty one rather than an error.
+   * Created empty on demand rather than with the site: a locale is activated long after, and the first
+   * page written in it has to have a sidebar to inherit. An absent menu is an empty one, never an
+   * error.
    */
-  async ensureSiteNav(siteId: string): Promise<void> {
-    await WIKI.db
+  async siteNavId(siteId: string, locale: string): Promise<string> {
+    const existing = await WIKI.db
+      .select({ id: navigationTable.id })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.siteId, siteId), eq(navigationTable.locale, locale)))
+      .limit(1)
+    if (existing[0]) {
+      return existing[0].id
+    }
+    // -> Two pages created in a new locale at once both find nothing and both insert; the unique
+    //    index settles it and the loser reads back what the winner wrote
+    const inserted = await WIKI.db
       .insert(navigationTable)
-      .values({ id: siteId, siteId, items: [] })
-      .onConflictDoNothing()
+      .values({ siteId, locale, items: [] })
+      .onConflictDoNothing({ target: [navigationTable.siteId, navigationTable.locale] })
+      .returning({ id: navigationTable.id })
+    if (inserted[0]) {
+      return inserted[0].id
+    }
+    const raced = await WIKI.db
+      .select({ id: navigationTable.id })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.siteId, siteId), eq(navigationTable.locale, locale)))
+      .limit(1)
+    return raced[0]!.id
   }
 
   /**
    * Drop the menus belonging to tree entries that no longer exist.
    *
    * A menu is keyed by the id of the entry that owns it, so deleting a page or a folder would
-   * otherwise leave its menu behind with nothing able to reach it. The site's own menu is keyed by the
-   * site id and is never a tree entry, so it is not at risk here.
+   * otherwise leave its menu behind with nothing able to reach it. A site's own menus are identified
+   * by site and locale rather than by an id borrowed from the tree, so they are not at risk here.
    *
    * @param ids Tree entry ids being removed
    */
@@ -129,21 +154,28 @@ class Navigation {
    * @param siteId Site the entry belongs to, since paths are only unique within one
    * @param folderPath Encoded ltree path of the folder holding the entry, empty at the site root
    */
-  private async ancestorNavId(siteId: string, folderPath: string): Promise<string | null> {
+  private async ancestorNavId(
+    siteId: string,
+    locale: string,
+    folderPath: string
+  ): Promise<string | null> {
     if (!folderPath) {
-      return siteId
+      return this.siteNavId(siteId, locale)
     }
+    // -> Within the locale: the tree holds every translation side by side, so an override on the
+    //    English `/guides` would otherwise decide what the French one below it shows
     const result = await WIKI.db.execute(sql`
       SELECT "navigationId"
       FROM tree
       WHERE "siteId" = ${siteId}
+        AND "locale" = ${locale}
         AND ("folderPath" || "fileName") @> ${folderPath}::ltree
         AND "navigationMode" IN ('override', 'hide')
       ORDER BY nlevel("folderPath" || "fileName") DESC
       LIMIT 1
     `)
     const rows = (result.rows ?? result) as any[]
-    return rows.length > 0 ? (rows[0].navigationId ?? null) : siteId
+    return rows.length > 0 ? (rows[0].navigationId ?? null) : this.siteNavId(siteId, locale)
   }
 
   /**
@@ -157,7 +189,7 @@ class Navigation {
    */
   async inheritedNavId(siteId: string, pageId: string): Promise<string | null> {
     const entry = await this.getEntry(siteId, pageId)
-    return this.ancestorNavId(siteId, entry.folderPath ?? '')
+    return this.ancestorNavId(siteId, entry.locale, entry.folderPath ?? '')
   }
 
   /**
@@ -183,18 +215,14 @@ class Navigation {
   }): Promise<UpdateNavigationResult> {
     const entry = await this.getEntry(siteId, pageId)
 
-    // -> Whatever this change resolves to, `inherit` ultimately falls back to the site menu, and a
-    //    site created before that row existed does not have one yet
-    await this.ensureSiteNav(siteId)
-
     const folderPath = entry.folderPath ?? ''
-    // -> The home page at the root edits the site-wide menu rather than one of its own, which is what
-    //    makes it the menu every other page inherits
+    // -> The home page at the root edits the site-wide menu FOR ITS LOCALE rather than one of its own,
+    //    which is what makes it the menu every other page in that locale inherits
     const isSiteRoot = folderPath === '' && entry.fileName === 'home'
-    const ownNavId = isSiteRoot ? siteId : entry.id
+    const ownNavId = isSiteRoot ? await this.siteNavId(siteId, entry.locale) : entry.id
     const fullPath = folderPath ? `${folderPath}.${entry.fileName}` : entry.fileName
 
-    const ancestorId = await this.ancestorNavId(siteId, folderPath)
+    const ancestorId = await this.ancestorNavId(siteId, entry.locale, folderPath)
 
     if (items) {
       /*
@@ -215,6 +243,8 @@ class Navigation {
         .insert(navigationTable)
         .values({ id: targetNavId, siteId, items })
         .onConflictDoUpdate({ target: navigationTable.id, set: { items } })
+      // NOTE: a site menu already exists by the time it is named here — `siteNavId` created it — so
+      //       this insert only ever creates one for a tree entry, whose id is the key
     }
 
     // -> A mode that stops applying below this entry hands its descendants back to the ancestor
@@ -269,6 +299,7 @@ class Navigation {
         UPDATE tree tt
         SET "navigationId" = ${cascadeTo}
         WHERE tt."siteId" = ${siteId}
+          AND tt."locale" = ${entry.locale}
           AND tt.tree IN ('page', 'folder')
           AND tt."folderPath" <@ ${fullPath}::ltree
           AND tt."navigationMode" = 'inherit'
@@ -276,6 +307,7 @@ class Navigation {
             SELECT 1
             FROM tree tc
             WHERE tc."siteId" = ${siteId}
+              AND tc."locale" = ${entry.locale}
               AND tc.tree IN ('page', 'folder')
               AND tc."folderPath" <@ ${fullPath}::ltree
               AND (tc."folderPath" || tc."fileName") @> tt."folderPath"

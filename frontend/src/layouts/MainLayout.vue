@@ -59,8 +59,8 @@
               flat
               dense
               icon="la:globe"
-              :label="commonStore.locale"
-              :aria-label="commonStore.locale"
+              :label="siteStore.localeAlias(commonStore.locale)"
+              :aria-label="siteStore.localeAlias(commonStore.locale)"
               size="sm">
               <locale-selector-menu :offset="[-5, 5]" />
             </w-btn>

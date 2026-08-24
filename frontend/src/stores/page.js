@@ -98,7 +98,7 @@ export const usePageStore = defineStore('page', {
   getters: {
     breadcrumbs: (state) => {
       const siteStore = useSiteStore()
-      const pathPrefix = siteStore.useLocales ? `/${state.locale}` : ''
+      const pathPrefix = siteStore.localeUrlPrefix(state.locale)
       return state.path.split('/').reduce((result, value, key) => {
         result.push({
           id: key,
@@ -124,14 +124,20 @@ export const usePageStore = defineStore('page', {
      * what holds it — see `PageRedirect.vue` — and the screen it lands on offers to follow it.
      */
     editorExitPath: (state) => {
-      return `/${state.path}${state.editor === 'redirect' ? '?redirect=no' : ''}`
+      // -> Prefixed, on a site that brackets its URLs by locale: an unprefixed path is sent to the
+      //    PRIMARY locale, so leaving the editor on a page just written in another one landed the
+      //    author on the English page instead of the French one they had made
+      const siteStore = useSiteStore()
+      return `${siteStore.localeUrlPrefix(state.locale)}/${state.path}${
+        state.editor === 'redirect' ? '?redirect=no' : ''
+      }`
     }
   },
   actions: {
     /**
      * PAGE - LOAD
      */
-    async pageLoad({ path, id, withContent = false }) {
+    async pageLoad({ path, id, locale, withContent = false }) {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
       /*
@@ -150,7 +156,9 @@ export const usePageStore = defineStore('page', {
           `sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`,
           {
             searchParams: {
-              withContent
+              withContent,
+              // -> Absent means the site's primary locale, which is what an unprefixed URL addresses
+              ...(locale && { locale })
             }
           }
         ).json()
@@ -285,10 +293,15 @@ export const usePageStore = defineStore('page', {
      * is actually known, and what the create button goes on to make a page at.
      *
      * @param {string} path The path that was requested, with or without its leading slash.
+     * @param {string} [locale] The locale it was requested in. A page that does not exist still has
+     *   one — it is what a create button started from here writes the page in — and leaving the
+     *   previous page's locale standing is how creating the French home page tried to write the
+     *   English one and was refused as a duplicate.
      */
-    pageNotFound({ path }) {
+    pageNotFound({ path, locale }) {
       this.$patch({
         id: '',
+        locale: locale || this.locale,
         path: (path ?? '').replace(/^\/+/, ''),
         title: '',
         description: '',
@@ -424,7 +437,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - DUPLICATE
      */
-    async pageDuplicate({ sourcePageId, title, path }) {
+    async pageDuplicate({ sourcePageId, title, path, locale }) {
       const siteStore = useSiteStore()
       try {
         const pageData = await API_CLIENT.get(
@@ -438,6 +451,9 @@ export const usePageStore = defineStore('page', {
           editor: pageData.editor,
           title,
           path,
+          // -> A copy may be made in another locale, which is how a translation starts: the same page
+          //    at the same path, in a locale that does not have it yet
+          locale,
           content: pageData.content,
           description: pageData.description
         })
@@ -508,7 +524,7 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - EDIT
      */
-    async pageEdit({ path, id, fromNavigate = false } = {}) {
+    async pageEdit({ path, id, locale, fromNavigate = false } = {}) {
       const editorStore = useEditorStore()
 
       const loadArgs = {
@@ -519,6 +535,10 @@ export const usePageStore = defineStore('page', {
         loadArgs.id = id
       } else if (path) {
         loadArgs.path = path
+        // -> A path only names a page within a locale; absent, the API answers with the primary one
+        if (locale) {
+          loadArgs.locale = locale
+        }
       } else {
         loadArgs.id = this.id
       }
@@ -577,20 +597,23 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - MOVE
      */
-    async pageMove({ id, title, path } = {}) {
+    async pageMove({ id, title, path, locale } = {}) {
       const siteStore = useSiteStore()
       unwrap(
         await API_CLIENT.put(`sites/${siteStore.id}/pages/${id}/path`, {
           json: {
             path,
-            ...(title ? { title } : {})
+            ...(title ? { title } : {}),
+            // -> A move may cross locales, which is the same page translated rather than a new one
+            ...(locale ? { locale } : {})
           }
         }).json()
       )
       // -> Following the page only makes sense when it is the one being viewed. Moved from the file
       //    manager, it is some other page, and the reader is still on theirs.
       if (id === this.id) {
-        this.router.replace(`/${path}`)
+        this.$patch({ path, ...(locale ? { locale } : {}) })
+        this.router.replace(this.editorExitPath)
       }
     },
     /**

@@ -63,12 +63,18 @@
               class="nav-edit-item nav-edit-item-header"
               v-if="element.type === `header`"
               :class="state.selected === element.id ? `is-active` : ``"
-              @click="setItem(element)">
+              @click="setItem(element)"
+              @contextmenu="setItem(element)">
               <w-item-label class="text-caption" header>{{ element.label }}</w-item-label>
               <w-space />
               <w-item-section side>
                 <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
               </w-item-section>
+              <nav-edit-item-menu
+                :item="element"
+                @duplicate="duplicateItem"
+                @toggle-nesting="toggleNesting"
+                @delete="removeItem" />
             </div>
             <w-item
               class="nav-edit-item nav-edit-item-link"
@@ -76,22 +82,34 @@
               dense
               :class="{ 'is-active': state.selected === element.id, 'is-nested': element.isNested }"
               @click="setItem(element)"
+              @contextmenu="setItem(element)"
               clickable>
               <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
               <w-item-section class="text-wordbreak-all">{{ element.label }}</w-item-section>
               <w-item-section side>
                 <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
               </w-item-section>
+              <nav-edit-item-menu
+                :item="element"
+                @duplicate="duplicateItem"
+                @toggle-nesting="toggleNesting"
+                @delete="removeItem" />
             </w-item>
             <div
               class="nav-edit-item nav-edit-item-separator"
               v-else
               :class="state.selected === element.id ? `is-active` : ``"
-              @click="setItem(element)">
+              @click="setItem(element)"
+              @contextmenu="setItem(element)">
               <w-separator dark inset style="flex: 1; margin-top: 11px" />
               <w-item-section side>
                 <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
               </w-item-section>
+              <nav-edit-item-menu
+                :item="element"
+                @duplicate="duplicateItem"
+                @toggle-nesting="toggleNesting"
+                @delete="removeItem" />
             </div>
           </template>
         </sortable>
@@ -104,27 +122,29 @@
             :label="t(`common.actions.add`)"
             :aria-label="t(`common.actions.add`)"
             icon="la:plus-circle">
-            <w-menu fit :offset="[0, 10]" auto-close>
-              <w-list separator>
-                <w-item clickable @click="addItem(`header`)">
-                  <w-item-section side><w-icon name="la:heading" /></w-item-section>
-                  <w-item-section>
-                    <w-item-label>{{ t('navEdit.header') }}</w-item-label>
-                  </w-item-section>
-                </w-item>
-                <w-item clickable @click="addItem(`link`)">
-                  <w-item-section side><w-icon name="la:link" /></w-item-section>
-                  <w-item-section>
-                    <w-item-label>{{ t('navEdit.link') }}</w-item-label>
-                  </w-item-section>
-                </w-item>
-                <w-item clickable @click="addItem(`separator`)">
-                  <w-item-section side><w-icon name="la:minus" /></w-item-section>
-                  <w-item-section>
-                    <w-item-label>{{ t('navEdit.separator') }}</w-item-label>
-                  </w-item-section>
-                </w-item>
-              </w-list>
+            <w-menu class="translucent-menu" fit :offset="[0, 10]" auto-close>
+              <w-card class="p-2">
+                <w-list dense style="min-width: 150px">
+                  <w-item clickable @click="addItem(`header`)">
+                    <w-item-section side><w-icon name="la:heading" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.header') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="addItem(`link`)">
+                    <w-item-section side><w-icon name="la:link" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.link') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="addItem(`separator`)">
+                    <w-item-section side><w-icon name="la:minus" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.separator') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                </w-list>
+              </w-card>
             </w-menu>
           </w-btn>
           <w-btn
@@ -134,22 +154,29 @@
             :aria-label="t(`common.actions.add`)"
             icon="la:ellipsis-v"
             padding="xs sm">
-            <w-menu :offset="[0, 10]" anchor="bottom right" self="top right" auto-close>
-              <w-list separator>
-                <w-item clickable @click="clearItems" :disable="state.items.length < 1">
-                  <w-item-section side>
-                    <w-icon name="la:trash-alt" color="negative" />
-                  </w-item-section>
-                  <w-item-section>
-                    <w-item-label>{{ t('navEdit.clearItems') }}</w-item-label>
-                  </w-item-section>
-                </w-item>
-                <!-- q-item(clickable) -->
-                <!-- q-item-section(side) -->
-                <!-- q-icon(name='mdi:import') -->
-                <!-- q-item-section -->
-                <!-- q-item-label Copy from... -->
-              </w-list>
+            <w-menu
+              class="translucent-menu"
+              :offset="[0, 10]"
+              anchor="bottom right"
+              self="top right"
+              auto-close>
+              <w-card class="p-2">
+                <w-list dense style="min-width: 150px">
+                  <w-item clickable @click="clearItems" :disable="state.items.length < 1">
+                    <w-item-section side>
+                      <w-icon name="la:trash-alt" color="negative" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.clearItems') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <!-- q-item(clickable) -->
+                  <!-- q-item-section(side) -->
+                  <!-- q-icon(name='mdi:import') -->
+                  <!-- q-item-section -->
+                  <!-- q-item-label Copy from... -->
+                </w-list>
+              </w-card>
             </w-menu>
           </w-btn>
         </div>
@@ -235,7 +262,7 @@
               :label="t(`common.actions.delete`)"
               color="negative"
               padding="xs md"
-              @click="removeItem(state.current.id)" />
+              @click="removeItem(state.current)" />
           </w-card>
         </template>
         <template v-if="state.current.type === `link`">
@@ -434,7 +461,7 @@
               :label="t(`common.actions.delete`)"
               color="negative"
               padding="xs md"
-              @click="removeItem(state.current.id)" />
+              @click="removeItem(state.current)" />
           </w-card>
         </template>
         <template v-if="state.current.type === `separator`">
@@ -484,7 +511,7 @@
               :label="t(`common.actions.delete`)"
               color="negative"
               padding="xs md"
-              @click="removeItem(state.current.id)" />
+              @click="removeItem(state.current)" />
           </w-card>
         </template>
       </w-page>
@@ -507,6 +534,7 @@ import { v4 as uuid } from 'uuid'
 import { pick } from 'es-toolkit/object'
 import { Sortable } from 'sortablejs-vue3'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
+import NavEditItemMenu from '@/components/NavEditItemMenu.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
@@ -664,10 +692,53 @@ function addItem(type) {
   state.current = newItem
 }
 
-function removeItem(id) {
-  state.items = state.items.filter((item) => item.id !== id)
-  state.selected = null
-  state.current = {}
+function removeItem(item) {
+  state.items = state.items.filter((it) => it.id !== item.id)
+  // -> Only the row that went gives up the panel: a delete from another row's context menu leaves
+  //    whatever was being edited on screen
+  if (state.selected === item.id) {
+    state.selected = null
+    state.current = {}
+  }
+}
+
+/**
+ * Copies a row and drops the copy directly beneath it.
+ *
+ * A top-level link takes its nested children with it. This list is flat and `isNested` binds a child to
+ * whatever link precedes it, so a copy inserted immediately after its original would slide between the
+ * original and its children and inherit them — leaving the original childless and the copy holding a
+ * submenu it was never given. Copying the whole branch and landing it after the last child is the only
+ * reading that leaves the original as it was.
+ */
+function duplicateItem(item) {
+  const idx = state.items.findIndex((it) => it.id === item.id)
+  if (idx < 0) {
+    return
+  }
+  // -> Only a top-level link has children to take along; a nested row, a header and a separator never do
+  let end = idx
+  if (item.type === 'link' && !item.isNested) {
+    while (state.items[end + 1]?.isNested) {
+      end++
+    }
+  }
+  const copies = state.items.slice(idx, end + 1).map((it) => ({
+    ...it,
+    id: uuid(),
+    // -> A fresh array, or editing one copy's group list would edit the other's
+    visibilityGroups: [...(it.visibilityGroups ?? [])]
+  }))
+  state.items.splice(end + 1, 0, ...copies)
+  setItem(state.items[end + 1])
+}
+
+/** Nests a link under the one above it, or takes it back out — the panel's pair of buttons, on the row. */
+function toggleNesting(item) {
+  const target = state.items.find((it) => it.id === item.id)
+  if (target) {
+    target.isNested = !target.isNested
+  }
 }
 
 function clearItems() {

@@ -355,6 +355,12 @@ export interface StorageAssetLocation {
 }
 
 /** Where a page sits, which is all a target needs in order to find its copy of one. */
+/** Where a page's copy sits on a target, which takes a locale as well as a path to say. */
+export interface StoragePageLocation {
+  locale: string
+  path: string
+}
+
 export interface StoragePageRef {
   id: string
   siteId: string
@@ -425,8 +431,18 @@ export interface StorageModule {
   putPage: (target: StorageTarget, ref: StoragePageRef, page: StoragePageContent) => Promise<void>
   /** Drop its copy. Must not fail over a copy that is not there. */
   deletePage: (target: StorageTarget, ref: StoragePageRef) => Promise<void>
-  /** Follow a move, `ref` being where the page now is. */
-  movePage: (target: StorageTarget, ref: StoragePageRef, previousPath: string) => Promise<void>
+  /**
+   * Follow a move, `ref` being where the page now is.
+   *
+   * `previous` carries the locale as well as the path, because a page can be moved between locales
+   * and the two together are what locate the old file: the locale decides the folder the tree is
+   * bracketed by, the path decides the rest.
+   */
+  movePage: (
+    target: StorageTarget,
+    ref: StoragePageRef,
+    previous: StoragePageLocation
+  ) => Promise<void>
   /**
    * A URL a reader can fetch this asset from directly, signed by the store.
    *
@@ -1014,6 +1030,10 @@ class Storage {
    * that wrote it put it. What follows is the target's own business: the folders of the tree, and then
    * a file name each kind of content decides for itself.
    *
+   * The locale segment is the locale's SHORT code — `fr` rather than `fr-FR`, or whatever an
+   * administrator aliased it to. It is what the wiki calls that locale, and a folder tree read by
+   * people is where that matters most.
+   *
    * @returns Null for content the layout has no place for — a secondary locale on a site storing only
    *   its primary one. Not an error: it is what the site asked for, and each operation decides what
    *   that means for it. A write is the one that cannot shrug (`putAsset` in the disk module).
@@ -1022,7 +1042,7 @@ class Storage {
     const layout = this.pathLayoutFor(siteId)
     const prefix = layout.sitePrefix ? [siteId] : []
     if (layout.localePrefix) {
-      return [...prefix, locale]
+      return [...prefix, WIKI.models.locales.shortCodeFor(locale)]
     }
     return locale === layout.primaryLocale ? prefix : null
   }
@@ -1057,7 +1077,9 @@ class Storage {
       if (rest.length < 2) {
         return null
       }
-      locale = rest[0]
+      // -> The segment is normally the locale's short code, but a folder written before an alias was
+      //    set still holds the plain one, so either is read back to the locale it names
+      locale = WIKI.models.locales.localeForShortCode(rest[0])
       rest = rest.slice(1)
     }
     return rest.length > 0 ? { locale, segments: rest } : null
@@ -1580,14 +1602,15 @@ class Storage {
   /**
    * Move every page-keeping target's copy of a page, `ref` being where it now is.
    */
-  async relocatePage(ref: StoragePageRef, previousPath: string): Promise<void> {
-    if (previousPath === ref.path) {
+  async relocatePage(ref: StoragePageRef, previous: StoragePageLocation): Promise<void> {
+    if (previous.path === ref.path && previous.locale === ref.locale) {
       return
     }
+    const label = (loc: StoragePageLocation) => `${loc.locale}/${loc.path}`
     await this.eachPageTarget(
       ref.siteId,
-      `move the page from ${previousPath} to ${ref.path}`,
-      (mod, target) => mod.movePage(target, ref, previousPath)
+      `move the page from ${label(previous)} to ${label(ref)}`,
+      (mod, target) => mod.movePage(target, ref, previous)
     )
   }
 

@@ -13,7 +13,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { setCssVar } from '@/helpers/cssVars'
-import { stripPageExtension } from '@/helpers/pagePaths'
+import { splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
 
@@ -104,6 +104,13 @@ async function applyLocale(locale) {
     }
   }
   i18n.locale.value = locale
+  /*
+    The document says what language it is in too, not just the strings in it. `index.html` ships
+    `lang="en"` because that is all a static shell can say, and it stayed that way however the
+    interface was switched -- so a French page announced itself as English to a screen reader, and to
+    anything else reading the document for its language.
+  */
+  document.documentElement.lang = locale
 }
 
 // THEME
@@ -202,6 +209,8 @@ async function loadBootstrap() {
       searchParams: { hostname: window.location.hostname },
       cache: 'no-store'
     }).json()
+    // -> Before the site: `applySiteInfo` resolves the site's active locale codes against this
+    siteStore.installedLocales = data.locales ?? []
     siteStore.applySiteInfo(data.site)
     flagsStore.apply(data.flags)
     userStore.applyProfile(data.user)
@@ -233,15 +242,53 @@ router.beforeEach(async (to, from) => {
     bootstrap above, since that is where the site's extensions come from. A `/_` route is the app
     itself rather than a page, and is left alone as it is by the server.
   */
-  const withoutExtension = to.path.startsWith('/_')
-    ? null
-    : stripPageExtension(to.path, siteStore.pageExtensions)
+  const isPagePath = !to.path.startsWith('/_')
+  const withoutExtension = isPagePath ? stripPageExtension(to.path, siteStore.pageExtensions) : null
   if (withoutExtension) {
     return { path: withoutExtension, query: to.query, hash: to.hash, replace: true }
   }
 
-  // -> Locale
+  /*
+    -> Locale prefix
+    A site that brackets its URLs by locale sends a path arriving without one to its primary locale, so
+    that every page has a single address. The server does this for a request that reaches it; this is
+    the same rule for a link inside a page, which the router follows on its own. The prefix is the
+    locale's short code -- `/fr` for `fr-FR` -- the same segment its content is filed under.
+  */
   if (
+    isPagePath &&
+    siteStore.locales.forcePrefix &&
+    !splitLocalePath(to.path, siteStore.localePrefixes)
+  ) {
+    const primary = siteStore.localeAlias(siteStore.locales.primary)
+    return {
+      path: `/${primary}${to.path === '/' ? '' : to.path}`,
+      query: to.query,
+      hash: to.hash,
+      replace: true
+    }
+  }
+
+  /*
+    -> Locale
+    On a page, the interface speaks whatever the page is written in -- the prefix in the URL when
+    there is one, and the site's PRIMARY locale when there is not, because that is what an unprefixed
+    path resolves to. Falling back to the stored choice instead is what left `/` showing the English
+    home page with a French interface and French in the picker, after a detour through `/fr/...`.
+
+    It replaces the stored choice rather than shadowing it, which is what carries the switch on to a
+    screen with no locale in its path: the admin area and the profile are not pages, and keep it. The
+    site's primary is also the fallback for a first visit, and for a stored locale the site no longer
+    offers.
+  */
+  const pageLocale = isPagePath
+    ? (splitLocalePath(to.path, siteStore.localePrefixes)?.locale ?? siteStore.locales.primary)
+    : null
+  if (pageLocale) {
+    if (pageLocale !== commonStore.desiredLocale) {
+      commonStore.setLocale(pageLocale)
+    }
+  } else if (
     !commonStore.desiredLocale ||
     !siteStore.locales.active.some((l) => l.code === commonStore.desiredLocale)
   ) {

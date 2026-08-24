@@ -289,6 +289,31 @@ export const locales = pgTable(
     region: varchar({ length: 3 }).notNull(), // Unicode region subtag
     script: varchar({ length: 4 }).notNull(), // Unicode script subtag
     isRTL: boolean().notNull().default(false),
+    /**
+     * Whether `strings` holds a real string set. A locale the update task has only seen in the
+     * remote metadata gets a row so that it can be offered, but has nothing to serve until it is
+     * installed.
+     */
+    isInstalled: boolean().notNull().default(false),
+    /**
+     * The remote metadata's hash of the strings file this row was installed from, so that an update
+     * only downloads the locales that actually changed. Empty for a locale that came off disk and
+     * for one that is not installed yet -- which is exactly what makes the next update fetch it.
+     */
+    hash: varchar({ length: 64 }).notNull().default(''),
+    /**
+     * The short code an administrator would rather this locale be shown as -- `zh` for `zh-CN` --
+     * overriding the one derived from the tag. An alias and nothing more: `code` stays the identity,
+     * so nothing a page, an asset or a storage target already records has to move for this.
+     * Null when the derived form is fine, which is the usual case.
+     */
+    customCode: varchar({ length: 255 }).unique(),
+    /**
+     * The name an administrator would rather this locale be shown as, overriding the one `Intl`
+     * gives for the tag. Display only, and not unique: two locales reading alike in a menu is a
+     * choice somebody made, not a collision. Null when the derived name is fine.
+     */
+    customName: varchar({ length: 255 }),
     strings: jsonb().notNull().default([]),
     completeness: integer().notNull().default(0),
     createdAt: timestamp().notNull().defaultNow(),
@@ -303,11 +328,21 @@ export const navigation = pgTable(
   {
     id: uuid().primaryKey().defaultRandom(),
     items: jsonb().notNull().default([]),
+    /**
+     * Set only on a site-wide menu, naming the locale it is the menu for — the sidebar a page in that
+     * locale falls back to when nothing above it overrides one. Null on a menu belonging to a tree
+     * entry, which is identified by that entry's id instead. Postgres lets a unique index hold any
+     * number of nulls, which is what lets both kinds share the table.
+     */
+    locale: varchar({ length: 255 }),
     siteId: uuid()
       .notNull()
       .references(() => sites.id)
   },
-  (table) => [index('navigation_siteId_idx').on(table.siteId)]
+  (table) => [
+    index('navigation_siteId_idx').on(table.siteId),
+    uniqueIndex('navigation_siteId_locale_key').on(table.siteId, table.locale)
+  ]
 )
 
 // PAGES ------------------------------

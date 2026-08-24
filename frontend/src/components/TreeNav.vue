@@ -133,7 +133,13 @@ function resetLoaded() {
 // PROVIDE
 
 provide('roots', toRef(props, 'roots'))
-provide('nodes', props.nodes)
+/*
+  A ref, not `props.nodes`. Providing the object itself hands the levels below the map as it stood at
+  setup, so a parent that REPLACES its map -- which is how starting a tree over reads -- leaves them
+  looking up new ids in the old one. The rows still appeared, since `roots` was a ref and updated:
+  each drew its icon and no label at all, `{ ...undefined }` having nothing to spread.
+*/
+provide('nodes', toRef(props, 'nodes'))
 provide('loaded', state.loaded)
 provide('opened', state.opened)
 provide('displayMode', toRef(props, 'displayMode'))

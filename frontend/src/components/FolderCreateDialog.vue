@@ -83,6 +83,15 @@ const props = defineProps({
   parentId: {
     type: String,
     default: null
+  },
+  /**
+   * The locale to create it in. Only consulted at the root of the tree: a folder inside another one
+   * takes its parent's locale, which the server settles rather than trusting the caller for. Absent,
+   * the server falls back to the site's primary locale.
+   */
+  locale: {
+    type: String,
+    default: null
   }
 })
 
@@ -153,12 +162,15 @@ async function create() {
     if (!isFormValid) {
       throw new Error(t('fileman.createFolderInvalidData'))
     }
-    // -> No locale is sent: the server puts the folder in the site's primary one
     const resp = await API_CLIENT.post(`sites/${siteStore.id}/tree/folders`, {
       json: {
         parentId: props.parentId,
         pathName: state.path,
-        title: state.title
+        title: state.title,
+        // -> Which the server only reads for a folder at the ROOT -- one created inside another takes
+        //    that one's locale. Left out, a folder made while browsing French landed in the primary
+        //    locale, where nothing looking at the French tree would ever see it again
+        ...(props.locale && { locale: props.locale })
       }
     }).json()
     // -> The API client does not throw on 400, so a refused name comes back as a parsed error

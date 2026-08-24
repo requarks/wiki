@@ -78,6 +78,15 @@ const props = defineProps({
   basePath: {
     type: String,
     default: null
+  },
+  /**
+   * The locale to write the new page in. The page store's current one when absent, which is right
+   * from the page view and wrong from the file manager -- there the reader is looking at whichever
+   * locale the picker is on, not at the page behind the overlay.
+   */
+  locale: {
+    type: String,
+    default: null
   }
 })
 
@@ -101,7 +110,7 @@ const { t } = useI18n()
 async function create(editor) {
   loading.show()
   emit('newPage')
-  await pageStore.pageCreate({ editor, basePath: props.basePath })
+  await pageStore.pageCreate({ editor, basePath: props.basePath, locale: props.locale })
   loading.hide()
 }
 

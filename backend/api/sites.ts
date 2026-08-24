@@ -434,7 +434,9 @@ async function routes(app: FastifyInstance) {
       // -> Validate locales against the installed ones, and against what the site ends up with once
       //    the patch is merged, so that a partial update cannot leave the primary locale inactive
       if (req.body.locales) {
-        const installedCodes = (await WIKI.models.locales.getLocales()).map((lc: any) => lc.code)
+        const installedCodes = (await WIKI.models.locales.getInstalledLocales()).map(
+          (lc: any) => lc.code
+        )
         const active = req.body.locales.active ?? site.config.locales?.active ?? []
         const primary = req.body.locales.primary ?? site.config.locales?.primary
 

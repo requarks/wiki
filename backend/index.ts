@@ -33,7 +33,7 @@ import configSvc from './core/config.ts'
 import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
-import { stripPageExtension } from './helpers/common.ts'
+import { splitLocalePath, stripPageExtension } from './helpers/common.ts'
 import { corsOrigin, parseCspDirectives } from './helpers/security.ts'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
@@ -78,6 +78,26 @@ const SERVER_ROUTE_SEGMENTS = new Set([
 function isPageUrl(urlPath: string): boolean {
   const firstSegment = urlPath.split('/')[1] ?? ''
   return !firstSegment.startsWith('_') && !RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
+}
+
+/**
+ * The segments a site's locale-prefixed URLs may start with, mapped to the locale each names.
+ *
+ * Every code a locale answers to, not only the short one it is addressed by now: an alias an
+ * administrator changed leaves the links people have already saved pointing at the old segment, and
+ * a wiki that answers 404 to them has broken them. `localeForShortCode` is what knows the set.
+ */
+function localePrefixesFor(activeCodes?: string[] | null): Map<string, string> {
+  const prefixes = new Map<string, string>()
+  for (const code of activeCodes ?? []) {
+    const locale = WIKI.cache?.get(`locale:${code}`) as any
+    for (const segment of [locale?.displayCode, locale?.derivedCode, code]) {
+      if (segment) {
+        prefixes.set(segment, code)
+      }
+    }
+  }
+  return prefixes
 }
 
 if (!semver.satisfies(process.version, '>=26')) {
@@ -611,6 +631,24 @@ async function initHTTPServer() {
         //    permanent redirect would go on applying it after an administrator had changed it
         reply.redirect(withQuery(withoutExtension), 302)
         return
+      }
+
+      /*
+        A site that brackets its URLs by locale sends a path arriving without one to its primary
+        locale, so that every page has a single address. The prefix is the locale's SHORT code — `/fr`
+        for `fr-FR` — which is the same segment its content is filed under on a storage target.
+
+        302 for the same reason as the extension above: it is a setting, and a browser holding a
+        permanent redirect would go on applying it after an administrator had turned it off.
+      */
+      const siteLocales = WIKI.sites[siteId]?.config?.locales
+      if (siteLocales?.forcePrefix) {
+        const prefixes = localePrefixesFor(siteLocales.active)
+        if (!splitLocalePath(trimmed, prefixes)) {
+          const primary = WIKI.models.locales.shortCodeFor(siteLocales.primary)
+          reply.redirect(withQuery(`/${primary}${trimmed === '/' ? '' : trimmed}`), 302)
+          return
+        }
       }
     }
 

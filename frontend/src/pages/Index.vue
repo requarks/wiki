@@ -349,6 +349,7 @@ import { useMinWidth } from '@/composables/screen'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
+import { splitLocalePath } from '@/helpers/pagePaths'
 import { enhanceRenderedContent, routableHref, sameDocumentHash } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
@@ -659,7 +660,11 @@ watch(
         return router.replace('/')
       }
       loading.show()
-      await pageStore.pageEdit({ path: route.params.pagePath, fromNavigate: true })
+      await pageStore.pageEdit({
+        path: route.params.pagePath,
+        locale: route.query.locale,
+        fromNavigate: true
+      })
       loading.hide()
       return
     }
@@ -669,11 +674,20 @@ watch(
       return
     }
 
+    /*
+      -> Split the locale off the URL. A site that brackets its paths by locale addresses
+         `notes/one` in French as `/fr/notes/one`, so the page to load is what sits below the prefix.
+         No prefix means the site's primary locale, which is what the API assumes when none is given.
+    */
+    const localePath = splitLocalePath(newValue, siteStore.localePrefixes)
+    const pagePath = localePath?.path ?? newValue
+    const pageLocale = localePath?.locale
+
     // -> Load Page. The contents panel belongs to the page being left, so it goes with it
     state.tocPanelOpen = false
     scrollPageToTop()
     try {
-      await pageStore.pageLoad({ path: newValue })
+      await pageStore.pageLoad({ path: pagePath, locale: pageLocale })
       if (editorStore.isActive) {
         /*
           Walking away from the editor closes it, and `mode` describes the editor that was open — so
@@ -705,24 +719,31 @@ watch(
       })
     } catch (err) {
       if (err.message === 'ERR_PAGE_NOT_FOUND') {
-        if (newValue === '/') {
+        if (pagePath === '/') {
           if (!userStore.authenticated) {
             router.push('/login')
           } else if (!userStore.can('write:pages')) {
             router.replace('/_error/unauthorized')
           } else {
+            /*
+              The home page that is missing is the one in the locale being viewed, and that is what
+              the welcome screen's create button writes. This branch draws instead of calling
+              `pageNotFound`, so it has to say so itself -- left standing, the previous page's locale
+              sent an arrival at `/fr` off to write the ENGLISH home page, and the save came back 409.
+            */
+            pageStore.$patch({ locale: pageLocale || siteStore.locales.primary })
             siteStore.overlay = 'Welcome'
           }
         } else {
           // -> Not a notification over the page the reader came from: that page is still on screen
           //    behind it, at a URL that is not its own. The view draws the missing page instead.
-          pageStore.pageNotFound({ path: newValue })
+          pageStore.pageNotFound({ path: pagePath, locale: pageLocale })
           /*
             The one place the page permissions have to be asked for on their own: everywhere else they
             arrive with the page, and here there is no page to carry them — while the screen about to
             be drawn offers to create one, which is a permission question.
           */
-          await userStore.fetchPagePermissions(newValue)
+          await userStore.fetchPagePermissions(pagePath, pageLocale)
         }
       } else if (err.message === 'ERR_PAGE_UNAUTHORIZED') {
         // -> `replace`, so the back button leaves the wiki the way it came rather than bouncing off

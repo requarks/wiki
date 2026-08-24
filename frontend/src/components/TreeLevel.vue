@@ -2,9 +2,11 @@
   <ul class="treeview-level">
     <!-- ROOT NODE -->
     <li class="treeview-node" v-if="!props.parentId">
-      <div class="treeview-label" @click="setRoot" :class='{ "active": !selection }'>
+      <div class="treeview-label" @click="setRoot" :class="{ active: !selection }">
         <w-icon name="img:/_assets/icons/fluent-ftp.svg" size="sm" />
-        <div class="treeview-label-text" :class="dark.isActive ? `text-purple-4` : `text-purple`">root</div>
+        <div class="treeview-label-text" :class="dark.isActive ? `text-purple-4` : `text-purple`">
+          root
+        </div>
         <w-menu
           v-if="rootContextActionList.length > 0"
           touch-position
@@ -13,7 +15,7 @@
           transition-show="jump-down"
           transition-hide="jump-up">
           <w-card class="p-2">
-            <w-list dense style="min-width: 150px;">
+            <w-list dense style="min-width: 150px">
               <w-item
                 v-for="action of rootContextActionList"
                 :key="action.key"
@@ -22,7 +24,9 @@
                 <w-item-section side>
                   <w-icon :name="action.icon" :color="action.iconColor" />
                 </w-item-section>
-                <w-item-section :class="action.labelColor && (`text-` + action.labelColor)">{{action.label}}</w-item-section>
+                <w-item-section :class="action.labelColor && `text-` + action.labelColor">{{
+                  action.label
+                }}</w-item-section>
               </w-item>
             </w-list>
           </w-card>
@@ -63,7 +67,6 @@ const props = defineProps({
   }
 })
 
-
 // INJECT
 
 const roots = inject('roots')
@@ -90,14 +93,14 @@ const level = computed(() => {
     for (const root of roots.value) {
       items.push({
         id: root,
-        ...nodes[root]
+        ...nodes.value[root]
       })
     }
   } else {
-    for (const node of nodes[props.parentId].children) {
+    for (const node of nodes.value[props.parentId]?.children ?? []) {
       items.push({
         id: node,
-        ...nodes[node]
+        ...nodes.value[node]
       })
     }
   }

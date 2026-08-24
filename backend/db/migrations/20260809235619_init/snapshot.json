@@ -1939,6 +1939,58 @@
       "table": "locales"
     },
     {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "isInstalled",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "locales"
+    },
+    {
+      "type": "varchar(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "''",
+      "generated": null,
+      "identity": null,
+      "name": "hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "locales"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customCode",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "locales"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "customName",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "locales"
+    },
+    {
       "type": "jsonb",
       "typeSchema": null,
       "notNull": true,
@@ -2012,6 +2064,19 @@
       "generated": null,
       "identity": null,
       "name": "items",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "navigation"
+    },
+    {
+      "type": "varchar(255)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "locale",
       "entityType": "columns",
       "schema": "public",
       "table": "navigation"
@@ -4026,6 +4091,34 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "siteId",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "locale",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": true,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "navigation_siteId_locale_key",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "navigation"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "pageId",
           "isExpression": false,
           "asc": true,
@@ -5684,6 +5777,17 @@
       "schema": "public",
       "table": "users",
       "entityType": "pks"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "customCode"
+      ],
+      "nullsNotDistinct": false,
+      "name": "locales_customCode_key",
+      "schema": "public",
+      "table": "locales",
+      "entityType": "uniques"
     },
     {
       "nameExplicit": false,

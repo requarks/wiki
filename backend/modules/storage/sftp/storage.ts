@@ -376,12 +376,12 @@ const sftpStorage: StorageModule = {
     await withClient(target, (client) => removeRemote(client, target, relPath))
   },
 
-  async movePage(target, ref, previousPath) {
+  async movePage(target, ref, previous) {
     await withClient(target, (client) =>
       moveRemote(
         client,
         target,
-        pageRelPath(target, { ...ref, path: previousPath }),
+        pageRelPath(target, { ...ref, ...previous }),
         pageRelPath(target, ref)
       )
     )

@@ -19,10 +19,12 @@
           class="fileman-locale mr-2 acrylic-btn"
           flat
           color="white"
-          :label="commonStore.locale"
-          :aria-label="commonStore.locale"
+          :label="siteStore.localeAlias(state.locale)"
+          :aria-label="siteStore.localeAlias(state.locale)"
           style="height: 40px">
-          <locale-selector-menu />
+          <!-- -> Chooses which locale's content is LISTED, so it filters rather than navigates: going
+                  to another page would close the overlay the reader is working in -->
+          <locale-selector-menu :selected="state.locale" :navigate="false" @select="switchLocale" />
         </w-btn>
         <!--
           The same pill the site header uses, rather than a `w-input`.
@@ -310,7 +312,8 @@
                 :show-new-folder="true"
                 @new-folder="() => newFolder(state.currentFolderId)"
                 @new-page="() => close()"
-                :base-path="folderPath" />
+                :base-path="folderPath"
+                :locale="state.locale" />
             </w-btn>
             <w-btn
               flat
@@ -590,6 +593,12 @@ function storedViewOptions() {
 const state = reactive({
   loading: 0,
   isFetching: false,
+  /*
+    Which locale's content is listed. Its own state rather than the interface language: the manager is
+    a view of the tree, and the tree holds every translation side by side -- unfiltered, it listed all
+    of them at once. Starts on the locale of the page it was opened from.
+  */
+  locale: pageStore.locale,
   search: '',
   /** Drives the search pill's inversion, as HeaderSearch does it. */
   searchIsFocused: false,
@@ -883,6 +892,7 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
   try {
     const items = await API_CLIENT.get(`sites/${siteStore.id}/tree`, {
       searchParams: {
+        locale: state.locale,
         ...(parentId ? { parentId } : {}),
         ...(parentPath ? { parentPath } : {}),
         ...(types?.length > 0 ? { types: types.join(',') } : {}),
@@ -993,6 +1003,29 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
   state.isFetching = false
 }
 
+/**
+ * Browse another locale.
+ *
+ * Back to the root of it rather than the folder that was open: the tree holds each locale separately,
+ * so the folder being left may not exist in the one being entered — and a folder id from the other
+ * tree would load somebody else's contents under this locale's name.
+ */
+async function switchLocale(locale) {
+  if (locale === state.locale) {
+    return
+  }
+  state.locale = locale
+  state.treeNodes = {}
+  state.treeRoots = []
+  state.currentFolderId = null
+  state.currentFileId = null
+  state.fileList = []
+  // -> The tree marks which folders it has fetched children for, by id. None of them are in the tree
+  //    being entered, so the marks would only ever be wrong about it
+  treeComp.value?.resetLoaded()
+  await loadTree({ initLoad: true })
+}
+
 function treeContextAction(nodeId, action) {
   switch (action) {
     case 'newFolder': {
@@ -1018,7 +1051,8 @@ function newFolder(parentId) {
   dialog({
     component: FolderCreateDialog,
     componentProps: {
-      parentId
+      parentId,
+      locale: state.locale
     }
   }).onOk(() => {
     loadTree({ parentId })
@@ -1106,14 +1140,16 @@ function duplicatePage(item) {
       itemId: item.id,
       itemTitle: item.title,
       folderPath: item.folderPath,
-      itemFileName: item.fileName
+      itemFileName: item.fileName,
+      locale: state.locale
     }
   }).onOk(async (opts) => {
     try {
       await pageStore.pageDuplicate({
         sourcePageId: item.id,
         path: opts.path,
-        title: opts.title
+        title: opts.title,
+        locale: opts.locale
       })
       // -> The editor is now underneath this overlay, as it is after opening a page to edit
       close()
@@ -1143,18 +1179,26 @@ function renameMovePage(item) {
       itemId: item.id,
       itemTitle: item.title,
       folderPath: item.folderPath,
-      itemFileName: item.fileName
+      itemFileName: item.fileName,
+      locale: state.locale
     }
   }).onOk(async (opts) => {
     try {
-      if (opts.path === currentPath) {
+      // -> Only the destination decides which of the two endpoints this is, and the destination is a
+      //    locale as well as a path: the same path in another locale is a move, not a rename
+      if (opts.path === currentPath && opts.locale === state.locale) {
         await pageStore.pageRename({ id: item.id, title: opts.title })
         notify({
           type: 'positive',
           message: 'Page renamed successfully.'
         })
       } else {
-        await pageStore.pageMove({ id: item.id, path: opts.path, title: opts.title })
+        await pageStore.pageMove({
+          id: item.id,
+          path: opts.path,
+          title: opts.title,
+          locale: opts.locale
+        })
         notify({
           type: 'positive',
           message: 'Page moved successfully.'
@@ -1247,11 +1291,13 @@ async function uploadNewFiles() {
           }
           idx++
           state.uploadPercentage = totalFiles > 1 ? Math.round((idx / totalFiles) * 100) : 90
-          // -> The body is the file itself rather than a multipart form, and the locale is left to the
-          //    server, which uses the site's primary one
+          // -> The body is the file itself rather than a multipart form. The locale is the one being
+          //    browsed: a file dropped into a French folder belongs to the French tree, and left to
+          //    the server it would have been filed under the site's primary locale instead
           const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
             searchParams: {
               fileName: fileToUpload.name,
+              locale: state.locale,
               ...(state.currentFolderId ? { folderId: state.currentFolderId } : {})
             },
             headers: {
@@ -1314,14 +1360,24 @@ function doubleClickItem(item) {
   }
 }
 
+/**
+ * Where a page in this listing lives, in the locale being browsed.
+ *
+ * The prefix is not optional decoration: the manager lists whichever locale the picker is on, so a
+ * path without one addresses the PRIMARY locale's page of that name -- a different page, or none.
+ */
+function pageUrl(item) {
+  const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+  return `${siteStore.localeUrlPrefix(state.locale)}/${pagePath}`
+}
+
 function openItem(item) {
   switch (item.type) {
     case 'folder': {
       return
     }
     case 'page': {
-      const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
-      router.push(`/${pagePath}`)
+      router.push(pageUrl(item))
       close()
       break
     }
@@ -1337,8 +1393,7 @@ async function copyItemURL(item) {
   try {
     switch (item.type) {
       case 'page': {
-        const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
-        await navigator.clipboard.writeText(`${window.location.origin}/${pagePath}`)
+        await navigator.clipboard.writeText(`${window.location.origin}${pageUrl(item)}`)
         break
       }
       case 'asset': {
@@ -1367,9 +1422,10 @@ async function copyItemURL(item) {
 }
 
 async function editItem(item) {
-  router.push(
-    item.folderPath ? `/_edit/${item.folderPath}/${item.fileName}` : `/_edit/${item.fileName}`
-  )
+  const pagePath = item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName
+  // -> `/_edit` is an app route and carries no prefix, so the locale travels as a query the way it
+  //    already does for `/_create` -- without it the editor opens the primary locale's page instead
+  router.push({ path: `/_edit/${pagePath}`, query: { locale: state.locale } })
   close()
 }
 

@@ -95,8 +95,10 @@ async function createHomePage(editor) {
   siteStore.overlay = ''
   try {
     await pageStore.pageCreate({
+      // -> No locale: the one being written is the one the reader is looking at, which the store
+      //    already holds. Pinning it to the site's primary meant that arriving at `/fr` with no
+      //    French home page yet offered to create one and then tried to write the English one
       editor,
-      locale: siteStore.locales.primary,
       path: 'home',
       title: t('welcome.homeDefault.title'),
       description: t('welcome.homeDefault.description'),

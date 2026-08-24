@@ -944,7 +944,8 @@ class Tree {
           path: page.path,
           contentType: page.contentType
         },
-        page.previousPath
+        // -> A folder rename never crosses locales, so the page's own is where it came from too
+        { locale: page.locale, path: page.previousPath }
       )
     }
 
@@ -1149,8 +1150,9 @@ class Tree {
       siteId,
       tags,
       meta,
-      // -> Pages inherit the site's navigation until something says otherwise
-      navigationId: siteId,
+      // -> Pages inherit the navigation of the site AND LOCALE they are in until something says
+      //    otherwise; the first page written in a locale is what creates that menu
+      navigationId: await WIKI.models.navigation.siteNavId(siteId, locale),
       // -> A page's file name is its URL, chosen deliberately by whoever wrote it, so a clash is
       //    something to report rather than something to work around
       onConflict: 'error'

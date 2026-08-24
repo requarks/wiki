@@ -30,7 +30,8 @@
             flat
             dense
             icon="la:language"
-            :label="commonStore.locale"
+            :label="siteStore.localeAlias(commonStore.locale)"
+            :aria-label="siteStore.localeAlias(commonStore.locale)"
             color="grey-4">
             <w-menu
               content-class="translucent-menu"
@@ -55,8 +56,7 @@
                     </w-avatar>
                   </w-item-section>
                   <w-item-section>
-                    <w-item-label>{{ lang.nativeName }}</w-item-label>
-                    <w-item-label caption>{{ lang.name }}</w-item-label>
+                    <w-item-label>{{ lang.displayName }}</w-item-label>
                   </w-item-section>
                 </w-item>
               </w-list>

@@ -162,11 +162,11 @@ const diskStorage: StorageModule = {
     await pruneEmptyDirs(root, path.dirname(filePath))
   },
 
-  async movePage(target, ref, previousPath) {
+  async movePage(target, ref, previous) {
     // -> Which editor wrote it does not change when a page moves, so both ends share an extension
     await moveStored(
       baseDir(target),
-      pageRelPath(target, { ...ref, path: previousPath }),
+      pageRelPath(target, { ...ref, ...previous }),
       pageRelPath(target, ref)
     )
   },
