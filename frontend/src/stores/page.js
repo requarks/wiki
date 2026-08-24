@@ -437,13 +437,15 @@ export const usePageStore = defineStore('page', {
         // -> A page being created has no stored source to lose: whatever it starts with IS the source
         contentLoaded: true,
         render: '',
-        isBrowsable: true,
         /*
-          A redirection is browsable like any other page and findable in none: a search result for one
-          would stand in front of the page the reader actually wanted. The server settles this either
-          way -- see `createPage` in `models/pages.ts` -- so this is the store agreeing with it rather
-          than deciding it.
+          A redirection is in neither the browse menu nor search by default: the first because it is a
+          doorway rather than a page to land on, the second because a result for one would stand in
+          front of the page the reader actually wanted. The server settles both the same way -- see
+          `createPage` in `models/pages.ts` -- so this is the store agreeing with it rather than
+          deciding it. The difference is that browsing is a choice the author can turn back on, in the
+          redirect editor or the properties panel, and searching is not offered at all.
         */
+        isBrowsable: editor !== 'redirect',
         isSearchable: editor !== 'redirect',
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,

@@ -894,7 +894,13 @@ class Pages {
         editor,
         hash,
         icon: input.icon ?? '',
-        isBrowsable: input.isBrowsable ?? true,
+        /*
+          A redirection is a doorway rather than a destination, so it stays out of the browse menu
+          unless its author says otherwise -- the same default the redirect editor's own toggle
+          opens on. Unlike `isSearchable` below this is a choice and not a rule: a redirection that
+          IS the name readers look for belongs in the menu, and saying so is all it takes.
+        */
+        isBrowsable: input.isBrowsable ?? !isRedirect,
         // -> A redirection has nothing to find: a result for it would be a result whose page is a
         //    doorway to the page the reader actually wanted, which is the one search should offer
         isSearchable: isRedirect ? false : (input.isSearchable ?? true),

@@ -69,6 +69,23 @@
           </div>
           <w-separator class="my-2" inset />
           <!-- ----------------------- -->
+          <!-- Show in Site Navigation -->
+          <!-- ----------------------- -->
+          <w-item>
+            <blueprint-icon icon="tree-structure" />
+            <w-item-section>
+              <w-item-label>{{ t('editor.props.showInTree') }}</w-item-label>
+              <w-item-label caption>{{ t('editor.redirect.showInTreeHint') }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-toggle
+                :model-value="pageStore.isBrowsable"
+                :aria-label="t(`editor.props.showInTree`)"
+                @update:model-value="setIsBrowsable" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <!-- ----------------------- -->
           <!-- Interstitial -->
           <!-- ----------------------- -->
           <w-item>
@@ -126,8 +143,9 @@ import { usePageStore } from '@/stores/page'
  * The `redirect` editor: a page that sends its reader somewhere else.
  *
  * There is no content to write, so this is a form rather than an editor — a title, where the page
- * points, and whether the reader is told about it on the way. All three are the page's own fields:
- * the title is the page's, and the other two are its content, as JSON. See `helpers/pageRedirect.js`.
+ * points, whether it is offered in the browse menu, and whether the reader is told about it on the
+ * way. Two of those are the page's own fields — the title and `isBrowsable`, which the properties
+ * panel also edits — and the other two are its content, as JSON. See `helpers/pageRedirect.js`.
  *
  * What the page then DOES with that is `PageRedirect.vue`, which is what the page view draws in place
  * of an article.
@@ -178,6 +196,18 @@ function touch() {
 
 function setTitle(title) {
   pageStore.title = title
+  touch()
+}
+
+/**
+ * Whether the page is offered in the browse menu, which is the page's `isBrowsable` field rather than
+ * anything about the redirection — the same toggle the properties panel carries, put here because it
+ * is the question a redirection actually raises. Off for a new one: a redirection is usually a doorway
+ * left behind for an old path, and a menu of those is a menu of the same pages twice. The file manager
+ * lists it either way; this is the reader's menu, not the author's.
+ */
+function setIsBrowsable(isBrowsable) {
+  pageStore.isBrowsable = isBrowsable
   touch()
 }
 

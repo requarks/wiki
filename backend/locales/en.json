@@ -1885,6 +1885,7 @@
   "editor.redirect.pickerTitle": "Select Redirection Target",
   "editor.redirect.showInterstitial": "Show Interstitial",
   "editor.redirect.showInterstitialHint": "Show a short notice saying where the reader is going before taking them there. Off sends them straight on.",
+  "editor.redirect.showInTreeHint": "List this redirection in the site's browse menu. Off keeps it out, which is usually what a doorway left behind for an old path should do. It is listed in the file manager either way.",
   "editor.redirect.summaryDirect": "Readers arriving at this page are sent to {target} right away.",
   "editor.redirect.summaryIncomplete": "This redirection has no target yet, and cannot be saved until it does.",
   "editor.redirect.summaryInterstitial": "Readers arriving at this page are told they are being sent to {target}, then taken there a few seconds later.",
