@@ -1,6 +1,14 @@
 <template>
   <nav class="page-toc" aria-label="Table of contents">
-    <ul class="page-toc-list">
+    <ul
+      class="page-toc-list"
+      :class="{ 'page-toc-list--animated': markerAnimated }"
+      ref="listEl"
+      :style="{
+        '--page-toc-marker-y': `${marker.y}px`,
+        '--page-toc-marker-h': `${marker.h}px`,
+        '--page-toc-marker-opacity': marker.visible ? 1 : 0
+      }">
       <li
         v-for="item of visibleItems"
         :key="item.key"
@@ -24,7 +32,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 import { isVisible, scrollToAnchor } from '@/helpers/anchors'
 import { flattenToc } from '@/helpers/toc'
@@ -89,6 +97,30 @@ const TAB_TAG = 'BLOCK-TAB'
 
 let spyFrame = null
 let spySuspendedUntil = 0
+
+// DATA
+
+const listEl = ref(null)
+
+/*
+  Where the marker sits on the rail, in pixels down from the top of the list, and how tall it is.
+  Measured rather than expressed in CSS because the marker is one element for the whole list: that is
+  what lets it travel from one heading to the next instead of being switched off one row and on
+  another, and a pseudo-element on the active row can only ever do the latter.
+*/
+const marker = reactive({ y: 0, h: 0, visible: false })
+
+/*
+  Whether the marker may animate yet. Off for its first placement, so that a reader arriving partway
+  down a page is not shown it sliding from the top of the list -- there is no move to follow there,
+  only the list settling.
+*/
+const markerAnimated = ref(false)
+
+/* The inset the marker keeps at each end of a row, so it marks the label rather than the gap too. */
+const MARKER_INSET = 2
+
+let markerObserver = null
 
 // COMPUTED
 
@@ -201,6 +233,35 @@ function syncSpy() {
   }
 }
 
+/**
+ * Put the marker over the active row.
+ *
+ * Offsets are read off the row rather than computed from the list, since every depth has its own
+ * type size and therefore its own height. `offsetTop` is relative to the list, which is the nearest
+ * positioned ancestor and so the marker's own containing block.
+ */
+function syncMarker() {
+  const list = listEl.value
+  const active = list?.querySelector('.page-toc-item--active')
+  if (!active) {
+    // -> Nothing marked: fade out where it stands, rather than travelling to the top of the list
+    marker.visible = false
+    return
+  }
+
+  marker.y = active.offsetTop + MARKER_INSET
+  marker.h = Math.max(active.offsetHeight - MARKER_INSET * 2, 0)
+  marker.visible = true
+
+  if (!markerAnimated.value) {
+    // -> A frame after the first placement, so the browser paints it there before the transition
+    //    exists to animate away from it
+    requestAnimationFrame(() => {
+      markerAnimated.value = true
+    })
+  }
+}
+
 /** Scroll fires far more often than the marker can move; one read per frame is enough. */
 function queueSpy() {
   if (spyFrame !== null) {
@@ -217,6 +278,12 @@ function queueSpy() {
 // -> A new render means new heading positions, and possibly a different set of them
 watch(() => props.nodes, queueSpy)
 
+// -> After the class the marker is measured from has been applied
+watch([() => props.selected, visibleItems], async () => {
+  await nextTick()
+  syncMarker()
+})
+
 // MOUNTED
 
 onMounted(() => {
@@ -228,6 +295,15 @@ onMounted(() => {
   window.addEventListener('scroll', queueSpy, { capture: true, passive: true })
   window.addEventListener('resize', queueSpy, { passive: true })
   queueSpy()
+
+  /*
+    The rows move for reasons no event reports: the sidebar narrows at 1400px and long labels wrap
+    onto another line, which changes the height of the row the marker is on and the offset of every
+    row below it. Watching the list itself catches all of that, resizes included.
+  */
+  markerObserver = new ResizeObserver(syncMarker)
+  markerObserver.observe(listEl.value)
+  syncMarker()
 })
 
 onBeforeUnmount(() => {
@@ -236,6 +312,7 @@ onBeforeUnmount(() => {
   if (spyFrame !== null) {
     cancelAnimationFrame(spyFrame)
   }
+  markerObserver?.disconnect()
 })
 </script>
 
@@ -293,18 +370,33 @@ onBeforeUnmount(() => {
   }
 
   /*
-    The active marker, drawn ON the rail rather than beside it: `left: 0` is the item's own border
-    box, which starts at the rail whatever the indentation, so every depth marks the same line.
+    The active marker, drawn ON the rail rather than beside it: `left: 0` is the list's own border
+    box, which is where the rail is, so every depth marks the same line whatever its indentation.
+
+    One element for the whole list rather than a pseudo on the active row, so that moving to the next
+    heading is a slide down the rail instead of the marker being switched off one row and on another.
+    Where it goes cannot be said in CSS -- each depth has its own type size and so its own height --
+    so `syncMarker` measures the row and hands the two numbers over as custom properties.
   */
-  &-item--active::before {
+  &-list::after {
     content: '';
     position: absolute;
-    top: 2px;
-    bottom: 2px;
+    top: 0;
     left: 0;
     width: 2px;
+    height: var(--page-toc-marker-h, 0);
     border-radius: 1px;
     background-color: var(--color-primary);
+    opacity: var(--page-toc-marker-opacity, 0);
+    transform: translateY(var(--page-toc-marker-y, 0));
+  }
+
+  /* -> The class arrives a frame after the first placement, so the marker does not travel to it */
+  &-list--animated::after {
+    transition:
+      transform 0.25s var(--ease-standard),
+      height 0.25s var(--ease-standard),
+      opacity 0.15s var(--ease-standard);
   }
 
   &-link {
@@ -367,7 +459,8 @@ onBeforeUnmount(() => {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    &-link {
+    &-link,
+    &-list--animated::after {
       transition-duration: 0.01ms;
     }
   }

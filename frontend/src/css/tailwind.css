@@ -733,6 +733,20 @@
     color: var(--color-primary-light);
   }
 
+  /*
+    The heading at the top of every admin page. Only the colour lives here -- the size stays a
+    `text-h5` utility on the element -- because the one thing every copy of that header needs and
+    cannot express inline is the dark-mode shade: `primary` is picked to read on white and at
+    #1976d2 over `dark-5` it is too dim for a heading, the same problem `.w-section-header` has.
+  */
+  .admin-page-title {
+    color: var(--color-primary);
+  }
+
+  body.body--dark .admin-page-title {
+    color: var(--color-primary-light);
+  }
+
   .w-unstyled {
     appearance: none;
     background-color: transparent;

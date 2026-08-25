@@ -114,7 +114,7 @@ Content of the second tab.
       }
       .tab:hover:not(.is-active) {
         background-color: rgb(255 255 255 / 0.5);
-        color: var(--tabs-active-fg);
+        color: var(--tabs-active-label);
       }
       :host([dark]) .tab:hover:not(.is-active) {
         background-color: rgb(255 255 255 / 0.05);
@@ -130,7 +130,7 @@ Content of the second tab.
         border-bottom-color: var(--tabs-panel-bg);
         background-color: var(--tabs-panel-bg);
         background-image: none;
-        color: var(--tabs-active-fg);
+        color: var(--tabs-active-label);
       }
 
       .tab svg {
@@ -170,12 +170,21 @@ Content of the second tab.
         --tabs-strip-bg: linear-gradient(to bottom, #fdfdfd, #eeeeee);
         --tabs-inactive-fg: #424242;
         --tabs-active-fg: var(--q-primary, #1976d2);
+        /*
+          The label of the tab being pointed at or opened. The active foreground, except on dark,
+          where writing in a mid-tone picked to read on white is too dim -- the strip and the panel
+          both sit near #1b212a. The edge that marks the open tab and the focus ring keep the plain
+          brand colour: they are shapes rather than writing, and read at that weight.
+        */
+        --tabs-active-label: var(--tabs-active-fg);
         --tabs-panel-bg: #fff;
       }
       :host([dark]) {
         --tabs-border: rgba(255, 255, 255, 0.15);
         --tabs-strip-bg: linear-gradient(to bottom, #1b212a, #12161d);
         --tabs-inactive-fg: rgba(255, 255, 255, 0.7);
+        /* -> A mix of --q-primary, so a re-themed site's own hue comes with it. See block-index. */
+        --tabs-active-label: var(--color-primary-light);
         --tabs-panel-bg: #1e232a;
       }
     `

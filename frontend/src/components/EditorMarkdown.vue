@@ -440,21 +440,27 @@ const HEADER_ICONS = [
 ]
 
 /*
-  How the preview follows the caret: the line being edited goes to the TOP of the pane.
+  How the preview follows the caret: the line being edited is put a SHORT WAY down the pane.
 
-  `start` rather than `nearest`, which was tried and is wrong here -- `nearest` leaves a line alone as
-  long as it is visible anywhere, so a line sitting on the last row of the pane stays there, with what is
-  being written pinned to the bottom edge and nothing after it in view.
+  Not at its top, which is what this replaces. The top is exact, and that is the problem with it -- it
+  scrolls away everything written just above the caret, which is the paragraph the next one is being
+  written against, so the author is left editing at the edge of a pane with no context on one side of
+  it. Expressed as a fraction of the pane rather than a fixed inset so that a preview half the height
+  gives up half as much of itself to the lines already written.
 
-  Asking for the top on every caret move costs nothing when the caret stays put: the element is already
-  there, so the browser computes the same offset and there is no movement. What used to make this thrash
-  was the pane losing its scroll position to the re-render -- see `processContent` -- and animating up
-  from the top of the document each time, not the alignment asked for here.
+  `nearest` is not the answer either, at any offset: it leaves a line alone as long as it is visible
+  anywhere, so a line sitting on the last row of the pane stays there, with what is being written pinned
+  to the bottom edge and nothing after it in view. The position is computed and applied on every caret
+  move, and costs nothing when the caret stays put -- the arithmetic lands on the offset the pane is
+  already scrolled to and nothing moves. What used to make this thrash was the pane losing its scroll
+  position to the re-render -- see `processContent` -- and animating up from the top of the document each
+  time, not the alignment asked for here.
 
-  `inline: 'nearest'` only so that a wide block -- a table, a diagram -- is never scrolled sideways as a
-  side effect of following the caret down the page.
+  Scrolling the container rather than asking an element to bring itself into view also means a wide block
+  -- a table, a diagram -- is never scrolled sideways as a side effect of following the caret down the
+  page.
 */
-const SYNC_SCROLL = { behavior: 'smooth', block: 'start', inline: 'nearest' }
+const PREVIEW_CONTEXT_ABOVE = 0.2
 
 /**
  * Whether the window is wide enough to open the preview beside the source.
@@ -1162,6 +1168,24 @@ function previewAnchorFor(container, line) {
   return best ?? panel
 }
 
+/**
+ * Scroll the preview so that `el` sits `PREVIEW_CONTEXT_ABOVE` of the way down the pane.
+ *
+ * Measured through `getBoundingClientRect` rather than `offsetTop`, because what is wanted is the
+ * distance to the SCROLL container and `offsetTop` answers to the nearest positioned ancestor -- which
+ * inside rendered page content is whatever a block happened to put around it.
+ *
+ * A negative result is clamped by `scrollTo`, so an anchor near the top of the document puts the
+ * document's own top in view rather than leaving a gap above it.
+ */
+function scrollPreviewTo(container, el) {
+  const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top
+  container.scrollTo({
+    top: container.scrollTop + offset - container.clientHeight * PREVIEW_CONTEXT_ABOVE,
+    behavior: 'smooth'
+  })
+}
+
 function processContent(newContent) {
   /*
     A render that throws must not become a render that is empty.
@@ -1569,7 +1593,10 @@ onMounted(async () => {
         container.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
-      previewAnchorFor(container, currentLine)?.scrollIntoView(SYNC_SCROLL)
+      const anchor = previewAnchorFor(container, currentLine)
+      if (anchor) {
+        scrollPreviewTo(container, anchor)
+      }
     }, 500)
   )
 

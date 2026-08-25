@@ -235,6 +235,18 @@ export class BlockIndexElement extends LitElement {
         font-weight: normal;
         pointer-events: none;
       }
+      /*
+        On a dark row the writing takes the app's lightened brand shade, the same one the interface
+        gives a heading over a dark surface: primary is a mid-tone picked to read on white and is
+        too dim against #161b22. --color-primary-light is a mix of --q-primary, so a re-themed
+        site's own hue comes with it.
+
+        On .text rather than on the anchor, so it is the title alone that lightens: the icon and the
+        arrow are drawn with currentColor precisely so they keep the link's normal primary.
+      */
+      :host([dark]) .text {
+        color: var(--color-primary-light);
+      }
 
       /*
         The page's own icon. Sized in em so it keeps its place beside writing at whatever size the

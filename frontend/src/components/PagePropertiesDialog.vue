@@ -252,7 +252,7 @@
       <w-card-section class="alt-card pb-6" id="refCardSocial">
         <div class="w-section-header">{{ t('editor.props.social') }}</div>
         <w-form class="gap-4 pt-2">
-          <div>
+          <div v-if="flagsStore.experimental">
             <w-toggle
               v-model="pageStore.allowComments"
               dense
@@ -270,7 +270,7 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
-          <div>
+          <div v-if="flagsStore.experimental">
             <w-toggle
               v-model="pageStore.allowRatings"
               dense
@@ -352,6 +352,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useEditorStore } from '@/stores/editor'
+import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
@@ -364,6 +365,7 @@ import PageTags from './PageTags.vue'
 // STORES
 
 const editorStore = useEditorStore()
+const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 

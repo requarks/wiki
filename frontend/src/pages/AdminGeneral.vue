@@ -5,7 +5,7 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-web.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.general.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.general.title') }}</div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.general.subtitle') }}
         </div>
@@ -185,19 +185,21 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="discussion-forum" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.allowComments`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.allowCommentsHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.features.comments"
-                :aria-label="t(`admin.general.allowComments`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
+          <template v-if="flagsStore.experimental">
+            <w-item tag="label">
+              <blueprint-icon icon="discussion-forum" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.general.allowComments`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.general.allowCommentsHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-toggle
+                  v-model="state.config.features.comments"
+                  :aria-label="t(`admin.general.allowComments`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+          </template>
           <w-item tag="label">
             <blueprint-icon icon="administrator-male" />
             <w-item-section>
@@ -211,23 +213,25 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
-          <w-item>
-            <blueprint-icon icon="star-half-empty" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.allowRatings`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.allowRatingsHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section class="flex-none">
-              <w-btn-toggle
-                v-model="state.config.features.ratingsMode"
-                push
-                glossy
-                no-caps
-                toggle-color="primary"
-                :options="ratingsModes" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
+          <template v-if="flagsStore.experimental">
+            <w-item>
+              <blueprint-icon icon="star-half-empty" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.general.allowRatings`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.general.allowRatingsHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section class="flex-none">
+                <w-btn-toggle
+                  v-model="state.config.features.ratingsMode"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="ratingsModes" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+          </template>
           <w-item tag="label">
             <blueprint-icon icon="search" />
             <w-item-section>
@@ -287,6 +291,24 @@
                 :right-label-value="`H` + state.config.defaults.tocDepth.max"
                 label
                 markers />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
+        <!-- Discovery -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.general.discovery') }}</w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="cellular-network" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.discoverable`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.discoverableHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.discoverable"
+                :aria-label="t(`admin.general.discoverable`)" />
             </w-item-section>
           </w-item>
         </w-card>
@@ -464,24 +486,6 @@
           </w-item>
         </w-card>
         <!-- ----------------------- -->
-        <!-- Discovery -->
-        <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
-          <w-card-header>{{ t('admin.general.discovery') }}</w-card-header>
-          <w-item tag="label">
-            <blueprint-icon icon="cellular-network" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.discoverable`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.discoverableHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.discoverable"
-                :aria-label="t(`admin.general.discoverable`)" />
-            </w-item-section>
-          </w-item>
-        </w-card>
-        <!-- ----------------------- -->
         <!-- Uploads -->
         <!-- ----------------------- -->
         <w-card class="pb-2 mt-4" v-if="state.config.uploads">
@@ -585,6 +589,7 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
+import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
@@ -601,6 +606,7 @@ import { toMerged } from 'es-toolkit/object'
 // STORES
 
 const adminStore = useAdminStore()
+const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N

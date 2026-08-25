@@ -7,7 +7,7 @@
           src="/_assets/icons/fluent-paint-roller-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.theme.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.theme.title') }}</div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.theme.subtitle') }}
         </div>
@@ -217,7 +217,7 @@
         <!-- ----------------------- -->
         <!-- Fonts -->
         <!-- ----------------------- -->
-        <w-card class="pb-2">
+        <w-card class="pb-2" v-if="flagStore.experimental">
           <w-card-header>
             {{ t('admin.theme.fonts') }}
             <template #action>
@@ -269,7 +269,7 @@
         <!-- ----------------------- -->
         <!-- Code Injection -->
         <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
+        <w-card :class="['pb-2', { 'mt-4': flagStore.experimental }]">
           <w-card-header>{{ t('admin.theme.codeInjection') }}</w-card-header>
           <w-item>
             <blueprint-icon icon="css" />

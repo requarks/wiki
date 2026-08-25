@@ -7,7 +7,7 @@
           src="/_assets/icons/fluent-linux-terminal-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 text-primary animated fadeInLeft">{{ t('admin.terminal.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.terminal.title') }}</div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.terminal.subtitle') }}
         </div>
@@ -15,7 +15,8 @@
       <div class="flex-none flex items-center">
         <div v-if="state.connected" class="mr-4 text-right leading-tight">
           <div class="text-xs text-grey">{{ t('admin.terminal.instance') }}</div>
-          <div class="flex items-center justify-end gap-1.5 font-mono text-sm">
+          <div
+            class="flex items-center justify-end gap-1.5 font-mono text-sm text-grey-9 dark:text-grey-3">
             <status-light class="admin-terminal-dot" color="positive" pulse />
             {{ state.instance }}
           </div>

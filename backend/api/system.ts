@@ -105,6 +105,9 @@ async function routes(app: FastifyInstance) {
               dbHost: {
                 type: 'string'
               },
+              dbVersion: {
+                type: 'string'
+              },
               groupsTotal: {
                 type: 'number'
               },
@@ -160,7 +163,7 @@ async function routes(app: FastifyInstance) {
                 type: 'string'
               },
               tagsTotal: {
-                type: 'string'
+                type: 'number'
               },
               upgradeCapable: {
                 type: 'boolean'
