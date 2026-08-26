@@ -43,8 +43,8 @@ jobs:
       - name: Extract version
         id: version
         run: |
-          VERSION=$(jq -r .version package.json)
-          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+          VERSION=$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' package.json | head -1)
+          if [ -z "$VERSION" ]; then
             echo "Failed to parse version from package.json" >&2
             exit 1
           fi

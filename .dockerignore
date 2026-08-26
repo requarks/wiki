@@ -1,0 +1,10 @@
+.git
+.github
+.gitea
+.webpack-cache
+node_modules
+assets
+data
+logs
+config.yml
+wiki-js.tar.gz
