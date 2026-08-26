@@ -1,0 +1,102 @@
+name: Build multi-arch image and push to Harbor and Docker Hub when new commit to main-branch
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: linux_amd64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable binfmt/QEMU for cross-arch RUN steps
+        run: |
+          podman run --privileged --rm docker.io/tonistiigi/binfmt --install all
+
+      - name: Login to Swissmakers Registry
+        if: ${{ secrets.HARBOR_REGISTRY && secrets.HARBOR_USERNAME && secrets.HARBOR_PASSWORD }}
+        env:
+          REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
+          ROBOT_USER: ${{ secrets.HARBOR_USERNAME }}
+          ROBOT_PASS: ${{ secrets.HARBOR_PASSWORD }}
+        run: |
+          echo "$ROBOT_PASS" | podman login --username "$ROBOT_USER" --password-stdin "$REGISTRY"
+
+      - name: Login to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        env:
+          DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DH_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DH_TOKEN" | podman login docker.io --username "$DH_USER" --password-stdin
+
+      - name: Login to GHCR
+        if: ${{ secrets.GHCR_USERNAME && secrets.GHCR_TOKEN }}
+        env:
+          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | podman login ghcr.io --username "$GHCR_USER" --password-stdin
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(jq -r .version package.json)
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "Failed to parse version from package.json" >&2
+            exit 1
+          fi
+          echo "version=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build multi-arch manifest locally
+        env:
+          LOCAL_MANIFEST: localhost/wikijs-ng:${{ github.sha }}
+          PLATFORMS: linux/amd64,linux/arm64
+        run: |
+          podman build --pull \
+            --platform "$PLATFORMS" \
+            --manifest "$LOCAL_MANIFEST" \
+            --build-arg VERSION="${{ steps.version.outputs.version }}" \
+            --build-arg REVISION="${{ github.sha }}" \
+            --build-arg CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -f dev/build/Dockerfile \
+            .
+          podman manifest inspect "$LOCAL_MANIFEST"
+
+      - name: Push to Swissmakers Registry
+        if: ${{ secrets.HARBOR_REGISTRY && secrets.HARBOR_PROJECT }}
+        env:
+          REG: ${{ secrets.HARBOR_REGISTRY }}
+          PROJ: ${{ secrets.HARBOR_PROJECT }}
+          LOCAL_MANIFEST: localhost/wikijs-ng:${{ github.sha }}
+        run: |
+          DEST="docker://$REG/$PROJ/wikijs-ng"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ github.sha }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ steps.version.outputs.version }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:latest"
+
+      - name: Push to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME && secrets.DOCKERHUB_TOKEN }}
+        env:
+          DH_NS: ${{ secrets.DOCKERHUB_USERNAME }}
+          DH_REPO: wikijs-ng
+          LOCAL_MANIFEST: localhost/wikijs-ng:${{ github.sha }}
+        run: |
+          DEST="docker://docker.io/$DH_NS/$DH_REPO"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ github.sha }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ steps.version.outputs.version }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:latest"
+
+      - name: Push to GHCR
+        if: ${{ secrets.GHCR_USERNAME && secrets.GHCR_TOKEN }}
+        env:
+          GHCR_NS: swissmakers
+          GHCR_REPO: wikijs-ng
+          LOCAL_MANIFEST: localhost/wikijs-ng:${{ github.sha }}
+        run: |
+          DEST="docker://ghcr.io/$GHCR_NS/$GHCR_REPO"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ github.sha }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:${{ steps.version.outputs.version }}"
+          podman manifest push --all "$LOCAL_MANIFEST" "$DEST:latest"
