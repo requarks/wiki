@@ -27,7 +27,7 @@ import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 import { usePageStore } from '@/stores/page'
 import { apiErrorMessage } from '@/helpers/apiError'
-import { assetPath } from '@/helpers/assets'
+import { assetPath, pastedAssetFolder } from '@/helpers/assets'
 
 // EMITS
 
@@ -69,15 +69,30 @@ onMounted(async () => {
   */
   const replacements = []
 
+  // -> Read once, not per file: every file in one save goes to the same place, and the page cannot
+  //    move underneath this
+  const folderPath = pastedAssetFolder(siteStore.uploads.pastedDestination, pageStore.folderPath)
+
   try {
     for (const item of editorStore.pendingAssets) {
       state.current++
-      // -> The body is the file itself rather than a multipart form, and the locale is left to the
-      //    server, which uses the site's primary one
+      /*
+        The body is the file itself rather than a multipart form.
+
+        Addressed by path because a path is what the editor knows, and any folder in it that does not
+        exist yet is created by the upload. Where that path leads is the site's to say -- see
+        `pastedAssetFolder` -- and it defaults to the page's own folder. The site root is where these
+        used to land regardless, which put every screenshot anybody ever pasted in one flat list beside
+        the site's top-level pages.
+
+        The locale is the page's, not the site's default: a folder belongs to one locale, so a file
+        for the French page has to be filed in the French tree or it is not in the same folder at all.
+      */
       const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
         searchParams: {
-          fileName: item.fileName
-          // TODO: Upload to page specific folder
+          fileName: item.fileName,
+          locale: pageStore.locale,
+          ...(folderPath ? { folderPath } : {})
         },
         headers: {
           'content-type': item.file.type || 'application/octet-stream'

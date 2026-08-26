@@ -192,7 +192,8 @@ class Sites {
               }
             },
             uploads: {
-              conflictBehavior: 'overwrite'
+              conflictBehavior: 'overwrite',
+              pastedDestination: ''
             },
             storage: {
               largeThreshold: '25MB',
@@ -455,7 +456,8 @@ class Sites {
           contentFont: 'roboto'
         },
         uploads: {
-          conflictBehavior: 'overwrite'
+          conflictBehavior: 'overwrite',
+          pastedDestination: ''
         },
         storage: {
           largeThreshold: '25MB',

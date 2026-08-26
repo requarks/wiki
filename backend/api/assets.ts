@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
-import { decodeTreePath } from '../helpers/common.ts'
+import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 
 const assetIdParam = {
@@ -60,7 +60,7 @@ async function routes(app: FastifyInstance) {
    */
   app.post<{
     Params: { siteId: string }
-    Querystring: { fileName: string; folderId?: string; locale?: string }
+    Querystring: { fileName: string; folderId?: string; folderPath?: string; locale?: string }
   }>(
     '/sites/:siteId/assets',
     {
@@ -94,7 +94,13 @@ async function routes(app: FastifyInstance) {
             folderId: {
               type: 'string',
               format: 'uuid',
-              description: 'The folder to upload into. The site root when absent.'
+              description: 'The folder to upload into. Wins over `folderPath`.'
+            },
+            folderPath: {
+              type: 'string',
+              maxLength: 2048,
+              description:
+                'Slash-separated path of the folder to upload into, created if it does not exist. The site root when both this and `folderId` are absent.'
             },
             locale: {
               type: 'string',
@@ -132,11 +138,19 @@ async function routes(app: FastifyInstance) {
         return reply.badRequest('No file was sent.')
       }
 
+      /*
+        Where this is going, as a path, which is what a rule addresses. An ID has to be looked up to
+        get one; a path is already one, and is normalized here rather than trusted -- the model would
+        happily create a folder called `..`.
+      */
       const folder = req.query.folderId
         ? await WIKI.models.tree.getFolderById(req.query.folderId)
         : null
-      const folderPath = folder ? (decodeTreePath(folder.folderPath ?? '') ?? '') : ''
-      const destination = folder ? [folderPath, folder.fileName].filter(Boolean).join('/') : ''
+      const folderPath = req.query.folderId ? null : normalizeFolderPath(req.query.folderPath)
+      const parentPath = folder ? (decodeTreePath(folder.folderPath ?? '') ?? '') : ''
+      const destination = folder
+        ? [parentPath, folder.fileName].filter(Boolean).join('/')
+        : (folderPath ?? '')
       if (
         !mayOnAsset(req, 'write:assets', { folderPath: destination, fileName: req.query.fileName })
       ) {
@@ -146,6 +160,7 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         locale: req.query.locale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en',
         folderId: req.query.folderId,
+        folderPath,
         fileName: req.query.fileName,
         mimeType: req.headers['content-type'],
         data,

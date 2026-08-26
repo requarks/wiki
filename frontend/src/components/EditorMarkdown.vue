@@ -1294,8 +1294,23 @@ function processContent(newContent) {
  * An image goes in as one, anything else as a link with its file name for text — a dropped PDF is a
  * link to a PDF, not a broken picture. The name is the image's alt text as well, which is both what the
  * handler this replaces did and better than nothing for a reader who cannot see it.
+ *
+ * Except while suggesting an edit, where files are refused outright. A pending asset is uploaded when
+ * the page is SAVED, and submitting a suggestion is not a save — nothing would ever send these, so the
+ * markdown would keep a `blob:` URL that dies with the tab. Nor is that only plumbing: somebody
+ * suggesting an edit is by definition somebody without write access to this page, and filing their
+ * files into the wiki beside it is not a decision this flow gets to make. Carrying an attachment on a
+ * suggestion is a feature, and until there is one, the refusal is said out loud — the paste has already
+ * been taken off the browser by the time this runs, so a silent return is a paste that vanished.
  */
 function insertFilesAsAssets(files) {
+  if (editorStore.mode === 'suggest') {
+    notify({
+      type: 'warning',
+      message: t('editor.pendingAssetsNotInSuggestions')
+    })
+    return
+  }
   const markup = files.map((file) => {
     const blobUrl = editorStore.addPendingAsset(file)
     return `${file.type.startsWith('image/') ? '!' : ''}[${file.name}](${blobUrl})`
@@ -1360,6 +1375,26 @@ function onEditorDrop(event) {
 }
 
 /**
+ * The editor's model onto the page store: the source a save sends, and the render made from it.
+ *
+ * Debounced because it renders the whole document on every keystroke, and NAMED so that it can also be
+ * flushed — see `reloadEditorContent`, which needs it to have happened before it returns rather than
+ * half a second later.
+ */
+const syncContentToStore = debounce(() => {
+  editorStore.$patch({
+    lastChangeTimestamp: Temporal.Now.instant()
+  })
+  pageStore.$patch({
+    content: editor.getValue(),
+    // -> What the author has typed IS the source, whatever the load did or did not deliver; see
+    //    the guard in `pageSave`
+    contentLoaded: true
+  })
+  processContent(pageStore.content)
+}, 500)
+
+/**
  * Rewrite text that was already in the editor — the blob URLs of pending assets, once the upload has
  * given them real paths.
  *
@@ -1380,6 +1415,15 @@ function reloadEditorContent({ replacements = [] } = {}) {
   }
   if (edits.length > 0) {
     editor.executeEdits('assets', edits)
+    /*
+      And the store follows the model NOW, rather than when the debounce would have got to it.
+
+      This runs from `UploadPendingAssetsDialog`, immediately before the page is saved. Left to the
+      timer, the sync would land after that save -- so the page would go up with a render still full of
+      `blob:` URLs, and then be marked dirty half a second later by the very edit that fixed it,
+      needing a second save to publish. Flushing here is what makes one save enough.
+    */
+    syncContentToStore.flush()
   }
 }
 
@@ -1546,29 +1590,29 @@ onMounted(async () => {
     }
   })
 
+  /*
+    Ctrl/Cmd+S, asking for the header's Save button rather than saving anything itself. What that
+    button does is the header's to know -- which of the three it currently is, whether the
+    reason-for-change dialog has to be answered first, and that it is disabled with nothing pending --
+    so the shortcut goes through the event bus instead of reaching for `pageSave` and getting a
+    different save from the one on screen.
+
+    A Monaco action rather than a listener because that is what stops the browser offering to save the
+    page as a file: Monaco takes the keystroke off the event once a keybinding resolves. It has been
+    registered here, doing nothing, for exactly that reason.
+  */
   editor.addAction({
     id: 'save',
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
     label: 'Save',
     precondition: '',
-    run(ed) {}
+    run(ed) {
+      EVENT_BUS.emit('savePage')
+    }
   })
 
   // -> Handle content change
-  editor.onDidChangeModelContent(
-    debounce((ev) => {
-      editorStore.$patch({
-        lastChangeTimestamp: Temporal.Now.instant()
-      })
-      pageStore.$patch({
-        content: editor.getValue(),
-        // -> What the author has typed IS the source, whatever the load did or did not deliver; see
-        //    the guard in `pageSave`
-        contentLoaded: true
-      })
-      processContent(pageStore.content)
-    }, 500)
-  )
+  editor.onDidChangeModelContent(syncContentToStore)
 
   // -> Handle cursor movement
   editor.onDidChangeCursorPosition(
@@ -1728,6 +1772,14 @@ onBeforeUnmount(() => {
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header
   stopCollabSession()
+  /*
+    Anything pasted but never uploaded goes with the session that held it. This hook is where an
+    editing session ends, whichever way it ended -- discarded, closed, submitted as a suggestion, or
+    walked away from by following a link -- because the editor is mounted exactly while
+    `editorStore.isActive` holds (see `pages/Index.vue`). A save has already emptied this by the time
+    it gets here: the upload runs before the page goes up, not after.
+  */
+  editorStore.clearPendingAssets()
   if (editor) {
     editor.dispose()
   }

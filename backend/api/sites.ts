@@ -1,5 +1,5 @@
 import { validate as uuidValidate } from 'uuid'
-import { CustomError } from '../helpers/common.ts'
+import { CustomError, normalizePastedDestination } from '../helpers/common.ts'
 import { detectImageMime, detectSvg, imageMimeTypes, svgMimeType } from '../helpers/images.ts'
 import { siteAssetKinds } from '../models/sites.ts'
 import type { SiteAssetKind } from '../models/sites.ts'
@@ -474,6 +474,17 @@ async function routes(app: FastifyInstance) {
       // -> Keep the legacy `features.ratings` flag in sync with the ratings mode
       if (config.features?.ratingsMode !== undefined) {
         config.features.ratings = config.features.ratingsMode !== 'off'
+      }
+
+      /*
+        The pasted-uploads destination is stored in one form, so that what the admin area reads back is
+        what an upload will do with it -- `assets/`, `./assets` and `assets` are the same folder, and
+        the editor should not have to know that.
+      */
+      if (config.uploads?.pastedDestination !== undefined) {
+        config.uploads.pastedDestination = normalizePastedDestination(
+          config.uploads.pastedDestination
+        )
       }
 
       // -> Update site

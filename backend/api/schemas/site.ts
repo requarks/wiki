@@ -116,6 +116,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'What an upload does about a file already at the name it wants: replace it in place, refuse the upload, or store the arrival as the next free `name-1.ext`.',
             enum: ['overwrite', 'reject', 'new']
+          },
+          pastedDestination: {
+            type: 'string',
+            maxLength: 2048,
+            description:
+              "Where a file pasted or dropped into the editor is filed when the page is saved. Empty is the page's own folder. A relative path is a folder under it — `assets` files them in `<page folder>/assets`. A path starting with `/` is from the site root, so every page's pasted files land in the one place. Missing folders are created on the first upload. Normalized on save: doubled slashes and `.`/`..` segments go, and a leading slash is kept because it is what tells the two apart."
           }
         }
       },

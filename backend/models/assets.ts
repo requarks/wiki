@@ -286,7 +286,11 @@ class Assets {
    * `UploadConflictBehavior`. An overwrite returns the existing asset's ID, so a caller that means to
    * link to what it just uploaded must read the returned name and ID rather than assume its own.
    *
-   * @param folderId UUID of the folder to upload into. The site root when absent.
+   * @param folderId UUID of the folder to upload into. Takes precedence over `folderPath`.
+   * @param folderPath Slash-separated path of the folder to upload into, created if it does not exist.
+   *                   The site root when both are absent. A caller that knows a path and not an ID --
+   *                   the editor uploading what was pasted into a page, which knows the page it is in
+   *                   -- addresses the folder this way rather than looking it up first.
    * @param fileName What to call it. Sanitized, so what comes back may differ from what went in.
    * @param data The file itself.
    */
@@ -294,6 +298,7 @@ class Assets {
     siteId,
     locale,
     folderId,
+    folderPath,
     fileName,
     mimeType,
     data,
@@ -302,6 +307,7 @@ class Assets {
     siteId: string
     locale: string
     folderId?: string | null
+    folderPath?: string | null
     fileName: string
     mimeType?: string | null
     data: Buffer
@@ -312,7 +318,14 @@ class Assets {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
     const fileExt = extensionOf(safeName)
-    await this.guardAgainstPageCollision({ siteId, locale, folderId, fileName: safeName, fileExt })
+    await this.guardAgainstPageCollision({
+      siteId,
+      locale,
+      folderId,
+      folderPath,
+      fileName: safeName,
+      fileExt
+    })
     // -> The extension decides the type, not the request: the declared one is whatever the client felt
     //    like sending, and this value is what gets served back to a browser later
     const resolvedMime = mime.getType(safeName) ?? mimeType ?? 'application/octet-stream'
@@ -333,6 +346,7 @@ class Assets {
             siteId,
             locale,
             parentId: folderId,
+            parentPath: folderPath,
             fileName: safeName
           })
     if (occupant) {
@@ -373,6 +387,7 @@ class Assets {
     //    that was actually free, which is not always the one asked for.
     const entry = await WIKI.models.tree.addAsset({
       parentId: folderId,
+      parentPath: folderPath,
       fileName: safeName,
       title: safeName,
       locale,
@@ -384,7 +399,9 @@ class Assets {
       }
     })
     const storedName = entry.fileName
-    const folderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
+    // -> Read off the row rather than from the request: the folder may have just been created, and a
+    //    name that was taken took the next free one
+    const storedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
 
     try {
       // -> The metadata row goes in before the bytes, since the database target writes them into it
@@ -405,7 +422,7 @@ class Assets {
           siteId,
           actorId: authorId,
           locale,
-          folderPath,
+          folderPath: storedFolderPath,
           fileName: storedName,
           kind,
           fileSize: data.length
@@ -422,7 +439,7 @@ class Assets {
     WIKI.models.hooks.emit('asset:upload', {
       id: entry.id,
       fileName: storedName,
-      folderPath,
+      folderPath: storedFolderPath,
       siteId,
       authorId,
       metadata: { fileSize: data.length, mimeType: resolvedMime, kind }
@@ -435,7 +452,7 @@ class Assets {
       kind,
       mimeType: resolvedMime,
       fileSize: data.length,
-      folderPath,
+      folderPath: storedFolderPath,
       locale,
       title: entry.title,
       hasPreview: Boolean(preview),

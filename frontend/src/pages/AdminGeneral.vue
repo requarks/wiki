@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-web.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.general.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.general.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.general.subtitle') }}
         </div>
@@ -512,6 +514,21 @@
                 :aria-label="t(`admin.general.uploadConflictBehavior`)" />
             </w-item-section>
           </w-item>
+          <w-item>
+            <blueprint-icon icon="opened-folder" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.pastedDestination`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.pastedDestinationHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-input
+                outlined
+                v-model="state.config.uploads.pastedDestination"
+                dense
+                :placeholder="t(`admin.general.pastedDestinationPlaceholder`)"
+                :aria-label="t(`admin.general.pastedDestination`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <!-- ----------------------- -->
         <!-- URL Handling -->
@@ -766,7 +783,8 @@ async function save() {
         logoText: state.config.logoText ?? false,
         sitemap: state.config.sitemap ?? false,
         uploads: {
-          conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite'
+          conflictBehavior: state.config.uploads?.conflictBehavior ?? 'overwrite',
+          pastedDestination: state.config.uploads?.pastedDestination ?? ''
         },
         robots: {
           index: state.config.robots?.index ?? false,

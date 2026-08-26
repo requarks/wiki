@@ -103,6 +103,45 @@ export function normalizePagePath(input?: string | null): string {
 }
 
 /**
+ * Reduce a folder path to the segments it actually names.
+ *
+ * Wrapping and doubled slashes go, and so do `.` and `..` segments — in a wiki tree those name a
+ * literal folder rather than a relative path, so a caller asking for `../etc` is asking for a folder
+ * called `etc` and never for somewhere outside the site. Which is what makes this safe to hand a path
+ * that came from a request.
+ *
+ * Case is left alone: `encodeTreePath` lowercases on the way into the database, so the lookup does not
+ * care, and the tree is what decides what a new folder ends up called.
+ */
+export function normalizeFolderPath(input?: string | null): string {
+  return (input ?? '')
+    .trim()
+    .split('/')
+    .filter((segment) => segment && segment !== '.' && segment !== '..')
+    .join('/')
+}
+
+/**
+ * Reduce the site's pasted-uploads destination to its stored form.
+ *
+ * `normalizeFolderPath` plus the one thing that setting carries which a plain folder path does not: a
+ * LEADING SLASH, which is what distinguishes a path from the site root from one relative to the page
+ * being edited. So it survives normalization, and `/` on its own stays `/` — the site root, which is a
+ * real answer and a different one from empty (the page's own folder).
+ */
+export function normalizePastedDestination(input?: string | null): string {
+  const raw = (input ?? '').trim()
+  if (!raw) {
+    return ''
+  }
+  const normalized = normalizeFolderPath(raw)
+  if (!raw.startsWith('/')) {
+    return normalized
+  }
+  return `/${normalized}`
+}
+
+/**
  * Drop a site's page extension from the end of a URL path.
  *
  * A wiki's pages are addressed without one — `/foo/bar`, not `/foo/bar.md` — but the file the page

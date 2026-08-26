@@ -328,7 +328,16 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -429,7 +438,12 @@ const state = reactive({
    * that watching a page again a minute later rings it again — a class left on plays once and never
    * plays a second time.
    */
-  bellRinging: false
+  bellRinging: false,
+  /**
+   * Whether a save is on the wire. Read only by `savePageFromShortcut`, where the keystroke can repeat
+   * faster than the request comes back; see the note there.
+   */
+  isSaving: false
 })
 
 // REFS
@@ -464,7 +478,52 @@ watch(
   (description) => syncEditable(descriptionEl.value, description)
 )
 
+// LIFECYCLE
+
+/*
+  Ctrl+S in an editor, emitted by whichever editor is open (`EditorMarkdown.vue`). The listener lives
+  here because the buttons do.
+*/
+onMounted(() => {
+  EVENT_BUS.on('savePage', savePageFromShortcut)
+})
+
+onBeforeUnmount(() => {
+  EVENT_BUS.off('savePage', savePageFromShortcut)
+})
+
 // METHODS
+
+/**
+ * The keyboard asking for the Save button.
+ *
+ * Which button that is depends on the mode -- a suggestion is submitted, a page that has no row yet is
+ * created through the save-as dialog, everything else is saved in place -- so this dispatches the same
+ * three ways the template does, and stays disabled where they are. A shortcut that saved a page the
+ * button in front of the author could not would be a different action wearing its name.
+ */
+function savePageFromShortcut() {
+  if (isSuggesting.value) {
+    if (editorStore.hasPendingChanges) {
+      submitSuggestion()
+    }
+    return
+  }
+  if (editorStore.mode === 'create') {
+    // -> No pending-changes guard, matching its button: a page being created has nothing to compare to
+    createPage()
+    return
+  }
+  /*
+    `state.isSaving` is only ever consulted here. A button cannot be pressed thirty times a second, but
+    Ctrl+S held down auto-repeats, and every repeat that landed before the answer came back would write
+    another version into the page's history. The two branches above need no such guard: both open a
+    dialog, which takes the focus off the editor and ends the repeat.
+  */
+  if (editorStore.hasPendingChanges && !state.isSaving) {
+    saveChanges(false)
+  }
+}
 
 /**
  * Put a value into a contenteditable without disturbing a caret that is already in it.
@@ -612,6 +671,7 @@ async function saveChanges(closeAfter = false) {
 async function saveChangesCommit(closeAfter = false) {
   await processPendingAssets()
   loading.show()
+  state.isSaving = true
   try {
     await pageStore.pageSave()
     notify({
@@ -642,6 +702,8 @@ async function saveChangesCommit(closeAfter = false) {
       message: 'Failed to save page changes.',
       caption: err.message
     })
+  } finally {
+    state.isSaving = false
   }
   loading.hide()
 }
@@ -685,17 +747,22 @@ async function createPage() {
       locale: pageStore.locale
     }
   }).onOk(async ({ path, title, locale }) => {
+    pageStore.$patch({
+      title,
+      path,
+      // -> The dialog is where the locale is settled for a page that has none yet, so what it
+      //    hands back is what the page is written in
+      locale
+    })
+    /*
+      After the patch above, and before the save: pending assets are uploaded into the folder the page
+      is in, and until this dialog answered, the page was not anywhere yet. Uploading first would have
+      filed everything pasted into a new page against wherever the editor was opened from.
+    */
     await processPendingAssets()
 
     loading.show()
     try {
-      pageStore.$patch({
-        title,
-        path,
-        // -> The dialog is where the locale is settled for a page that has none yet, so what it
-        //    hands back is what the page is written in
-        locale
-      })
       await pageStore.pageSave()
       notify({
         type: 'positive',

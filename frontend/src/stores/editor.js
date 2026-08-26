@@ -65,6 +65,28 @@ export const useEditorStore = defineStore('editor', {
       }
       return blobUrl
     },
+    /**
+     * Drop every pending asset without uploading any of them.
+     *
+     * What the end of an editing session that did not save means for these. A pending asset becomes a
+     * file only when the page is SAVED, so once the editor is gone nothing is ever going to send them,
+     * and nothing points at them either -- the markdown that did went with the draft that was
+     * discarded.
+     *
+     * Left in place they outlive the editor that made them and are uploaded by the next save instead,
+     * which is very often another page: a file filed into that page's folder that nothing references,
+     * and one nobody chose to upload. `pendingAssets` is not per page, and the rail that lists them is
+     * only drawn while an editor is open, so a leftover is also invisible until it lands.
+     *
+     * Revokes the URLs on the way out, since the browser holds the bytes behind each one until it is
+     * told it can let go.
+     */
+    clearPendingAssets () {
+      for (const item of this.pendingAssets) {
+        URL.revokeObjectURL(item.blobUrl)
+      }
+      this.pendingAssets = []
+    },
     async fetchConfigs () {
       const siteStore = useSiteStore()
       try {

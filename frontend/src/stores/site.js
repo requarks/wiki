@@ -95,6 +95,14 @@ export const useSiteStore = defineStore('site', {
       reasonForChange: 'required',
       search: false
     },
+    /**
+     * What this site does with uploads. Set in the admin area's General section; only the parts the
+     * app itself acts on are carried here, which is where a pasted file goes -- the conflict behavior
+     * is the server's business alone.
+     */
+    uploads: {
+      pastedDestination: ''
+    },
     /** How this site handles signing in. Set in the admin area's Login section. */
     auth: {
       /**
@@ -284,6 +292,10 @@ export const useSiteStore = defineStore('site', {
         auth: {
           ...this.auth,
           ...siteInfo.auth
+        },
+        uploads: {
+          ...this.uploads,
+          ...siteInfo.uploads
         },
         editors: {
           asciidoc: siteInfo.editors.asciidoc.isActive,
