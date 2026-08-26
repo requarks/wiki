@@ -3,13 +3,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import VueClipboards from 'vue-clipboards'
-import { ApolloClient } from 'apollo-client'
-import { BatchHttpLink } from 'apollo-link-batch-http'
-import { ApolloLink, split } from 'apollo-link'
-import { WebSocketLink } from 'apollo-link-ws'
-import { ErrorLink } from 'apollo-link-error'
-import { InMemoryCache } from 'apollo-cache-inmemory'
-import { getMainDefinition } from 'apollo-utilities'
+import { ApolloClient, ApolloLink, InMemoryCache, split } from '@apollo/client/core'
+import { BatchHttpLink } from '@apollo/client/link/batch-http'
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
+import { onError } from '@apollo/client/link/error'
+import { getMainDefinition } from '@apollo/client/utilities'
+import { createClient as createWsClient } from 'graphql-ws'
 import VueApollo from 'vue-apollo'
 import Vuetify from 'vuetify/lib'
 import Velocity from 'velocity-animate'
@@ -53,7 +52,7 @@ const graphQLEndpoint = window.location.protocol + '//' + window.location.host +
 const graphQLWSEndpoint = ((window.location.protocol === 'https:') ? 'wss:' : 'ws:') + '//' + window.location.host + '/graphql-subscriptions'
 
 const graphQLLink = ApolloLink.from([
-  new ErrorLink(({ graphQLErrors, networkError }) => {
+  onError(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
       let isAuthError = false
       graphQLErrors.map(({ message, locations, path }) => {
@@ -110,17 +109,14 @@ const graphQLLink = ApolloLink.from([
   })
 ])
 
-const graphQLWSLink = new WebSocketLink({
-  uri: graphQLWSEndpoint,
-  options: {
-    reconnect: true,
-    lazy: true,
-    connectionParams: () => {
-      const token = Cookies.get('jwt')
-      return token ? { token } : {}
-    }
+const graphQLWSLink = new GraphQLWsLink(createWsClient({
+  url: graphQLWSEndpoint,
+  lazy: true,
+  connectionParams: () => {
+    const token = Cookies.get('jwt')
+    return token ? { token } : {}
   }
-})
+}))
 
 window.graphQL = new ApolloClient({
   link: split(({ query }) => {

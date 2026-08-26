@@ -11,6 +11,7 @@ COPY ./client ./client
 COPY ./dev ./dev
 COPY ./patches ./patches
 COPY ./package.json ./package.json
+COPY ./yarn.lock ./yarn.lock
 COPY ./.babelrc ./.babelrc
 COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
@@ -26,7 +27,19 @@ RUN yarn patch-package
 # --- Release ---
 # ===============
 FROM node:24-alpine
-LABEL maintainer="requarks.io"
+
+ARG VERSION=dev
+ARG REVISION=unknown
+ARG CREATED=unknown
+
+LABEL maintainer="swissmakers.ch" \
+      org.opencontainers.image.title="wikijs-ng" \
+      org.opencontainers.image.description="Wiki.js NG - a modern, lightweight and powerful wiki app" \
+      org.opencontainers.image.source="https://github.com/swissmakers/wikijs-ng" \
+      org.opencontainers.image.licenses="AGPL-3.0" \
+      org.opencontainers.image.version="$VERSION" \
+      org.opencontainers.image.revision="$REVISION" \
+      org.opencontainers.image.created="$CREATED"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \

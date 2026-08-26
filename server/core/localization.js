@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const dotize = require('dotize')
-const i18nMW = require('i18next-express-middleware')
+const i18nMW = require('i18next-http-middleware')
 const i18next = require('i18next')
 const Promise = require('bluebird')
 const fs = require('fs-extra')
@@ -80,7 +80,7 @@ module.exports = {
       try {
         const devEntriesRaw = await fs.readFile(path.join(WIKI.SERVERPATH, `locales/${locale}.yml`), 'utf8')
         if (devEntriesRaw) {
-          const devEntries = yaml.safeLoad(devEntriesRaw)
+          const devEntries = yaml.load(devEntriesRaw)
           _.forOwn(devEntries, (data, ns) => {
             this.namespaces.push(ns)
             this.engine.addResourceBundle(locale, ns, data, true, true)

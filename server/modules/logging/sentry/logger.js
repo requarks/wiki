@@ -1,27 +1,35 @@
-const util = require('util')
-const winston = require('winston')
+const Transport = require('winston-transport')
+const { LEVEL } = require('triple-beam')
 
 // ------------------------------------
 // Sentry
 // ------------------------------------
 
+class SentryTransport extends Transport {
+  constructor (opts) {
+    super(opts)
+
+    this.name = 'sentryLogger'
+    this.level = opts.level || 'warn'
+    this.Sentry = require('@sentry/node')
+    this.Sentry.init({
+      dsn: opts.key
+    })
+  }
+
+  log (info, callback = () => {}) {
+    const level = (info[LEVEL] === 'warn') ? 'warning' : info[LEVEL]
+    this.Sentry.captureMessage(info.message, {
+      level,
+      extra: info
+    })
+    callback(null, true)
+  }
+}
+
 module.exports = {
   init (logger, conf) {
-    let SentryLogger = winston.transports.SentryLogger = function (options) {
-      this.name = 'sentryLogger'
-      this.level = options.level || 'warn'
-      this.raven = require('raven')
-      this.raven.config(options.key).install()
-    }
-    util.inherits(SentryLogger, winston.Transport)
-
-    SentryLogger.prototype.log = function (level, msg, meta, callback) {
-      level = (level === 'warn') ? 'warning' : level
-      this.raven.captureMessage(msg, { level, extra: meta })
-      callback(null, true)
-    }
-
-    logger.add(new SentryLogger({
+    logger.add(new SentryTransport({
       level: 'warn',
       key: conf.key
     }))

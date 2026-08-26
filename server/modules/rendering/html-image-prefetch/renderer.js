@@ -1,21 +1,21 @@
-const request = require('request-promise')
+/* global WIKI */
 
 const prefetch = async (element) => {
   const url = element.attr(`src`)
-  let response
+  let contentType = ''
+  let image = ''
   try {
-    response = await request({
-      method: `GET`,
-      url,
-      resolveWithFullResponse: true
-    })
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Unexpected response code ${response.status}`)
+    }
+    contentType = response.headers.get(`content-type`)
+    image = Buffer.from(await response.arrayBuffer()).toString('base64')
   } catch (err) {
     WIKI.logger.warn(`Failed to prefetch ${url}`)
     WIKI.logger.warn(err)
     return
   }
-  const contentType = response.headers[`content-type`]
-  const image = Buffer.from(response.body).toString('base64')
   element.attr('src', `data:${contentType};base64,${image}`)
   element.removeClass('prefetch-candidate')
 }

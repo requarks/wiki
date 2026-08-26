@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors')
 const express = require('express')
 const session = require('express-session')
-const KnexSessionStore = require('connect-session-knex')(session)
+const { ConnectSessionKnexStore } = require('connect-session-knex')
 const favicon = require('serve-favicon')
 const path = require('path')
 const _ = require('lodash')
@@ -80,8 +80,9 @@ module.exports = async () => {
     secret: WIKI.config.sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: new KnexSessionStore({
-      knex: WIKI.models.knex
+    store: new ConnectSessionKnexStore({
+      knex: WIKI.models.knex,
+      createTable: true
     })
   }))
   app.use(WIKI.auth.passport.initialize())

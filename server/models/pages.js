@@ -199,7 +199,7 @@ module.exports = class Page extends Model {
           result = frontmatterRegex.markdown.exec(raw)
           if (result[2]) {
             return {
-              ...yaml.safeLoad(result[2]),
+              ...yaml.load(result[2]),
               content: result[3]
             }
           } else {
@@ -218,7 +218,7 @@ module.exports = class Page extends Model {
           result = frontmatterRegex.html.exec(raw)
           if (result[2]) {
             return {
-              ...yaml.safeLoad(result[2]),
+              ...yaml.load(result[2]),
               content: result[3]
             }
           }
@@ -312,10 +312,10 @@ module.exports = class Page extends Model {
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
       toc: '[]',
-      extra: JSON.stringify({
+      extra: {
         js: scriptJs,
         css: scriptCss
-      })
+      }
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -431,11 +431,11 @@ module.exports = class Page extends Model {
       publishEndDate: opts.publishEndDate || '',
       publishStartDate: opts.publishStartDate || '',
       title: opts.title,
-      extra: JSON.stringify({
+      extra: {
         ...ogPage.extra,
         js: scriptJs,
         css: scriptCss
-      })
+      }
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
 

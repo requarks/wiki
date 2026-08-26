@@ -585,14 +585,19 @@ export default {
         this.cm.refresh()
       })
     },
-    renderMermaidDiagrams () {
-      document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code').forEach(elm => {
+    async renderMermaidDiagrams () {
+      for (const elm of document.querySelectorAll('.editor-markdown-preview pre.codeblock-mermaid > code')) {
         mermaidId++
         const mermaidDef = elm.innerText
         const mmElm = document.createElement('div')
-        mmElm.innerHTML = `<div id="mermaid-id-${mermaidId}">${mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)}</div>`
+        try {
+          const { svg } = await mermaid.render(`mermaid-id-${mermaidId}`, mermaidDef)
+          mmElm.innerHTML = `<div>${svg}</div>`
+        } catch (err) {
+          mmElm.innerHTML = `<div class="caption red--text">${err.message}</div>`
+        }
         elm.parentElement.replaceWith(mmElm)
-      })
+      }
     },
     autocomplete (cm, change) {
       if (cm.getModeAt(cm.getCursor()).name !== 'markdown') {

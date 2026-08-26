@@ -12,7 +12,7 @@ module.exports = {
   },
   Subscription: {
     loggingLiveTrail: {
-      subscribe: () => WIKI.GQLEmitter.asyncIterator('livetrail')
+      subscribe: () => WIKI.GQLEmitter.asyncIterableIterator('livetrail')
     }
   },
   LoggingQuery: {

@@ -32,12 +32,12 @@ module.exports = {
     let appdata = {}
 
     try {
-      appconfig = yaml.safeLoad(
+      appconfig = yaml.load(
         cfgHelper.parseConfigValue(
           fs.readFileSync(confPaths.config, 'utf8')
         )
       )
-      appdata = yaml.safeLoad(fs.readFileSync(confPaths.data, 'utf8'))
+      appdata = yaml.load(fs.readFileSync(confPaths.data, 'utf8'))
       appdata.regex = require(confPaths.dataRegex)
       console.info(chalk.green.bold(`OK`))
     } catch (err) {

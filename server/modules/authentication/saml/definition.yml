@@ -74,6 +74,12 @@ props:
     hint: If enabled, add WantAssertionsSigned="true" to the metadata, to specify that the IdP should always sign the assertions.
     default: false
     order: 21
+  wantAuthnResponseSigned:
+    type: Boolean
+    title: Require signed response
+    hint: If enabled, the outer SAML AuthnResponse from the IdP must be signed. Enable only if your IdP signs the whole response, not just the assertions.
+    default: false
+    order: 21.5
   acceptedClockSkewMs:
     type: Number
     title: Accepted Clock Skew Milleseconds

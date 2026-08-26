@@ -22,7 +22,8 @@ const init = {
     global.WP = webpack(global.WP_CONFIG)
     global.WP_DEV = {
       devMiddleware: require('webpack-dev-middleware')(global.WP, {
-        publicPath: global.WP_CONFIG.output.publicPath
+        publicPath: global.WP_CONFIG.output.publicPath,
+        writeToDisk: true
       }),
       hotMiddleware: require('webpack-hot-middleware')(global.WP)
     }

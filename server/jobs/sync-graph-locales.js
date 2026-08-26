@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { createApolloFetch } = require('apollo-fetch')
+const { createGraphFetch } = require('../helpers/graph-fetch')
 
 /* global WIKI */
 
@@ -7,7 +7,7 @@ module.exports = async () => {
   WIKI.logger.info('Syncing locales with Graph endpoint...')
 
   try {
-    const apollo = createApolloFetch({
+    const apollo = createGraphFetch({
       uri: WIKI.config.graphEndpoint
     })
 

@@ -126,11 +126,13 @@ router.post('/login', bruteforce.prevent, async (req, res, next) => {
 /**
  * Logout
  */
-router.get('/logout', async (req, res) => {
+router.get('/logout', async (req, res, next) => {
   const redirURL = await WIKI.models.users.logout({ req, res })
-  req.logout()
-  res.clearCookie('jwt')
-  res.redirect(redirURL)
+  req.logout(err => {
+    if (err) { return next(err) }
+    res.clearCookie('jwt')
+    res.redirect(redirURL)
+  })
 })
 
 /**

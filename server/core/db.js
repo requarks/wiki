@@ -111,14 +111,13 @@ module.exports = {
         dbClient = 'mssql'
 
         if (_.isPlainObject(dbConfig)) {
-          dbConfig.appName = 'Wiki.js'
-          _.set(dbConfig, 'options.appName', 'Wiki.js')
+          dbConfig.server = dbConfig.host
+          delete dbConfig.host
 
-          dbConfig.enableArithAbort = true
+          _.set(dbConfig, 'options.appName', 'Wiki.js')
           _.set(dbConfig, 'options.enableArithAbort', true)
 
           if (dbUseSSL) {
-            dbConfig.encrypt = true
             _.set(dbConfig, 'options.encrypt', true)
           }
         }

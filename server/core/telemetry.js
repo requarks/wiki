@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const { createApolloFetch } = require('apollo-fetch')
+const { createGraphFetch } = require('../helpers/graph-fetch')
 const { v4: uuid } = require('uuid')
 const os = require('os')
 const fs = require('fs-extra')
@@ -26,7 +26,7 @@ module.exports = {
     if (WIKI.devMode || !this.enabled) { return }
 
     try {
-      const apollo = createApolloFetch({
+      const apollo = createGraphFetch({
         uri: WIKI.config.graphEndpoint
       })
 

@@ -28,7 +28,7 @@ module.exports = {
       new GitHubStrategy(githubConfig, async (req, accessToken, refreshToken, profile, cb) => {
         try {
           WIKI.logger.info(`GitHub OAuth: Processing profile for user ${profile.id || profile.username}`)
-          
+
           // Ensure email is available - passport-github2 should fetch it automatically with user:email scope
           // but we'll log a warning if it's missing
           if (!profile.emails || (Array.isArray(profile.emails) && profile.emails.length === 0)) {
@@ -42,7 +42,7 @@ module.exports = {
               picture: _.get(profile, 'photos[0].value', '')
             }
           })
-          
+
           WIKI.logger.info(`GitHub OAuth: Successfully authenticated user ${user.email}`)
           cb(null, user)
         } catch (err) {

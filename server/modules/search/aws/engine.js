@@ -1,5 +1,6 @@
 const _ = require('lodash')
-const AWS = require('aws-sdk')
+const { CloudSearchClient, DescribeAnalysisSchemesCommand, DefineAnalysisSchemeCommand, DescribeIndexFieldsCommand, DefineIndexFieldCommand, DescribeSuggestersCommand, DefineSuggesterCommand, IndexDocumentsCommand } = require('@aws-sdk/client-cloudsearch')
+const { CloudSearchDomainClient, SearchCommand, SuggestCommand, UploadDocumentsCommand } = require('@aws-sdk/client-cloudsearch-domain')
 const { pipeline } = require('node:stream/promises')
 const { Transform } = require('node:stream')
 
@@ -17,67 +18,69 @@ module.exports = {
    */
   async init() {
     WIKI.logger.info(`(SEARCH/AWS) Initializing...`)
-    this.client = new AWS.CloudSearch({
-      apiVersion: '2013-01-01',
-      accessKeyId: this.config.accessKeyId,
-      secretAccessKey: this.config.secretAccessKey,
+    this.client = new CloudSearchClient({
+      credentials: {
+        accessKeyId: this.config.accessKeyId,
+        secretAccessKey: this.config.secretAccessKey
+      },
       region: this.config.region
     })
-    this.clientDomain = new AWS.CloudSearchDomain({
-      apiVersion: '2013-01-01',
+    this.clientDomain = new CloudSearchDomainClient({
       endpoint: this.config.endpoint,
-      accessKeyId: this.config.accessKeyId,
-      secretAccessKey: this.config.secretAccessKey,
+      credentials: {
+        accessKeyId: this.config.accessKeyId,
+        secretAccessKey: this.config.secretAccessKey
+      },
       region: this.config.region
     })
 
     let rebuildIndex = false
 
     // -> Define Analysis Schemes
-    const schemes = await this.client.describeAnalysisSchemes({
+    const schemes = await this.client.send(new DescribeAnalysisSchemesCommand({
       DomainName: this.config.domain,
       AnalysisSchemeNames: ['default_anlscheme']
-    }).promise()
+    }))
     if (_.get(schemes, 'AnalysisSchemes', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Analysis Scheme...`)
-      await this.client.defineAnalysisScheme({
+      await this.client.send(new DefineAnalysisSchemeCommand({
         DomainName: this.config.domain,
         AnalysisScheme: {
           AnalysisSchemeLanguage: this.config.AnalysisSchemeLang,
           AnalysisSchemeName: 'default_anlscheme'
         }
-      }).promise()
+      }))
       rebuildIndex = true
     }
 
     // -> Define Index Fields
-    const fields = await this.client.describeIndexFields({
+    const fields = await this.client.send(new DescribeIndexFieldsCommand({
       DomainName: this.config.domain
-    }).promise()
+    }))
     if (_.get(fields, 'IndexFields', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Index Fields...`)
-      await this.client.defineIndexField({
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'id',
           IndexFieldType: 'literal'
         }
-      }).promise()
-      await this.client.defineIndexField({
+      }))
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'path',
           IndexFieldType: 'literal'
         }
-      }).promise()
-      await this.client.defineIndexField({
+      }))
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'locale',
           IndexFieldType: 'literal'
         }
-      }).promise()
-      await this.client.defineIndexField({
+      }))
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'title',
@@ -87,8 +90,8 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
-      await this.client.defineIndexField({
+      }))
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'description',
@@ -98,8 +101,8 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
-      await this.client.defineIndexField({
+      }))
+      await this.client.send(new DefineIndexFieldCommand({
         DomainName: this.config.domain,
         IndexField: {
           IndexFieldName: 'content',
@@ -109,18 +112,18 @@ module.exports = {
             AnalysisScheme: 'default_anlscheme'
           }
         }
-      }).promise()
+      }))
       rebuildIndex = true
     }
 
     // -> Define suggester
-    const suggesters = await this.client.describeSuggesters({
+    const suggesters = await this.client.send(new DescribeSuggestersCommand({
       DomainName: this.config.domain,
       SuggesterNames: ['default_suggester']
-    }).promise()
+    }))
     if (_.get(suggesters, 'Suggesters', []).length < 1) {
       WIKI.logger.info(`(SEARCH/AWS) Defining Suggester...`)
-      await this.client.defineSuggester({
+      await this.client.send(new DefineSuggesterCommand({
         DomainName: this.config.domain,
         Suggester: {
           SuggesterName: 'default_suggester',
@@ -129,16 +132,16 @@ module.exports = {
             FuzzyMatching: 'high'
           }
         }
-      }).promise()
+      }))
       rebuildIndex = true
     }
 
     // -> Rebuild Index
     if (rebuildIndex) {
       WIKI.logger.info(`(SEARCH/AWS) Requesting Index Rebuild...`)
-      await this.client.indexDocuments({
+      await this.client.send(new IndexDocumentsCommand({
         DomainName: this.config.domain
-      }).promise()
+      }))
     }
 
     WIKI.logger.info(`(SEARCH/AWS) Initialization completed.`)
@@ -152,17 +155,17 @@ module.exports = {
   async query(q, opts) {
     try {
       let suggestions = []
-      const results = await this.clientDomain.search({
+      const results = await this.clientDomain.send(new SearchCommand({
         query: q,
         partial: true,
         size: 50
-      }).promise()
+      }))
       if (results.hits.found < 5) {
-        const suggestResults = await this.clientDomain.suggest({
+        const suggestResults = await this.clientDomain.send(new SuggestCommand({
           query: q,
           suggester: 'default_suggester',
           size: 5
-        }).promise()
+        }))
         suggestions = suggestResults.suggest.suggestions.map(s => s.suggestion)
       }
       return {
@@ -187,7 +190,7 @@ module.exports = {
    * @param {Object} page Page to create
    */
   async created(page) {
-    await this.clientDomain.uploadDocuments({
+    await this.clientDomain.send(new UploadDocumentsCommand({
       contentType: 'application/json',
       documents: JSON.stringify([
         {
@@ -202,7 +205,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    }))
   },
   /**
    * UPDATE
@@ -210,7 +213,7 @@ module.exports = {
    * @param {Object} page Page to update
    */
   async updated(page) {
-    await this.clientDomain.uploadDocuments({
+    await this.clientDomain.send(new UploadDocumentsCommand({
       contentType: 'application/json',
       documents: JSON.stringify([
         {
@@ -225,7 +228,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    }))
   },
   /**
    * DELETE
@@ -233,7 +236,7 @@ module.exports = {
    * @param {Object} page Page to delete
    */
   async deleted(page) {
-    await this.clientDomain.uploadDocuments({
+    await this.clientDomain.send(new UploadDocumentsCommand({
       contentType: 'application/json',
       documents: JSON.stringify([
         {
@@ -241,7 +244,7 @@ module.exports = {
           id: page.hash
         }
       ])
-    }).promise()
+    }))
   },
   /**
    * RENAME
@@ -249,7 +252,7 @@ module.exports = {
    * @param {Object} page Page to rename
    */
   async renamed(page) {
-    await this.clientDomain.uploadDocuments({
+    await this.clientDomain.send(new UploadDocumentsCommand({
       contentType: 'application/json',
       documents: JSON.stringify([
         {
@@ -257,8 +260,8 @@ module.exports = {
           id: page.hash
         }
       ])
-    }).promise()
-    await this.clientDomain.uploadDocuments({
+    }))
+    await this.clientDomain.send(new UploadDocumentsCommand({
       contentType: 'application/json',
       documents: JSON.stringify([
         {
@@ -273,7 +276,7 @@ module.exports = {
           }
         }
       ])
-    }).promise()
+    }))
   },
   /**
    * REBUILD INDEX
@@ -326,7 +329,7 @@ module.exports = {
     const flushBuffer = async () => {
       WIKI.logger.info(`(SEARCH/AWS) Sending batch of ${chunks.length}...`)
       try {
-        await this.clientDomain.uploadDocuments({
+        await this.clientDomain.send(new UploadDocumentsCommand({
           contentType: 'application/json',
           documents: JSON.stringify(_.map(chunks, doc => ({
             type: 'add',
@@ -339,7 +342,7 @@ module.exports = {
               content: WIKI.models.pages.cleanHTML(doc.render)
             }
           })))
-        }).promise()
+        }))
       } catch (err) {
         WIKI.logger.warn('(SEARCH/AWS) Failed to send batch to AWS CloudSearch: ', err)
       }
@@ -360,9 +363,9 @@ module.exports = {
     )
 
     WIKI.logger.info(`(SEARCH/AWS) Requesting Index Rebuild...`)
-    await this.client.indexDocuments({
+    await this.client.send(new IndexDocumentsCommand({
       DomainName: this.config.domain
-    }).promise()
+    }))
 
     WIKI.logger.info(`(SEARCH/AWS) Index rebuilt successfully.`)
   }

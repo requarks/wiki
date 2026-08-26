@@ -1,13 +1,14 @@
 const _ = require('lodash')
 const fs = require('fs')
-// const gqlTools = require('graphql-tools')
 const path = require('path')
 const autoload = require('auto-load')
 const PubSub = require('graphql-subscriptions').PubSub
 const { LEVEL, MESSAGE } = require('triple-beam')
 const Transport = require('winston-transport')
-const { createRateLimitTypeDef } = require('graphql-rate-limit-directive')
-// const { GraphQLUpload } = require('graphql-upload')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
+
+const authDirectiveTransformer = require('./directives/auth')
+const { rateLimitDirectiveTypeDefs, rateLimitDirectiveTransformer } = require('./directives/rate-limit')
 
 /* global WIKI */
 
@@ -19,7 +20,7 @@ WIKI.GQLEmitter = new PubSub()
 
 // Schemas
 
-let typeDefs = [createRateLimitTypeDef()]
+let typeDefs = [rateLimitDirectiveTypeDefs]
 let schemas = fs.readdirSync(path.join(WIKI.SERVERPATH, 'graph/schemas'))
 schemas.forEach(schema => {
   typeDefs.push(fs.readFileSync(path.join(WIKI.SERVERPATH, `graph/schemas/${schema}`), 'utf8'))
@@ -27,19 +28,20 @@ schemas.forEach(schema => {
 
 // Resolvers
 
-let resolvers = {
-  // Upload: GraphQLUpload
-}
+let resolvers = {}
 const resolversObj = _.values(autoload(path.join(WIKI.SERVERPATH, 'graph/resolvers')))
 resolversObj.forEach(resolver => {
   _.merge(resolvers, resolver)
 })
 
-// Directives
+// Build Schema + Apply Directives
 
-let schemaDirectives = {
-  ...autoload(path.join(WIKI.SERVERPATH, 'graph/directives'))
-}
+let schema = makeExecutableSchema({
+  typeDefs,
+  resolvers
+})
+schema = authDirectiveTransformer(schema)
+schema = rateLimitDirectiveTransformer(schema)
 
 // Live Trail Logger (admin)
 
@@ -68,7 +70,5 @@ WIKI.logger.add(new LiveTrailLogger({}))
 WIKI.logger.info(`GraphQL Schema: [ OK ]`)
 
 module.exports = {
-  typeDefs,
-  resolvers,
-  schemaDirectives
+  schema
 }

@@ -620,10 +620,11 @@ export default {
     Prism.highlightAllUnder(this.$refs.container)
 
     // -> Render Mermaid diagrams
-    mermaid.mermaidAPI.initialize({
-      startOnLoad: true,
+    mermaid.initialize({
+      startOnLoad: false,
       theme: this.$vuetify.theme.dark ? `dark` : `default`
     })
+    mermaid.run({ querySelector: '.mermaid' })
 
     // -> Handle anchor scrolling
     if (window.location.hash && window.location.hash.length > 1) {

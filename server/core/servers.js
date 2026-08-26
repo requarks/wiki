@@ -1,7 +1,10 @@
 const fs = require('fs-extra')
 const http = require('http')
 const https = require('https')
-const { ApolloServer } = require('apollo-server-express')
+const { ApolloServer } = require('@apollo/server')
+const { expressMiddleware } = require('@as-integrations/express4')
+const { WebSocketServer } = require('ws')
+const { useServer } = require('graphql-ws/lib/use/ws')
 const Promise = require('bluebird')
 const _ = require('lodash')
 const jwt = require('jsonwebtoken')
@@ -15,6 +18,8 @@ module.exports = {
     http: null,
     https: null
   },
+  subscriptionServers: [],
+  graphSchema: null,
   connections: new Map(),
   le: null,
   /**
@@ -23,7 +28,7 @@ module.exports = {
   async startHTTP () {
     WIKI.logger.info(`HTTP Server on port: [ ${WIKI.config.port} ]`)
     this.servers.http = http.createServer(WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.http)
+    this.startSubscriptions(this.servers.http)
 
     this.servers.http.listen(WIKI.config.port, WIKI.config.bindIP)
     this.servers.http.on('error', (error) => {
@@ -85,7 +90,7 @@ module.exports = {
       return process.exit(1)
     }
     this.servers.https = https.createServer(tlsOpts, WIKI.app)
-    this.servers.graph.installSubscriptionHandlers(this.servers.https)
+    this.startSubscriptions(this.servers.https)
 
     this.servers.https.listen(WIKI.config.ssl.port, WIKI.config.bindIP)
     this.servers.https.on('error', (error) => {
@@ -121,46 +126,64 @@ module.exports = {
    * Start GraphQL Server
    */
   async startGraphQL () {
-    const graphqlSchema = require('../graph')
+    const { schema } = require('../graph')
+    this.graphSchema = schema
     this.servers.graph = new ApolloServer({
-      ...graphqlSchema,
-      context: ({ req, res }) => ({ req, res }),
-      subscriptions: {
-        onConnect: (connectionParams, webSocket) => {
-          let token = _.get(connectionParams, 'token', null)
-
-          if (!token) {
-            const cookieHeader = _.get(webSocket, 'upgradeReq.headers.cookie', '')
-            if (cookieHeader) {
-              const cookies = cookie.parse(cookieHeader)
-              token = cookies.jwt || null
-            }
-          }
-
-          if (!token) {
-            throw new Error('Unauthorized')
-          }
-
-          try {
-            const user = jwt.verify(token, WIKI.config.certs.public, {
-              audience: WIKI.config.auth.audience,
-              issuer: 'urn:wiki.js',
-              algorithms: ['RS256']
-            })
-
-            if (!_.includes(user.permissions, 'manage:system')) {
-              throw new Error('Forbidden')
-            }
-
-            return { user }
-          } catch (err) {
-            throw new Error('Unauthorized')
-          }
-        },
-        path: '/graphql-subscriptions'
-      }
+      schema,
+      allowBatchedHttpRequests: true,
+      csrfPrevention: true,
+      introspection: true
     })
-    this.servers.graph.applyMiddleware({ app: WIKI.app, cors: false })
+    await this.servers.graph.start()
+    WIKI.app.use('/graphql', expressMiddleware(this.servers.graph, {
+      context: async ({ req, res }) => ({ req, res })
+    }))
+  },
+  /**
+   * Attach GraphQL Subscriptions handler (graphql-ws) to a server
+   */
+  startSubscriptions (server) {
+    const wss = new WebSocketServer({
+      server,
+      path: '/graphql-subscriptions'
+    })
+    useServer({
+      schema: this.graphSchema,
+      onConnect: (ctx) => {
+        let token = _.get(ctx.connectionParams, 'token', null)
+
+        if (!token) {
+          const cookieHeader = _.get(ctx.extra, 'request.headers.cookie', '')
+          if (cookieHeader) {
+            const cookies = cookie.parse(cookieHeader)
+            token = cookies.jwt || null
+          }
+        }
+
+        if (!token) {
+          return false
+        }
+
+        try {
+          const user = jwt.verify(token, WIKI.config.certs.public, {
+            audience: WIKI.config.auth.audience,
+            issuer: 'urn:wiki.js',
+            algorithms: ['RS256']
+          })
+
+          if (!_.includes(user.permissions, 'manage:system')) {
+            return false
+          }
+
+          ctx.extra.user = user
+          return true
+        } catch (err) {
+          return false
+        }
+      },
+      context: (ctx) => ({ user: ctx.extra.user })
+    }, wss)
+    this.subscriptionServers.push(wss)
   },
   /**
    * Close all active connections
@@ -182,6 +205,10 @@ module.exports = {
    */
   async stopServers () {
     this.closeConnections()
+    for (const wss of this.subscriptionServers) {
+      wss.close()
+    }
+    this.subscriptionServers = []
     if (this.servers.http) {
       await Promise.fromCallback(cb => { this.servers.http.close(cb) })
       this.servers.http = null
@@ -189,6 +216,9 @@ module.exports = {
     if (this.servers.https) {
       await Promise.fromCallback(cb => { this.servers.https.close(cb) })
       this.servers.https = null
+    }
+    if (this.servers.graph) {
+      await this.servers.graph.stop()
     }
     this.servers.graph = null
   },

@@ -96,8 +96,8 @@ module.exports = {
     async create (obj, args, { req }) {
       const group = await WIKI.models.groups.query().insertAndFetch({
         name: args.name,
-        permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-        pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules),
+        permissions: WIKI.data.groups.defaultPermissions,
+        pageRules: WIKI.data.groups.defaultPageRules,
         isSystem: false
       })
       await WIKI.auth.reloadGroups()
@@ -193,8 +193,8 @@ module.exports = {
       await WIKI.models.groups.query().patch({
         name: args.name,
         redirectOnLogin: args.redirectOnLogin,
-        permissions: JSON.stringify(args.permissions),
-        pageRules: JSON.stringify(args.pageRules)
+        permissions: args.permissions,
+        pageRules: args.pageRules
       }).where('id', args.id)
 
       // Revoke tokens for this group

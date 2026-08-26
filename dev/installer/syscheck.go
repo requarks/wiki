@@ -10,7 +10,7 @@ import (
 	"github.com/pbnjay/memory"
 )
 
-const nodejsSemverRange = ">=8.11.4 <11.0.0"
+const nodejsSemverRange = ">=24.0.0"
 const ramMin = 768
 
 // CheckNodeJs checks if Node.js is installed and has minimal supported version

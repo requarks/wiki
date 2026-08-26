@@ -1,15 +1,42 @@
 extends:
-  - requarks
+  - standard
   - plugin:vue/strongly-recommended
   - plugin:cypress/recommended
 env:
   node: true
   jest: true
 parserOptions:
-  parser: babel-eslint
-  ecmaVersion: 2017
+  parser: '@babel/eslint-parser'
+  requireConfigFile: false
+  ecmaVersion: 2022
   allowImportExportEverywhere: true
 globals:
   document: false
   navigator: false
   window: false
+  siteConfig: false
+  siteLangs: false
+rules:
+  # Style rules parked during the standard@17 upgrade - fix incrementally
+  array-bracket-spacing: off
+  array-callback-return: off
+  dot-notation: off
+  lines-between-class-members: off
+  multiline-ternary: off
+  no-case-declarations: off
+  no-prototype-builtins: off
+  no-useless-escape: off
+  no-var: off
+  no-void: off
+  object-curly-spacing: off
+  object-shorthand: off
+  prefer-const: off
+  quote-props: off
+  quotes: off
+  space-before-function-paren: off
+  cypress/unsafe-to-chain-command: off
+  n/handle-callback-err: off
+  n/no-deprecated-api: off
+  vue/multi-word-component-names: off
+  vue/no-arrow-functions-in-watch: off
+  vue/component-definition-name-casing: off

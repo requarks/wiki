@@ -140,8 +140,8 @@ module.exports = () => {
       // WIKI.telemetry.sendEvent('setup', 'install-start')
 
       // Basic checks
-      if (!semver.satisfies(process.version, '>=10.12')) {
-        throw new Error('Node.js 10.12.x or later required!')
+      if (!semver.satisfies(process.version, '>=24.0')) {
+        throw new Error('Node.js 24.x or later required!')
       }
 
       // Create directory structure
@@ -239,16 +239,16 @@ module.exports = () => {
       WIKI.logger.info('Creating default groups...')
       const adminGroup = await WIKI.models.groups.query().insert({
         name: 'Administrators',
-        permissions: JSON.stringify(['manage:system']),
-        pageRules: JSON.stringify([]),
+        permissions: ['manage:system'],
+        pageRules: [],
         isSystem: true
       })
       const guestGroup = await WIKI.models.groups.query().insert({
         name: 'Guests',
-        permissions: JSON.stringify(['read:pages', 'read:assets', 'read:comments']),
-        pageRules: JSON.stringify([
+        permissions: ['read:pages', 'read:assets', 'read:comments'],
+        pageRules: [
           { id: 'guest', roles: ['read:pages', 'read:assets', 'read:comments'], match: 'START', deny: false, path: '', locales: [] }
-        ]),
+        ],
         isSystem: true
       })
       if (adminGroup.id !== 1 || guestGroup.id !== 2) {
