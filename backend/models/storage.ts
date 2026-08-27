@@ -92,6 +92,17 @@ const SIZE_UNIT_BYTES: Record<string, number> = {
  */
 const TARGET_CACHE_TTL_MS = 30_000
 
+/**
+ * How stale a target's recorded state may get before an unchanged outcome is written again.
+ *
+ * `recordState` runs on the success path of every upload, every page copy and every read, so writing
+ * each one would put a row update behind each of them. Writing none of them was worse: an outcome
+ * that never changes never gets a timestamp, which is how a target that had only ever succeeded came
+ * to report no activity at all. A minute is under the resolution the Status card reads the timestamp
+ * back at, so the cost buys nothing observable beyond it.
+ */
+const STATE_REFRESH_INTERVAL_MS = 60_000
+
 /** An action a module knows how to run on demand, as declared by its `definition.yml`. */
 /**
  * How a target is behaving, as opposed to how it is configured.
@@ -1678,16 +1689,27 @@ class Storage {
    * a full disk that gets emptied stops being reported without anybody dismissing anything — and it
    * is why the timestamp travels with it, so that "healthy" can be read as of when.
    *
-   * Written only when it says something new, because the success path runs on every upload and every
-   * page save. The cached target is patched in step, so the check keeps holding within the cache's
-   * lifetime rather than costing a read.
+   * So `updatedAt` is when the target was last *used*, not when its status last *changed* — the two
+   * only differ for an outcome that repeats, and the first is the more useful of them: a target
+   * reading healthy as of last March is a target nothing is reaching, which the other reading cannot
+   * tell apart from one that is working. A repeating failure likewise reads as still failing rather
+   * than as having failed once.
+   *
+   * A new outcome is always written. An unchanged one is written at most once every
+   * `STATE_REFRESH_INTERVAL_MS`, because the success path runs on every upload and every page save
+   * and each write is a row update. The cached target is patched in step, so both checks hold within
+   * the cache's lifetime rather than costing a read.
    */
   async recordState(
     target: StorageTarget,
     status: StorageTargetStatus,
     message = ''
   ): Promise<void> {
-    if (target.state.status === status && target.state.message === message) {
+    if (
+      target.state.status === status &&
+      target.state.message === message &&
+      !this.isStateStale(target.state)
+    ) {
       return
     }
     const state: StorageTargetState = {
@@ -1698,6 +1720,22 @@ class Storage {
     // -> In place, so that every holder of this object — the cache above all — agrees with the row
     target.state = state
     await WIKI.db.update(storageTable).set({ state }).where(eq(storageTable.id, target.id))
+  }
+
+  /**
+   * Whether a target's recorded state is old enough to be worth writing again unchanged.
+   *
+   * A state with no timestamp counts as stale: that is a target whose outcome has never been written
+   * at all, which is precisely the one that most needs recording.
+   */
+  isStateStale(state: StorageTargetState): boolean {
+    if (!state.updatedAt) {
+      return true
+    }
+    return (
+      Temporal.Now.instant().since(Temporal.Instant.from(state.updatedAt)).total('milliseconds') >=
+      STATE_REFRESH_INTERVAL_MS
+    )
   }
 
   /**

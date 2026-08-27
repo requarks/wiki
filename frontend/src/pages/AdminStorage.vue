@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-ssd-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.storage.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.storage.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.storage.subtitle') }}
         </div>
@@ -419,22 +421,35 @@
                     {{ currentState.label }}
                   </w-item-label>
                   <!-- -> What actually went wrong, which is the whole use of the two unhealthy
-                       states: "Error" on its own only sends an administrator to the server log.
+                       states: "Error" on its own only sends an administrator to the server log. Only
+                       those two set it, so a healthy card goes straight from the status to the
+                       timestamp under it.
 
                        The captions carry their own top margins rather than the section carrying a
                        gap: a gap belongs to `WItemSection`, which every item in the admin area uses
-                       for the tight label-and-hint pairing that wants no space at all. Only the two
-                       unhealthy states set either of these, and they set both, so a one-line card
-                       never ends up with a margin hanging off it.
+                       for the tight label-and-hint pairing that wants no space at all. Each is set
+                       only where the label is rendered, so a card missing either never ends up with
+                       a margin hanging off it.
 
-                       Uneven on purpose. The wider gap under the status separates the heading from
-                       the detail, and the narrow one keeps the message and the moment it happened
-                       reading as the one thing they are. -->
+                       Uneven on purpose. The wider gap separates the status from what follows it,
+                       and the narrow one keeps a message and the moment it happened reading as the
+                       one thing they are -- which is why the timestamp takes the wide gap itself
+                       when there is no message above it to sit against. -->
                   <w-item-label caption class="mt-3" v-if="currentState.message">
                     {{ currentState.message }}
                   </w-item-label>
-                  <w-item-label caption class="mt-1" v-if="currentState.since">
-                    {{ relativeDate(currentState.since) }}
+                  <!-- -> Named rather than a bare relative date, which under "Not in use" would
+                       read as how long the target has been unused rather than when it was last
+                       asked for anything. Absent entirely on a target nothing has been dispatched
+                       to yet: `relativeDate`'s own `---` would claim an activity there was none
+                       of. -->
+                  <w-item-label
+                    caption
+                    :class="currentState.message ? `mt-1` : `mt-3`"
+                    v-if="currentState.since">
+                    {{
+                      t('admin.storage.stateLastRun', { date: relativeDate(currentState.since) })
+                    }}
                   </w-item-label>
                 </w-item-section>
               </w-item>
@@ -721,17 +736,30 @@ const assetContentTypes = [
  */
 const currentState = computed(() => {
   const saved = state.target?.saved
+  /*
+    Read before the configuration branches below return, because `since` belongs to every one of
+    them: it is when the target was last asked to do anything, which is as much a fact about one
+    that has since been turned off as about a healthy one. Only the target having never been used at
+    all leaves it out.
+  */
+  const health = state.target?.state ?? {}
+  const since = health.updatedAt ?? null
   if (!saved?.isEnabled) {
-    return { label: t('admin.storage.stateInactive'), text: 'text-grey', dot: 'bg-grey-5' }
+    return {
+      label: t('admin.storage.stateInactive'),
+      text: 'text-grey',
+      dot: 'bg-grey-5',
+      since
+    }
   }
   if (saved.activeTypes.length < 1) {
     return {
       label: t('admin.storage.stateNoContentTypes'),
       text: 'text-negative',
-      dot: 'bg-negative'
+      dot: 'bg-negative',
+      since
     }
   }
-  const health = state.target.state ?? {}
   if (health.status === 'error') {
     return {
       label: t('admin.storage.stateError'),
@@ -739,7 +767,7 @@ const currentState = computed(() => {
       dot: 'bg-negative',
       flash: true,
       message: health.message,
-      since: health.updatedAt
+      since
     }
   }
   if (health.status === 'warning') {
@@ -749,10 +777,15 @@ const currentState = computed(() => {
       dot: 'bg-warning',
       flash: true,
       message: health.message,
-      since: health.updatedAt
+      since
     }
   }
-  return { label: t('admin.storage.stateActive'), text: 'text-positive', dot: 'bg-positive' }
+  return {
+    label: t('admin.storage.stateActive'),
+    text: 'text-positive',
+    dot: 'bg-positive',
+    since
+  }
 })
 
 /** Whether the selected target is enabled *as saved* — see `savedSnapshot`. */

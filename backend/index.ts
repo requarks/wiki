@@ -222,6 +222,10 @@ async function postBoot() {
   // -> The icon cache is derived from the db and starts empty on a fresh instance
   await WIKI.models.icons.ensureCacheDir()
 
+  // -> The system's cron entries are defined in code, so they are brought in line here rather than
+  //    only seeded on a fresh database — must precede the scheduler start that queues from them
+  await WIKI.models.jobs.reconcileSchedule()
+
   await WIKI.dbManager.subscribeToNotifications()
   // -> Its own postgres listener, on its own channel: collaboration traffic is far heavier than the
   //    event bus's and has nothing to do with it. Must follow the sites cache, which the websocket

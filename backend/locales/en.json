@@ -904,6 +904,7 @@
   "admin.storage.stateActive": "Healthy",
   "admin.storage.stateError": "Error",
   "admin.storage.stateInactive": "Not in use",
+  "admin.storage.stateLastRun": "Last activity {date}",
   "admin.storage.stateNoContentTypes": "No content type",
   "admin.storage.stateWarning": "Degraded",
   "admin.storage.status": "Status",
