@@ -12,10 +12,11 @@
   content, and it has to be, or a rendered page comes out as undifferentiated 14px text.
 
   Written against what `renderers/markdown.js` actually emits (and what `models/rendering.ts` does to
-  it server-side), which is: heading anchors, `pre.codeblock` with highlight.js token classes and an
-  optional line-number gutter, task lists, footnotes, multi-line tables, admonitions, twemoji images,
-  and whatever classes an author attaches through `markdown-it-attrs` (`id`, `class` and `target` are
-  the ones the renderer allows through).
+  it server-side), which is: heading anchors, `pre.codeblock` with highlight.js token classes, an
+  optional line-number gutter, optional per-line highlights and an optional header bar carrying a
+  title, task lists, footnotes, multi-line tables, admonitions, twemoji images, and whatever classes an
+  author attaches through `markdown-it-attrs` (`id`, `class` and `target` are the ones the renderer
+  allows through).
 
   Maths and diagrams are not in that list: they are blocks now -- `block-mathjax`, `block-diagram`,
   `block-plantuml` -- and a block styles itself inside its own shadow root, which nothing here reaches.
@@ -63,6 +64,15 @@
     this one property rather than the rule.
   */
   --content-bleed: 1rem;
+
+  /*
+    A code panel's padding, held as properties rather than written out at each place that has to line up
+    with it: the row layer behind the code reaches back over it exactly, and a titled block's header bar
+    pads to the same edge from outside the panel. The left one is per panel and lives on `pre`, since the
+    line-number gutter widens it.
+  */
+  --code-pad-y: 0.9rem;
+  --code-pad-x: 1.1rem;
 
   /* Rules: the hairline between table cells and around panels, and a heavier one for a quote's bar */
   --content-rule: rgba(0, 0, 0, 0.12);
@@ -1136,8 +1146,11 @@
     panel with no edge would dissolve into the page.
   */
   pre {
+    /* -> The one the gutter widens; see `pre.codeblock.line-numbers` */
+    --code-pad-left: var(--code-pad-x);
+
     margin: 1.5em 0;
-    padding: 0.9rem 1.1rem;
+    padding: var(--code-pad-y) var(--code-pad-x) var(--code-pad-y) var(--code-pad-left);
     border: 1px solid var(--content-rule);
     border-radius: 8px;
     background-color: var(--content-surface-code);
@@ -1232,40 +1245,161 @@
   }
 
   /*
-    The line-number gutter, for a block of more than one line. The renderer emits one empty <span> per
-    line inside `.line-numbers-rows`; a counter turns those into numbers, so the digits are never part
-    of the text and a copied selection stays clean.
+    The row layer: one empty <span> per line of code, inside `.line-numbers-rows`.
+
+    Two things are drawn off these rows, and neither can be drawn off the code itself. The line numbers
+    come from a counter, so the digits are never part of the text and a copied selection stays clean.
+    And the wash behind a line named by a fence's `linesHighlight` is a row's own background -- because
+    highlighting a line by wrapping it would mean splitting the highlighted HTML on its newlines and
+    re-balancing whatever highlight.js left open across them (one multi-line comment is one span),
+    where a row already lands on its line by geometry alone.
+
+    So the layer is emitted for a block of more than one line, which is where a gutter is worth having,
+    and for a single-line block that named a line to highlight. `line-numbers` on the panel is what
+    says the digits are wanted; everything here is about the rows.
+
+    It bleeds out to the panel's own edges -- back over the padding on the left, gutter included, and
+    past the longest line on the right -- so a highlight is the full width of the block. The bleed lands
+    exactly on the padding box, which is where the panel clips, so nothing escapes it.
   */
-  pre.codeblock.line-numbers {
+  pre.codeblock {
     position: relative;
-    padding-left: 3.6rem;
-    counter-reset: codeline;
 
     > code {
+      /*
+        A stacking context, so that a row is painted behind the code and still above the panel: the
+        layer sits at a negative depth inside it, which puts it over this element's own background --
+        none -- and under its text, while the panel's background belongs to the `pre` outside.
+      */
       position: relative;
+      z-index: 0;
+      /*
+        Sized to the longest line rather than to the panel, so that a row is as wide as the code and a
+        line's highlight is still behind it once the block has been scrolled sideways. At least the
+        panel's width, so that a short block's rows still reach its right edge.
+      */
+      width: max-content;
+      min-width: 100%;
     }
 
     .line-numbers-rows {
       position: absolute;
       top: 0;
-      left: -2.5rem;
-      width: 2rem;
-      border-right: 1px solid var(--content-rule);
+      left: calc(-1 * var(--code-pad-left));
+      right: calc(-1 * var(--code-pad-x));
+      z-index: -1;
+      /* -> One below the first line, since a row increments before it draws; see `linesStart` */
+      counter-reset: codeline var(--code-line-start, 0);
       user-select: none;
       pointer-events: none;
 
       > span {
+        position: relative;
         display: block;
+        /*
+          Held to a line of the code it sits behind. A row has no content of its own -- the number is
+          drawn by a counter and takes itself out of the flow -- so nothing else would give it a height,
+          and a row of no height would leave every row after it on the wrong line.
+        */
+        height: 1lh;
         counter-increment: codeline;
-
-        &::before {
-          content: counter(codeline);
-          display: block;
-          padding-right: 0.7em;
-          color: var(--content-ink-faint);
-          text-align: right;
-        }
       }
+
+      /*
+        A highlighted line, washed with the block's own ink rather than with a colour of its own, for
+        the reason the copy button takes its colours the same way: a highlight.js theme paints `.hljs`,
+        so the panel can be any colour at all, and a mix of what is already written on it is the one
+        wash that reads on every one of them. The bar down the left edge is the same mix at strength --
+        at this subtlety the wash alone is easy to miss on a busy line.
+      */
+      > span.is-highlighted {
+        background-color: color-mix(in srgb, currentColor 10%, transparent);
+        box-shadow: inset 2px 0 0 color-mix(in srgb, currentColor 45%, transparent);
+      }
+    }
+  }
+
+  /*
+    The gutter proper: the digits, and the rule that holds them off the code. All that separates a
+    numbered block from one that only has rows because it highlights a line.
+  */
+  pre.codeblock.line-numbers {
+    --code-pad-left: 3.6rem;
+
+    .line-numbers-rows {
+      /*
+        Drawn once down the whole layer rather than once per row, and as the LAST thing in it -- a
+        highlighted row's wash is a background and would otherwise paint over the rule, breaking the
+        gutter's line wherever a line is marked.
+
+        Mixed from the panel's own ink rather than taken from `--content-rule`, for the reason the copy
+        button takes its colours that way: a highlight.js theme paints `.hljs`, so a panel can be any
+        colour, and the page's hairline is invisible on a dark one. Against the default palette the two
+        land within a shade of each other; over a highlighted row this one still reads.
+      */
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 3.1rem;
+        border-left: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+      }
+
+      > span::before {
+        content: counter(codeline);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3.1rem;
+        padding-right: 0.5rem;
+        color: var(--content-ink-faint);
+        text-align: right;
+      }
+    }
+  }
+
+  /*
+    A fence given a `title="..."`, drawn as a bar across the top of the block.
+
+    The bar is a sibling of the `<pre>` rather than a child of it, because the panel is the thing that
+    scrolls: a header inside it would slide sideways with the code and be indented by the gutter's
+    padding. So a titled block is a box holding the two, and the box carries the border, the radius and
+    the margin the panel gives up.
+
+    That box wears `hljs` as well, which is what keeps it the same colour as the code it is holding: the
+    theme chosen under Admin -> Theme is injected as bare `.hljs` rules (see `applyCodeBlocksTheme` in
+    `App.vue`) and sets a background and an ink, so a panel is only `--content-surface-code` until an
+    administrator picks something else. Reaching for the token here instead would leave the bar light
+    over a dark panel on any site that has. The token is the fallback for both, exactly as before, and
+    the bar's own wash is mixed from the ink it ends up with.
+  */
+  .codeblock-titled {
+    margin: 1.5em 0;
+    border: 1px solid var(--content-rule);
+    border-radius: 8px;
+    /* -> Clips the panel's square corners to this box's radius */
+    overflow: hidden;
+    background-color: var(--content-surface-code);
+    color: var(--content-ink);
+
+    > .codeblock-title {
+      padding: 0.45rem var(--code-pad-x);
+      border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      background-color: color-mix(in srgb, currentColor 7%, transparent);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1.5;
+      /* -> A file path with no spaces in it is the commonest title there is */
+      overflow-wrap: anywhere;
+    }
+
+    /* -> The box is the block's outline now; the panel keeps only its padding and its scrolling */
+    > pre.codeblock {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
     }
   }
 
@@ -1741,6 +1875,7 @@
     line-height: 1.55;
 
     pre.codeblock,
+    .codeblock-titled,
     table,
     img,
     blockquote,

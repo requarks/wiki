@@ -206,6 +206,170 @@ function iconShortcode(state, silent) {
   return true
 }
 
+/**
+ * Everything a fence may say about itself beyond its language.
+ *
+ * ```yaml title="Some title here" linesStart="3" linesHighlight="1,3,5-8"
+ *
+ * markdown-it takes the first word of the info string as the language name and leaves the rest of the
+ * line alone, so this is a parse of that remainder and of nothing else. A value may be quoted with
+ * either quote or left bare, because bare is what anybody writes for a number; a key with no value is
+ * not matched at all, since none of the three means anything without one. A quoted value may hold the
+ * quote that delimits it if it is escaped -- `title="Say \\"hi\\""` -- which is why the backslash is
+ * consumed here rather than left for `unescapeAll` to find after the value has already been cut short.
+ *
+ * Keys are folded to lower case. The syntax is documented in camel case and reads better that way, but
+ * `linestart` is the same request typed by somebody who did not look closely, and there is nothing to
+ * be gained by refusing it.
+ */
+const FENCE_ATTRIBUTE =
+  /([a-z][\w-]*)\s*=\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^\s"']+))/gi
+
+function parseFenceAttributes(source, unescape = (value) => value) {
+  const attributes = {}
+  for (const match of source.matchAll(FENCE_ATTRIBUTE)) {
+    attributes[match[1].toLowerCase()] = unescape(match[2] ?? match[3] ?? match[4])
+  }
+  return attributes
+}
+
+/** One entry of a `linesHighlight` list: a single line, or a range written with a hyphen. */
+const LINE_RANGE = /^(\d+)(?:\s*-\s*(\d+))?$/
+
+/**
+ * The lines a `linesHighlight` value names, kept as the ranges it lists rather than expanded into the
+ * set of numbers in them -- `1-40000000` is a plausible slip of the hand and a set built from it is a
+ * hung tab. Nothing needs the numbers themselves; every caller only ever asks whether one line is in.
+ *
+ * An entry that is neither a number nor a range is dropped rather than failing the fence. The whole
+ * feature is decoration over a block that renders perfectly well without it, and the render this runs
+ * in is the editor's preview -- one that throws is one the editor saves as an empty page.
+ *
+ * A range written backwards (`8-5`) is read as the range it plainly means.
+ */
+function parseLineRanges(value) {
+  const ranges = []
+  for (const entry of (value ?? '').split(',')) {
+    const match = LINE_RANGE.exec(entry.trim())
+    if (!match) {
+      continue
+    }
+    const from = Number(match[1])
+    const to = match[2] === undefined ? from : Number(match[2])
+    ranges.push([Math.min(from, to), Math.max(from, to)])
+  }
+  return ranges
+}
+
+/** Whether `line` falls in any of them. */
+function inRanges(ranges, line) {
+  return ranges.some(([from, to]) => line >= from && line <= to)
+}
+
+/**
+ * The number the gutter counts from, which is also what `linesHighlight` is written against: a snippet
+ * lifted out of a file at line 30 shows 30 against its first row, and the line an author wants marked
+ * is the one they can read off the gutter rather than one they have to count to.
+ *
+ * Anything that is not a whole non-negative number falls back to 1, the number a gutter counts from
+ * when nobody said otherwise.
+ */
+function parseLineStart(value) {
+  const parsed = Number.parseInt(value ?? '', 10)
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : 1
+}
+
+/**
+ * The row layer of a code block: one empty `<span>` per line of code.
+ *
+ * Two things are drawn off these rows, and neither can be drawn off the code itself. The line numbers
+ * come from a counter, so the digits are never part of the text and a copied selection stays clean.
+ * And the wash behind a highlighted line is the row's own background: highlighting a line by wrapping
+ * it would mean splitting the highlighted HTML on its newlines and re-balancing whatever hljs left
+ * open across them -- a multi-line comment or string is one span -- where a row already lands on its
+ * line by geometry alone.
+ *
+ * Drawn for a block of more than one line, which is where a gutter is worth having, and for a
+ * single-line block that asked for a highlight. `aria-hidden`, because a screen reader is reading the
+ * code and these rows say nothing about it.
+ */
+function lineRows(lineCount, lineStart, highlights) {
+  const rows = []
+  for (let index = 0; index < lineCount; index++) {
+    rows.push(
+      inRanges(highlights, lineStart + index)
+        ? '<span class="is-highlighted"></span>'
+        : '<span></span>'
+    )
+  }
+  return `<span aria-hidden="true" class="line-numbers-rows">${rows.join('')}</span>`
+}
+
+/**
+ * One fence, as the markup it is drawn as -- always rooted at a `<pre>`, whatever it holds.
+ *
+ * @param {string} str The code, as the author wrote it.
+ * @param {string} lang The first word of the info string.
+ * @param {object} attributes The rest of it, parsed -- see `parseFenceAttributes`. Ignored by the
+ *                            diagram branches, which are a source for something else to draw and have
+ *                            no gutter, no title bar and no lines to mark.
+ */
+function codeBlock(str, lang, attributes) {
+  if (lang === 'diagram') {
+    return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
+  }
+  if (['kroki', 'mermaid', 'plantuml'].includes(lang)) {
+    /*
+      Left as source, deliberately: a diagram is drawn by the block whose body it is —
+      `block-diagram` for mermaid, `block-plantuml` and `block-kroki` for the others — and each
+      reads the text out of this `pre`. A fence on its own outside a block keeps the panel the
+      stylesheet gives it, which says "a diagram nobody has drawn" rather than pretending to be
+      a code sample.
+    */
+    return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
+  }
+
+  /*
+    `getLanguage` first, because `hljs.highlight` THROWS on a language it does not know --
+    `ignoreIllegals` only forgives illegal syntax within a language it does. markdown-it takes
+    the first word of a fence's info string as the language name, so a fence whose code starts
+    on the opening line (```   <!DOCTYPE rfc [) asks for a language called `<!DOCTYPE`, and the
+    throw took the entire render with it: an empty preview, and -- since the editor patches the
+    store with the result -- an empty render saved over the stored HTML.
+
+    Unknown language therefore falls back to plain code, and the fallback ESCAPES: `str` is the
+    author's raw source, and the unhighlighted branch used to interpolate it into the markup as
+    it stood. hljs escapes what it emits, so this only ever affected the unhighlighted path.
+  */
+  const highlighted =
+    lang && hljs.getLanguage(lang)
+      ? hljs.highlight(str, { language: lang, ignoreIllegals: true })
+      : { value: escape(str) }
+  // -> `match` is null, not empty, when the code is a single line with no trailing newline
+  const lineCount = (highlighted.value.match(/\n/g) ?? []).length
+
+  const lineStart = parseLineStart(attributes.linesstart)
+  const highlights = parseLineRanges(attributes.lineshighlight)
+  /*
+    The gutter is for a block worth numbering; a one-line block is its own line number. A highlight
+    still needs its row, so the two are separate questions -- the class is what draws the digits, the
+    layer is what the wash is painted on.
+  */
+  const numbered = lineCount > 1
+  const rows =
+    numbered || highlights.length > 0 ? lineRows(Math.max(lineCount, 1), lineStart, highlights) : ''
+
+  /*
+    Where the counter starts, as the value it is reset to -- one below the first line, since every row
+    increments before it draws. Left off entirely at the default, so that a block nobody has renumbered
+    carries no style attribute at all.
+  */
+  const numbering = lineStart === 1 ? '' : ` style="--code-line-start: ${lineStart - 1}"`
+  // -> `lang` is escaped too: it is whatever the author typed after the backticks, and a quote
+  //    in it would otherwise close the attribute and inject markup into the preview
+  return `<pre class="codeblock hljs${numbered ? ' line-numbers' : ''}"${numbering}><code class="language-${escape(lang)}">${highlighted.value}${rows}</code></pre>`
+}
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -213,47 +377,7 @@ export class MarkdownRenderer {
       breaks: config.lineBreaks,
       linkify: config.linkify,
       typography: config.typographer,
-      quotes: quoteStyles[config.quotes] ?? quoteStyles.english,
-      highlight(str, lang) {
-        if (lang === 'diagram') {
-          return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
-        } else if (['kroki', 'mermaid', 'plantuml'].includes(lang)) {
-          /*
-            Left as source, deliberately: a diagram is drawn by the block whose body it is —
-            `block-diagram` for mermaid, `block-plantuml` and `block-kroki` for the others — and each
-            reads the text out of this `pre`. A fence on its own outside a block keeps the panel the
-            stylesheet gives it, which says "a diagram nobody has drawn" rather than pretending to be
-            a code sample.
-          */
-          return `<pre class="codeblock-${lang}"><code>${escape(str)}</code></pre>`
-        } else {
-          /*
-            `getLanguage` first, because `hljs.highlight` THROWS on a language it does not know --
-            `ignoreIllegals` only forgives illegal syntax within a language it does. markdown-it takes
-            the first word of a fence's info string as the language name, so a fence whose code starts
-            on the opening line (```   <!DOCTYPE rfc [) asks for a language called `<!DOCTYPE`, and the
-            throw took the entire render with it: an empty preview, and -- since the editor patches the
-            store with the result -- an empty render saved over the stored HTML.
-
-            Unknown language therefore falls back to plain code, and the fallback ESCAPES: `str` is the
-            author's raw source, and the unhighlighted branch used to interpolate it into the markup as
-            it stood. hljs escapes what it emits, so this only ever affected the unhighlighted path.
-          */
-          const highlighted =
-            lang && hljs.getLanguage(lang)
-              ? hljs.highlight(str, { language: lang, ignoreIllegals: true })
-              : { value: escape(str) }
-          // -> `match` is null, not empty, when the code is a single line with no trailing newline
-          const lineCount = (highlighted.value.match(/\n/g) ?? []).length
-          const lineNums =
-            lineCount > 1
-              ? `<span aria-hidden="true" class="line-numbers-rows">${'<span></span>'.repeat(lineCount)}</span>`
-              : ''
-          // -> `lang` is escaped too: it is whatever the author typed after the backticks, and a quote
-          //    in it would otherwise close the attribute and inject markup into the preview
-          return `<pre class="codeblock hljs ${lineCount > 1 && 'line-numbers'}"><code class="language-${escape(lang ?? '')}">${highlighted.value}${lineNums}</code></pre>`
-        }
-      }
+      quotes: quoteStyles[config.quotes] ?? quoteStyles.english
     })
       /*
         MDC's INLINE component syntax is off, and deliberately: `:name` is how it writes one, which is
@@ -492,26 +616,70 @@ export class MarkdownRenderer {
     this.md.renderer.rules.blockquote_open = injectLineNumbers
 
     /*
-      A fence carries its line in the markup rather than on the token, because the `highlight` option
-      above returns the whole `<pre>` and markdown-it hands a highlighted fence straight back: the
-      token's attributes are rendered by nobody, so `attrSet` would reach nothing.
+      CODE BLOCKS
+      -----------
 
-      Worth the string surgery for the case this whole mechanism exists for. A tabset whose panels each
-      hold one long code sample -- per language, per platform -- is the commonest tabset there is, and
-      it is exactly the one where the caret has no anchor of its own to be scrolled to.
+      Rendered here rather than through markdown-it's `highlight` option, which is where the hljs call
+      used to live, because the whole of the markup a fence produces is decided by its info string and
+      `highlight` is handed only the language off the front of it. It also cannot produce a wrapper: the
+      default fence rule takes the return value whole ONLY if it starts with `<pre`, and wraps it in a
+      `<pre><code>` of its own otherwise -- so the title bar, which has to sit outside the scrolling
+      panel, has nowhere to go from in there.
 
-      The attribute only, without the `line` class the tokens above join: the class would have to go on
-      a tag that already carries one, and two `class` attributes on the same tag is not markup.
+      Nothing is lost by owning the rule instead. The token's own attributes were already going
+      unrendered for exactly the same reason, so `markdown-it-attrs` on a fence has never done anything.
+
+      Three optional attributes, after the language:
+
+          ```yaml title="Some title here" linesStart="3" linesHighlight="1,3,5-8"
+
+      `title` becomes a header bar above the block; `linesStart` renumbers the gutter; `linesHighlight`
+      washes the rows it names. See `codeBlock` for the last two and `parseFenceAttributes` for the
+      shape of all three. A diagram fence ignores them -- it is a source for something else to draw.
+
+      The line the fence sits on is stamped into the markup rather than onto the token, since the token
+      is not what renders it. It is worth the string surgery for the case the preview's scroll sync
+      exists for: a tabset whose panels each hold one long code sample -- per language, per platform --
+      is the commonest tabset there is, and exactly the one where the caret has no anchor of its own.
+      The attribute only, without the `line` class the tokens above join, because it would have to go on
+      a tag that already carries a class and two `class` attributes on one tag is not markup.
     */
-    const renderFence =
-      this.md.renderer.rules.fence ??
-      ((tokens, idx, options, env, slf) => slf.renderToken(tokens, idx, options, env, slf))
-    this.md.renderer.rules.fence = (tokens, idx, options, env, slf) => {
-      const html = renderFence(tokens, idx, options, env, slf)
-      const map = tokens[idx].map
-      // -> Every branch of `highlight` opens with `<pre`, and so does the wrapper markdown-it puts
-      //    around a fence it did not highlight
-      return map ? html.replace(/^<pre/, `<pre data-line="${map[0] + 1}"`) : html
+    this.md.renderer.rules.fence = (tokens, idx) => {
+      const token = tokens[idx]
+      const info = (token.info ?? '').trim()
+      const boundary = info.search(/\s/)
+      /*
+        Unescaped value by value rather than over the info string as a whole -- which is what the
+        default rule does, and what it can afford to do because it never looks inside. The string is
+        source text, so `\\"` in it is an author writing a quote, and unescaping first would have that
+        quote close the attribute it was written into: `title="Say \\"hi\\""` came out as `Say`.
+      */
+      const unescape = (value) => this.md.utils.unescapeAll(value)
+      const lang = unescape(boundary < 0 ? info : info.slice(0, boundary))
+      const attributes = parseFenceAttributes(
+        boundary < 0 ? '' : info.slice(boundary + 1),
+        unescape
+      )
+
+      const html = codeBlock(token.content, lang, attributes)
+      const line = token.map ? ` data-line="${token.map[0] + 1}"` : ''
+      const title = (attributes.title ?? '').trim()
+
+      /*
+        The bar is a sibling of the `<pre>` and not a child of it, because the panel is the thing that
+        scrolls: a header inside it would slide sideways with the code and be indented by the gutter's
+        padding. So a titled block is a box holding both, and the box is what carries the border, the
+        radius and the line the editor scrolls to.
+
+        `hljs` on that box as well as on the panel, which is what keeps the two the same colour: the code
+        theme an administrator picks is injected as bare `.hljs` rules setting a background and an ink,
+        so the box has to be able to take them or the bar would stay light over a dark panel.
+      */
+      if (title) {
+        return `<div class="codeblock-titled hljs"${line}><div class="codeblock-title">${escape(title)}</div>${html}</div>\n`
+      }
+      // -> Every branch of `codeBlock` opens with `<pre`
+      return `${html.replace(/^<pre/, `<pre${line}`)}\n`
     }
 
     // --------------------------------
