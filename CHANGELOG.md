@@ -10,7 +10,11 @@ Full dependency and toolchain modernization of the 2.x codebase, Node.js 24 enfo
 
 ### Added
 
-- Gitea Actions workflow `.gitea/workflows/build-harbor.yml`: builds a multi-arch image (linux/amd64, linux/arm64) with podman on push to `main` and pushes it to Harbor, Docker Hub and GHCR as `wikijs-ng` (tags: commit SHA, `v<version>` from `package.json`, `latest`)
+- Gitea Actions workflow `.gitea/workflows/build-harbor.yml`: builds a multi-arch image (linux/amd64, linux/arm64) with podman on push to `main` and pushes it to Harbor, Docker Hub and GHCR as `wikijs-ng` (tags: commit SHA, `v<version>` from `package.json`, `latest`). Version is extracted with plain `sed` (no `jq` required on the runner)
+- `dev/BUILD.md`: how to build and run the image locally with Podman (rootless subuid setup, single- and multi-arch, run examples)
+- `.dockerignore` (keeps `node_modules`, `assets`, `.webpack-cache`, `.git` etc. out of the build context)
+- `patches/babel-plugin-lodash+3.3.4.patch`: replaces the deprecated `isModuleDeclaration` call with `isImportOrExportDeclaration` (silences the Babel deprecation printed on every build)
+- `dev/webpack/webpack.common.js`: shared webpack base (entries, rules, plugins, resolve) — `webpack.prod.js` / `webpack.dev.js` now only contain their deltas
 - OCI image labels (`org.opencontainers.image.*`) and `VERSION` / `REVISION` / `CREATED` build args in `dev/build/Dockerfile`; maintainer label changed to swissmakers.ch
 - `cypress.config.js` (Cypress 13+ config format)
 - New SAML strategy option **Require signed response** (`wantAuthnResponseSigned`), exposed in the admin UI (`@node-saml` v5 defaults to `true`; the fork defaults to `false` to preserve existing IdP setups)
@@ -51,6 +55,9 @@ Full dependency and toolchain modernization of the 2.x codebase, Node.js 24 enfo
 - **i18next 19 → 25** with **i18next-http-middleware** (replaces deprecated i18next-express-middleware); mongodb driver 3 → 6 (promise API in v1-import paths); js-yaml 3 → 4 (`safeLoad` → `load`); luxon 1 → 3; jsdom 16 → 26; nodemailer 6 → 7; uuid 9 → 11; ssh2 1.17; node-2fa 2; d3 6 → 7; codemirror 5.65 (staying on the v5 line)
 - **Lint/test tooling**: ESLint 7 → **8.57** with `eslint-config-standard` 17 and `@babel/eslint-parser` (replaces the dead `eslint-config-requarks` / `babel-eslint`); eslint-plugin-vue 9 (Vue 2 configs); Jest 26 → **29**; Cypress 5 → **13** (`cypress.json` → `cypress.config.js`). New standard@17 style findings are parked via a `rules:` block in `.eslintrc.yml` for incremental cleanup
 - GitHub `build.yml` Windows job: obsolete `extract-files` patch workaround steps removed (the patched package left the dependency tree)
+- Build warnings eliminated: removed `graphql-persisted-document-loader` (its `documentId` output was never consumed; drops the ancient `persistgraphql` → `apollo-client@1` chain and with it the graphql-0.10 resolution warnings — the `resolutions` field in `package.json` is gone entirely), removed the unused Modernizr stack (`webpack-modernizr-loader`, `client/.modernizrrc.js`, vendored `client/libs/modernizr/` — the generated `mdz-*` class was referenced nowhere), pinned `rate-limiter-flexible` to 5.0.5 and bumped `pug-plain-loader` to 1.1.0 (peer ranges satisfied), added `@opentelemetry/core` as a direct dependency (Sentry peer), set `"private": true`
+- Production minification runs with bounded parallelism (`terser-webpack-plugin` / `css-minimizer-webpack-plugin` with `parallel: 2`) so builds no longer exhaust memory on small hosts or under QEMU emulation in CI
+- Both build Dockerfiles set `NODE_OPTIONS=--no-deprecation` in the build stage (silences Yarn 1's `url.parse()` DEP0169 noise under Node 24); `dev/build-arm/Dockerfile` now carries the same OCI labels, build args and `--no-deprecation` CMD as the main Dockerfile, copies `yarn.lock`, and skips the Cypress binary download (`CYPRESS_INSTALL_BINARY=0` in the main Dockerfile)
 - Sentry logging module rewritten as a proper winston 3 `Transport` subclass using `@sentry/node` (the old transport still used the winston 2 API and silently mis-fired under winston 3)
 
 ### Fixed

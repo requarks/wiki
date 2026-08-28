@@ -14,8 +14,6 @@ switch (window.document.documentElement.lang) {
     break
 }
 
-require('modernizr')
-
 require('./scss/app.scss')
 import(/* webpackChunkName: "theme" */ './themes/' + siteConfig.theme + '/scss/app.scss')
 

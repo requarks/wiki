@@ -4,18 +4,11 @@ const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
 
-const { VueLoaderPlugin } = require('vue-loader')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
-const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
-const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
-const WebpackBarPlugin = require('webpackbar')
+const TerserPlugin = require('terser-webpack-plugin')
 
-const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
-const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
+const common = require('./webpack.common')
 
 process.noDeprecation = true
 
@@ -23,191 +16,22 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 
 module.exports = {
   mode: 'production',
-  entry: {
-    app: './client/index-app.js',
-    legacy: './client/index-legacy.js',
-    setup: './client/index-setup.js'
-  },
+  entry: common.entries,
   output: {
-    path: path.join(process.cwd(), 'assets'),
-    publicPath: '/_assets/',
+    ...common.outputBase,
     filename: 'js/[name].[contenthash:8].js',
-    chunkFilename: 'js/[name].[contenthash:8].js',
-    globalObject: 'this',
-    crossOriginLoading: 'use-credentials'
+    chunkFilename: 'js/[name].[contenthash:8].js'
   },
-  cache: {
-    type: 'filesystem',
-    cacheDirectory: path.join(process.cwd(), '.webpack-cache/cache'),
-    buildDependencies: {
-      config: [__filename, path.join(process.cwd(), '.babelrc')]
-    }
-  },
+  cache: common.cache(__filename),
   module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: (modulePath) => {
-          return modulePath.includes('node_modules') && !modulePath.includes('vuetify')
-        },
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              ...babelConfig,
-              cacheDirectory: babelDir
-            }
-          }
-        ]
-      },
-      {
-        test: /\.css$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader'
-        ]
-      },
-      {
-        test: /\.sass$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'postcss-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sourceMap: false,
-              sassOptions: {
-                indentedSyntax: true,
-                quietDeps: true
-              }
-            }
-          }
-        ]
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          'postcss-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sourceMap: false,
-              sassOptions: {
-                quietDeps: true
-              }
-            }
-          },
-          {
-            loader: 'sass-resources-loader',
-            options: {
-              resources: path.join(process.cwd(), '/client/scss/global.scss')
-            }
-          }
-        ]
-      },
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
-      {
-        test: /\.pug$/,
-        exclude: [
-          path.join(process.cwd(), 'dev')
-        ],
-        loader: 'pug-plain-loader'
-      },
-      {
-        test: /\.(png|jpg|gif)$/,
-        type: 'asset',
-        parser: {
-          dataUrlCondition: {
-            maxSize: 8192
-          }
-        }
-      },
-      {
-        test: /\.svg$/,
-        exclude: [
-          path.join(process.cwd(), 'node_modules/grapesjs')
-        ],
-        type: 'asset/resource',
-        generator: {
-          filename: 'svg/[name][ext]'
-        }
-      },
-      {
-        test: /\.(graphql|gql)$/,
-        exclude: /node_modules/,
-        use: [
-          { loader: 'graphql-persisted-document-loader' },
-          { loader: 'graphql-tag/loader' }
-        ]
-      },
-      {
-        test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'fonts/[name][ext]'
-        }
-      },
-      {
-        loader: 'webpack-modernizr-loader',
-        test: /\.modernizrrc\.js$/
-      }
-    ]
+    rules: common.rules(MiniCssExtractPlugin.loader)
   },
   plugins: [
-    new VueLoaderPlugin(),
-    new VuetifyLoaderPlugin(),
+    ...common.plugins(),
     new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
-    new webpack.ProvidePlugin({
-      Buffer: ['buffer', 'Buffer'],
-      process: 'process/browser.js'
-    }),
-    new MomentTimezoneDataPlugin({
-      startYear: 2017,
-      endYear: (new Date().getFullYear()) + 5
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: 'client/static' },
-        { from: './node_modules/prismjs/components', to: 'js/prism' }
-      ]
-    }),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.[contenthash].css',
       chunkFilename: 'css/[name].[contenthash].css'
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/master.pug',
-      filename: '../server/views/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'legacy']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/legacy.pug',
-      filename: '../server/views/legacy/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'app']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/setup.pug',
-      filename: '../server/views/setup.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['app', 'legacy']
-    }),
-    new HtmlWebpackPugPlugin(),
-    new WebpackBarPlugin({
-      name: 'Client Assets'
     }),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('production'),
@@ -224,44 +48,20 @@ module.exports = {
     },
     runtimeChunk: 'single',
     minimizer: [
-      '...',
+      // Bounded parallelism: the default (CPU count - 1) workers can exhaust
+      // memory on small build hosts and under QEMU emulation in CI
+      new TerserPlugin({
+        parallel: 2
+      }),
       new CssMinimizerPlugin({
+        parallel: 2,
         minimizerOptions: {
           preset: ['default', { discardComments: { removeAll: true } }]
         }
       })
     ]
   },
-  resolve: {
-    mainFields: ['browser', 'main', 'module'],
-    symlinks: true,
-    alias: {
-      '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.esm.js',
-      'gql': path.join(process.cwd(), 'client/graph'),
-      // Duplicates fixes:
-      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
-      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
-    },
-    extensions: [
-      '.js',
-      '.json',
-      '.vue'
-    ],
-    modules: [
-      'node_modules'
-    ],
-    fallback: {
-      fs: false,
-      crypto: false,
-      path: false,
-      util: require.resolve('util/'),
-      stream: require.resolve('stream-browserify')
-    }
-  },
-  stats: {
-    children: false,
-    entrypoints: false
-  },
+  resolve: common.resolve,
+  stats: common.stats,
   target: 'web'
 }

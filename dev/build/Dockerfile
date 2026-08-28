@@ -9,6 +9,7 @@ WORKDIR /wiki
 
 COPY ./client ./client
 COPY ./dev ./dev
+COPY ./patches ./patches
 COPY ./package.json ./package.json
 COPY ./yarn.lock ./yarn.lock
 COPY ./.babelrc ./.babelrc
@@ -16,6 +17,7 @@ COPY ./.eslintignore ./.eslintignore
 COPY ./.eslintrc.yml ./.eslintrc.yml
 
 ENV CYPRESS_INSTALL_BINARY=0
+ENV NODE_OPTIONS="--no-deprecation"
 
 RUN yarn cache clean
 RUN yarn --frozen-lockfile --non-interactive

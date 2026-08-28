@@ -7,8 +7,11 @@ RUN apk add yarn g++ make cmake python3 --no-cache
 
 WORKDIR /wiki
 
+COPY ./patches ./patches
 COPY ./package.json ./package.json
 COPY ./yarn.lock ./yarn.lock
+
+ENV NODE_OPTIONS="--no-deprecation"
 
 RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 100000
 
@@ -16,7 +19,19 @@ RUN yarn --production --frozen-lockfile --non-interactive --network-timeout 1000
 # --- Release ---
 # ===============
 FROM node:24-alpine
-LABEL maintainer="requarks.io"
+
+ARG VERSION=dev
+ARG REVISION=unknown
+ARG CREATED=unknown
+
+LABEL maintainer="swissmakers.ch" \
+      org.opencontainers.image.title="wikijs-ng" \
+      org.opencontainers.image.description="Wiki.js NG - a modern, lightweight and powerful wiki app" \
+      org.opencontainers.image.source="https://github.com/swissmakers/wikijs-ng" \
+      org.opencontainers.image.licenses="AGPL-3.0" \
+      org.opencontainers.image.version="$VERSION" \
+      org.opencontainers.image.revision="$REVISION" \
+      org.opencontainers.image.created="$CREATED"
 
 RUN apk add bash curl git openssh gnupg sqlite --no-cache && \
     mkdir -p /wiki && \
@@ -41,4 +56,4 @@ VOLUME ["/wiki/data/content"]
 EXPOSE 3000
 EXPOSE 3443
 
-CMD ["node", "server"]
+CMD ["node", "--no-deprecation", "server"]

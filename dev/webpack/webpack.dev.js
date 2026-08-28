@@ -4,16 +4,7 @@ const fs = require('fs-extra')
 const yargs = require('yargs').argv
 const _ = require('lodash')
 
-const { VueLoaderPlugin } = require('vue-loader')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const HtmlWebpackPugPlugin = require('html-webpack-pug-plugin')
-const MomentTimezoneDataPlugin = require('moment-timezone-data-webpack-plugin')
-const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
-const WebpackBarPlugin = require('webpackbar')
-
-const babelConfig = fs.readJsonSync(path.join(process.cwd(), '.babelrc'))
-const babelDir = path.join(process.cwd(), '.webpack-cache/babel')
+const common = require('./webpack.common')
 
 process.noDeprecation = true
 
@@ -21,188 +12,19 @@ fs.emptyDirSync(path.join(process.cwd(), 'assets'))
 
 module.exports = {
   mode: 'development',
-  entry: {
-    app: ['./client/index-app.js', 'webpack-hot-middleware/client'],
-    legacy: ['./client/index-legacy.js', 'webpack-hot-middleware/client'],
-    setup: ['./client/index-setup.js', 'webpack-hot-middleware/client']
-  },
+  entry: _.mapValues(common.entries, entry => [entry, 'webpack-hot-middleware/client']),
   output: {
-    path: path.join(process.cwd(), 'assets'),
-    publicPath: '/_assets/',
+    ...common.outputBase,
     filename: 'js/[name].js',
     chunkFilename: 'js/[name].js',
-    globalObject: 'this',
-    pathinfo: true,
-    crossOriginLoading: 'use-credentials'
+    pathinfo: true
   },
-  cache: {
-    type: 'filesystem',
-    cacheDirectory: path.join(process.cwd(), '.webpack-cache/cache'),
-    buildDependencies: {
-      config: [__filename, path.join(process.cwd(), '.babelrc')]
-    }
-  },
+  cache: common.cache(__filename),
   module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: (modulePath) => {
-          return modulePath.includes('node_modules') && !modulePath.includes('vuetify')
-        },
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              ...babelConfig,
-              cacheDirectory: babelDir
-            }
-          }
-        ]
-      },
-      {
-        test: /\.css$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'postcss-loader'
-        ]
-      },
-      {
-        test: /\.sass$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'postcss-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sourceMap: false,
-              sassOptions: {
-                indentedSyntax: true,
-                quietDeps: true
-              }
-            }
-          }
-        ]
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          'style-loader',
-          'css-loader',
-          'postcss-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sourceMap: false,
-              sassOptions: {
-                quietDeps: true
-              }
-            }
-          },
-          {
-            loader: 'sass-resources-loader',
-            options: {
-              resources: path.join(process.cwd(), '/client/scss/global.scss')
-            }
-          }
-        ]
-      },
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
-      {
-        test: /\.pug$/,
-        exclude: [
-          path.join(process.cwd(), 'dev')
-        ],
-        loader: 'pug-plain-loader'
-      },
-      {
-        test: /\.(png|jpg|gif)$/,
-        type: 'asset',
-        parser: {
-          dataUrlCondition: {
-            maxSize: 8192
-          }
-        }
-      },
-      {
-        test: /\.svg$/,
-        exclude: [
-          path.join(process.cwd(), 'node_modules/grapesjs')
-        ],
-        type: 'asset/resource',
-        generator: {
-          filename: 'svg/[name][ext]'
-        }
-      },
-      {
-        test: /\.(graphql|gql)$/,
-        exclude: /node_modules/,
-        use: [
-          { loader: 'graphql-persisted-document-loader' },
-          { loader: 'graphql-tag/loader' }
-        ]
-      },
-      {
-        test: /\.(woff2|woff|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'fonts/[name][ext]'
-        }
-      },
-      {
-        loader: 'webpack-modernizr-loader',
-        test: /\.modernizrrc\.js$/
-      }
-    ]
+    rules: common.rules('style-loader')
   },
   plugins: [
-    new VueLoaderPlugin(),
-    new VuetifyLoaderPlugin(),
-    new webpack.ProvidePlugin({
-      Buffer: ['buffer', 'Buffer'],
-      process: 'process/browser.js'
-    }),
-    new MomentTimezoneDataPlugin({
-      startYear: 2017,
-      endYear: (new Date().getFullYear()) + 5
-    }),
-    new CopyWebpackPlugin({
-      patterns: [
-        { from: 'client/static' },
-        { from: './node_modules/prismjs/components', to: 'js/prism' }
-      ]
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/master.pug',
-      filename: '../server/views/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'legacy']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/legacy.pug',
-      filename: '../server/views/legacy/master.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['setup', 'app']
-    }),
-    new HtmlWebpackPlugin({
-      template: 'dev/templates/setup.pug',
-      filename: '../server/views/setup.pug',
-      hash: false,
-      inject: false,
-      excludeChunks: ['app', 'legacy']
-    }),
-    new HtmlWebpackPugPlugin(),
-    new WebpackBarPlugin({
-      name: 'Client Assets'
-    }),
+    ...common.plugins(),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify('development'),
       'process.env.CURRENT_THEME': JSON.stringify(_.defaultTo(yargs.theme, 'default'))
@@ -231,37 +53,8 @@ module.exports = {
     },
     runtimeChunk: 'single'
   },
-  resolve: {
-    mainFields: ['browser', 'main', 'module'],
-    symlinks: true,
-    alias: {
-      '@': path.join(process.cwd(), 'client'),
-      'vue$': 'vue/dist/vue.esm.js',
-      'gql': path.join(process.cwd(), 'client/graph'),
-      // Duplicates fixes:
-      'uc.micro': path.join(process.cwd(), 'node_modules/uc.micro'),
-      'modernizr$': path.resolve(process.cwd(), 'client/.modernizrrc.js')
-    },
-    extensions: [
-      '.js',
-      '.json',
-      '.vue'
-    ],
-    modules: [
-      'node_modules'
-    ],
-    fallback: {
-      fs: false,
-      crypto: false,
-      path: false,
-      util: require.resolve('util/'),
-      stream: require.resolve('stream-browserify')
-    }
-  },
-  stats: {
-    children: false,
-    entrypoints: false
-  },
+  resolve: common.resolve,
+  stats: common.stats,
   target: 'web',
   watch: true
 }
