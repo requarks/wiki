@@ -139,7 +139,7 @@ module.exports = {
     }
     let meta = {
       locale: WIKI.config.lang.code,
-      path: _.initial(fpath.split('.')).join('')
+      path: _.initial(fpath.split('.')).join('.')
     }
     const result = localeFolderRegex.exec(meta.path)
     if (result[1]) {

@@ -5,6 +5,32 @@ const configHelper = require('../helpers/config')
 
 /* global WIKI */
 
+// Bounded concurrency for forked worker jobs: each fork is a full Node process
+// with its own DB pool. Unlimited forks can exhaust process/fd limits (EAGAIN).
+const MAX_CONCURRENT_WORKERS = 3
+const WORKER_TIMEOUT_MS = 10 * 60 * 1000
+let activeWorkers = 0
+const workerQueue = []
+
+function acquireWorkerSlot () {
+  if (activeWorkers < MAX_CONCURRENT_WORKERS) {
+    activeWorkers++
+    return Promise.resolve()
+  }
+  return new Promise(resolve => {
+    workerQueue.push(resolve)
+  })
+}
+
+function releaseWorkerSlot () {
+  const next = workerQueue.shift()
+  if (next) {
+    next()
+  } else {
+    activeWorkers--
+  }
+}
+
 class Job {
   constructor({
     name,
@@ -53,6 +79,7 @@ class Job {
   async invoke(data) {
     try {
       if (this.worker) {
+        await acquireWorkerSlot()
         const proc = childProcess.fork(`server/core/worker.js`, [
           `--job=${this.name}`,
           `--data=${data}`
@@ -62,8 +89,14 @@ class Job {
         })
         const stderr = []
         proc.stderr.on('data', chunk => stderr.push(chunk))
+        const killTimer = setTimeout(() => {
+          WIKI.logger.warn(`Job ${this.name} exceeded the ${WORKER_TIMEOUT_MS / 1000}s timeout and will be terminated.`)
+          proc.kill('SIGKILL')
+        }, WORKER_TIMEOUT_MS)
         this.finished = new Promise((resolve, reject) => {
           proc.on('exit', (code, signal) => {
+            clearTimeout(killTimer)
+            releaseWorkerSlot()
             const data = Buffer.concat(stderr).toString()
             if (code === 0) {
               resolve(data)

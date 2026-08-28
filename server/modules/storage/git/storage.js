@@ -9,6 +9,7 @@ const os = require('os')
 
 const pageHelper = require('../../../helpers/page')
 const assetHelper = require('../../../helpers/asset')
+const Mutex = require('../../../helpers/mutex')
 const commonDisk = require('../disk/common')
 
 /* global WIKI */
@@ -16,6 +17,7 @@ const commonDisk = require('../disk/common')
 module.exports = {
   git: null,
   repoPath: path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'repo'),
+  mutex: new Mutex(),
   async activated() {
     // not used
   },
@@ -26,10 +28,20 @@ module.exports = {
    * INIT
    */
   async init() {
+    return this.mutex.runExclusive(() => this.initInternal())
+  },
+  async initInternal() {
     WIKI.logger.info('(STORAGE/GIT) Initializing...')
     this.repoPath = path.resolve(WIKI.ROOTPATH, this.config.localRepoPath)
     await fs.ensureDir(this.repoPath)
-    this.git = sgit(this.repoPath, { maxConcurrentProcesses: 1 })
+
+    const opTimeout = _.toSafeInteger(this.config.operationTimeout) > 0 ? _.toSafeInteger(this.config.operationTimeout) * 1000 : 300000
+    this.git = sgit(this.repoPath, {
+      maxConcurrentProcesses: 1,
+      timeout: {
+        block: opTimeout
+      }
+    })
 
     // Set custom binary path
     if (!_.isEmpty(this.config.gitBinaryPath)) {
@@ -110,22 +122,97 @@ module.exports = {
     await this.git.checkout(this.config.branch)
 
     // Perform initial sync
-    await this.sync()
+    await this.syncInternal()
 
     WIKI.logger.info('(STORAGE/GIT) Initialization completed.')
+  },
+  /**
+   * Resolve current HEAD commit hash (null on an unborn branch)
+   */
+  async getCurrentHash() {
+    try {
+      return _.trim(await this.git.revparse(['--verify', 'HEAD']))
+    } catch (err) {
+      return null
+    }
+  },
+  /**
+   * Read / persist the last commit hash whose changes were imported into the DB.
+   * Stored inside the .git directory so it survives config changes and is
+   * wiped together with the repo on purge.
+   */
+  async getLastProcessedHash() {
+    try {
+      const syncState = await fs.readJson(path.join(this.repoPath, '.git/wikijs-sync.json'))
+      return _.get(syncState, 'lastProcessedHash', null)
+    } catch (err) {
+      return null
+    }
+  },
+  async setLastProcessedHash(hash) {
+    await fs.outputJson(path.join(this.repoPath, '.git/wikijs-sync.json'), { lastProcessedHash: hash })
+  },
+  /**
+   * Repair an interrupted rebase and absorb any pending worktree changes
+   * left behind by previously failed operations, so the worktree is
+   * guaranteed clean before pulling.
+   */
+  async repairAndAbsorb(rootUser) {
+    // -> Abort interrupted rebase (if any)
+    if (await fs.pathExists(path.join(this.repoPath, '.git/rebase-merge')) || await fs.pathExists(path.join(this.repoPath, '.git/rebase-apply'))) {
+      WIKI.logger.warn('(STORAGE/GIT) Interrupted rebase detected! Aborting it...')
+      try {
+        await this.git.rebase(['--abort'])
+      } catch (err) {
+        WIKI.logger.warn(`(STORAGE/GIT) Failed to abort interrupted rebase: ${err.message}`)
+      }
+    }
+
+    // -> Absorb untracked / uncommitted leftovers
+    const status = await this.git.status()
+    if (!status.isClean()) {
+      const changeCount = status.files.length
+      WIKI.logger.warn(`(STORAGE/GIT) Found ${changeCount} pending change(s) in the worktree. Committing them now...`)
+      await this.git.add(['-A'])
+      await this.git.commit('docs: absorb pending changes', {
+        '--author': `"${rootUser.name} <${rootUser.email}>"`
+      })
+    }
   },
   /**
    * SYNC
    */
   async sync() {
-    const currentCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
-
+    return this.mutex.runExclusive(() => this.syncInternal())
+  },
+  async syncInternal() {
     const rootUser = await WIKI.models.users.getRootUser()
+
+    // Ensure clean worktree (self-healing for failed page commits / interrupted rebases)
+    await this.repairAndAbsorb(rootUser)
+
+    // Determine the window start for change processing
+    let lastProcessedHash = await this.getLastProcessedHash()
+    if (!lastProcessedHash) {
+      lastProcessedHash = await this.getCurrentHash()
+    }
 
     // Pull rebase
     if (_.includes(['sync', 'pull'], this.mode)) {
       WIKI.logger.info(`(STORAGE/GIT) Performing pull rebase from origin on branch ${this.config.branch}...`)
-      await this.git.pull('origin', this.config.branch, ['--rebase'])
+      await this.pullWithRecovery()
+    }
+
+    // Process changes pulled from remote BEFORE pushing, so a push failure
+    // can never cause remote changes to be skipped
+    if (_.includes(['sync', 'pull'], this.mode)) {
+      const newHead = await this.getCurrentHash()
+      if (newHead && lastProcessedHash && newHead !== lastProcessedHash) {
+        await this.processDiff(lastProcessedHash, newHead, rootUser)
+      }
+      if (newHead) {
+        await this.setLastProcessedHash(newHead)
+      }
     }
 
     // Push
@@ -135,56 +222,87 @@ module.exports = {
       if (this.mode === 'push') {
         pushOpts.push('--force')
       }
-      await this.git.push('origin', this.config.branch, pushOpts)
-    }
-
-    // Process Changes
-    if (_.includes(['sync', 'pull'], this.mode)) {
-      const latestCommitLog = _.get(await this.git.log(['-n', '1', this.config.branch, '--']), 'latest', {})
-
-      const diff = await this.git.diffSummary(['-M', currentCommitLog.hash, latestCommitLog.hash])
-      if (_.get(diff, 'files', []).length > 0) {
-        let filesToProcess = []
-        const filePattern = /(.*?)(?:{(.*?))? => (?:(.*?)})?(.*)/
-        for (const f of diff.files) {
-          const fMatch = f.file.match(filePattern)
-          const fNames = {
-            old: null,
-            new: null
-          }
-          if (!fMatch) {
-            fNames.old = f.file
-            fNames.new = f.file
-          } else if (!fMatch[2] && !fMatch[3]) {
-            fNames.old = fMatch[1]
-            fNames.new = fMatch[4]
-          } else {
-            fNames.old = (fMatch[1] + fMatch[2] + fMatch[4]).replace('//', '/')
-            fNames.new = (fMatch[1] + fMatch[3] + fMatch[4]).replace('//', '/')
-          }
-          const fPath = path.join(this.repoPath, fNames.new)
-          let fStats = { size: 0 }
-          try {
-            fStats = await fs.stat(fPath)
-          } catch (err) {
-            if (err.code !== 'ENOENT') {
-              WIKI.logger.warn(`(STORAGE/GIT) Failed to access file ${f.file}! Skipping...`)
-              continue
-            }
-          }
-
-          filesToProcess.push({
-            ...f,
-            file: {
-              path: fPath,
-              stats: fStats
-            },
-            oldPath: fNames.old,
-            relPath: fNames.new
-          })
+      try {
+        await this.git.push('origin', this.config.branch, pushOpts)
+      } catch (err) {
+        if (this.mode !== 'sync') {
+          throw err
         }
-        await this.processFiles(filesToProcess, rootUser)
+        // Remote moved between our pull and push -> pull again and retry once.
+        // Changes fetched by this second pull are processed on the next sync
+        // run (the persisted hash window covers them).
+        WIKI.logger.warn(`(STORAGE/GIT) Push rejected (${err.message}). Pulling latest changes and retrying...`)
+        await this.pullWithRecovery()
+        await this.git.push('origin', this.config.branch, pushOpts)
       }
+    }
+  },
+  /**
+   * Pull (rebase) with deterministic conflict resolution and rebase recovery.
+   * On conflicting changes the local wiki edit wins; the remote side converges
+   * again on the following push.
+   */
+  async pullWithRecovery() {
+    try {
+      await this.git.pull('origin', this.config.branch, ['--rebase', '--strategy-option=theirs'])
+    } catch (err) {
+      if (await fs.pathExists(path.join(this.repoPath, '.git/rebase-merge')) || await fs.pathExists(path.join(this.repoPath, '.git/rebase-apply'))) {
+        WIKI.logger.warn('(STORAGE/GIT) Pull rebase failed mid-way. Aborting rebase to restore a clean state...')
+        try {
+          await this.git.rebase(['--abort'])
+        } catch (errAbort) {
+          WIKI.logger.warn(`(STORAGE/GIT) Failed to abort rebase: ${errAbort.message}`)
+        }
+      }
+      throw err
+    }
+  },
+  /**
+   * Compute the diff between two commits and import the changes into the DB
+   */
+  async processDiff(fromHash, toHash, rootUser) {
+    const diff = await this.git.diffSummary(['-M', fromHash, toHash])
+    if (_.get(diff, 'files', []).length > 0) {
+      let filesToProcess = []
+      const filePattern = /(.*?)(?:{(.*?))? => (?:(.*?)})?(.*)/
+      for (const f of diff.files) {
+        const fMatch = f.file.match(filePattern)
+        const fNames = {
+          old: null,
+          new: null
+        }
+        if (!fMatch) {
+          fNames.old = f.file
+          fNames.new = f.file
+        } else if (!fMatch[2] && !fMatch[3]) {
+          fNames.old = fMatch[1]
+          fNames.new = fMatch[4]
+        } else {
+          fNames.old = (fMatch[1] + fMatch[2] + fMatch[4]).replace('//', '/')
+          fNames.new = (fMatch[1] + fMatch[3] + fMatch[4]).replace('//', '/')
+        }
+        const fPath = path.join(this.repoPath, fNames.new)
+        let fStats = { size: 0 }
+        try {
+          fStats = await fs.stat(fPath)
+        } catch (err) {
+          if (err.code !== 'ENOENT') {
+            WIKI.logger.warn(`(STORAGE/GIT) Failed to access file ${f.file}! Skipping...`)
+            continue
+          }
+        }
+
+        filesToProcess.push({
+          ...f,
+          file: {
+            path: fPath,
+            stats: fStats
+          },
+          oldPath: fNames.old,
+          relPath: fNames.new
+        })
+      }
+      await this.processFiles(filesToProcess, rootUser)
     }
   },
   /**
@@ -290,26 +408,35 @@ module.exports = {
     }
   },
   /**
+   * Commit a file, unless it is excluded by .gitignore
+   */
+  async commitFile(gitFilePath, fileName, message, authorName, authorEmail) {
+    if ((await this.git.checkIgnore(gitFilePath)).length > 0) {
+      WIKI.logger.warn(`(STORAGE/GIT) File ${fileName} is excluded by .gitignore and will NOT be committed! Remove the matching .gitignore rule to track it.`)
+      return
+    }
+    await this.git.add(gitFilePath)
+    await this.git.commit(message, fileName, {
+      '--author': `"${authorName} <${authorEmail}>"`
+    })
+  },
+  /**
    * CREATE
    *
    * @param {Object} page Page to create
    */
   async created(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing new file [${page.localeCode}] ${page.path}...`)
-    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
-      fileName = `${page.localeCode}/${fileName}`
-    }
-    const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing new file [${page.localeCode}] ${page.path}...`)
+      let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+      if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
+        fileName = `${page.localeCode}/${fileName}`
+      }
+      const filePath = path.join(this.repoPath, fileName)
+      await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    const gitFilePath = `./${fileName}`
-    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
-      await this.git.add(gitFilePath)
-      await this.git.commit(`docs: create ${page.path}`, fileName, {
-        '--author': `"${page.authorName} <${page.authorEmail}>"`
-      })
-    }
+      await this.commitFile(`./${fileName}`, fileName, `docs: create ${page.path}`, page.authorName, page.authorEmail)
+    })
   },
   /**
    * UPDATE
@@ -317,21 +444,17 @@ module.exports = {
    * @param {Object} page Page to update
    */
   async updated(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing updated file [${page.localeCode}] ${page.path}...`)
-    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
-      fileName = `${page.localeCode}/${fileName}`
-    }
-    const filePath = path.join(this.repoPath, fileName)
-    await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing updated file [${page.localeCode}] ${page.path}...`)
+      let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+      if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
+        fileName = `${page.localeCode}/${fileName}`
+      }
+      const filePath = path.join(this.repoPath, fileName)
+      await fs.outputFile(filePath, page.injectMetadata(), 'utf8')
 
-    const gitFilePath = `./${fileName}`
-    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
-      await this.git.add(gitFilePath)
-      await this.git.commit(`docs: update ${page.path}`, fileName, {
-        '--author': `"${page.authorName} <${page.authorEmail}>"`
-      })
-    }
+      await this.commitFile(`./${fileName}`, fileName, `docs: update ${page.path}`, page.authorName, page.authorEmail)
+    })
   },
   /**
    * DELETE
@@ -339,19 +462,23 @@ module.exports = {
    * @param {Object} page Page to delete
    */
   async deleted(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing removed file [${page.localeCode}] ${page.path}...`)
-    let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
-      fileName = `${page.localeCode}/${fileName}`
-    }
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing removed file [${page.localeCode}] ${page.path}...`)
+      let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+      if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
+        fileName = `${page.localeCode}/${fileName}`
+      }
 
-    const gitFilePath = `./${fileName}`
-    if ((await this.git.checkIgnore(gitFilePath)).length === 0) {
+      const gitFilePath = `./${fileName}`
+      if ((await this.git.checkIgnore(gitFilePath)).length > 0) {
+        WIKI.logger.warn(`(STORAGE/GIT) File ${fileName} is excluded by .gitignore, nothing to delete.`)
+        return
+      }
       await this.git.rm(gitFilePath)
       await this.git.commit(`docs: delete ${page.path}`, fileName, {
         '--author': `"${page.authorName} <${page.authorEmail}>"`
       })
-    }
+    })
   },
   /**
    * RENAME
@@ -359,27 +486,33 @@ module.exports = {
    * @param {Object} page Page to rename
    */
   async renamed(page) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing file move from [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
-    let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-    let destinationFileName = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing file move from [${page.localeCode}] ${page.path} to [${page.destinationLocaleCode}] ${page.destinationPath}...`)
+      let sourceFileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+      let destinationFileName = `${page.destinationPath}.${pageHelper.getFileExtension(page.contentType)}`
 
-    if (this.config.alwaysNamespace || WIKI.config.lang.namespacing) {
-      if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.localeCode) {
-        sourceFileName = `${page.localeCode}/${sourceFileName}`
+      if (this.config.alwaysNamespace || WIKI.config.lang.namespacing) {
+        if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.localeCode) {
+          sourceFileName = `${page.localeCode}/${sourceFileName}`
+        }
+        if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.destinationLocaleCode) {
+          destinationFileName = `${page.destinationLocaleCode}/${destinationFileName}`
+        }
       }
-      if (this.config.alwaysNamespace || WIKI.config.lang.code !== page.destinationLocaleCode) {
-        destinationFileName = `${page.destinationLocaleCode}/${destinationFileName}`
+
+      const sourceFilePath = path.join(this.repoPath, sourceFileName)
+      const destinationFilePath = path.join(this.repoPath, destinationFileName)
+      await fs.move(sourceFilePath, destinationFilePath)
+
+      if ((await this.git.checkIgnore(`./${destinationFileName}`)).length > 0) {
+        WIKI.logger.warn(`(STORAGE/GIT) File ${destinationFileName} is excluded by .gitignore and will NOT be committed! Remove the matching .gitignore rule to track it.`)
+        return
       }
-    }
-
-    const sourceFilePath = path.join(this.repoPath, sourceFileName)
-    const destinationFilePath = path.join(this.repoPath, destinationFileName)
-    await fs.move(sourceFilePath, destinationFilePath)
-
-    await this.git.rm(`./${sourceFileName}`)
-    await this.git.add(`./${destinationFileName}`)
-    await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, [sourceFilePath, destinationFilePath], {
-      '--author': `"${page.moveAuthorName} <${page.moveAuthorEmail}>"`
+      await this.git.rm(`./${sourceFileName}`)
+      await this.git.add(`./${destinationFileName}`)
+      await this.git.commit(`docs: rename ${page.path} to ${page.destinationPath}`, [sourceFilePath, destinationFilePath], {
+        '--author': `"${page.moveAuthorName} <${page.moveAuthorEmail}>"`
+      })
     })
   },
   /**
@@ -388,13 +521,12 @@ module.exports = {
    * @param {Object} asset Asset to upload
    */
   async assetUploaded (asset) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing new file ${asset.path}...`)
-    const filePath = path.join(this.repoPath, asset.path)
-    await fs.outputFile(filePath, asset.data, 'utf8')
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing new file ${asset.path}...`)
+      const filePath = path.join(this.repoPath, asset.path)
+      await fs.outputFile(filePath, asset.data)
 
-    await this.git.add(`./${asset.path}`)
-    await this.git.commit(`docs: upload ${asset.path}`, asset.path, {
-      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+      await this.commitFile(`./${asset.path}`, asset.path, `docs: upload ${asset.path}`, asset.authorName, asset.authorEmail)
     })
   },
   /**
@@ -403,11 +535,13 @@ module.exports = {
    * @param {Object} asset Asset to upload
    */
   async assetDeleted (asset) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${asset.path}...`)
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing removed file ${asset.path}...`)
 
-    await this.git.rm(`./${asset.path}`)
-    await this.git.commit(`docs: delete ${asset.path}`, asset.path, {
-      '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+      await this.git.rm(`./${asset.path}`)
+      await this.git.commit(`docs: delete ${asset.path}`, asset.path, {
+        '--author': `"${asset.authorName} <${asset.authorEmail}>"`
+      })
     })
   },
   /**
@@ -416,11 +550,13 @@ module.exports = {
    * @param {Object} asset Asset to upload
    */
   async assetRenamed (asset) {
-    WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${asset.path} to ${asset.destinationPath}...`)
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Committing file move from ${asset.path} to ${asset.destinationPath}...`)
 
-    await this.git.mv(`./${asset.path}`, `./${asset.destinationPath}`)
-    await this.git.commit(`docs: rename ${asset.path} to ${asset.destinationPath}`, [asset.path, asset.destinationPath], {
-      '--author': `"${asset.moveAuthorName} <${asset.moveAuthorEmail}>"`
+      await this.git.mv(`./${asset.path}`, `./${asset.destinationPath}`)
+      await this.git.commit(`docs: rename ${asset.path} to ${asset.destinationPath}`, [asset.path, asset.destinationPath], {
+        '--author': `"${asset.moveAuthorName} <${asset.moveAuthorEmail}>"`
+      })
     })
   },
   async getLocalLocation (asset) {
@@ -430,94 +566,112 @@ module.exports = {
    * HANDLERS
    */
   async importAll() {
-    WIKI.logger.info(`(STORAGE/GIT) Importing all content from local Git repo to the DB...`)
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Importing all content from local Git repo to the DB...`)
 
-    const rootUser = await WIKI.models.users.getRootUser()
+      const rootUser = await WIKI.models.users.getRootUser()
 
-    await pipeline(
-      klaw(this.repoPath, {
-        filter: (f) => {
-          return !_.includes(f, '.git')
-        }
-      }),
-      new Transform({
-        objectMode: true,
-        transform: async (file, enc, cb) => {
-          const relPath = file.path.substr(this.repoPath.length + 1)
-          if (file.stats.size < 1) {
-            // Skip directories and zero-byte files
-            return cb()
-          } else if (relPath && relPath.length > 3) {
-            WIKI.logger.info(`(STORAGE/GIT) Processing ${relPath}...`)
-            await this.processFiles([{
-              user: rootUser,
-              relPath,
-              file,
-              deletions: 0,
-              insertions: 0,
-              importAll: true
-            }], rootUser)
+      await pipeline(
+        klaw(this.repoPath, {
+          filter: (f) => {
+            return !_.includes(f, '.git')
           }
-          cb()
-        }
-      })
-    )
+        }),
+        new Transform({
+          objectMode: true,
+          transform: async (file, enc, cb) => {
+            try {
+              const relPath = file.path.substr(this.repoPath.length + 1)
+              if (file.stats.size < 1) {
+                // Skip directories and zero-byte files
+                return cb()
+              } else if (relPath && relPath.length > 3) {
+                WIKI.logger.info(`(STORAGE/GIT) Processing ${relPath}...`)
+                await this.processFiles([{
+                  user: rootUser,
+                  relPath,
+                  file,
+                  deletions: 0,
+                  insertions: 0,
+                  importAll: true
+                }], rootUser)
+              }
+              cb()
+            } catch (err) {
+              cb(err)
+            }
+          }
+        })
+      )
 
-    commonDisk.clearFolderCache()
+      commonDisk.clearFolderCache()
 
-    WIKI.logger.info('(STORAGE/GIT) Import completed.')
+      WIKI.logger.info('(STORAGE/GIT) Import completed.')
+    })
   },
   async syncUntracked() {
-    WIKI.logger.info(`(STORAGE/GIT) Adding all untracked content...`)
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Adding all untracked content...`)
 
-    // -> Pages
-    await pipeline(
-      WIKI.models.knex.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
-        isPrivate: false
-      }).stream(),
-      new Transform({
-        objectMode: true,
-        transform: async (page, enc, cb) => {
-          const pageObject = await WIKI.models.pages.query().findById(page.id)
-          page.tags = await pageObject.$relatedQuery('tags')
+      // -> Pages
+      await pipeline(
+        WIKI.models.knex.column('id', 'path', 'localeCode', 'title', 'description', 'contentType', 'content', 'isPublished', 'updatedAt', 'createdAt', 'editorKey').select().from('pages').where({
+          isPrivate: false
+        }).stream(),
+        new Transform({
+          objectMode: true,
+          transform: async (page, enc, cb) => {
+            try {
+              const pageObject = await WIKI.models.pages.query().findById(page.id)
+              page.tags = await pageObject.$relatedQuery('tags')
 
-          let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
-          if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
-            fileName = `${page.localeCode}/${fileName}`
+              let fileName = `${page.path}.${pageHelper.getFileExtension(page.contentType)}`
+              if (this.config.alwaysNamespace || (WIKI.config.lang.namespacing && WIKI.config.lang.code !== page.localeCode)) {
+                fileName = `${page.localeCode}/${fileName}`
+              }
+              WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
+              const filePath = path.join(this.repoPath, fileName)
+              await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
+              await this.git.add(`./${fileName}`)
+              cb()
+            } catch (err) {
+              cb(err)
+            }
           }
-          WIKI.logger.info(`(STORAGE/GIT) Adding page ${fileName}...`)
-          const filePath = path.join(this.repoPath, fileName)
-          await fs.outputFile(filePath, pageHelper.injectPageMetadata(page), 'utf8')
-          await this.git.add(`./${fileName}`)
-          cb()
-        }
-      })
-    )
+        })
+      )
 
-    // -> Assets
-    const assetFolders = await WIKI.models.assetFolders.getAllPaths()
+      // -> Assets
+      const assetFolders = await WIKI.models.assetFolders.getAllPaths()
 
-    await pipeline(
-      WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
-      new Transform({
-        objectMode: true,
-        transform: async (asset, enc, cb) => {
-          const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
-          WIKI.logger.info(`(STORAGE/GIT) Adding asset ${filename}...`)
-          await fs.outputFile(path.join(this.repoPath, filename), asset.data)
-          await this.git.add(`./${filename}`)
-          cb()
-        }
-      })
-    )
+      await pipeline(
+        WIKI.models.knex.column('filename', 'folderId', 'data').select().from('assets').join('assetData', 'assets.id', '=', 'assetData.id').stream(),
+        new Transform({
+          objectMode: true,
+          transform: async (asset, enc, cb) => {
+            try {
+              const filename = (asset.folderId && asset.folderId > 0) ? `${_.get(assetFolders, asset.folderId)}/${asset.filename}` : asset.filename
+              WIKI.logger.info(`(STORAGE/GIT) Adding asset ${filename}...`)
+              await fs.outputFile(path.join(this.repoPath, filename), asset.data)
+              await this.git.add(`./${filename}`)
+              cb()
+            } catch (err) {
+              cb(err)
+            }
+          }
+        })
+      )
 
-    await this.git.commit(`docs: add all untracked content`)
-    WIKI.logger.info('(STORAGE/GIT) All content is now tracked.')
+      await this.git.commit(`docs: add all untracked content`)
+      WIKI.logger.info('(STORAGE/GIT) All content is now tracked.')
+    })
   },
   async purge() {
-    WIKI.logger.info(`(STORAGE/GIT) Purging local repository...`)
-    await fs.emptyDir(this.repoPath)
-    WIKI.logger.info('(STORAGE/GIT) Local repository is now empty. Reinitializing...')
-    await this.init()
+    return this.mutex.runExclusive(async () => {
+      WIKI.logger.info(`(STORAGE/GIT) Purging local repository...`)
+      await fs.emptyDir(this.repoPath)
+      WIKI.logger.info('(STORAGE/GIT) Local repository is now empty. Reinitializing...')
+      await this.initInternal()
+    })
   }
 }

@@ -99,6 +99,12 @@ props:
     default: ''
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
     order: 50
+  operationTimeout:
+    type: Number
+    title: Operation Timeout
+    default: 300
+    hint: Maximum time in seconds a single git operation may run without producing output before it is terminated. Prevents a hanging remote from blocking all subsequent commits and syncs.
+    order: 51
 actions:
   - handler: syncUntracked
     label: Add Untracked Changes

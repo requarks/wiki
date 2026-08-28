@@ -4,6 +4,7 @@ const fs = require('fs-extra')
 const _ = require('lodash')
 const yaml = require('js-yaml')
 const commonHelper = require('../helpers/common')
+const configHelper = require('../helpers/config')
 
 /* global WIKI */
 
@@ -120,10 +121,11 @@ module.exports = class Storage extends Model {
       // -> Stop and delete existing jobs
       const prevjobs = _.remove(WIKI.scheduler.jobs, job => job.name === `sync-storage`)
       if (prevjobs.length > 0) {
-        prevjobs.forEach(job => job.stop())
+        prevjobs.forEach(job => { job.stop().catch(() => {}) })
       }
 
       // -> Initialize targets
+      const failedTargets = []
       for (let target of this.targets) {
         const targetDef = _.find(WIKI.data.storage, ['key', target.key])
         target.fn = require(`../modules/storage/${target.key}/storage`)
@@ -143,24 +145,32 @@ module.exports = class Storage extends Model {
 
           // -> Set recurring sync job
           if (targetDef.schedule && target.syncInterval !== `P0D`) {
+            let syncInterval = target.syncInterval
+            if (!configHelper.isValidDurationString(syncInterval)) {
+              WIKI.logger.warn(`Invalid sync interval '${syncInterval}' for storage target ${target.key}. Falling back to default (${targetDef.schedule}).`)
+              syncInterval = targetDef.schedule
+            }
             WIKI.scheduler.registerJob({
               name: `sync-storage`,
               immediate: false,
-              schedule: target.syncInterval,
+              schedule: syncInterval,
               repeat: true
             }, target.key)
           }
 
           // -> Set internal recurring sync job
-          if (targetDef.internalSchedule && targetDef.internalSchedule !== `P0D`) {
+          if (targetDef.internalSchedule && targetDef.internalSchedule !== `P0D` && configHelper.isValidDurationString(targetDef.internalSchedule)) {
             WIKI.scheduler.registerJob({
               name: `sync-storage`,
               immediate: false,
-              schedule: target.internalSchedule,
+              schedule: targetDef.internalSchedule,
               repeat: true
             }, target.key)
           }
         } catch (err) {
+          WIKI.logger.warn(`Failed to initialize storage target ${target.key}: ${err.message}`)
+          failedTargets.push(target.key)
+
           // -> Save initialization error
           await WIKI.models.storage.query().patch({
             state: {
@@ -170,6 +180,11 @@ module.exports = class Storage extends Model {
             }
           }).where('key', target.key)
         }
+      }
+
+      // -> Remove failed targets so page/asset events are not dispatched to half-initialized modules
+      if (failedTargets.length > 0) {
+        _.remove(this.targets, t => _.includes(failedTargets, t.key))
       }
     } catch (err) {
       WIKI.logger.warn(err)
