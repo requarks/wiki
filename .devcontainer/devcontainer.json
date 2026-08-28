@@ -3,7 +3,7 @@
 // 2. Select "Remote Containers - Reopen in container"
 
 {
-  "name": "Wiki.js",
+  "name": "Wiki.js NG",
   "dockerComposeFile": [
     "../dev/containers/docker-compose.yml"
   ],

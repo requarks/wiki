@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // ===========================================
-// Wiki.js DEV UTILITY
+// Wiki.js NG DEV UTILITY
 // Licensed under AGPLv3
 // ===========================================
 
@@ -14,7 +14,7 @@ const init = {
     const chokidar = require('chokidar')
 
     console.info(chalk.yellow.bold('--- ====================== ---'))
-    console.info(chalk.yellow.bold('--- Wiki.js DEVELOPER MODE ---'))
+    console.info(chalk.yellow.bold('--- Wiki.js NG DEVELOPER MODE ---'))
     console.info(chalk.yellow.bold('--- ====================== ---'))
 
     global.DEV = true
@@ -28,7 +28,7 @@ const init = {
       hotMiddleware: require('webpack-hot-middleware')(global.WP)
     }
     global.WP_DEV.devMiddleware.waitUntilValid(() => {
-      console.info(chalk.yellow.bold('>>> Starting Wiki.js in DEVELOPER mode...'))
+      console.info(chalk.yellow.bold('>>> Starting Wiki.js NG in DEVELOPER mode...'))
       require('../server')
 
       process.stdin.setEncoding('utf8')

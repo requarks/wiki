@@ -56,7 +56,7 @@
                     color='red darken-2'
                     v-model='config.securityTrustProxy'
                     persistent-hint
-                    hint='Should be enabled when using a reverse-proxy like nginx, apache, CloudFlare, etc in front of Wiki.js. Turn off otherwise.'
+                    hint='Should be enabled when using a reverse-proxy like nginx, apache, CloudFlare, etc in front of Wiki.js NG. Turn off otherwise.'
                     )
 
                   //- v-divider.mt-3

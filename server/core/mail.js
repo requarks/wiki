@@ -53,7 +53,7 @@ module.exports = {
     await this.loadTemplate(opts.template)
     return this.transport.sendMail({
       headers: {
-        'x-mailer': 'Wiki.js'
+        'x-mailer': 'Wiki.js NG'
       },
       from: `"${WIKI.config.mail.senderName}" <${WIKI.config.mail.senderEmail}>`,
       to: opts.to,
@@ -62,7 +62,7 @@ module.exports = {
       html: _.get(this.templates, opts.template)({
         logo: (WIKI.config.logoUrl.startsWith('http') ? '' : WIKI.config.host) + WIKI.config.logoUrl,
         siteTitle: WIKI.config.title,
-        copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js',
+        copyright: WIKI.config.company.length > 0 ? WIKI.config.company : 'Powered by Wiki.js NG',
         ...opts.data
       })
     })

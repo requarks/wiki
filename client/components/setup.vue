@@ -10,11 +10,11 @@
                 .body-2.mt-3 Cloning the dev branch directly from GitHub is #[strong NOT] the proper way to install Wiki.js!
                 .body-2 Read the #[a(href='https://docs.requarks.io/install', style='color: #FFF;') documentation] on correctly installing the latest stable version.
               .text-center
-                img.setup-logo.animated.fadeInUp.wait-p2s(src='/_assets/svg/logo-wikijs-full.svg', alt='Wiki.js Logo')
+                img.setup-logo.animated.fadeInUp.wait-p2s(src='/_assets/svg/logo-wikijs-full.svg', alt='Wiki.js NG Logo')
               v-alert(v-model='error', type='error', icon='mdi-alert', tile, dismissible) {{ errorMessage }}
               v-alert(v-if='!error', tile, color='blue lighten-5', :value='true')
                 v-icon.mr-3(color='blue') mdi-package-variant
-                span.blue--text You are about to install Wiki.js #[strong {{wikiVersion}}].
+                span.blue--text You are about to install Wiki.js NG #[strong {{wikiVersion}}].
               v-card-text
                 .overline.pl-3 Administrator Account
                 v-container.pa-3.mt-3(grid-list-xl)
@@ -74,7 +74,7 @@
                   v-model='conf.telemetry',
                   label='Allow Telemetry',
                   persistent-hint,
-                  hint='Help Wiki.js developers improve this app with anonymized telemetry.'
+                  hint='Help Wiki.js NG developers improve this app with anonymized telemetry.'
                 )
                 a.pl-3(style='font-size: 12px; letter-spacing: initial;', href='https://docs.requarks.io/telemetry', target='_blank') Learn more
               v-divider.mt-2

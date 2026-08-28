@@ -4,7 +4,36 @@ All notable changes to **wikijs-ng** (fork of [Requarks/wiki](https://github.com
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] - 2026-08-26
+## [2.6.0] - Unreleased
+
+### Added
+
+- **Rebranding to "Wiki.js NG"** across all user-visible surfaces: boot banner, default site title, setup wizard, PWA manifest, footer link (now pointing to the fork repository), admin UI copy, mail footer/`x-mailer`, installer, config sample. Functional identifiers deliberately untouched: JWT issuer/audience (`urn:wiki.js` — changing it would invalidate all sessions and API keys), i18next keys (translations come from the upstream locale service), migration IDs, `package.json` name
+- Version bumped to **2.6.0** (`BASE_DEV_VERSION`, SECURITY.md support table updated; `minimumNodeRequired` corrected to 24.0.0). The default site logo no longer loads from the Requarks CDN but from the bundled local asset
+- Git storage: new **Operation Timeout** setting (default 300 s) — a hanging remote operation is terminated instead of blocking all subsequent commits and syncs forever
+- `server/helpers/mutex.js`: small FIFO promise lock used by the git storage module
+
+### Fixed — Git storage sync reliability
+
+Production symptoms addressed: `spawn git EAGAIN` after prolonged uptime, bi-directional sync permanently breaking after external pushes, and articles never reaching the git repository (requiring manual "Add Untracked Changes" + "Force Sync").
+
+- **Scheduler hot-loop bug** (`server/models/storage.js`): the internal sync job was registered with the DB row's (nonexistent) `internalSchedule` instead of the module definition's — `moment.duration(undefined)` is 0 ms, so with the Disk target enabled a sync-storage job re-armed **every event-loop tick**, exhausting processes/CPU (primary `EAGAIN` source). Sync intervals are now also validated, with fallback to the module default
+- **Bounded worker forks**: page renders/tree rebuilds fork one Node process each with no cap or timeout — now limited to 3 concurrent forks (FIFO queue) with a 10-minute kill timeout (`server/core/scheduler.js`)
+- **Self-healing sync**: every sync first aborts any interrupted rebase and commits leftover untracked/staged changes ("absorb pending changes") — files stranded by earlier failures are picked up automatically; manual "Add Untracked Changes" is no longer needed
+- **Deterministic conflict handling**: `pull --rebase` runs with `-X theirs` (the local wiki edit wins; both sides converge on the following push). A failed rebase is aborted automatically instead of wedging the repository permanently
+- **No more lost change windows**: the last imported commit hash is persisted (`.git/wikijs-sync.json`); pulled changes are imported into the DB *before* pushing, and a rejected push is retried once after re-pulling — previously a push failure silently skipped the import and lost that diff window forever
+- **Single-flight locking**: scheduled sync, Force Sync, admin "Apply", purge, import and all page/asset commit handlers are serialized through a mutex — no more interleaved git operations corrupting each other
+- Failed storage-target initialization now removes the target from the event dispatch list (page saves no longer hit half-initialized modules)
+- `.gitignore`d pages are now logged loudly when skipped instead of silently never committed; the rename handler gained the same guard
+- **Asset binary corruption**: git storage wrote uploaded assets with `utf8` encoding, corrupting every binary file — fixed
+- "Add Untracked Changes" / "Import Everything" no longer hang forever when a single file fails (stream callback bug)
+- `render-page` job continued after destroying its DB pool on empty content; page paths containing dots were mangled on git import (`getPagePath` join bug)
+
+### Changed
+
+- Admin → System now compares versions with semver instead of strict equality — a fork version newer than upstream no longer shows a bogus "upgrade available" (which could have pulled the upstream Docker image)
+
+## [Modernization] - 2026-08-26
 
 Full dependency and toolchain modernization of the 2.x codebase, Node.js 24 enforcement, and a new Gitea-based container build pipeline. This is the first divergence from upstream after the fork.
 

@@ -1,6 +1,6 @@
 # Security Policy
 
-Wiki.js is built with security in mind. We try our absolute best to deliver secure and robust applications. However, like any software, there can be security bugs, either introduced by an update or by using an attack vector that wasn't considered when designing the software.
+Wiki.js NG is built with security in mind. We try our absolute best to deliver secure and robust applications. However, like any software, there can be security bugs, either introduced by an update or by using an attack vector that wasn't considered when designing the software.
 
 If you find such vulnerability, it's important to disclose it in a quick and secure manner to the developers. Follow the instructions below to report a vulnerability.
 
@@ -8,7 +8,7 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.x.x   | :white_check_mark: |
+| 2.6.x   | :white_check_mark: |
 | 1.x.x   | :x:                |
 
 ## Reporting a Vulnerability
@@ -16,10 +16,10 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 > [!CAUTION]
 > **DO NOT CREATE A GITHUB ISSUE / DISCUSSION** to report a potential vulnerability / security problem. Instead, use the process below:
 
-Submit a Vulnerability Report by filling in the form on https://github.com/requarks/wiki/security/advisories/new
+Submit a Vulnerability Report by filling in the form on https://github.com/swissmakers/wikijs-ng/security/advisories/new
 
 Include as much details as possible, such as:
-- The version(s) of Wiki.js that are impacted
+- The version(s) of Wiki.js NG that are impacted
 - How to reproduce the vulnerability (step-by-step, screenshots or a video)
 - The platform / environment it occurs on (e.g. OS version, DB type + version, etc.)
 - Any potential fixes or reference code you think might be helpful in resolving the issue

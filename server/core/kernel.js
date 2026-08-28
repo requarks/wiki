@@ -6,7 +6,7 @@ const EventEmitter = require('eventemitter2').EventEmitter2
 module.exports = {
   async init() {
     WIKI.logger.info('=======================================')
-    WIKI.logger.info(`= Wiki.js ${_.padEnd(WIKI.version + ' ', 29, '=')}`)
+    WIKI.logger.info(`= Wiki.js NG ${_.padEnd(WIKI.version + ' ', 26, '=')}`)
     WIKI.logger.info('=======================================')
     WIKI.logger.info('Initializing...')
 

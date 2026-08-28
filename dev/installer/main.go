@@ -13,7 +13,7 @@ var qs = []*survey.Question{
 	{
 		Name: "location",
 		Prompt: &survey.Input{
-			Message: "Where do you want to install Wiki.js?",
+			Message: "Where do you want to install Wiki.js NG?",
 			Default: "./wiki",
 		},
 		Validate: survey.Required,
@@ -53,7 +53,7 @@ func main() {
   `
 	color.Yellow(logo)
 
-	bold.Println("\nInstaller for Wiki.js 2.x")
+	bold.Println("\nInstaller for Wiki.js NG 2.x")
 	fmt.Printf("%s-%s\n\n", runtime.GOOS, runtime.GOARCH)
 
 	// Check system requirements

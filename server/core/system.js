@@ -14,7 +14,7 @@ module.exports = {
     version: WIKI.version,
     releaseDate: WIKI.releaseDate,
     minimumVersionRequired: '2.0.0-beta.0',
-    minimumNodeRequired: '10.12.0'
+    minimumNodeRequired: '24.0.0'
   },
   exportStatus: {
     status: 'notrunning',

@@ -24,7 +24,7 @@
       v-text-field.mt-7(
         outlined
         label='Target Folder Path'
-        hint='Either an absolute path or relative to the Wiki.js installation folder, where exported content will be saved to. Note that the folder MUST be empty!'
+        hint='Either an absolute path or relative to the Wiki.js NG installation folder, where exported content will be saved to. Note that the folder MUST be empty!'
         persistent-hint
         v-model='filePath'
       )

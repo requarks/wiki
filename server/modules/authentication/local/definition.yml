@@ -1,6 +1,6 @@
 key: local
 title: Local Database
-description: Built-in authentication for Wiki.js
+description: Built-in authentication for Wiki.js NG
 author: requarks.io
 logo: https://static.requarks.io/logo/wikijs.svg
 color: primary

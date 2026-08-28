@@ -3,7 +3,7 @@
 describe('Setup', () => {
   it('Load the setup page', () => {
     cy.visit('/')
-    cy.contains('You are about to install Wiki.js').should('exist')
+    cy.contains('You are about to install Wiki.js NG').should('exist')
   })
   it('Enter administrator email address', () => {
     cy.get('.v-input').contains('Administrator Email').next('input').click().type('test@example.com')

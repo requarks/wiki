@@ -11,7 +11,7 @@
           v-flex(lg6 xs12)
             v-card.animated.fadeInUp
               v-btn.animated.fadeInLeft.wait-p2s.btn-animate-rotate(fab, absolute, :right='!$vuetify.rtl', :left='$vuetify.rtl', top, small, light, @click='refresh'): v-icon(color='grey') mdi-refresh
-              v-subheader Wiki.js
+              v-subheader Wiki.js NG
               v-list(two-line, dense)
                 v-list-item
                   v-list-item-avatar
@@ -28,7 +28,7 @@
                   v-list-item-action
                     v-list-item-action-text {{ $t('admin:system.published') }} {{ info.latestVersionReleaseDate | moment('from') }}
               v-card-actions(v-if='info.upgradeCapable && !isLatestVersion && info.platform === `docker`', :class='$vuetify.theme.dark ? `grey darken-3-d5` : `indigo lighten-5`')
-                .caption.indigo--text.pl-3(:class='$vuetify.theme.dark ? `text--lighten-4` : ``') Wiki.js can perform the upgrade to the latest version for you.
+                .caption.indigo--text.pl-3(:class='$vuetify.theme.dark ? `text--lighten-4` : ``') Wiki.js NG can perform the upgrade to the latest version for you.
                 v-spacer
                 v-btn.px-3(
                   color='indigo'
@@ -116,7 +116,7 @@
             color='#FFF'
             style='margin: 0 auto;'
             )
-          .body-2.mt-5.blue--text.text--lighten-4 Your Wiki.js container is being upgraded...
+          .body-2.mt-5.blue--text.text--lighten-4 Your Wiki.js NG container is being upgraded...
           .caption.blue--text.text--lighten-2 Please wait
           v-progress-linear.mt-5(
             color='blue lighten-2'
@@ -131,6 +131,7 @@
 
 <script>
 import _ from 'lodash'
+import semverLte from 'semver/functions/lte'
 
 import { SelfBuildingSquareSpinner } from 'epic-spinners'
 
@@ -175,7 +176,10 @@ export default {
       return this.info.dbType === 'MySQL' && this.dbVersion.indexOf('5.') === 0
     },
     isLatestVersion () {
-      return this.info.currentVersion === this.info.latestVersion
+      if (this.info.latestVersion === 'n/a' || this.info.currentVersion === 'n/a') {
+        return true
+      }
+      return semverLte(this.info.latestVersion, this.info.currentVersion)
     }
   },
   methods: {

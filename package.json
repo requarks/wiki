@@ -1,7 +1,7 @@
 {
   "name": "wiki",
-  "version": "2.0.0",
-  "releaseDate": "2026-01-01T01:01:01.000Z",
+  "version": "2.6.0",
+  "releaseDate": "2026-08-27T00:00:00.000Z",
   "description": "A modern, lightweight and powerful wiki app built on NodeJS, Git and Markdown",
   "main": "wiki.js",
   "dev": true,
@@ -10,6 +10,7 @@
     "start": "node server",
     "dev": "node dev",
     "build": "webpack --profile --config dev/webpack/webpack.prod.js",
+    "build:safe": "bash dev/build-safe.sh build",
     "watch": "webpack --config dev/webpack/webpack.dev.js",
     "test": "eslint --ext .js,.vue . && pug-lint server/views && jest",
     "cypress:open": "cypress open",
