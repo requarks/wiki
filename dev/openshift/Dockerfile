@@ -1,4 +1,4 @@
-FROM requarks/wiki:2
+FROM ghcr.io/swissmakers/wikijs-ng:latest
 
 USER root
 

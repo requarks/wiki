@@ -8,7 +8,7 @@ services:
     image: postgres:17-alpine
     environment:
       POSTGRES_DB: wiki
-      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_PASSWORD: swissmakers
       POSTGRES_USER: wikijs
     logging:
       driver: "none"

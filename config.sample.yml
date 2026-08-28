@@ -27,7 +27,7 @@ db:
   host: localhost
   port: 5432
   user: wikijs
-  pass: wikijsrocks
+  pass: swissmakers
   db: wiki
   ssl: false
 

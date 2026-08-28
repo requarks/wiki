@@ -2,10 +2,10 @@ version: "3"
 services:
 
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: wiki
-      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_PASSWORD: swissmakers
       POSTGRES_USER: wikijs
     logging:
       driver: "none"
@@ -14,7 +14,7 @@ services:
       - db-data:/var/lib/postgresql/data
 
   wiki:
-    image: requarks/wiki:2
+    image: ghcr.io/swissmakers/wikijs-ng:latest
     depends_on:
       - db
     environment:
@@ -22,7 +22,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: wikijs
-      DB_PASS: wikijsrocks
+      DB_PASS: swissmakers
       DB_NAME: wiki
     restart: unless-stopped
     ports:
