@@ -1,4 +1,24 @@
-# Building wikijs-ng locally with Podman
+# Building wikijs-ng locally
+
+## Native asset build (`yarn build`) on a busy host
+
+A full webpack production build can consume several GB of RAM. On a host that is
+already under memory pressure (check `free -h` / `swapon --show` — a full swap is
+a warning sign) this pushes the system into swap thrashing: SSH sessions freeze
+or get killed, and the kernel OOM killer may terminate unrelated processes.
+
+**Use the capped wrapper instead:**
+
+```bash
+yarn build:safe        # = dev/build-safe.sh, throttled to ~2.8G RAM / 2 cores / low IO priority
+```
+
+The wrapper confines the build to a systemd user scope with `MemoryHigh` (throttle
+before kill), `MemoryMax`, `CPUQuota`, low CPU/IO weights and a capped Node heap.
+A cold build takes longer, but the host stays responsive. Warm builds (webpack
+filesystem cache) finish in well under a minute either way.
+
+# Building the container image with Podman
 
 Quick reference for building and running the container image on your own machine. The CI equivalent lives in `.gitea/workflows/build-harbor.yml`.
 

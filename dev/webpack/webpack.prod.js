@@ -28,7 +28,7 @@ module.exports = {
   },
   plugins: [
     ...common.plugins(),
-    new webpack.BannerPlugin('Wiki.js - wiki.js.org - Licensed under AGPL'),
+    new webpack.BannerPlugin('Wiki.js NG - github.com/swissmakers/wikijs-ng - Licensed under AGPL'),
     new MiniCssExtractPlugin({
       filename: 'css/bundle.[contenthash].css',
       chunkFilename: 'css/[name].[contenthash].css'
