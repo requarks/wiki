@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  269 icons.
+  270 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-right": {"body":"<path fill=\"currentColor\" d=\"M12.969 4.281L11.53 5.72L21.812 16l-10.28 10.281l1.437 1.438l11-11l.687-.719l-.687-.719z\"/>","width":32,"height":32},
@@ -271,6 +271,7 @@ export const BUNDLED_ICONS = {
   "mdi:table-split-cell": {"body":"<path fill=\"currentColor\" d=\"M19 14h2v6H3v-6h2v4h14zM3 4v6h2V6h14v4h2V4zm8 7v2H8v2l-3-3l3-3v2zm5 0V9l3 3l-3 3v-2h-3v-2z\"/>","width":24,"height":24},
   "mdi:tag": {"body":"<path fill=\"currentColor\" d=\"M5.5 7A1.5 1.5 0 0 1 4 5.5A1.5 1.5 0 0 1 5.5 4A1.5 1.5 0 0 1 7 5.5A1.5 1.5 0 0 1 5.5 7m15.91 4.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.11 0-2 .89-2 2v7c0 .55.22 1.05.59 1.41l8.99 9c.37.36.87.59 1.42.59s1.05-.23 1.41-.59l7-7c.37-.36.59-.86.59-1.41c0-.56-.23-1.06-.59-1.42\"/>","width":24,"height":24},
   "mdi:text-box-outline": {"body":"<path fill=\"currentColor\" d=\"M5 3c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 2h14v14H5zm2 2v2h10V7zm0 4v2h10v-2zm0 4v2h7v-2z\"/>","width":24,"height":24},
+  "mdi:tooltip-plus-outline": {"body":"<path fill=\"currentColor\" d=\"M4 2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-4 4l-4-4H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m0 2v12h4.83L12 19.17L15.17 16H20V4zm7 2h2v3h3v2h-3v3h-2v-3H8V9h3z\"/>","width":24,"height":24},
   "mdi:toy-brick-plus": {"body":"<path fill=\"currentColor\" d=\"M19 6V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v1h-2V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1H3v14h10.09a5.5 5.5 0 0 1-.09-1a6 6 0 0 1 8-5.66V6m-1 9v3h3v2h-3v3h-2v-3h-3v-2h3v-3Z\"/>","width":24,"height":24},
   "mdi:transfer-down": {"body":"<path fill=\"currentColor\" d=\"M16 3v2H8V3zm0 4v2H8V7zm0 4v2H8v-2zM5 15h14l-7 7z\"/>","width":24,"height":24},
   "mdi:transfer-up": {"body":"<path fill=\"currentColor\" d=\"M8 21v-2h8v2zm0-4v-2h8v2zm0-4v-2h8v2zm11-4H5l7-7z\"/>","width":24,"height":24},

@@ -44,11 +44,6 @@
             t('editor.markup.insertDefinitionList')
           }}</w-tooltip>
         </w-btn>
-        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertFootnote')
-          }}</w-tooltip>
-        </w-btn>
         <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
           <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
           <w-tooltip anchor="center right" self="center left">{{
@@ -63,6 +58,16 @@
           </w-menu>
           <w-tooltip anchor="center right" self="center left">{{
             t('editor.markup.insertIcon')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertFootnote')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:tooltip-plus-outline" padding="sm sm" flat @click="insertAbbreviation">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertAbbreviation')
           }}</w-tooltip>
         </w-btn>
         <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
@@ -957,6 +962,39 @@ function insertBeforeEachLine({ content, before, focus = true }) {
   if (focus) {
     editor.focus()
   }
+}
+
+/**
+ * An abbreviation definition, on a line of its own.
+ *
+ * `*[TERM]: definition` is a block rule, so it can follow a paragraph line directly but cannot sit
+ * inside one — the same reason the definition list breaks out of a line the cursor is mid-way
+ * through.
+ *
+ * Inserted as a Monaco snippet rather than as plain text, so the two placeholders are tab stops: the
+ * term starts selected and Tab moves to the definition. Both are typed over, never cleaned up.
+ */
+function insertAbbreviation() {
+  const model = editor.getModel()
+  const position = editor.getPosition()
+  const line = model.getLineContent(position.lineNumber)
+  const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n' : ''
+  const after = line.slice(position.column - 1).trim().length > 0 ? '\n' : ''
+  const term = snippetEscape(t('editor.markup.abbreviationTerm'))
+  const definition = snippetEscape(t('editor.markup.abbreviationDefinition'))
+
+  editor
+    .getContribution('snippetController2')
+    .insert(`${before}*[\${1:${term}}]: \${2:${definition}}${after}`)
+  editor.focus()
+}
+
+/**
+ * Escape the characters Monaco's snippet parser reads as syntax, so a translated placeholder is
+ * inserted as the words it is
+ */
+function snippetEscape(text) {
+  return text.replace(/[\\$}]/g, '\\$&')
 }
 
 /**
