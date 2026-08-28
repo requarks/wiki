@@ -106,6 +106,13 @@
   --color-primary-light: color-mix(in srgb, var(--color-primary) 60%, white);
 
   /*
+    A step lighter again, for brand-coloured text that is small AND on a dark surface -- the search
+    panel's operator names. `primary-light` is mixed for headings, which carry their contrast partly
+    in their weight; the same shade at 12px on black reads as dim rather than as a highlight.
+  */
+  --color-primary-lighter: color-mix(in srgb, var(--color-primary) 35%, white);
+
+  /*
     And the sidebar's colour a shade lighter, for the one control that sits INSIDE that column and has
     to read as a button against it rather than as a second accent beside it: scroll-to-top, tucked into
     the bottom of the sidebar in `MainLayout`. Mixed, for the reason above -- a themed sidebar takes its

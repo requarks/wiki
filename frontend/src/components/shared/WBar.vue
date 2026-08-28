@@ -1,7 +1,7 @@
 <template>
   <div
     class="w-bar flex w-full flex-nowrap items-center"
-    :class="dense ? 'w-bar--dense' : 'w-bar--standard'">
+    :class="[dense ? 'w-bar--dense' : 'w-bar--standard', { 'w-bar--flush': flush }]">
     <slot />
   </div>
 </template>
@@ -13,9 +13,16 @@
  * Metrics taken from Quasar's own variables so migrated chrome keeps its exact size:
  *   standard  height 32px (16px inner font x2), padding 0 12px, font-size 18px, buttons 11px
  *   dense     height 24px (14px + 10),          padding 0 8px,  font-size 14px, buttons 8px
+ *
+ * `flush` drops the side padding, for a bar whose contents are meant to reach its edges -- a single
+ * full-width button rather than a row of controls inset from the sides.
  */
 defineProps({
   dense: {
+    type: Boolean,
+    default: false
+  },
+  flush: {
     type: Boolean,
     default: false
   }
@@ -37,6 +44,12 @@ defineProps({
   height: 24px;
   padding: 0 8px;
   font-size: 14px;
+}
+
+/* -> After the two size rules, so it overrides whichever of them is in play */
+.w-bar--flush {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /*

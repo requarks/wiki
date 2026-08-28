@@ -85,7 +85,7 @@
           <div class="searchpanel-header">
             <span>Popular Tags</span>
             <w-space />
-            <w-btn class="acrylic-btn" flat label="View All" rounded size="xs" />
+            <w-btn class="acrylic-btn" flat label="View All" size="xs" />
           </div>
           <div class="mb-4 flex flex-wrap gap-1">
             <w-chip
@@ -103,17 +103,19 @@
           </div>
         </template>
         <div class="searchpanel-header">Search Operators</div>
-        <div class="searchpanel-tip">
-          <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
-        </div>
-        <div class="searchpanel-tip">
-          <code>bana*</code> for to match any term starting with "bana" (e.g. banana).
-        </div>
-        <div class="searchpanel-tip">
-          <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
-        </div>
-        <div class="searchpanel-tip">
-          <code>"foo bar"</code> to match exactly the phrase "foo bar".
+        <div class="searchpanel-tips">
+          <div class="searchpanel-tip">
+            <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
+          </div>
+          <div class="searchpanel-tip">
+            <code>foo*</code> to match any term starting with "foo".
+          </div>
+          <div class="searchpanel-tip">
+            <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
+          </div>
+          <div class="searchpanel-tip">
+            <code>"foo bar"</code> to match exactly the phrase "foo bar".
+          </div>
         </div>
       </div>
     </div>
@@ -271,6 +273,17 @@ defineExpose({ focus })
 
 <style lang="scss">
 /*
+  Where the operator tips fall back to a single column. This panel's own threshold rather than one of
+  the app's `--breakpoint-*`: the panel is as wide as the search field, which is whatever the header
+  has left over after the site title and its buttons -- so it only has room for two columns of tips
+  on a very wide window. Stated as a `max` value just under 2000px, the way the shared ones are.
+*/
+$tips-single-column-max: 1999.98px;
+
+/* The gap between a panel title and the rule under it, which the View All button has to cancel. */
+$searchpanel-header-gap: 0.15rem;
+
+/*
   The header search box.
 
   Deliberately not built on WInput: that is a form field -- label, hint line, error line, inset
@@ -402,23 +415,73 @@ defineExpose({ focus })
   &-header {
     font-weight: 500;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0 0 0.5rem 0;
+    padding: 0 0 $searchpanel-header-gap 0;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-  }
 
-  &-tip {
-    + .searchpanel-tip {
-      margin-top: 0.5rem;
+    /*
+      View All sits ON the rule rather than above it: it gives back the title's bottom gap and squares
+      its lower corners, so the button's own edge and the rule read as one line -- a tab on the rule
+      rather than a pill floating over it. Hence no `rounded` prop on the button either: all four
+      corners are this rule's to set, and a pill's 28px would fight the two it keeps.
+
+      `flex-end` rather than the header's `center` because the negative margin shrinks the button's
+      outer box -- centred, half of it would be taken up by the centring and the button would come to
+      rest short of the rule.
+    */
+    .acrylic-btn {
+      align-self: flex-end;
+      margin-bottom: -$searchpanel-header-gap;
+      border-radius: 5px 5px 0 0;
     }
   }
 
+  /*
+    The separator is a pseudo-element on the grid rather than a border on the right-hand column: with
+    a row gap between the tips, a per-cell border would come out as one dash per row instead of a
+    single line down the middle of the gutter.
+  */
+  &-tips {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.5rem;
+    row-gap: 0.35rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(50% - 0.5px);
+      width: 1px;
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Below 2000px the tips stack, and the separator has nothing left to separate. */
+    @media (max-width: $tips-single-column-max) {
+      grid-template-columns: 1fr;
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+
+  &-tip {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  /*
+    Colour alone rather than a chip: the tips are one line each and mostly operator, so a filled
+    background on every other word made the column read as a row of buttons. `primary-lighter` and
+    not `primary` because the panel is a wash of black in either theme -- the mid-tone is picked to
+    read on white, and even the heading shade is dim at this size.
+  */
   code {
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 2px 8px;
-    font-weight: 700;
-    border-radius: 4px;
+    color: var(--color-primary-lighter);
   }
 }
 </style>

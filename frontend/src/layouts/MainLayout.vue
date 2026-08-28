@@ -80,7 +80,7 @@
         </div>
         <nav-sidebar />
         <!-- -> Edit Nav is the whole bar now, so it is also what decides whether there is one -->
-        <w-bar v-if="showEditNav" class="sidebar-footerbtns text-white" dense>
+        <w-bar v-if="showEditNav" class="sidebar-footerbtns text-white" dense flush>
           <w-btn class="flex-1" icon="la:dharmachakra" label="Edit Nav" flat>
             <w-menu ref="navEditMenu" anchor="top left" self="bottom left" :offset="[0, 10]">
               <nav-edit-menu

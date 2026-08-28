@@ -9,15 +9,15 @@
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="inherit" /></w-item-section>
           <w-item-section>
-            <w-item-label>Show</w-item-label>
-            <w-item-label caption>Show the left sidebar navigaiton menu items.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeRootShow`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeRootShowHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="hide" /></w-item-section>
           <w-item-section>
-            <w-item-label>Hide</w-item-label>
-            <w-item-label caption>Completely hide the left sidebar navigation.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeRootHide`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeRootHideHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
       </template>
@@ -25,36 +25,36 @@
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="inherit" /></w-item-section>
           <w-item-section>
-            <w-item-label>Inherit</w-item-label>
-            <w-item-label caption>Use the menu items and settings from the parent path.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeInherit`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeInheritHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="override" /></w-item-section>
           <w-item-section>
-            <w-item-label>Override Current + Descendants</w-item-label>
-            <w-item-label caption>Set menu items and settings for this path and all descendants.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeOverride`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeOverrideHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="overrideExact" /></w-item-section>
           <w-item-section>
-            <w-item-label>Override Current Only</w-item-label>
-            <w-item-label caption>Set menu items and settings only for this path.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeOverrideExact`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeOverrideExactHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="hide" /></w-item-section>
           <w-item-section>
-            <w-item-label>Hide Current + Descendants</w-item-label>
-            <w-item-label caption>Completely hide the left sidebar navigation for this path and all descendants.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeHide`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeHideHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
         <w-item tag="label">
           <w-item-section side><w-radio v-model="state.mode" val="hideExact" /></w-item-section>
           <w-item-section>
-            <w-item-label>Hide Current Only</w-item-label>
-            <w-item-label caption>Completely hide the left sidebar navigation only for this path.</w-item-label>
+            <w-item-label>{{ t(`navEdit.modeHideExact`) }}</w-item-label>
+            <w-item-label caption>{{ t(`navEdit.modeHideExactHint`) }}</w-item-label>
           </w-item-section>
         </w-item>
       </template>
@@ -214,7 +214,7 @@ async function save() {
     }).json()
     // -> The API client does not throw on 400, so a refusal comes back as a parsed error
     if (resp?.ok === false) {
-      throw new Error(resp.message || 'An unexpected error occured.')
+      throw new Error(resp.message || t(`common.error.unexpected`))
     }
     notify({
       type: 'positive',
