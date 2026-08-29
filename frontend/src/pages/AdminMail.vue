@@ -360,6 +360,7 @@ import { onMounted, reactive } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
@@ -486,13 +487,39 @@ function editTemplate(tmplId) {
   })
 }
 
-function sendTest() {
-  // TODO: the backend has no SMTP transport yet, so there is nothing to send the test email with.
-  // Only the mail configuration itself is wired up (GET / PUT /_api/mail/config).
-  notify({
-    type: 'warning',
-    message: t('admin.mail.sendTestUnavailable')
-  })
+async function sendTest() {
+  if (!state.testEmail) {
+    notify({
+      type: 'negative',
+      message: t('admin.mail.testRecipientMissing')
+    })
+    return
+  }
+  state.testLoading = true
+  try {
+    // -> The stored configuration is what it sends through, so anything typed above and not yet
+    //    saved is not what is being tested
+    const resp = await API_CLIENT.post('mail/test', {
+      json: {
+        recipient: state.testEmail
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t('admin.mail.sendTestSuccess')
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.mail.sendTestFailed'),
+      // -> The mail server's own complaint, which is the whole value of the button
+      caption: apiErrorMessage(err)
+    })
+  }
+  state.testLoading = false
 }
 
 // MOUNTED

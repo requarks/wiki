@@ -16,6 +16,16 @@ import type { PurgeTimeframe } from '../models/pageHistory.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
+ * The tag the admin area's Generate Sample Content puts on every page it writes, and the only thing
+ * Purge Sample Content goes looking for.
+ *
+ * **Also written in `frontend/src/helpers/sampleContent.js`**, which is what does the generating —
+ * the three workspaces share no package, so the two have to be kept in step by hand. Changing one
+ * without the other leaves content that nothing will clean up.
+ */
+const SAMPLE_CONTENT_TAG = 'test'
+
+/**
  * Every instance connected to this database, with how it is using the connection pool.
  *
  * There is no instance registry: an instance is only known by the connections it holds, which it
@@ -1208,6 +1218,74 @@ async function routes(app: FastifyInstance) {
       return {
         ok: true,
         message: `Purged ${count} page version(s).`,
+        count
+      }
+    }
+  )
+
+  /**
+   * PURGE SAMPLE CONTENT
+   *
+   * The other half of the admin area's Generate Sample Content, which is a development convenience:
+   * it fills a fresh instance with pages to look at instead of making somebody write dummy content to
+   * test against. Every page it writes carries the `test` tag, and this deletes exactly those.
+   *
+   * The tag is the whole of the contract, which is what makes this usable on content nothing here
+   * generated — tag a page `test` by hand and this takes it too. Said plainly in the description
+   * rather than left as a surprise.
+   */
+  app.post<{ Body: { siteId: string } }>(
+    '/sample-content/purge',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Delete every page tagged `test` on a site',
+        description:
+          "The counterpart to the admin area's Generate Sample Content, which tags everything it writes `test`. Membership of that tag is the only thing consulted, so a page tagged by hand is deleted too. Folders are left standing: they carry no tags, and one somebody made themselves must not go because a sample page was filed in it. Each page is deleted the way the file manager deletes one — its history records the deletion, and its copy on every storage target goes with it.",
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['siteId'],
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Sample content purged successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              count: {
+                type: 'number',
+                description: 'Pages deleted.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!WIKI.sites[req.body.siteId]) {
+        return reply.badRequest('This site does not exist.')
+      }
+      const count = await WIKI.models.pages.deletePagesByTag(req.body.siteId, SAMPLE_CONTENT_TAG, {
+        id: req.session.user!.id,
+        permissions: req.session.permissions ?? []
+      })
+      return {
+        ok: true,
+        message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG}.`,
         count
       }
     }

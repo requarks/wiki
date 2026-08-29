@@ -427,7 +427,8 @@ class Users {
     password,
     groups = [],
     mustChangePassword = false,
-    isVerified = true
+    isVerified = true,
+    strategyId
   }: {
     name: string
     email: string
@@ -435,12 +436,22 @@ class Users {
     groups?: string[]
     mustChangePassword?: boolean
     /**
-     * Defaults to true: an administrator creating the account vouches for the address, and login
-     * rejects unverified users with `ERR_USER_NOT_VERIFIED` — which no email can currently clear.
+     * Defaults to true: an administrator creating the account vouches for the address. Login rejects
+     * an unverified user with `ERR_USER_NOT_VERIFIED`, which is cleared either by the link in the
+     * registration email or by an administrator marking the account verified.
      */
     isVerified?: boolean
+    /**
+     * Which local strategy the password is filed under. Defaults to the built-in one, which is where
+     * every account seeded or created by an administrator keeps it.
+     *
+     * It matters because the local module reads `user.auth[its own strategy ID]` — a password stored
+     * under one local strategy authenticates nobody through another. A registration therefore files
+     * it under the strategy that was registered through, rather than assuming the built-in one.
+     */
+    strategyId?: string
   }): Promise<string> {
-    const localStrategyId = WIKI.data.systemIds.localAuthId
+    const localStrategyId = strategyId ?? WIKI.data.systemIds.localAuthId
     const result = await WIKI.db
       .insert(usersTable)
       .values({
@@ -1365,7 +1376,15 @@ class Users {
           WIKI.logger.warn(errc)
           throw new Error('ERR_TFA_FAILED')
         }
-      } else if (str.config?.enforceTfa || authStr.tfaRequired) {
+        /*
+          `conf`, not `config`: what a module is constructed with is its stored settings, and every
+          one of them keeps them under that name. `config` is free for a module to use for something
+          else, and two of them do — on the OIDC and Google strategies it holds the provider's
+          openid-client `Configuration`, which has no `enforceTfa` and never will. Read the wrong one
+          and this arm is simply never taken, which is what made "Enforce Two-Factor Authentication"
+          do nothing at all.
+        */
+      } else if (str.conf?.enforceTfa || authStr.tfaRequired) {
         try {
           const { tfaQRImage } = await this.startTfaSetup(user, strategyId, context.siteId)
           const tfaToken = await this.generateToken({
@@ -1679,6 +1698,347 @@ class Users {
     } else {
       throw new Error('ERR_INVALID_USER')
     }
+  }
+
+  /**
+   * Create an account from the login screen's own registration form.
+   *
+   * Only the local module registers this way. The providers that sign users in elsewhere create
+   * accounts too, but they do it in `loginWithProvider()` on the way through a successful sign-in —
+   * there is no form to fill in, and no password to choose.
+   *
+   * The strategy has to be one the site actually offers (`getSiteStrategy`), not merely one that
+   * exists: a strategy an administrator has taken off a site must stop creating accounts on it, and
+   * the ID is in the hands of anybody who has ever loaded that login screen.
+   *
+   * What happens next depends on the strategy's `emailValidation` prop. With it off the account is
+   * usable at once and this returns whatever an ordinary login would have — including a 2FA setup,
+   * for a strategy that enforces one. With it on the account is created unverified, the address is
+   * sent a link, and `verifyEmail` is what comes back: there is nothing to log in to yet.
+   *
+   * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @throws `ERR_INVALID_STRATEGY`, `ERR_REGISTRATION_DISABLED`, `ERR_EMAIL_NOT_ALLOWED`,
+   *         `ERR_ACCOUNT_ALREADY_EXISTS`, `ERR_PASSWORD_TOO_SHORT`, `ERR_MAIL_NOT_CONFIGURED`
+   */
+  async registerUser(
+    {
+      siteId,
+      strategyId,
+      name,
+      email,
+      password,
+      ip,
+      baseUrl
+    }: {
+      siteId: string
+      strategyId: string
+      name: string
+      email: string
+      password: string
+      ip?: string
+      baseUrl: string
+    },
+    req: any
+  ): Promise<AfterLoginResult> {
+    const strategy = await WIKI.models.authentication.getSiteStrategy(siteId, strategyId)
+    if (!strategy || strategy.module !== 'local') {
+      WIKI.models.flags.authDebug(
+        `Registration on site ${siteId} refused: ${strategyId} is not a local strategy offered there`
+      )
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if (!strategy.registration) {
+      throw new Error('ERR_REGISTRATION_DISABLED')
+    }
+    if (!password || password.length < 8) {
+      throw new Error('ERR_PASSWORD_TOO_SHORT')
+    }
+
+    const address = email.toLowerCase().trim()
+    if (strategy.allowedEmailRegex) {
+      let allowed = false
+      try {
+        allowed = new RegExp(strategy.allowedEmailRegex).test(address)
+      } catch (err: any) {
+        // -> A pattern that will not compile allows nobody, rather than everybody
+        WIKI.logger.warn(
+          `Strategy ${strategy.id} has an invalid email pattern, refusing: ${err.message}`
+        )
+      }
+      if (!allowed) {
+        WIKI.models.flags.authDebug(
+          `Registration refused for <${address}>: the address is outside strategy ${strategy.id}'s allow-list`
+        )
+        throw new Error('ERR_EMAIL_NOT_ALLOWED')
+      }
+    }
+    if (await this.getByEmail(address)) {
+      throw new Error('ERR_ACCOUNT_ALREADY_EXISTS')
+    }
+
+    /*
+      An address this wiki has undertaken to check has to actually be checkable. Refusing here rather
+      than quietly creating a verified account is the point: the setting says addresses are confirmed,
+      and an instance with nothing to send the confirmation through cannot honour it. The alternative
+      -- an unverified account nobody can ever send a link to -- is a dead end that needs an
+      administrator either way, and this at least says so while somebody is looking.
+    */
+    const mustVerify = strategy.config?.emailValidation === true
+    if (mustVerify && !WIKI.models.mail.isConfigured) {
+      WIKI.logger.warn(
+        `Registration refused: strategy ${strategy.id} validates email addresses, but no SMTP server is configured.`
+      )
+      throw new Error('ERR_MAIL_NOT_CONFIGURED')
+    }
+
+    const userId = await this.createUser({
+      name: name.trim(),
+      email: address,
+      password,
+      groups: strategy.autoEnrollGroups ?? [],
+      isVerified: !mustVerify,
+      strategyId: strategy.id
+    })
+
+    if (mustVerify) {
+      const token = await this.generateToken({
+        kind: 'verifyEmail',
+        userId,
+        meta: { strategyId: strategy.id, siteId }
+      })
+      try {
+        await WIKI.models.mail.send({
+          siteId,
+          to: address,
+          template: 'welcome',
+          data: {
+            name: name.trim(),
+            baseUrl,
+            // -> The login screen, which asks for a press before it confirms anything. Never an
+            //    endpoint that would confirm on being fetched: the scanners that follow every link
+            //    in a message before it is delivered would spend the token before the reader does.
+            verifyUrl: `${baseUrl}/login?verify=${token}`
+          }
+        })
+      } catch (err: any) {
+        /*
+          Undone rather than left behind. The account cannot be signed into and cannot be confirmed,
+          and leaving it would take the address with it -- a second attempt, after whatever was wrong
+          with the mail server is fixed, would be refused as already registered. Nothing else has
+          happened to it yet, so there is nothing else to unwind.
+        */
+        await this.deleteUser(userId)
+        WIKI.logger.warn(`Could not send the verification email to <${address}>: ${err.message}`)
+        throw new Error('ERR_MAIL_SEND_FAILED')
+      }
+      WIKI.models.flags.authDebug(
+        `Registered user ${userId} <${address}> on site ${siteId} from ${ip}, pending email verification`
+      )
+      return {
+        nextAction: 'verifyEmail',
+        redirect: '/'
+      }
+    }
+
+    // -> Best effort, and deliberately not undone on failure: unlike the verification link this is a
+    //    courtesy, and the account it welcomes works whether or not it arrives
+    if (WIKI.models.mail.isConfigured) {
+      try {
+        await WIKI.models.mail.send({
+          siteId,
+          to: address,
+          template: 'welcome',
+          data: { name: name.trim(), baseUrl }
+        })
+      } catch (err: any) {
+        WIKI.logger.warn(`Could not send the welcome email to <${address}>: ${err.message}`)
+      }
+    }
+
+    const user = await this.getById(userId)
+    WIKI.models.flags.authDebug(
+      `Registered user ${userId} <${address}> on site ${siteId} from ${ip}, signing them in`
+    )
+    return this.afterLoginChecks(user, strategy.id, { ip, siteId }, {}, req)
+  }
+
+  /**
+   * Tell somebody an account has been made for them.
+   *
+   * The administrator's version of what registration sends itself: no confirmation link, because an
+   * account an administrator created is verified by definition, and no password, because the mail is
+   * not the place for one. What it carries is the wiki's name and where to sign in.
+   *
+   * @param siteId Which site to welcome them to. Defaults to whichever one the request was addressed
+   *               to, since an instance with one site has no choice to make.
+   * @throws `ERR_INVALID_USER`, `ERR_MAIL_NOT_CONFIGURED`, and whatever the mail server said
+   */
+  async sendWelcomeEmail({
+    userId,
+    siteId,
+    req
+  }: {
+    userId: string
+    siteId?: string
+    req?: any
+  }): Promise<void> {
+    const user = await this.getById(userId)
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    const targetSiteId =
+      (siteId && WIKI.sites[siteId] ? siteId : null) ??
+      (await WIKI.models.sites.getSiteByHostname({ hostname: req?.hostname ?? '*' }))?.id ??
+      ''
+    await WIKI.models.mail.send({
+      siteId: targetSiteId,
+      to: user.email,
+      template: 'welcome',
+      data: {
+        name: user.name,
+        baseUrl: WIKI.models.mail.baseUrl({ req, siteId: targetSiteId })
+      }
+    })
+  }
+
+  /**
+   * Confirm an address from the link in a registration email.
+   *
+   * The token is consumed whether or not it was still needed, so the link works once. Nobody is
+   * signed in by it: the browser reading the mail is not necessarily the one that registered, and
+   * whoever it is still has to know the password.
+   *
+   * @throws `ERR_INVALID_VALIDATION_TOKEN`, `ERR_EXPIRED_VALIDATION_TOKEN`, `ERR_INVALID_USER`
+   */
+  async verifyUserEmail(token: string): Promise<void> {
+    const { user } = await this.validateToken({ kind: 'verifyEmail', token })
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    if (!user.isVerified) {
+      await WIKI.db
+        .update(usersTable)
+        .set({ isVerified: true, updatedAt: sql`now()` })
+        .where(eq(usersTable.id, user.id))
+    }
+    WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> confirmed their email address`)
+  }
+
+  /**
+   * Send somebody the link they choose a new password from, if there is anybody to send it to.
+   *
+   * **This never says whether the address is registered.** It returns the same way for an account
+   * that got a mail, an address nobody here has, an account that signs in through a provider and has
+   * no local password, and a deactivated one — because the form is public, and answering the question
+   * would make it a way to find out who has an account. What is not about the address is reported
+   * normally: a strategy that does not offer resets at all, and an instance with no mail server, are
+   * both misconfigurations rather than answers about a user.
+   *
+   * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @throws `ERR_INVALID_STRATEGY`, `ERR_FORGOT_PASSWORD_DISABLED`, `ERR_MAIL_NOT_CONFIGURED`
+   */
+  async requestPasswordReset({
+    siteId,
+    strategyId,
+    email,
+    ip,
+    baseUrl
+  }: {
+    siteId: string
+    strategyId: string
+    email: string
+    ip?: string
+    baseUrl: string
+  }): Promise<void> {
+    const strategy = await WIKI.models.authentication.getSiteStrategy(siteId, strategyId)
+    if (!strategy || strategy.module !== 'local') {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    if (strategy.config?.allowForgotPassword !== true) {
+      throw new Error('ERR_FORGOT_PASSWORD_DISABLED')
+    }
+    if (!WIKI.models.mail.isConfigured) {
+      WIKI.logger.warn(
+        'A password reset was requested, but no SMTP server is configured to send it through.'
+      )
+      throw new Error('ERR_MAIL_NOT_CONFIGURED')
+    }
+
+    const address = email.toLowerCase().trim()
+    const user = await this.getByEmail(address)
+    const auth = (user?.auth ?? {}) as Record<string, any>
+    if (!user || !user.isActive || !auth[strategy.id]?.password) {
+      WIKI.models.flags.authDebug(
+        `Password reset requested from ${ip} for <${address}>, which has no password on strategy ${strategy.id}; nothing sent`
+      )
+      return
+    }
+
+    const token = await this.generateToken({
+      kind: 'resetPwd',
+      userId: user.id,
+      meta: { strategyId: strategy.id, siteId }
+    })
+    await WIKI.models.mail.send({
+      siteId,
+      to: user.email,
+      template: 'resetPwd',
+      data: {
+        name: user.name,
+        baseUrl,
+        resetUrl: `${baseUrl}/login?reset=${token}`
+      }
+    })
+    WIKI.models.flags.authDebug(
+      `Password reset requested from ${ip} for user ${user.id} <${user.email}>, link sent`
+    )
+  }
+
+  /**
+   * Set the new password a reset link was followed to choose.
+   *
+   * The token is consumed on the first attempt, correct password or not — unlike the 2FA
+   * continuation token, there is nothing to get wrong here that would need a second try, and a link
+   * sitting in a mailbox should stop working as soon as it has been used.
+   *
+   * The account is also marked verified. Following the link proves control of the mailbox, which is
+   * the whole of what verification asks — and without this, somebody who registered, never got the
+   * confirmation and then reset their password would still not be able to sign in.
+   *
+   * Nobody is signed in by it: the new password is what does that, on the login screen.
+   *
+   * @throws `ERR_INVALID_VALIDATION_TOKEN`, `ERR_EXPIRED_VALIDATION_TOKEN`, `ERR_INVALID_USER`,
+   *         `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT`
+   */
+  async resetPassword({
+    token,
+    newPassword
+  }: {
+    token: string
+    newPassword: string
+  }): Promise<void> {
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error('ERR_PASSWORD_TOO_SHORT')
+    }
+    const { user, strategyId } = await this.validateToken({ kind: 'resetPwd', token })
+    if (!user) {
+      throw new Error('ERR_INVALID_USER')
+    }
+    const auth = (user.auth ?? {}) as Record<string, any>
+    // -> The strategy could have been deleted, or password login turned off, since the link was sent
+    if (!auth[strategyId]?.password) {
+      throw new Error('ERR_INVALID_STRATEGY')
+    }
+    auth[strategyId] = {
+      ...auth[strategyId],
+      password: await bcrypt.hash(newPassword, 12),
+      mustChangePwd: false
+    }
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, isVerified: true, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, user.id))
+    WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> reset their password`)
   }
 
   updateSession(user: any, req: any): void {

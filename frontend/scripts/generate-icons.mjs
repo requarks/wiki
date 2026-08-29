@@ -42,12 +42,26 @@ const SETS = ['mdi', 'la']
  */
 const REF = /(["'`])([a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:[-.][a-z0-9]+)*)\1/g
 
+/**
+ * Files whose icon references are CONTENT rather than chrome, and so do not belong in this bundle.
+ *
+ * `sampleContent.js` is a set of pages the admin area writes into a wiki; the names in it end up in
+ * the `icon` column of a page, exactly as if an author had picked them, and resolve through `/_icons`
+ * like every other icon an author picks. Inlining them would put twenty-odd icons that only a
+ * development instance ever draws into the bundle every reader downloads.
+ */
+const NOT_CHROME = new Set(['sampleContent.js'])
+
 function* sourceFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name)
     if (entry.isDirectory()) {
       yield* sourceFiles(full)
-    } else if (/\.(vue|js)$/.test(entry.name) && !entry.name.endsWith('.generated.js')) {
+    } else if (
+      /\.(vue|js)$/.test(entry.name) &&
+      !entry.name.endsWith('.generated.js') &&
+      !NOT_CHROME.has(entry.name)
+    ) {
       yield full
     }
   }

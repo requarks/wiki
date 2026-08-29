@@ -154,7 +154,7 @@
 </template>
 
 <script setup>
-import { computed, inject, ref, useId, useSlots, watch } from 'vue'
+import { computed, inject, onMounted, ref, useId, useSlots, watch } from 'vue'
 
 /**
  * Text input.
@@ -243,6 +243,22 @@ const props = defineProps({
   autocomplete: {
     type: String,
     default: null
+  },
+  /**
+   * Put the caret in this field as soon as it is on screen.
+   *
+   * A prop rather than the native attribute, which is what the markup used to carry and what did
+   * nothing: an attribute this component does not declare falls through to the root element, and
+   * `autofocus` on a plain `<div>` focuses nothing. Only one field per screen may have it — several
+   * would simply race, and the last one mounted would win.
+   *
+   * Not for a control that arrives with the screen already open. `focus()` is exposed for that,
+   * because focus is an action taken at a moment rather than a state of the field; see
+   * `composables/dialog.js`, which focuses on open, and `UtilCodeEditor` on the same reasoning.
+   */
+  autofocus: {
+    type: Boolean,
+    default: false
   },
   /** Rows for `type="textarea"`. */
   rows: {
@@ -454,6 +470,14 @@ const outlineStyle = computed(() => ({
   borderColor: frameColor.value,
   borderWidth: `${frameWidth.value}px`
 }))
+
+// LIFECYCLE
+
+onMounted(() => {
+  if (props.autofocus) {
+    inputEl.value?.focus()
+  }
+})
 
 // METHODS
 

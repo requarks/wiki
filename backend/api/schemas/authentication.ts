@@ -17,9 +17,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       nextAction: {
         type: 'string',
-        enum: ['redirect', 'changePassword', 'provideTfa', 'setupTfa'],
+        enum: ['redirect', 'changePassword', 'provideTfa', 'setupTfa', 'verifyEmail'],
         description:
-          'What the client has to do to finish. Anything other than `redirect` means the attempt is not a login yet and has to be continued with `continuationToken`.'
+          'What the client has to do to finish. Anything other than `redirect` means the attempt is not a login yet. `changePassword`, `provideTfa` and `setupTfa` are continued with `continuationToken`; `verifyEmail` — only ever from registration — is not continued here at all, since the link in the email is what finishes it.'
       },
       continuationToken: {
         type: 'string',
@@ -155,7 +155,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       registration: {
         type: 'boolean',
         description:
-          'Whether an account is created for somebody signing in for the first time. Enforced for the providers that sign users in elsewhere (OpenID Connect, Google, GitHub); the local module has a registration flow of its own.'
+          'Whether an account is created for somebody who has none yet. For the providers that sign users in elsewhere (OpenID Connect, Google, GitHub) that happens on the way through a first successful sign-in; for the local module it is what puts the registration form on the login screen.'
       },
       allowedEmailRegex: {
         type: 'string',
@@ -170,7 +170,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           format: 'uuid'
         },
         description:
-          'Groups a self-registered user would join. The guests group is refused. Stored but not enforced, as above.'
+          'Groups a self-registered user joins, whether they registered on the login screen or arrived through a provider. The guests group is refused.'
       },
       config: {
         type: 'object',

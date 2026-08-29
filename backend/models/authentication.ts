@@ -149,6 +149,33 @@ class Authentication {
   }
 
   /**
+   * A strategy as it is offered on one site, or null when it is not offered there at all.
+   *
+   * The self-service flows — registering, and asking for a password reset — resolve their strategy
+   * through this rather than merely checking that the ID names one, because otherwise a strategy an
+   * administrator has taken off a site would still create accounts on it for anyone who kept the ID.
+   *
+   * Being on the site is what is asked, not being *visible* on it: `isVisible` decides whether the
+   * login screen offers a strategy, and a wiki that hides its local login while still allowing it
+   * must not thereby lose password resets. That matches `login()`, which does not consult visibility
+   * either — and which resolves through `WIKI.auth.strategies` rather than through here, because it
+   * needs the live module instance instead of the stored row.
+   */
+  async getSiteStrategy(siteId: string, strategyId: string): Promise<AuthStrategy | null> {
+    const site = await WIKI.models.sites.getSiteById({ id: siteId })
+    if (!site) {
+      return null
+    }
+    const strategy = await this.getStrategyById(strategyId)
+    if (!strategy?.isEnabled) {
+      return null
+    }
+    // -> A site created before it had strategies configured has no list at all
+    const configured = (site.config.authStrategies ?? []) as { id: string }[]
+    return configured.some((s) => s.id === strategyId) ? strategy : null
+  }
+
+  /**
    * Merge incoming config values onto the ones already stored, keeping only what the module declares.
    *
    * Read-only props are never taken from the client: they are declarations of something the server

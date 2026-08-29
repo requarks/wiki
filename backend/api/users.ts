@@ -1286,7 +1286,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Create a new user',
         description:
-          'Creates a user authenticated against the local strategy. `sendWelcomeEmail` is accepted but not yet supported, as the server has no mail transport.',
+          'Creates a user authenticated against the local strategy. With `sendWelcomeEmail` the new address is told the account exists and where to sign in — the account is created either way, so a mail that could not be sent is reported in the reply rather than failing the request.',
         tags: ['Users'],
         body: {
           type: 'object',
@@ -1350,6 +1350,11 @@ async function routes(app: FastifyInstance) {
               id: {
                 type: 'string',
                 format: 'uuid'
+              },
+              welcomeEmailError: {
+                type: 'string',
+                description:
+                  'Only when `sendWelcomeEmail` was asked for and the mail server refused it — what it said. The account was still created.'
               }
             }
           }
@@ -1363,11 +1368,10 @@ async function routes(app: FastifyInstance) {
       if (await WIKI.models.users.getByEmail(req.body.email.toLowerCase())) {
         throw new CustomError('userCreateDuplicateEmail', 'A user with this email already exists.')
       }
-      // -> There is no mail transport yet, so accepting this flag would silently drop the request
-      if (req.body.sendWelcomeEmail) {
+      if (req.body.sendWelcomeEmail && !WIKI.models.mail.isConfigured) {
         throw new CustomError(
           'userCreateWelcomeEmailUnavailable',
-          'Sending a welcome email is not supported yet, as mail delivery is not implemented.'
+          'No SMTP server is configured, so no welcome email can be sent.'
         )
       }
 
@@ -1379,6 +1383,28 @@ async function routes(app: FastifyInstance) {
           groups: req.body.groups ?? [],
           mustChangePassword: req.body.mustChangePassword ?? false
         })
+        /*
+          After the account, and never allowed to undo it: an administrator asked for a user and got
+          one, and a mail server that would not take the message does not change that. The failure is
+          reported in the same reply instead, since the button that sends it again is one screen away.
+        */
+        if (req.body.sendWelcomeEmail) {
+          try {
+            await WIKI.models.users.sendWelcomeEmail({
+              userId: id,
+              siteId: req.body.sendWelcomeEmailFromSiteId,
+              req
+            })
+          } catch (err: any) {
+            WIKI.logger.warn(`Welcome email for new user ${id} failed: ${err.message}`)
+            return {
+              ok: true,
+              message: 'User created successfully.',
+              id,
+              welcomeEmailError: err.message
+            }
+          }
+        }
         return {
           ok: true,
           message: 'User created successfully.',
@@ -1660,6 +1686,85 @@ async function routes(app: FastifyInstance) {
       return {
         ok: true,
         message: 'User password updated successfully.'
+      }
+    }
+  )
+
+  /**
+   * SEND A WELCOME EMAIL
+   *
+   * The same mail `POST /users` offers to send on create, available afterwards — for an account
+   * created before mail was configured, or one whose owner never got the first one.
+   */
+  app.post<{ Params: { userId: string }; Body: { siteId?: string } }>(
+    '/:userId/send-welcome-email',
+    {
+      config: {
+        permissions: ['manage:users']
+      },
+      schema: {
+        summary: 'Send a welcome email to a user',
+        description:
+          "Tells the account's address that it exists and where to sign in. Carries no password and no confirmation link: an account an administrator created is verified already.",
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['userId']
+        },
+        body: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid',
+              description:
+                'Which site to welcome them to, i.e. whose name and address the mail carries. Defaults to the one this request was addressed to.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The welcome email was accepted by the mail server',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!WIKI.models.mail.isConfigured) {
+        return reply.badRequest('No SMTP server is configured, so no welcome email can be sent.')
+      }
+      try {
+        await WIKI.models.users.sendWelcomeEmail({
+          userId: req.params.userId,
+          siteId: req.body?.siteId,
+          req
+        })
+        return {
+          ok: true,
+          message: 'Welcome email sent successfully.'
+        }
+      } catch (err: any) {
+        if (err.message === 'ERR_INVALID_USER') {
+          return reply.notFound('User does not exist.')
+        }
+        WIKI.logger.warn(`Welcome email for user ${req.params.userId} failed: ${err.message}`)
+        // -> The mail server's own words, as with the test mail: what is wrong is on its end
+        return reply.badRequest(err.message)
       }
     }
   )

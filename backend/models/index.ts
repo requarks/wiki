@@ -10,6 +10,7 @@ import { hooks } from './hooks.ts'
 import { icons } from './icons.ts'
 import { jobs } from './jobs.ts'
 import { locales } from './locales.ts'
+import { mail } from './mail.ts'
 import { navigation } from './navigation.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pages } from './pages.ts'
@@ -40,6 +41,7 @@ export default {
   icons,
   jobs,
   locales,
+  mail,
   navigation,
   pageHistory,
   pages,

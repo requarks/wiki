@@ -376,6 +376,332 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * REGISTER
+   *
+   * Self-registration on the login screen, which only the local module offers: everything else that
+   * creates accounts does it on the way through a successful sign-in at the provider.
+   */
+  app.post<{
+    Params: { siteId: string }
+    Body: { strategyId: string; name: string; email: string; password: string }
+  }>(
+    '/sites/:siteId/auth/register',
+    {
+      config: {
+        publicAccess: true
+      },
+      // -> Public and account-creating; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Register a new account',
+        description:
+          'Refused unless the strategy is a local one the site offers and has registration turned on. Answers like the login route does: an account that needed no email confirmation is signed in from here, and one that did gets `verifyEmail` instead, with nothing to continue — the link in the email is what finishes it.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['strategyId', 'name', 'email', 'password'],
+          properties: {
+            strategyId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            name: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              maxLength: 255
+            },
+            password: {
+              type: 'string',
+              minLength: 8,
+              maxLength: 255
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'AuthLoginResult#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        if (!/^[^<>"]+$/.test(req.body.name)) {
+          throw new Error('ERR_INVALID_NAME')
+        }
+        const result = await WIKI.models.users.registerUser(
+          {
+            siteId: req.params.siteId,
+            strategyId: req.body.strategyId,
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+            ip: req.ip,
+            baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId })
+          },
+          req
+        )
+        if (result.authenticated) {
+          req.session.authenticated = true
+        }
+        return {
+          ok: true,
+          ...result
+        }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          return reply.badRequest(err.message)
+        }
+        WIKI.logger.warn(err)
+        WIKI.models.flags.authDebug(`Registration failed unexpectedly: ${err.message}`)
+        return reply.badRequest('ERR_REGISTRATION_FAILED')
+      }
+    }
+  )
+
+  /**
+   * CONFIRM AN EMAIL ADDRESS
+   *
+   * The other end of the link in a registration email — but not the link itself, which lands on the
+   * login screen and puts a button in front of the reader. **This has to be a POST that somebody
+   * pressed**, never a GET the link performs: Outlook's Safe Links and the scanners like it fetch
+   * every URL in a message before it is delivered, and a GET that confirmed the address would be
+   * spent by the scanner, leaving the real click with a token that has already been used. A form
+   * submission from the page is not something a link scanner makes.
+   *
+   * Nobody is signed in by it either: the browser reading the mail is not necessarily the one that
+   * registered, and the password is still needed.
+   */
+  app.post<{ Params: { siteId: string }; Body: { token: string } }>(
+    '/sites/:siteId/auth/verifyEmail',
+    {
+      config: {
+        publicAccess: true
+      },
+      // -> The token is the whole of the secret; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Confirm an email address',
+        description:
+          'Consumes the token from a registration email and marks the account verified, so it works once. Deliberately not reachable by GET — see the route comment.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['token'],
+          properties: {
+            token: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The address was confirmed',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        await WIKI.models.users.verifyUserEmail(req.body.token)
+        return { ok: true }
+      } catch (err: any) {
+        WIKI.models.flags.authDebug(`Email confirmation refused: ${err.message}`)
+        if (err.message.startsWith('ERR_')) {
+          return reply.badRequest(err.message)
+        }
+        WIKI.logger.warn(err)
+        return reply.badRequest('ERR_INVALID_VALIDATION_TOKEN')
+      }
+    }
+  )
+
+  /**
+   * REQUEST A PASSWORD RESET
+   *
+   * Answers the same way whether or not the address belongs to anybody — see `requestPasswordReset`
+   * for why. What it does report is the two things that are about this wiki rather than about a user:
+   * a strategy that does not offer resets, and an instance with no mail server configured.
+   */
+  app.post<{ Params: { siteId: string }; Body: { strategyId: string; email: string } }>(
+    '/sites/:siteId/auth/forgotPassword',
+    {
+      config: {
+        publicAccess: true
+      },
+      // -> Public, and sends mail on demand; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Request a password reset link',
+        description:
+          'Succeeds for any address, registered or not: a public form that answered differently would be a way of finding out who has an account here.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['strategyId', 'email'],
+          properties: {
+            strategyId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              maxLength: 255
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The request was accepted',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        await WIKI.models.users.requestPasswordReset({
+          siteId: req.params.siteId,
+          strategyId: req.body.strategyId,
+          email: req.body.email,
+          ip: req.ip,
+          baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId })
+        })
+        return { ok: true }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          return reply.badRequest(err.message)
+        }
+        WIKI.logger.warn(err)
+        WIKI.models.flags.authDebug(`Password reset request failed unexpectedly: ${err.message}`)
+        return reply.badRequest('ERR_FORGOT_PASSWORD_FAILED')
+      }
+    }
+  )
+
+  /**
+   * SET A NEW PASSWORD FROM A RESET LINK
+   *
+   * The token stands for the mailbox rather than for a half-finished login, so unlike the
+   * change-password route above this one signs nobody in: what comes next is the login screen.
+   */
+  app.post<{ Params: { siteId: string }; Body: { token: string; newPassword: string } }>(
+    '/sites/:siteId/auth/resetPassword',
+    {
+      config: {
+        publicAccess: true
+      },
+      // -> The token is guessable in principle; see `helpers/rateLimit.ts`
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Set a new password from a reset link',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: {
+          type: 'object',
+          required: ['token', 'newPassword'],
+          properties: {
+            token: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255
+            },
+            newPassword: {
+              type: 'string',
+              minLength: 8,
+              maxLength: 255
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The password was changed',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        await WIKI.models.users.resetPassword({
+          token: req.body.token,
+          newPassword: req.body.newPassword
+        })
+        return { ok: true }
+      } catch (err: any) {
+        if (err.message.startsWith('ERR_')) {
+          WIKI.models.flags.authDebug(`Password reset rejected: ${err.message}`)
+          return reply.badRequest(err.message)
+        }
+        WIKI.logger.warn(err)
+        WIKI.models.flags.authDebug(`Password reset failed unexpectedly: ${err.message}`)
+        return reply.badRequest('ERR_CHANGE_PASSWORD_FAILED')
+      }
+    }
+  )
+
+  /**
    * SUBMIT A 2FA CODE
    *
    * The other half of a login that answered `provideTfa` or `setupTfa`: the continuation token stands

@@ -31,9 +31,13 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// This can be used to network with other containers or with the host.
-	"forwardPorts": [3000, 3001, 5432, 8000],
+	"forwardPorts": [1025, 3000, 3001, 5432, 8000, 8025],
 
   "portsAttributes": {
+    "1025": {
+      "label": "Mailpit SMTP",
+      "onAutoForward": "silent"
+    },
     "3000": {
       "label": "Application Backend",
       "onAutoForward": "silent"
@@ -48,6 +52,10 @@
     },
     "8000": {
       "label": "PGAdmin",
+      "onAutoForward": "silent"
+    },
+    "8025": {
+      "label": "Mailpit",
       "onAutoForward": "silent"
     }
   },

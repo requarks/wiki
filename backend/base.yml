@@ -57,9 +57,22 @@ defaults:
     api:
       isEnabled: false
     mail:
+      senderName: ''
+      senderEmail: ''
+      # Where links in emails point. Left empty, the host the request came in on is used instead —
+      # which is right for a small instance and wrong behind a proxy or on a private address.
+      defaultBaseURL: ''
       host: ''
+      port: 465
+      name: ''
       secure: true
       verifySSL: true
+      user: ''
+      pass: ''
+      useDKIM: false
+      dkimDomainName: ''
+      dkimKeySelector: ''
+      dkimPrivateKey: ''
     metrics:
       isEnabled: false
     auth:

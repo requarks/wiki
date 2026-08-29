@@ -126,11 +126,12 @@
         <w-item v-if="state.userSendWelcomeEmail">
           <blueprint-icon icon="web-design" />
           <w-item-section>
+            <!-- -> One site, not several: the mail carries that site's name and points at it, and
+                    the endpoint takes a single ID -->
             <w-select
               v-model="state.userSendWelcomeEmailFromSiteId"
               outlined
               :options="adminStore.sites"
-              multiple
               map-options
               emit-value
               option-value="id"
@@ -340,6 +341,15 @@ async function create() {
       type: 'positive',
       message: t('admin.users.createSuccess')
     })
+    // -> The account exists either way, so this is reported beside the success rather than instead of
+    //    it. The user's Operations tab is where it can be tried again.
+    if (resp.welcomeEmailError) {
+      notify({
+        type: 'negative',
+        message: t('admin.users.sendWelcomeEmailFailed'),
+        caption: resp.welcomeEmailError
+      })
+    }
     if (state.keepOpened) {
       state.userName = ''
       state.userEmail = ''

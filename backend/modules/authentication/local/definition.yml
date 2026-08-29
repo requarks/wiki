@@ -18,7 +18,7 @@ props:
   emailValidation:
     type: Boolean
     title: Email Validation
-    hint: Send a verification email to the user with a validation link when registering (if registration is enabled).
+    hint: Send a verification email with a validation link when somebody registers, and refuse them a login until they follow it. Requires a configured mail server — registration is refused outright without one.
     icon: received
     default: true
   allowForgotPassword:

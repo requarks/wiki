@@ -37,6 +37,24 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
 
+  # A mail server that delivers nothing, which is what makes it useful: everything the wiki sends —
+  # a registration's confirmation link, a password reset, the admin area's test button — lands in a
+  # web inbox at http://localhost:8025 instead of somebody's mailbox.
+  #
+  # Configure it under Admin -> Mail: host `localhost`, port 1025, TLS off, no username or password.
+  # Sharing the database container's network namespace is what makes `localhost` reach it.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      # -> Nothing here is reachable from outside the container, and a dev instance should not fail a
+      #    send because of a credential nobody has set: any AUTH is accepted, over a plain connection.
+      - MP_SMTP_AUTH_ACCEPT_ANY=true
+      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+    # -> Deliberately no volume: these are test messages, and a mailbox that survives a rebuild is a
+    #    mailbox full of last month's password resets.
+    network_mode: service:db
+
   pgadmin:
     image: dpage/pgadmin4:latest
     environment:

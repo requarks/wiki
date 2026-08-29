@@ -35,7 +35,11 @@ The backend is **TypeScript 7**; `frontend/` and `blocks/` are JavaScript. See
   `assets/_assets/`. Served by the backend. Don't hand-edit.
 - `dev/` — deployment/packaging artifacts: `dev/build/Dockerfile` (production image), `dev/helm/`,
   `dev/packer/`, `dev/noto-emoji-build/`.
-- `.devcontainer/` — VS Code dev container (app + postgres + pgAdmin via docker-compose).
+- `.devcontainer/` — VS Code dev container (app + postgres + pgAdmin + mailpit via docker-compose).
+  Mailpit is the mail server for development: it accepts everything and delivers nothing, so a
+  confirmation link or a password reset lands in a web inbox at `http://localhost:8025` rather than a
+  real mailbox. Point the wiki at it under **Admin → Mail** — host `localhost`, port 1025, TLS off,
+  no credentials.
 - `localazy.json` — translation sync config; locale strings live in `backend/locales/`.
 
 ### `backend/`
@@ -722,17 +726,15 @@ store; no SVG is ever written into content.
 
 An earlier iteration of 3.x used GraphQL/Apollo. **All of it is deprecated** — there is no GraphQL
 server left in `backend/`, and `APOLLO_CLIENT` is not defined as a global, so any call still going
-through it throws. `blocks/block-index/` also still imports a `tree.graphql`.
+through it throws.
 
-Three files under `frontend/src/` make live `APOLLO_CLIENT` calls, and each needs a REST endpoint
-that does not exist yet, so the feature behind it is currently broken:
+**One call is left.** `pages/AdminNavigation.vue`'s `save()` sends the navigation tree and its mode
+through `APOLLO_CLIENT.mutate`, so saving the navigation is broken until it is ported. Nothing else
+under `frontend/src/` references the global. That handler needs more than the endpoint, mind: it also
+calls `this.$store.commit(...)` nine times over, and the file is `<script setup>` with no Vuex store
+anywhere in the app — so `this` is undefined and every one of those throws too.
 
-| File | Feature |
-| ---- | ------- |
-| `components/AuthLoginPanel.vue` | self-registration (the `register()` call only — passkey login and 2FA are REST now) |
-| `pages/AdminNavigation.vue`, `pages/AdminUtilities.vue` | assorted admin actions |
-
-When touching such a file, port it to the REST API (`API_CLIENT` + the matching `backend/api/` route)
+When touching it, port it to the REST API (`API_CLIENT` + the matching `backend/api/` route)
 rather than extending the GraphQL code. If the REST endpoint doesn't exist yet, add it under
 `backend/api/` following the schema + permissions conventions above — `sites/:siteId/images/:kind`,
 which replaced the logo and favicon upload mutations in `AdminGeneral.vue`, is a recent example of

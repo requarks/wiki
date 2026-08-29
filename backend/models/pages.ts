@@ -1322,6 +1322,35 @@ class Pages {
   }
 
   /**
+   * Delete every page on a site carrying a tag.
+   *
+   * One page at a time through `deletePage` rather than one statement against the table: a page is
+   * more than its row — a tree entry, a navigation menu keyed by its id, a copy on every storage
+   * target — and a bulk `DELETE` would leave all of that behind. This is a handful of pages on a
+   * development instance, so the cost of doing it properly is nothing.
+   *
+   * The folders the pages sat in are left standing. They are not tagged, nothing is served from an
+   * empty one, and a folder somebody created themselves must not be swept up because a tagged page
+   * happened to be filed in it.
+   *
+   * @returns How many pages were deleted
+   */
+  async deletePagesByTag(siteId: string, tag: string, actor: PageActor): Promise<number> {
+    const rows = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.siteId, siteId), sql`${pagesTable.tags} @> ${sql.param([tag])}`))
+
+    let deleted = 0
+    for (const row of rows) {
+      if (await this.deletePage(siteId, row.id, actor)) {
+        deleted++
+      }
+    }
+    return deleted
+  }
+
+  /**
    * Delete the pages left behind by a folder deletion, which removed their tree entries already.
    *
    * Not optional tidying: a page is served from its own row, found by the hash of its path, and the

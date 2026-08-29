@@ -36,8 +36,7 @@
               :rules="newPasswordValidation"
               hide-bottom-space
               :label="t(`auth.changePwd.newPassword`)"
-              lazy-rules="ondemand"
-              autofocus>
+              lazy-rules="ondemand">
               <template #append>
                 <div class="flex flex-nowrap items-center">
                   <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
@@ -63,8 +62,7 @@
               :rules="verifyPasswordValidation"
               hide-bottom-space
               :label="t(`auth.changePwd.newPasswordVerify`)"
-              lazy-rules="ondemand"
-              autofocus />
+              lazy-rules="ondemand" />
           </w-item-section>
         </w-item>
       </w-form>

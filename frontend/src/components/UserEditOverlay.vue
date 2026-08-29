@@ -571,6 +571,7 @@
                       color="primary"
                       v-if="canManage"
                       @click="sendWelcomeEmail"
+                      :loading="state.welcomeEmailLoading"
                       :label="t(`common.actions.proceed`)" />
                   </w-item-section>
                 </w-item>
@@ -710,6 +711,7 @@ const state = reactive({
   groups: [],
   groupToAdd: null,
   loading: 0,
+  welcomeEmailLoading: false,
   metadataInvalidJSON: false
 })
 
@@ -926,7 +928,33 @@ function invalidateTFA() {
   })
 }
 
-async function sendWelcomeEmail() {}
+async function sendWelcomeEmail() {
+  // -> Not `state.loading`, which the whole overlay hides itself behind: this is one row's button
+  state.welcomeEmailLoading = true
+  try {
+    // -> The site the admin area is being used on decides what the mail calls this wiki and where it
+    //    points; the endpoint takes that from the request when nothing is named
+    const resp = await API_CLIENT.post(`users/${adminStore.overlayOpts.id}/send-welcome-email`, {
+      json: {
+        siteId: adminStore.currentSiteId
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t('admin.users.sendWelcomeEmailSuccess')
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.users.sendWelcomeEmailFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  state.welcomeEmailLoading = false
+}
 
 function toggleVerified() {
   state.user.isVerified = !state.user.isVerified

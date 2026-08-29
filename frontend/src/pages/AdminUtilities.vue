@@ -7,7 +7,9 @@
           src="/_assets/icons/fluent-swiss-army-knife-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.utilities.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.utilities.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.utilities.subtitle') }}
         </div>
@@ -74,6 +76,23 @@
                 icon="la:arrow-circle-right"
                 color="primary"
                 @click="flushCache"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="popcorn-maker" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.generateSample`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.generateSampleHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                :loading="state.sampleLoading"
+                @click="generateSampleContent"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -174,6 +193,23 @@
             </w-item-section>
           </w-item>
           <w-item>
+            <blueprint-icon icon="eraser" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeSample`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeSampleHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                :loading="state.sampleLoading"
+                @click="purgeSampleContent"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
             <blueprint-icon icon="rescan-document" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.scanPageProblems`) }}</w-item-label>
@@ -205,10 +241,14 @@ import { loading } from '@/composables/loading'
 import { confirm } from '@/composables/dialog'
 import { apiErrorMessage } from '@/helpers/apiError'
 
+import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+
+import { MarkdownRenderer } from '@/renderers/markdown'
 
 // STORES
 
+const adminStore = useAdminStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -224,10 +264,17 @@ useMeta({
 // DATA
 
 const state = reactive({
-  purgeHistoryTimeframe: '1y'
+  purgeHistoryTimeframe: '1y',
+  /** Shared by both sample-content buttons: neither should be pressable while the other is running. */
+  sampleLoading: false
 })
 
 // COMPUTED
+
+/** What to call the site the two sample-content actions write to and clear. */
+const siteName = computed(
+  () => adminStore.sites.find((site) => site.id === adminStore.currentSiteId)?.title ?? ''
+)
 
 const purgeHistoryTimeframes = computed(() => [
   { value: '24h', label: t('admin.utitilies.purgeHistoryToday') },
@@ -433,6 +480,170 @@ function purgeRevokedKeys() {
       })
     }
     loading.hide()
+  })
+}
+
+/**
+ * Fill the current site with pages to look at.
+ *
+ * A development convenience: a fresh instance is empty, so checking a stylesheet, a renderer or the
+ * navigation against anything means writing dummy pages first. Every page is tagged so
+ * {@link purgeSampleContent} can take them all away again.
+ *
+ * The pages are written one at a time through the ordinary create endpoint — the same one the editor
+ * saves through — rather than by a bulk call on the server. That is what makes the content
+ * representative: it goes through the same validation, the same render sanitising and the same tree
+ * placement as a page somebody typed.
+ *
+ * **The render is produced here**, by the same markdown renderer the editor uses, because that is
+ * where it lives. A page stores the HTML its editor produced, and the server can only produce one by
+ * driving a headless browser through the Puppeteer extension — which a plain checkout does not
+ * install, so a server-side generator would write pages that are blank until somebody re-renders
+ * them.
+ */
+async function generateSampleContent() {
+  const { SAMPLE_CONTENT_TAG, SAMPLE_PAGES } = await import('@/helpers/sampleContent')
+  confirm({
+    title: t('admin.utilities.generateSample'),
+    message: t('admin.utilities.generateSampleConfirm', {
+      count: SAMPLE_PAGES.length,
+      site: siteName.value
+    }),
+    caption: t('admin.utilities.generateSampleConfirmWarn', { tag: SAMPLE_CONTENT_TAG }),
+    cancel: true,
+    persistent: true,
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    const siteId = adminStore.currentSiteId
+    state.sampleLoading = true
+    try {
+      /*
+        The site's own markdown settings, so the render matches what its editor would have produced —
+        line breaks, typography and linkify all change the output. Read from the site rather than from
+        `editorStore`, which holds the config of the site being BROWSED, and the admin area may be
+        working on another one.
+      */
+      const site = await API_CLIENT.get(`sites/${siteId}`).json()
+      const md = new MarkdownRenderer(site?.editors?.markdown?.config ?? {})
+
+      /*
+        Store the icons before the pages that use them, so the wiki can serve them without the Iconify
+        API afterwards — which is what the icon picker does when an author chooses one.
+
+        The ones written INTO the content as well as the ones on the pages: a tab's `icon` prop is an
+        icon reference like any other, and materializing only the page icons left every tab in the
+        sample set with a blank space where its icon should be.
+
+        Best effort: this reaches upstream, which an offline instance does not, and an icon that could
+        not be fetched costs a missing picture rather than a page.
+      */
+      const icons = new Set(SAMPLE_PAGES.map((page) => page.icon))
+      for (const page of SAMPLE_PAGES) {
+        for (const [, name] of page.content.matchAll(/\bicon="([a-z0-9-]+:[a-z0-9-]+)"/g)) {
+          icons.add(name)
+        }
+      }
+      try {
+        await API_CLIENT.post('icons/materialize', { json: { icons: [...icons] } }).json()
+      } catch (err) {
+        console.warn(`Could not store the sample content icons: ${apiErrorMessage(err)}`)
+      }
+
+      let created = 0
+      const failures = []
+      for (const page of SAMPLE_PAGES) {
+        try {
+          const resp = await API_CLIENT.post(`sites/${siteId}/pages`, {
+            json: {
+              path: page.path,
+              title: page.title,
+              description: page.description,
+              icon: page.icon,
+              editor: 'markdown',
+              content: page.content,
+              render: md.render(page.content, { pagePath: page.path }),
+              // -> The tag the purge looks for, first, then whatever this page is about
+              tags: [SAMPLE_CONTENT_TAG, ...page.tags],
+              publishState: 'published'
+            }
+          }).json()
+          if (!resp?.ok) {
+            throw new Error(resp?.message || 'An unexpected error occured.')
+          }
+          created++
+        } catch (err) {
+          // -> One page at a time, and one failure does not stop the rest: a path already taken is
+          //    the likely case, and the other twenty pages are still worth having
+          failures.push(`${page.path} — ${apiErrorMessage(err)}`)
+        }
+      }
+
+      if (failures.length > 0) {
+        notify({
+          type: created > 0 ? 'warning' : 'negative',
+          message: t('admin.utilities.generateSamplePartial', created, { count: created }),
+          caption: failures.slice(0, 3).join('; ')
+        })
+      } else {
+        notify({
+          type: 'positive',
+          message: t('admin.utilities.generateSampleSuccess', created, { count: created })
+        })
+      }
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.generateSampleFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    state.sampleLoading = false
+  })
+}
+
+/**
+ * Delete every page carrying the sample content tag.
+ *
+ * The tag is the whole of what is consulted, so a page tagged by hand goes with them — which the
+ * confirmation says outright, since it is the one way this can take something nobody generated.
+ * Folders are left standing: they carry no tags, and one somebody made themselves must not go because
+ * a sample page happened to be filed in it.
+ */
+async function purgeSampleContent() {
+  const { SAMPLE_CONTENT_TAG } = await import('@/helpers/sampleContent')
+  confirm({
+    title: t('admin.utilities.purgeSample'),
+    message: t('admin.utilities.purgeSampleConfirm', {
+      tag: SAMPLE_CONTENT_TAG,
+      site: siteName.value
+    }),
+    caption: t('admin.utilities.purgeSampleConfirmWarn', { tag: SAMPLE_CONTENT_TAG }),
+    cancel: true,
+    persistent: true,
+    color: 'negative',
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    state.sampleLoading = true
+    try {
+      const resp = await API_CLIENT.post('system/sample-content/purge', {
+        json: { siteId: adminStore.currentSiteId }
+      }).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.count ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.purgeSampleSuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.purgeSampleFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    state.sampleLoading = false
   })
 }
 
