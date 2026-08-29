@@ -92,6 +92,7 @@
                 outlined
                 v-model="state.config.defaultBaseURL"
                 dense
+                placeholder="https://wiki.example.com"
                 :aria-label="t(`admin.mail.defaultBaseURL`)" />
             </w-item-section>
           </w-item>

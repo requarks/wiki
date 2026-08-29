@@ -173,8 +173,8 @@ async function load() {
 
 async function install(ext) {
   loading.show({
-    message: t('admin.extensions.installing') + '<br>' + t('admin.extensions.installingHint'),
-    html: true
+    message: t('admin.extensions.installing'),
+    caption: t('admin.extensions.installingHint')
   })
   try {
     const resp = await API_CLIENT.post(`system/extensions/${ext.key}/install`, {

@@ -1,6 +1,20 @@
 <template>
   <div>
     <!--
+      What went wrong, above whichever screen is showing.
+
+      Above rather than beside the field it came from, because most of these are not about one field:
+      a refused password, an expired reset token, a provider that failed somewhere else entirely. And
+      here rather than in a toast at the top of the window, which is five seconds of small text a long
+      way from the form being read — a login that quietly does nothing is how a wrong password looks
+      when the only thing that said so has already gone.
+    -->
+    <w-banner v-if="state.errorMessage" class="auth-error" role="alert">
+      <template #avatar><w-icon name="mdi:alert" size="24px" /></template>
+      <div class="auth-error-message">{{ state.errorMessage }}</div>
+      <div class="auth-error-caption" v-if="state.errorCaption">{{ state.errorCaption }}</div>
+    </w-banner>
+    <!--
       Nothing until the strategies are known.
 
       Every screen below depends on them — which fields the form has, what the username is called,
@@ -18,9 +32,9 @@
     <!-- LOGIN SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `login`">
-      <p v-if="formStrategies.length < 2">{{ t('auth.enterCredentials') }}</p>
+      <p class="auth-subtitle" v-if="formStrategies.length < 2">{{ t('auth.enterCredentials') }}</p>
       <template v-else>
-        <p>{{ t('auth.selectAuthProvider') }}</p>
+        <p class="auth-subtitle">{{ t('auth.selectAuthProvider') }}</p>
         <div class="auth-strategies mb-4">
           <w-btn
             v-for="str of formStrategies"
@@ -154,7 +168,7 @@
     <!-- FORGOT PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `forgot`">
-      <p>{{ t('auth.forgotPasswordSubtitle') }}</p>
+      <p class="auth-subtitle">{{ t('auth.forgotPasswordSubtitle') }}</p>
       <w-form ref="forgotForm" @submit="forgotPassword">
         <w-input
           ref="forgotEmailIpt"
@@ -196,7 +210,7 @@
       reader with a link that has already been used.
     -->
     <template v-else-if="state.screen === `verifyEmail`">
-      <p>{{ t('auth.verifyEmail.instructions') }}</p>
+      <p class="auth-subtitle">{{ t('auth.verifyEmail.instructions') }}</p>
       <w-btn
         class="w-full mt-2"
         push
@@ -219,7 +233,7 @@
     <!-- RESET PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `resetPwd`">
-      <p>{{ t('auth.resetPwd.instructions') }}</p>
+      <p class="auth-subtitle">{{ t('auth.resetPwd.instructions') }}</p>
       <w-form ref="resetPwdForm" @submit="resetPassword">
         <w-input
           v-model="state.newPassword"
@@ -274,7 +288,7 @@
     <!-- REGISTER SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `register`">
-      <p>{{ t('auth.registerSubTitle') }}</p>
+      <p class="auth-subtitle">{{ t('auth.registerSubTitle') }}</p>
       <w-form ref="registerForm" @submit="register">
         <w-input
           ref="registerNameIpt"
@@ -352,7 +366,9 @@
     <!-- CHANGE PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `changePwd`">
-      <p v-if="state.continuationToken">{{ t('auth.changePwd.instructions') }}</p>
+      <p class="auth-subtitle" v-if="state.continuationToken">
+        {{ t('auth.changePwd.instructions') }}
+      </p>
       <w-form ref="changePwdForm" @submit="changePwd">
         <w-input
           v-if="!state.continuationToken"
@@ -412,7 +428,7 @@
     <!-- TFA SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `tfa`">
-      <p>{{ t('auth.tfa.subtitle') }}</p>
+      <p class="auth-subtitle">{{ t('auth.tfa.subtitle') }}</p>
       <v-otp-input
         v-model:value="state.securityCode"
         :num-inputs="6"
@@ -434,12 +450,12 @@
     <!-- TFA SETUP SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `tfasetup`">
-      <p>{{ t('auth.tfaSetupTitle') }}</p>
-      <p>{{ t('auth.tfaSetupInstrFirst') }}</p>
+      <p class="auth-subtitle">{{ t('auth.tfaSetupTitle') }}</p>
+      <p class="auth-subtitle">{{ t('auth.tfaSetupInstrFirst') }}</p>
       <div style="justify-content: center; display: flex">
         <div v-html="state.tfaQRImage" style="width: 200px" />
       </div>
-      <p class="mt-2">{{ t('auth.tfaSetupInstrSecond') }}</p>
+      <p class="auth-subtitle">{{ t('auth.tfaSetupInstrSecond') }}</p>
       <v-otp-input
         v-model:value="state.securityCode"
         :num-inputs="6"
@@ -455,6 +471,31 @@
         no-caps
         icon="la:sign-in-alt"
         @click="finishSetupTFA" />
+    </template>
+    <!-- ----------------------------------------------------- -->
+    <!-- SUCCESS SCREEN -->
+    <!-- ----------------------------------------------------- -->
+    <!--
+      Where a flow that has nothing left to do ends. A mail sent, a password changed, an address
+      confirmed: that is the whole answer to what the reader just pressed, and said in a toast it is
+      four lines at the top of the window, gone in five seconds, nowhere near the form they were
+      looking at. Here it takes the panel over, and the way on is the link under it.
+    -->
+    <template v-else-if="state.screen === `success`">
+      <div class="auth-success" role="status">
+        <w-icon name="mdi:check-circle" color="positive" size="5rem" />
+        <h3 class="auth-success-message">{{ state.successMessage }}</h3>
+        <p class="auth-success-caption" v-if="state.successCaption">{{ state.successCaption }}</p>
+      </div>
+      <w-separator class="my-4" />
+      <w-btn
+        class="acrylic-btn w-full"
+        flat
+        color="primary"
+        :label="t(`auth.switchToLogin.link`)"
+        no-caps
+        icon="la:arrow-circle-left"
+        @click="switchTo(`login`)" />
     </template>
   </div>
 </template>
@@ -510,6 +551,12 @@ const state = reactive({
   verifyToken: '',
   /** Whether the strategies have been fetched — settled either way, so a failure still draws. */
   strategiesLoaded: false,
+  /** What the success screen says. Set by `showSuccess()`, never read anywhere else. */
+  successMessage: '',
+  successCaption: '',
+  /** What the error box above the panel says, if anything. Set by `showError()`. */
+  errorMessage: '',
+  errorCaption: '',
   isTFAShown: false,
   isTFASetupShown: false,
   tfaQRImage: ''
@@ -647,6 +694,48 @@ function switchTo(screen) {
       throw new Error('Invalid Screen')
     }
   }
+  /*
+    A screen change is a fresh start, so whatever the last one was complaining about goes with it.
+    The two flows that mean to carry a message across a change — a 2FA token the server has discarded,
+    a confirmation link that was refused — move first and call `showError()` after, which is the whole
+    reason this clears here rather than in `showError()`'s callers.
+  */
+  clearError()
+}
+
+/**
+ * Say what went wrong, in the box above the panel.
+ *
+ * @param message What failed
+ * @param caption The underlying reason, where the message is a summary of it
+ */
+function showError(message, caption = '') {
+  state.errorMessage = message
+  state.errorCaption = caption
+}
+
+/** Take the error box away. Called as each action starts, so nothing answers for the previous one. */
+function clearError() {
+  state.errorMessage = ''
+  state.errorCaption = ''
+}
+
+/**
+ * End a flow on the success screen.
+ *
+ * Every flow that gets here is finished — there is nothing to continue and no session to carry on
+ * with — so the screen's own way out is always the link back to the login form, and this only has to
+ * say what happened.
+ *
+ * @param message What was accomplished
+ * @param caption What the reader does next, where that is not the login form itself
+ */
+function showSuccess(message, caption = '') {
+  state.successMessage = message
+  state.successCaption = caption
+  state.screen = 'success'
+  // -> Not via `switchTo()`, so the clearing that comes with a screen change has to be said here
+  clearError()
 }
 
 async function fetchStrategies(showAll = false) {
@@ -661,11 +750,7 @@ async function fetchStrategies(showAll = false) {
   } catch (err) {
     // -> Said out loud rather than left as an unhandled rejection: what the reader is looking at is
     //    a login form with no strategy behind it, and a submit that cannot go anywhere
-    notify({
-      type: 'negative',
-      message: t('auth.genericError'),
-      caption: apiErrorMessage(err)
-    })
+    showError(t('auth.genericError'), apiErrorMessage(err))
   } finally {
     // -> In a `finally`, so a wiki whose strategies could not be fetched still shows its form rather
     //    than spinning for ever
@@ -727,17 +812,20 @@ async function handleLoginResponse(resp) {
     */
     case 'verifyEmail': {
       loading.hide()
-      notify({
-        type: 'positive',
-        message: t('auth.registerSuccess'),
-        caption: t('auth.registerCheckEmail')
-      })
-      switchTo('login')
+      showSuccess(t('auth.registerSuccess'), t('auth.registerCheckEmail'))
       break
     }
     case 'redirect': {
+      /*
+        No delay, unlike every other use of the overlay: this one is not covering a wait, it IS the
+        confirmation — the reader is leaving for another page a second from now and this line is the
+        only thing that will have said the login worked. Left on the default 500ms it would appear
+        halfway through that second, or not at all when the response was already slow enough for the
+        overlay to be up.
+      */
       loading.show({
-        message: t('auth.loginSuccess')
+        message: t('auth.loginSuccess'),
+        delay: 0
       })
       setTimeout(() => {
         const loginRedirect = Cookies.get('loginRedirect')
@@ -757,10 +845,7 @@ async function handleLoginResponse(resp) {
     }
     default: {
       loading.hide()
-      notify({
-        type: 'negative',
-        message: 'Unexpected Authentication Response'
-      })
+      showError('Unexpected Authentication Response')
     }
   }
 }
@@ -769,6 +854,7 @@ async function handleLoginResponse(resp) {
  * LOGIN
  */
 async function login() {
+  clearError()
   loading.show({
     message: t('auth.signingIn')
   })
@@ -794,10 +880,7 @@ async function login() {
   } catch (err) {
     console.warn(err)
     loading.hide()
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -805,6 +888,7 @@ async function login() {
  * LOGIN WITH PASSKEY
  */
 async function loginWithPasskey() {
+  clearError()
   loading.show({
     message: t('auth.signingIn')
   })
@@ -834,10 +918,7 @@ async function loginWithPasskey() {
     if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
       return
     }
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -845,6 +926,7 @@ async function loginWithPasskey() {
  * FORGOT PASSWORD
  */
 async function forgotPassword() {
+  clearError()
   loading.show({
     message: t('auth.forgotPasswordLoading')
   })
@@ -869,17 +951,10 @@ async function forgotPassword() {
       this has to keep: saying "no such account" on a public form is how a wiki's member list gets
       read off it one address at a time.
     */
-    notify({
-      type: 'positive',
-      message: t('auth.forgotPasswordSuccess')
-    })
-    switchTo('login')
+    showSuccess(t('auth.forgotPasswordSuccessTitle'), t('auth.forgotPasswordSuccess'))
   } catch (err) {
     loading.hide()
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -887,10 +962,11 @@ async function forgotPassword() {
  * RESET PASSWORD
  *
  * The other end of the link in a reset email. Nothing signs the user in here — the token stands for
- * the mailbox rather than for a half-finished login — so what follows a successful reset is the login
- * screen, with the new password to type into it.
+ * the mailbox rather than for a half-finished login — so what follows a successful reset is the
+ * success screen, and the login form is a link away from it, with the new password to type into it.
  */
 async function resetPassword() {
+  clearError()
   loading.show({
     message: t('auth.changePwd.loading')
   })
@@ -914,17 +990,10 @@ async function resetPassword() {
     state.newPassword = ''
     state.newPasswordVerify = ''
     clearQueryParams(['reset'])
-    notify({
-      type: 'positive',
-      message: t('auth.resetPwd.success')
-    })
-    switchTo('login')
+    showSuccess(t('auth.resetPwd.success'))
   } catch (err) {
     loading.hide()
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -932,6 +1001,7 @@ async function resetPassword() {
  * REGISTER
  */
 async function register() {
+  clearError()
   try {
     const isFormValid = await registerForm.value.validate(true)
     if (!isFormValid) {
@@ -960,10 +1030,7 @@ async function register() {
     await handleLoginResponse(resp)
   } catch (err) {
     loading.hide()
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -971,6 +1038,7 @@ async function register() {
  * CHANGE PASSWORD
  */
 async function changePwd() {
+  clearError()
   try {
     const isFormValid = await changePwdForm.value.validate(true)
     if (!isFormValid) {
@@ -995,10 +1063,7 @@ async function changePwd() {
       throw new Error(resp.message || 'ERR_CHANGE_PASSWORD_FAILED')
     }
   } catch (err) {
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -1039,19 +1104,18 @@ async function submitTFA(setup) {
 async function handleTFAError(err) {
   const code = apiErrorMessage(err)
   loading.hide()
-  notify({
-    type: 'negative',
-    message: localizeError(code, t)
-  })
   if (code === 'ERR_INVALID_VALIDATION_TOKEN' || code === 'ERR_EXPIRED_VALIDATION_TOKEN') {
     state.continuationToken = ''
     state.securityCode = ''
     state.password = ''
     switchTo('login')
   }
+  // -> After the screen change above, which clears the box this is about to fill
+  showError(localizeError(code, t))
 }
 
 async function verifyTFA() {
+  clearError()
   loading.show({
     message: t('auth.signingIn')
   })
@@ -1066,6 +1130,7 @@ async function verifyTFA() {
  * FINISH TFA SETUP
  */
 async function finishSetupTFA() {
+  clearError()
   loading.show({
     message: t('auth.tfaSetupVerifying')
   })
@@ -1085,9 +1150,12 @@ async function finishSetupTFA() {
  * CONFIRM EMAIL
  *
  * The press the confirm screen exists for. Nobody is signed in by it — the browser reading the mail
- * is not necessarily the one that registered — so what follows is the login screen.
+ * is not necessarily the one that registered — so what follows is the success screen, with the login
+ * form a link away. The token is spent either way, so it leaves the address bar here as it does on
+ * the paths through `cancelVerifyEmail()`.
  */
 async function confirmEmail() {
+  clearError()
   loading.show({
     message: t('auth.verifyEmail.loading')
   })
@@ -1102,19 +1170,15 @@ async function confirmEmail() {
       throw new Error(resp?.message || 'ERR_INVALID_VALIDATION_TOKEN')
     }
     loading.hide()
-    notify({
-      type: 'positive',
-      message: t('auth.verifyEmail.success')
-    })
-    cancelVerifyEmail()
+    state.verifyToken = ''
+    clearQueryParams(['verify'])
+    showSuccess(t('auth.verifyEmail.success'))
   } catch (err) {
     loading.hide()
-    notify({
-      type: 'negative',
-      message: localizeError(apiErrorMessage(err), t)
-    })
     // -> Nothing left to press: a token that was refused is not going to be accepted on a second try
     cancelVerifyEmail()
+    // -> After the screen change, which clears the box this is about to fill
+    showError(localizeError(apiErrorMessage(err), t))
   }
 }
 
@@ -1144,13 +1208,19 @@ function cancelReset() {
 
 onMounted(async () => {
   /*
-    Before the fetch, and therefore before anything is drawn: the panel is held back until the
+    Both before the fetch, and therefore before anything is drawn: the panel is held back until the
     strategies arrive, so setting the screen now means the right one is the FIRST to mount. Done
-    afterwards it would mount the login form, focus its email field and then take both away again.
+    afterwards it would mount the login form, focus its email field and then take both away again —
+    and, now that a failed provider login is a box above the form rather than a toast beside it, it
+    would push that form down a beat after it was first painted.
+
+    Neither reads anything but the URL, so there is nothing to wait for. A fetch that then fails says
+    so over the top of this, which is the right way round: a login screen with no strategy behind it
+    is the larger problem of the two.
   */
   screenFromQuery()
-  await fetchStrategies()
   reportRedirectLoginError()
+  await fetchStrategies()
 })
 
 /**
@@ -1165,11 +1235,7 @@ function reportRedirectLoginError() {
   if (!code) {
     return
   }
-  notify({
-    type: 'negative',
-    message: t('auth.errors.loginError'),
-    caption: localizeError(code, t)
-  })
+  showError(t('auth.errors.loginError'), localizeError(code, t))
   clearQueryParams(['error'])
 }
 
