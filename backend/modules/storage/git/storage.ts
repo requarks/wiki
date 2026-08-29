@@ -270,7 +270,7 @@ async function ensureRemote(repo: Repo, target: StorageTarget): Promise<{ onRemo
     const remoteBranches = branches.all.filter((b) => b.startsWith('remotes/origin/'))
     if (remoteBranches.length > 0) {
       throw new Error(
-        `The branch "${branch}" does not exist locally or on the remote, which has ${remoteBranches
+        `(STORAGE/GIT) The branch "${branch}" does not exist locally or on the remote, which has ${remoteBranches
           .map((b) => b.replace('remotes/origin/', ''))
           .join(', ')}. Check the branch name, or create it on the remote first.`
       )
@@ -383,7 +383,7 @@ async function pullRebase(repo: Repo, branch: string): Promise<string[]> {
         throw retryErr
       }
       throw new Error(
-        `${unsettled.slice(0, 5).join(', ')}${unsettled.length > 5 ? ', ...' : ''} changed here and were deleted on the remote, or the other way round, which nothing can settle on its own. Nothing has been changed either side. Decide which of the two is right - Purge Local Repository takes the remote's answer, Force Sync in Push mode takes the wiki's.`
+        `(STORAGE/GIT) ${unsettled.slice(0, 5).join(', ')}${unsettled.length > 5 ? ', ...' : ''} changed here and were deleted on the remote, or the other way round, which nothing can settle on its own. Nothing has been changed either side. Decide which of the two is right - Purge Local Repository takes the remote's answer, Force Sync in Push mode takes the wiki's.`
       )
     }
     return conflicted
@@ -442,7 +442,7 @@ async function reattach(repo: Repo, branch: string): Promise<string> {
   } catch (err: any) {
     await abortInterrupted(repo).catch(() => null)
     throw new Error(
-      `This working copy has no history in common with origin/${branch}, and taking the remote's up failed: ${err.message}. Purge Local Repository starts again from the remote's copy.`
+      `(STORAGE/GIT) This working copy has no history in common with origin/${branch}, and taking the remote's up failed: ${err.message}. Purge Local Repository starts again from the remote's copy.`
     )
   }
   return `The working copy had no history in common with origin/${branch} - which is what a container replaced without a volume for it leaves behind - so the remote's history was taken up and this wiki's own files kept on top of it. Nothing in the wiki itself was changed: run Import Everything if the repository holds content this wiki does not.`
@@ -770,7 +770,7 @@ const gitStorage: StorageModule = {
     const relPath = assetRelPath(target, ref)
     if (!relPath) {
       throw new Error(
-        `${target.title} has no path for ${ref.locale} content, so ${ref.fileName} cannot be stored there.`
+        `(STORAGE/GIT) ${target.title} has no path for ${ref.locale} content, so ${ref.fileName} cannot be stored there.`
       )
     }
     await withRepo(target, async (repo) => {
@@ -909,7 +909,7 @@ const gitStorage: StorageModule = {
     const branch = target.config.branch || 'main'
     return withRepo(target, async (repo) => {
       if (!target.config.repoUrl) {
-        return 'No repository URI is configured, so there is nothing to sync with. Commits are being made locally.'
+        return '(STORAGE/GIT) No repository URI is configured, so there is nothing to sync with. Commits are being made locally.'
       }
       // -> Before anything else touches the repository, since git refuses to move a branch or make a
       //    commit while an earlier operation is unfinished — `ensureRemote`'s checkout is the first
@@ -1119,7 +1119,7 @@ async function applyIncoming(
     } catch (err: any) {
       // -> One entry the wiki could not let go of must not stop the rest of the commit being applied
       WIKI.logger.warn(`(STORAGE/GIT) Could not delete ${segments.join('/')} [ SKIPPED ]`)
-      WIKI.logger.warn(err.message)
+      WIKI.logger.warn(`(STORAGE/GIT) ${err.message}`)
     }
   }
 

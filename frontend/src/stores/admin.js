@@ -19,6 +19,7 @@ export const useAdminStore = defineStore('admin', {
       webhooksTotal: 0,
       loginsPastDay: 0,
       isApiEnabled: false,
+      isMCPEnabled: false,
       isMailConfigured: false,
       isMetricsEnabled: false,
       isSchedulerHealthy: false

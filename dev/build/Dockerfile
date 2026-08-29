@@ -15,6 +15,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -qy --no-in
 RUN mkdir -p /wiki && \
     mkdir -p /logs && \
     mkdir -p /wiki/data/content && \
+    mkdir -p /wiki/data/repo && \
     chown -R node:node /wiki /logs
 
 WORKDIR /wiki
@@ -54,6 +55,7 @@ RUN PUPPETEER_VERSION="$(sed -n 's/^installVersion: *//p' modules/extensions/pup
 WORKDIR /wiki
 
 VOLUME ["/wiki/data/content"]
+VOLUME ["/wiki/data/repo"]
 
 EXPOSE 3000
 EXPOSE 3443
