@@ -636,6 +636,28 @@ misconfigured one reads healthy until something is actually asked of it.
   has to come off the tree rather than the file: the stem is looked up first and only counts as the
   page if `pages.storageFileNameOf` matches the name that went, so a deleted `readme.pdf` never takes
   the page `readme` with it.
+- **A conflict is settled, never left open.** The pull is `--rebase --autostash`, and a rebase that
+  conflicts stops and waits for a human that this working copy does not have — with the index
+  unmerged, which git then refuses every write against, so it is not one failed sync but every commit
+  after it (`ensureRemote`'s checkout is the first thing to fail, and what such a target reports).
+  `pullRebase` therefore rolls a conflicted rebase back and pulls again with `-X ours`, which during a
+  rebase is the *remote*, consistent with a pull being authoritative. What `-X` cannot settle is a
+  file one side changed and the other deleted; that fails the sync, but leaves the working copy usable.
+  `abortInterrupted` also runs at the top of every sync and in `prepareRepo`, so a copy somebody left
+  mid-rebase by hand heals itself instead of needing Purge.
+- **A working copy started again from nothing re-attaches itself.** It is a directory in a container
+  while the content is a database elsewhere, so an upgrade that replaces the container without a volume
+  for `data/repo` takes it with it — and `prepareRepo` then inits an empty one, the next page save
+  commits into it, and the wiki has the remote's own files under a second root commit. `sync` asks
+  `sharesHistoryWith` before it pulls, and with no commit in common `reattach` merges the remote's
+  history in with `--allow-unrelated-histories -X ours` instead: the remote's history and every file
+  the wiki has not re-saved come back, the working copy's version wins where the two overlap (these
+  files were written from the database *since* the copy was created, so the remote's copy is the older
+  one), and the push that follows puts the two in step. It runs in **every** mode — a `push` mode force
+  push from a working copy created ten minutes ago would otherwise replace the whole repository with
+  it. The wiki itself is not written to and `applyIncoming` is skipped for that sync, since the diff is
+  the entire repository; Import Everything is what takes in content the repository has and the wiki
+  does not.
 - **The diff, not the tree.** Incoming changes come from `git diff --name-status -M -z` between the
   commit the branch was on and the one it is on now — a sync runs every few minutes and cannot read
   every file each time. `-z` because a path may contain anything, newlines included.

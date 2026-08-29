@@ -152,6 +152,6 @@ actions:
     icon: database-daily-import
   purge:
     label: Purge Local Repository
-    hint: Empty the local working copy and clone it again from the remote. This is the way out of unrelated merge histories or a working copy that git can no longer make sense of. The remote is not touched and nothing is committed.
+    hint: Empty the local working copy and clone it again from the remote. A working copy that was replaced re-attaches itself on the next sync, so this is for when git can no longer make sense of at all. The remote is not touched and nothing is committed.
     warn: Any commit that exists only in the local repository and has never been pushed is lost. Run a Force Sync first if you are not sure.
     icon: trash
