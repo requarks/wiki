@@ -165,11 +165,6 @@
                   ? t(`admin.auth.registrationLocalHint`)
                   : t(`admin.auth.registrationHint`)
               }}</w-item-label>
-              <!-- Saved, but there is no self-registration path in the server yet — say so rather than -->
-              <!-- let the toggle read as a working setting -->
-              <w-item-label class="text-orange" caption>{{
-                t(`admin.auth.registrationNotEnforced`)
-              }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle

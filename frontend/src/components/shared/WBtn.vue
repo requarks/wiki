@@ -46,13 +46,19 @@ const props = defineProps({
   },
   /**
    * Theme or palette color name (`primary`, `negative`, `grey-7`, ...), resolved against the
-   * Tailwind color variables. Drives the background for solid variants, the text for flat ones.
+   * Tailwind color variables. The button's own color: the background for solid variants, and the
+   * hover tint for unfilled ones (`acrylic-btn` builds its resting fill from it too).
    */
   color: {
     type: String,
     default: null
   },
-  /** Overrides the foreground color independently of `color`. */
+  /**
+   * The label and icon color, when it is not the button's. Defaults to `color` on an unfilled
+   * button and to white on a solid one, which is what every caller that names only `color` gets --
+   * so this is only ever set where the two genuinely differ, as on the login screen, where the
+   * flat buttons keep a `primary` fill under a lighter `primary-light` label.
+   */
   textColor: {
     type: String,
     default: null
@@ -222,8 +228,12 @@ const classes = computed(() => [
   isSolid.value && !props.unelevated ? 'shadow-card' : '',
   props.outline ? 'border border-current' : '',
   isDisabled.value ? 'pointer-events-none opacity-60' : 'cursor-pointer',
-  // -> Flat buttons have no background of their own, so hover tints with the current text color
-  isSolid.value ? 'hover:brightness-110' : 'hover:bg-current/10',
+  /*
+    Flat buttons have no background of their own, so hover tints with the button's own color rather
+    than with `currentcolor` -- which is the label, and on a button whose `textColor` differs from
+    its `color` those are two different answers.
+  */
+  isSolid.value ? 'hover:brightness-110' : 'hover:bg-(--w-btn-tint)',
   props.glossy ? 'w-glossy' : ''
 ])
 
@@ -250,6 +260,22 @@ const styles = computed(() => {
     const [v, h = v] = props.padding.split(/\s+/)
     out.padding = `${SIZES[v] ?? v} ${SIZES[h] ?? h}`
   }
+
+  /*
+    The button's own color, for the tints that are drawn from it: the hover fill above, and
+    `acrylic-btn`'s resting one in `css/_base.scss`. Always set, so neither has to name a fallback,
+    and `currentcolor` where there is no `color` -- which is what both used unconditionally before
+    text and fill could differ.
+  */
+  out['--w-btn-color'] = props.color ? `var(--color-${props.color})` : 'currentcolor'
+
+  /*
+    The hover tint, as a variable rather than as `bg-[color-mix(...)]` in the class list: Tailwind
+    reads an arbitrary `color-mix()` as a color it cannot resolve and emits `background-color:
+    var(--w-btn-color)` ahead of it as the pre-`color-mix` fallback -- an opaque fill under a label
+    of the same color, on a button whose whole point is that it has no fill until it is hovered.
+  */
+  out['--w-btn-tint'] = 'color-mix(in srgb, var(--w-btn-color) 10%, transparent)'
 
   if (isSolid.value && props.color) {
     out.backgroundColor = `var(--color-${props.color})`

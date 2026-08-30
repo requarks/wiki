@@ -116,6 +116,7 @@
           class="acrylic-btn w-full"
           flat
           color="primary"
+          :text-color="acrylicBtnTextColor"
           :label="t(`auth.passkeys.signin`)"
           no-caps
           icon="la:key"
@@ -134,6 +135,7 @@
           :key="str.id"
           flat
           color="primary"
+          :text-color="acrylicBtnTextColor"
           :label="t(`auth.actions.loginWith`, { provider: str.activeStrategy.displayName })"
           no-caps
           :icon="`img:` + str.activeStrategy.strategy.icon"
@@ -147,6 +149,7 @@
           v-if="selectedStrategy.activeStrategy.registration"
           flat
           color="primary"
+          :text-color="acrylicBtnTextColor"
           :label="t(`auth.switchToRegister.link`)"
           no-caps
           icon="la:user-plus"
@@ -158,6 +161,7 @@
           v-if="selectedStrategy.activeStrategy.allowForgotPassword"
           flat
           color="primary"
+          :text-color="acrylicBtnTextColor"
           :label="t(`auth.forgotPasswordLink`)"
           no-caps
           icon="la:life-ring"
@@ -195,6 +199,7 @@
         class="acrylic-btn w-full"
         flat
         color="primary"
+        :text-color="acrylicBtnTextColor"
         :label="t(`auth.forgotPasswordCancel`)"
         no-caps
         icon="la:arrow-circle-left"
@@ -224,6 +229,7 @@
         class="acrylic-btn w-full"
         flat
         color="primary"
+        :text-color="acrylicBtnTextColor"
         :label="t(`auth.switchToLogin.link`)"
         no-caps
         icon="la:arrow-circle-left"
@@ -279,6 +285,7 @@
         class="acrylic-btn w-full"
         flat
         color="primary"
+        :text-color="acrylicBtnTextColor"
         :label="t(`auth.switchToLogin.link`)"
         no-caps
         icon="la:arrow-circle-left"
@@ -357,6 +364,7 @@
         class="acrylic-btn w-full"
         flat
         color="primary"
+        :text-color="acrylicBtnTextColor"
         :label="t(`auth.switchToLogin.link`)"
         no-caps
         icon="la:arrow-circle-left"
@@ -455,6 +463,36 @@
       <div style="justify-content: center; display: flex">
         <div v-html="state.tfaQRImage" style="width: 200px" />
       </div>
+      <!--
+        The same secret in text, for an authenticator app that is not on the device showing this, or
+        a user who would rather type it than point a camera at the screen. Grouped in fours to be
+        readable; the copy button copies it without the spaces. Same block as `SetupTfaDialog`, which
+        is the other half of this — 2FA set up from the profile rather than forced at the login.
+      -->
+      <div class="mt-2 text-center text-caption text-grey">
+        {{ t('auth.tfaSetupInstrManual') }}
+      </div>
+      <div class="mt-1 flex items-center justify-center gap-2">
+        <!--
+          `text-caption`, a step down from the `text-body2` the same block uses in `SetupTfaDialog`:
+          the key is 32 characters and 7 spaces of monospace, and this panel is a 500px column with
+          4rem of padding either side -- at 14px it does not fit beside the copy button and wraps to
+          a second line, which for something being read a group at a time and typed into a phone is
+          worse than the smaller size.
+        -->
+        <code class="rounded bg-black/6 px-2 py-1 font-mono text-caption dark:bg-white/10">{{
+          groupedTfaSecret
+        }}</code>
+        <w-btn
+          class="acrylic-btn"
+          flat
+          dense
+          icon="la:copy"
+          :aria-label="t(`common.actions.copy`)"
+          color="primary"
+          :text-color="acrylicBtnTextColor"
+          @click="copyTfaSecret" />
+      </div>
       <p class="auth-subtitle">{{ t('auth.tfaSetupInstrSecond') }}</p>
       <v-otp-input
         v-model:value="state.securityCode"
@@ -492,6 +530,7 @@
         class="acrylic-btn w-full"
         flat
         color="primary"
+        :text-color="acrylicBtnTextColor"
         :label="t(`auth.switchToLogin.link`)"
         no-caps
         icon="la:arrow-circle-left"
@@ -508,6 +547,7 @@ import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useDark } from '@/composables/dark'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { copyToClipboard } from '@/helpers/clipboard'
 import { localizeError } from '@/helpers/localization'
 
 import { useSiteStore } from '@/stores/site'
@@ -557,9 +597,22 @@ const state = reactive({
   /** What the error box above the panel says, if anything. Set by `showError()`. */
   errorMessage: '',
   errorCaption: '',
+  /*
+    Whether a request that could carry the flow forward is already out.
+
+    Every screen here can be submitted twice inside the time one request takes: a password manager
+    fills the form and presses the button, `v-otp-input` emits `on-complete` again as the last of the
+    six boxes settles, someone double-clicks. The second attempt is never a second login -- it spends
+    a continuation token the first one has already spent -- so the server refuses it, and the panel
+    paints that refusal over a login that in fact succeeded, or drops the reader back to the login
+    form a beat before the redirect fires. It also costs another attempt against the auth rate limit,
+    which is what eventually locks the address out for a quarter of an hour.
+  */
+  isSubmitting: false,
   isTFAShown: false,
   isTFASetupShown: false,
-  tfaQRImage: ''
+  tfaQRImage: '',
+  tfaSecret: ''
 })
 
 // REFS
@@ -638,6 +691,23 @@ const passwordStrength = computed(() => {
 const canUsePasskeys = computed(() => {
   return browserSupportsWebAuthn()
 })
+
+/** The 2FA secret in groups of four, which is how a 32-character string stays readable to type. */
+const groupedTfaSecret = computed(() => state.tfaSecret.replace(/.{4}(?=.)/g, '$& '))
+
+/*
+  What the labels on the panel's flat "acrylic" buttons are coloured -- the passkey and provider
+  buttons, and every link-like one at the foot of a screen.
+
+  `primary` is a mid-tone picked to read on white, and this panel sits straight on the page rather
+  than in a card: white in light mode, `dark-6` in dark, where the same blue is the ~2.7:1 that
+  `--color-primary-light` exists for. Only the text: the buttons keep their `primary` fill, which is
+  a 10% tint that a lighter colour would wash out.
+
+  Bound rather than written in the stylesheet because `WBtn` resolves both colours to inline styles,
+  which no rule outside it can beat without `!important`.
+*/
+const acrylicBtnTextColor = computed(() => (dark.isActive ? 'primary-light' : 'primary'))
 
 // VALIDATION RULES
 
@@ -803,6 +873,7 @@ async function handleLoginResponse(resp) {
       state.securityCode = ''
       state.screen = 'tfasetup'
       state.tfaQRImage = resp.tfaQRImage
+      state.tfaSecret = resp.tfaSecret
       loading.hide()
       break
     }
@@ -854,6 +925,10 @@ async function handleLoginResponse(resp) {
  * LOGIN
  */
 async function login() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.signingIn')
@@ -881,6 +956,8 @@ async function login() {
     console.warn(err)
     loading.hide()
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -888,6 +965,10 @@ async function login() {
  * LOGIN WITH PASSKEY
  */
 async function loginWithPasskey() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.signingIn')
@@ -919,6 +1000,8 @@ async function loginWithPasskey() {
       return
     }
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -926,6 +1009,10 @@ async function loginWithPasskey() {
  * FORGOT PASSWORD
  */
 async function forgotPassword() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.forgotPasswordLoading')
@@ -955,6 +1042,8 @@ async function forgotPassword() {
   } catch (err) {
     loading.hide()
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -966,6 +1055,10 @@ async function forgotPassword() {
  * success screen, and the login form is a link away from it, with the new password to type into it.
  */
 async function resetPassword() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.changePwd.loading')
@@ -994,6 +1087,8 @@ async function resetPassword() {
   } catch (err) {
     loading.hide()
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -1001,6 +1096,10 @@ async function resetPassword() {
  * REGISTER
  */
 async function register() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   try {
     const isFormValid = await registerForm.value.validate(true)
@@ -1031,6 +1130,8 @@ async function register() {
   } catch (err) {
     loading.hide()
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -1038,6 +1139,10 @@ async function register() {
  * CHANGE PASSWORD
  */
 async function changePwd() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   try {
     const isFormValid = await changePwdForm.value.validate(true)
@@ -1064,6 +1169,8 @@ async function changePwd() {
     }
   } catch (err) {
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -1115,6 +1222,15 @@ async function handleTFAError(err) {
 }
 
 async function verifyTFA() {
+  /*
+    `continuationToken` as well as the flag: `submitTFA` spends the token on the way out, and the OTP
+    boxes keep their digits when the model behind them is cleared -- so an autofill that writes them
+    a second time re-emits a code the login it belonged to has already finished with.
+  */
+  if (state.isSubmitting || !state.continuationToken) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.signingIn')
@@ -1123,6 +1239,28 @@ async function verifyTFA() {
     await handleLoginResponse(await submitTFA(false))
   } catch (err) {
     await handleTFAError(err)
+  } finally {
+    state.isSubmitting = false
+  }
+}
+
+/**
+ * Copy the setup key shown under the QR code, for typing it into an authenticator app by hand.
+ */
+async function copyTfaSecret() {
+  try {
+    // -> Without the display grouping: a space is harmless in most authenticator apps, but not all
+    await copyToClipboard(state.tfaSecret)
+    notify({
+      type: 'positive',
+      message: t('auth.tfaSetupKeyCopied')
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('auth.tfaSetupKeyCopyFailed'),
+      caption: err.message
+    })
   }
 }
 
@@ -1130,6 +1268,11 @@ async function verifyTFA() {
  * FINISH TFA SETUP
  */
 async function finishSetupTFA() {
+  // -> As `verifyTFA`: no token left means the code in the boxes belongs to a finished login
+  if (state.isSubmitting || !state.continuationToken) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.tfaSetupVerifying')
@@ -1143,6 +1286,8 @@ async function finishSetupTFA() {
     await handleLoginResponse(resp)
   } catch (err) {
     await handleTFAError(err)
+  } finally {
+    state.isSubmitting = false
   }
 }
 
@@ -1155,6 +1300,10 @@ async function finishSetupTFA() {
  * the paths through `cancelVerifyEmail()`.
  */
 async function confirmEmail() {
+  if (state.isSubmitting) {
+    return
+  }
+  state.isSubmitting = true
   clearError()
   loading.show({
     message: t('auth.verifyEmail.loading')
@@ -1179,6 +1328,8 @@ async function confirmEmail() {
     cancelVerifyEmail()
     // -> After the screen change, which clears the box this is about to fill
     showError(localizeError(apiErrorMessage(err), t))
+  } finally {
+    state.isSubmitting = false
   }
 }
 

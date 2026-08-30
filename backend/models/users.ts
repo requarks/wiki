@@ -226,6 +226,7 @@ export interface AfterLoginResult {
   nextAction: string
   continuationToken?: string
   tfaQRImage?: string
+  tfaSecret?: string
   redirect: string
 }
 
@@ -1386,7 +1387,7 @@ class Users {
         */
       } else if (str.conf?.enforceTfa || authStr.tfaRequired) {
         try {
-          const { tfaQRImage } = await this.startTfaSetup(user, strategyId, context.siteId)
+          const { secret, tfaQRImage } = await this.startTfaSetup(user, strategyId, context.siteId)
           const tfaToken = await this.generateToken({
             kind: 'tfaSetup',
             userId: user.id,
@@ -1401,6 +1402,7 @@ class Users {
             nextAction: 'setupTfa',
             continuationToken: tfaToken,
             tfaQRImage,
+            tfaSecret: secret,
             redirect
           }
         } catch (errc) {

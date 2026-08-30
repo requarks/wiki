@@ -152,15 +152,20 @@ body::-webkit-scrollbar-thumb {
 // own hover state -- so the tint is a background on the button itself. Kept alongside the rule
 // above rather than replacing it, because both kinds of button are in play until Quasar is gone.
 //
-// Unlayered (this file is plain CSS, not a Tailwind layer), so it beats the `hover:bg-current/10`
-// utility WBtn carries for its flat variant, which would otherwise cancel the hover step out.
+// Unlayered (this file is plain CSS, not a Tailwind layer), so it beats the hover-tint utility WBtn
+// carries for its flat variant, which would otherwise cancel the hover step out.
+//
+// `--w-btn-color` rather than `currentcolor`: that is the button's `color` prop, which is the label
+// too unless a `text-color` says otherwise -- and where it does, the fill is meant to stay with the
+// button rather than follow the text. WBtn always sets it, falling back to `currentcolor` itself,
+// so a Quasar-era button that somehow reaches this rule still tints.
 .w-btn.acrylic-btn {
-  background-color: color-mix(in srgb, currentcolor 10%, transparent);
+  background-color: color-mix(in srgb, var(--w-btn-color, currentcolor) 10%, transparent);
 }
 
 @media (hover: hover) {
   .w-btn.acrylic-btn:hover {
-    background-color: color-mix(in srgb, currentcolor 30%, transparent);
+    background-color: color-mix(in srgb, var(--w-btn-color, currentcolor) 30%, transparent);
   }
 }
 

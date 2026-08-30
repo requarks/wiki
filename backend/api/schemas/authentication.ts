@@ -30,6 +30,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'For `setupTfa` only: the `otpauth://` URI as an SVG QR code, to be rendered as-is.'
       },
+      tfaSecret: {
+        type: 'string',
+        description:
+          'For `setupTfa` only: the base32 secret that QR code encodes, for a user typing it into an authenticator app rather than scanning it.'
+      },
       redirect: {
         type: 'string',
         description: 'Where to send the user once logged in. A path within this wiki, or a URL.'

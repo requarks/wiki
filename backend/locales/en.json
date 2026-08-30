@@ -157,7 +157,6 @@
   "admin.auth.registration": "Registration",
   "admin.auth.registrationHint": "Allow any user successfully authorized by the strategy to access the wiki.",
   "admin.auth.registrationLocalHint": "Whether to allow guests to register new accounts.",
-  "admin.auth.registrationNotEnforced": "Saved but not enforced yet: self-registration is not implemented.",
   "admin.auth.saveFailed": "Failed to save {strategy}.",
   "admin.auth.saveSuccess": "Authentication configuration saved successfully.",
   "admin.auth.security": "Security",

@@ -832,7 +832,7 @@ async function routes(app: FastifyInstance) {
               tfaSecret: {
                 type: 'string',
                 description:
-                  'The base32 secret the QR code encodes, for a user who would rather type it into an authenticator app than scan it. Only ever returned here, to the user setting 2FA up on their own account.'
+                  'The base32 secret the QR code encodes, for a user who would rather type it into an authenticator app than scan it. Returned only to the user setting 2FA up on their own account — here, and from the login flow that enforces it.'
               }
             }
           }
