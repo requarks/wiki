@@ -92,4 +92,18 @@ jobs:
         name: build
         path: wiki-js.tar.gz
 
+    # - name: Create Prerelease
+    #   uses: ncipollo/release-action@v1.21.0
+    #   with:
+    #     prerelease: true
+    #     draft: false
+    #     owner: requarks
+    #     repo: wiki
+    #     commit: ${{ github.sha }}
+    #     tag: ${{ env.REL_VERSION }}
+    #     name: ${{ env.REL_VERSION }}
+    #     omitBody: true
+    #     token: ${{ github.token }}
+
+
 

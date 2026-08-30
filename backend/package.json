@@ -31,7 +31,7 @@
     "typecheck:watch": "tsc --watch",
     "ncu": "ncu -i",
     "ncu-u": "ncu -u",
-    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.ts --out=./db/migrations --name=main",
+    "db-generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.ts --out=./db/migrations --name=scarlett",
     "db-up": "drizzle-kit up --dialect=postgresql --out=./db/migrations"
   },
   "dependencies": {
