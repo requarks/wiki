@@ -80,7 +80,7 @@ module.exports = {
       try {
         const devEntriesRaw = await fs.readFile(path.join(WIKI.SERVERPATH, `locales/${locale}.yml`), 'utf8')
         if (devEntriesRaw) {
-          const devEntries = yaml.safeLoad(devEntriesRaw)
+          const devEntries = yaml.load(devEntriesRaw)
           _.forOwn(devEntries, (data, ns) => {
             this.namespaces.push(ns)
             this.engine.addResourceBundle(locale, ns, data, true, true)

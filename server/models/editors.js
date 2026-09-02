@@ -21,13 +21,10 @@ module.exports = class Editor extends Model {
 
       properties: {
         key: {type: 'string'},
-        isEnabled: {type: 'boolean'}
+        isEnabled: {type: 'boolean'},
+        config: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config']
   }
 
   static async getEditors() {
@@ -44,7 +41,7 @@ module.exports = class Editor extends Model {
       let diskEditors = []
       for (let dir of editorDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/editor', dir, 'definition.yml'), 'utf8')
-        diskEditors.push(yaml.safeLoad(def))
+        diskEditors.push(yaml.load(def))
       }
       WIKI.data.editors = diskEditors.map(editor => ({
         ...editor,

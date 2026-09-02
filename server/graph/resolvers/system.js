@@ -6,7 +6,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const moment = require('moment')
 const graphHelper = require('../../helpers/graph')
-const request = require('request-promise')
 const crypto = require('crypto')
 const nanoid = require('nanoid/non-secure').customAlphabet('1234567890abcdef', 10)
 
@@ -89,13 +88,14 @@ module.exports = {
     async performUpgrade (obj, args, context) {
       try {
         if (process.env.UPGRADE_COMPANION) {
-          await request({
-            method: 'POST',
-            uri: 'http://wiki-update-companion/upgrade',
-            qs: {
-              ...process.env.UPGRADE_COMPANION_REF && { container: process.env.UPGRADE_COMPANION_REF }
-            }
-          })
+          const upgradeUrl = new URL('http://wiki-update-companion/upgrade')
+          if (process.env.UPGRADE_COMPANION_REF) {
+            upgradeUrl.searchParams.set('container', process.env.UPGRADE_COMPANION_REF)
+          }
+          const upgradeResp = await fetch(upgradeUrl, { method: 'POST', signal: AbortSignal.timeout(30000) })
+          if (!upgradeResp.ok) {
+            throw new Error(`Upgrade companion returned ${upgradeResp.status}`)
+          }
           return {
             responseResult: graphHelper.generateSuccess('Upgrade has started.')
           }
@@ -134,8 +134,8 @@ module.exports = {
           if (args.groupMode === `SINGLE`) {
             const singleGroup = await WIKI.models.groups.query().insert({
               name: `Import_${curDateISO}`,
-              permissions: JSON.stringify(WIKI.data.groups.defaultPermissions),
-              pageRules: JSON.stringify(WIKI.data.groups.defaultPageRules)
+              permissions: WIKI.data.groups.defaultPermissions,
+              pageRules: WIKI.data.groups.defaultPageRules
             })
             groupsCount++
             assignableGroups.push(singleGroup.id)
@@ -184,8 +184,8 @@ module.exports = {
 
                   const newGroup = await WIKI.models.groups.query().insert({
                     name: `Import_${curDateISO}_${groupsCount + 1}`,
-                    permissions: JSON.stringify(perms),
-                    pageRules: JSON.stringify(pageRules)
+                    permissions: perms,
+                    pageRules: pageRules
                   })
                   reuseGroups.push({
                     groupId: newGroup.id,

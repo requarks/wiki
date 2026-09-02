@@ -21,13 +21,10 @@ module.exports = class Analytics extends Model {
 
       properties: {
         key: {type: 'string'},
-        isEnabled: {type: 'boolean'}
+        isEnabled: {type: 'boolean'},
+        config: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config']
   }
 
   static async getProviders(isEnabled) {
@@ -45,7 +42,7 @@ module.exports = class Analytics extends Model {
       let diskProviders = []
       for (let dir of analyticsDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/analytics', dir, 'definition.yml'), 'utf8')
-        diskProviders.push(yaml.safeLoad(def))
+        diskProviders.push(yaml.load(def))
       }
       WIKI.data.analytics = diskProviders.map(provider => ({
         ...provider,
@@ -111,7 +108,7 @@ module.exports = class Analytics extends Model {
 
       for (let provider of providers) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/analytics', provider.key, 'code.yml'), 'utf8')
-        let code = yaml.safeLoad(def)
+        let code = yaml.load(def)
         code.head = _.defaultTo(code.head, '')
         code.bodyStart = _.defaultTo(code.bodyStart, '')
         code.bodyEnd = _.defaultTo(code.bodyEnd, '')

@@ -1,4 +1,3 @@
-const request = require('request-promise')
 const _ = require('lodash')
 
 /* global WIKI */
@@ -10,16 +9,20 @@ module.exports = {
   ContributeQuery: {
     async contributors(obj, args, context, info) {
       try {
-        const resp = await request({
+        const resp = await fetch('https://graph.requarks.io', {
           method: 'POST',
-          uri: 'https://graph.requarks.io',
-          json: true,
-          body: {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             query: '{\n  sponsors {\n    list(kind: BACKER) {\n      id\n      source\n      name\n      joined\n      website\n      twitter\n      avatar\n    }\n  }\n}\n',
             variables: {}
-          }
+          }),
+          signal: AbortSignal.timeout(10000)
         })
-        return _.get(resp, 'data.sponsors.list', [])
+        if (!resp.ok) {
+          throw new Error(`Contributors fetch failed with status ${resp.status}`)
+        }
+        const data = await resp.json()
+        return _.get(data, 'data.sponsors.list', [])
       } catch (err) {
         WIKI.logger.warn(err)
       }

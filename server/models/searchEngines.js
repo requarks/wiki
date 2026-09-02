@@ -22,13 +22,10 @@ module.exports = class SearchEngine extends Model {
       properties: {
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        level: {type: 'string'}
+        level: {type: 'string'},
+        config: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config']
   }
 
   static async getSearchEngines() {
@@ -45,7 +42,7 @@ module.exports = class SearchEngine extends Model {
       let diskSearchEngines = []
       for (let dir of searchEnginesDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/search', dir, 'definition.yml'), 'utf8')
-        diskSearchEngines.push(yaml.safeLoad(def))
+        diskSearchEngines.push(yaml.load(def))
       }
       WIKI.data.searchEngines = diskSearchEngines.map(searchEngine => ({
         ...searchEngine,

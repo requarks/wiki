@@ -21,13 +21,12 @@ module.exports = class Authentication extends Model {
 
       properties: {
         key: {type: 'string'},
-        selfRegistration: {type: 'boolean'}
+        selfRegistration: {type: 'boolean'},
+        config: {type: 'object'},
+        domainWhitelist: {type: 'object'},
+        autoEnrollGroups: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config', 'domainWhitelist', 'autoEnrollGroups']
   }
 
   static async getStrategy(key) {
@@ -84,7 +83,7 @@ module.exports = class Authentication extends Model {
       WIKI.data.authentication = []
       for (let dir of authDirs) {
         const defRaw = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/authentication', dir, 'definition.yml'), 'utf8')
-        const def = yaml.safeLoad(defRaw)
+        const def = yaml.load(defRaw)
         WIKI.data.authentication.push({
           ...def,
           props: commonHelper.parseModuleProps(def.props)

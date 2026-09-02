@@ -1,6 +1,5 @@
 const _ = require('lodash')
 const { SearchService, QueryType } = require('azure-search-client')
-const request = require('request-promise')
 const { pipeline } = require('node:stream/promises')
 const { Transform } = require('node:stream')
 
@@ -100,25 +99,27 @@ module.exports = {
         top: 50
       })
       if (results.result.value.length < 5) {
-        // Using plain request, not yet available in library...
+        // Using native fetch, not yet available in library...
         try {
-          const suggestResults = await request({
-            uri: `https://${this.config.serviceName}.search.windows.net/indexes/${this.config.indexName}/docs/autocomplete`,
-            method: 'post',
-            qs: {
-              'api-version': '2017-11-11-Preview'
-            },
+          const suggestUrl = new URL(`https://${this.config.serviceName}.search.windows.net/indexes/${this.config.indexName}/docs/autocomplete`)
+          suggestUrl.searchParams.set('api-version', '2017-11-11-Preview')
+          const suggestResp = await fetch(suggestUrl, {
+            method: 'POST',
             headers: {
               'api-key': this.config.adminKey,
               'Content-Type': 'application/json'
             },
-            json: true,
-            body: {
+            body: JSON.stringify({
               autocompleteMode: 'oneTermWithContext',
               search: q,
               suggesterName: 'suggestions'
-            }
+            }),
+            signal: AbortSignal.timeout(10000)
           })
+          if (!suggestResp.ok) {
+            throw new Error(`Azure autocomplete returned ${suggestResp.status}`)
+          }
+          const suggestResults = await suggestResp.json()
           suggestions = suggestResults.value.map(s => s.queryPlusText)
         } catch (err) {
           WIKI.logger.warn('Search Engine suggestion failure: ', err)

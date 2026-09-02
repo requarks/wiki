@@ -28,7 +28,7 @@ module.exports = class User extends Model {
         providerId: {type: 'string'},
         password: {type: 'string'},
         tfaIsActive: {type: 'boolean', default: false},
-        tfaSecret: {type: ['string', null]},
+        tfaSecret: {type: 'string', nullable: true},
         jobTitle: {type: 'string'},
         location: {type: 'string'},
         pictureUrl: {type: 'string'},

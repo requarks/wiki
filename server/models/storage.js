@@ -22,13 +22,11 @@ module.exports = class Storage extends Model {
       properties: {
         key: {type: 'string'},
         isEnabled: {type: 'boolean'},
-        mode: {type: 'string'}
+        mode: {type: 'string'},
+        config: {type: 'object'},
+        state: {type: 'object'}
       }
     }
-  }
-
-  static get jsonAttributes() {
-    return ['config', 'state']
   }
 
   static async getTargets() {
@@ -45,7 +43,7 @@ module.exports = class Storage extends Model {
       let diskTargets = []
       for (let dir of storageDirs) {
         const def = await fs.readFile(path.join(WIKI.SERVERPATH, 'modules/storage', dir, 'definition.yml'), 'utf8')
-        diskTargets.push(yaml.safeLoad(def))
+        diskTargets.push(yaml.load(def))
       }
       WIKI.data.storage = diskTargets.map(target => ({
         ...target,
