@@ -157,26 +157,26 @@ Support this project by becoming a sponsor. Your name and a link to your website
 
 <h2 align="center">Special Thanks</h2>
 
-<img src="https://beta.js.wiki/images/thanks/browserstack.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/browserstack.svg" width="40" />
 
 [Browserstack](https://www.browserstack.com/) for providing access to their great cross-browser testing tools.
 
-<img src="https://beta.js.wiki/images/thanks/cloudflare.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/cloudflare.svg" width="40" />
 
 [Cloudflare](https://www.cloudflare.com/) for providing their great CDN, SSL and advanced networking services.
 
-<img src="https://beta.js.wiki/images/thanks/icons8.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/icons8.svg" width="40" />
 
 [Icons8](https://icons8.com/) for providing access to their beautiful icon sets.
 
-<img src="https://beta.js.wiki/images/thanks/crowdin.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/crowdin.svg" width="40" />
 
 [CrowdIn](https://crowdin.com/) for providing access to their great localization tool.
 
-<img src="https://beta.js.wiki/images/thanks/porkbun.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/porkbun.svg" width="40" />
 
 [Porkbun](https://www.porkbun.com) for providing domain registration services.
 
-<img src="https://beta.js.wiki/images/thanks/productbridge.svg" height="40" />
+<img src="https://beta.js.wiki/images/thanks/productbridge.svg" width="40" />
 
 [ProductBridge](https://productbridge.io/) for providing access to their great feedback portal tool.
