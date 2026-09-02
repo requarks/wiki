@@ -63,9 +63,13 @@ jobs:
         tags: |
           type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
           type=raw,value=3.0.0-beta
+        labels: |
+          org.opencontainers.image.title=Wiki.js
+          org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
+          org.opencontainers.image.documentation=https://docs.js.wiki
         annotations: |
           org.opencontainers.image.title=Wiki.js
-          org.opencontainers.image.description=Next Generation Open Source Wiki
+          org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
           org.opencontainers.image.documentation=https://docs.js.wiki
 
     - name: Login to GitHub Container Registry
@@ -92,6 +96,7 @@ jobs:
         push: true
         platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
 
     - name: Prepare build archive
