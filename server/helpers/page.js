@@ -143,9 +143,16 @@ module.exports = {
     }
     const result = localeFolderRegex.exec(meta.path)
     if (result[1]) {
-      meta = {
-        locale: result[1].replace('/', ''),
-        path: result[2]
+      const extractedLocale = result[1].replace('/', '')
+      const knownLocales = new Set([
+        WIKI.config.lang.code,
+        ...(WIKI.config.lang.namespaces || [])
+      ])
+      if (knownLocales.has(extractedLocale)) {
+        meta = {
+          locale: extractedLocale,
+          path: result[2]
+        }
       }
     }
     return meta
