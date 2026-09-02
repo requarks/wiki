@@ -16,6 +16,7 @@ extend type Mutation {
 
 type SiteQuery {
   config: SiteConfig @auth(requires: ["manage:system"])
+  uploadConfig: UploadConfig @auth(requires: ["manage:system", "manage:assets", "read:assets", "write:assets"])
 }
 
 # -----------------------------------------------
@@ -115,4 +116,9 @@ type SiteConfig {
   uploadMaxFiles: Int
   uploadScanSVG: Boolean
   uploadForceDownload: Boolean
+}
+
+type UploadConfig {
+  uploadMaxFileSize: Int @auth(requires: ["manage:system", "manage:assets", "read:assets", "write:assets"])
+  uploadMaxFiles: Int @auth(requires: ["manage:system", "manage:assets", "read:assets", "write:assets"])
 }
