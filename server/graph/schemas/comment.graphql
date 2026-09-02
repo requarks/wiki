@@ -81,6 +81,7 @@ type CommentPost {
   render: String!
   authorId: Int!
   authorName: String!
+  authorPictureUrl: String
   authorEmail: String! @auth(requires: ["manage:system"])
   authorIP: String! @auth(requires: ["manage:system"])
   createdAt: Date!

@@ -47,12 +47,19 @@ module.exports = {
         })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['read:comments'], { tags: page.tags, ...args })) {
-          const comments = await WIKI.models.comments.query().where('pageId', page.id).orderBy('createdAt')
+          const comments = await WIKI.models.comments.query()
+            .where('pageId', page.id)
+            .withGraphJoined('author')
+            .modifyGraph('author', builder => {
+              builder.select('id', 'pictureUrl')
+            })
+            .orderBy('createdAt')
           return comments.map(c => ({
             ...c,
             authorName: c.name,
             authorEmail: c.email,
-            authorIP: c.ip
+            authorIP: c.ip,
+            authorPictureUrl: _.get(c, 'author.pictureUrl', '')
           }))
         } else {
           throw new WIKI.Error.CommentViewForbidden()
@@ -69,6 +76,7 @@ module.exports = {
       if (!cm || !cm.pageId) {
         throw new WIKI.Error.CommentNotFound()
       }
+      const author = await WIKI.models.users.query().select('pictureUrl').findById(cm.authorId)
       const page = await WIKI.models.pages.query().select('localeCode', 'path').findById(cm.pageId)
         .withGraphJoined('tags')
         .modifyGraph('tags', builder => {
@@ -84,7 +92,8 @@ module.exports = {
             ...cm,
             authorName: cm.name,
             authorEmail: cm.email,
-            authorIP: cm.ip
+            authorIP: cm.ip,
+            authorPictureUrl: _.get(author, 'pictureUrl', '')
           }
         } else {
           throw new WIKI.Error.CommentViewForbidden()
