@@ -25,6 +25,7 @@ module.exports = {
         ...WIKI.config.features,
         ...WIKI.config.security,
         authAutoLogin: WIKI.config.auth.autoLogin,
+        authBypassUnauthorized: WIKI.config.auth.bypassUnauthorized,
         authEnforce2FA: WIKI.config.auth.enforce2FA,
         authHideLocal: WIKI.config.auth.hideLocal,
         authLoginBgUrl: WIKI.config.auth.loginBgUrl,
@@ -82,6 +83,7 @@ module.exports = {
 
         WIKI.config.auth = {
           autoLogin: _.get(args, 'authAutoLogin', WIKI.config.auth.autoLogin),
+          bypassUnauthorized: _.get(args, 'authBypassUnauthorized', WIKI.config.auth.bypassUnauthorized),
           enforce2FA: _.get(args, 'authEnforce2FA', WIKI.config.auth.enforce2FA),
           hideLocal: _.get(args, 'authHideLocal', WIKI.config.auth.hideLocal),
           loginBgUrl: _.get(args, 'authLoginBgUrl', WIKI.config.auth.loginBgUrl),
