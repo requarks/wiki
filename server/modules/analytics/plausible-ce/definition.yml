@@ -1,0 +1,14 @@
+key: plausible-ce
+title: Plausible CE
+description: Community edition of Plausible - a simple, open-source, lightweight and privacy-friendly web analytics alternative to Google Analytics, use this integration for Plausible CE installs after October 2025.
+author: requarks.io
+logo: https://cdn.js.wiki/images/3rdparty/plausible.svg
+website: https://plausible.io
+isAvailable: true
+props:
+  plausibleJsSrc:
+    type: String
+    default: https://plausible.io/js/pa-string.js
+    title: Plausible JS Script source
+    hint: The URL of Plausbile Script
+    order: 1
