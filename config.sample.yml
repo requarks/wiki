@@ -145,3 +145,11 @@ dataPath: ./data
 # file uploads.
 
 bodyParserLimit: 5mb
+
+# ---------------------------------------------------------------------
+# User Session Cleanup
+# ---------------------------------------------------------------------
+# Configures how often Knex cleans up stale sessions from the
+# database. Should be defined in milliseconds.
+
+sessionClearInterval: 60000
