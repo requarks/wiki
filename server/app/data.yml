@@ -98,6 +98,7 @@ defaults:
       maxFiles: 10
       scanSVG: true
       forceDownload: true
+      appendTimestampToFilename: false
     flags:
       ldapdebug: false
       sqllog: false
