@@ -73,7 +73,7 @@
               v-chip(
                 v-for='tag of tags'
                 :key='`tag-` + tag'
-                close
+                :close='hasTagsPermission'
                 label
                 color='teal'
                 text-color='teal lighten-5'
@@ -84,6 +84,7 @@
               outlined
               v-model='newTag'
               :hint='$t(`editor:props.tagsHint`)'
+              :disabled='!hasTagsPermission'
               :items='newTagSuggestions'
               :loading='$apollo.queries.newTagSuggestions.loading'
               persistent-hint
@@ -301,6 +302,7 @@ export default {
     scriptCss: sync('page/scriptCss'),
     hasScriptPermission: get('page/effectivePermissions@pages.script'),
     hasStylePermission: get('page/effectivePermissions@pages.style'),
+    hasTagsPermission: get('page/effectivePermissions@tags.write'),
     pageSelectorMode () {
       return (this.mode === 'create') ? 'create' : 'move'
     }
@@ -314,6 +316,10 @@ export default {
       }
     },
     newTag (newValue, oldValue) {
+      if (!this.hasTagsPermission) {
+        this.newTag = null
+        return
+      }
       const tagClean = _.trim(newValue || '').toLowerCase()
       if (tagClean && tagClean.length > 0) {
         if (!_.includes(this.tags, tagClean)) {
@@ -345,6 +351,9 @@ export default {
   },
   methods: {
     removeTag (tag) {
+      if (!this.hasTagsPermission) {
+        return
+      }
       this.tags = _.without(this.tags, tag)
     },
     close() {
