@@ -151,6 +151,7 @@ import 'codemirror/addon/hint/show-hint.js'
 import 'codemirror/addon/fold/foldcode.js'
 import 'codemirror/addon/fold/foldgutter.js'
 import 'codemirror/addon/fold/foldgutter.css'
+import { getCodeMirrorInputStyle } from '../../helpers/codemirror'
 import cmFold from './common/cmFold'
 
 // ========================================
@@ -403,7 +404,7 @@ export default {
         annotateScrollbar: true
       },
       viewportMargin: 50,
-      inputStyle: 'contenteditable',
+      inputStyle: getCodeMirrorInputStyle(),
       allowDropFileTypes: ['image/jpg', 'image/png', 'image/svg', 'image/jpeg', 'image/gif'],
       direction: siteConfig.rtl ? 'rtl' : 'ltr',
       foldGutter: true,
