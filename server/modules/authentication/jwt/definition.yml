@@ -1,0 +1,15 @@
+key: jwt
+title: JWT
+description: Authenticate via JWT token
+author: Lilian Abiven
+logo: https://static.requarks.io/logo/wikijs.svg
+color: primary
+website: https://wiki.js.org
+isAvailable: true
+useForm: false
+props:
+  jwtSecret:
+    type: String
+    title: JWT secret
+    hint: JWT secret
+    order: 1
