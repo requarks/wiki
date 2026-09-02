@@ -99,6 +99,9 @@ The following table lists the configurable parameters of the Wiki.js chart and t
 | `imagePullPolicy`                    | Image pull policy                           | `IfNotPresent`                                             |
 | `replicacount`                       | Number of Wiki.js pods to run                   | `1`                                                        |
 | `revisionHistoryLimit`               | Total number of revision history points                   | `10`                                        |
+| `strategy.type`               | Strategy used to replace old pods by new ones                   | `RollingUpdate`                                        |
+| `strategy.rollingUpdate.maxSurge`               | Maximum number of pods that can be created over the desired replica count during the upgrade process                   | `25%`                                        |
+| `strategy.rollingUpdate.maxUnavailable`               | Maximum number of pods that can be unavailable during the upgrade process                   | `25%`                                        |
 | `resources.limits`               | Wiki.js service resource limits                         | `nil`                               |
 | `resources.requests`             | Wiki.js service resource requests                       | `nil`                               |
 | `nodeSelector`                   | Node labels for the Wiki.js pod assignment          | `{}`                                                       |
