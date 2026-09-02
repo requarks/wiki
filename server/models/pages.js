@@ -332,8 +332,11 @@ module.exports = class Page extends Model {
     // -> Render page to HTML
     await WIKI.models.pages.renderPage(page)
 
-    // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // -> Update page tree incrementally
+    await WIKI.models.pages.updatePageTreeIncremental({
+      action: 'create',
+      page: page
+    })
 
     // -> Add to Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -476,10 +479,11 @@ module.exports = class Page extends Model {
         user: opts.user
       })
     } else {
-      // -> Update title of page tree entry
-      await WIKI.models.knex.table('pageTree').where({
-        pageId: page.id
-      }).update('title', page.title)
+      // -> Update page tree incrementally
+      await WIKI.models.pages.updatePageTreeIncremental({
+        action: 'update',
+        page: page
+      })
     }
 
     // -> Get latest updatedAt
@@ -735,8 +739,18 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // -> Update page tree incrementally
+    await WIKI.models.pages.updatePageTreeIncremental({
+      action: 'move',
+      oldPage: page,
+      page: {
+        ...page,
+        path: opts.destinationPath,
+        localeCode: opts.destinationLocale,
+        title: destinationTitle,
+        hash: destinationHash
+      }
+    })
 
     // -> Rename in Search Index
     const pageContents = await WIKI.models.pages.query().findById(page.id).select('render')
@@ -814,8 +828,11 @@ module.exports = class Page extends Model {
     await WIKI.models.pages.deletePageFromCache(page.hash)
     WIKI.events.outbound.emit('deletePageFromCache', page.hash)
 
-    // -> Rebuild page tree
-    await WIKI.models.pages.rebuildTree()
+    // -> Update page tree incrementally
+    await WIKI.models.pages.updatePageTreeIncremental({
+      action: 'delete',
+      page: page
+    })
 
     // -> Delete from Search Index
     await WIKI.data.searchEngine.deleted(page)
@@ -926,6 +943,227 @@ module.exports = class Page extends Model {
       worker: true
     })
     return rebuildJob.finished
+  }
+
+  /**
+   * Incrementally update page tree for a specific page
+   *
+   * @param {Object} opts Page properties
+   * @param {string} opts.action Action type: 'create', 'update', 'delete', 'move'
+   * @param {Object} opts.page Page data
+   * @param {Object} [opts.oldPage] Original page data (for update/move operations)
+   * @returns {Promise} Promise with no value
+   */
+  static async updatePageTreeIncremental(opts) {
+    try {
+      switch (opts.action) {
+        case 'create':
+          await WIKI.models.pages.addPageToTree(opts.page)
+          break
+        case 'update':
+          await WIKI.models.pages.updatePageInTree(opts.page)
+          break
+        case 'delete':
+          await WIKI.models.pages.removePageFromTree(opts.page)
+          break
+        case 'move':
+          await WIKI.models.pages.movePageInTree(opts.oldPage, opts.page)
+          break
+        default:
+          WIKI.logger.warn(`Unknown page tree action: ${opts.action}`)
+      }
+    } catch (err) {
+      WIKI.logger.error(`Failed to update page tree incrementally: ${err.message}`)
+      // Fallback to full rebuild if incremental update fails
+      await WIKI.models.pages.rebuildTree()
+    }
+  }
+
+  /**
+   * Add a new page to the page tree
+   *
+   * @param {Object} page Page data
+   * @returns {Promise} Promise with no value
+   */
+  static async addPageToTree(page) {
+    const pagePaths = page.path.split('/')
+    let currentPath = ''
+    let depth = 0
+    let parentId = null
+    let ancestors = []
+
+    for (const part of pagePaths) {
+      depth++
+      const isFolder = (depth < pagePaths.length)
+      currentPath = currentPath ? `${currentPath}/${part}` : part
+
+      // Check if this path already exists in the tree
+      const existing = await WIKI.models.knex.table('pageTree')
+        .where({
+          localeCode: page.localeCode,
+          path: currentPath
+        })
+        .first()
+
+      if (!existing) {
+        // Create new tree entry
+        const newEntry = {
+          localeCode: page.localeCode,
+          path: currentPath,
+          depth: depth,
+          title: isFolder ? part : page.title,
+          isFolder: isFolder,
+          isPrivate: !isFolder && page.isPrivate,
+          privateNS: !isFolder ? page.privateNS : null,
+          parent: parentId,
+          pageId: isFolder ? null : page.id,
+          ancestors: JSON.stringify(ancestors)
+        }
+
+        // Insert and reliably retrieve the auto-generated id (PostgreSQL)
+        let inserted = await WIKI.models.knex
+          .table('pageTree')
+          .insert(newEntry)
+          .returning('id')
+
+        // Knex returns an array; depending on driver it can be an array of ids or objects
+        const insertedId = Array.isArray(inserted)
+          ? (inserted[0] && (inserted[0].id || inserted[0]))
+          : inserted
+        parentId = insertedId
+      } else {
+        // 如果现有节点是页面但需要变成文件夹，则更新
+        if (isFolder && !existing.isFolder) {
+          await WIKI.models.knex.table('pageTree')
+            .where('id', existing.id)
+            .update({
+              isFolder: true
+              // 注意：不清空pageId，保持页面内容的关联
+            })
+        }
+        parentId = existing.id
+      }
+      ancestors.push(parentId)
+    }
+
+    // Update ancestors for all child entries
+    await WIKI.models.pages.updateAncestorsForChildren(parentId, ancestors)
+  }
+
+  /**
+   * Update a page in the page tree
+   *
+   * @param {Object} page Page data
+   * @returns {Promise} Promise with no value
+   */
+  static async updatePageInTree(page) {
+    // Update the page title in the tree
+    await WIKI.models.knex.table('pageTree')
+      .where({
+        pageId: page.id,
+        localeCode: page.localeCode
+      })
+      .update({
+        title: page.title,
+        isPrivate: page.isPrivate,
+        privateNS: page.privateNS
+      })
+  }
+
+  /**
+   * Remove a page from the page tree
+   *
+   * @param {Object} page Page data
+   * @returns {Promise} Promise with no value
+   */
+  static async removePageFromTree(page) {
+    // Find the tree entry for this page
+    const treeEntry = await WIKI.models.knex.table('pageTree')
+      .where({
+        pageId: page.id,
+        localeCode: page.localeCode
+      })
+      .first()
+
+    if (!treeEntry) return
+
+    // Remove the page entry
+    await WIKI.models.knex.table('pageTree')
+      .where('id', treeEntry.id)
+      .del()
+
+    // Check if parent folders are now empty and can be removed
+    await WIKI.models.pages.cleanupEmptyFolders(treeEntry.parent)
+  }
+
+  /**
+   * Move a page in the page tree
+   *
+   * @param {Object} oldPage Original page data
+   * @param {Object} newPage New page data
+   * @returns {Promise} Promise with no value
+   */
+  static async movePageInTree(oldPage, newPage) {
+    // Remove from old location
+    await WIKI.models.pages.removePageFromTree(oldPage)
+    
+    // Add to new location
+    await WIKI.models.pages.addPageToTree(newPage)
+  }
+
+  /**
+   * Update ancestors for child entries
+   *
+   * @param {number} parentId Parent ID
+   * @param {Array} ancestors Ancestors array
+   * @returns {Promise} Promise with no value
+   */
+  static async updateAncestorsForChildren(parentId, ancestors) {
+    const children = await WIKI.models.knex.table('pageTree')
+      .where('parent', parentId)
+      .select('id')
+
+    for (const child of children) {
+      const childAncestors = [...ancestors, child.id]
+      await WIKI.models.knex.table('pageTree')
+        .where('id', child.id)
+        .update('ancestors', JSON.stringify(childAncestors))
+
+      // Recursively update children
+      await WIKI.models.pages.updateAncestorsForChildren(child.id, childAncestors)
+    }
+  }
+
+  /**
+   * Clean up empty folders in the page tree
+   *
+   * @param {number} parentId Parent ID to check
+   * @returns {Promise} Promise with no value
+   */
+  static async cleanupEmptyFolders(parentId) {
+    if (!parentId) return
+
+    const parent = await WIKI.models.knex.table('pageTree')
+      .where('id', parentId)
+      .first()
+
+    if (!parent || !parent.isFolder) return
+
+    // Check if this folder has any children
+    const children = await WIKI.models.knex.table('pageTree')
+      .where('parent', parentId)
+      .count('* as count')
+      .first()
+
+    if (children.count === 0) {
+      // Remove empty folder
+      await WIKI.models.knex.table('pageTree')
+        .where('id', parentId)
+        .del()
+
+      // Check parent folder
+      await WIKI.models.pages.cleanupEmptyFolders(parent.parent)
+    }
   }
 
   /**
