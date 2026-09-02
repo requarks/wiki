@@ -7,6 +7,7 @@ module.exports = {
   loggers: {},
   init(uid) {
     const loggerFormats = [
+      winston.format.errors({ stack: true }),
       winston.format.label({ label: uid }),
       winston.format.timestamp()
     ]
@@ -15,7 +16,7 @@ module.exports = {
       loggerFormats.push(winston.format.json())
     } else {
       loggerFormats.push(winston.format.colorize())
-      loggerFormats.push(winston.format.printf(info => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`))
+      loggerFormats.push(winston.format.printf(info => `${info.timestamp} [${info.label}] ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`))
     }
 
     const logger = winston.createLogger({
