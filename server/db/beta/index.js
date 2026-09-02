@@ -84,6 +84,8 @@ module.exports = {
       const baseMigrationPath = path.join(WIKI.SERVERPATH, (WIKI.config.db.type !== 'sqlite') ? 'db/beta/migrations' : 'db/beta/migrations-sqlite')
       await knex.migrate.latest({
         tableName: 'migrations',
+        schemaName: (WIKI.config.db.schema && WIKI.config.db.schema !== 'public')
+                        ? WIKI.config.db.schema : undefined,
         migrationSource: {
           async getMigrations() {
             const migrationFiles = await fs.readdir(baseMigrationPath)
