@@ -64,9 +64,9 @@ jobs:
           type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
           type=raw,value=3.0.0-beta
         annotations: |
-          manifest:org.opencontainers.image.title=Wiki.js
-          manifest:org.opencontainers.image.description=Next Generation Open Source Wiki
-          manifest:org.opencontainers.image.documentation=https://docs.js.wiki
+          org.opencontainers.image.title=Wiki.js
+          org.opencontainers.image.description=Next Generation Open Source Wiki
+          org.opencontainers.image.documentation=https://docs.js.wiki
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4
