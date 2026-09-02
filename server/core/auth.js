@@ -241,7 +241,7 @@ module.exports = {
       let checkState = {
         deny: false,
         match: false,
-        specificity: ''
+        specificity: 0
       }
       user.groups.forEach(grp => {
         const grpId = _.isObject(grp) ? _.get(grp, 'id', 0) : grp
@@ -253,34 +253,30 @@ module.exports = {
             switch (rule.match) {
               case 'START':
                 if (_.startsWith(`/${page.path}`, `/${rule.path}`)) {
-                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['END', 'REGEX', 'EXACT', 'TAG'] })
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState })
                 }
                 break
               case 'END':
                 if (_.endsWith(page.path, rule.path)) {
-                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['REGEX', 'EXACT', 'TAG'] })
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState })
                 }
                 break
               case 'REGEX':
                 const reg = new RegExp(rule.path)
                 if (reg.test(page.path)) {
-                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: ['EXACT', 'TAG'] })
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState })
                 }
                 break
               case 'TAG':
                 _.get(page, 'tags', []).forEach(tag => {
                   if (tag.tag === rule.path) {
-                    checkState = this._applyPageRuleSpecificity({
-                      rule,
-                      checkState,
-                      higherPriority: ['EXACT']
-                    })
+                    checkState = this._applyPageRuleSpecificity({ rule, checkState })
                   }
                 })
                 break
               case 'EXACT':
                 if (`/${page.path}` === `/${rule.path}`) {
-                  checkState = this._applyPageRuleSpecificity({ rule, checkState, higherPriority: [] })
+                  checkState = this._applyPageRuleSpecificity({ rule, checkState })
                 }
                 break
             }
@@ -365,25 +361,39 @@ module.exports = {
    *
    * @access private
    */
-  _applyPageRuleSpecificity ({ rule, checkState, higherPriority = [] }) {
-    if (rule.path.length === checkState.specificity.length) {
-      // Do not override higher priority rules
-      if (_.includes(higherPriority, checkState.match)) {
+  _getPathSpecificity (matchType, rulePath) {
+    switch (matchType) {
+      case 'EXACT':
+        return Number.MAX_SAFE_INTEGER
+      case 'TAG':
+        return Number.MAX_SAFE_INTEGER - 1
+      case 'REGEX':
+        return Number.MAX_SAFE_INTEGER - 2
+      default: {
+        const segments = rulePath.split('/').filter(s => s.length > 0).length
+        const separators = (rulePath.match(/\//g) || []).length
+        const base = segments + separators
+        return matchType === 'END' ? base + 0.5 : base
+      }
+    }
+  },
+
+  _applyPageRuleSpecificity ({ rule, checkState }) {
+    const ruleSpecificity = this._getPathSpecificity(rule.match, rule.path)
+
+    if (ruleSpecificity === checkState.specificity) {
+      // Do not override a previous DENY rule with same specificity
+      if (checkState.deny && !rule.deny) {
         return checkState
       }
-      // Do not override a previous DENY rule with same match
-      if (rule.match === checkState.match && checkState.deny && !rule.deny) {
-        return checkState
-      }
-    } else if (rule.path.length < checkState.specificity.length) {
-      // Do not override higher specificity rules
+    } else if (ruleSpecificity < checkState.specificity) {
       return checkState
     }
 
     return {
       deny: rule.deny,
       match: rule.match,
-      specificity: rule.path
+      specificity: ruleSpecificity
     }
   },
 
