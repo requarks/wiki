@@ -56,7 +56,7 @@ jobs:
       uses: docker/metadata-action@v6
       with:
         flavor: |
-          latest=flase
+          latest=false
         images: |
           requarks/wiki
           ghcr.io/requarks/wiki
