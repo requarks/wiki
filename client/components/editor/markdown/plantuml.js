@@ -13,6 +13,7 @@ module.exports = {
       const closeChar = closeMarker.charCodeAt(0)
       const imageFormat = opts.imageFormat || 'svg'
       const server = opts.server || 'https://plantuml.requarks.io'
+      const renderSvgAsObject = opts.renderSvgAsObject || false
 
       md.block.ruler.before('fence', 'uml_diagram', (state, startLine, endLine, silent) => {
         let nextLine
@@ -134,7 +135,8 @@ module.exports = {
       openMarker: conf.openMarker,
       closeMarker: conf.closeMarker,
       imageFormat: conf.imageFormat,
-      server: conf.server
+      server: conf.server,
+      renderSvgAsObject: conf.renderSvgAsObject
     })
   }
 }
