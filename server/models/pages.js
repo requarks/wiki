@@ -795,10 +795,17 @@ module.exports = class Page extends Model {
     }
 
     // -> Check for page access
-    if (!WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
+    const isTheAuthorAndHasWritePermission = page.authorId === opts.user.id && WIKI.auth.checkAccess(opts.user, ['write:pages'], {
       locale: page.locale,
       path: page.path
-    })) {
+    })
+
+    const hasDeletePermission = WIKI.auth.checkAccess(opts.user, ['delete:pages'], {
+      locale: page.locale,
+      path: page.path
+    })
+
+    if (!isTheAuthorAndHasWritePermission && !hasDeletePermission) {
       throw new WIKI.Error.PageDeleteForbidden()
     }
 

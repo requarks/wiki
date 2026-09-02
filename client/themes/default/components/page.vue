@@ -563,11 +563,14 @@ export default {
     tocDecoded () {
       return JSON.parse(Buffer.from(this.toc, 'base64').toString())
     },
+    currentUserId: get('user/id'),
     tocPosition: get('site/tocPosition'),
     hasAdminPermission: get('page/effectivePermissions@system.manage'),
     hasWritePagesPermission: get('page/effectivePermissions@pages.write'),
     hasManagePagesPermission: get('page/effectivePermissions@pages.manage'),
-    hasDeletePagesPermission: get('page/effectivePermissions@pages.delete'),
+    hasDeletePagesPermission() {
+      return get('page/effectivePermissions@pages.delete').call(this) || (this.authorId === this.currentUserId && this.hasWritePagesPermission)
+    },
     hasReadSourcePermission: get('page/effectivePermissions@source.read'),
     hasReadHistoryPermission: get('page/effectivePermissions@history.read'),
     hasAnyPagePermissions () {
