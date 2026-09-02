@@ -45,6 +45,7 @@ module.exports = {
   getCookieOpts () {
     return {
       expires: DateTime.utc().plus({ days: 365 }).toJSDate(),
+      httpOnly: true,
       ...(WIKI.config.host.startsWith('https://') ? { secure: true } : {})
     }
   }

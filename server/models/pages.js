@@ -292,7 +292,7 @@ module.exports = class Page extends Model {
       locale: opts.locale,
       path: opts.path
     })) {
-      scriptJs = opts.scriptJs || ''
+      scriptJs = opts.scriptJs ? opts.scriptJs.replace(/<script/gi, '') : ''
     }
 
     // -> Create page
@@ -419,7 +419,7 @@ module.exports = class Page extends Model {
       locale: opts.locale,
       path: opts.path
     })) {
-      scriptJs = opts.scriptJs || ''
+      scriptJs = opts.scriptJs ? opts.scriptJs.replace(/<script/gi, '') : ''
     }
 
     // -> Update page
