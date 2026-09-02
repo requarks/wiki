@@ -9,7 +9,7 @@ isAvailable: true
 useForm: false
 scopes:
   - profile
-  - email
+  - emailAddress
   - openid
 props:
   entryPoint:
