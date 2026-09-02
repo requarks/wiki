@@ -213,6 +213,10 @@ export default {
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
       this.currentParent = _.last(this.parents)
 
+      if (curPage.isFolder) {
+        this.fetchBrowseItems(curPage)
+      }
+
       this.loadedCache = [curPage.parent]
       this.currentItems = _.filter(items, ['parent', curPage.parent])
       this.$store.commit(`loadingStop`, 'browse-load')
