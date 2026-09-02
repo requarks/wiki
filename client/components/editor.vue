@@ -1,5 +1,5 @@
 <template lang="pug">
-  v-app.editor(:dark='$vuetify.theme.dark')
+  v-app.editor(:dark='$vuetify.theme.dark' :class='$vuetify.rtl ? `is-rtl` : `is-ltr`')
     nav-header(dense)
       template(slot='mid')
         v-text-field.editor-title-input(
