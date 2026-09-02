@@ -1,3 +1,22 @@
+// Unicode Private Use Area characters to temporarily replace special
+// characters during markdown parsing:
+// - braces: prevent markdown-it-attrs from interpreting them as attribute
+//   delimiters.
+// - pipe: prevent markdown table parser from interpreting them as cell
+//   delimiters.
+const BRACE_OPEN_PLACEHOLDER = '\uE000'
+const BRACE_CLOSE_PLACEHOLDER = '\uE001'
+const PIPE_PLACEHOLDER = '\uE002'
+const AMPERSAND_PLACEHOLDER = '\uE003'
+
+export function restoreBraces (str) {
+  return str
+    .replaceAll(BRACE_OPEN_PLACEHOLDER, '{')
+    .replaceAll(BRACE_CLOSE_PLACEHOLDER, '}')
+    .replaceAll(PIPE_PLACEHOLDER, '|')
+    .replaceAll(AMPERSAND_PLACEHOLDER, '&')
+}
+
 // Test if potential opening or closing delimieter
 // Assumes that there is a "$" at state.src[pos]
 function isValidDelim (state, pos) {
@@ -27,6 +46,8 @@ function isValidDelim (state, pos) {
 }
 
 export default {
+  restoreBraces,
+
   katexInline (state, silent) {
     let start, match, token, res, pos
 
@@ -84,11 +105,13 @@ export default {
       token.content = state.src
         // Extract the math part without the $
         .slice(start, match)
-        // Escape the curly braces since they will be interpreted as
-        // attributes by markdown-it-attrs (the "curly_attributes"
-        // core rule)
-        .replaceAll("{", "{{")
-        .replaceAll("}", "}}")
+        // Replace curly braces with temporary placeholders to prevent
+        // markdown-it-attrs from interpreting them as attribute delimiters.
+        .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+        .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+        // Replace pipe with temporary placeholder to prevent markdown
+        // table parser from interpreting it as a cell delimiter.
+        .replaceAll('|', PIPE_PLACEHOLDER)
     }
 
     state.pos = match + 1
@@ -133,15 +156,22 @@ export default {
       }
     }
 
-    state.line = next + 1
+  state.line = next + 1
 
-    token = state.push('katex_block', 'math', 0)
-    token.block = true
-    token.content = (firstLine && firstLine.trim() ? firstLine + '\n' : '') +
-    state.getLines(start + 1, next, state.tShift[start], true) +
-    (lastLine && lastLine.trim() ? lastLine : '')
-    token.map = [ start, state.line ]
-    token.markup = '$$'
-    return true
-  }
+  token = state.push('katex_block', 'math', 0)
+  token.block = true
+  token.content = ((firstLine && firstLine.trim() ? firstLine + '\n' : '') +
+  state.getLines(start + 1, next, state.tShift[start], true) +
+  (lastLine && lastLine.trim() ? lastLine : ''))
+    // Replace curly braces with temporary placeholders to prevent
+    // markdown-it-attrs from interpreting them as attribute delimiters.
+    .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+    .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+    // Replace pipe with temporary placeholder to prevent markdown
+    // table parser from interpreting it as a cell delimiter.
+    .replaceAll('|', PIPE_PLACEHOLDER)
+  token.map = [ start, state.line ]
+  token.markup = '$$'
+  return true
+}
 }

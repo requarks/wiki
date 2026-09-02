@@ -19,6 +19,56 @@ const quoteStyles = {
   Swedish: '””’’'
 }
 
+// Unicode Private Use Area characters to temporarily replace special
+// characters inside math expressions:
+// - pipe (|): prevent markdown table parser from interpreting them as cell
+//   delimiters.
+// - ampersand (&): prevent markdown table parser from interpreting them
+//   as cell delimiters in multiline tables.
+const PIPE_PLACEHOLDER = '\uE002'
+const AMPERSAND_PLACEHOLDER = '\uE003'
+
+/**
+ * Replace pipe and ampersand characters inside inline ($...$) and block
+ * ($$...$$) math expressions with placeholders to prevent markdown table
+ * parsers from splitting formulas containing | (e.g., |x|) or &
+ * (e.g., \begin{cases} ... & ... \\ ... \end{cases}).
+ */
+function protectMathPipes (text) {
+  let result = ''
+  let i = 0
+  while (i < text.length) {
+    // Check for block math ($$...$$)
+    if (text.slice(i, i + 2) === '$$') {
+      const end = text.indexOf('$$', i + 2)
+      if (end !== -1) {
+        result += text.slice(i, end + 2)
+          .replace(/\|/g, PIPE_PLACEHOLDER)
+          .replace(/&/g, AMPERSAND_PLACEHOLDER)
+        i = end + 2
+        continue
+      }
+    }
+    // Check for inline math ($...$) - must not span multiple lines
+    if (text[i] === '$' && text[i + 1] !== '$') {
+      // Only search for closing $ on the same line
+      const lineEnd = text.indexOf('\n', i + 1)
+      const searchEnd = lineEnd === -1 ? text.length : lineEnd
+      const end = text.indexOf('$', i + 1)
+      if (end !== -1 && end < searchEnd) {
+        result += text.slice(i, end + 1)
+          .replace(/\|/g, PIPE_PLACEHOLDER)
+          .replace(/&/g, AMPERSAND_PLACEHOLDER)
+        i = end + 1
+        continue
+      }
+    }
+    result += text[i]
+    i++
+  }
+  return result
+}
+
 module.exports = {
   async render() {
     const mkdown = md({
@@ -50,6 +100,8 @@ module.exports = {
       await renderer.init(mkdown, child.config)
     }
 
-    return mkdown.render(this.input)
+    // Protect pipe characters inside math expressions before markdown parsing
+    const protectedInput = protectMathPipes(this.input)
+    return mkdown.render(protectedInput)
   }
 }

@@ -296,6 +296,56 @@ DOMPurify.addHook('uponSanitizeElement', (elm) => {
 // HELPER FUNCTIONS
 // ========================================
 
+// Unicode Private Use Area characters to temporarily replace special
+// characters inside math expressions:
+// - pipe (|): prevent markdown table parser from interpreting them as cell
+//   delimiters.
+// - ampersand (&): prevent markdown-it-multimd-table from interpreting them
+//   as cell delimiters in multiline tables.
+const PIPE_PLACEHOLDER = '\uE002'
+const AMPERSAND_PLACEHOLDER = '\uE003'
+
+/**
+ * Replace pipe and ampersand characters inside inline ($...$) and block
+ * ($$...$$) math expressions with placeholders to prevent markdown table
+ * parsers from splitting formulas containing | (e.g., |x|) or &
+ * (e.g., \begin{cases} ... & ... \\ ... \end{cases}).
+ */
+function protectMathPipes (text) {
+  let result = ''
+  let i = 0
+  while (i < text.length) {
+    // Check for block math ($$...$$)
+    if (text.slice(i, i + 2) === '$$') {
+      const end = text.indexOf('$$', i + 2)
+      if (end !== -1) {
+        result += text.slice(i, end + 2)
+          .replace(/\|/g, PIPE_PLACEHOLDER)
+          .replace(/&/g, AMPERSAND_PLACEHOLDER)
+        i = end + 2
+        continue
+      }
+    }
+    // Check for inline math ($...$) - must not span multiple lines
+    if (text[i] === '$' && text[i + 1] !== '$') {
+      // Only search for closing $ on the same line
+      const lineEnd = text.indexOf('\n', i + 1)
+      const searchEnd = lineEnd === -1 ? text.length : lineEnd
+      const end = text.indexOf('$', i + 1)
+      if (end !== -1 && end < searchEnd) {
+        result += text.slice(i, end + 1)
+          .replace(/\|/g, PIPE_PLACEHOLDER)
+          .replace(/&/g, AMPERSAND_PLACEHOLDER)
+        i = end + 1
+        continue
+      }
+    }
+    result += text[i]
+    i++
+  }
+  return result
+}
+
 // Inject line numbers for preview scroll sync
 let linesMap = []
 function injectLineNumbers (tokens, idx, options, env, slf) {
@@ -328,7 +378,7 @@ const macros = {}
 md.inline.ruler.after('escape', 'katex_inline', katexHelper.katexInline)
 md.renderer.rules.katex_inline = (tokens, idx) => {
   try {
-    return katex.renderToString(tokens[idx].content, {
+    return katex.renderToString(katexHelper.restoreBraces(tokens[idx].content), {
       displayMode: false, macros
     })
   } catch (err) {
@@ -341,7 +391,7 @@ md.block.ruler.after('blockquote', 'katex_block', katexHelper.katexBlock, {
 })
 md.renderer.rules.katex_block = (tokens, idx) => {
   try {
-    return `<p>` + katex.renderToString(tokens[idx].content, {
+    return `<p>` + katex.renderToString(katexHelper.restoreBraces(tokens[idx].content), {
       displayMode: true, macros
     }) + `</p>`
   } catch (err) {
@@ -453,7 +503,9 @@ export default {
       linesMap = []
       // this.$store.set('editor/content', newContent)
       this.processMarkers(this.cm.firstLine(), this.cm.lastLine())
-      this.previewHTML = DOMPurify.sanitize(md.render(newContent), {
+      // Protect pipe characters inside math expressions before markdown parsing
+      const protectedContent = protectMathPipes(newContent)
+      this.previewHTML = DOMPurify.sanitize(md.render(protectedContent), {
         ADD_TAGS: ['foreignObject'],
         HTML_INTEGRATION_POINTS: { foreignobject: true }
       })
