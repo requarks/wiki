@@ -31,7 +31,7 @@ jobs:
         yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
 
     - name: Upload translations source file
-      uses: crowdin/github-action@v2
+      uses: crowdin/github-action@v3
       env:
         CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
         CROWDIN_BASE_PATH: ${{ github.workspace }}
@@ -63,6 +63,10 @@ jobs:
         tags: |
           type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
           type=raw,value=3.0.0-beta
+        annotations: |
+          manifest:org.opencontainers.image.title=Wiki.js
+          manifest:org.opencontainers.image.description=Next Generation Open Source Wiki
+          manifest:org.opencontainers.image.documentation=https://docs.js.wiki
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4
