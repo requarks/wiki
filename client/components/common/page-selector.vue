@@ -147,7 +147,7 @@ export default {
       tree: [
         {
           id: 0,
-          title: '/ (root)',
+          title: '/ (' + siteConfig.title + ')',
           children: []
         }
       ],
@@ -248,7 +248,7 @@ export default {
         this.tree = [
           {
             id: 0,
-            title: '/ (root)',
+            title: '/ (' + siteConfig.title + ')',
             children: []
           }
         ]
