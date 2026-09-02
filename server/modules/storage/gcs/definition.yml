@@ -1,0 +1,42 @@
+key: gcs
+title: Google Cloud Storage
+description: Google Cloud Storage is a fully-managed, scalable object storage service offered by Google Cloud Platform.
+author: Horus Gonzalez (built with Claude)
+logo: https://upload.wikimedia.org/wikipedia/commons/d/df/Google_Cloud_storage.svg
+website: https://cloud.google.com/storage
+isAvailable: true
+supportedModes:
+  - push
+defaultMode: push
+schedule: false
+props:
+  bucket:
+    type: String
+    title: Bucket Name
+    default: ''
+    hint: The unique name of an existing Google Cloud Storage bucket (e.g. my-wiki-bucket). The bucket must already exist; it will not be created automatically.
+    order: 1
+  projectId:
+    type: String
+    title: Project ID
+    default: ''
+    hint: The Google Cloud project ID that owns the bucket.
+    order: 2
+  serviceAccountKey:
+    type: String
+    title: Service Account Key (JSON)
+    default: ''
+    hint: Paste the full contents of a Google Cloud service account JSON key. The account needs 2 roles on the bucket -- Storage Object Admin AND Storage Legacy Bucket Reader (the second one is required for the bucket existence check on startup). Create the key at https://console.cloud.google.com/iam-admin/serviceaccounts (select your project → open the service account → Keys tab → Add Key → JSON).
+    sensitive: true
+    multiline: true
+    order: 3
+  publicRead:
+    type: Boolean
+    title: Make Uploaded Files Public
+    default: false
+    hint: When enabled, files uploaded to the bucket will be set as publicly readable. Requires the service account to have permission to set object ACLs and Fine-grained access enabled on the bucket.
+    order: 4
+actions:
+  - handler: exportAll
+    label: Export All
+    hint: Output all content from the DB to Google Cloud Storage, overwriting any existing data. If you enabled Google Cloud Storage after content was created or you temporarily disabled it, you'll want to execute this action to add the missing content.
