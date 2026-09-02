@@ -27,9 +27,9 @@ module.exports = {
           providerKey: req.params.strategy,
           profile: {
             ...profile,
-            id: _.get(profile, conf.userIdClaim),
-            displayName: _.get(profile, conf.displayNameClaim, '???'),
-            email: _.get(profile, conf.emailClaim),
+            id: String(_.get(profile, conf.userIdClaim)),
+            displayName: String(_.get(profile, conf.displayNameClaim, '???')),
+            email: String(_.get(profile, conf.emailClaim)),
             picture: picture
           }
         })
