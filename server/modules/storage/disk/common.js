@@ -87,7 +87,7 @@ module.exports = {
         id: currentPage.id,
         title: _.get(pageData, 'title', currentPage.title),
         description: _.get(pageData, 'description', currentPage.description) || '',
-        tags: newTags || currentPage.tags.map(t => t.tag),
+        tags: newTags || (currentPage.tags || []).map(t => t.tag),
         isPublished: _.get(pageData, 'isPublished', currentPage.isPublished),
         isPrivate: false,
         content: pageData.content,
