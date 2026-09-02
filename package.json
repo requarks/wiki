@@ -43,7 +43,7 @@
     "@root/csr": "0.8.1",
     "@root/keypairs": "0.10.3",
     "@root/pem": "1.0.4",
-    "acme": "3.0.3",
+    "@root/acme": "3.1.0",
     "akismet-api": "5.3.0",
     "algoliasearch": "4.5.1",
     "apollo-fetch": "0.7.0",
