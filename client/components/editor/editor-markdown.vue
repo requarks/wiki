@@ -149,7 +149,6 @@
               v-html='previewHTML'
               :spellcheck='spellModeActive'
               :contenteditable='spellModeActive'
-              @blur='spellModeActive = false'
               )
 
     v-system-bar.editor-markdown-sysbar(dark, status, color='grey darken-3')
