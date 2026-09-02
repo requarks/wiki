@@ -111,7 +111,13 @@ module.exports = {
             }
           }
           if (args.tags && args.tags.length > 0) {
-            queryBuilder.whereIn('tags.tag', args.tags.map(t => _.trim(t).toLowerCase()))
+            queryBuilder.whereExists(function() {
+              this.select('*')
+                .from('pageTags as pt')
+                .leftJoin('tags as t', 'pt.tagId', 't.id')
+                .whereRaw('"pt"."pageId" = "pages"."id"')
+                .whereIn('t.tag', args.tags.map(t => _.trim(t).toLowerCase()))
+            })
           }
           const orderDir = args.orderByDirection === 'DESC' ? 'desc' : 'asc'
           switch (args.orderBy) {
@@ -135,7 +141,8 @@ module.exports = {
       results = _.filter(results, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          tags: r.tags
         })
       }).map(r => ({
         ...r,
@@ -207,7 +214,8 @@ module.exports = {
       const allTags = _.filter(pages, r => {
         return WIKI.auth.checkAccess(context.req.user, ['read:pages'], {
           path: r.path,
-          locale: r.locale
+          locale: r.locale,
+          tags: r.tags
         })
       }).flatMap(r => r.tags)
       return _.orderBy(_.uniqBy(allTags, 'id'), ['tag'], ['asc'])
