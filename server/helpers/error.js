@@ -1,6 +1,10 @@
 const CustomError = require('custom-error-instance')
 
 module.exports = {
+  AssetCreateFolderForbidden: CustomError('AssetCreateFolderForbidden', {
+    message: 'You are not authorized to create this folder.',
+    code: 2010
+  }),
   AssetDeleteForbidden: CustomError('AssetDeleteForbidden', {
     message: 'You are not authorized to delete this asset.',
     code: 2003
