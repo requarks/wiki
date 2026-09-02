@@ -176,6 +176,15 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Page with metadata for storing on disk
+   *
+   * @returns {string} Page Contents with Injected Metadata
+   */
+  storageContent() {
+    return this.injectMetadata() + '\n'
+  }
+
+  /**
    * Get the page's file extension based on content type
    *
    * @returns {string} File Extension
