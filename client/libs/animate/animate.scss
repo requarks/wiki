@@ -9,8 +9,8 @@
  */
 
 .animated {
-  -webkit-animation-duration: 1s;
-  animation-duration: 1s;
+  -webkit-animation-duration: 250ms;
+  animation-duration: 250ms;
   -webkit-animation-fill-mode: both;
   animation-fill-mode: both;
   &.infinite {
@@ -18,12 +18,12 @@
     animation-iteration-count: infinite;
   }
   &.hinge {
-    -webkit-animation-duration: 2s;
-    animation-duration: 2s;
+    -webkit-animation-duration: 500ms;
+    animation-duration: 500ms;
   }
   &.flipOutX, &.flipOutY, &.bounceIn, &.bounceOut {
-    -webkit-animation-duration: .75s;
-    animation-duration: .75s;
+    -webkit-animation-duration: 150ms;
+    animation-duration: 150ms;
   }
 }
 
