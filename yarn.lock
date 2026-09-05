@@ -13485,6 +13485,11 @@ markdown-it-attrs@3.0.3:
   resolved "https://registry.yarnpkg.com/markdown-it-attrs/-/markdown-it-attrs-3.0.3.tgz#92acdb16fe551cb056c5eb9848413443cafb5231"
   integrity sha512-cLnICU2t61skNCr4Wih/sdza+UbQcqJGZwvqAypnbWA284nzDm+Gpc90iaRk/JjsIy4emag5v3s0rXFhFBWhCA==
 
+markdown-it-container@3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/markdown-it-container/-/markdown-it-container-3.0.0.tgz#1d19b06040a020f9a827577bb7dbf67aa5de9a5b"
+  integrity sha512-y6oKTq4BB9OQuY/KLfk/O3ysFhB3IMYoIWhGJEidXt1NQFocFK2sA2t0NYZAMyMShAGL6x5OPIbrmXPIqaN9rw==
+
 markdown-it-decorate@1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/markdown-it-decorate/-/markdown-it-decorate-1.2.2.tgz#f1e11d11d837ae78906198f8a2c974f0e646acb7"

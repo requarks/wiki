@@ -2,6 +2,7 @@ const md = require('markdown-it')
 const mdAttrs = require('markdown-it-attrs')
 const mdDecorate = require('markdown-it-decorate')
 const _ = require('lodash')
+const spoiler = require('./spoiler')
 const underline = require('./underline')
 
 const quoteStyles = {
@@ -43,6 +44,7 @@ module.exports = {
     mkdown.use(mdAttrs, {
       allowedAttributes: ['id', 'class', 'target']
     })
+    mkdown.use(spoiler)
     mkdown.use(mdDecorate)
 
     for (let child of this.children) {

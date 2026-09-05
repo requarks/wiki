@@ -224,6 +224,7 @@ import mermaid from 'mermaid'
 
 // Helpers
 import katexHelper from './common/katex'
+import spoiler from './markdown/spoiler'
 import tabsetHelper from './markdown/tabset'
 import cmFold from './common/cmFold'
 
@@ -264,6 +265,7 @@ const md = new MarkdownIt({
   .use(mdAttrs, {
     allowedAttributes: ['id', 'class', 'target']
   })
+  .use(spoiler)
   .use(mdDecorate)
   .use(underline)
   .use(mdEmoji)
