@@ -124,12 +124,21 @@
       <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
         <div class="p-4">
           <template v-if="currentFileDetails">
+            <!--
+              A button around the thumbnail, and only for an image: it opens the full view, and the
+              illustration standing in for a page has nothing behind it to open.
+            -->
+            <button
+              class="fileman-details-thumb w-unstyled mb-4 block w-full"
+              v-if="currentFileDetails.thumbnail && currentFileDetails.viewable"
+              :aria-label="t(`common.actions.view`)"
+              @click="viewCurrentFile">
+              <img class="w-full rounded object-cover" :src="currentFileDetails.thumbnail" />
+            </button>
             <img
-              class="w-full object-cover rounded mb-4"
-              v-if="currentFileDetails.thumbnail"
-              :src="currentFileDetails.thumbnail"
-              width="100%"
-              :ratio="16 / 10" />
+              class="mb-4 w-full rounded object-cover"
+              v-else-if="currentFileDetails.thumbnail"
+              :src="currentFileDetails.thumbnail" />
             <div
               class="fileman-details-row"
               v-for="item of currentFileDetails.items"
@@ -364,7 +373,10 @@
                   @click="selectItem(item)"
                   @dblclick="doubleClickItem(item)">
                   <w-item-section class="fileman-filelist-icon" avatar>
-                    <w-icon :name="item.icon" :size="state.isCompact ? `md` : `xl`" />
+                    <w-icon
+                      :name="item.icon"
+                      :size="state.isCompact ? `md` : `xl`"
+                      :style="item.iconStyle" />
                   </w-item-section>
                   <w-item-section class="fileman-filelist-label">
                     <w-item-label>{{ usePathTitle ? item.fileName : item.title }}</w-item-label>
@@ -415,7 +427,10 @@
                           </w-item-section>
                           <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
                         </w-item>
-                        <template v-if="item.type === `asset` && item.imageEdit">
+                        <!-- -> Behind the experimental flag: neither has a handler behind it yet,
+                                so on an ordinary instance they are two rows that do nothing -->
+                        <template
+                          v-if="flagsStore.experimental && item.type === `asset` && item.imageEdit">
                           <w-item clickable>
                             <w-item-section side>
                               <w-icon name="la:edit" color="orange" />
@@ -441,7 +456,21 @@
                           </w-item-section>
                           <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
                         </w-item>
-                        <w-item clickable @click="duplicateItem(item)">
+                        <w-item
+                          clickable
+                          v-if="item.type === `folder`"
+                          @click="setFolderColor(item.id)">
+                          <w-item-section side>
+                            <w-icon name="la:fill" color="orange" />
+                          </w-item-section>
+                          <w-item-section>{{ t(`common.actions.setColor`) }}...</w-item-section>
+                        </w-item>
+                        <!--
+                          Not for a file: duplicating is copying content to a second path, and an
+                          upload has none to copy -- a second name over the same bytes is all it could
+                          mean, which is not what anyone is asking a wiki for.
+                        -->
+                        <w-item clickable v-if="item.type !== `asset`" @click="duplicateItem(item)">
                           <w-item-section side>
                             <w-icon name="la:copy" color="teal" />
                           </w-item-section>
@@ -458,18 +487,34 @@
                           </w-item-section>
                           <w-item-section>Rename / Move Page...</w-item-section>
                         </w-item>
+                        <!--
+                          One entry for a file too, and for a plainer reason than a page's: its name
+                          and its folder are the two halves of where a storage target keeps it, so
+                          changing either is the same move to everything downstream of the rename.
+                        -->
+                        <w-item
+                          clickable
+                          v-else-if="item.type === `asset`"
+                          @click="renameMoveAsset(item)">
+                          <w-item-section side>
+                            <w-icon name="la:share" color="teal" />
+                          </w-item-section>
+                          <w-item-section>Rename / Move To...</w-item-section>
+                        </w-item>
+                        <!-- -> Folders, which are the only thing left with two entries: their name
+                                and their place are asked for in two different dialogs -->
                         <template v-else>
-                          <w-item clickable @click="renameItem(item)">
+                          <w-item clickable @click="renameFolder(item.id)">
                             <w-item-section side>
                               <w-icon name="la:redo" color="teal" />
                             </w-item-section>
                             <w-item-section>Rename...</w-item-section>
                           </w-item>
-                          <w-item clickable>
+                          <w-item clickable @click="moveFolder(item.id)">
                             <w-item-section side>
                               <w-icon name="la:arrow-right" color="teal" />
                             </w-item-section>
-                            <w-item-section>Move to...</w-item-section>
+                            <w-item-section>Move To...</w-item-section>
                           </w-item>
                         </template>
                         <w-item clickable @click="delItem(item)">
@@ -515,11 +560,13 @@ import {
 import { useRouter } from 'vue-router'
 
 import { dialog } from '@/composables/dialog'
+import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
 
 import { useCommonStore } from '@/stores/common'
+import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
@@ -530,10 +577,10 @@ import Tree from './TreeNav.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { assetUrl } from '@/helpers/assets'
 import fileTypes from '@/helpers/fileTypes'
+import { folderIconStyle } from '@/helpers/folderColors'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
-import AssetRenameDialog from '@/components/AssetRenameDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
 // COMPOSABLES
@@ -544,6 +591,7 @@ const screen = useScreen()
 // STORES
 
 const commonStore = useCommonStore()
+const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -696,14 +744,16 @@ const treeDrawerOpen = computed({
 })
 
 const folderPath = computed(() => {
-  if (!state.currentFolderId) {
+  // -> The path comes out of the tree cache, so a selected folder that is not in it -- one whose
+  //    branch was just reloaded, or which has moved out of the locale being listed -- has no path to
+  //    show rather than `/undefined/`, which is what it used to render
+  const folderNode = state.currentFolderId ? state.treeNodes[state.currentFolderId] : null
+  if (!folderNode?.fileName) {
     return '/'
-  } else {
-    const folderNode = state.treeNodes[state.currentFolderId] ?? {}
-    return folderNode.folderPath
-      ? `/${folderNode.folderPath}/${folderNode.fileName}/`
-      : `/${folderNode.fileName}/`
   }
+  return folderNode.folderPath
+    ? `/${folderNode.folderPath}/${folderNode.fileName}/`
+    : `/${folderNode.fileName}/`
 })
 
 const usePathTitle = computed(() => state.displayMode === 'path')
@@ -732,6 +782,7 @@ const files = computed(() => {
       switch (f.type) {
         case 'folder': {
           f.icon = fileTypes.folder.icon
+          f.iconStyle = folderIconStyle(f.hue)
           f.caption = t('fileman.folderChildrenCount', { count: f.children }, f.children)
           break
         }
@@ -756,6 +807,14 @@ const files = computed(() => {
       return f
     })
 })
+
+/**
+ * Whether this listing entry is an image, which is what decides both the thumbnail beside it and
+ * whether View opens it in place rather than handing it to the browser.
+ */
+function isImageAsset(item) {
+  return item.type === 'asset' && Boolean(item.mimeType?.startsWith('image/'))
+}
 
 const currentFileDetails = computed(() => {
   if (!state.currentFileId) {
@@ -796,7 +855,7 @@ const currentFileDetails = computed(() => {
     }
     case 'asset': {
       // -> Only images get one, and the endpoint answers 404 for anything else
-      thumbnail = item.mimeType?.startsWith('image/') ? `/_thumb/${item.id}.webp` : null
+      thumbnail = isImageAsset(item) ? `/_thumb/${item.id}.webp` : null
       items.push({
         label: t('fileman.detailsAssetType'),
         value: fileTypes[item.fileExt]
@@ -807,11 +866,21 @@ const currentFileDetails = computed(() => {
         label: t('fileman.detailsAssetSize'),
         value: filesize(item.fileSize)
       })
+      // -> Only an image has these, and only one measured on arrival: an upload from before the Sharp
+      //    extension was installed carries none, so the row is left out rather than shown empty
+      if (item.width && item.height) {
+        items.push({
+          label: t('fileman.detailsAssetDimensions'),
+          value: `${item.width} × ${item.height}`
+        })
+      }
       break
     }
   }
   return {
     thumbnail,
+    // -> Whether the thumbnail leads anywhere: only an image has a full view to open behind it
+    viewable: item.type === 'asset' && isImageAsset(item),
     items
   }
 })
@@ -910,6 +979,7 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
               folderPath: item.folderPath,
               fileName: item.fileName,
               title: item.title,
+              hue: item.hue,
               children: state.treeNodes[item.id]?.children ?? []
             }
 
@@ -942,6 +1012,7 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
                 type: 'folder',
                 title: item.title,
                 fileName: item.fileName,
+                hue: item.hue,
                 children: item.childrenCount || 0
               })
             }
@@ -956,6 +1027,8 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
                 fileExt: item.fileExt,
                 fileSize: item.fileSize,
                 mimeType: item.mimeType,
+                width: item.width,
+                height: item.height,
                 folderPath: item.folderPath,
                 fileName: item.fileName,
                 createdAt: item.createdAt,
@@ -1036,6 +1109,18 @@ function treeContextAction(nodeId, action) {
       renameFolder(nodeId)
       break
     }
+    case 'move': {
+      moveFolder(nodeId)
+      break
+    }
+    case 'color': {
+      setFolderColor(nodeId)
+      break
+    }
+    case 'duplicate': {
+      duplicateFolder(nodeId)
+      break
+    }
     case 'del': {
       delFolder(nodeId)
       break
@@ -1080,6 +1165,145 @@ function renameFolder(folderId) {
     // -> Reload current view (in case current folder is included)
     await loadTree({ parentId: state.currentFolderId })
   })
+}
+
+/**
+ * Move a folder, and everything under it, to another parent — or another locale.
+ *
+ * The view follows it: a move is not something to be left looking at the hole it left, and the folder
+ * is where the person who moved it now wants to be.
+ */
+function moveFolder(folderId) {
+  const node = state.treeNodes[folderId]
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'moveFolder',
+      itemId: folderId,
+      itemTitle: node?.title ?? '',
+      folderPath: node?.folderPath ?? '',
+      itemFileName: node?.fileName ?? '',
+      locale: state.locale
+    }
+  }).onOk(async (opts) => {
+    /*
+      Blocking, as a copy is: the rows move in one statement, but the copy every storage target holds
+      moves one page and one file at a time -- which on a target that is a repository or a bucket is a
+      write apiece. Same reasoning, same overlay.
+    */
+    loading.show({
+      message: t('fileman.folderMoving'),
+      caption: t('fileman.folderMovingHint')
+    })
+    try {
+      const resp = await API_CLIENT.put(`sites/${siteStore.id}/tree/folders/${folderId}/path`, {
+        json: {
+          folderPath: opts.folderPath,
+          locale: opts.locale
+        },
+        // -> Nothing on this side gives up on it, since the server does not either
+        timeout: false
+      }).json()
+      // -> The API client does not throw on 400, so a refused destination comes back as a parsed error
+      if (resp?.ok === false) {
+        throw new Error(resp.message || 'An unexpected error occured.')
+      }
+      notify({
+        type: 'positive',
+        message: resp.message
+      })
+      await goToFolder(resp.folder)
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: 'Failed to move folder.',
+        caption: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    } finally {
+      // -> In `finally` because `goToFolder` above can throw too, and an overlay left up is a wiki
+      //    nobody can click on
+      loading.hide()
+    }
+  })
+}
+
+/**
+ * Colour a folder's icon.
+ *
+ * Only the two rows that hold it need repainting, so nothing is refetched: the tree node and the
+ * listing row are the same folder seen twice, and the icon in each reads its colour off them.
+ */
+function setFolderColor(folderId) {
+  const node = state.treeNodes[folderId]
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/FolderColorDialog.vue')),
+    componentProps: {
+      folderId,
+      folderTitle: node?.title ?? '',
+      hue: node?.hue ?? 0
+    }
+  }).onOk((hue) => {
+    if (node) {
+      node.hue = hue
+    }
+    const row = state.fileList.find((f) => f.id === folderId)
+    if (row) {
+      row.hue = hue
+    }
+  })
+}
+
+/** The id of an already-loaded folder, addressed the way a path addresses it. */
+function findFolderIdByPath(path) {
+  if (!path) {
+    return null
+  }
+  const entry = Object.entries(state.treeNodes).find(
+    ([, node]) => (node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName) === path
+  )
+  return entry?.[0] ?? null
+}
+
+/**
+ * Open a folder wherever it now is, rebuilding the tree around it.
+ *
+ * Everything cached is dropped rather than patched: a move rewrites the path of every entry under the
+ * folder, so the branch it left and the branch it joined are both wrong, and across locales the whole
+ * tree on screen belongs to a locale the folder is no longer in.
+ *
+ * @param folder The folder as the API answered with it — where it is now, and which locale it is in.
+ */
+async function goToFolder({ id, folderPath, fileName, locale }) {
+  const path = folderPath ? `${folderPath}/${fileName}` : fileName
+  // -> Set before anything is fetched: every request below asks for one locale's tree
+  state.locale = locale
+  state.treeNodes = {}
+  state.treeRoots = []
+  state.currentFileId = null
+  state.fileList = []
+  treeComp.value?.resetLoaded()
+
+  // -> With its ancestors, which is the whole branch the tree has to draw to show where it landed
+  const wasCurrent = state.currentFolderId === id
+  await loadTree({ parentPath: path, initLoad: true })
+  const parts = path.split('/')
+  for (let i = 1; i <= parts.length; i++) {
+    const ancestorId = findFolderIdByPath(parts.slice(0, i).join('/'))
+    if (ancestorId) {
+      treeComp.value?.setOpened(ancestorId)
+    }
+  }
+
+  /*
+    Selecting it is what lists its contents, through the watcher on this -- but only when the value
+    actually changes, and moving the folder somebody was already inside does not change it. Hence the
+    second call, which is that same load done by hand. Both come after the await above, so neither
+    can be dropped by `loadTree`'s guard against overlapping fetches.
+  */
+  state.currentFolderId = id
+  if (wasCurrent) {
+    await loadTree({ parentId: id })
+  }
 }
 
 function delFolder(folderId, mustReload = false) {
@@ -1233,15 +1457,49 @@ function delPage(pageId, pageName) {
 // ASSET METHODS
 // --------------------------------------
 
-function renameAsset(assetId) {
+/**
+ * Rename a file, move it to another folder, or both — one dialog and one request, as it is for a
+ * page.
+ */
+function renameMoveAsset(item) {
   dialog({
-    component: AssetRenameDialog,
+    component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
     componentProps: {
-      assetId
+      mode: 'renameAsset',
+      itemId: item.id,
+      itemTitle: item.title,
+      folderPath: item.folderPath,
+      itemFileName: item.fileName,
+      locale: state.locale
     }
-  }).onOk(async () => {
-    // -> Reload current view
-    await loadTree({ parentId: state.currentFolderId })
+  }).onOk(async (opts) => {
+    try {
+      const resp = await API_CLIENT.patch(`sites/${siteStore.id}/assets/${item.id}`, {
+        json: {
+          fileName: opts.fileName,
+          folderPath: opts.folderPath,
+          // -> The destination is a locale as well as a folder, as it is for a page: the same folder
+          //    in another locale is somewhere else
+          locale: opts.locale
+        }
+      }).json()
+      // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+      if (resp?.ok === false) {
+        throw new Error(resp.message || 'An unexpected error occured.')
+      }
+      notify({
+        type: 'positive',
+        message: resp.message
+      })
+      // -> Reload current view
+      await loadTree({ parentId: state.currentFolderId })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: 'Failed to rename or move file.',
+        caption: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    }
   })
 }
 
@@ -1381,11 +1639,41 @@ function openItem(item) {
       close()
       break
     }
+    /*
+      The manager stays open behind both of these, unlike a page: the viewer is a look at one file
+      rather than a departure from the folder, and closing it comes back to the same selection.
+    */
     case 'asset': {
-      // TODO: Open asset
-      close()
+      if (isImageAsset(item)) {
+        viewImage(item)
+      } else {
+        // -> Nothing here can display it, so the browser is given the chance: it opens what it knows
+        //    -- a PDF, a video -- and downloads the rest, which is what View means for those
+        window.open(assetUrl(item.folderPath, item.fileName), '_blank', 'noopener')
+      }
       break
     }
+  }
+}
+
+/**
+ * Open an image at full size, over the manager.
+ */
+function viewImage(item) {
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/AssetPreviewDialog.vue')),
+    componentProps: {
+      assetId: item.id,
+      fileName: item.fileName
+    }
+  })
+}
+
+/** The details pane's thumbnail, which is only offered for a file `viewImage` can show. */
+function viewCurrentFile() {
+  const item = state.fileList.find((f) => f.id === state.currentFileId)
+  if (item && isImageAsset(item)) {
+    viewImage(item)
   }
 }
 
@@ -1449,34 +1737,83 @@ async function downloadItem(item) {
   }
 }
 
-function renameItem(item) {
-  switch (item.type) {
-    case 'folder': {
-      renameFolder(item.id)
-      break
-    }
-    case 'page': {
-      renameMovePage(item)
-      break
-    }
-    case 'asset': {
-      renameAsset(item.id)
-      break
-    }
-  }
-}
-
-/**
- * Duplicating a folder or an asset has no endpoint behind it yet, so those two keep the inert entry
- * they already had rather than being offered something that would fail.
- */
 function duplicateItem(item) {
   switch (item.type) {
     case 'page': {
       duplicatePage(item)
       break
     }
+    case 'folder': {
+      duplicateFolder(item.id)
+      break
+    }
   }
+}
+
+/**
+ * Copy a folder, and everything under it, somewhere else — under a name of its own.
+ *
+ * The view goes to the copy rather than staying where it was, as a move does: what was asked for is a
+ * new folder, and it is the new folder somebody wants to look at.
+ */
+function duplicateFolder(folderId) {
+  const node = state.treeNodes[folderId]
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
+    componentProps: {
+      mode: 'duplicateFolder',
+      itemId: folderId,
+      itemTitle: node?.title ?? '',
+      folderPath: node?.folderPath ?? '',
+      itemFileName: node?.fileName ?? '',
+      locale: state.locale
+    }
+  }).onOk(async (opts) => {
+    /*
+      Blocking, and with a word about why: the copy is one request that runs to completion on the
+      server -- a page rendered, indexed and written out per entry -- so a folder of any size is
+      seconds rather than milliseconds, and the manager would otherwise sit there looking idle while
+      it happened, with nothing to stop somebody starting a second one on top of it.
+    */
+    loading.show({
+      message: t('fileman.folderDuplicating'),
+      caption: t('fileman.folderDuplicatingHint')
+    })
+    try {
+      const resp = await API_CLIENT.post(
+        `sites/${siteStore.id}/tree/folders/${folderId}/duplicate`,
+        {
+          json: {
+            folderPath: opts.folderPath,
+            pathName: opts.pathName,
+            title: opts.title,
+            locale: opts.locale
+          },
+          // -> Nothing on this side gives up on it, since the server does not either
+          timeout: false
+        }
+      ).json()
+      // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+      if (resp?.ok === false) {
+        throw new Error(resp.message || 'An unexpected error occured.')
+      }
+      notify({
+        type: 'positive',
+        message: resp.message
+      })
+      await goToFolder(resp.folder)
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: 'Failed to duplicate folder.',
+        caption: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    } finally {
+      // -> In `finally` because `goToFolder` above can throw too, and an overlay left up is a wiki
+      //    nobody can click on
+      loading.hide()
+    }
+  })
 }
 
 function delItem(item) {
@@ -1809,6 +2146,22 @@ $fileman-hdr-wrap-max: 899.98px;
         padding-right: 6px;
         min-width: 0;
       }
+    }
+  }
+  /*
+    The thumbnail reads as something to press: it is the way into the full view, and a picture with no
+    affordance on it is one nobody clicks. `zoom-in` rather than `pointer` says which way it leads.
+  */
+  &-details-thumb {
+    cursor: zoom-in;
+
+    img {
+      transition: box-shadow 0.2s var(--ease-standard);
+    }
+
+    &:hover img,
+    &:focus-visible img {
+      box-shadow: 0 0 0 2px var(--color-primary);
     }
   }
   &-details-row {

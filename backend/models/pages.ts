@@ -634,6 +634,23 @@ class Pages {
   }
 
   /**
+   * Take a set of pages out of their locale groups, for a folder that moved to another locale.
+   *
+   * The same rule `movePage` applies to one page, applied to everything under a folder that crossed
+   * locales at once. It has to happen before their `locale` column is rewritten: a group holds one
+   * page per locale and the index enforcing that would refuse the second arrival otherwise.
+   *
+   * One page at a time rather than in bulk, because the groups they belong to are not the same group
+   * and each has to be looked at for whether it still has anybody left in it. A folder move is a rare
+   * and deliberate act, so the queries are worth the plainness.
+   */
+  async detachFromLocaleGroups(siteId: string, ids: string[]): Promise<void> {
+    for (const id of ids) {
+      await this.detachFromLocaleGroup(siteId, id)
+    }
+  }
+
+  /**
    * Take one page out of its locale group, leaving the rest of the set related to each other.
    *
    * For a page that stops being the version it was: a move across locales, where what it is the

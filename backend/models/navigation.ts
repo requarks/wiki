@@ -318,6 +318,69 @@ class Navigation {
 
     return { navigationMode: mode, navigationId: navId }
   }
+
+  /**
+   * Repoint the sidebars of a subtree that has just moved.
+   *
+   * A menu is inherited from where an entry SITS -- the nearest ancestor that overrides or hides, and
+   * the site menu of its locale when none does -- so a folder that changes parents, or locales, takes
+   * a subtree full of entries pointing at a menu that is no longer above them. Left alone, a French
+   * page would show the English sidebar, which is the one thing a translated wiki cannot do.
+   *
+   * Only entries still on `inherit` are repointed, and only those not sitting under an override or a
+   * hide WITHIN the moved subtree: a menu written for a branch belongs to that branch's own entry, is
+   * keyed by its id, and travels with it.
+   *
+   * Called after the rows are at their destination, since what is above them is what decides this.
+   *
+   * @param folderId The moved folder, whose own mode is considered along with its descendants'
+   * @param locale The locale it now sits in
+   * @param folderPath Encoded ltree path of its new parent, empty at the site root
+   * @param fileName Its path name, which with `folderPath` is what its descendants sit under
+   */
+  async repointMovedSubtree({
+    siteId,
+    folderId,
+    locale,
+    folderPath,
+    fileName
+  }: {
+    siteId: string
+    folderId: string
+    locale: string
+    folderPath: string
+    fileName: string
+  }): Promise<void> {
+    const inherited = await this.ancestorNavId(siteId, locale, folderPath)
+    const fullPath = folderPath ? `${folderPath}.${fileName}` : fileName
+
+    // -> The folder itself first: it is not under its own path, so the cascade below passes it over
+    await WIKI.db
+      .update(treeTable)
+      .set({ navigationId: inherited })
+      .where(and(eq(treeTable.id, folderId), eq(treeTable.navigationMode, 'inherit')))
+
+    // -> The same walk `updateNavigation` does when a mode changes, over the subtree that moved
+    await WIKI.db.execute(sql`
+      UPDATE tree tt
+      SET "navigationId" = ${inherited}
+      WHERE tt."siteId" = ${siteId}
+        AND tt."locale" = ${locale}
+        AND tt.tree IN ('page', 'folder')
+        AND tt."folderPath" <@ ${fullPath}::ltree
+        AND tt."navigationMode" = 'inherit'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM tree tc
+          WHERE tc."siteId" = ${siteId}
+            AND tc."locale" = ${locale}
+            AND tc.tree IN ('page', 'folder')
+            AND tc."folderPath" <@ ${fullPath}::ltree
+            AND (tc."folderPath" || tc."fileName") @> tt."folderPath"
+            AND tc."navigationMode" IN ('override', 'hide')
+        )
+    `)
+  }
 }
 
 export const navigation = new Navigation()

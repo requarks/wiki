@@ -193,3 +193,51 @@ export async function makeImageThumbnail(
     return null
   }
 }
+
+/** How big an image is, in pixels, as it is meant to be displayed. */
+export type ImageDimensions = {
+  width: number
+  height: number
+}
+
+/**
+ * Read an image's pixel dimensions, using the Sharp extension.
+ *
+ * Recorded once, when the file arrives, so that showing them later costs nothing — the file manager
+ * lists a folder at a time and must not read every image to describe one.
+ *
+ * The dimensions are the ones a viewer will show, not the ones the pixels are stored in: an EXIF
+ * orientation of 5 or above means the decoder turns the image a quarter turn, and Sharp reports the
+ * pre-rotation size, so the two are swapped back here. A portrait photo off a phone is exactly this
+ * case, and reporting it as landscape is worse than reporting nothing.
+ *
+ * @returns The dimensions, or null if Sharp is not usable on this system or these bytes are not an
+ *          image it can read
+ */
+export async function readImageDimensions(data: Buffer): Promise<ImageDimensions | null> {
+  const definition = WIKI.models.extensions.getDefinition('sharp')
+  if (!definition || !(await WIKI.models.extensions.isInstalled(definition))) {
+    return null
+  }
+  const specifier = 'sharp'
+  // -> Loading Sharp and running it are kept apart, as everywhere else here: whatever a user uploaded
+  //    may simply not be an image Sharp can read, which must not be recorded as Sharp being broken
+  let sharp: any
+  try {
+    ;({ default: sharp } = await import(specifier))
+  } catch (err: any) {
+    WIKI.models.extensions.noteLoadFailure(specifier)
+    WIKI.logger.warn(`Could not load Sharp to measure an image: ${err.message}`)
+    return null
+  }
+  try {
+    const { width, height, orientation } = await sharp(data).metadata()
+    if (!width || !height) {
+      return null
+    }
+    return orientation && orientation >= 5 ? { width: height, height: width } : { width, height }
+  } catch (err: any) {
+    WIKI.logger.debug(`Could not read the dimensions of an upload: ${err.message}`)
+    return null
+  }
+}

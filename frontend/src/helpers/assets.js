@@ -70,3 +70,19 @@ export const FILES_PREFIX = '/_files/'
 export function assetUrl(folderPath, fileName) {
   return `${FILES_PREFIX}${folderPath ? `${folderPath}/${fileName}` : fileName}`
 }
+
+/**
+ * Where an uploaded file's bytes come from when it is addressed by ID rather than by path.
+ *
+ * The API's own download route, which `/_api` fronts and the session cookie authenticates -- so it
+ * can be handed straight to an `<img>`. Preferred over `assetUrl` wherever the ID is in hand: a path
+ * exists once per locale and carries none, so `/_files/` answers with the primary locale's file of
+ * that name, which is a different file whenever another locale is being browsed.
+ *
+ * @param {string} siteId UUID of the site the asset belongs to.
+ * @param {string} assetId UUID of the asset.
+ * @returns {string} A root-relative URL.
+ */
+export function assetContentUrl(siteId, assetId) {
+  return `/_api/sites/${siteId}/assets/${assetId}/content`
+}

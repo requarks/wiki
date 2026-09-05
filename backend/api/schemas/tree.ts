@@ -48,6 +48,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'integer',
         description: 'Folders only — how many entries the folder holds.'
       },
+      hue: {
+        type: 'integer',
+        description:
+          'Folders only — how far the folder icon is rotated around the colour wheel, in degrees. Absent on a folder left the colour every folder starts out.'
+      },
       isAncestor: {
         type: 'boolean',
         description:
@@ -64,6 +69,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       mimeType: {
         type: 'string',
         description: 'Assets only.'
+      },
+      width: {
+        type: 'integer',
+        description:
+          'Image assets only — in pixels, as displayed. Absent when the dimensions were never read.'
+      },
+      height: {
+        type: 'integer',
+        description: 'Image assets only — in pixels, as displayed.'
       },
       editor: {
         type: 'string',
@@ -188,6 +202,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       childrenCount: {
         type: 'integer'
+      },
+      hue: {
+        type: 'integer',
+        description:
+          'How far the folder icon is rotated around the colour wheel, in degrees. Absent on a folder left the colour every folder starts out.'
       },
       createdAt: {
         type: 'string',

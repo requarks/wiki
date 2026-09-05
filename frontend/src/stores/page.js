@@ -142,21 +142,19 @@ export const usePageStore = defineStore('page', {
   actions: {
     /**
      * PAGE - LOAD
+     *
+     * Nothing in this store moves until the reply is in hand: the page being read stays on screen,
+     * whole, for as long as the request takes, and then the next one replaces it in a single change.
+     * That is what `applyWith` is for -- it wraps the moment everything changes, so the page view can
+     * hand that moment to the View Transition API and have the two cross-faded. Left at its default
+     * the change simply happens, which is what a same-page refresh wants.
+     *
+     * @param {(apply: () => void) => void|Promise<void>} [applyWith] Runs the given function, which
+     *   is what puts the loaded page into this store. Called only on success, exactly once.
      */
-    async pageLoad({ path, id, locale, withContent = false }) {
+    async pageLoad({ path, id, locale, withContent = false, applyWith = (apply) => apply() }) {
       const editorStore = useEditorStore()
       const siteStore = useSiteStore()
-      /*
-        The lock, and the absence of a page, belong to the page being loaded rather than to the one
-        before it.
-
-        Everything else in this store stays put until the reply arrives, deliberately -- blanking it
-        would flash an empty page on every navigation. These two cannot be treated that way: they are
-        read as "the page on screen is protected" and "there is no page on screen", and left standing
-        they make the NEXT page look protected, or missing, for as long as the request takes.
-      */
-      this.isLocked = false
-      this.notFound = false
       try {
         const pageData = await API_CLIENT.get(
           `sites/${siteStore.id}/pages/${id ?? fastHash(normalizePath(path))}`,
@@ -172,25 +170,34 @@ export const usePageStore = defineStore('page', {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
         // Update page store
-        this.$patch({
-          ...pageData,
-          // -> The field is present exactly when the source came with the page, which is what makes
-          //    the copy in this store safe to save; a view-mode load leaves the previous one in place
-          contentLoaded: Object.hasOwn(pageData, 'content'),
-          relations: pageData.relations.map((r) =>
-            pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
-          ),
-          localeRelations: (pageData.localeRelations ?? []).map((r) =>
-            pick(r, ['locale', 'path', 'title'])
-          ),
-          tocDepth: pick(pageData.tocDepth, ['min', 'max'])
-        })
-        this.applyViewerState(pageData.viewer)
-        // Update editor state timestamps
-        const curDate = Temporal.Now.instant()
-        editorStore.$patch({
-          lastChangeTimestamp: curDate,
-          lastSaveTimestamp: curDate
+        await applyWith(() => {
+          this.$patch({
+            ...pageData,
+            // -> The field is present exactly when the source came with the page, which is what makes
+            //    the copy in this store safe to save; a view-mode load leaves the previous one in place
+            contentLoaded: Object.hasOwn(pageData, 'content'),
+            relations: pageData.relations.map((r) =>
+              pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+            ),
+            localeRelations: (pageData.localeRelations ?? []).map((r) =>
+              pick(r, ['locale', 'path', 'title'])
+            ),
+            tocDepth: pick(pageData.tocDepth, ['min', 'max']),
+            /*
+              The absence of a page is not something the reply carries -- it is what the page view
+              says when there was no reply at all -- so arriving at one clears it here. `isLocked`
+              needs no such help: every page answers with it, so `...pageData` above has already
+              settled whether THIS page is protected.
+            */
+            notFound: false
+          })
+          this.applyViewerState(pageData.viewer)
+          // Update editor state timestamps
+          const curDate = Temporal.Now.instant()
+          editorStore.$patch({
+            lastChangeTimestamp: curDate,
+            lastSaveTimestamp: curDate
+          })
         })
       } catch (err) {
         // -> A missing page is an ordinary outcome, not a failure: it is what puts a new instance in

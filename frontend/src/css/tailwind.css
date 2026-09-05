@@ -839,3 +839,40 @@
   --breakpoint-lg: 1440px;
   --breakpoint-xl: 1920px;
 }
+
+/*
+  Page transitions.
+
+  The cross-fade one page makes into the next. `composables/viewTransition.js` is the other half: it
+  hands the whole swap to the View Transition API in one go, and this is what the browser does with
+  the two snapshots it took either side of it.
+
+  Only the duration is set. The animation itself is the browser's own cross-fade, which blends the
+  outgoing and incoming snapshots with `plus-lighter` inside an isolated pair -- so their opacities
+  sum to 1 throughout and everything that did NOT change between the two (the header, the sidebar,
+  the shell around the article) holds perfectly steady rather than dipping through the middle of it.
+  That property is what makes a whole-document transition usable here instead of naming pieces of the
+  page individually, and it is why the two halves have to keep the SAME duration and easing: give the
+  incoming half a curve of its own and the parts that are identical start to flicker.
+
+  180ms rather than the browser's 250: this fires on every link a reader follows, and a fade long
+  enough to notice on the first page is a fade in the way by the fifth.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+/*
+  Nothing moves for a reader who has asked for that. The swap is still a single change -- that part is
+  the point of it and is not an animation -- it simply arrives as a cut. `animation: none` leaves the
+  transition with nothing to wait on, so it ends on the next frame; the group is in the list because a
+  live one there would hold the finished snapshot on screen after the two halves had stopped.
+*/
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

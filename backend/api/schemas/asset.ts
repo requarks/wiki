@@ -41,6 +41,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description: 'Whether a thumbnail was generated, and `/_thumb/<id>.webp` will serve one.'
       },
+      width: {
+        type: 'integer',
+        description:
+          'Images only — in pixels, as displayed. Absent when the dimensions could not be read, which is the case for anything uploaded while the Sharp extension was missing.'
+      },
+      height: {
+        type: 'integer',
+        description: 'Images only — in pixels, as displayed.'
+      },
       createdAt: {
         type: 'string',
         format: 'date-time'

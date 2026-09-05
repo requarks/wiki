@@ -7,7 +7,12 @@
       -->
       <w-card-section class="card-header">
         <w-icon :name="header.icon" size="sm" class="mr-2" />
-        <span>{{ t(header.title) }}</span>
+        <div class="min-w-0">
+          <div>{{ t(header.title) }}</div>
+          <!-- -> Which folder is being moved: the form below is a destination and nothing else, so
+                  without this the dialog never says what it is acting on -->
+          <div class="text-caption truncate" v-if="isFolderMode">{{ itemTitle }}</div>
+        </div>
         <w-space />
         <!-- -> Only where there is a choice to make: one active locale is most wikis, and a button
                 that can only say `en` is noise on all of them -->
@@ -20,7 +25,9 @@
           color="white"
           :label="siteStore.localeAlias(state.locale)"
           :aria-label="siteStore.localeAlias(state.locale)">
-          <w-tooltip>{{ t(`pageSaveDialog.localeHint`) }}</w-tooltip>
+          <w-tooltip>{{
+            t(isAssetMode ? `fileman.assetLocaleHint` : `pageSaveDialog.localeHint`)
+          }}</w-tooltip>
           <locale-selector-menu
             :selected="state.locale"
             :navigate="false"
@@ -64,7 +71,7 @@
                 :active="item.id === state.currentFileId"
                 @click="selectItem(item)">
                 <w-item-section side>
-                  <w-icon :name="item.icon" size="sm" />
+                  <w-icon :name="item.icon" size="sm" :style="item.iconStyle" />
                 </w-item-section>
                 <w-item-section>
                   <w-item-label>{{ item.title }}</w-item-label>
@@ -75,8 +82,30 @@
         </div>
       </div>
       <div class="page-save-dialog-path font-robotomono">{{ currentFolderPath }}</div>
-      <w-list class="py-2">
-        <w-item>
+      <w-list class="py-2" v-if="!isFolderMode">
+        <!--
+          A folder is named twice over -- what it is called, and the segment its children's paths are
+          built from -- so a copy asks for both, the way the create and rename dialogs do. The path
+          follows the title until that field is touched, which is what makes `Guides copy` arrive as
+          `guides-copy` without anybody typing it.
+        -->
+        <w-item v-if="isFolderCopyMode">
+          <blueprint-icon icon="folder" />
+          <w-item-section>
+            <w-input
+              v-model="state.title"
+              :label="t(`fileman.folderTitle`)"
+              dense
+              outlined
+              autofocus
+              @keyup:enter="save" />
+          </w-item-section>
+        </w-item>
+        <!--
+          A page has a title and, separately, the path segment it is addressed by; a file has one
+          name that is both, so the asset mode asks for that alone.
+        -->
+        <w-item v-if="!isAssetMode && !isFolderCopyMode">
           <blueprint-icon icon="new-document" />
           <w-item-section>
             <w-input
@@ -90,13 +119,15 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="file-submodule" />
+          <blueprint-icon :icon="isAssetMode ? `image` : `file-submodule`" />
           <w-item-section>
             <w-input
               v-model="state.path"
-              :label="t(`pageSaveDialog.pathName`)"
+              :label="t(pathField.label)"
+              :hint="pathField.hint ? t(pathField.hint) : undefined"
               dense
               outlined
+              :autofocus="isAssetMode"
               @focus="onPathFocus"
               @keyup:enter="save" />
           </w-item-section>
@@ -165,6 +196,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import slugify from 'slugify'
 
 import fileTypes from '../helpers/fileTypes'
+import { folderIconStyle } from '@/helpers/folderColors'
 
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
@@ -261,10 +293,46 @@ const header = computed(() => {
     case 'renamePage': {
       return { icon: 'img:/_assets/icons/fluent-rename.svg', title: 'pageRenameDialog.title' }
     }
+    case 'renameAsset': {
+      return { icon: 'img:/_assets/icons/fluent-rename.svg', title: 'fileman.assetRenameMove' }
+    }
+    case 'moveFolder': {
+      return { icon: 'img:/_assets/icons/fluent-folder-tree.svg', title: 'fileman.folderMove' }
+    }
+    case 'duplicateFolder': {
+      return { icon: 'img:/_assets/icons/color-documents.svg', title: 'fileman.folderDuplicate' }
+    }
     default: {
       return { icon: 'img:/_assets/icons/fluent-save-as.svg', title: 'pageSaveDialog.title' }
     }
   }
+})
+
+/** Whether this is browsing for somewhere to put a file rather than a page. */
+const isAssetMode = computed(() => props.mode === 'renameAsset')
+
+/**
+ * Whether this is picking a destination and nothing else. A folder keeps its own name and title when
+ * it moves -- renaming one is its own dialog -- so there is no field to fill in, and the browser is
+ * the whole of the form.
+ */
+const isFolderMode = computed(() => props.mode === 'moveFolder')
+
+/**
+ * Whether a folder is being copied, which asks for a destination AND a name: the copy is a new folder
+ * and needs one of its own, defaulted to the source's with `copy` on the end.
+ */
+const isFolderCopyMode = computed(() => props.mode === 'duplicateFolder')
+
+/** What the one field every mode shares is asking for. */
+const pathField = computed(() => {
+  if (isAssetMode.value) {
+    return { label: 'fileman.assetFileName', hint: 'fileman.assetFileNameHint' }
+  }
+  if (isFolderCopyMode.value) {
+    return { label: 'fileman.folderFileName', hint: 'fileman.folderFileNameHint' }
+  }
+  return { label: 'pageSaveDialog.pathName', hint: null }
 })
 
 const currentFolderPath = computed(() => {
@@ -282,10 +350,15 @@ const files = computed(() => {
     switch (f.type) {
       case 'folder': {
         f.icon = fileTypes.folder.icon
+        f.iconStyle = folderIconStyle(f.hue)
         break
       }
       case 'page': {
         f.icon = fileTypes.page.icon
+        break
+      }
+      case 'asset': {
+        f.icon = fileTypes[f.fileExt]?.icon ?? ''
         break
       }
     }
@@ -323,6 +396,60 @@ function onPathFocus() {
 }
 
 async function save() {
+  // -> Nothing to validate: the destination is whatever folder the browser is open on, and the site
+  //    root is a real answer
+  if (isFolderMode.value) {
+    onDialogOK({
+      locale: state.locale,
+      folderPath: currentFolderPath.value.slice(1, -1)
+    })
+    return
+  }
+  /*
+    A folder is held to what a folder is held to everywhere else: a title that is shown, and a path
+    segment that every page underneath is addressed through. The server checks both again, and it is
+    the one that decides whether the name is free where the copy is going.
+  */
+  if (isFolderCopyMode.value) {
+    if (!state.title?.trim()) {
+      notify({ type: 'negative', message: t('fileman.folderTitleMissing') })
+      return
+    }
+    state.path = normalizePagePath(state.path)
+    if (!/^[a-z0-9-]+$/.test(state.path)) {
+      notify({ type: 'negative', message: t('fileman.folderFileNameInvalid') })
+      return
+    }
+    onDialogOK({
+      locale: state.locale,
+      folderPath: currentFolderPath.value.slice(1, -1),
+      pathName: state.path,
+      title: state.title.trim()
+    })
+    return
+  }
+  /*
+    A file name is not a slug: it keeps its extension, which is what decides the type the file is
+    served as, so the page rules below -- which refuse a dot -- cannot be applied to it. Held to what
+    the rename dialog it replaces asked for, and left to the server to sanitize beyond that; the
+    stored name comes back on the response.
+  */
+  if (isAssetMode.value) {
+    const name = state.path?.trim() ?? ''
+    if (name.length < 2 || !name.includes('.')) {
+      notify({
+        type: 'negative',
+        message: t('fileman.renameAssetInvalid')
+      })
+      return
+    }
+    onDialogOK({
+      locale: state.locale,
+      folderPath: currentFolderPath.value.slice(1, -1),
+      fileName: name
+    })
+    return
+  }
   if (!state.title?.trim()) {
     notify({
       type: 'negative',
@@ -416,6 +543,7 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
               folderPath: item.folderPath,
               fileName: item.fileName,
               title: item.title,
+              hue: item.hue,
               children: state.treeNodes[item.id]?.children ?? []
             }
 
@@ -447,7 +575,8 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
                 id: item.id,
                 type: 'folder',
                 title: item.title,
-                fileName: item.fileName
+                fileName: item.fileName,
+                hue: item.hue
               })
             }
             break
@@ -463,6 +592,21 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
                 fileName: item.fileName,
                 createdAt: item.createdAt,
                 updatedAt: item.updatedAt
+              })
+            }
+            break
+          }
+          // -> Only the asset mode asks for these, and it asks for them so that the folder being
+          //    picked shows the files already in it -- which is where a name clash becomes visible
+          case 'asset': {
+            if (isCurrentFolder) {
+              state.fileList.push({
+                id: item.id,
+                type: 'asset',
+                title: item.title,
+                fileExt: item.fileExt,
+                folderPath: item.folderPath,
+                fileName: item.fileName
               })
             }
             break
@@ -552,9 +696,35 @@ onMounted(async () => {
       state.pathDirty = true
       break
     }
+    /*
+      Assets rather than pages in the file list: this is browsing for a folder to put a file in, and
+      what is worth seeing there is the other files already in it. `pathDirty` because an asset has
+      no title of its own to derive a name from -- the two are the same string.
+    */
+    case 'renameAsset': {
+      state.typesToFetch = ['folder', 'asset']
+      state.pathDirty = true
+      break
+    }
+    // -> Folders alone: the answer being picked is which one to move into, and a listing of the pages
+    //    beside it is not part of that question
+    case 'moveFolder': {
+      state.typesToFetch = ['folder']
+      state.pathDirty = true
+      break
+    }
+    case 'duplicateFolder': {
+      state.typesToFetch = ['folder']
+      break
+    }
   }
-  state.title = props.itemTitle || ''
-  state.path = fName || ''
+  /*
+    A copy is offered the source's name with `copy` on the end, which the path field then slugs into
+    `guides-copy`. Set before the watcher can see it -- it only follows the title while the path has
+    not been touched, and this is one write, not a typed one.
+  */
+  state.title = isFolderCopyMode.value ? `${props.itemTitle} copy` : props.itemTitle || ''
+  state.path = isFolderCopyMode.value ? `${fName}-copy` : fName || ''
   await loadTree({
     parentPath: fPath,
     initLoad: true

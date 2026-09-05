@@ -3,8 +3,14 @@ import path from 'node:path'
 import mime from 'mime'
 import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
 import { assets as assetsTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError, decodeTreePath, encodeTreePath } from '../helpers/common.ts'
-import { makeImageThumbnail } from '../helpers/images.ts'
+import {
+  CustomError,
+  decodeTreePath,
+  encodeTreePath,
+  normalizeFolderPath
+} from '../helpers/common.ts'
+import { makeImageThumbnail, readImageDimensions } from '../helpers/images.ts'
+import type { ImageDimensions } from '../helpers/images.ts'
 import type { Readable } from 'node:stream'
 import type { DeletedEntry } from './tree.ts'
 import type { StorageAssetRef } from './storage.ts'
@@ -101,6 +107,13 @@ export interface Asset {
   locale: string
   title: string
   hasPreview: boolean
+  /**
+   * How big the image is, in pixels. Absent for anything that is not an image, and for an image whose
+   * dimensions could not be read when it arrived — Sharp does the reading, and it is an optional
+   * dependency, so a file uploaded while it was missing has none and never will.
+   */
+  width?: number
+  height?: number
   createdAt: Date
   updatedAt: Date
 }
@@ -147,6 +160,26 @@ function normalizePath(filePath: string): string {
  */
 function extensionOf(fileName: string): string {
   return path.extname(fileName).replace(/^\./, '').toLowerCase()
+}
+
+/**
+ * What the dimensions contribute to a stored `meta` object, on the asset row and on the tree row
+ * alike.
+ *
+ * Spread rather than assigned, so that a file with no dimensions to record carries no keys for them
+ * rather than a pair of nulls: an absent key is the honest shape for "never measured", and it is what
+ * keeps a listing from claiming a document is zero pixels across.
+ */
+function dimensionMeta(dimensions: ImageDimensions | null): Record<string, number> {
+  return dimensions ? { width: dimensions.width, height: dimensions.height } : {}
+}
+
+/** The pair back out of anything carrying it, or null when only one of the two is there to read. */
+function dimensionsOf(source: {
+  width?: number | null
+  height?: number | null
+}): ImageDimensions | null {
+  return source.width && source.height ? { width: source.width, height: source.height } : null
 }
 
 function kindOf(mimeType: string, fileExt: string): AssetKind {
@@ -335,6 +368,9 @@ class Assets {
       kind === 'image'
         ? await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
         : null
+    // -> Read now, while the bytes are in hand: a folder listing describes a screenful of files at a
+    //    time, and could not open each of them to say how big its image is
+    const dimensions = kind === 'image' ? await readImageDimensions(data) : null
 
     // -> What is already at this name, if anything, and what the site says to do about it. Asked
     //    before any row is touched, since two of the three answers write nothing new at all.
@@ -378,6 +414,7 @@ class Assets {
         mimeType: resolvedMime,
         data,
         preview,
+        dimensions,
         authorId
       })
     }
@@ -395,7 +432,8 @@ class Assets {
       meta: {
         fileSize: data.length,
         fileExt,
-        mimeType: resolvedMime
+        mimeType: resolvedMime,
+        ...dimensionMeta(dimensions)
       }
     })
     const storedName = entry.fileName
@@ -412,6 +450,7 @@ class Assets {
         kind,
         mimeType: resolvedMime,
         fileSize: data.length,
+        meta: dimensionMeta(dimensions),
         preview,
         authorId,
         siteId
@@ -456,6 +495,7 @@ class Assets {
       locale,
       title: entry.title,
       hasPreview: Boolean(preview),
+      ...dimensionMeta(dimensions),
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt
     }
@@ -489,6 +529,7 @@ class Assets {
     mimeType,
     data,
     preview,
+    dimensions,
     authorId
   }: {
     id: string
@@ -502,6 +543,7 @@ class Assets {
     mimeType: string
     data: Buffer
     preview: Buffer | null
+    dimensions: ImageDimensions | null
     authorId: string
   }): Promise<Asset> {
     await WIKI.models.storage.putAsset(
@@ -515,6 +557,10 @@ class Assets {
         kind,
         mimeType,
         fileSize: data.length,
+        // -> Set outright rather than merged, since these describe the bytes that just arrived: a
+        //    replacement of another size overwrites the old measurements, and one that could not be
+        //    measured at all leaves none behind
+        meta: dimensionMeta(dimensions),
         preview,
         authorId,
         updatedAt: sql`now()`
@@ -523,7 +569,10 @@ class Assets {
     // -> The tree carries its own copy of these, and it is what a folder listing reads
     await WIKI.db
       .update(treeTable)
-      .set({ meta: { fileSize: data.length, fileExt, mimeType }, updatedAt: sql`now()` })
+      .set({
+        meta: { fileSize: data.length, fileExt, mimeType, ...dimensionMeta(dimensions) },
+        updatedAt: sql`now()`
+      })
       .where(eq(treeTable.id, id))
 
     // -> The path resolves to the same asset as before, but to different metadata: the ETag is the
@@ -557,6 +606,7 @@ class Assets {
         locale,
         title,
         hasPreview: Boolean(preview),
+        ...dimensionMeta(dimensions),
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -575,6 +625,7 @@ class Assets {
         kind: assetsTable.kind,
         mimeType: assetsTable.mimeType,
         fileSize: assetsTable.fileSize,
+        meta: assetsTable.meta,
         createdAt: assetsTable.createdAt,
         updatedAt: assetsTable.updatedAt,
         folderPath: treeTable.folderPath,
@@ -593,11 +644,15 @@ class Assets {
     if (!row) {
       return null
     }
+    // -> `meta` is where the row keeps the dimensions and is not itself part of an asset as the API
+    //    describes one, so it is unpacked here rather than passed along
+    const { meta, ...rest } = row
     return {
-      ...row,
+      ...rest,
       fileSize: row.fileSize ?? 0,
       folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
-      hasPreview: Boolean(row.hasPreview)
+      hasPreview: Boolean(row.hasPreview),
+      ...dimensionMeta(dimensionsOf(meta as Record<string, any>))
     } as Asset
   }
 
@@ -628,6 +683,7 @@ class Assets {
         kind: assetsTable.kind,
         mimeType: assetsTable.mimeType,
         fileSize: assetsTable.fileSize,
+        meta: assetsTable.meta,
         createdAt: assetsTable.createdAt,
         updatedAt: assetsTable.updatedAt,
         folderPath: treeTable.folderPath,
@@ -652,11 +708,15 @@ class Assets {
     if (!row) {
       return null
     }
+    // -> `meta` is where the row keeps the dimensions and is not itself part of an asset as the API
+    //    describes one, so it is unpacked here rather than passed along
+    const { meta, ...rest } = row
     return {
-      ...row,
+      ...rest,
       fileSize: row.fileSize ?? 0,
       folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
-      hasPreview: Boolean(row.hasPreview)
+      hasPreview: Boolean(row.hasPreview),
+      ...dimensionMeta(dimensionsOf(meta as Record<string, any>))
     } as AssetAtPath
   }
 
@@ -883,6 +943,7 @@ class Assets {
       kind === 'image'
         ? await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
         : null
+    const dimensions = kind === 'image' ? await readImageDimensions(data) : null
 
     if (occupant) {
       return this.replace({
@@ -899,6 +960,7 @@ class Assets {
         mimeType,
         data,
         preview,
+        dimensions,
         authorId
       })
     }
@@ -909,7 +971,7 @@ class Assets {
       title: safeName,
       locale,
       siteId,
-      meta: { fileSize: data.length, fileExt, mimeType }
+      meta: { fileSize: data.length, fileExt, mimeType, ...dimensionMeta(dimensions) }
     })
 
     try {
@@ -920,6 +982,7 @@ class Assets {
         kind,
         mimeType,
         fileSize: data.length,
+        meta: dimensionMeta(dimensions),
         preview,
         authorId,
         siteId
@@ -950,6 +1013,7 @@ class Assets {
       locale,
       title: entry.title,
       hasPreview: Boolean(preview),
+      ...dimensionMeta(dimensions),
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt
     }
@@ -1226,16 +1290,35 @@ class Assets {
   }
 
   /**
-   * Rename an asset, in both of the rows that describe it.
+   * Rename an asset, move it to another folder, or both.
    *
+   * One operation rather than two, because to a storage target they are the same one: a file's path
+   * under a target is its folder and its name together, so either half changing is the same copy
+   * moved to a new place. The wiki's own rows are what decide where that is, and this rewrites them
+   * before asking every target to follow.
+   *
+   * A locale is part of that address too -- a target brackets its tree by locale unless the site says
+   * otherwise -- so moving between locales is the same operation again, and the folder the file lands
+   * in is that locale's, created if that locale does not have one yet.
+   *
+   * @param fileName What to call it, sanitized. Keeps its current name when absent.
+   * @param folderPath Which folder to put it in, from the site root, empty for the root itself.
+   *                   Created if it does not exist. Stays where it is when absent.
+   * @param locale Which locale's tree to put it in. Stays in its own when absent.
    * @returns The updated metadata, or null if there is no such asset on this site
    */
-  async renameAsset(siteId: string, id: string, fileName: string): Promise<Asset | null> {
+  async moveAsset(
+    siteId: string,
+    id: string,
+    { fileName, folderPath, locale }: { fileName?: string; folderPath?: string; locale?: string },
+    actorId?: string
+  ): Promise<Asset | null> {
     const asset = await this.getAsset(siteId, id)
-    if (!asset) {
+    const entry = await WIKI.models.tree.getById(id)
+    if (!asset || !entry) {
       return null
     }
-    const safeName = sanitizeFileName(fileName)
+    const safeName = fileName === undefined ? asset.fileName : sanitizeFileName(fileName)
     if (!safeName) {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
@@ -1243,41 +1326,101 @@ class Assets {
     if (!fileExt) {
       throw new CustomError('assetInvalidFileName', 'The file name must keep a file extension.')
     }
-    // -> The same two rules an upload is held to: renaming is another way of arriving at a name, and
-    //    `readme.pdf` renamed to `readme.md` would land on the page of that name just as squarely
-    const entry = await WIKI.models.tree.getById(id)
-    if (entry) {
-      await this.guardAgainstPageCollision({
-        siteId,
-        locale: entry.locale,
-        folderPath: decodeTreePath(entry.folderPath ?? '') ?? '',
-        fileName: safeName,
-        fileExt
-      })
+    const destination =
+      folderPath === undefined ? asset.folderPath : normalizeFolderPath(folderPath)
+    const destinationLocale = locale || entry.locale
+    const isRenamed = safeName !== asset.fileName
+    // -> One question rather than two: a file in another locale's tree is somewhere else as surely as
+    //    one in another folder, and everything below has to treat the pair as the destination
+    const isRelocated = destination !== asset.folderPath || destinationLocale !== entry.locale
+    if (!isRenamed && !isRelocated) {
+      return asset
     }
-    const resolvedMime = mime.getType(safeName) ?? asset.mimeType
 
-    await WIKI.models.tree.renameEntry({ id, fileName: safeName, title: safeName })
+    // -> The same two rules an upload is held to, asked of where it is GOING: renaming is another way
+    //    of arriving at a name, and `readme.pdf` renamed to `readme.md` -- or carried into the folder
+    //    holding the page `readme` -- would land on that page just as squarely
+    await this.guardAgainstPageCollision({
+      siteId,
+      locale: destinationLocale,
+      folderPath: destination,
+      fileName: safeName,
+      fileExt
+    })
+
+    let storedName = safeName
+    if (isRelocated) {
+      /*
+        Asked before anything is written, because the write cannot take it back: the tree entry is
+        MOVED rather than rewritten -- deleted and re-added, so that the folders the destination needs
+        get created and the ones it leaves stop counting it -- and a name refused halfway through that
+        would leave the asset row with no entry pointing at it. `addAsset` still settles a name that
+        was taken in between by suffixing it, which keeps the two rows consistent where failing would
+        not; `storedName` is read back off the row rather than assumed for exactly that case.
+      */
+      const occupant = await WIKI.models.tree.getEntryAt({
+        siteId,
+        locale: destinationLocale,
+        parentPath: destination,
+        fileName: safeName
+      })
+      if (occupant) {
+        throw new CustomError(
+          'assetNameTakenByEntry',
+          `A ${occupant.type} with this name already exists there.`,
+          409
+        )
+      }
+      await WIKI.models.tree.deleteEntry(id)
+      const moved = await WIKI.models.tree.addAsset({
+        id,
+        parentPath: destination,
+        fileName: safeName,
+        title: safeName,
+        locale: destinationLocale,
+        siteId,
+        tags: entry.tags,
+        meta: entry.meta
+      })
+      storedName = moved.fileName
+    } else {
+      await WIKI.models.tree.renameEntry({ id, fileName: safeName, title: safeName })
+    }
+    // -> Off the stored name rather than off the requested one, since the two differ where a move had
+    //    to settle a collision
+    const storedExt = extensionOf(storedName)
+    const resolvedMime = mime.getType(storedName) ?? asset.mimeType
+
     await WIKI.db
       .update(assetsTable)
       .set({
-        fileName: safeName,
-        fileExt,
+        fileName: storedName,
+        fileExt: storedExt,
         mimeType: resolvedMime,
-        kind: kindOf(resolvedMime, fileExt),
+        kind: kindOf(resolvedMime, storedExt),
         updatedAt: sql`now()`
       })
       .where(eq(assetsTable.id, id))
-    // -> The tree carries its own copy of these, and it is what a folder listing reads
+    // -> The tree carries its own copy of these, and it is what a folder listing reads. The bytes are
+    //    untouched by either half of this, so whatever was measured of them is carried across rather
+    //    than rebuilt: nothing here has the file in hand to measure it again.
     await WIKI.db
       .update(treeTable)
-      .set({ meta: { fileSize: asset.fileSize, fileExt, mimeType: resolvedMime } })
+      .set({
+        meta: {
+          fileSize: asset.fileSize,
+          fileExt: storedExt,
+          mimeType: resolvedMime,
+          ...dimensionMeta(dimensionsOf(asset))
+        }
+      })
       .where(eq(treeTable.id, id))
 
     // -> Every target holding this asset lays its copy out by path, so each of them has a file to
     //    move now that the tree rows have been rewritten
-    if (entry) {
-      await this.relocateAssets(siteId, [
+    await this.relocateAssets(
+      siteId,
+      [
         {
           id,
           previous: {
@@ -1286,20 +1429,24 @@ class Assets {
             fileName: asset.fileName
           }
         }
-      ])
-    }
+      ],
+      actorId
+    )
 
     // -> Both ends of the move: the name it left, and the name it took, which something else may have
     //    been resolved at before it was freed up
     this.forgetPath(siteId, asset.folderPath, asset.fileName)
-    this.forgetPath(siteId, asset.folderPath, safeName)
+    this.forgetPath(siteId, destination, storedName)
     await this.dropCachedContent([id])
 
     WIKI.models.hooks.emit('asset:rename', {
       id,
-      fileName: safeName,
+      fileName: storedName,
       previousFileName: asset.fileName,
-      folderPath: asset.folderPath,
+      folderPath: destination,
+      previousFolderPath: asset.folderPath,
+      locale: destinationLocale,
+      previousLocale: entry.locale,
       siteId
     })
 

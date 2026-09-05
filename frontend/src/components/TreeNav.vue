@@ -32,7 +32,7 @@ const props = defineProps({
   },
   contextActionList: {
     type: Array,
-    default: () => ['newFolder', 'duplicate', 'rename', 'move', 'del']
+    default: () => ['newFolder', 'color', 'duplicate', 'rename', 'move', 'del']
   },
   displayMode: {
     type: String,
@@ -55,6 +55,11 @@ const contextActions = {
     icon: 'la:plus-circle',
     iconColor: 'blue',
     label: t('common.actions.newFolder')
+  },
+  color: {
+    icon: 'la:fill',
+    iconColor: 'orange',
+    label: t('common.actions.setColor') + '...'
   },
   duplicate: {
     icon: 'la:copy',

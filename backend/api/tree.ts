@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy } from '../models/tree.ts'
-import { decodeTreePath } from '../helpers/common.ts'
+import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
+import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { actorFrom } from './pages.ts'
 
 interface TreeQuery {
@@ -106,6 +106,24 @@ function visibleTreeItems<T extends { type?: string; folderPath?: string; fileNa
 }
 
 /** A folder's own slash-separated path, which is what a rule over that branch addresses. */
+/**
+ * A folder as the `Folder` schema describes one.
+ *
+ * Five routes answer with a folder and each of them has to unpack the same two things out of the
+ * row -- the ltree path as a readable one, and the parts of `meta` that are a folder's own rather
+ * than the model's bookkeeping. Kept in one place so that adding a third cannot reach four routes
+ * and miss the fifth.
+ */
+function toFolderResponse(folder: TreeRow) {
+  return {
+    ...folder,
+    folderPath: decodeTreePath(folder.folderPath ?? '') ?? '',
+    childrenCount: folder.meta?.children ?? 0,
+    // -> Absent rather than zero on a folder nobody has coloured; see `setFolderColor`
+    ...(folder.meta?.hue ? { hue: folder.meta.hue } : {})
+  }
+}
+
 function folderPathOf(folder: { folderPath?: string | null; fileName: string }): string {
   const parent = decodeTreePath(folder.folderPath ?? '') ?? ''
   return parent ? `${parent}/${folder.fileName}` : folder.fileName
@@ -118,9 +136,15 @@ function folderPathOf(folder: { folderPath?: string | null; fileName: string }):
  * branch it opens: a rule denying `read:pages` under `geography` hides the folder as well as the
  * pages in it, and only somebody who may reorganise pages there may rename or remove it.
  */
-function mayOnFolder(req: FastifyRequest, permission: string, path: string): boolean {
+function mayOnFolder(
+  req: FastifyRequest,
+  permission: string,
+  path: string,
+  locale: string
+): boolean {
   return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
-    path
+    path,
+    locale
   })
 }
 
@@ -447,14 +471,10 @@ async function routes(app: FastifyInstance) {
       }
       const folderPath = folderPathOf(folder)
       // -> Not visible is the same as not there, so it answers as the id had matched nothing
-      if (!mayOnFolder(req, 'read:pages', folderPath)) {
+      if (!mayOnFolder(req, 'read:pages', folderPath, folder.locale)) {
         return reply.notFound('This folder does not exist.')
       }
-      return {
-        ...folder,
-        folderPath: decodeTreePath(folder.folderPath ?? '') ?? '',
-        childrenCount: folder.meta?.children ?? 0
-      }
+      return toFolderResponse(folder)
     }
   )
 
@@ -528,12 +548,13 @@ async function routes(app: FastifyInstance) {
         parentPath = parent ? folderPathOf(parent) : parentPath
       }
       const target = [parentPath, req.body.pathName].filter(Boolean).join('/')
-      if (!mayOnFolder(req, 'manage:pages', target)) {
+      const locale = req.body.locale ?? defaultLocale(req.params.siteId)
+      if (!mayOnFolder(req, 'manage:pages', target, locale)) {
         return reply.forbidden('You are not allowed to create a folder here.')
       }
       const folder = await WIKI.models.tree.createFolder({
         siteId: req.params.siteId,
-        locale: req.body.locale ?? defaultLocale(req.params.siteId),
+        locale,
         parentId: req.body.parentId,
         parentPath: req.body.parentPath,
         pathName: req.body.pathName,
@@ -542,11 +563,7 @@ async function routes(app: FastifyInstance) {
       return {
         ok: true,
         message: 'Folder created successfully.',
-        folder: {
-          ...folder,
-          folderPath: decodeTreePath(folder.folderPath ?? '') ?? '',
-          childrenCount: folder.meta?.children ?? 0
-        }
+        folder: toFolderResponse(folder)
       }
     }
   )
@@ -592,7 +609,7 @@ async function routes(app: FastifyInstance) {
       if (!existing || existing.siteId !== req.params.siteId) {
         return reply.notFound('This folder does not exist.')
       }
-      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing))) {
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing), existing.locale)) {
         return reply.forbidden('You are not allowed to rename this folder.')
       }
       const folder = await WIKI.models.tree.renameFolder({
@@ -604,11 +621,267 @@ async function routes(app: FastifyInstance) {
       return {
         ok: true,
         message: 'Folder renamed successfully.',
-        folder: {
-          ...folder,
-          folderPath: decodeTreePath(folder.folderPath ?? '') ?? '',
-          childrenCount: folder.meta?.children ?? 0
+        folder: toFolderResponse(folder)
+      }
+    }
+  )
+
+  /**
+   * MOVE FOLDER
+   */
+  app.put<{
+    Params: { siteId: string; folderId: string }
+    Body: { folderPath: string; locale?: string }
+  }>(
+    '/sites/:siteId/tree/folders/:folderId/path',
+    {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
+      schema: {
+        summary: 'Move a folder to another parent',
+        description:
+          'Everything under the folder moves with it — pages, files, and the folders in between — and every storage target holding a copy follows. Any folder the destination needs is created.\n\nMoving needs `manage:pages` at the destination as well as at the source, since page rules are granted per path and per locale. A folder cannot be moved into its own subtree.',
+        tags: ['Tree'],
+        params: folderIdParam,
+        body: {
+          type: 'object',
+          required: ['folderPath'],
+          properties: {
+            folderPath: {
+              type: 'string',
+              maxLength: 255,
+              description:
+                'The folder to move it into, from the site root, empty for the root itself. Created if it does not exist.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 255,
+              description: 'The locale to move it to. Stays in its own when absent.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Folder moved successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              folder: { $ref: 'Folder#' }
+            }
+          }
         }
+      }
+    },
+    async (req, reply) => {
+      const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
+      if (!existing || existing.siteId !== req.params.siteId) {
+        return reply.notFound('This folder does not exist.')
+      }
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing), existing.locale)) {
+        return reply.forbidden('You are not allowed to move this folder.')
+      }
+      /*
+        And where it is going, which is a whole branch arriving somewhere the mover may have no say
+        over: rules are granted per path AND per locale, so without this a folder full of pages is a
+        way to write into a place they could not have created one.
+      */
+      const destination = normalizeFolderPath(req.body.folderPath)
+      const destinationLocale = req.body.locale || existing.locale
+      if (
+        !mayOnFolder(
+          req,
+          'manage:pages',
+          [destination, existing.fileName].filter(Boolean).join('/'),
+          destinationLocale
+        )
+      ) {
+        return reply.forbidden('You are not allowed to move this folder there.')
+      }
+      const folder = await WIKI.models.tree.moveFolder({
+        folderId: req.params.folderId,
+        folderPath: destination,
+        locale: destinationLocale,
+        actorId: req.session.user?.id
+      })
+      return {
+        ok: true,
+        message: 'Folder moved successfully.',
+        folder: toFolderResponse(folder)
+      }
+    }
+  )
+
+  /**
+   * DUPLICATE FOLDER
+   */
+  app.post<{
+    Params: { siteId: string; folderId: string }
+    Body: { folderPath: string; pathName: string; title: string; locale?: string }
+  }>(
+    '/sites/:siteId/tree/folders/:folderId/duplicate',
+    {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
+      schema: {
+        summary: 'Duplicate a folder',
+        description:
+          'Copies the folder and everything under it — the folders in between, the pages and the files, each as a new entry of its own with its own copy on every storage target. Aliases, translation sets and sidebar overrides are not carried across; folder colours are.\n\nCopying needs `manage:pages` at the destination as well as at the source, since page rules are granted per path and per locale. A folder cannot be copied into its own subtree, and the name must be free where it is going.',
+        tags: ['Tree'],
+        params: folderIdParam,
+        body: {
+          allOf: [
+            { $ref: 'FolderInput#' },
+            { type: 'object', required: ['pathName', 'title'] },
+            {
+              type: 'object',
+              properties: {
+                folderPath: {
+                  type: 'string',
+                  maxLength: 2048,
+                  description:
+                    'Slash-separated path of the folder to copy into, empty for the site root. Created if it does not exist.'
+                },
+                locale: {
+                  type: 'string',
+                  maxLength: 10,
+                  description: "The source folder's own locale when absent."
+                }
+              }
+            }
+          ]
+        },
+        response: {
+          200: {
+            description: 'Folder duplicated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              folder: { $ref: 'Folder#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized('Duplicating a folder requires a logged in user.')
+      }
+      const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
+      if (!existing || existing.siteId !== req.params.siteId) {
+        return reply.notFound('This folder does not exist.')
+      }
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing), existing.locale)) {
+        return reply.forbidden('You are not allowed to duplicate this folder.')
+      }
+      // -> And where the copy is going, which is a whole branch of new pages arriving somewhere the
+      //    copier may have no say over
+      const destination = normalizeFolderPath(req.body.folderPath)
+      const destinationLocale = req.body.locale || existing.locale
+      if (
+        !mayOnFolder(
+          req,
+          'manage:pages',
+          [destination, req.body.pathName].filter(Boolean).join('/'),
+          destinationLocale
+        )
+      ) {
+        return reply.forbidden('You are not allowed to duplicate this folder there.')
+      }
+      const folder = await WIKI.models.tree.duplicateFolder({
+        folderId: req.params.folderId,
+        folderPath: destination,
+        pathName: req.body.pathName,
+        title: req.body.title,
+        locale: destinationLocale,
+        actor
+      })
+      return {
+        ok: true,
+        message: 'Folder duplicated successfully.',
+        folder: toFolderResponse(folder)
+      }
+    }
+  )
+
+  /**
+   * SET FOLDER COLOR
+   */
+  app.put<{
+    Params: { siteId: string; folderId: string }
+    Body: { hue: number }
+  }>(
+    '/sites/:siteId/tree/folders/:folderId/color',
+    {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions come
+        from a group's RULES. Checked against the folder's own path below.
+      */
+      schema: {
+        summary: "Set a folder's colour",
+        description:
+          'A hue rotation in degrees applied to the folder icon, rather than a colour: the icon is one image that the interface turns around the colour wheel. Zero is the colour every folder starts out, and clears the setting.',
+        tags: ['Tree'],
+        params: folderIdParam,
+        body: {
+          type: 'object',
+          required: ['hue'],
+          properties: {
+            hue: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 359,
+              description: 'Degrees around the colour wheel. Zero puts the folder back to yellow.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Folder colour set successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              folder: { $ref: 'Folder#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
+      if (!existing || existing.siteId !== req.params.siteId) {
+        return reply.notFound('This folder does not exist.')
+      }
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing), existing.locale)) {
+        return reply.forbidden('You are not allowed to change this folder.')
+      }
+      const folder = await WIKI.models.tree.setFolderColor({
+        folderId: req.params.folderId,
+        hue: req.body.hue
+      })
+      return {
+        ok: true,
+        message: 'Folder colour set successfully.',
+        folder: toFolderResponse(folder)
       }
     }
   )
@@ -647,7 +920,7 @@ async function routes(app: FastifyInstance) {
       if (!existing || existing.siteId !== req.params.siteId) {
         return reply.notFound('This folder does not exist.')
       }
-      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing))) {
+      if (!mayOnFolder(req, 'manage:pages', folderPathOf(existing), existing.locale)) {
         return reply.forbidden('You are not allowed to delete this folder.')
       }
       const removed = await WIKI.models.tree.deleteFolder(req.params.folderId)

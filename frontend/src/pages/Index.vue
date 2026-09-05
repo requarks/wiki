@@ -347,6 +347,7 @@ import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { notify } from '@/composables/notify'
+import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { splitLocalePath } from '@/helpers/pagePaths'
@@ -594,8 +595,8 @@ watch(
   page view (a search, the profile, the admin area), and the store it reads is global: an immediate run
   fires against whatever page was on screen BEFORE that detour, so leaving a locked page for the search
   screen and coming back to an unprotected one prompted for the earlier page's password. Every real
-  case still fires here, because `pageLoad` clears the flag as it starts and the reply sets it again --
-  so a locked page always arrives as a change, mount or no mount.
+  case still fires here: the flag is set from the reply, alongside the id of the page it came with, so
+  walking from one protected page to another moves this source from one id to the other.
 */
 watch(
   () => (pageStore.isLocked ? pageStore.id : null),
@@ -625,7 +626,7 @@ function onHashChange() {
 
 watch(
   () => route.path,
-  async (newValue) => {
+  async (newValue, oldValue) => {
     // -> Ignore route change (e.g. from page create route fix)
     if (editorStore.ignoreRouteChange) {
       editorStore.$patch({ ignoreRouteChange: false })
@@ -683,11 +684,35 @@ watch(
     const pagePath = localePath?.path ?? newValue
     const pageLocale = localePath?.locale
 
+    /*
+      The moment one page becomes the next, as a single change.
+
+      Everything the reader can see is in here -- the scroll position, the title, the description, the
+      breadcrumbs, the article -- because they used to arrive separately: the header would change over
+      to the new page while the old article was still under it, and for a frame the screen was half of
+      each. `withViewTransition` holds the screen still for the length of this function and cross-fades
+      between what it looked like before and after.
+
+      It is also why `scrollPageToTop` is in here rather than ahead of the request, where it used to
+      be: on the far side of the fetch the jump is not visible at all, the outgoing page being a
+      snapshot by then, so it no longer has to happen on the page being left.
+
+      Not on the immediate run, which is this component mounting rather than the reader going
+      anywhere: there is no page being left, and the screen behind this one is still the boot splash.
+    */
+    const isFirstRun = oldValue === undefined
+    const swapTo = (apply) => {
+      const update = () => {
+        scrollPageToTop()
+        apply()
+      }
+      return isFirstRun ? update() : withViewTransition(update)
+    }
+
     // -> Load Page. The contents panel belongs to the page being left, so it goes with it
     state.tocPanelOpen = false
-    scrollPageToTop()
     try {
-      await pageStore.pageLoad({ path: pagePath, locale: pageLocale })
+      await pageStore.pageLoad({ path: pagePath, locale: pageLocale, applyWith: swapTo })
       if (editorStore.isActive) {
         /*
           Walking away from the editor closes it, and `mode` describes the editor that was open — so
@@ -737,7 +762,7 @@ watch(
         } else {
           // -> Not a notification over the page the reader came from: that page is still on screen
           //    behind it, at a URL that is not its own. The view draws the missing page instead.
-          pageStore.pageNotFound({ path: pagePath, locale: pageLocale })
+          await swapTo(() => pageStore.pageNotFound({ path: pagePath, locale: pageLocale }))
           /*
             The one place the page permissions have to be asked for on their own: everywhere else they
             arrive with the page, and here there is no page to carry them — while the screen about to

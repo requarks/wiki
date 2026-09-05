@@ -27,15 +27,22 @@ const assetIdParam = {
  * Assets live in the same tree as pages and are addressed by the same rules — a rule over a branch
  * covers the files in it as well as the pages, which is why the asset permissions are offered
  * alongside the page ones in the group editor.
+ *
+ * Where it sits includes the LOCALE it is in, and the parameter is required for that reason: a rule
+ * may be limited to particular locales, and `ruleMatchesPage` treats a reference with no locale as
+ * one no locale restriction applies to — so an omitted locale silently widens every such rule. Every
+ * asset the API hands around carries one, and the two places that build a destination by hand say
+ * which locale they mean.
  */
 function mayOnAsset(
   req: FastifyRequest,
   permission: string,
-  asset: { folderPath?: string | null; fileName: string }
+  asset: { folderPath?: string | null; fileName: string; locale: string }
 ): boolean {
   const folder = asset.folderPath ?? ''
   return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
-    path: folder ? `${folder}/${asset.fileName}` : asset.fileName
+    path: folder ? `${folder}/${asset.fileName}` : asset.fileName,
+    locale: asset.locale
   })
 }
 
@@ -151,14 +158,21 @@ async function routes(app: FastifyInstance) {
       const destination = folder
         ? [parentPath, folder.fileName].filter(Boolean).join('/')
         : (folderPath ?? '')
+      // -> Settled once, since the rule check and the write have to be asking about the same locale
+      const locale =
+        req.query.locale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
       if (
-        !mayOnAsset(req, 'write:assets', { folderPath: destination, fileName: req.query.fileName })
+        !mayOnAsset(req, 'write:assets', {
+          folderPath: destination,
+          fileName: req.query.fileName,
+          locale
+        })
       ) {
         return reply.forbidden('You are not allowed to upload a file here.')
       }
       const asset = await WIKI.models.assets.upload({
         siteId: req.params.siteId,
-        locale: req.query.locale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en',
+        locale,
         folderId: req.query.folderId,
         folderPath,
         fileName: req.query.fileName,
@@ -279,9 +293,12 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
-   * RENAME ASSET
+   * RENAME / MOVE ASSET
    */
-  app.patch<{ Params: { siteId: string; assetId: string }; Body: { fileName: string } }>(
+  app.patch<{
+    Params: { siteId: string; assetId: string }
+    Body: { fileName?: string; folderPath?: string; locale?: string }
+  }>(
     '/sites/:siteId/assets/:assetId',
     {
       /*
@@ -289,26 +306,37 @@ async function routes(app: FastifyInstance) {
         from a group's RULES, which address the folder the file is in. Checked below.
       */
       schema: {
-        summary: 'Rename an asset',
+        summary: 'Rename an asset or move it to another folder',
         description:
-          'The extension is part of the name, and changing it changes the type the file is served as.',
+          'Any of the three may be sent on its own, and they are the same operation to a storage target: a file is addressed by its locale, its folder and its name together, so the copy on every target follows. The extension is part of the name, and changing it changes the type the file is served as.\n\nMoving needs `manage:assets` at the destination as well as at the source, since page rules are granted per path and per locale.',
         tags: ['Assets'],
         params: assetIdParam,
         body: {
           type: 'object',
-          required: ['fileName'],
           properties: {
             fileName: {
               type: 'string',
               minLength: 3,
               maxLength: 255,
-              description: 'Sanitized, so the stored name may differ from the one sent.'
+              description:
+                'Sanitized, so the stored name may differ from the one sent. Keeps its current name when absent.'
+            },
+            folderPath: {
+              type: 'string',
+              maxLength: 255,
+              description:
+                'The folder to move it to, from the site root, empty for the root itself. Created if it does not exist. Stays where it is when absent.'
+            },
+            locale: {
+              type: 'string',
+              maxLength: 255,
+              description: 'The locale to move it to. Stays in its own when absent.'
             }
           }
         },
         response: {
           200: {
-            description: 'Asset renamed successfully',
+            description: 'Asset renamed or moved successfully',
             type: 'object',
             properties: {
               ok: {
@@ -329,19 +357,38 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This asset does not exist.')
       }
       if (!mayOnAsset(req, 'manage:assets', existing)) {
-        return reply.forbidden('You are not allowed to rename this file.')
+        return reply.forbidden('You are not allowed to rename or move this file.')
       }
-      const asset = await WIKI.models.assets.renameAsset(
+      /*
+        And at the destination, when that is somewhere else: rules are granted per path AND per
+        locale, so a move is a write to a place the mover may have no say over -- which without this
+        is a way to put a file where they could not have uploaded one.
+      */
+      const destination = {
+        folderPath:
+          req.body.folderPath === undefined
+            ? existing.folderPath
+            : normalizeFolderPath(req.body.folderPath),
+        fileName: req.body.fileName ?? existing.fileName,
+        locale: req.body.locale || existing.locale
+      }
+      const isRelocated =
+        destination.folderPath !== existing.folderPath || destination.locale !== existing.locale
+      if (isRelocated && !mayOnAsset(req, 'manage:assets', destination)) {
+        return reply.forbidden('You are not allowed to move this file there.')
+      }
+      const asset = await WIKI.models.assets.moveAsset(
         req.params.siteId,
         req.params.assetId,
-        req.body.fileName
+        req.body,
+        req.session.user?.id
       )
       if (!asset) {
         return reply.notFound('This asset does not exist.')
       }
       return {
         ok: true,
-        message: 'Asset renamed successfully.',
+        message: isRelocated ? 'Asset moved successfully.' : 'Asset renamed successfully.',
         asset
       }
     }

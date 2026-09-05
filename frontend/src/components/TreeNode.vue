@@ -1,9 +1,11 @@
 <template>
   <li class="treeview-node">
     <!-- NODE -->
-    <div class="treeview-label" @click="openNode" :class='{ "active": isActive }'>
-      <w-icon :name="icon" size="sm" @click.stop="toggleNode()" />
-      <div class="treeview-label-text">{{displayMode === 'path' ? node.fileName : node.title}}</div>
+    <div class="treeview-label" @click="openNode" :class="{ active: isActive }">
+      <w-icon :name="icon" size="sm" :style="hueFilter" @click.stop="toggleNode()" />
+      <div class="treeview-label-text">
+        {{ displayMode === 'path' ? node.fileName : node.title }}
+      </div>
       <w-spinner class="mr-1" color="primary" v-if="state.isLoading" />
       <w-icon
         v-if="isActive"
@@ -20,7 +22,7 @@
         @before-show="state.isContextMenuShown = true"
         @before-hide="state.isContextMenuShown = false">
         <w-card class="p-2">
-          <w-list dense style="min-width: 150px;">
+          <w-list dense style="min-width: 150px">
             <w-item
               v-for="action of contextActionList"
               :key="action.key"
@@ -29,7 +31,9 @@
               <w-item-section side>
                 <w-icon :name="action.icon" :color="action.iconColor" />
               </w-item-section>
-              <w-item-section :class="action.labelColor && (`text-` + action.labelColor)">{{action.label}}</w-item-section>
+              <w-item-section :class="action.labelColor && `text-` + action.labelColor">{{
+                action.label
+              }}</w-item-section>
             </w-item>
           </w-list>
         </w-card>
@@ -49,6 +53,7 @@
 import { computed, inject, reactive } from 'vue'
 
 import { useDark } from '@/composables/dark'
+import { folderIconStyle } from '@/helpers/folderColors'
 
 import TreeLevel from './TreeLevel.vue'
 
@@ -68,7 +73,6 @@ const props = defineProps({
     default: null
   }
 })
-
 
 // INJECT
 
@@ -100,6 +104,12 @@ const icon = computed(() => {
     ? 'img:/_assets/icons/fluent-opened-folder.svg'
     : 'img:/_assets/icons/fluent-folder.svg'
 })
+
+/**
+ * The colour the folder was given, as a filter over the one folder icon every node draws. Nothing at
+ * all for a folder left the colour it starts out, and for a node drawing an icon of its own.
+ */
+const hueFilter = computed(() => (props.node.icon ? undefined : folderIconStyle(props.node.hue)))
 
 const hasChildren = computed(() => {
   return props.node.children?.length > 0

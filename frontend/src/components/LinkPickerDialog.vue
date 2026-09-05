@@ -66,7 +66,7 @@
                     :active="item.type === `page` && item.path === state.path"
                     @click="selectItem(item)">
                     <w-item-section side>
-                      <w-icon :name="item.icon" size="sm" />
+                      <w-icon :name="item.icon" size="sm" :style="item.iconStyle" />
                     </w-item-section>
                     <w-item-section>
                       <w-item-label>{{ item.title }}</w-item-label>
@@ -149,6 +149,7 @@ import { notify } from '@/composables/notify'
 
 import { apiErrorMessage } from '@/helpers/apiError'
 import fileTypes from '@/helpers/fileTypes'
+import { folderIconStyle } from '@/helpers/folderColors'
 import { splitLocalePath } from '@/helpers/pagePaths'
 
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
@@ -343,6 +344,7 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
           folderPath: entry.folderPath,
           fileName: entry.fileName,
           title: entry.title,
+          hue: entry.hue,
           children: state.treeNodes[entry.id]?.children ?? []
         }
         if (entry.folderPath) {
@@ -364,7 +366,8 @@ async function loadTree({ parentId = null, parentPath = null, initLoad = false }
           type: entry.type,
           title: entry.title,
           path,
-          icon: entry.type === 'folder' ? fileTypes.folder.icon : fileTypes.page.icon
+          icon: entry.type === 'folder' ? fileTypes.folder.icon : fileTypes.page.icon,
+          iconStyle: entry.type === 'folder' ? folderIconStyle(entry.hue) : undefined
         })
       }
     }

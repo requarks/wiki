@@ -7,8 +7,10 @@ import {
   encodeTreePath,
   generateHash,
   generatePathHash,
+  normalizeFolderPath,
   normalizePagePath
 } from '../helpers/common.ts'
+import type { PageActor } from './pages.ts'
 
 /** What a tree entry can be. Mirrors the `treeType` enum in the schema. */
 export type TreeItemType = 'folder' | 'page' | 'asset'
@@ -39,12 +41,22 @@ export interface TreeItem {
   updatedAt: Date
   /** Folders only — how many entries the folder holds. */
   childrenCount?: number
+  /**
+   * Folders only — how far the folder icon is rotated around the colour wheel, in degrees.
+   *
+   * Absent on a folder nobody has coloured, which is the same thing as zero: the icon is drawn
+   * yellow and a rotation of nothing leaves it there.
+   */
+  hue?: number
   /** Folders only — whether this folder is a parent of the one being listed, not a child of it. */
   isAncestor?: boolean
   /** Assets only. */
   fileSize?: number
   fileExt?: string
   mimeType?: string
+  /** Image assets only — in pixels, as displayed. Absent when the dimensions were never read. */
+  width?: number
+  height?: number
   /** Pages only. */
   editor?: string
   description?: string
@@ -168,6 +180,9 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
     updatedAt: row.updatedAt,
     ...(row.type === 'folder' && {
       childrenCount: row.meta?.children ?? 0,
+      // -> No default: an uncoloured folder carries no hue rather than a zero, which is what lets the
+      //    interface draw it with no filter at all
+      ...(row.meta?.hue ? { hue: row.meta.hue } : {}),
       // -> Shorter than the folder being listed means it sits above it, so it came from
       //    `includeAncestors` / `includeRootFolders` rather than from the listing itself
       isAncestor: folderPath.length < parentPath.length
@@ -175,7 +190,12 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
     ...(row.type === 'asset' && {
       fileSize: row.meta?.fileSize ?? 0,
       fileExt: row.meta?.fileExt ?? '',
-      mimeType: row.meta?.mimeType ?? ''
+      mimeType: row.meta?.mimeType ?? '',
+      // -> No default, unlike the rest: a file whose dimensions were never read has none rather than
+      //    being zero pixels across, and the file manager shows the row only for one that has them
+      ...(row.meta?.width && row.meta?.height
+        ? { width: row.meta.width, height: row.meta.height }
+        : {})
     }),
     ...(row.type === 'page' && {
       editor: row.meta?.editor ?? '',
@@ -809,7 +829,7 @@ class Tree {
           siteId,
           meta: { children: 0 }
         })
-        await this.countTowardsFolderAt(siteId, ancestor.folderPath, 1)
+        await this.countTowardsFolderAt(siteId, effectiveLocale, ancestor.folderPath, 1)
       }
     }
 
@@ -828,7 +848,7 @@ class Tree {
       })
       .returning()
 
-    await this.countTowardsFolderAt(siteId, path, 1)
+    await this.countTowardsFolderAt(siteId, effectiveLocale, path, 1)
 
     WIKI.logger.debug(`Created folder ${inserted[0].id} successfully.`)
     return inserted[0] as TreeRow
@@ -908,19 +928,35 @@ class Tree {
 
     WIKI.logger.debug(`Renaming folder ${folder.id} from ${oldPath} to ${newPath}...`)
 
-    // -> Direct children carry the old path verbatim; deeper ones carry it as a prefix, and keep
-    //    whatever they had below it
+    /*
+      Direct children carry the old path verbatim; deeper ones carry it as a prefix, and keep whatever
+      they had below it.
+
+      Scoped to this folder's locale, as everything below is: the tree holds every translation side by
+      side, so a path names one folder per locale, and without this renaming the English `/guides`
+      dragged the French one's children to a path their own folder row did not have.
+    */
     await WIKI.db
       .update(treeTable)
       .set({ folderPath: newPath })
-      .where(and(eq(treeTable.siteId, folder.siteId), eq(treeTable.folderPath, oldPath)))
+      .where(
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
+          eq(treeTable.folderPath, oldPath)
+        )
+      )
     await WIKI.db
       .update(treeTable)
       .set({
         folderPath: sql`${newPath}::ltree || subpath(${treeTable.folderPath}, nlevel(${newPath}::ltree))`
       })
       .where(
-        and(eq(treeTable.siteId, folder.siteId), sql`${treeTable.folderPath} <@ ${oldPath}::ltree`)
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
+          sql`${treeTable.folderPath} <@ ${oldPath}::ltree`
+        )
       )
 
     const fullPath = folder.folderPath ? `${decodeTreePath(folder.folderPath)}/${name}` : name
@@ -930,7 +966,7 @@ class Tree {
       .where(eq(treeTable.id, folder.id))
       .returning()
 
-    const movedPages = await this.refreshDescendantPaths(folder.siteId, newPath)
+    const movedPages = await this.refreshDescendantPaths(folder.siteId, folder.locale, newPath)
 
     // -> Only moved, never rewritten: none of these pages changed, so the copy a target holds is
     //    still the right contents at the wrong name
@@ -963,6 +999,7 @@ class Tree {
       .where(
         and(
           eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
           eq(treeTable.type, 'asset'),
           sql`${treeTable.folderPath} <@ ${newPath}::ltree`
         )
@@ -993,6 +1030,488 @@ class Tree {
   }
 
   /**
+   * Copy a folder, and everything under it, to another parent — another locale, and another name.
+   *
+   * Unlike a move, nothing here is a rewrite: every folder, page and file under the source gets a new
+   * row of its own, so the two trees go their separate ways from this moment. That is also why each
+   * copy goes through the model that owns it rather than through an INSERT ... SELECT — a copied page
+   * is rendered, indexed, given its own history and written to every storage target, and a copied file
+   * gets its own thumbnail and its own bytes on every target. A folder of a few hundred pages is
+   * therefore a slow request, and deliberately so: half a copy is worse than a slow one.
+   *
+   * What is deliberately not carried across:
+   *
+   * - **Aliases**, which are unique per site: a copy cannot have the original's, and inventing one is
+   *   not this operation's business.
+   * - **Translation sets**: a copy is a new page, not another language's version of an existing one.
+   * - **Sidebar overrides**, so the copies inherit the menu of wherever they land — which for a copy
+   *   into another locale is the only sensible answer anyway.
+   *
+   * Folder colours ARE carried across, since they are how somebody has arranged their tree.
+   *
+   * @param folderPath Slash-separated path of the folder to copy into, empty for the site root.
+   * @param pathName What to call the copy. The name it collides on, and the one that must be free.
+   * @param title The copy's title.
+   * @param locale The locale to copy into. The source's own when absent.
+   */
+  async duplicateFolder({
+    folderId,
+    folderPath,
+    pathName,
+    title,
+    locale,
+    actor
+  }: {
+    folderId: string
+    folderPath: string
+    pathName: string
+    title: string
+    locale?: string
+    /** Who is copying, which is who the copied pages and files are authored by. */
+    actor: PageActor
+  }): Promise<TreeRow> {
+    const source = await this.getFolderById(folderId)
+    if (!source) {
+      throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
+    }
+    const siteId = source.siteId
+    const destinationLocale = locale || source.locale
+    const requested = normalizeFolderPath(folderPath)
+    const sourcePath = childPathOf(source)
+    const ownPath = decodeTreePath(sourcePath) ?? ''
+
+    // -> On the paths, before anything is created: a folder copied into its own subtree would be
+    //    copying into what it is still reading from
+    if (
+      destinationLocale === source.locale &&
+      (requested === ownPath || requested.startsWith(`${ownPath}/`))
+    ) {
+      throw new CustomError(
+        'treeFolderIntoItself',
+        'A folder cannot be copied into itself or into one of its own subfolders.',
+        400
+      )
+    }
+
+    /*
+      Read before the copy starts, and in one go: the walk below creates folders as it goes, and a
+      scan that ran alongside it would find them. Shallowest first, so each entry's own parent has
+      already been created by the time it is reached.
+    */
+    const descendants = await WIKI.db
+      .select({
+        id: treeTable.id,
+        type: treeTable.type,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        title: treeTable.title,
+        // -> Cast because Drizzle types a jsonb column as `{}` until something says otherwise, and
+        //    what this reads out of it is the folder's colour
+        meta: sql<Record<string, any>>`${treeTable.meta}`
+      })
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, source.locale),
+          sql`${treeTable.folderPath} <@ ${sourcePath}::ltree`
+        )
+      )
+      .orderBy(sql`nlevel(${treeTable.folderPath})`, treeTable.fileName)
+
+    // -> `createFolder` is what refuses a name already taken there, so this is also the collision
+    //    check -- and it makes it before creating anything, including the folders the path needs
+    const copy = await this.createFolder({
+      siteId,
+      locale: destinationLocale,
+      parentPath: requested,
+      pathName,
+      title
+    })
+    if (source.meta?.hue) {
+      await this.setFolderColor({ folderId: copy.id, hue: source.meta.hue })
+    }
+
+    const copyPath = childPathOf(copy)
+    const newPrefix = decodeTreePath(copyPath) ?? ''
+    /** Where an entry under the source sits under the copy, as a slash-separated folder path. */
+    const mapFolder = (path: string | null) =>
+      `${newPrefix}${(decodeTreePath(path ?? '') ?? '').slice(ownPath.length)}`
+
+    WIKI.logger.debug(
+      `Copying folder ${source.id} and ${descendants.length} descendant(s) to ${destinationLocale}:${copyPath}...`
+    )
+
+    for (const entry of descendants) {
+      const parentPath = mapFolder(entry.folderPath)
+      switch (entry.type) {
+        case 'folder': {
+          const folderCopy = await this.createFolder({
+            siteId,
+            locale: destinationLocale,
+            parentPath,
+            pathName: entry.fileName,
+            title: entry.title
+          })
+          if (entry.meta?.hue) {
+            await this.setFolderColor({ folderId: folderCopy.id, hue: entry.meta.hue })
+          }
+          break
+        }
+        case 'page': {
+          const page = await WIKI.models.pages.getPage({
+            siteId,
+            id: entry.id,
+            withContent: true,
+            withPassword: true
+          })
+          if (!page) {
+            break
+          }
+          await WIKI.models.pages.createPage(
+            siteId,
+            {
+              path: parentPath ? `${parentPath}/${entry.fileName}` : entry.fileName,
+              locale: destinationLocale,
+              title: page.title,
+              description: page.description ?? '',
+              icon: page.icon ?? '',
+              editor: page.editor,
+              content: page.content ?? '',
+              render: page.render,
+              publishState: page.publishState,
+              publishStartDate: page.publishStartDate?.toISOString() ?? null,
+              publishEndDate: page.publishEndDate?.toISOString() ?? null,
+              isBrowsable: page.isBrowsable,
+              isSearchable: page.isSearchable,
+              password: page.password ?? '',
+              relations: page.relations,
+              tags: page.tags,
+              allowComments: page.allowComments,
+              allowContributions: page.allowContributions,
+              allowRatings: page.allowRatings,
+              showSidebar: page.showSidebar,
+              showTags: page.showTags
+            },
+            actor
+          )
+          break
+        }
+        case 'asset': {
+          const content = await WIKI.models.assets.getContent(entry.id)
+          if (!content) {
+            // -> Its bytes are gone, which is a broken file rather than a reason to fail the copy
+            WIKI.logger.warn(`Skipped copying ${entry.fileName}: it has no content.`)
+            break
+          }
+          await WIKI.models.assets.upload({
+            siteId,
+            locale: destinationLocale,
+            folderPath: parentPath,
+            fileName: entry.fileName,
+            mimeType: content.mimeType,
+            data: content.data,
+            authorId: actor.id
+          })
+          break
+        }
+      }
+    }
+
+    WIKI.logger.debug(`Copied folder ${source.id} successfully.`)
+    // -> Read back rather than returned as created: the copy was an empty folder at that point, and
+    //    answering with a child count of zero for a folder that now holds a branch is a lie the
+    //    caller would draw
+    return (await this.getFolderById(copy.id)) ?? copy
+  }
+
+  /**
+   * Colour a folder's icon, or put it back to the colour every folder starts out.
+   *
+   * Stored as a hue rotation in degrees rather than as a colour, because that is what is actually
+   * applied: the folder icon is one yellow image and the interface turns it around the colour wheel,
+   * so a wiki that restyles that icon keeps every folder's choice meaningful. Zero is therefore not a
+   * colour but the absence of one, and is stored by removing the key -- a folder nobody has coloured
+   * and one put back to yellow are the same folder.
+   *
+   * `meta` also carries the folder's child count, so this edits the one key rather than replacing the
+   * object: the count is maintained in postgres by whoever adds or removes an entry, and a
+   * read-modify-write here would lose whatever landed in between.
+   *
+   * @param hue Degrees around the colour wheel, 0 to 359. Zero clears it.
+   */
+  async setFolderColor({ folderId, hue }: { folderId: string; hue: number }): Promise<TreeRow> {
+    const folder = await this.getFolderById(folderId)
+    if (!folder) {
+      throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
+    }
+    if (!Number.isInteger(hue) || hue < 0 || hue > 359) {
+      throw new CustomError('treeInvalidHue', 'A folder colour must be a hue between 0 and 359.')
+    }
+    const updated = await WIKI.db
+      .update(treeTable)
+      .set({
+        meta: hue
+          ? sql`jsonb_set(${treeTable.meta}, '{hue}', to_jsonb(${hue}::int))`
+          : sql`${treeTable.meta} - 'hue'`,
+        updatedAt: sql`now()`
+      })
+      .where(eq(treeTable.id, folder.id))
+      .returning()
+    return updated[0] as TreeRow
+  }
+
+  /**
+   * Move a folder to another parent, another locale, or both — everything under it going along.
+   *
+   * The same rewrite a rename does, with the folder's own parent changing rather than its name, and
+   * with a locale that may change too. That makes it several operations at once, and the order below
+   * is what keeps them consistent:
+   *
+   * 1. **Nothing is created before the move is known to be legal.** The destination is resolved with
+   *    `createIfMissing`, so a folder asked to move inside itself would otherwise leave a new folder
+   *    behind on the way to being refused. Both refusals are therefore decided on the paths alone,
+   *    before anything is looked up.
+   * 2. **Pages leave their translation sets before their locale is rewritten**, since a set holds one
+   *    page per locale and the index enforcing it would refuse the second arrival.
+   * 3. **The rows move, then everything derived from them is rebuilt** — the hashes an entry is found
+   *    by, the second copy of its path each page keeps, the sidebar each entry inherits, and the copy
+   *    every storage target holds. Each of those reads the tree back rather than being computed from
+   *    the move, so there is one answer to where a thing is and it is the row.
+   *
+   * A collision cannot come from below: the destination is refused if anything but a page is already
+   * called this there, and nothing can sit under a folder path that does not exist — so once the
+   * folder itself fits, every descendant does.
+   *
+   * @param folderPath Slash-separated path of the folder to move into, empty for the site root.
+   *                   Created if it does not exist.
+   * @param locale The locale to move it to. Stays in its own when absent.
+   */
+  async moveFolder({
+    folderId,
+    folderPath,
+    locale,
+    actorId
+  }: {
+    folderId: string
+    folderPath: string
+    locale?: string
+    /** Who is moving it, for a target that records who moved a file. */
+    actorId?: string
+  }): Promise<TreeRow> {
+    const folder = await this.getFolderById(folderId)
+    if (!folder) {
+      throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
+    }
+    const siteId = folder.siteId
+    const destinationLocale = locale || folder.locale
+    const oldParentPath = folder.folderPath ?? ''
+    const oldPath = childPathOf(folder)
+    const requested = normalizeFolderPath(folderPath)
+    const ownPath = decodeTreePath(oldPath) ?? ''
+
+    // -> Decided on the paths, before the destination is resolved: resolving it would create it, and
+    //    a folder moved inside itself would take its own subtree out of the tree entirely
+    if (
+      destinationLocale === folder.locale &&
+      (requested === ownPath || requested.startsWith(`${ownPath}/`))
+    ) {
+      throw new CustomError(
+        'treeFolderIntoItself',
+        'A folder cannot be moved into itself or into one of its own subfolders.',
+        400
+      )
+    }
+
+    const parent = requested
+      ? await this.getFolder({
+          path: requested,
+          locale: destinationLocale,
+          siteId,
+          createIfMissing: true
+        })
+      : null
+    const newParentPath = parent ? childPathOf(parent) : ''
+    if (newParentPath === oldParentPath && destinationLocale === folder.locale) {
+      return folder
+    }
+
+    // -> As on the way in: a page may share the name of the folder holding the pages below it, an
+    //    asset may not, and neither may another folder
+    const existing = await WIKI.db
+      .select({ type: treeTable.type })
+      .from(treeTable)
+      .where(
+        and(
+          ne(treeTable.id, folder.id),
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, destinationLocale),
+          eq(treeTable.folderPath, newParentPath),
+          eq(treeTable.fileName, folder.fileName),
+          ne(treeTable.type, 'page')
+        )
+      )
+      .limit(1)
+    if (existing.length > 0) {
+      throw new CustomError(
+        'treeFolderDuplicate',
+        existing[0].type === 'folder'
+          ? 'A folder with this path name already exists there.'
+          : 'A file with this path name already exists there.',
+        409
+      )
+    }
+
+    const newPath = newParentPath ? `${newParentPath}.${folder.fileName}` : folder.fileName
+    const isLocaleChange = destinationLocale !== folder.locale
+
+    WIKI.logger.debug(
+      `Moving folder ${folder.id} from ${folder.locale}:${oldPath} to ${destinationLocale}:${newPath}...`
+    )
+
+    const descendants = await WIKI.db
+      .select({ id: treeTable.id, type: treeTable.type })
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, folder.locale),
+          sql`${treeTable.folderPath} <@ ${oldPath}::ltree`
+        )
+      )
+    const pageIds = descendants.filter((row) => row.type === 'page').map((row) => row.id)
+
+    if (isLocaleChange && pageIds.length > 0) {
+      await WIKI.models.pages.detachFromLocaleGroups(siteId, pageIds)
+    }
+
+    // -> Direct children carry the old path verbatim; deeper ones carry it as a prefix, and keep
+    //    whatever they had below it
+    const movedLocale = isLocaleChange ? { locale: destinationLocale } : {}
+    await WIKI.db
+      .update(treeTable)
+      .set({ folderPath: newPath, ...movedLocale })
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, folder.locale),
+          eq(treeTable.folderPath, oldPath)
+        )
+      )
+    await WIKI.db
+      .update(treeTable)
+      .set({
+        // -> What is dropped is however deep the OLD path was, which is what the row carries; a rename
+        //    can use either because the two are the same depth, and a move cannot
+        folderPath: sql`${newPath}::ltree || subpath(${treeTable.folderPath}, nlevel(${oldPath}::ltree))`,
+        ...movedLocale
+      })
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, folder.locale),
+          sql`${treeTable.folderPath} <@ ${oldPath}::ltree`
+        )
+      )
+    if (isLocaleChange && pageIds.length > 0) {
+      // -> A page keeps its own copy of the locale, as it does of its path, and it is the one a
+      //    reader's request resolves against
+      await WIKI.db
+        .update(pagesTable)
+        .set({ locale: destinationLocale })
+        .where(and(eq(pagesTable.siteId, siteId), inArray(pagesTable.id, pageIds)))
+    }
+
+    const fullPath = newParentPath
+      ? `${decodeTreePath(newParentPath)}/${folder.fileName}`
+      : folder.fileName
+    const updated = await WIKI.db
+      .update(treeTable)
+      .set({
+        folderPath: newParentPath,
+        locale: destinationLocale,
+        hash: generateHash(fullPath),
+        updatedAt: sql`now()`
+      })
+      .where(eq(treeTable.id, folder.id))
+      .returning()
+
+    const movedPages = await this.refreshDescendantPaths(siteId, destinationLocale, newPath)
+
+    // -> Only moved, never rewritten: none of these pages changed, so the copy a target holds is
+    //    still the right contents at the wrong place
+    for (const page of movedPages) {
+      await WIKI.models.storage.relocatePage(
+        {
+          id: page.id,
+          siteId,
+          actorId,
+          locale: destinationLocale,
+          path: page.path,
+          contentType: page.contentType
+        },
+        { locale: folder.locale, path: page.previousPath }
+      )
+    }
+
+    // -> A storage target that lays its content out by path has every one of those files to move.
+    //    Asked for after the rows are correct, so that where each file belongs is read off the tree
+    //    rather than recomputed from the move.
+    const movedAssets = await WIKI.db
+      .select({
+        id: treeTable.id,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName
+      })
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, destinationLocale),
+          eq(treeTable.type, 'asset'),
+          sql`${treeTable.folderPath} <@ ${newPath}::ltree`
+        )
+      )
+    const newPrefix = decodeTreePath(newPath)!
+    const oldPrefix = decodeTreePath(oldPath)!
+    await WIKI.models.assets.relocateAssets(
+      siteId,
+      movedAssets.map((row) => ({
+        id: row.id,
+        previous: {
+          locale: folder.locale,
+          // -> Where it was: the same place it is now, with the moved folder's path put back. Sliced
+          //    rather than replaced, since the segment that moved can occur again further down.
+          folderPath: `${oldPrefix}${(decodeTreePath(row.folderPath ?? '') ?? '').slice(newPrefix.length)}`,
+          fileName: row.fileName
+        }
+      })),
+      actorId
+    )
+
+    // -> Every asset under it is served from a different path now, and nothing about the assets
+    //    themselves changed for the file cache to notice
+    WIKI.models.assets.forgetAllPaths()
+
+    // -> What a sidebar is inherited from is where an entry SITS, and everything under here now sits
+    //    somewhere else
+    await WIKI.models.navigation.repointMovedSubtree({
+      siteId,
+      folderId: folder.id,
+      locale: destinationLocale,
+      folderPath: newParentPath,
+      fileName: folder.fileName
+    })
+
+    // -> The folder it left holds one fewer entry, and the one it arrived in holds one more
+    await this.countTowardsFolderAt(siteId, folder.locale, oldParentPath, -1)
+    await this.countTowardsFolderAt(siteId, destinationLocale, newParentPath, 1)
+
+    WIKI.logger.debug(`Moved folder ${folder.id} successfully.`)
+    return updated[0] as TreeRow
+  }
+
+  /**
    * Rewrite where everything at or below a folder now sits.
    *
    * Two rows carry a path and both have to be redone. The tree's own `hash` is how an entry is found
@@ -1008,11 +1527,17 @@ class Tree {
    * from here. What is deliberately not touched is `updatedAt`: the folder moved, the pages under it
    * did not change, and marking a few hundred of them as freshly edited would say otherwise.
    *
+   * Scoped to ONE LOCALE, and every caller has to say which. The tree holds every translation side by
+   * side under the same paths, so `folderPath <@ 'guides'` is the English subtree and the French one
+   * and every other — and a rewrite that took them all in would report another locale's pages as
+   * having moved, sending a storage target to move files that never went anywhere.
+   *
    * @returns Where each page moved from and to, for the copies a storage target keeps of them. The
    *   old path is only knowable from here — a moment later the row no longer says where it was.
    */
   private async refreshDescendantPaths(
     siteId: string,
+    locale: string,
     path: string
   ): Promise<
     { id: string; locale: string; previousPath: string; path: string; contentType: string }[]
@@ -1029,7 +1554,13 @@ class Tree {
       })
       .from(treeTable)
       .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
-      .where(and(eq(treeTable.siteId, siteId), sql`${treeTable.folderPath} <@ ${path}::ltree`))
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          sql`${treeTable.folderPath} <@ ${path}::ltree`
+        )
+      )
 
     const movedPages = []
     for (const row of rows) {
@@ -1076,12 +1607,22 @@ class Tree {
     const path = childPathOf(folder)
     WIKI.logger.debug(`Deleting folder ${folder.id} at path ${path}...`)
 
-    // -> `<@` is "at or below", and the folder itself is not under its own child path, so this takes
-    //    the descendants and leaves the row that owns them
+    /*
+      `<@` is "at or below", and the folder itself is not under its own child path, so this takes the
+      descendants and leaves the row that owns them.
+
+      Scoped to this folder's locale, as the rename and the move beside it are: the tree holds every
+      translation side by side under the same paths, so without it deleting the English `/guides`
+      took the French one's pages and files with it and left its folder rows behind, empty.
+    */
     const deleted = await WIKI.db
       .delete(treeTable)
       .where(
-        and(eq(treeTable.siteId, folder.siteId), sql`${treeTable.folderPath} <@ ${path}::ltree`)
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
+          sql`${treeTable.folderPath} <@ ${path}::ltree`
+        )
       )
       .returning({
         id: treeTable.id,
@@ -1096,7 +1637,7 @@ class Tree {
     // -> Any of them may have owned a sidebar menu keyed by its own id, the folder included
     await WIKI.models.navigation.deleteNavForEntries([...deleted.map((n) => n.id), folder.id])
 
-    await this.countTowardsFolderAt(folder.siteId, folder.folderPath ?? '', -1)
+    await this.countTowardsFolderAt(folder.siteId, folder.locale, folder.folderPath ?? '', -1)
 
     WIKI.logger.debug(`Deleted folder ${folder.id} and ${deleted.length} descendant(s).`)
 
@@ -1272,7 +1813,7 @@ class Tree {
       return false
     }
     await WIKI.db.delete(treeTable).where(eq(treeTable.id, id))
-    await this.countTowardsFolderAt(entry.siteId, entry.folderPath ?? '', -1)
+    await this.countTowardsFolderAt(entry.siteId, entry.locale, entry.folderPath ?? '', -1)
     return true
   }
 
@@ -1342,7 +1883,7 @@ class Tree {
       })
       .returning()
 
-    await this.countTowardsFolderAt(siteId, path, 1)
+    await this.countTowardsFolderAt(siteId, locale, path, 1)
 
     return inserted[0] as TreeRow
   }
@@ -1429,7 +1970,12 @@ class Tree {
    *
    * An empty path is the site root, which is not a folder and has nothing to count.
    */
-  private async countTowardsFolderAt(siteId: string, path: string, delta: number): Promise<void> {
+  private async countTowardsFolderAt(
+    siteId: string,
+    locale: string,
+    path: string,
+    delta: number
+  ): Promise<void> {
     if (!path) {
       return
     }
@@ -1442,6 +1988,10 @@ class Tree {
       .where(
         and(
           eq(treeTable.siteId, siteId),
+          // -> The tree holds every translation side by side, so a path names one folder PER LOCALE:
+          //    without this, adding a file to the English `/guides` also counted it against the French
+          //    one, and a folder that moved between locales decremented a folder it never sat in
+          eq(treeTable.locale, locale),
           eq(treeTable.folderPath, location.folderPath),
           eq(treeTable.fileName, location.fileName),
           eq(treeTable.type, 'folder')
