@@ -218,6 +218,8 @@ async function routes(app: FastifyInstance) {
       tags?: string
       editor?: string
       publishState?: string
+      creatorId?: string
+      authorId?: string
       orderBy?: SearchOrderBy
       orderByDirection?: 'asc' | 'desc'
       offset?: number
@@ -229,7 +231,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Search pages',
         description:
-          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\nA password-protected page is listed like any other — its title and description are not what the password covers — but for a searcher who would have to enter that password it can only be matched on those two, never on the text behind the lock, and it comes back with no `highlight`.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
+          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\nA password-protected page is listed like any other — its title and description are not what the password covers — but for a searcher who would have to enter that password it can only be matched on those two, never on the text behind the lock, and it comes back with no `highlight`.\n\n`creatorId` and `authorId` narrow the results to the pages of one person — who wrote a page and who touched it last are two different questions, and a public user profile asks both. They are a filter like any other, so a page marked as not searchable stays out of them too.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -262,6 +264,16 @@ async function routes(app: FastifyInstance) {
             publishState: {
               type: 'string',
               enum: ['draft', 'published', 'scheduled']
+            },
+            creatorId: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Only pages this user created.'
+            },
+            authorId: {
+              type: 'string',
+              format: 'uuid',
+              description: 'Only pages this user edited last.'
             },
             orderBy: {
               type: 'string',
@@ -303,6 +315,7 @@ async function routes(app: FastifyInstance) {
                     description: { type: ['string', 'null'] },
                     icon: { type: ['string', 'null'] },
                     tags: { type: 'array', items: { type: 'string' } },
+                    createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' },
                     relevancy: { type: 'number' },
                     highlight: {
@@ -332,6 +345,8 @@ async function routes(app: FastifyInstance) {
         tags: splitList(req.query.tags),
         editor: req.query.editor,
         publishState: req.query.publishState,
+        creatorId: req.query.creatorId,
+        authorId: req.query.authorId,
         orderBy: req.query.orderBy,
         orderByDirection: req.query.orderByDirection,
         offset: req.query.offset,

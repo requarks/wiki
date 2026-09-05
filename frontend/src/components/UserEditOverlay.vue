@@ -53,6 +53,21 @@
             <w-item-section>{{ sc.text }}</w-item-section>
           </w-item>
         </template>
+        <!--
+          A new tab rather than a router link: this overlay is an edit form with its own Save button,
+          and routing away from it unmounts it -- taking whatever has been typed into it and not saved
+          with it. `href` is what says so, since `to` would have the router resolve the path in place.
+
+          Left out for a system account, which has no profile to view: the guest every anonymous reader
+          is appears in the user list like any other row, and its profile answers 404.
+        -->
+        <template v-if="!state.user.isSystem">
+          <w-separator class="my-2" dark inset />
+          <w-item :href="`/_user/${state.user.id}`" target="_blank">
+            <w-item-section side><w-icon name="la:id-card" color="white" /></w-item-section>
+            <w-item-section>{{ t('profile.viewPublicProfile') }}</w-item-section>
+          </w-item>
+        </template>
       </w-list>
     </w-drawer>
     <w-page-container>

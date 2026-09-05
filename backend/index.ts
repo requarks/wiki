@@ -53,6 +53,9 @@ const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml']
  * and `/_error` too, and those have to reach the app shell like any page path. The distinction the
  * shell needs is "does something here serve this", which is this list, and it has to be kept in step
  * with the registrations below.
+ *
+ * `_user` is registered below but absent here: it is shared with the frontend router, and `isServerUrl`
+ * is what splits it.
  */
 const SERVER_ROUTE_SEGMENTS = new Set([
   '_api',
@@ -64,9 +67,29 @@ const SERVER_ROUTE_SEGMENTS = new Set([
   '_render',
   '_site',
   '_terminal',
-  '_thumb',
-  '_user'
+  '_thumb'
 ])
+
+/**
+ * Whether the server answers this URL, as opposed to the app shell being handed over for the frontend
+ * router to resolve.
+ *
+ * `_user` is the one segment the two SHARE, so it cannot be settled by its first segment alone: the
+ * server serves avatars at `/_user/<id>/avatar`, while the frontend owns the public profile page at
+ * `/_user/<id>`. Only the avatar is the server's, and everything else under there is the app's — so a
+ * mistyped avatar URL hands back a profile page that says the user does not exist, which is the same
+ * answer by a different route.
+ *
+ * `frontend/vite.config.js` draws the same line from the other side: its dev proxy forwards only the
+ * avatar path to this server, and the two have to agree.
+ */
+function isServerUrl(urlPath: string): boolean {
+  const segments = urlPath.split('/')
+  if (segments[1] === '_user') {
+    return segments[3] === 'avatar'
+  }
+  return SERVER_ROUTE_SEGMENTS.has(segments[1] ?? '')
+}
 
 /**
  * Whether a URL addresses the page tree rather than the server itself.
@@ -727,7 +750,7 @@ async function initHTTPServer() {
   app.setNotFoundHandler(async (req, reply) => {
     const urlPath = req.raw.url!.split('?')[0]!
     const firstSegment = urlPath.split('/')[1] ?? ''
-    const isSystemPath = SERVER_ROUTE_SEGMENTS.has(firstSegment)
+    const isSystemPath = isServerUrl(urlPath)
     const isReservedRootFile = RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
     // -> HEAD as well as GET: it has to answer what GET would, or a monitor pointed at the wiki reads a
     //    404 for a page the browser beside it loads. Node drops the body for HEAD on its own.

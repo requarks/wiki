@@ -54,7 +54,7 @@ export interface RebuildResult {
   locales: { locale: string; dictionary: string; pages: number }[]
 }
 
-export const SEARCH_ORDER_BY = ['relevancy', 'title', 'updatedAt'] as const
+export const SEARCH_ORDER_BY = ['relevancy', 'title', 'createdAt', 'updatedAt'] as const
 export type SearchOrderBy = (typeof SEARCH_ORDER_BY)[number]
 
 export interface SearchResult {
@@ -65,6 +65,7 @@ export interface SearchResult {
   description: string | null
   icon: string | null
   tags: string[]
+  createdAt: string
   updatedAt: string
   relevancy: number
   highlight: string | null
@@ -83,6 +84,15 @@ export interface SearchPagesParams {
   tags?: string[]
   editor?: string
   publishState?: string
+  /**
+   * Only pages this user created, and only pages this user edited last.
+   *
+   * Two separate columns rather than one "by this person": a page is created once and edited by
+   * whoever touched it most recently, and the profile page asks both questions of the same user in
+   * two different tabs.
+   */
+  creatorId?: string
+  authorId?: string
   orderBy?: SearchOrderBy
   orderByDirection?: 'asc' | 'desc'
   offset?: number
@@ -221,6 +231,8 @@ class Search {
     tags = [],
     editor = '',
     publishState = '',
+    creatorId = '',
+    authorId = '',
     orderBy = 'relevancy',
     orderByDirection = 'desc',
     offset = 0,
@@ -293,6 +305,12 @@ class Search {
     if (editor) {
       conditions.push(sql`p.editor = ${editor}`)
     }
+    if (creatorId) {
+      conditions.push(sql`p."creatorId" = ${creatorId}`)
+    }
+    if (authorId) {
+      conditions.push(sql`p."authorId" = ${authorId}`)
+    }
 
     const direction = orderByDirection === 'asc' ? sql`ASC` : sql`DESC`
     // -> Every page ranks 0 without a query, which would leave the order down to the planner
@@ -300,6 +318,7 @@ class Search {
     const ordering = {
       relevancy: sql`relevancy ${direction}, p."updatedAt" DESC`,
       title: sql`p.title ${direction}`,
+      createdAt: sql`p."createdAt" ${direction}`,
       updatedAt: sql`p."updatedAt" ${direction}`
     }[effectiveOrderBy]
 
@@ -327,6 +346,7 @@ class Search {
         p.description,
         p.icon,
         p.tags,
+        to_char(p."createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
         to_char(p."updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",
         ${hasQuery ? sql`ts_rank(p.ts, ${tsQuery})` : sql`0`} AS relevancy,
         ${highlight} AS highlight,
@@ -360,6 +380,7 @@ class Search {
       description: row.description ?? null,
       icon: row.icon ?? null,
       tags: (row.tags ?? []) as string[],
+      createdAt: row.createdAt as string,
       updatedAt: row.updatedAt as string,
       relevancy: Number(row.relevancy ?? 0),
       // -> Escaped first, so the only markup that survives is the emphasis postgres marked

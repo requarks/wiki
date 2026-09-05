@@ -211,17 +211,24 @@ export default defineConfig(({ mode }) => {
       allowedHosts: true,
       port: userConfig.dev?.port,
       proxy: [
-        '_api',
-        '_blocks',
-        '_collab',
-        '_files',
-        '_icons',
-        '_site',
-        '_terminal',
-        '_thumb',
-        '_user'
+        '/_api',
+        '/_blocks',
+        '/_collab',
+        '/_files',
+        '/_icons',
+        '/_site',
+        '/_terminal',
+        '/_thumb',
+        /*
+          Not `/_user`: that segment is shared. The backend serves avatars under it, while the app's
+          own router owns the public profile page at `/_user/<id>` -- which has to be served by THIS
+          dev server, or it would come back as the built shell from `assets/` and boot yesterday's
+          bundle. A key starting with `^` is a regular expression to Vite, which is how the two are
+          told apart. `backend/index.ts` draws the same line from the other side.
+        */
+        '^/_user/[^/]+/avatar'
       ].reduce((result, key) => {
-        result[`/${key}`] = {
+        result[key] = {
           target: {
             host: '127.0.0.1',
             port: userConfig.port

@@ -164,6 +164,50 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * PUBLIC USER PROFILE - What a user's profile page shows anyone who opens it
+   *
+   * Everything here is either something the user typed into their own profile to be seen, or the fact
+   * that they were here. The email is absent on purpose — see `PublicUserProfile` in the model.
+   */
+  app.addSchema({
+    $id: 'PublicUserProfile',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+        format: 'uuid'
+      },
+      name: {
+        type: 'string'
+      },
+      hasAvatar: {
+        type: 'boolean'
+      },
+      location: {
+        type: 'string'
+      },
+      jobTitle: {
+        type: 'string'
+      },
+      pronouns: {
+        type: 'string'
+      },
+      timezone: {
+        type: 'string',
+        description:
+          'IANA time zone name, or an empty string for a user who never picked one — in which case there is no local time to show for them.'
+      },
+      lastLoginAt: {
+        // -> `nullable` rather than a type array, as on `UserCore`: the emitted spec is OpenAPI 3.0
+        type: 'string',
+        nullable: true,
+        format: 'date-time',
+        description: 'RFC 3339 Date Time, or null if the user has never logged in'
+      }
+    }
+  })
+
+  /**
    * USER PROFILE UPDATE - The fields a user may change on its own profile
    *
    * The email is absent on purpose: it identifies the account and is the local strategy's username.

@@ -109,6 +109,26 @@ export interface UserProfile {
   cvd: string
 }
 
+/**
+ * What a user's public profile page shows to whoever opens it.
+ *
+ * A strict subset of `UserProfile`, and deliberately not built by trimming one: the email is absent
+ * because a profile page is readable by anyone who can read the wiki, and every preference that only
+ * decides how the wiki is DRAWN for its owner — date format, appearance, colour vision — says nothing
+ * about the person. The time zone is the one preference that does, since it is what the card needs to
+ * say what time it is where they are.
+ */
+export interface PublicUserProfile {
+  id: string
+  name: string
+  hasAvatar: boolean
+  location: string
+  jobTitle: string
+  pronouns: string
+  timezone: string
+  lastLoginAt: Date | null
+}
+
 /** The fields a user may change on its own profile. Notably not the email, nor any admin flag. */
 export interface UserProfilePatch {
   name?: string
@@ -552,6 +572,37 @@ class Users {
       timeFormat: prefs.timeFormat ?? '12h',
       appearance: prefs.appearance ?? 'site',
       cvd: prefs.cvd ?? 'none'
+    }
+  }
+
+  /**
+   * A user as their public profile page presents them, which is anybody who can read the wiki.
+   *
+   * `meta` and `prefs` are defaulted here for the same reason `getProfile` defaults them: they are
+   * free-form blobs, and a user created before a key existed simply has none.
+   *
+   * @returns The profile, or null when there is no person behind the ID — no such user, or a system
+   *          account, which is what the guest every anonymous reader is and what content nobody
+   *          authored is attributed to. Neither has a profile to show.
+   */
+  async getPublicProfile(id: string): Promise<PublicUserProfile | null> {
+    const user = await this.getById(id)
+    if (!user || user.isSystem) {
+      return null
+    }
+    const meta = (user.meta ?? {}) as Record<string, any>
+    const prefs = (user.prefs ?? {}) as Record<string, any>
+    return {
+      id: user.id,
+      name: user.name,
+      hasAvatar: user.hasAvatar,
+      location: meta.location ?? '',
+      jobTitle: meta.jobTitle ?? '',
+      pronouns: meta.pronouns ?? '',
+      // -> Empty for a user who never picked one, which leaves the card with no local time to show
+      //    rather than one from a zone nobody chose
+      timezone: prefs.timezone ?? '',
+      lastLoginAt: user.lastLoginAt
     }
   }
 

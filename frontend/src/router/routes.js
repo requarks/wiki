@@ -49,6 +49,15 @@ const routes = [
     path: '/_search',
     component: () => import('@/pages/Search.vue')
   },
+  /*
+    The public profile of one user. `/_user` is shared with the server, which serves avatars at
+    `/_user/<id>/avatar` -- both `backend/index.ts` and the dev proxy in `frontend/vite.config.js`
+    split the segment the same way, so this route only ever sees the profile half.
+  */
+  {
+    path: '/_user/:userId',
+    component: () => import('@/pages/UserProfile.vue')
+  },
   {
     path: '/_admin',
     component: () => import('@/layouts/AdminLayout.vue'),

@@ -1225,6 +1225,56 @@ async function routes(app: FastifyInstance) {
     }
   )
 
+  /**
+   * PUBLIC USER PROFILE
+   */
+  app.get<{ Params: { userId: string } }>(
+    '/:userId/profile',
+    {
+      /*
+        No route-level permissions: this is the public profile page, readable by whoever can read the
+        wiki — the same reach an avatar already has under `/_user/<id>/avatar`, and for the same reason.
+        A page names its author, so a reader who can open the page can look them up.
+
+        Nothing here enumerates users either: the ID has to be known, and `GET /users` — which is what
+        turns a wiki into a list of names and addresses — still wants `read:users`.
+      */
+      schema: {
+        summary: 'Get a user public profile',
+        description:
+          'What a user chose to say about themselves, plus when they were last here. Answers 404 for a system account — the guest an anonymous reader is, and the account content nobody authored is attributed to, are not people and have no profile.',
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['userId']
+        },
+        response: {
+          200: {
+            description: 'Public user profile',
+            type: 'object',
+            $ref: 'PublicUserProfile#'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const profile = await WIKI.models.users.getPublicProfile(req.params.userId)
+      if (!profile) {
+        return reply.notFound('User does not exist.')
+      }
+      return profile
+    }
+  )
+
+  /**
+   * GET USER
+   */
   app.get<{ Params: { userId: string } }>(
     '/:userId',
     {
