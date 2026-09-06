@@ -42,6 +42,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'Body the editor writes between the opening and closing lines when inserting the block, for a block whose content is other blocks. Empty for a block that takes none.'
       },
+      contentEditor: {
+        type: 'string',
+        description:
+          "Names an editor for the block's body, which the markdown editor offers as an \"Edit Content\" lens above the block alongside \"Edit Block Parameters\". A key the frontend resolves to a component, for a block whose body is a fenced source the props form cannot describe. Empty for a block that names none, which is most of them."
+      },
       props: {
         type: 'array',
         description:

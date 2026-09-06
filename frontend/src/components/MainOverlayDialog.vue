@@ -17,6 +17,10 @@ import { useSiteStore } from '../stores/site'
 import LoadingGeneric from './LoadingGeneric.vue'
 
 const overlays = {
+  BlockContentEditor: defineAsyncComponent({
+    loader: () => import('./BlockContentEditorOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   BlockPicker: defineAsyncComponent({
     loader: () => import('./BlockPickerOverlay.vue'),
     loadingComponent: LoadingGeneric

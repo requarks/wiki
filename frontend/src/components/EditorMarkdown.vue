@@ -346,7 +346,13 @@ import { useMinWidth } from '@/composables/screen'
 import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
-import { blockOpeningLine, blockValues, findBlocks } from '@/helpers/markdownBlocks'
+import {
+  blockOpeningLine,
+  blockValues,
+  findBlockContent,
+  findBlocks,
+  writeBlockContent
+} from '@/helpers/markdownBlocks'
 import { findEditableTables } from '@/helpers/markdownTable'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -735,6 +741,67 @@ function editBlock(line, name) {
     editor.setPosition(new Position(found.line, 1))
     editor.focus()
   })
+}
+
+/**
+ * The block's BODY, in whatever editor its definition named — what the "Edit Content" lens opens.
+ *
+ * A second lens rather than a second tab of the parameters dialog, because the two are different
+ * shapes of thing: the parameters are a short form over one line, and a body is a whole screen of
+ * drawing or source. A block only has this one when it says so and when its body is a single fenced
+ * source to hand over, which is what `findBlockContent` answers.
+ *
+ * Looked up again at the moment of the click, for the reason `editTable` gives: a lens carries a line
+ * number from whenever the document last settled.
+ */
+function editBlockContent(line, name) {
+  const text = editor.getModel().getValue()
+  const found = findBlocks(text).find((entry) => entry.line === line && entry.block === name)
+  const definition = found && blockDefinition(found.block)
+  const content = definition?.contentEditor ? findBlockContent(text, found) : null
+  if (!content) {
+    return
+  }
+  siteStore.$patch({
+    overlay: 'BlockContentEditor',
+    overlayOpts: {
+      /*
+        What the block declared, which is the key the overlay resolves to an editor component. The
+        block's own parameters go with it, since an editor may be configured by them -- where the
+        drawing is edited, say -- and only the editor knows which of them it cares about.
+      */
+      editor: definition.contentEditor,
+      block: definition,
+      params: blockValues(found, definition),
+      source: content.source,
+      // -> Where it goes back, and in what: the editor is handed text and hands text back, and the
+      //    fence it lives in is this side's business
+      replace: content
+    }
+  })
+}
+
+/**
+ * A block body an editor produced, back over the fence it came from.
+ *
+ * The fences are rewritten along with the text -- see `writeBlockContent` -- so the whole thing is one
+ * edit and one undo, and the opening line of the block is not touched at all.
+ */
+function replaceBlockContentClb({ source, replace }) {
+  const model = editor.getModel()
+  editor.executeEdits('blockContent', [
+    {
+      range: new Range(
+        replace.startLine,
+        1,
+        replace.endLine,
+        model.getLineMaxColumn(replace.endLine)
+      ),
+      text: writeBlockContent(replace, source)
+    }
+  ])
+  editor.setPosition(new Position(replace.startLine, 1))
+  editor.focus()
 }
 
 /**
@@ -1556,23 +1623,49 @@ onMounted(async () => {
     It appears only over a block this editor holds a definition for and that has something to fill in.
     A child block -- a `::block-tab` inside a tabset -- is one it never does: those are left out of
     the list the API answers with, having no switch of their own to be listed against.
+
+    "Edit Content" joins it over a block whose definition NAMES an editor for its body and whose body
+    is a single fenced source to hand that editor. Both lenses come from this one provider rather than
+    a provider each, which is what fixes the order they appear in: two providers over the same line are
+    merged in whatever order the registry holds them, and a block would get its two links either way
+    round. Content first, since it is the block itself -- its parameters are how it is drawn.
   */
   const editBlockCommand = editor.addCommand(0, (_accessor, line, block) => editBlock(line, block))
+  const editBlockContentCommand = editor.addCommand(0, (_accessor, line, block) =>
+    editBlockContent(line, block)
+  )
   blockLensProvider = monaco.languages.registerCodeLensProvider('markdown', {
     provideCodeLenses(model) {
-      return {
-        lenses: findBlocks(model.getValue())
-          .filter((found) => blockDefinition(found.block)?.props?.length > 0)
-          .map((found) => ({
-            range: new Range(found.line, 1, found.line, 1),
+      const text = model.getValue()
+      const lenses = []
+      for (const found of findBlocks(text)) {
+        const definition = blockDefinition(found.block)
+        if (!definition) {
+          continue
+        }
+        const range = new Range(found.line, 1, found.line, 1)
+        if (definition.contentEditor && findBlockContent(text, found)) {
+          lenses.push({
+            range,
+            command: {
+              id: editBlockContentCommand,
+              title: t('editor.markup.editBlockContent'),
+              arguments: [found.line, found.block]
+            }
+          })
+        }
+        if (definition.props?.length > 0) {
+          lenses.push({
+            range,
             command: {
               id: editBlockCommand,
               title: t('editor.markup.editBlock'),
               arguments: [found.line, found.block]
             }
-          })),
-        dispose() {}
+          })
+        }
       }
+      return { lenses, dispose() {} }
     }
   })
 
@@ -1761,6 +1854,7 @@ onMounted(async () => {
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertTable', insertTableClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
+  EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
 
   // this.$root.$on('editorInsert', opts => {
@@ -1800,6 +1894,7 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)
+  EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)

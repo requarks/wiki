@@ -31,6 +31,18 @@ export interface BlockDefinition {
   isChild?: boolean
   /** Body the editor writes between the opening and closing lines when inserting the block. */
   template?: string
+  /**
+   * Names an editor for the block's BODY, which the markdown editor then offers as a second lens
+   * above the block — "Edit Content", beside "Edit Block Parameters".
+   *
+   * For a block whose body is a fenced source the props form has nothing to say about: a diagram, a
+   * drawing. The value is a key the frontend resolves to a component, not a component or a URL, so
+   * that what a block declares stays a plain literal the manifest can be read out of.
+   *
+   * Absent for every other block, and absent is the answer: a body nobody named an editor for is
+   * edited in the page like any other content.
+   */
+  contentEditor?: string
 }
 
 /** A block row as exposed by the API, with what its component says it can be given. */
@@ -45,6 +57,8 @@ export interface SiteBlock {
   config: Record<string, any>
   props: BlockProp[]
   template: string
+  /** Empty for a block that names no body editor, which is most of them. */
+  contentEditor: string
 }
 
 const blockSelection = {
@@ -278,7 +292,8 @@ class Blocks {
       return {
         ...row,
         props: definition?.props ?? [],
-        template: definition?.template ?? ''
+        template: definition?.template ?? '',
+        contentEditor: definition?.contentEditor ?? ''
       }
     })
   }
