@@ -7,7 +7,9 @@
           src="/_assets/icons/fluent-find-and-replace-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.search.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.search.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.search.subtitle') }}
         </div>
@@ -18,7 +20,7 @@
           flat
           icon="mdi:database-refresh"
           :label="t(`admin.searchRebuildIndex`)"
-          color="purple"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
           @click="rebuild"
           :loading="state.rebuildLoading" />
         <w-separator class="mr-2" vertical />
@@ -100,6 +102,7 @@
 import { onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -108,6 +111,10 @@ import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+
+// COMPOSABLES
+
+const dark = useDark()
 
 // STORES
 

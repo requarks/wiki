@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import { CustomError, rethrowAsBadRequest } from '../helpers/common.ts'
 import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
@@ -356,6 +357,12 @@ async function routes(app: FastifyInstance) {
         cvd: profile.cvd
       }
 
+      // -> The fields that were touched, not the values: `patch` carries whatever the profile form
+      //    sends, and a field added to it later should not start appearing in the log by itself
+      await audit(req, 'profile', 'updateProfile', {
+        changedFields: Object.keys(patch)
+      })
+
       return {
         ok: true,
         message: 'Profile updated successfully.',
@@ -417,6 +424,8 @@ async function routes(app: FastifyInstance) {
       // -> The account menu reads `hasAvatar` off the session on every page load
       req.session.user = { ...req.session.user!, hasAvatar: true }
 
+      await audit(req, 'profile', 'updateAvatar', {})
+
       return {
         ok: true,
         message: 'Avatar uploaded successfully.'
@@ -462,6 +471,8 @@ async function routes(app: FastifyInstance) {
 
       await WIKI.models.users.clearAvatar(userId)
       req.session.user = { ...req.session.user!, hasAvatar: false }
+
+      await audit(req, 'profile', 'deleteAvatar', {})
 
       return {
         ok: true,
@@ -597,6 +608,9 @@ async function routes(app: FastifyInstance) {
         // -> The session outlived the user it points at
         return reply.unauthorized()
       }
+
+      await audit(req, 'profile', 'updateEditorSettings', { editor: req.params.editor })
+
       return { ok: true, config }
     }
   )
@@ -730,6 +744,8 @@ async function routes(app: FastifyInstance) {
         rethrowAsBadRequest(err)
       }
 
+      await audit(req, 'profile', 'changePassword', { strategyId: req.body.strategyId })
+
       return {
         ok: true,
         message: 'Password changed successfully.'
@@ -788,6 +804,11 @@ async function routes(app: FastifyInstance) {
       } catch (err: any) {
         rethrowAsBadRequest(err)
       }
+
+      await audit(req, 'profile', 'togglePasswordLogin', {
+        strategyId: req.body.strategyId,
+        isEnabled: req.body.isEnabled
+      })
 
       return {
         ok: true,
@@ -923,6 +944,8 @@ async function routes(app: FastifyInstance) {
         rethrowAsBadRequest(err)
       }
 
+      await audit(req, 'profile', 'enableTfa', { strategyId: req.body.strategyId })
+
       return {
         ok: true,
         message: '2FA enabled successfully.'
@@ -966,6 +989,8 @@ async function routes(app: FastifyInstance) {
       } catch (err: any) {
         rethrowAsBadRequest(err)
       }
+
+      await audit(req, 'profile', 'disableTfa', { strategyId: req.params.strategyId })
 
       return reply.code(204).send()
     }
@@ -1074,6 +1099,11 @@ async function routes(app: FastifyInstance) {
           registrationResponse: req.body.registrationResponse as any,
           pending: req.session.passkeyRegistration
         })
+        await audit(req, 'profile', 'registerPasskey', {
+          passkeyId: passkey.id,
+          name: passkey.name
+        })
+
         return {
           ok: true,
           passkey
@@ -1123,6 +1153,9 @@ async function routes(app: FastifyInstance) {
       if (!(await WIKI.models.passkeys.remove(userId, req.params.passkeyId))) {
         return reply.notFound('You have no passkey with this ID.')
       }
+
+      await audit(req, 'profile', 'deletePasskey', { passkeyId: req.params.passkeyId })
+
       return reply.code(204).send()
     }
   )
@@ -1217,6 +1250,8 @@ async function routes(app: FastifyInstance) {
         WIKI.config.userDefaults = previousDefaults
         return reply.internalServerError('Failed to save user defaults.')
       }
+
+      await audit(req, 'admin', 'updateUserDefaults', { changedFields: Object.keys(patch) })
 
       return {
         ok: true,
@@ -1447,6 +1482,13 @@ async function routes(app: FastifyInstance) {
             })
           } catch (err: any) {
             WIKI.logger.warn(`Welcome email for new user ${id} failed: ${err.message}`)
+            await audit(req, 'admin', 'createUser', {
+              targetUserId: id,
+              name: req.body.name,
+              email: req.body.email,
+              groups: req.body.groups ?? [],
+              welcomeEmailSent: false
+            })
             return {
               ok: true,
               message: 'User created successfully.',
@@ -1455,6 +1497,17 @@ async function routes(app: FastifyInstance) {
             }
           }
         }
+
+        // -> Who the account is for, and which groups it was put in — never the password it was
+        //    given, which is the one thing about a new account that must not be recoverable from here
+        await audit(req, 'admin', 'createUser', {
+          targetUserId: id,
+          name: req.body.name,
+          email: req.body.email,
+          groups: req.body.groups ?? [],
+          welcomeEmailSent: Boolean(req.body.sendWelcomeEmail)
+        })
+
         return {
           ok: true,
           message: 'User created successfully.',
@@ -1651,6 +1704,21 @@ async function routes(app: FastifyInstance) {
         if (req.body.auth !== undefined) {
           await WIKI.models.users.setUserAuthFlags(req.params.userId, req.body.auth)
         }
+
+        // -> Group membership is listed because who is in which group IS the permission model, so a
+        //    change to it is the one thing here worth being able to read back without a diff
+        await audit(req, 'admin', 'updateUser', {
+          targetUserId: user.id,
+          targetName: user.name,
+          targetEmail: user.email,
+          changedFields: [
+            ...Object.keys(patch),
+            ...(req.body.groups !== undefined ? ['groups'] : []),
+            ...(req.body.auth !== undefined ? ['auth'] : [])
+          ],
+          ...(req.body.groups !== undefined ? { groups: req.body.groups } : {})
+        })
+
         return {
           ok: true,
           message: 'User updated successfully.'
@@ -1733,6 +1801,12 @@ async function routes(app: FastifyInstance) {
       if (!updated) {
         return reply.notFound('User does not exist.')
       }
+
+      await audit(req, 'admin', 'resetUserPassword', {
+        targetUserId: req.params.userId,
+        mustChangePassword: req.body.mustChangePassword ?? false
+      })
+
       return {
         ok: true,
         message: 'User password updated successfully.'
@@ -1804,6 +1878,11 @@ async function routes(app: FastifyInstance) {
           siteId: req.body?.siteId,
           req
         })
+        await audit(req, 'admin', 'sendWelcomeEmail', {
+          targetUserId: req.params.userId,
+          siteId: req.body?.siteId ?? null
+        })
+
         return {
           ok: true,
           message: 'Welcome email sent successfully.'
@@ -1882,6 +1961,18 @@ async function routes(app: FastifyInstance) {
 
       try {
         await WIKI.models.users.deleteUser(user.id)
+
+        /*
+          The deleted account's own name and email are on `meta` rather than on `meta.actor`, which
+          belongs to whoever pressed the button. This is also the entry that explains why every OTHER
+          entry that user left behind now has a null `userId`.
+        */
+        await audit(req, 'admin', 'deleteUser', {
+          targetUserId: user.id,
+          targetName: user.name,
+          targetEmail: user.email
+        })
+
         return reply.code(204).send()
       } catch (err: any) {
         // -> Pages and assets reference users without a cascade, so a user who authored content

@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 /**
@@ -181,6 +182,12 @@ async function routes(app: FastifyInstance) {
 
       try {
         const updated = await WIKI.models.blocks.setBlocksState(req.params.siteId, req.body.states)
+
+        await audit(req, 'admin', 'updateBlock', {
+          siteId: req.params.siteId,
+          states: req.body.states
+        })
+
         return {
           ok: true,
           message: 'Blocks state updated successfully.',
@@ -244,6 +251,13 @@ async function routes(app: FastifyInstance) {
       }
 
       await WIKI.models.blocks.deleteCustomBlock(req.params.siteId, req.params.blockId)
+
+      await audit(req, 'admin', 'deleteBlock', {
+        siteId: req.params.siteId,
+        blockId: req.params.blockId,
+        name: block.name
+      })
+
       return reply.code(204).send()
     }
   )

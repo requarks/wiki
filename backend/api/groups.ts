@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
 import { SYSTEM_PERMISSION } from '../models/groups.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
@@ -129,6 +130,9 @@ async function routes(app: FastifyInstance) {
 
       try {
         const id = await WIKI.models.groups.createGroup(req.body.name)
+
+        await audit(req, 'admin', 'createGroup', { groupId: id, name: req.body.name })
+
         return {
           ok: true,
           message: 'Group created successfully.',
@@ -332,6 +336,19 @@ async function routes(app: FastifyInstance) {
 
       try {
         await WIKI.models.groups.updateGroup(group.id, patch)
+        /*
+          The permissions and the rules are recorded in full rather than as "changed", because they
+          ARE the answer to who may do what — and reconstructing the set somebody was granted at a
+          point in time is the question an audit log gets asked about a group.
+        */
+        await audit(req, 'admin', 'updateGroup', {
+          groupId: group.id,
+          name: patch.name ?? group.name,
+          changedFields: Object.keys(patch),
+          ...(patch.permissions !== undefined ? { permissions: patch.permissions } : {}),
+          ...(patch.rules !== undefined ? { rules: patch.rules } : {})
+        })
+
         return {
           ok: true,
           message: 'Group updated successfully.'
@@ -391,6 +408,9 @@ async function routes(app: FastifyInstance) {
 
       try {
         await WIKI.models.groups.deleteGroup(group.id)
+
+        await audit(req, 'admin', 'deleteGroup', { groupId: group.id, name: group.name })
+
         return reply.code(204).send()
       } catch (err: any) {
         WIKI.logger.warn(err)
@@ -547,6 +567,14 @@ async function routes(app: FastifyInstance) {
         return reply.conflict('User is already assigned to this group.')
       }
 
+      await audit(req, 'admin', 'assignUserToGroup', {
+        groupId: group.id,
+        groupName: group.name,
+        targetUserId: user.id,
+        targetName: user.name,
+        targetEmail: user.email
+      })
+
       return {
         ok: true,
         message: 'User assigned to group successfully.'
@@ -619,6 +647,15 @@ async function routes(app: FastifyInstance) {
       }
 
       await WIKI.models.groups.unassignUserFromGroup(group.id, req.params.userId)
+
+      await audit(req, 'admin', 'unassignUserFromGroup', {
+        groupId: group.id,
+        groupName: group.name,
+        targetUserId: req.params.userId,
+        targetName: user?.name ?? null,
+        targetEmail: user?.email ?? null
+      })
+
       return reply.code(204).send()
     }
   )

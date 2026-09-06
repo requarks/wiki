@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
 import { limitAuthAttempts } from '../helpers/rateLimit.ts'
 import type { AuthStrategy } from '../models/authentication.ts'
@@ -534,7 +535,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       try {
-        await WIKI.models.users.verifyUserEmail(req.body.token)
+        await WIKI.models.users.verifyUserEmail(req.body.token, req.ip)
         return { ok: true }
       } catch (err: any) {
         WIKI.models.flags.authDebug(`Email confirmation refused: ${err.message}`)
@@ -686,7 +687,8 @@ async function routes(app: FastifyInstance) {
       try {
         await WIKI.models.users.resetPassword({
           token: req.body.token,
-          newPassword: req.body.newPassword
+          newPassword: req.body.newPassword,
+          ip: req.ip
         })
         return { ok: true }
       } catch (err: any) {
@@ -1182,6 +1184,14 @@ async function routes(app: FastifyInstance) {
             email: user.email
           }
         })
+        // -> Not through `audit()`: the session was destroyed above, so the request no longer knows
+        //    who made it and the actor has to come from the copy taken before that
+        await WIKI.models.auditLog.record({
+          kind: 'auth',
+          action: 'logout',
+          actor: { id: user.id, name: user.name, email: user.email, ip: req.ip },
+          meta: { siteId: req.params.siteId }
+        })
       }
 
       return {
@@ -1340,6 +1350,14 @@ async function routes(app: FastifyInstance) {
 
       const id = await WIKI.models.authentication.createStrategy(req.body as any)
 
+      // -> The module and the display name, never the config: a strategy's config is where its client
+      //    secret lives
+      await audit(req, 'admin', 'createAuthStrategy', {
+        strategyId: id,
+        module: req.body.module,
+        displayName: req.body.displayName
+      })
+
       return {
         ok: true,
         message: 'Authentication strategy created successfully.',
@@ -1429,6 +1447,14 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to update the authentication strategy.')
       }
 
+      // -> Which fields were touched, not what they were set to, for the same reason as above
+      await audit(req, 'admin', 'updateAuthStrategy', {
+        strategyId: current.id,
+        module: current.module,
+        displayName: current.displayName,
+        changedFields: Object.keys(patch)
+      })
+
       return {
         ok: true,
         message: 'Authentication strategy updated successfully.'
@@ -1477,6 +1503,13 @@ async function routes(app: FastifyInstance) {
       }
 
       await WIKI.models.authentication.deleteStrategy(req.params.strategyId)
+
+      await audit(req, 'admin', 'deleteAuthStrategy', {
+        strategyId: req.params.strategyId,
+        module: strategy.module,
+        displayName: strategy.displayName
+      })
+
       return reply.code(204).send()
     }
   )

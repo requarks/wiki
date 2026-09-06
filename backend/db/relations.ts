@@ -16,5 +16,14 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.userKeys.userId,
       to: r.users.id
     })
+  },
+  auditLog: {
+    // -> Optional, and stays that way: the row outlives the account it points at, and reading the
+    //    log after a deletion falls back to the name and email kept on `meta.actor`
+    user: r.one.users({
+      from: r.auditLog.userId,
+      to: r.users.id,
+      optional: true
+    })
   }
 }))

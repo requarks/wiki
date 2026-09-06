@@ -37,6 +37,9 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   { task: 'checkVersion', cron: '0 0 * * *' },
   { task: 'cleanJobHistory', cron: '5 0 * * *' },
   // { task: 'refreshAutocomplete', cron: '0 */6 * * *' },
+  // -> Daily, off the hour: the retention is expressed in days, so nothing is gained by looking
+  //    more often than once a day
+  { task: 'purgeAuditLog', cron: '20 0 * * *' },
   { task: 'purgeRateLimits', cron: '10 * * * *' },
   { task: 'updateLocales', cron: '0 0 * * *' },
   // -> Every minute, and the task decides which sites are actually due: the interval is a per-site

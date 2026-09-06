@@ -1,4 +1,5 @@
 import { validate as uuidValidate } from 'uuid'
+import { audit } from '../helpers/audit.ts'
 import { CustomError, normalizePastedDestination } from '../helpers/common.ts'
 import { detectImageMime, detectSvg, imageMimeTypes, svgMimeType } from '../helpers/images.ts'
 import { siteAssetKinds } from '../models/sites.ts'
@@ -238,6 +239,13 @@ async function routes(app: FastifyInstance) {
         const result = await WIKI.models.sites.createSite(req.body.hostname, {
           title: req.body.title
         })
+
+        await audit(req, 'admin', 'createSite', {
+          siteId: result.id,
+          hostname: req.body.hostname,
+          title: req.body.title
+        })
+
         return {
           ok: true,
           message: 'Site created successfully.',
@@ -494,6 +502,20 @@ async function routes(app: FastifyInstance) {
           isEnabled: req.body.isEnabled,
           ...(Object.keys(config).length < 1 ? {} : { config })
         })
+
+        // -> The config is a large nested blob covering everything from the theme to the storage
+        //    layout, so its top-level sections are what is recorded rather than the whole of it
+        await audit(req, 'admin', 'updateSite', {
+          siteId: req.params.siteId,
+          ...(req.body.hostname !== undefined ? { hostname: req.body.hostname } : {}),
+          ...(req.body.isEnabled !== undefined ? { isEnabled: req.body.isEnabled } : {}),
+          changedFields: [
+            ...(req.body.hostname !== undefined ? ['hostname'] : []),
+            ...(req.body.isEnabled !== undefined ? ['isEnabled'] : []),
+            ...Object.keys(config).map((section) => `config.${section}`)
+          ]
+        })
+
         return {
           ok: true,
           message: 'Site updated successfully.'
@@ -571,6 +593,11 @@ async function routes(app: FastifyInstance) {
 
       await WIKI.models.sites.setAsset(req.params.siteId, req.params.kind, data)
 
+      await audit(req, 'admin', 'updateSiteImage', {
+        siteId: req.params.siteId,
+        kind: req.params.kind
+      })
+
       return {
         ok: true,
         message: 'Image uploaded successfully.'
@@ -631,6 +658,11 @@ async function routes(app: FastifyInstance) {
 
       await WIKI.models.sites.clearAsset(req.params.siteId, req.params.kind)
 
+      await audit(req, 'admin', 'deleteSiteImage', {
+        siteId: req.params.siteId,
+        kind: req.params.kind
+      })
+
       return {
         ok: true,
         message: 'Image cleared successfully.'
@@ -668,10 +700,18 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      // -> Read before it goes, so that the entry can say which site this was rather than only which
+      //    id it had
+      const doomed = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
       try {
         if ((await WIKI.models.sites.countSites()) <= 1) {
           reply.conflict('Cannot delete the last site. At least 1 site must exist at all times.')
         } else if (await WIKI.models.sites.deleteSite(req.params.siteId)) {
+          await audit(req, 'admin', 'deleteSite', {
+            siteId: req.params.siteId,
+            hostname: doomed?.hostname ?? null,
+            title: doomed?.config?.title ?? null
+          })
           reply.code(204)
         } else {
           reply.badRequest('Site does not exist.')

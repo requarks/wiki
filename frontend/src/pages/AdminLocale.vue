@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-language.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.locale.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.locale.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.locale.subtitle') }}
         </div>
@@ -15,7 +17,7 @@
           class="mr-2 acrylic-btn"
           flat
           icon="la:cloud-download-alt"
-          color="purple"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
           :label="t(`admin.locale.fetch`)"
           @click="fetchLocales">
           <w-tooltip>{{ t(`admin.locale.fetchHint`) }}</w-tooltip>

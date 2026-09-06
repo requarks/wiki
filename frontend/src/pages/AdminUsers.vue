@@ -39,14 +39,18 @@
           :loading="state.loading > 0">
           <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
         </w-btn>
+        <!--
+          Labelled rather than icon-only: `la:user-cog` reads as "edit a user" next to a table of
+          users, which is not what it opens. No `aria-label` or tooltip alongside it — the label is
+          the accessible name now, and a tooltip repeating it is one more thing to dismiss.
+        -->
         <w-btn
           class="mr-2"
           v-if="canManage"
           icon="la:user-cog"
           unelevated
           color="secondary"
-          :aria-label="t(`admin.users.defaults`)">
-          <w-tooltip>{{ t(`admin.users.defaults`) }}</w-tooltip>
+          :label="t(`admin.users.defaultsButton`)">
           <user-defaults-menu />
         </w-btn>
         <w-btn

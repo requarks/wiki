@@ -114,6 +114,70 @@ export const assets = pgTable(
   (table) => [index('assets_siteId_idx').on(table.siteId)]
 )
 
+// AUDIT LOG ---------------------------
+/**
+ * What somebody did, one row per action.
+ *
+ * Only actions a *person* took: every row is written from an API route handler, which is the one
+ * place the requester's identity and address are both in hand, and is by construction never reached
+ * by the scheduler or a storage sync. A job that creates a page therefore leaves no row here, which
+ * is the point — an audit log is a record of who did something, and "the wiki did it" is not an
+ * answer anybody audits.
+ *
+ * Reads are not recorded. Page views would outnumber everything else by orders of magnitude and
+ * bury the log, and failed logins are left out on purpose: a credential-stuffing run would otherwise
+ * fill the table on demand from the outside. A login that *succeeded* is recorded, since that is the
+ * event with consequences.
+ *
+ * Nothing here duplicates what another table already keeps. A page edit records the `pageHistory`
+ * version its change produced and nothing about the change itself — the before and after live there,
+ * and copying them would make this table enormous as well as wrong the moment the two disagreed.
+ */
+export const auditLog = pgTable(
+  'auditLog',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    ts: timestamp().notNull().defaultNow(),
+    /**
+     * Which part of the wiki the action belongs to: `page`, `asset`, `auth`, `profile` or `admin`.
+     * A varchar rather than an enum, for the same reason `pageHistory.action` is one — naming
+     * another area later should not need a migration. `AUDIT_KINDS` in `models/auditLog.ts` is the
+     * list that decides.
+     */
+    kind: varchar({ length: 16 }).notNull(),
+    /**
+     * What was done, camelCase — `createPage`, `editSite`, `login`. Deliberately a key rather than a
+     * sentence: it is what the interface looks a translation up by, and what a filter matches on.
+     * `AUDIT_ACTIONS` in `models/auditLog.ts` is the full list.
+     */
+    action: varchar({ length: 64 }).notNull(),
+    /** Where the request came from. 45 characters is the longest an IPv6 address can be written. */
+    clientIP: varchar({ length: 45 }).notNull().default(''),
+    /**
+     * The context of the action: which page, site or account it touched, and always an `actor` block
+     * carrying the email, display name and address the requester had AT THE TIME. That copy is the
+     * point of it — `userId` goes null when the account is deleted, and a log that then said only
+     * "somebody" would have lost exactly what it existed to record.
+     *
+     * Never anything secret. `sanitizeMeta` in `helpers/audit.ts` is the backstop, but the rule is
+     * that a route does not put a password, a token or a module's sensitive prop in here to begin
+     * with.
+     */
+    meta: jsonb().notNull().default({}),
+    // -> Set null rather than cascade: deleting an account must not delete the record of what it
+    //    did. The name and email on `meta.actor` are what the row is read by afterwards.
+    userId: uuid().references(() => users.id, { onDelete: 'set null' })
+  },
+  (table) => [
+    // -> The unfiltered view: newest first, which is the only order this table is ever read in
+    index('auditLog_ts_idx').on(table.ts.desc()),
+    // -> One index per filter, each carrying `ts` so that narrowing by it still comes back ordered
+    index('auditLog_userId_idx').on(table.userId, table.ts.desc()),
+    index('auditLog_kind_idx').on(table.kind, table.ts.desc()),
+    index('auditLog_action_idx').on(table.action, table.ts.desc())
+  ]
+)
+
 // AUTHENTICATION ----------------------
 export const authentication = pgTable('authentication', {
   id: uuid().primaryKey().defaultRandom(),

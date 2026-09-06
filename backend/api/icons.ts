@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -88,6 +89,9 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       try {
         const set = await WIKI.models.icons.addSet(req.body.prefix.toLowerCase())
+
+        await audit(req, 'admin', 'addIconSet', { prefix: set.prefix, name: set.name })
+
         return {
           ok: true,
           message: `The ${set.name} icon set has been added.`,
@@ -155,6 +159,9 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Icon set has not been added.')
       }
       await WIKI.models.icons.setSetState(prefix, req.body.isEnabled)
+
+      await audit(req, 'admin', 'updateIconSet', { prefix, isEnabled: req.body.isEnabled })
+
       return {
         ok: true,
         message: `The ${prefix} icon set has been ${req.body.isEnabled ? 'enabled' : 'disabled'}.`
@@ -211,6 +218,11 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Icon set has not been added.')
       }
       const deletedIcons = await WIKI.models.icons.deleteSet(prefix)
+
+      // -> The icon count matters: deleting a set drops every icon stored for it, so anything a page
+      //    still references from that prefix stops resolving
+      await audit(req, 'admin', 'deleteIconSet', { prefix, deletedIcons })
+
       return {
         ok: true,
         message: `The ${prefix} icon set has been deleted.`,
@@ -285,9 +297,12 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async (_req, reply) => {
+    async (req, reply) => {
       try {
         const refreshed = await WIKI.models.icons.refreshSets()
+
+        await audit(req, 'admin', 'refreshIconSets', { refreshed })
+
         return {
           ok: true,
           message: `Refreshed ${refreshed} icon sets.`,
@@ -477,6 +492,14 @@ async function routes(app: FastifyInstance) {
     },
     async (req) => {
       const failed = await WIKI.models.icons.materializeIcons(req.body.icons)
+
+      // -> Counts rather than the references themselves: picking an icon calls this, so a list of
+      //    every name somebody browsed past would be noise rather than a record
+      await audit(req, 'admin', 'materializeIcons', {
+        requested: req.body.icons.length,
+        failed: failed.length
+      })
+
       return {
         ok: failed.length < 1,
         message:
@@ -566,8 +589,11 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
+    async (req) => {
       await WIKI.models.icons.purgeCache()
+
+      await audit(req, 'admin', 'flushIconCache', {})
+
       return {
         ok: true,
         message: 'The icon cache has been purged.'

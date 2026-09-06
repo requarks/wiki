@@ -447,6 +447,21 @@
   }
 
   /*
+    The picker button on a date or time field, in dark mode.
+
+    The browser draws it itself, as a black glyph, and gives it no colour to set -- so on a dark
+    field it is black on near-black and effectively invisible. A filter is the only lever there is.
+    `invert(0.75)` rather than a full inversion: black inverted all the way is pure white, brighter
+    than the field's own text, where 0.75 lands on the light grey the rest of the control uses.
+
+    Chromium and Safari only; Firefox draws no indicator for these types, so there is nothing there
+    for the rule to match.
+  */
+  body.body--dark .w-input-control input::-webkit-calendar-picker-indicator {
+    filter: invert(0.75);
+  }
+
+  /*
     The Material notched outline, for an outlined field that carries a label: at rest the label stands
     in the middle of the field, and on focus or once there is a value it rises into the top border.
     Shared by WInput and WSelect, for the reason given above.

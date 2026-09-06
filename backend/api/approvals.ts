@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
 import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor } from './pages.ts'
 import type { ApprovalPageRef, ApprovalRulePatch, ReviewerScope } from '../models/approvals.ts'
@@ -264,6 +265,13 @@ async function routes(app: FastifyInstance) {
       }
 
       const rule = await WIKI.models.approvals.createRule(req.params.siteId, req.body)
+
+      await audit(req, 'admin', 'createApprovalRule', {
+        ruleId: rule.id,
+        siteId: req.params.siteId,
+        name: rule.name
+      })
+
       return {
         ok: true,
         rule
@@ -345,6 +353,14 @@ async function routes(app: FastifyInstance) {
       if (!rule) {
         return reply.notFound('Approval rule does not exist.')
       }
+
+      await audit(req, 'admin', 'updateApprovalRule', {
+        ruleId: rule.id,
+        siteId: req.params.siteId,
+        name: rule.name,
+        changedFields: Object.keys(req.body)
+      })
+
       return {
         ok: true,
         rule
@@ -391,6 +407,12 @@ async function routes(app: FastifyInstance) {
       if (!(await WIKI.models.approvals.deleteRule(req.params.siteId, req.params.ruleId))) {
         return reply.notFound('Approval rule does not exist.')
       }
+
+      await audit(req, 'admin', 'deleteApprovalRule', {
+        ruleId: req.params.ruleId,
+        siteId: req.params.siteId
+      })
+
       return reply.code(204).send()
     }
   )
@@ -538,6 +560,19 @@ async function routes(app: FastifyInstance) {
       if (!applied) {
         return reply.notFound('This edit suggestion does not exist.')
       }
+
+      // -> Approving writes the suggestion onto the page through `updatePage`, so the edit itself is
+      //    in that page's history under the reviewer's name — this entry records the decision
+      await audit(req, 'page', 'approvePageEdit', {
+        submissionId: req.params.submissionId,
+        pageId: submission.page.id,
+        siteId: req.params.siteId,
+        locale: submission.page.locale,
+        path: submission.page.path,
+        submittedBy: submission.author.name,
+        submittedByGuest: submission.author.isGuest
+      })
+
       return {
         ok: true,
         message: 'Edit suggestion approved.'
@@ -585,6 +620,17 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This edit suggestion does not exist.')
       }
       await WIKI.models.approvals.rejectSubmission(req.params.siteId, req.params.submissionId)
+
+      await audit(req, 'page', 'rejectPageEdit', {
+        submissionId: req.params.submissionId,
+        pageId: submission.page.id,
+        siteId: req.params.siteId,
+        locale: submission.page.locale,
+        path: submission.page.path,
+        submittedBy: submission.author.name,
+        submittedByGuest: submission.author.isGuest
+      })
+
       return {
         ok: true,
         message: 'Edit suggestion declined.'
@@ -845,6 +891,20 @@ async function routes(app: FastifyInstance) {
         authorId: actor?.id ?? null,
         guestName,
         guestEmail
+      })
+
+      /*
+        Recorded even for a guest, who has no account for `userId` to point at: the entry is the only
+        record that somebody outside the wiki sent this in, and the name and email they gave are on
+        `meta` rather than on `meta.actor` — those two are the account's, and there is no account.
+      */
+      await audit(req, 'page', 'submitPageEdit', {
+        submissionId: submission.id,
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        ...(actor ? {} : { guestName, guestEmail })
       })
 
       return {

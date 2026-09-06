@@ -17,7 +17,7 @@
           class="acrylic-btn mr-2"
           flat
           icon="la:broom"
-          color="purple"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
           :label="t(`admin.icons.purgeCache`)"
           @click="purgeCache">
           <w-tooltip>{{ t('admin.icons.purgeCacheHint') }}</w-tooltip>

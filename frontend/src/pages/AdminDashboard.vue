@@ -7,7 +7,9 @@
           src="/_assets/icons/fluent-apps-tab-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.dashboard.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.dashboard.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.dashboard.subtitle') }}
         </div>
@@ -303,6 +305,61 @@
           </w-list>
         </w-card>
       </div>
+      <div class="col-span-12 lg:col-span-6">
+        <w-card>
+          <w-card-section class="admin-dashboard-panel">
+            <img src="/_assets/icons/fluent-copybook.svg" />
+            <strong>{{ t('admin.dashboard.recentPages') }}</strong>
+          </w-card-section>
+          <w-separator />
+          <w-list separator>
+            <!--
+              Straight to the page itself. `url` is built by the server, because whether a path
+              carries a locale prefix is a per-site setting and a dashboard listing every site has no
+              way to know how each of them is configured.
+
+              Two kinds of link, because leaving the admin area is not the same as leaving this
+              wiki's host: a page on the site being browsed is a route this app can take itself, and
+              one on another site is a plain href to that site's own host.
+            -->
+            <w-item
+              v-for="pg of state.recentPages"
+              :key="pg.id"
+              clickable
+              :to="isCurrentSite(pg) ? pg.url : null"
+              :href="isCurrentSite(pg) ? null : externalPageUrl(pg)">
+              <w-item-section side>
+                <!-- -> Which of the two this was; `updatedAt` alone cannot say -->
+                <w-icon :name="pg.isNew ? `la:plus-circle` : `la:pen`" :color="actionColor" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ pg.title }}</w-item-label>
+                <!--
+                  `url`, not the locale and path spelled out: the address is what a reader wants to
+                  see under the title, and on a site that does not bracket its URLs by locale the
+                  prefix is not part of it — printing one would name a path that 404s.
+                -->
+                <w-item-label caption class="font-mono">{{ pg.url }}</w-item-label>
+              </w-item-section>
+              <w-item-section side class="text-right">
+                <div class="text-caption">{{ relativeDate(pg.updatedAt) }}</div>
+                <div class="text-caption text-grey">
+                  {{ pg.authorName || t('admin.dashboard.recentPagesAuthorGone') }}
+                </div>
+                <!-- -> The exact moment, in the reader's own pattern and zone, behind the rough one -->
+                <w-tooltip anchor="center left" self="center right">
+                  {{ userStore.formatDateTime(t, pg.updatedAt) }}
+                </w-tooltip>
+              </w-item-section>
+            </w-item>
+            <w-item v-if="state.recentPages.length < 1">
+              <w-item-section>
+                <w-item-label caption>{{ t('admin.dashboard.recentPagesNone') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
+      </div>
     </div>
   </w-page>
 </template>
@@ -367,7 +424,8 @@ const { t } = useI18n()
 
 const state = reactive({
   loading: 0,
-  lastLogins: []
+  lastLogins: [],
+  recentPages: []
 })
 
 // COMPUTED
@@ -431,10 +489,43 @@ async function loadLastLogins() {
   }
 }
 
+// -> Same bargain as the panel beside it: its own state, its own failure
+async function loadRecentPages() {
+  try {
+    state.recentPages = await API_CLIENT.get('pages/recent').json()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: 'Failed to load the recently edited pages.',
+      caption: err.message
+    })
+  }
+}
+
+/**
+ * Whether a page belongs to the site this admin area is being browsed on.
+ *
+ * Only then can the router take the reader there — every other site is a different host, and a
+ * route this app pushes would resolve against the wrong one.
+ */
+function isCurrentSite(pg) {
+  return !pg.hostname || pg.siteId === siteStore.id
+}
+
+/** A page on another site, as an absolute URL on that site's own host. */
+function externalPageUrl(pg) {
+  return `${window.location.protocol}//${pg.hostname}${pg.url}`
+}
+
+/** The two panels this page fills itself, in parallel — neither waits on the other. */
+function loadPanels() {
+  return Promise.all([loadLastLogins(), loadRecentPages()])
+}
+
 async function load() {
   state.loading++
   try {
-    await Promise.all([adminStore.fetchInfo(), adminStore.fetchSites(), loadLastLogins()])
+    await Promise.all([adminStore.fetchInfo(), adminStore.fetchSites(), loadPanels()])
   } catch (err) {
     notify({
       type: 'negative',
@@ -445,8 +536,8 @@ async function load() {
   state.loading--
 }
 
-// -> The store is already filled by the layout; this is the one thing on the page that has to ask
-onMounted(loadLastLogins)
+// -> The store is already filled by the layout; these two panels are what this page has to ask for
+onMounted(loadPanels)
 
 function newSite() {
   dialog({

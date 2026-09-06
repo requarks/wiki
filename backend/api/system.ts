@@ -11,6 +11,7 @@ import {
   users as usersTable
 } from '../db/schema.ts'
 import maintenance from '../core/maintenance.ts'
+import { audit } from '../helpers/audit.ts'
 import { purgeTimeframes } from '../models/pageHistory.ts'
 import type { PurgeTimeframe } from '../models/pageHistory.ts'
 import type { FastifyInstance } from 'fastify'
@@ -292,6 +293,8 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to save the system flags.')
       }
 
+      await audit(req, 'admin', 'updateFlags', patch)
+
       return {
         ok: true,
         message: 'System flags updated successfully.'
@@ -368,6 +371,10 @@ async function routes(app: FastifyInstance) {
       if (!(await WIKI.models.security.updateConfig(patch))) {
         return reply.internalServerError('Failed to save the security configuration.')
       }
+
+      // -> The security settings are the one configuration blob recorded in full: none of them is a
+      //    secret, and what a CSP or a rate limit was set to is precisely what gets asked about later
+      await audit(req, 'admin', 'updateSecurity', patch)
 
       return {
         ok: true,
@@ -498,6 +505,13 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to save the search configuration.')
       }
 
+      await audit(req, 'admin', 'updateSearchConfig', {
+        ...(req.body.termHighlighting !== undefined
+          ? { termHighlighting: req.body.termHighlighting }
+          : {}),
+        ...(req.body.dictOverrides !== undefined ? { dictOverrides: req.body.dictOverrides } : {})
+      })
+
       return {
         ok: true,
         message: 'Search configuration updated successfully.'
@@ -545,6 +559,9 @@ async function routes(app: FastifyInstance) {
       if (!added?.id) {
         return reply.internalServerError('The scheduler could not queue the rebuild.')
       }
+
+      await audit(req, 'admin', 'rebuildSearchIndex', { jobId: added.id })
+
       return {
         ok: true,
         message: 'Search index rebuild queued successfully.',
@@ -653,6 +670,12 @@ async function routes(app: FastifyInstance) {
       //    to wonder why nothing changed.
       const restartRequired = WIKI.models.extensions.hasLoadFailed(definition)
 
+      await audit(req, 'admin', 'installExtension', {
+        extensionKey: req.params.extensionKey,
+        title: definition.title,
+        restartRequired
+      })
+
       return {
         ok: true,
         message: restartRequired
@@ -746,6 +769,8 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to save the API state.')
       }
 
+      await audit(req, 'admin', 'updateApiState', { isEnabled: req.body.isEnabled })
+
       return {
         ok: true,
         message: req.body.isEnabled ? 'API enabled successfully.' : 'API disabled successfully.',
@@ -836,6 +861,8 @@ async function routes(app: FastifyInstance) {
         WIKI.config.metrics = previousConfig
         return reply.internalServerError('Failed to save the metrics endpoint state.')
       }
+
+      await audit(req, 'admin', 'updateMetricsState', { isEnabled: req.body.isEnabled })
 
       return {
         ok: true,
@@ -934,9 +961,12 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
+    async (req) => {
       const count = maintenance.disconnectWebsockets()
       WIKI.events.outbound.emit('disconnectWebsockets')
+
+      await audit(req, 'admin', 'disconnectWebsockets', { count })
+
       return {
         ok: true,
         message: `Closed ${count} websocket connection(s) on this instance.`,
@@ -975,9 +1005,12 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
+    async (req) => {
       await maintenance.flushCaches()
       WIKI.events.outbound.emit('flushCaches')
+
+      await audit(req, 'admin', 'flushCache', {})
+
       return {
         ok: true,
         message: 'The cache has been flushed.'
@@ -1059,6 +1092,9 @@ async function routes(app: FastifyInstance) {
       if (invalidatedKeys === null) {
         return reply.internalServerError('Failed to save the new certificates.')
       }
+
+      await audit(req, 'admin', 'regenerateCertificates', { invalidatedKeys })
+
       return {
         ok: true,
         message: `Certificates regenerated successfully. ${invalidatedKeys} API key(s) will have to be reissued.`,
@@ -1101,8 +1137,11 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
+    async (req) => {
       const count = await WIKI.models.apiKeys.purgeRevoked()
+
+      await audit(req, 'admin', 'purgeApiKeys', { count })
+
       return {
         ok: true,
         message: `Purged ${count} revoked API key(s).`,
@@ -1150,6 +1189,9 @@ async function routes(app: FastifyInstance) {
       if (count === null) {
         return reply.internalServerError('Failed to save the new session secret.')
       }
+
+      // -> Before the session goes, since that is where the entry's actor comes from
+      await audit(req, 'admin', 'invalidateSessions', { count })
 
       /*
         This request's own session, which the rows above no longer include but which would come
@@ -1215,6 +1257,11 @@ async function routes(app: FastifyInstance) {
     },
     async (req) => {
       const count = await WIKI.models.pageHistory.purge(req.body.olderThan)
+
+      // -> Worth recording precisely because of what it destroys: the versions this took away are
+      //    what page audit entries older than it point at
+      await audit(req, 'admin', 'purgePageHistory', { olderThan: req.body.olderThan, count })
+
       return {
         ok: true,
         message: `Purged ${count} page version(s).`,
@@ -1283,6 +1330,8 @@ async function routes(app: FastifyInstance) {
         id: req.session.user!.id,
         permissions: req.session.permissions ?? []
       })
+      await audit(req, 'admin', 'purgeSampleContent', { siteId: req.body.siteId, count })
+
       return {
         ok: true,
         message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG}.`,
@@ -1323,7 +1372,7 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
+    async (req) => {
       const renderJob = await WIKI.scheduler.addJob({
         task: 'checkVersion',
         maxRetries: 0,
@@ -1332,6 +1381,9 @@ async function routes(app: FastifyInstance) {
       // NOTE: `addJob` resolves to undefined if enqueueing failed, in which case this throws —
       // preserving the existing behavior.
       await renderJob!.promise
+
+      await audit(req, 'admin', 'checkForUpdate', { latest: WIKI.config.update.version })
+
       return {
         current: WIKI.version,
         latest: WIKI.config.update.version,

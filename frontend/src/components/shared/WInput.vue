@@ -379,11 +379,23 @@ const hasValue = computed(() => String(props.modelValue ?? '').length > 0)
   way -- it asks the caller to pin the label up whenever there is a start adornment.
 
   A placeholder likewise: it renders in the resting position the moment the field is empty.
+
+  And so do the date and time types, which are never visually empty: the browser draws its own format
+  hint (`mm/dd/yyyy, --:--`) in the resting position whatever the value is, and there is no attribute
+  that suppresses it. An empty one would otherwise be a label printed over a format hint.
 */
 const hasLeadingAdornment = computed(() => Boolean(slots.prepend || props.prefix))
 
+/** Types whose control paints its own format hint, so the resting position is never free. */
+const SELF_LABELLING_TYPES = ['date', 'datetime-local', 'month', 'time', 'week']
+
 const isFloating = computed(
-  () => hasFocus.value || hasValue.value || Boolean(props.placeholder) || hasLeadingAdornment.value
+  () =>
+    hasFocus.value ||
+    hasValue.value ||
+    Boolean(props.placeholder) ||
+    hasLeadingAdornment.value ||
+    SELF_LABELLING_TYPES.includes(props.type)
 )
 
 const floatColorClass = computed(() => {

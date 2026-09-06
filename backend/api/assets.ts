@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
+import { audit } from '../helpers/audit.ts'
 import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 
@@ -179,6 +180,17 @@ async function routes(app: FastifyInstance) {
         mimeType: req.headers['content-type'],
         data,
         authorId
+      })
+
+      // -> The stored name, not the one that was sent: an upload conflict may have renamed the file
+      //    or replaced one that was already there, and the entry has to say what actually happened
+      await audit(req, 'asset', 'uploadAsset', {
+        assetId: asset.id,
+        siteId: req.params.siteId,
+        locale,
+        folderPath: destination,
+        fileName: asset.fileName,
+        fileSize: asset.fileSize
       })
 
       return {
@@ -386,6 +398,19 @@ async function routes(app: FastifyInstance) {
       if (!asset) {
         return reply.notFound('This asset does not exist.')
       }
+
+      await audit(req, 'asset', 'updateAsset', {
+        assetId: asset.id,
+        siteId: req.params.siteId,
+        locale: destination.locale,
+        folderPath: destination.folderPath,
+        fileName: destination.fileName,
+        previousLocale: existing.locale,
+        previousFolderPath: existing.folderPath,
+        previousFileName: existing.fileName,
+        isRelocated
+      })
+
       return {
         ok: true,
         message: isRelocated ? 'Asset moved successfully.' : 'Asset renamed successfully.',
@@ -432,6 +457,15 @@ async function routes(app: FastifyInstance) {
       ) {
         return reply.notFound('This asset does not exist.')
       }
+
+      await audit(req, 'asset', 'deleteAsset', {
+        assetId: req.params.assetId,
+        siteId: req.params.siteId,
+        locale: doomed.locale,
+        folderPath: doomed.folderPath,
+        fileName: doomed.fileName
+      })
+
       return reply.code(204).send()
     }
   )

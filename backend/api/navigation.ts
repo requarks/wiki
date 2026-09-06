@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { NAVIGATION_MODES, type NavigationItem, type NavigationMode } from '../models/navigation.ts'
 
@@ -214,6 +215,16 @@ async function routes(app: FastifyInstance) {
         mode: req.body.mode,
         items: req.body.items
       })
+      // -> The mode and how many items, not the tree itself: a sidebar is hundreds of entries and
+      //    the point of the record is that somebody changed the navigation of this page
+      await audit(req, 'admin', 'updatePageNavigation', {
+        siteId: req.params.siteId,
+        pageId: req.params.pageId,
+        mode: result.navigationMode,
+        navigationId: result.navigationId,
+        itemCount: req.body.items?.length ?? 0
+      })
+
       return {
         ok: true,
         message: 'Navigation updated successfully.',

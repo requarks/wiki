@@ -1515,6 +1515,24 @@ class Users {
       }
     })
 
+    /*
+      The one audit entry not written from a route handler, and for the same reason the stamp above
+      is not: every way of signing in — local, a provider, a passkey, and the 2FA and forced password
+      change continuations — converges here, and recording it at each of those routes instead would
+      be six copies of one event that would drift apart.
+
+      A login that FAILED is deliberately not recorded anywhere. This endpoint is open to whoever can
+      reach the wiki, so a credential-stuffing run would otherwise be able to fill the table from the
+      outside; `models/rateLimits.ts` is what answers that, and the wiki's own log is where a refused
+      attempt shows up.
+    */
+    await WIKI.models.auditLog.record({
+      kind: 'auth',
+      action: 'login',
+      actor: { id: user.id, name: user.name, email: user.email, ip: context.ip ?? '' },
+      meta: { strategyId, siteId: context.siteId ?? null }
+    })
+
     return {
       authenticated: true,
       nextAction: 'redirect',
@@ -1741,6 +1759,15 @@ class Users {
       user.auth[strategyId].mustChangePwd = false
       await WIKI.db.update(usersTable).set({ auth: user.auth }).where(eq(usersTable.id, user.id))
 
+      // -> Recorded separately from the `login` the call below writes: two things happened, and a
+      //    password that a login insisted be changed is the one worth being able to find on its own
+      await WIKI.models.auditLog.record({
+        kind: 'auth',
+        action: 'forcedPasswordChange',
+        actor: { id: user.id, name: user.name, email: user.email, ip: ip ?? '' },
+        meta: { siteId, strategyId }
+      })
+
       return this.afterLoginChecks(
         user,
         strategyId,
@@ -1853,6 +1880,19 @@ class Users {
       strategyId: strategy.id
     })
 
+    /*
+      Called from both of the paths below rather than here, because the account is undone again if
+      the verification email cannot be sent — and an audit entry for an account that no longer
+      exists, pointing at a deleted row, is worse than no entry.
+    */
+    const recordRegistration = () =>
+      WIKI.models.auditLog.record({
+        kind: 'auth',
+        action: 'register',
+        actor: { id: userId, name: name.trim(), email: address, ip: ip ?? '' },
+        meta: { siteId, strategyId: strategy.id, mustVerify }
+      })
+
     if (mustVerify) {
       const token = await this.generateToken({
         kind: 'verifyEmail',
@@ -1887,6 +1927,7 @@ class Users {
       WIKI.models.flags.authDebug(
         `Registered user ${userId} <${address}> on site ${siteId} from ${ip}, pending email verification`
       )
+      await recordRegistration()
       return {
         nextAction: 'verifyEmail',
         redirect: '/'
@@ -1912,6 +1953,7 @@ class Users {
     WIKI.models.flags.authDebug(
       `Registered user ${userId} <${address}> on site ${siteId} from ${ip}, signing them in`
     )
+    await recordRegistration()
     return this.afterLoginChecks(user, strategy.id, { ip, siteId }, {}, req)
   }
 
@@ -1963,7 +2005,7 @@ class Users {
    *
    * @throws `ERR_INVALID_VALIDATION_TOKEN`, `ERR_EXPIRED_VALIDATION_TOKEN`, `ERR_INVALID_USER`
    */
-  async verifyUserEmail(token: string): Promise<void> {
+  async verifyUserEmail(token: string, ip?: string): Promise<void> {
     const { user } = await this.validateToken({ kind: 'verifyEmail', token })
     if (!user) {
       throw new Error('ERR_INVALID_USER')
@@ -1975,6 +2017,12 @@ class Users {
         .where(eq(usersTable.id, user.id))
     }
     WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> confirmed their email address`)
+    await WIKI.models.auditLog.record({
+      kind: 'auth',
+      action: 'verifyEmail',
+      actor: { id: user.id, name: user.name, email: user.email, ip: ip ?? '' },
+      meta: {}
+    })
   }
 
   /**
@@ -2045,6 +2093,17 @@ class Users {
     WIKI.models.flags.authDebug(
       `Password reset requested from ${ip} for user ${user.id} <${user.email}>, link sent`
     )
+    /*
+      Only when a link was actually sent. The early return above covers an address nobody holds, and
+      recording those would turn an endpoint open to the internet into a way of writing arbitrary
+      addresses into the audit log.
+    */
+    await WIKI.models.auditLog.record({
+      kind: 'auth',
+      action: 'requestPasswordReset',
+      actor: { id: user.id, name: user.name, email: user.email, ip: ip ?? '' },
+      meta: { siteId, strategyId: strategy.id }
+    })
   }
 
   /**
@@ -2065,10 +2124,12 @@ class Users {
    */
   async resetPassword({
     token,
-    newPassword
+    newPassword,
+    ip
   }: {
     token: string
     newPassword: string
+    ip?: string
   }): Promise<void> {
     if (!newPassword || newPassword.length < 8) {
       throw new Error('ERR_PASSWORD_TOO_SHORT')
@@ -2092,6 +2153,12 @@ class Users {
       .set({ auth, isVerified: true, updatedAt: sql`now()` })
       .where(eq(usersTable.id, user.id))
     WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> reset their password`)
+    await WIKI.models.auditLog.record({
+      kind: 'auth',
+      action: 'resetPassword',
+      actor: { id: user.id, name: user.name, email: user.email, ip: ip ?? '' },
+      meta: { strategyId }
+    })
   }
 
   updateSession(user: any, req: any): void {

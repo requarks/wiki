@@ -56,6 +56,14 @@ defaults:
     # DB defaults
     api:
       isEnabled: false
+    audit:
+      # How many days of audit log to keep. Rows older than this are deleted by the `purgeAuditLog`
+      # task, which runs daily. Set to 0 to keep everything for ever.
+      #
+      # Either 0 or at least 30: a shorter window would let somebody act and have the record of it
+      # purged before anybody had reason to look. A value between the two is read as 30 rather than
+      # honoured, wherever it came from.
+      retentionDays: 90
     mail:
       senderName: ''
       senderEmail: ''

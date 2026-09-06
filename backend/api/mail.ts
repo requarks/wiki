@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -133,6 +134,10 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to save mail configuration.')
       }
 
+      // -> Which settings were touched, never their values: `patch` carries the SMTP password and
+      //    the DKIM private key
+      await audit(req, 'admin', 'updateMailConfig', { changedFields: Object.keys(patch) })
+
       return {
         ok: true,
         message: 'Mail configuration updated successfully.'
@@ -204,6 +209,8 @@ async function routes(app: FastifyInstance) {
             baseUrl: WIKI.models.mail.baseUrl({ req, siteId })
           }
         })
+        await audit(req, 'admin', 'sendTestEmail', { recipient: req.body.recipient, siteId })
+
         return {
           ok: true,
           message: 'Test email sent successfully.'

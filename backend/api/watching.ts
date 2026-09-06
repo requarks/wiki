@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import { actorFrom, mayOnPage, unlockedFor } from './pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
@@ -95,6 +96,14 @@ async function routes(app: FastifyInstance) {
         pageId: page.id,
         userId
       })
+
+      await audit(req, 'page', 'watchPage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path
+      })
+
       return { ok: true, isWatching: true }
     }
   )
@@ -135,6 +144,14 @@ async function routes(app: FastifyInstance) {
         it — and there is nothing to protect anyway: this only ever deletes the caller's own row.
       */
       await WIKI.models.pageWatching.unwatch({ pageId: req.params.pageId, userId })
+
+      // -> No path or locale: the page was deliberately not loaded above, so the id is all this
+      //    request ever knew about it
+      await audit(req, 'page', 'unwatchPage', {
+        pageId: req.params.pageId,
+        siteId: req.params.siteId
+      })
+
       return { ok: true, isWatching: false }
     }
   )

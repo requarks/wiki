@@ -285,11 +285,21 @@
               </w-item-section>
             </w-item>
           </template>
-          <template v-if="userStore.can(`manage:system`)">
+          <!--
+            Every entry in this section is `manage:system`'s EXCEPT the audit log, which `read:audit`
+            grants on its own — so the section opens on either, and the rest is nested behind the one
+            it actually needs. Written as two nested templates rather than a `v-if` repeated down
+            sixteen items, which is the same rule stated sixteen times and drifts the moment one is
+            added without it.
+          -->
+          <template v-if="systemSectionShown">
             <w-item-label class="mt-2 text-caption text-blue-grey-4" header>{{
               t('admin.nav.system')
             }}</w-item-label>
-            <w-item to="/_admin/api" active-class="bg-primary text-white">
+            <w-item
+              to="/_admin/api"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:system`)">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-rest-api.svg" />
               </w-item-section>
@@ -298,141 +308,139 @@
                 <status-light :color="adminStore.info.isApiEnabled ? `positive` : `negative`" />
               </w-item-section>
             </w-item>
-            <w-item
-              to="/_admin/audit"
-              active-class="bg-primary text-white"
-              disabled
-              v-if="flagsStore.experimental">
+            <w-item to="/_admin/audit" active-class="bg-primary text-white" v-if="auditIsVisible">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-event-log.svg" />
               </w-item-section>
               <w-item-section>{{ t('admin.audit.title') }}</w-item-section>
             </w-item>
-            <w-item to="/_admin/extensions" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-module.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.extensions.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/icons" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-spring.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.icons.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/instances" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-network.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.instances.title') }}</w-item-section>
-              <w-item-section side>
-                <w-badge
-                  color="dark-3"
-                  :label="adminStore.info.instancesTotal"
-                  :class="countBadgeClass(adminStore.info.instancesTotal)" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/mail" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-message-settings.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.mail.title') }}</w-item-section>
-              <w-item-section side>
-                <status-light
-                  :color="adminStore.info.isMailConfigured ? `positive` : `warning`"
-                  :pulse="!adminStore.info.isMailConfigured" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/mcp" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-ai.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.mcp.title') }}</w-item-section>
-              <w-item-section side>
-                <status-light
-                  :color="adminStore.info.isMCPEnabled ? `positive` : `negative`" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/metrics" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-graph.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.metrics.title') }}</w-item-section>
-              <w-item-section side>
-                <status-light :color="adminStore.info.isMetricsEnabled ? `positive` : `negative`" />
-              </w-item-section>
-            </w-item>
-            <w-item
-              to="/_admin/rendering"
-              active-class="bg-primary text-white"
-              v-if="flagsStore.experimental">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-rich-text-converter.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.rendering.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/scheduler" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-bot.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.scheduler.title') }}</w-item-section>
-              <w-item-section side>
-                <status-light
-                  :color="adminStore.info.isSchedulerHealthy ? `positive` : `warning`"
-                  :pulse="!adminStore.info.isSchedulerHealthy" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/search" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-find-and-replace.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.search.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/security" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-protect.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.security.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/system" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-processor.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.system.title') }}</w-item-section>
-              <w-item-section side>
-                <status-light :color="adminStore.isVersionLatest ? `positive` : `warning`" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/terminal" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-linux-terminal.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.terminal.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/utilities" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-swiss-army-knife.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.utilities.title') }}</w-item-section>
-            </w-item>
-            <w-item to="/_admin/webhooks" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
-              <w-item-section side>
-                <w-badge
-                  color="dark-3"
-                  :label="adminStore.info.webhooksTotal"
-                  :class="countBadgeClass(adminStore.info.webhooksTotal)" />
-              </w-item-section>
-            </w-item>
-            <w-item to="/_admin/flags" active-class="bg-primary text-white">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.dev.flags.title') }}</w-item-section>
-            </w-item>
+            <template v-if="userStore.can(`manage:system`)">
+              <w-item to="/_admin/extensions" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-module.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.extensions.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/icons" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-spring.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.icons.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/instances" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-network.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.instances.title') }}</w-item-section>
+                <w-item-section side>
+                  <w-badge
+                    color="dark-3"
+                    :label="adminStore.info.instancesTotal"
+                    :class="countBadgeClass(adminStore.info.instancesTotal)" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/mail" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-message-settings.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.mail.title') }}</w-item-section>
+                <w-item-section side>
+                  <status-light
+                    :color="adminStore.info.isMailConfigured ? `positive` : `warning`"
+                    :pulse="!adminStore.info.isMailConfigured" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/mcp" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-ai.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.mcp.title') }}</w-item-section>
+                <w-item-section side>
+                  <status-light :color="adminStore.info.isMCPEnabled ? `positive` : `negative`" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/metrics" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-graph.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.metrics.title') }}</w-item-section>
+                <w-item-section side>
+                  <status-light
+                    :color="adminStore.info.isMetricsEnabled ? `positive` : `negative`" />
+                </w-item-section>
+              </w-item>
+              <w-item
+                to="/_admin/rendering"
+                active-class="bg-primary text-white"
+                v-if="flagsStore.experimental">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-rich-text-converter.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.rendering.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/scheduler" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-bot.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.scheduler.title') }}</w-item-section>
+                <w-item-section side>
+                  <status-light
+                    :color="adminStore.info.isSchedulerHealthy ? `positive` : `warning`"
+                    :pulse="!adminStore.info.isSchedulerHealthy" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/search" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-find-and-replace.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.search.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/security" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-protect.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.security.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/system" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-processor.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.system.title') }}</w-item-section>
+                <w-item-section side>
+                  <status-light :color="adminStore.isVersionLatest ? `positive` : `warning`" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/terminal" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-linux-terminal.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.terminal.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/utilities" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-swiss-army-knife.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.utilities.title') }}</w-item-section>
+              </w-item>
+              <w-item to="/_admin/webhooks" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
+                <w-item-section side>
+                  <w-badge
+                    color="dark-3"
+                    :label="adminStore.info.webhooksTotal"
+                    :class="countBadgeClass(adminStore.info.webhooksTotal)" />
+                </w-item-section>
+              </w-item>
+              <w-item to="/_admin/flags" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.dev.flags.title') }}</w-item-section>
+              </w-item>
+            </template>
           </template>
         </w-list>
       </w-scroll-area>
@@ -592,6 +600,12 @@ const usersAreVisible = computed(() => {
 })
 const usersSectionShown = computed(() => {
   return groupsAreVisible.value || usersAreVisible.value
+})
+const auditIsVisible = computed(() => {
+  return userStore.can('read:audit')
+})
+const systemSectionShown = computed(() => {
+  return userStore.can('manage:system') || auditIsVisible.value
 })
 const overlayIsShown = computed(() => {
   return Boolean(adminStore.overlay)

@@ -323,12 +323,18 @@ There are **two kinds of permission**, granted separately and checked in differe
 kind a name belongs to decides how it may be enforced, so it is the first thing to establish about
 any permission you touch.
 
-**Global permissions** are held site-wide, bound to no path: `access:admin`, `manage:users`,
-`manage:groups`, `manage:navigation`, `manage:theme`, `manage:sites`, `manage:system`. That list is
-the whole of it — the one offered by the group editor (`GroupEditOverlay.vue`). They live on a
-group's `permissions` column, are flattened onto `req.session.permissions` at login
-(`models/users.ts` → `updateSession`), and are what the per-route `config.permissions` hook
-checks. `manage:system` bypasses every check everywhere.
+**Global permissions** are held site-wide, bound to no path: `access:admin`, `read:users`,
+`manage:users`, `read:groups`, `manage:groups`, `read:audit`, `manage:navigation`, `manage:theme`,
+`manage:sites`, `manage:system`. That is the list as it stands — the one offered by the group editor
+(`GroupEditOverlay.vue`). They live on a group's `permissions` column, are flattened onto
+`req.session.permissions` at login (`models/users.ts` → `updateSession`), and are what the per-route
+`config.permissions` hook checks. `manage:system` bypasses every check everywhere.
+
+**Adding a global permission is the maintainer's call, not yours.** The list is not frozen, but a new
+name reshapes who can do what across the whole instance and every existing group silently lacks it —
+so propose it and wait for a yes before writing any code that names it. Until then, express what a
+route needs with the permissions that already exist. This is about *adding* to the list; using one
+that is already on it needs no permission from anybody.
 
 **Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
 `review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
@@ -357,8 +363,10 @@ Consequences worth knowing:
 - **An anonymous request is the guests group**, not an absence of groups: that is how a wiki opens
   reading, and suggesting edits, to the public. Deny guests explicitly where an account is genuinely
   required (`reviewerFor` in `api/approvals.ts` is the worked example).
-- **Never invent a permission name.** Both lists above are closed; `can('browse:fileman')` and
-  friends matched nothing and silently hid the controls they guarded.
+- **Never invent a permission name.** Nothing validates one, so a name that is not on the lists above
+  simply never matches: `can('browse:fileman')` and friends silently hid the controls they guarded.
+  Adding a genuinely new global permission is allowed but is the maintainer's decision — ask first,
+  as above; never introduce one on your own.
 
 ### Backend patterns
 
@@ -721,6 +729,55 @@ store; no SVG is ever written into content.
     their Iconify equivalents for data written before the fonts were dropped; do not write new ones.
 - Picking an icon calls `POST /_api/icons/materialize`, which is what guarantees the wiki can serve it
   afterwards without the Iconify API.
+
+### Audit log
+
+Every action a **person** takes is one row in `auditLog` — `userId`, `clientIP`, `ts`, `kind`
+(`page` / `asset` / `auth` / `profile` / `admin`), `action`, and a `meta` blob. Read at
+`/_admin/audit` behind the `read:audit` permission; the retention setting behind `manage:system`,
+because shortening it destroys evidence and that is not the same authority as looking.
+
+- **Written from API route handlers**, through `audit(req, kind, action, meta)` in `helpers/audit.ts`
+  and only ever AFTER the work succeeded. That is what excludes the scheduler by construction: a page
+  the git sync imports reaches `pages.adoptStoredPage` by a path that never passes through a route,
+  so it leaves no row. Don't move an audit call into a model to save a few lines — the model is
+  reachable from a job, and the log would start claiming a person did it.
+- **The exceptions are the auth events with no session yet**, which record themselves in
+  `models/users.ts`: a login, a registration, an email confirmation, a password reset from a link, a
+  forced password change. The account is only identified there, from a credential or a token, and the
+  login case additionally converges six routes (local, provider, passkey, and the 2FA and
+  password-change continuations) on one place. A logout is the mirror image and passes its own actor,
+  since the session is destroyed before the entry is written.
+- **`AUDIT_ACTIONS` in `models/auditLog.ts` is the closed list**, grouped by kind, and `AuditAction`
+  is its union — so `npm run typecheck` refuses an action that is not in it. Each key is also its
+  translation key (`admin.audit.actions.<action>`) and what `GET /audit/actions` serves the filter
+  from, so adding an action means adding the string too. Keys are unique ACROSS kinds, which is why
+  `forcedPasswordChange` (demanded at sign-in) and `changePassword` (from one's own profile) are
+  named apart.
+- **What is recorded and what is not.** Every mutating route, plus successful logins. Not reads —
+  page views would bury everything else. Not FAILED logins: that endpoint is open to whoever can
+  reach the wiki, so recording them would let anybody outside fill the table on demand
+  (`models/rateLimits.ts` is what answers that). `requestPasswordReset` is recorded only when a link
+  was actually sent, for the same reason.
+- **`meta` carries identity, never payload and never content.** A page edit records the `pageHistory`
+  version its change produced — which is why `createPage` / `updatePage` / `movePage` / `deletePage`
+  return a `PageChange` rather than a page — instead of copying the before and after into a second
+  table. Configuration routes record which fields were touched, not what they were set to; `security`
+  is the one exception, recorded in full because none of it is a secret and its values are exactly
+  what gets asked about later. `sanitizeMeta` redacts secret-shaped keys as a backstop, not as the
+  rule.
+- **`meta.actor` is a copy of the email, display name and IP as they stood.** `userId` is
+  `on delete: set null`, so an entry outlives the account that made it — the copy is the whole reason
+  the row is still readable, and the admin area reads the user column from it rather than from the
+  users table, so a rename does not rewrite history.
+- **Rows are purged, not kept for ever.** `purgeAuditLog` runs daily off `SYSTEM_SCHEDULE`, against
+  the `audit.retentionDays` setting (`0` keeps everything). **The floor is `MIN_RETENTION_DAYS`, 30**,
+  and it is not a preference: retention is the one setting whose whole effect is to destroy this
+  table, and `manage:system` — the permission that changes it — belongs to exactly the person the
+  table exists to record. Left free, acting and then setting retention to a day would purge the
+  record before anybody had reason to look. So the API refuses anything between 1 and 30, and
+  `retentionDays()` reads such a value AS 30 rather than honouring it — the second check is what
+  closes the config-file and direct-database routes round the first.
 
 ### GraphQL is being removed
 

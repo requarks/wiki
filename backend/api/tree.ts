@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
+import { audit } from '../helpers/audit.ts'
 import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { actorFrom } from './pages.ts'
 
@@ -560,6 +561,14 @@ async function routes(app: FastifyInstance) {
         pathName: req.body.pathName,
         title: req.body.title
       })
+      await audit(req, 'page', 'createFolder', {
+        folderId: folder.id,
+        siteId: req.params.siteId,
+        locale,
+        path: target,
+        title: req.body.title
+      })
+
       return {
         ok: true,
         message: 'Folder created successfully.',
@@ -618,6 +627,15 @@ async function routes(app: FastifyInstance) {
         title: req.body.title,
         actorId: req.session.user?.id
       })
+      await audit(req, 'page', 'updateFolder', {
+        folderId: req.params.folderId,
+        siteId: req.params.siteId,
+        locale: existing.locale,
+        path: folderPathOf(folder),
+        previousPath: folderPathOf(existing),
+        title: folder.title
+      })
+
       return {
         ok: true,
         message: 'Folder renamed successfully.',
@@ -710,6 +728,17 @@ async function routes(app: FastifyInstance) {
         locale: destinationLocale,
         actorId: req.session.user?.id
       })
+      // -> One entry for a move that took a whole branch with it. The pages underneath moved rather
+      //    than changed, so they have no history versions of their own to point at.
+      await audit(req, 'page', 'moveFolder', {
+        folderId: req.params.folderId,
+        siteId: req.params.siteId,
+        locale: destinationLocale,
+        path: folderPathOf(folder),
+        previousLocale: existing.locale,
+        previousPath: folderPathOf(existing)
+      })
+
       return {
         ok: true,
         message: 'Folder moved successfully.',
@@ -810,6 +839,16 @@ async function routes(app: FastifyInstance) {
         locale: destinationLocale,
         actor
       })
+      await audit(req, 'page', 'duplicateFolder', {
+        folderId: folder.id,
+        siteId: req.params.siteId,
+        locale: destinationLocale,
+        path: folderPathOf(folder),
+        sourceFolderId: req.params.folderId,
+        sourceLocale: existing.locale,
+        sourcePath: folderPathOf(existing)
+      })
+
       return {
         ok: true,
         message: 'Folder duplicated successfully.',
@@ -878,6 +917,14 @@ async function routes(app: FastifyInstance) {
         folderId: req.params.folderId,
         hue: req.body.hue
       })
+      await audit(req, 'page', 'setFolderColor', {
+        folderId: req.params.folderId,
+        siteId: req.params.siteId,
+        locale: existing.locale,
+        path: folderPathOf(existing),
+        hue: req.body.hue
+      })
+
       return {
         ok: true,
         message: 'Folder colour set successfully.',
@@ -928,6 +975,18 @@ async function routes(app: FastifyInstance) {
       //    asset actually live
       await WIKI.models.pages.deleteOrphaned(req.params.siteId, removed.pages, actor)
       await WIKI.models.assets.deleteOrphaned(req.params.siteId, removed.assets, actor.id)
+
+      // -> Counts rather than ids: a folder deletion can take hundreds of pages with it, and each of
+      //    those already has its own history version recording the deletion
+      await audit(req, 'page', 'deleteFolder', {
+        folderId: req.params.folderId,
+        siteId: req.params.siteId,
+        locale: existing.locale,
+        path: folderPathOf(existing),
+        deletedPages: removed.pages.length,
+        deletedAssets: removed.assets.length
+      })
+
       return reply.code(204).send()
     }
   )

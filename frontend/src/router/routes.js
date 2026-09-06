@@ -81,6 +81,7 @@ const routes = [
       { path: 'users/:id?/:section?', component: () => import('@/pages/AdminUsers.vue') },
       // -> System
       { path: 'api', component: () => import('@/pages/AdminApi.vue') },
+      { path: 'audit', component: () => import('@/pages/AdminAudit.vue') },
       { path: 'extensions', component: () => import('@/pages/AdminExtensions.vue') },
       { path: 'icons', component: () => import('@/pages/AdminIcons.vue') },
       { path: 'instances', component: () => import('@/pages/AdminInstances.vue') },

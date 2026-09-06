@@ -52,6 +52,12 @@ class Settings {
         }
       },
       {
+        key: 'audit',
+        value: {
+          retentionDays: 90
+        }
+      },
+      {
         key: 'auth',
         value: {
           // -> The installation keypair, carrying its own passphrase. Its one job is signing API

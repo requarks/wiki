@@ -749,6 +749,13 @@ const permissions = [
     disabled: false
   },
   {
+    permission: 'read:audit',
+    hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
     permission: 'manage:navigation',
     hint: 'Can manage site navigation',
     warning: false,

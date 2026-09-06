@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
 import { STORAGE_DIRECT_ACCESS_FALLBACKS, STORAGE_TARGET_STATUSES } from '../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
@@ -282,6 +283,22 @@ async function routes(app: FastifyInstance) {
         }
       }
 
+      /*
+        Which targets were written and which site-wide settings were touched — never the target
+        configs themselves, which are where the S3 secret keys and the SSH passwords live. A target's
+        module and title are enough to say what was changed.
+      */
+      await audit(req, 'admin', 'updateStorage', {
+        siteId: req.params.siteId,
+        targets: patches.map(({ target, patch }) => ({
+          targetId: target.id,
+          module: target.module,
+          title: target.title,
+          changedFields: Object.keys(patch).filter((key) => key !== 'id')
+        })),
+        changedFields: Object.keys(req.body).filter((key) => key !== 'targets')
+      })
+
       return {
         ok: true,
         message: 'Storage configuration updated successfully.',
@@ -361,6 +378,21 @@ async function routes(app: FastifyInstance) {
 
       try {
         const message = await WIKI.models.storage.executeAction(target, req.params.action, actorId)
+
+        /*
+          The action is recorded, not what it did. An import can create hundreds of pages and each of
+          those goes through `adoptStoredPage`, which is reached from a scheduled sync as well as from
+          here — so those pages have their own history versions but no audit entries of their own.
+          This is the entry that says a person asked for it.
+        */
+        await audit(req, 'admin', 'runStorageAction', {
+          siteId: req.params.siteId,
+          targetId: target.id,
+          module: target.module,
+          title: target.title,
+          action: req.params.action
+        })
+
         return {
           ok: true,
           message: message ?? 'Action completed successfully.'

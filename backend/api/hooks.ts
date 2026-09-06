@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
 import { EMITTED_EVENTS, HOOK_EVENTS } from '../models/hooks.ts'
 
@@ -195,6 +196,14 @@ async function routes(app: FastifyInstance) {
         authHeader: req.body.authHeader
       })
 
+      // -> No `authHeader`: a webhook's auth header is a credential for the endpoint it calls
+      await audit(req, 'admin', 'createHook', {
+        hookId: id,
+        name: req.body.name,
+        url: req.body.url,
+        events: req.body.events
+      })
+
       return {
         ok: true,
         message: 'Webhook created successfully.',
@@ -272,6 +281,13 @@ async function routes(app: FastifyInstance) {
 
       await WIKI.models.hooks.updateHook(req.params.hookId, patch)
 
+      await audit(req, 'admin', 'updateHook', {
+        hookId: req.params.hookId,
+        name: patch.name,
+        url: patch.url,
+        changedFields: Object.keys(patch)
+      })
+
       return {
         ok: true,
         message: 'Webhook updated successfully.'
@@ -312,6 +328,9 @@ async function routes(app: FastifyInstance) {
       if (!(await WIKI.models.hooks.deleteHook(req.params.hookId))) {
         return reply.notFound('Webhook does not exist.')
       }
+
+      await audit(req, 'admin', 'deleteHook', { hookId: req.params.hookId })
+
       return reply.code(204).send()
     }
   )

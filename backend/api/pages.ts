@@ -2,6 +2,7 @@ import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
+import { audit } from '../helpers/audit.ts'
 import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
 
@@ -176,6 +177,81 @@ async function loadReadablePage(req: FastifyRequest, siteId: string, pageId: str
  * Pages API Routes
  */
 async function routes(app: FastifyInstance) {
+  /**
+   * LIST RECENTLY EDITED PAGES
+   */
+  app.get<{ Querystring: { limit?: number } }>(
+    '/pages/recent',
+    {
+      config: {
+        // -> `access:admin`, not a page permission: this fills a panel on the admin dashboard, which
+        //    everyone who can open the admin area sees, and it is the same permission
+        //    `users/recent-logins` fills the panel beside it with. Page rules are not consulted, so
+        //    the answer is deliberately thin -- where a page is and when it was last written, and
+        //    nothing of what it says.
+        permissions: ['access:admin']
+      },
+      schema: {
+        summary: 'List the most recently edited pages',
+        description:
+          'What has been written lately, newest first, across every site. Ordered by the last write, which covers a creation as well as an edit — `isNew` says which of the two this row is.',
+        tags: ['Pages'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'The most recently edited pages, newest first',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                siteId: { type: 'string', format: 'uuid' },
+                locale: { type: 'string' },
+                path: { type: 'string' },
+                title: { type: 'string' },
+                updatedAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'RFC 3339 Date Time'
+                },
+                isNew: {
+                  type: 'boolean',
+                  description:
+                    'Whether this is the page first appearing rather than a later edit of it.'
+                },
+                url: {
+                  type: 'string',
+                  description:
+                    "Where the page is, as a path on its own site — carrying a locale prefix only where that site's settings put one there."
+                },
+                hostname: {
+                  type: 'string',
+                  nullable: true,
+                  description:
+                    'The host that site answers on, for linking to a page on a site other than the one being browsed. Null for the catch-all site.'
+                },
+                authorName: {
+                  type: 'string',
+                  nullable: true,
+                  description: 'Who wrote the version that stands. Null once that account is gone.'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      return WIKI.models.pages.getRecentlyEdited({ limit: req.query.limit ?? 10 })
+    }
+  )
+
   /**
    * LIST PAGES
    */
@@ -676,6 +752,17 @@ async function routes(app: FastifyInstance) {
         request, and it is the reader's own deliberate action that starts it.
       */
       req.session.unlockedPages = [...new Set([...(req.session.unlockedPages ?? []), page.id])]
+
+      // -> The one read this log records, because it is a password being accepted rather than a page
+      //    being looked at. A wrong password is not recorded, for the same reason a failed login is
+      //    not: this endpoint is open to anybody who can reach the page.
+      await audit(req, 'page', 'unlockPage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path
+      })
+
       return page
     }
   )
@@ -725,7 +812,21 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'write:pages', { path: req.body.path, locale: req.body.locale })) {
         return reply.forbidden('You are not allowed to create a page here.')
       }
-      const page = await WIKI.models.pages.createPage(req.params.siteId, req.body, actor)
+      const { page, versionId } = await WIKI.models.pages.createPage(
+        req.params.siteId,
+        req.body,
+        actor
+      )
+
+      await audit(req, 'page', 'createPage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        title: page.title,
+        versionId
+      })
+
       return {
         ok: true,
         message: 'Page created successfully.',
@@ -780,15 +881,27 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'write:pages', target)) {
         return reply.forbidden('You are not allowed to edit this page.')
       }
-      const page = await WIKI.models.pages.updatePage(
+      const change = await WIKI.models.pages.updatePage(
         req.params.siteId,
         req.params.pageId,
         req.body,
         actor
       )
-      if (!page) {
+      if (!change) {
         return reply.notFound('This page does not exist.')
       }
+      const { page, versionId } = change
+
+      // -> What changed is not repeated here: `versionId` points at the `pageHistory` row that holds
+      //    the page as it now stands, which is the record of the edit itself
+      await audit(req, 'page', 'updatePage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        title: page.title,
+        versionId
+      })
       /*
         Anyone else editing this page right now is looking at the text that was just stored, so their
         editor should stop calling it unsaved. Told through the collaboration room rather than answered
@@ -892,15 +1005,27 @@ async function routes(app: FastifyInstance) {
       ) {
         return reply.forbidden('You are not allowed to move this page there.')
       }
-      const page = await WIKI.models.pages.movePage(
+      const change = await WIKI.models.pages.movePage(
         req.params.siteId,
         req.params.pageId,
         req.body,
         actor
       )
-      if (!page) {
+      if (!change) {
         return reply.notFound('This page does not exist.')
       }
+      const { page, versionId } = change
+
+      await audit(req, 'page', 'movePage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        previousLocale: target.locale,
+        previousPath: target.path,
+        versionId
+      })
+
       return {
         ok: true,
         message: 'Page moved successfully.',
@@ -964,6 +1089,14 @@ async function routes(app: FastifyInstance) {
       if (!queued) {
         return reply.notFound('This page does not exist.')
       }
+
+      await audit(req, 'page', 'renderPage', {
+        pageId: req.params.pageId,
+        siteId: req.params.siteId,
+        locale: target.locale,
+        path: target.path
+      })
+
       return reply.code(202).send({
         ok: true,
         message: 'Page queued for rendering.'
@@ -1008,9 +1141,26 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'delete:pages', target)) {
         return reply.forbidden('You are not allowed to delete this page.')
       }
-      if (!(await WIKI.models.pages.deletePage(req.params.siteId, req.params.pageId, actor))) {
+      const deleted = await WIKI.models.pages.deletePage(
+        req.params.siteId,
+        req.params.pageId,
+        actor
+      )
+      if (!deleted) {
         return reply.notFound('This page does not exist.')
       }
+
+      // -> The version recorded here is the deletion itself, which is what recovering the page would
+      //    be built from — so the entry says where to find the page that is no longer there
+      await audit(req, 'page', 'deletePage', {
+        pageId: req.params.pageId,
+        siteId: req.params.siteId,
+        locale: target.locale,
+        path: target.path,
+        title: target.title,
+        versionId: deleted.versionId
+      })
+
       return reply.code(204).send()
     }
   )

@@ -1,4 +1,4 @@
-import { and, eq, inArray, ne, notInArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, ne, notInArray, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
 import {
   CustomError,
@@ -209,9 +209,47 @@ export interface PageInput {
 }
 
 /** Who is saving, and what they are allowed to put in a page. */
+/** One row of the admin dashboard's recently-edited panel. */
+export interface RecentPage {
+  id: string
+  siteId: string
+  locale: string
+  path: string
+  title: string
+  updatedAt: Date
+  /** Whether this is the page appearing for the first time rather than a later edit of it. */
+  isNew: boolean
+  /**
+   * Where the page is, as a path on its own site — locale prefix included only where that site's
+   * settings put one there.
+   */
+  url: string
+  /**
+   * The host that site answers on, so a caller looking at one site can still link to a page on
+   * another. Null for the catch-all site, which has no host of its own to name.
+   */
+  hostname: string | null
+  /** Who wrote the version that stands. Null once that account is deleted. */
+  authorName: string | null
+}
+
 export interface PageActor {
   id: string
   permissions: string[]
+}
+
+/**
+ * A page as it stands after a change, together with the history version that change produced.
+ *
+ * The version is returned rather than kept to itself because the audit log references it: an audit
+ * entry says a page was edited and points at the `pageHistory` row holding what the edit actually
+ * was, instead of copying the before and after into a second table. Null when history could not be
+ * recorded — `pageHistory.record` swallows its own failures, since losing a version is not a reason
+ * to fail the edit.
+ */
+export interface PageChange {
+  page: Page
+  versionId: string | null
 }
 
 function hasPermission(actor: PageActor, permission: string): boolean {
@@ -709,6 +747,74 @@ class Pages {
    * @param withPassword Whether to include the password value. For whoever may edit the page — not for
    *                     a reader who just entered it, who needs it no more after that.
    */
+  /**
+   * The pages touched most recently, newest first — what the admin dashboard's panel is built from.
+   *
+   * Across every site, like the rest of that dashboard: it answers "what has been happening here",
+   * and an instance-wide question should not be filtered to whichever site the admin area happens to
+   * be pointed at.
+   *
+   * Ordered by `updatedAt`, which covers both halves of "edited or created": a page's creation sets
+   * it and every save moves it, so one column is the whole of the answer.
+   */
+  async getRecentlyEdited({ limit = 10 }: { limit?: number } = {}): Promise<RecentPage[]> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        siteId: pagesTable.siteId,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        createdAt: pagesTable.createdAt,
+        updatedAt: pagesTable.updatedAt,
+        authorName: usersTable.name
+      })
+      .from(pagesTable)
+      // -> Left, so a page whose author has since been deleted is still listed, without a name
+      .leftJoin(usersTable, eq(usersTable.id, pagesTable.authorId))
+      .orderBy(desc(pagesTable.updatedAt))
+      .limit(limit)
+
+    return rows.map((row) => ({
+      id: row.id,
+      siteId: row.siteId,
+      locale: row.locale,
+      path: row.path,
+      title: row.title,
+      updatedAt: row.updatedAt,
+      /*
+        Creating a page sets both stamps to the same moment and every later save moves only
+        `updatedAt`, so equality is what tells the two apart. Compared in milliseconds because these
+        are `Date`s, which have no `valueOf` ordering worth relying on for equality.
+      */
+      isNew: row.createdAt.getTime() === row.updatedAt.getTime(),
+      url: this.urlFor(row.siteId, row.locale, row.path),
+      // -> `*` is the catch-all rather than a host; a link to it is whatever host you are already on
+      hostname:
+        WIKI.sites[row.siteId]?.hostname && WIKI.sites[row.siteId].hostname !== '*'
+          ? WIKI.sites[row.siteId].hostname
+          : null,
+      authorName: row.authorName
+    }))
+  }
+
+  /**
+   * Where a page lives, as a path.
+   *
+   * Built here rather than by the caller because the rule is per SITE — a site brackets its URLs by
+   * locale or it does not — and a client looking at one site has no way to know how another one is
+   * configured. Mirrors `localeUrlPrefix` in the frontend's site store and the redirect in
+   * `index.ts`, which is what corrects a URL that arrives without the prefix.
+   */
+  urlFor(siteId: string, locale: string, path: string): string {
+    const locales = WIKI.sites[siteId]?.config?.locales
+    const prefix =
+      locales?.forcePrefix || locale !== locales?.primary
+        ? `/${WIKI.models.locales.shortCodeFor(locale)}`
+        : ''
+    return `${prefix}/${path}`
+  }
+
   async getPage({
     siteId,
     id,
@@ -846,7 +952,7 @@ class Pages {
    *
    * @param actor Who is saving it. Their permissions decide what survives sanitizing.
    */
-  async createPage(siteId: string, input: PageInput, actor: PageActor): Promise<Page> {
+  async createPage(siteId: string, input: PageInput, actor: PageActor): Promise<PageChange> {
     if (!WIKI.sites[siteId]) {
       throw new CustomError('pageInvalidSite', 'This site does not exist.', 404)
     }
@@ -970,7 +1076,7 @@ class Pages {
       throw err
     }
 
-    await WIKI.models.pageHistory.record({
+    const versionId = await WIKI.models.pageHistory.record({
       siteId,
       pageId: page.id,
       action: 'created',
@@ -991,7 +1097,7 @@ class Pages {
       metadata: { title: page.title, description: page.description, editor }
     })
 
-    return (await this.getPage({ siteId, id: page.id })) as Page
+    return { page: (await this.getPage({ siteId, id: page.id })) as Page, versionId }
   }
 
   /**
@@ -1002,7 +1108,7 @@ class Pages {
     id: string,
     patch: Partial<PageInput>,
     actor: PageActor
-  ): Promise<Page | null> {
+  ): Promise<PageChange | null> {
     const results = await WIKI.db
       .select()
       .from(pagesTable)
@@ -1121,7 +1227,7 @@ class Pages {
 
     const updated = (await this.getPage({ siteId, id })) as Page
 
-    await WIKI.models.pageHistory.record({
+    const versionId = await WIKI.models.pageHistory.record({
       siteId,
       pageId: id,
       action: 'updated',
@@ -1162,7 +1268,7 @@ class Pages {
       metadata: { title: updated.title, description: updated.description }
     })
 
-    return updated
+    return { page: updated, versionId }
   }
 
   /**
@@ -1173,7 +1279,7 @@ class Pages {
     id: string,
     { path, locale, title }: { path: string; locale?: string; title?: string },
     actor: PageActor
-  ): Promise<Page | null> {
+  ): Promise<PageChange | null> {
     // -> With the source, which the move itself does not need: it is what the copy kept by a storage
     //    target is rewritten from once the page has landed at its new path
     const page = await this.getPage({ siteId, id, withContent: true })
@@ -1190,7 +1296,8 @@ class Pages {
     const newLocale = locale || page.locale
     const isRelocated = newPath !== page.path || newLocale !== page.locale
     if (!isRelocated && (title === undefined || title === page.title)) {
-      return page
+      // -> Nothing moved and nothing was renamed, so there is no version recording a change either
+      return { page, versionId: null }
     }
 
     if (isRelocated) {
@@ -1259,7 +1366,7 @@ class Pages {
 
     // -> Recorded as its own kind of change rather than an edit: a move is what breaks inbound links,
     //    and a history list has to be able to say so
-    await WIKI.models.pageHistory.record({
+    const versionId = await WIKI.models.pageHistory.record({
       siteId,
       pageId: id,
       action: 'moved',
@@ -1293,21 +1400,22 @@ class Pages {
       siteId,
       authorId: actor.id
     })
-    return moved
+    return { page: moved, versionId }
   }
 
   /**
    * Delete a page and its tree entry.
    *
-   * @returns Whether a page was deleted
+   * @returns The page as it last stood and the version recording its deletion, or null when there
+   *          was no such page
    */
-  async deletePage(siteId: string, id: string, actor: PageActor): Promise<boolean> {
+  async deletePage(siteId: string, id: string, actor: PageActor): Promise<PageChange | null> {
     const page = await this.getPage({ siteId, id })
     if (!page) {
-      return false
+      return null
     }
     // -> Before the row goes, and this version is what recovering the page would be built from
-    await WIKI.models.pageHistory.record({
+    const versionId = await WIKI.models.pageHistory.record({
       siteId,
       pageId: id,
       action: 'deleted',
@@ -1335,7 +1443,7 @@ class Pages {
       siteId,
       authorId: actor.id
     })
-    return true
+    return { page, versionId }
   }
 
   /**
@@ -1681,7 +1789,7 @@ class Pages {
     // -> The one difference between the two directions, and deliberately the only one: a page that is
     //    there is *saved*, through the same method an editor saves through, so it gets a history entry
     //    and a re-render and a mirrored copy without any of that being reimplemented here
-    const page = existing[0]
+    const change = existing[0]
       ? await this.updatePage(
           siteId,
           existing[0].id,
@@ -1713,9 +1821,10 @@ class Pages {
           actor
         )
     // -> Only if the page went away between the two statements above
-    if (!page) {
+    if (!change) {
       return null
     }
+    const page = change.page
 
     // -> A restore should not report every page as written today. Applied after the fact because the
     //    two dates are not something an API client may set, only something a file can carry back.

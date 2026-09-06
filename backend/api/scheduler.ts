@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
 import { JOB_STATES, type JobState } from '../models/jobs.ts'
 
@@ -89,6 +90,17 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('The scheduler could not queue the job.')
       }
 
+      /*
+        A scheduled task run by hand IS a user action, and is recorded as one — what the task itself
+        then does is not, since by the time it runs there is no request and no requester. This entry
+        is the link between the two: the job id is what `jobHistory` records the outcome against.
+      */
+      await audit(req, 'admin', 'runScheduledTask', {
+        scheduleId: req.params.scheduleId,
+        task: entry.task,
+        jobId: id
+      })
+
       return {
         ok: true,
         message: 'Task queued successfully.',
@@ -161,6 +173,9 @@ async function routes(app: FastifyInstance) {
       if (!cancelled) {
         return reply.notFound('No pending job with this ID.')
       }
+
+      await audit(req, 'admin', 'cancelJob', { jobId: req.params.jobId })
+
       return reply.code(204).send()
     }
   )
@@ -283,6 +298,12 @@ async function routes(app: FastifyInstance) {
       if (!id) {
         return reply.internalServerError('The scheduler could not queue the job.')
       }
+
+      await audit(req, 'admin', 'retryJob', {
+        task: entry.task,
+        retriedJobId: req.params.jobId,
+        jobId: id
+      })
 
       return {
         ok: true,

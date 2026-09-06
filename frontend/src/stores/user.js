@@ -31,6 +31,29 @@ function formatDatePart(zoned, dateFormat) {
 }
 
 /**
+ * The zone this user's clock is in: their stored preference where it is still a real zone, and this
+ * browser's otherwise.
+ *
+ * A preference can outlive the zone it names — the IANA database retires and renames them — and an
+ * empty one is the normal state for an account that never chose. Either way a table full of dates
+ * must not throw, so both fall back to where the reader actually is.
+ *
+ * @param timezone This user's stored zone, which may be empty or no longer exist.
+ */
+function resolveZone(timezone) {
+  if (!timezone) {
+    return Temporal.Now.timeZoneId()
+  }
+  try {
+    // -> The only way to ask whether a zone id is real is to use it
+    Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(timezone)
+    return timezone
+  } catch {
+    return Temporal.Now.timeZoneId()
+  }
+}
+
+/**
  * The moment as this user's clock shows it, whatever form the API sent it in.
  *
  * @param date A `Temporal.Instant`, a `Date`, or a string one can be parsed from.
@@ -43,13 +66,7 @@ function toUserZone(date, timezone) {
   } else if (date instanceof Date) {
     instant = date.toTemporalInstant()
   }
-  // -> A preference set before the zone list changed, or none at all, falls back to this browser's
-  //    zone rather than throwing in the middle of a table
-  try {
-    return instant.toZonedDateTimeISO(timezone || Temporal.Now.timeZoneId())
-  } catch {
-    return instant.toZonedDateTimeISO(Temporal.Now.timeZoneId())
-  }
+  return instant.toZonedDateTimeISO(resolveZone(timezone))
 }
 
 /**
@@ -217,6 +234,16 @@ export const useUserStore = defineStore('user', {
         date: formatDatePart(zoned, this.dateFormat),
         time: formatTimePart(zoned, this.timeFormat)
       })
+    },
+    /**
+     * The IANA zone every date on screen is rendered in — this user's preference, or this browser's
+     * where they have none or theirs no longer exists.
+     *
+     * Resolved rather than read off `timezone` directly, so that what is displayed as the zone is the
+     * one the timestamps beside it were actually converted to. The two are the same call.
+     */
+    timezoneId() {
+      return resolveZone(this.timezone)
     },
     /**
      * Format the DATE alone, in this user's pattern and zone. For a line with no room for a time, or

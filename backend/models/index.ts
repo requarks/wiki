@@ -1,6 +1,7 @@
 import { apiKeys } from './apiKeys.ts'
 import { approvals } from './approvals.ts'
 import { assets } from './assets.ts'
+import { auditLog } from './auditLog.ts'
 import { authentication } from './authentication.ts'
 import { blocks } from './blocks.ts'
 import { extensions } from './extensions.ts'
@@ -32,6 +33,7 @@ export default {
   apiKeys,
   approvals,
   assets,
+  auditLog,
   authentication,
   blocks,
   extensions,

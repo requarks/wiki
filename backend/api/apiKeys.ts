@@ -1,3 +1,4 @@
+import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
 import type { KeyExpiration } from '../models/apiKeys.ts'
 
@@ -121,6 +122,14 @@ async function routes(app: FastifyInstance) {
         groups: req.body.groups
       })
 
+      // -> Never the token: it exists once, in the response above, and this log is not a second copy
+      await audit(req, 'admin', 'createApiKey', {
+        apiKeyId: id,
+        name: req.body.name,
+        expiration: req.body.expiration,
+        groups: req.body.groups
+      })
+
       return {
         ok: true,
         message: 'API key created successfully.',
@@ -180,6 +189,8 @@ async function routes(app: FastifyInstance) {
       }
 
       await WIKI.models.apiKeys.revokeKey(key.id)
+
+      await audit(req, 'admin', 'revokeApiKey', { apiKeyId: key.id, name: key.name })
 
       return {
         ok: true,
