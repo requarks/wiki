@@ -119,7 +119,13 @@ class Settings {
       {
         key: 'metrics',
         value: {
-          isEnabled: false
+          isEnabled: false,
+          path: '/metrics',
+          allowAnonymousLocal: true,
+          allowAnonymousPrivate: true,
+          allowAnonymousExternal: false,
+          includeRuntime: true,
+          includeWiki: false
         }
       },
       {

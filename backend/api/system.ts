@@ -780,7 +780,7 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
-   * GET METRICS ENDPOINT STATE
+   * GET METRICS CONFIGURATION
    */
   app.get(
     '/metrics',
@@ -789,54 +789,38 @@ async function routes(app: FastifyInstance) {
         permissions: ['manage:system']
       },
       schema: {
-        summary: 'Get the metrics endpoint state',
+        summary: 'Get the metrics endpoint configuration',
         description:
-          'Whether the Prometheus metrics endpoint is turned on. The endpoint itself is not implemented yet — see the description of the PUT counterpart.',
+          'Whether the Prometheus metrics endpoint is turned on, the path it answers at, and who may scrape it without credentials.',
         tags: ['System'],
         response: {
-          200: {
-            description: 'Metrics endpoint state',
-            type: 'object',
-            properties: {
-              isEnabled: {
-                type: 'boolean'
-              }
-            }
-          }
+          200: { $ref: 'MetricsConfig#' }
         }
       }
     },
     async () => {
-      return { isEnabled: WIKI.config.metrics.isEnabled === true }
+      return WIKI.models.metrics.getConfig()
     }
   )
 
   /**
-   * SET METRICS ENDPOINT STATE
+   * UPDATE METRICS CONFIGURATION
    */
-  app.put<{ Body: { isEnabled: boolean } }>(
+  app.put<{ Body: Record<string, any> }>(
     '/metrics',
     {
       config: {
         permissions: ['manage:system']
       },
       schema: {
-        summary: 'Turn the metrics endpoint on or off',
+        summary: 'Update the metrics endpoint configuration',
         description:
-          'Stores the state and nothing more, for now: the `/metrics` endpoint it governs is not implemented, and its documented `read:metrics` bearer authentication depends on API keys, which are not implemented either.',
+          'Accepts any subset of the fields, and applies at once on every instance — nothing here is read at boot. While the endpoint is enabled it takes its path over from the page tree, so a wiki page at that path becomes unreachable until it is turned off again.',
         tags: ['System'],
-        body: {
-          type: 'object',
-          required: ['isEnabled'],
-          properties: {
-            isEnabled: {
-              type: 'boolean'
-            }
-          }
-        },
+        body: { $ref: 'MetricsConfig#' },
         response: {
           200: {
-            description: 'Metrics endpoint state updated successfully',
+            description: 'Metrics endpoint configuration updated successfully',
             type: 'object',
             properties: {
               ok: {
@@ -844,9 +828,6 @@ async function routes(app: FastifyInstance) {
               },
               message: {
                 type: 'string'
-              },
-              isEnabled: {
-                type: 'boolean'
               }
             }
           }
@@ -854,22 +835,86 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const previousConfig = WIKI.config.metrics
-      WIKI.config.metrics = { ...previousConfig, isEnabled: req.body.isEnabled }
-
-      if (!(await WIKI.configSvc.saveToDb(['metrics']))) {
-        WIKI.config.metrics = previousConfig
-        return reply.internalServerError('Failed to save the metrics endpoint state.')
+      const patch = WIKI.models.metrics.pickFields(req.body)
+      if (Object.keys(patch).length < 1) {
+        return reply.badRequest('No valid metrics setting was provided.')
       }
 
-      await audit(req, 'admin', 'updateMetricsState', { isEnabled: req.body.isEnabled })
+      const invalid = WIKI.models.metrics.validate(patch)
+      if (invalid) {
+        return reply.badRequest(invalid)
+      }
+
+      if (!(await WIKI.models.metrics.updateConfig(patch))) {
+        return reply.internalServerError('Failed to save the metrics configuration.')
+      }
+
+      // -> Fields rather than values, as the other configuration routes do. `isEnabled` is the
+      //    exception because whether the endpoint is open at all is the part that gets asked about.
+      await audit(req, 'admin', 'updateMetricsState', {
+        fields: Object.keys(patch).sort(),
+        ...(patch.isEnabled === undefined ? {} : { isEnabled: patch.isEnabled })
+      })
 
       return {
         ok: true,
-        message: req.body.isEnabled
-          ? 'Metrics endpoint enabled successfully.'
-          : 'Metrics endpoint disabled successfully.',
-        isEnabled: req.body.isEnabled
+        message: 'Metrics configuration saved successfully.'
+      }
+    }
+  )
+
+  /**
+   * PREVIEW THE METRICS EXPOSITION
+   */
+  app.get<{ Querystring: { includeRuntime?: boolean; includeWiki?: boolean } }>(
+    '/metrics/preview',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Preview the metrics exposition',
+        description:
+          'The Prometheus text a scrape would be answered with, for the admin area to show. Works whether or not the endpoint is enabled, and ignores the path and the anonymous-access settings entirely — this is the API talking, not the endpoint. `includeRuntime` and `includeWiki` override the stored settings so an unsaved selection can be previewed; either one left out falls back to what is stored.',
+        tags: ['System'],
+        querystring: {
+          type: 'object',
+          properties: {
+            includeRuntime: {
+              type: 'boolean'
+            },
+            includeWiki: {
+              type: 'boolean'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The exposition',
+            type: 'object',
+            properties: {
+              contentType: {
+                type: 'string',
+                description: 'The `Content-Type` the endpoint answers with.'
+              },
+              body: {
+                type: 'string',
+                description: 'The exposition itself. Empty when neither group is included.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      try {
+        return await WIKI.models.metrics.render({
+          includeRuntime: req.query.includeRuntime,
+          includeWiki: req.query.includeWiki
+        })
+      } catch (err: any) {
+        WIKI.logger.warn(`Failed to collect metrics for preview: ${err.message}`)
+        return reply.internalServerError('Failed to collect metrics.')
       }
     }
   )

@@ -756,6 +756,13 @@ const permissions = [
     disabled: false
   },
   {
+    permission: 'read:metrics',
+    hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
     permission: 'manage:navigation',
     hint: 'Can manage site navigation',
     warning: false,

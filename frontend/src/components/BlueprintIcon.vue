@@ -1,5 +1,5 @@
 <template>
-  <w-item-section avatar>
+  <w-item-section avatar :top="top">
     <w-avatar
       class="blueprint-icon"
       :color="avatarBgColor"
@@ -8,13 +8,13 @@
       rounded
       :style="props.hueRotate !== 0 ? `filter: hue-rotate(` + props.hueRotate + `deg)` : ``">
       <w-badge v-if="indicatorDot" rounded :color="indicatorDot" floating>
-        <w-tooltip v-if="props.indicatorText">{{props.indicatorText}}</w-tooltip>
+        <w-tooltip v-if="props.indicatorText">{{ props.indicatorText }}</w-tooltip>
       </w-badge>
       <w-icon
         v-if="!textMode"
         :name="`img:/_assets/icons/ultraviolet-` + icon + `.svg`"
         size="sm" />
-      <span class="uppercase" v-else>{{props.text}}</span>
+      <span class="uppercase" v-else>{{ props.text }}</span>
     </w-avatar>
   </w-item-section>
 </template>
@@ -28,6 +28,15 @@ const props = defineProps({
   icon: {
     type: String,
     default: ''
+  },
+  /**
+   * Sit at the top of the row rather than centred in it. For a row whose section runs to several
+   * lines — a hint plus a warning, a stack of checkboxes — where a centred icon drifts away from
+   * the label it belongs to.
+   */
+  top: {
+    type: Boolean,
+    default: false
   },
   indicator: {
     type: String,

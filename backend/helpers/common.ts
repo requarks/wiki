@@ -63,6 +63,17 @@ export function createDeferred<T = void>(): Deferred<T> {
 }
 
 /**
+ * Files a browser or a crawler asks for at the root by convention, rather than because the wiki has a
+ * page there.
+ *
+ * Kept out of the page URL rules in `index.ts` — `txt` is a page extension on a default site, and
+ * answering `/robots.txt` with a redirect to `/robots` would be answering the wrong question. Also
+ * what the metrics endpoint's path is checked against, since taking one of these over would break a
+ * convention nothing in the admin area would explain.
+ */
+export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
+
+/**
  * Decode a tree path
  *
  * @param str String to decode

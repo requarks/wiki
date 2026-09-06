@@ -113,6 +113,7 @@
                 outlined
                 v-model="state.config.host"
                 dense
+                no-autofill
                 hide-bottom-space
                 :aria-label="t(`admin.mail.smtpHost`)" />
             </w-item-section>
@@ -129,6 +130,7 @@
                 outlined
                 v-model="state.config.port"
                 dense
+                no-autofill
                 :aria-label="t(`admin.mail.smtpPort`)" />
             </w-item-section>
           </w-item>
@@ -168,6 +170,7 @@
                 outlined
                 v-model="state.config.user"
                 dense
+                no-autofill
                 :aria-label="t(`admin.mail.smtpUser`)" />
             </w-item-section>
           </w-item>
@@ -179,10 +182,16 @@
               <w-item-label caption>{{ t(`admin.mail.smtpPwdHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section>
+              <!-- -> Masked, with WInput's own reveal toggle: what arrives from the server is a mask
+                      rather than the password, so the only value ever readable here is one the
+                      operator is typing at that moment and may want to check -->
               <w-input
                 outlined
                 v-model="state.config.pass"
                 dense
+                type="password"
+                revealable
+                no-autofill
                 :aria-label="t(`admin.mail.smtpPwd`)" />
             </w-item-section>
           </w-item>
@@ -198,6 +207,7 @@
                 outlined
                 v-model="state.config.name"
                 dense
+                no-autofill
                 hide-bottom-space
                 :aria-label="t(`admin.mail.smtpName`)" />
             </w-item-section>
@@ -275,6 +285,7 @@
                   outlined
                   v-model="state.config.dkimPrivateKey"
                   dense
+                  no-autofill
                   :aria-label="t(`admin.mail.dkimPrivateKey`)"
                   type="textarea" />
               </w-item-section>

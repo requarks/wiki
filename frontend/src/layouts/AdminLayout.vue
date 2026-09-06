@@ -438,7 +438,7 @@
                 <w-item-section avatar>
                   <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
                 </w-item-section>
-                <w-item-section>{{ t('admin.dev.flags.title') }}</w-item-section>
+                <w-item-section>{{ t('admin.flags.title') }}</w-item-section>
               </w-item>
             </template>
           </template>

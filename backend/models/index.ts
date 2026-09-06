@@ -12,6 +12,7 @@ import { icons } from './icons.ts'
 import { jobs } from './jobs.ts'
 import { locales } from './locales.ts'
 import { mail } from './mail.ts'
+import { metrics } from './metrics.ts'
 import { navigation } from './navigation.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pages } from './pages.ts'
@@ -44,6 +45,7 @@ export default {
   jobs,
   locales,
   mail,
+  metrics,
   navigation,
   pageHistory,
   pages,

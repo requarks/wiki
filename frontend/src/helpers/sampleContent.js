@@ -776,8 +776,8 @@ There are two kinds, granted separately and checked in different places.
 ## Global permissions
 
 Held site-wide, bound to no path. \`access:admin\`, \`read:users\`, \`manage:users\`, \`read:groups\`,
-\`manage:groups\`, \`read:audit\`, \`manage:navigation\`, \`manage:theme\`, \`manage:sites\`,
-\`manage:system\`. That list is the whole of it.
+\`manage:groups\`, \`read:audit\`, \`read:metrics\`, \`manage:navigation\`, \`manage:theme\`,
+\`manage:sites\`, \`manage:system\`. That list is the whole of it.
 
 \`manage:system\` bypasses every check everywhere.
 

@@ -83,6 +83,23 @@ defaults:
       dkimPrivateKey: ''
     metrics:
       isEnabled: false
+      # The URL path the Prometheus exposition is served at. While the endpoint is enabled it takes
+      # this path over from the page tree; turned off, nothing is registered and a page here is
+      # served normally.
+      path: '/metrics'
+      # Which addresses may scrape without credentials. Anything else has to carry an API key or a
+      # session holding `read:metrics`. Note that what an address means depends on
+      # `security.trustProxy`: with it off, a wiki behind a reverse proxy sees the proxy's address
+      # for every request.
+      allowAnonymousLocal: true
+      allowAnonymousPrivate: true
+      allowAnonymousExternal: false
+      # Which groups of metrics the exposition carries: the Node.js process (CPU, memory, GC, event
+      # loop) and the wiki itself (content totals, job queue, scheduler health). The wiki group is
+      # off by default because every one of its gauges is a count read fresh, so a scrape of it costs
+      # about a dozen database queries.
+      includeRuntime: true
+      includeWiki: false
     auth:
       autoLogin: false
       enforce2FA: false

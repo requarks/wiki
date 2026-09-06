@@ -79,7 +79,7 @@
         :placeholder="placeholder"
         :readonly="readonly"
         :disabled="disable || disabled"
-        :autocomplete="autocomplete"
+        v-bind="autofillAttrs"
         :rows="type === 'textarea' ? rows : undefined"
         :aria-invalid="hasError || undefined"
         :aria-required="required || undefined"
@@ -245,6 +245,18 @@ const props = defineProps({
     default: null
   },
   /**
+   * Keep browsers and password managers out of this field entirely.
+   *
+   * `autocomplete` alone only talks to the browser, and a field holding somebody ELSE's credential
+   * -- an SMTP account, a storage target's key -- is exactly what a password manager offers to fill
+   * with the operator's own, and then offers to save over afterwards. Each vendor reads its own
+   * opt-out attribute, so all of them go on together; see `autofillAttrs`.
+   */
+  noAutofill: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * Put the caret in this field as soon as it is on screen.
    *
    * A prop rather than the native attribute, which is what the markup used to carry and what did
@@ -337,6 +349,26 @@ const isRevealed = ref(false)
 // COMPUTED
 
 const hasError = computed(() => Boolean(errorMessage.value))
+
+/*
+  The opt-out attributes, as one object bound in a single `v-bind`.
+
+  `autocomplete="off"` is the standards half and the only one any browser reads; the four `data-`
+  attributes are what the password managers that ignore it read instead -- 1Password, LastPass,
+  Bitwarden and Dashlane respectively, each having settled on its own spelling. They are inert
+  everywhere else, so they cost a field that nobody's extension looks at nothing.
+*/
+const autofillAttrs = computed(() =>
+  props.noAutofill
+    ? {
+        autocomplete: 'off',
+        'data-1p-ignore': 'true',
+        'data-lpignore': 'true',
+        'data-bwignore': 'true',
+        'data-form-type': 'other'
+      }
+    : { autocomplete: props.autocomplete }
+)
 
 /** A revealed password field renders as plain text; every other type is passed through unchanged. */
 const effectiveType = computed(() =>

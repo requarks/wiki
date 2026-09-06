@@ -28,22 +28,16 @@ import ajvFormats from 'ajv-formats'
 import Emittery from 'emittery'
 import NodeCache from 'node-cache'
 
+import { metricsHook } from './controllers/metrics.ts'
 import collab from './core/collab.ts'
 import configSvc from './core/config.ts'
 import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
-import { splitLocalePath, stripPageExtension } from './helpers/common.ts'
+import { RESERVED_ROOT_FILES, splitLocalePath, stripPageExtension } from './helpers/common.ts'
 import { corsOrigin, parseCspDirectives } from './helpers/security.ts'
 
 const nanoid = customAlphabet('1234567890abcdef', 10)
-
-/**
- * Files a browser or a crawler asks for at the root by convention, rather than because the wiki has a
- * page there. Kept out of the page URL rules below — `txt` is a page extension on a default site, and
- * answering `/robots.txt` with a redirect to `/robots` would be answering the wrong question.
- */
-const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
 
 /**
  * First path segments the SERVER itself answers — every prefix registered in `initHTTPServer`.
@@ -595,14 +589,20 @@ async function initHTTPServer() {
   app.decorateRequest('apiKey', null)
 
   app.addHook('onRequest', async (req, reply) => {
-    // -> Bearer tokens authenticate API calls only; everything else is cookie-authenticated. Note
-    //    that the session is deliberately left untouched: writing to it would have @fastify/session
-    //    persist a session row for every scraped request.
-    if (!req.url.startsWith('/_api/')) {
-      return
-    }
+    /*
+      Bearer tokens authenticate API calls and the metrics endpoint; everything else is
+      cookie-authenticated. The metrics path is here rather than verifying a key of its own, so that
+      there is one place a bearer token is checked — it is served by a hook below, at a path that is
+      a setting, so it cannot declare itself part of the API by its prefix.
+
+      Note that the session is deliberately left untouched: writing to it would have
+      @fastify/session persist a session row for every scraped request.
+    */
     const header = req.headers.authorization
     if (!header?.startsWith('Bearer ')) {
+      return
+    }
+    if (!req.url.startsWith('/_api/') && !WIKI.models.metrics.matches(req.url.split('?')[0]!)) {
       return
     }
     const token = header.slice('Bearer '.length).trim()
@@ -655,6 +655,18 @@ async function initHTTPServer() {
     }
     done()
   })
+
+  // ----------------------------------------
+  // Metrics
+  // ----------------------------------------
+
+  /*
+    Before the SEO hook on purpose: the metrics path is a plain page-looking path, so the redirects
+    below would send a scrape to the site's locale prefix or strip a page extension off it. And after
+    the session and API key hooks, whose work it reads to decide whether a scrape from outside the
+    addresses anonymous access was opened to is entitled to an answer.
+  */
+  app.addHook('onRequest', metricsHook)
 
   // ----------------------------------------
   // SEO
