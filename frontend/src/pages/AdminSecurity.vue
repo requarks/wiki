@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-protect.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.security.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.security.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.security.subtitle') }}
         </div>
@@ -57,8 +59,6 @@
                   </w-card-section>
                   <w-card-section class="text-caption">
                     <div>{{ t('admin.security.warn') }}</div>
-                    <!-- These are read when the HTTP server builds its plugin chain, not per request -->
-                    <div class="mt-1">{{ t('admin.security.restartRequired') }}</div>
                   </w-card-section>
                 </w-card-section>
               </w-card>
@@ -69,6 +69,10 @@
             <w-item-section>
               <w-item-label>{{ t(`admin.security.disallowIframe`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.security.disallowIframeHint`) }}</w-item-label>
+              <w-item-label class="text-caption text-negative flex items-center">
+                <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
+                {{ t('admin.security.restartRequired') }}
+              </w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -84,6 +88,10 @@
               <w-item-label caption>{{
                 t(`admin.security.enforceSameOriginReferrerPolicyHint`)
               }}</w-item-label>
+              <w-item-label class="text-caption text-negative flex items-center">
+                <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
+                {{ t('admin.security.restartRequired') }}
+              </w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -143,6 +151,10 @@
             <w-item-section>
               <w-item-label>{{ t(`admin.security.enforceHsts`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.security.enforceHstsHint`) }}</w-item-label>
+              <w-item-label class="text-caption text-negative flex items-center">
+                <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
+                {{ t('admin.security.restartRequired') }}
+              </w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -294,6 +306,10 @@
             <w-item-section>
               <w-item-label>{{ t(`admin.security.maxUploadSize`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.security.maxUploadSizeHint`) }}</w-item-label>
+              <w-item-label class="text-caption text-negative flex items-center">
+                <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
+                {{ t('admin.security.restartRequired') }}
+              </w-item-label>
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
@@ -343,6 +359,10 @@
             <w-item-section>
               <w-item-label>{{ t(`admin.security.corsMode`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.security.corsModeHint`) }}</w-item-label>
+              <w-item-label class="text-caption text-negative flex items-center">
+                <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
+                {{ t('admin.security.restartRequired') }}
+              </w-item-label>
             </w-item-section>
             <w-item-section>
               <w-select

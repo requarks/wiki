@@ -53,8 +53,8 @@ async function routes(app: FastifyInstance) {
   //    parses, so the JSON routes below are unaffected.
   //
   //    The limit is read once, here, because a route's body limit is fixed when it is registered —
-  //    changing it in the admin area takes effect on the next restart, as the rest of the security
-  //    settings do.
+  //    changing it in the admin area takes effect on the next restart, which is why that field is
+  //    one of the ones the security view marks as needing one.
   app.addContentTypeParser(
     '*',
     { parseAs: 'buffer', bodyLimit: WIKI.config.security?.uploadMaxFileSize ?? 10485760 },

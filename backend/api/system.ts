@@ -314,7 +314,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the security configuration',
         description:
-          'Most of this is applied when the HTTP server starts, so changing it takes effect on the next restart.',
+          'Response headers, CSP, HSTS, CORS and `uploadMaxFileSize` are applied when the HTTP server starts, so changing those takes effect on the next restart. The rest is read per request.',
         tags: ['System'],
         response: {
           200: { $ref: 'SecurityConfig#' }
@@ -338,7 +338,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update the security configuration',
         description:
-          'Accepts any subset of the fields. Header, CORS and proxy settings are read when the HTTP server starts and therefore apply after a restart.',
+          'Accepts any subset of the fields. Response headers, CSP, HSTS, CORS and `uploadMaxFileSize` are read when the HTTP server starts and therefore apply after a restart; `trustProxy`, `forceAssetDownload` and the rate limit are read per request and apply at once.',
         tags: ['System'],
         body: { $ref: 'SecurityConfig#' },
         response: {

@@ -28,9 +28,12 @@ const DURATION_PATTERN = /^\d+[smhdwy]$/
 /**
  * Security model
  *
- * The admin area's security view, which is exactly the `security` settings blob. Most of it is read
- * when the HTTP server starts — see the `Security` section of `index.ts` — so saving here takes
- * effect on the next restart.
+ * The admin area's security view, which is exactly the `security` settings blob. Saving does not mean
+ * the same thing for all of it, which is why the view marks the restart per option rather than once
+ * at the top: the response headers, CSP, HSTS and CORS are read by the `Security` section of
+ * `index.ts` when the HTTP server starts, and `uploadMaxFileSize` by the upload route's body limit
+ * when it is registered, so those take effect on the next restart. `trustProxy`, the rate limit
+ * fields and `forceAssetDownload` are read per request and apply as soon as they are saved.
  */
 class Security {
   /**

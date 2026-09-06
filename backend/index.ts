@@ -304,9 +304,31 @@ async function initHTTPServer() {
     logger: {
       level: 'error'
     },
-    // -> `securityTrustProxy` was the 2.x name: the setting is `trustProxy`, so this read never
-    //    matched and the option was permanently off no matter what the admin area showed
-    trustProxy: WIKI.config.security.trustProxy ?? false,
+    /*
+      A function rather than the boolean itself, so that the setting is answered per request instead
+      of being baked in here: the value fastify is handed at construction can never change, and this
+      is the one security setting whose effect an administrator checks immediately — an audit entry
+      or a rate limit recorded against the proxy rather than the visitor. Turning it on and being
+      told to restart before it means anything is how a wrong address gets read as a bug.
+
+      Fastify only asks whether a given hop is trusted, and it asks per hop per request, so
+      returning false for all of them is exactly the `false` behaviour: `proxy-addr` truncates the
+      chain at the socket, and `req.ip` / `req.host` / `req.protocol` come from the connection and
+      the Host header as they would with the option off. The truthiness of the function is what
+      matters at construction time, not the setting.
+
+      Read through the `WIKI` global on every call, and that is load-bearing rather than incidental:
+      an HA instance that did not serve the save learns about it from the `reloadConfig` event, whose
+      handler REPLACES `WIKI.config` with a merged copy rather than mutating it. Hoisting this to a
+      captured `WIKI.config.security` would keep working on the instance the administrator happened to
+      hit and silently freeze on every other one. Verified across two instances sharing a database.
+
+      Note that `true` trusts the whole chain and therefore takes the LEFTMOST `X-Forwarded-For`
+      entry, which a client can put anything it likes into. That is the meaning of the setting as it
+      stands; a deployment where clients can reach the wiki without passing the proxy needs a hop
+      count or a CIDR list, which this setting cannot express yet.
+    */
+    trustProxy: () => WIKI.config.security?.trustProxy === true,
     routerOptions: {
       ignoreTrailingSlash: true
     }
@@ -354,8 +376,10 @@ async function initHTTPServer() {
   // Security
   // ----------------------------------------
 
-  // -> Every setting below comes from the admin area's security view. They are read once, here, so a
-  //    change takes effect on the next restart — the view says as much.
+  // -> Every setting below comes from the admin area's security view, and every one of them is read
+  //    once, here, so a change takes effect on the next restart. Not every setting in that view is:
+  //    `trustProxy` above and `forceAssetDownload` and the rate limit elsewhere are read per request,
+  //    which is why the view marks the restart on the individual options rather than on the page.
   const security = WIKI.config.security
 
   app.register(fastifyHelmet, {
