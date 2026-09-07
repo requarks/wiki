@@ -353,15 +353,21 @@ const hasError = computed(() => Boolean(errorMessage.value))
 /*
   The opt-out attributes, as one object bound in a single `v-bind`.
 
-  `autocomplete="off"` is the standards half and the only one any browser reads; the four `data-`
+  `autocomplete` is the standards half and the only one any browser reads; the four `data-`
   attributes are what the password managers that ignore it read instead -- 1Password, LastPass,
   Bitwarden and Dashlane respectively, each having settled on its own spelling. They are inert
   everywhere else, so they cost a field that nobody's extension looks at nothing.
+
+  `new-password` rather than `off` on a password field, and that difference is the whole point on
+  the fields that matter most: Chrome deliberately disregards `off` there -- too many banks had used
+  it to stop people pasting -- and offers the saved credential anyway. `new-password` is the one
+  value it does honour, because a field being filled with an EXISTING password is exactly what it
+  says this is not. Every other type reads `off`, which they all honour.
 */
 const autofillAttrs = computed(() =>
   props.noAutofill
     ? {
-        autocomplete: 'off',
+        autocomplete: props.type === 'password' ? 'new-password' : 'off',
         'data-1p-ignore': 'true',
         'data-lpignore': 'true',
         'data-bwignore': 'true',

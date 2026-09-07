@@ -3,10 +3,16 @@
     v-if="max > 1"
     class="w-pagination flex flex-nowrap items-center gap-1"
     :aria-label="ariaLabel">
+    <!--
+      `dark:text-white` on every button: `.w-unstyled` leaves the colour to `inherit`, and this
+      control is used OUTSIDE a card — straight on the admin page background — where nothing up the
+      tree sets a dark-mode colour, so the numbers were drawn in the light theme's black on a dark
+      page. The ellipsis beside them already carried its own pair.
+    -->
     <button
       v-if="directionLinks"
       type="button"
-      class="w-unstyled w-pagination-btn"
+      class="w-unstyled w-pagination-btn dark:text-white"
       :disabled="modelValue <= 1"
       :aria-label="prevLabel"
       @click="go(modelValue - 1)">
@@ -20,7 +26,7 @@
       <button
         v-else
         type="button"
-        class="w-unstyled w-pagination-btn"
+        class="w-unstyled w-pagination-btn dark:text-white"
         :class="page === modelValue ? 'w-pagination-btn--active' : ''"
         :aria-current="page === modelValue ? 'page' : undefined"
         :aria-label="`${pageLabel} ${page}`"
@@ -32,7 +38,7 @@
     <button
       v-if="directionLinks"
       type="button"
-      class="w-unstyled w-pagination-btn"
+      class="w-unstyled w-pagination-btn dark:text-white"
       :disabled="modelValue >= max"
       :aria-label="nextLabel"
       @click="go(modelValue + 1)">

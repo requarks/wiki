@@ -309,11 +309,17 @@
                     options-dense
                     :aria-label="cfg.title"
                     :disable="cfg.readOnly" />
+                  <!-- -> `no-autofill` on every prop a strategy declares, not only the sensitive
+                       ones: a manager offers to fill whatever LOOKS like a credential, and a
+                       client ID or an issuer URL beside a secret is exactly that shape. What is
+                       typed here is the wiki's credential with an identity provider, never the
+                       operator's own. -->
                   <w-input
                     v-else
                     outlined
                     v-model="cfg.value"
                     dense
+                    no-autofill
                     :type="inputTypeFor(cfg)"
                     :aria-label="cfg.title"
                     :disable="cfg.readOnly"

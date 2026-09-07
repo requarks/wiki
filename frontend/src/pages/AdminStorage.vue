@@ -201,11 +201,17 @@
                         options-dense
                         :aria-label="cfg.title"
                         :disable="cfg.readOnly" />
+                      <!-- -> `no-autofill` on every field a module declares, not only the
+                           sensitive ones: a manager offers to fill whatever LOOKS like a credential,
+                           and a target's host and account name are exactly that shape. What is being
+                           typed here is the wiki's credential for somebody else's bucket, never the
+                           operator's own. -->
                       <w-input
                         v-else
                         outlined
                         v-model="cfg.value"
                         dense
+                        no-autofill
                         :type="inputTypeFor(cfg)"
                         :aria-label="cfg.title"
                         :disable="cfg.readOnly"
@@ -270,6 +276,7 @@
                     <w-input
                       outlined
                       dense
+                      no-autofill
                       v-model="state.target.assetDelivery.baseUrl"
                       placeholder="https://files.example.com"
                       :aria-label="t(`admin.storage.deliveryBaseUrl`)" />
@@ -288,6 +295,7 @@
                     <w-input
                       outlined
                       dense
+                      no-autofill
                       v-model="state.target.assetDelivery.linkExpiration"
                       :aria-label="t(`admin.storage.deliveryExpiration`)" />
                   </w-item-section>
@@ -544,6 +552,7 @@
               <w-input
                 outlined
                 dense
+                no-autofill
                 v-model="state.largeThreshold"
                 :aria-label="t(`admin.storage.largeThreshold`)" />
             </w-item-section>
@@ -559,6 +568,7 @@
               <w-input
                 outlined
                 dense
+                no-autofill
                 v-model="state.syncInterval"
                 :aria-label="t(`admin.storage.syncInterval`)" />
             </w-item-section>
