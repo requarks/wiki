@@ -1,4 +1,4 @@
-import { Gauge, Registry, collectDefaultMetrics } from 'prom-client'
+import { Gauge, Registry, collectDefaultMetrics } from '@prometheus-io/client'
 import { eq, sql } from 'drizzle-orm'
 
 import { RESERVED_ROOT_FILES } from '../helpers/common.ts'
