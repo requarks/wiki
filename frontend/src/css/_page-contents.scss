@@ -219,80 +219,96 @@
   */
   isolation: isolate;
 
+  /*
+    The dark palette, and only where there is a lit screen to read it on.
+
+    `@media not print` rather than a print block that puts each of these back one at a time: this is
+    two dozen tokens and it grows, and the print block below would have to shadow every one of them --
+    at a higher specificity, since `.body--dark .page-contents` outranks this block -- or quietly print
+    whichever it had missed. It missed most of them: a page printed from the dark theme came out with
+    invisible table and code rules (white at 16% opacity, on white paper), the lighter link blue, and
+    the GitHub-dark syntax colours.
+
+    So the condition is stated once, here, where it is also the true one: this palette is for a screen
+    that emits light. Paper does not, and what it falls back to is the light palette declared above,
+    which is the one the print block below was written against.
+  */
   @at-root .body--dark & {
-    --content-ink: rgba(255, 255, 255, 0.87);
-    --content-ink-muted: rgba(255, 255, 255, 0.62);
-    --content-ink-faint: rgba(255, 255, 255, 0.42);
+    @media not print {
+      --content-ink: rgba(255, 255, 255, 0.87);
+      --content-ink-muted: rgba(255, 255, 255, 0.62);
+      --content-ink-faint: rgba(255, 255, 255, 0.42);
 
-    /* -> The mid-tone brand blue is too dim on a dark surface; see `--color-primary-light` */
-    --content-link: var(--color-primary-light);
-    --content-h1: var(--color-primary-light);
+      /* -> The mid-tone brand blue is too dim on a dark surface; see `--color-primary-light` */
+      --content-link: var(--color-primary-light);
+      --content-h1: var(--color-primary-light);
 
-    --content-rule: rgba(255, 255, 255, 0.16);
-    --content-rule-strong: rgba(255, 255, 255, 0.32);
-    --content-h2-rule: rgba(255, 255, 255, 0.45);
+      --content-rule: rgba(255, 255, 255, 0.16);
+      --content-rule-strong: rgba(255, 255, 255, 0.32);
+      --content-h2-rule: rgba(255, 255, 255, 0.45);
 
-    /* Matches the app's own `dark-4` panel, so code sits a step above the page rather than below it */
-    --content-surface-code: #161b22;
-    --content-surface-alt: rgba(255, 255, 255, 0.07);
+      /* Matches the app's own `dark-4` panel, so code sits a step above the page rather than below it */
+      --content-surface-code: #161b22;
+      --content-surface-alt: rgba(255, 255, 255, 0.07);
 
-    /*
-      The head keeps its colours -- see the light block -- but the shadow under the table cannot: a 5%
-      black drop is invisible on a dark page. Deepened, and no wider, so it still reads as the panel
-      being lifted rather than as a glow around it.
-    */
-    --content-table-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.32);
+      /*
+        The head keeps its colours -- see the light block -- but the shadow under the table cannot: a 5%
+        black drop is invisible on a dark page. Deepened, and no wider, so it still reads as the panel
+        being lifted rather than as a glow around it.
+      */
+      --content-table-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 3px 10px rgba(0, 0, 0, 0.32);
 
-    /* -> Lifted off the page rather than sunk into it, which is the same intent as the light theme's
-          pair: the dark page is already darker than anything a row could be tinted towards */
-    --content-table-row: rgba(255, 255, 255, 0.02);
-    --content-table-row-alt: rgba(255, 255, 255, 0.055);
+      /* -> Lifted off the page rather than sunk into it, which is the same intent as the light theme's
+            pair: the dark page is already darker than anything a row could be tinted towards */
+      --content-table-row: rgba(255, 255, 255, 0.02);
+      --content-table-row-alt: rgba(255, 255, 255, 0.055);
 
-    /* -> Back to `.card-header`'s own near end: on a dark page the bar reads as dark as it measures,
-          and the extra step the light theme needs would leave the head sitting above the page */
-    --content-table-head: #1e232a;
+      /* -> Back to `.card-header`'s own near end: on a dark page the bar reads as dark as it measures,
+            and the extra step the light theme needs would leave the head sitting above the page */
+      --content-table-head: #1e232a;
 
-    --content-mark: #6b5d13;
+      --content-mark: #6b5d13;
 
-    /* -> Lifted off the dark page, and mixed from the lighter blue for the same reason links are */
-    --content-links-row: rgba(255, 255, 255, 0.05);
-    --content-links-row-hover: color-mix(in srgb, var(--color-primary-light) 14%, transparent);
-    /* -> Barely there: on a dark page the same light that reads as a rounded top edge reads as a bar */
-    --content-links-sheen: rgba(255, 255, 255, 0.045);
-    /* -> Deepened, and no wider, for the reason the table's is: a 7% black drop is invisible here */
-    --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      /* -> Lifted off the dark page, and mixed from the lighter blue for the same reason links are */
+      --content-links-row: rgba(255, 255, 255, 0.05);
+      --content-links-row-hover: color-mix(in srgb, var(--color-primary-light) 14%, transparent);
+      /* -> Barely there: on a dark page the same light that reads as a rounded top edge reads as a bar */
+      --content-links-sheen: rgba(255, 255, 255, 0.045);
+      /* -> Deepened, and no wider, for the reason the table's is: a 7% black drop is invisible here */
+      --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 
-    /*
-      Lighter than the light theme's, because the box has to be seen against a dark page -- but held
-      well below the white of the tick on it, which is what makes the tick readable.
-    */
-    --content-tick: rgba(255, 255, 255, 0.38);
-    /* -> A white box would be a lit square on a dark page; the empty one is just its outline */
-    --content-tick-empty: transparent;
+      /*
+        Lighter than the light theme's, because the box has to be seen against a dark page -- but held
+        well below the white of the tick on it, which is what makes the tick readable.
+      */
+      --content-tick: rgba(255, 255, 255, 0.38);
+      /* -> A white box would be a lit square on a dark page; the empty one is just its outline */
+      --content-tick-empty: transparent;
 
-    --content-info: #6ab0ff;
-    --content-info-wash: rgba(106, 176, 255, 0.12);
-    --content-success: #4ecf9a;
-    --content-success-wash: rgba(78, 207, 154, 0.12);
-    --content-warning: #f3b661;
-    --content-warning-wash: rgba(243, 182, 97, 0.12);
-    --content-danger: #ff8b8b;
-    --content-danger-wash: rgba(255, 139, 139, 0.12);
-    --content-important: #c4a7ff;
-    --content-important-wash: rgba(196, 167, 255, 0.12);
+      --content-info: #6ab0ff;
+      --content-info-wash: rgba(106, 176, 255, 0.12);
+      --content-success: #4ecf9a;
+      --content-success-wash: rgba(78, 207, 154, 0.12);
+      --content-warning: #f3b661;
+      --content-warning-wash: rgba(243, 182, 97, 0.12);
+      --content-danger: #ff8b8b;
+      --content-danger-wash: rgba(255, 139, 139, 0.12);
+      --content-important: #c4a7ff;
+      --content-important-wash: rgba(196, 167, 255, 0.12);
 
-    --content-code-comment: #8b949e;
-    --content-code-keyword: #ff7b72;
-    --content-code-string: #a5d6ff;
-    --content-code-number: #79c0ff;
-    --content-code-title: #d2a8ff;
-    --content-code-type: #ffa657;
-    --content-code-attr: #79c0ff;
-    --content-code-meta: #8b949e;
-    --content-code-addition: #56d364;
-    --content-code-addition-wash: rgba(46, 160, 67, 0.15);
-    --content-code-deletion: #ffa198;
-    --content-code-deletion-wash: rgba(248, 81, 73, 0.15);
+      --content-code-comment: #8b949e;
+      --content-code-keyword: #ff7b72;
+      --content-code-string: #a5d6ff;
+      --content-code-number: #79c0ff;
+      --content-code-title: #d2a8ff;
+      --content-code-type: #ffa657;
+      --content-code-attr: #79c0ff;
+      --content-code-meta: #8b949e;
+      --content-code-addition: #56d364;
+      --content-code-addition-wash: rgba(46, 160, 67, 0.15);
+      --content-code-deletion: #ffa198;
+      --content-code-deletion-wash: rgba(248, 81, 73, 0.15);
+    }
   }
 
   /* -> The page's own margins are the container's business; the first and last block give theirs up */
@@ -1850,6 +1866,13 @@
   // PRINT
   // ---------------------------------------------------------------------------
 
+  /*
+    Written against the light palette above and reached from either theme, because the dark one is
+    screen-only -- see the note on it.
+
+    The chrome around the article is dealt with in `css/_print.scss`, which is the rest of this story:
+    what is hidden, and what is left of the shell once it stops being a viewport.
+  */
   @media print {
     /* Washes and tints cost ink and print muddy; the structure has to come from the rules instead */
     --content-ink: #000;
@@ -1869,6 +1892,18 @@
     /* -> And the banding, which on paper is grey ink over every other row for no gain */
     --content-table-row: transparent;
     --content-table-row-alt: transparent;
+    /*
+      The article column prints with no padding of its own -- the sheet's own margin is the margin
+      now, see `_print.scss` -- so the rule under the page title has nothing left to reach back
+      through. Left at 1rem it would overhang the text by exactly the padding that is gone.
+    */
+    /*
+      `0px` and not `0`: the title's rule positions itself with `calc(-1 * var(--content-bleed))`, and
+      a unitless zero makes that a NUMBER rather than a length. The declaration is then invalid, `left`
+      falls back to `auto` against a `right: 0`, and a rule with no width to shrink to disappears --
+      which is exactly how the page title lost the rule under it on paper.
+    */
+    --content-bleed: 0px;
 
     font-size: 11pt;
     line-height: 1.55;
@@ -1892,9 +1927,174 @@
       break-after: avoid;
     }
 
-    /* -> On paper there is no "leaves the wiki": every link is equally unfollowable */
+    /*
+      The rule under a title and a section heading is a gradient, which is to say a BACKGROUND -- and a
+      print dialog leaves background graphics off by default, so the one device that makes the sections
+      of a long page findable was the one thing that did not survive being printed. Same pair as a done
+      task item further up, for the same reason.
+    */
+    h1::after,
+    h2::after {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    /* -> A single line of a paragraph stranded on either side of a break; three is the usual floor */
+    p,
+    li {
+      orphans: 3;
+      widows: 3;
+    }
+
+    /*
+      Code wraps.
+
+      On screen a long line scrolls sideways inside its panel and nothing is lost. On paper the panel is
+      as wide as the sheet and everything past that edge is simply gone -- silently, which is the worst
+      way for a code sample to be wrong. So the rule the screen keeps a few hundred lines up ("code does
+      not wrap: a wrapped line is a different line, and indentation stops meaning anything") is the
+      wrong trade here and is inverted: a wrapped line is still readable, an absent one is not.
+
+      `overflow-wrap: break-word` breaks only where a single unbroken run is wider than the panel by
+      itself -- a URL in a comment, a base64 literal, a long path -- so ordinary code still gives way at
+      its spaces and its indentation survives.
+
+      The `width: max-content` the code carries has to go with it: it sizes the block to its longest
+      line, which leaves `pre-wrap` nothing to wrap against.
+    */
+    pre {
+      overflow-x: visible;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+    pre.codeblock > code {
+      width: auto;
+    }
+
+    /*
+      And the line-number gutter goes with it.
+
+      Neither the digits nor a highlighted line's wash is part of the text: they are an absolutely
+      positioned layer of empty rows, each exactly `1lh` tall, that lands on its line by geometry alone.
+      A wrapped line is taller than one row, so from the first wrap onwards every number sits against
+      the wrong line -- and a code sample whose numbers lie is worse than one with no numbers at all.
+
+      The padding the gutter had reserved goes back to the panel's own, so a numbered block does not
+      print with an empty 3.6rem margin down its left side.
+    */
+    pre.codeblock .line-numbers-rows {
+      display: none;
+    }
+    pre.codeblock.line-numbers {
+      --code-pad-left: var(--code-pad-x);
+    }
+
+    /*
+      Every panel of a tabset, one after another.
+
+      A tabset shows one panel at a time because a screen has one place to put it. Paper has as many
+      places as it needs, and a panel that does not print is content the reader is never told exists --
+      so they all print, each under a bar carrying its own label. `block-tabs` hides its strip for the
+      same reason, in its own stylesheet, where the strip lives.
+
+      Here rather than in that block because of where the panels live. `block-tab` has no shadow root at
+      all -- its content is page content, styled by this file, which is the whole point of it -- and
+      which panel is showing is an inline `display` its parent writes onto the element. So this is at
+      once the only stylesheet that reaches them and the only weight that beats an inline style.
+
+      `[label]` guards the bar: the label is an attribute, and a tab written without one would otherwise
+      print an empty rule.
+    */
+    block-tab {
+      display: block !important;
+    }
+    block-tab + block-tab {
+      margin-top: 1.5em;
+    }
+
+    /*
+      A solid bar and a spine down the side, and they are the same colour on purpose: at the top of a
+      panel the two meet and read as one shape turning the corner, which is what marks out where a
+      panel starts AND how far down the sheet it runs. That second half is the harder one -- a rule
+      under a label says where a panel begins and nothing at all about where it ends, and on paper
+      there is no strip left above to hold the set together.
+
+      This is the one place here that spends solid ink, and it is a deliberate departure from the note
+      a few rules up about a table's head: there, the bold text and the ruled grid already say "head",
+      so the near-black bar was ink buying nothing. Here the bar is the ONLY thing separating one
+      panel's content from the next one's, and drawn as a hairline and small caps it was too quiet to
+      do it.
+
+      Dark grey rather than the near-black the table's head uses on screen: it is enough for white to
+      read on (about 9:1) and costs a third less ink over a bar that repeats once per panel.
+
+      The bar's negative left margin is what takes it back over the padding so that it meets the spine
+      rather than starting inboard of it.
+
+      `print-color-adjust` is what makes any of it appear, for the reason a done task item carries the
+      same pair: a print dialog leaves background graphics OFF by default, so the fill would print as
+      nothing and the white label as white on white -- the panel losing its heading altogether, which
+      is worse than the quiet version this replaces. The property is inherited, so declaring it here
+      covers the bar as well as the spine.
+    */
+    block-tab[label] {
+      --content-tab-bar: #3a4049;
+      /*
+        Held as a property, and in `rem`, because the bar's negative margin has to cancel this padding
+        EXACTLY. Written as `0.9em` in both places it did not: an `em` here resolves against the
+        panel's font size and the same `em` on the bar against the bar's own smaller one, so the two
+        came out 13.2px and 10.7px and left a 2px seam of white between the spine and the bar.
+      */
+      --content-tab-pad: 0.75rem;
+
+      border-left: 4px solid var(--content-tab-bar);
+      padding-left: var(--content-tab-pad);
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+    block-tab[label]::before {
+      content: attr(label);
+      display: block;
+      margin: 0 0 0.9em calc(-1 * var(--content-tab-pad));
+      padding: 0.35em var(--content-tab-pad);
+      background-color: var(--content-tab-bar);
+      color: #fff;
+      font-size: 0.8125em;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /*
+      The marker becomes the address.
+
+      On screen an external link only has to SAY that it leaves the wiki -- where it goes is in the
+      status bar, one hover away, and a click away after that. On paper there is neither: a link is
+      worth exactly the address printed beside it, so the arrow gives way to the href itself.
+
+      Still the renderer's class rather than a selector on the href, for the reason the screen rule
+      gives: whether an address is off-site is a question about its host, and that is settled at
+      render time. A relative link spelled out in full would be a path nobody can type.
+
+      Everything the screen rule set up for a masked glyph has to be undone, since this is the same
+      pseudo-element carrying text now rather than a shape -- the mask would otherwise cut the
+      address down to a 0.8em square of nothing.
+
+      A link whose text is already its own URL prints it twice. That is the cost of the rule, and it
+      is a good deal cheaper than a printed reference nobody can follow.
+    */
     a.is-external-link::after {
-      content: none;
+      content: ' (' attr(href) ')';
+      display: inline;
+      width: auto;
+      height: auto;
+      margin-left: 0;
+      background-color: transparent;
+      mask-image: none;
+      opacity: 1;
+      font-size: 0.85em;
+      /* -> A URL has no spaces to break at and would otherwise run off the edge of the sheet */
+      word-break: break-all;
     }
   }
 }

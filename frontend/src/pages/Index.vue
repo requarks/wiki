@@ -129,7 +129,15 @@
               ref="pageContents"
               v-html="pageStore.render"
               @click="onContentClick" />
-            <template v-if="pageStore.relations && pageStore.relations.length > 0">
+            <!--
+              A box of its own rather than a bare `<template>`, so that `css/_print.scss` has something
+              to hide: these are links onward -- the next page, the previous one, a related topic --
+              which is the one thing a sheet of paper cannot do anything with. The separator goes with
+              them, since it exists only to divide them from the article above.
+            -->
+            <div
+              class="page-relations"
+              v-if="pageStore.relations && pageStore.relations.length > 0">
               <w-separator class="my-6" />
               <div class="flex flex-wrap">
                 <div class="min-w-0 flex-1 text-left" v-if="relationsLeft.length > 0">
@@ -185,7 +193,7 @@
                   </w-btn>
                 </div>
               </div>
-            </template>
+            </div>
           </div>
           <!--
             Inside the scrolling column, and last: this is the bottom of the PAGE, so it is reached by

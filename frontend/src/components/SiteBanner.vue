@@ -191,5 +191,47 @@ async function render() {
       font-weight: 600;
     }
   }
+
+  /*
+    ON PAPER
+    --------
+
+    The banner survives printing. It is site chrome rather than this page, and the same on every one of
+    them -- but an administrator raises a banner because it has to be seen, and a printout that quietly
+    drops "this documentation is superseded" is worse than one that spends the ink. What goes is the
+    wash, as every other tint does on paper (see `css/_print.scss`); the rule under the notice and its
+    hue are what carry it.
+
+    Here rather than with the rest of the print stylesheet because of the cascade: these styles ship in
+    the page view's lazily-imported chunk, which the browser adds after `main`'s, so a rule over there
+    would tie on specificity and lose on order.
+
+    The margins are the other half. They are measured off the article column's padding -- see the note
+    on `--site-banner-pad` above -- and print zeroes that padding, so left alone they would pull the
+    band a whole rem out past the text on three sides.
+  */
+  @media print {
+    margin: 0 0 1.5rem;
+
+    .site-banner-alert {
+      background-color: transparent;
+
+      /*
+        The warning triangle is a mask over a background COLOUR, and a print dialog leaves background
+        graphics off by default -- so the one mark that says this notice is a warning rather than an
+        aside was the one part of it that did not print. Same pair as a done task item in
+        `css/_page-contents.scss`, for the same reason.
+      */
+      &::before {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+
+    /* -> The dark theme's hue is pitched to be seen against a dark page and prints as a pale smear */
+    @at-root .body--dark & .site-banner-alert {
+      --site-banner-hue: #c02636;
+    }
+  }
 }
 </style>

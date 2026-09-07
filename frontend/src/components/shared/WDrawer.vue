@@ -27,9 +27,15 @@
       :style="{ '--w-drawer-width': `${width}px` }">
       <teleport to="body">
         <transition name="w-drawer-scrim">
+          <!--
+            Carries a class of its own, unlike the utility-styled elements around it, because
+            `css/_print.scss` has to reach it: this is teleported out of the drawer it belongs to, so
+            hiding `.w-drawer` for print does not take it along -- and a scrim left on the sheet is a
+            black first page.
+          -->
           <div
             v-if="isVisible && isOverlay"
-            class="fixed inset-0 z-30 bg-black/40"
+            class="w-drawer-scrim fixed inset-0 z-30 bg-black/40"
             @click="$emit('update:modelValue', false)" />
         </transition>
       </teleport>

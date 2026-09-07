@@ -126,9 +126,9 @@
           dense
           icon="la:print"
           color="grey"
-          aria-label="Print"
+          :aria-label="t(`common.actions.print`)"
           @click="printPage">
-          <w-tooltip>Print</w-tooltip>
+          <w-tooltip>{{ t('common.actions.print') }}</w-tooltip>
         </w-btn>
         <!--
           Only for whoever reviews this page: the server answers `canReview` from the approval rules

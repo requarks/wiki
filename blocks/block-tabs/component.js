@@ -165,6 +165,43 @@ Content of the second tab.
         margin-bottom: 0;
       }
 
+      /*
+        ON PAPER
+        --------
+
+        The strip goes. A tabset shows one panel at a time because a screen has one place to put it,
+        and on paper every panel prints, one after another, each under a bar carrying its own label --
+        so a row of buttons naming panels that are all right there is a control with nothing left to
+        control.
+
+        Only this half is here. Showing the panels and drawing those bars belongs to the app's print
+        stylesheet, because the panels are slotted light DOM and which one is showing is an inline
+        display this block writes onto them: nothing in here reaches either. See the block-tab rules in
+        the print section of the app's css/_page-contents.scss.
+
+        The frame stays, and it is the reason for the one thing that does change here: with the strip
+        gone it is all that says these sections were one set, so it keeps its border and its radius and
+        gives up only the shadow, which prints as a grey smudge along two edges and lifts nothing.
+
+        What the panel gives up is its padding, down from 16px/20px to 8px all round. On screen that
+        inset is what holds a panel's content off the frame around it; on paper it is 40px of the
+        measure spent on white space that the label bar and the spine inside it already mark out --
+        and it is spent twice, since each tab pads itself off its own spine as well. Eight is what
+        keeps the content from touching the frame, and no more than that.
+      */
+      @media print {
+        .strip {
+          display: none;
+        }
+        .tabs,
+        :host([dark]) .tabs {
+          box-shadow: none;
+        }
+        .panel {
+          padding: 8px;
+        }
+      }
+
       :host {
         --tabs-border: #e0e0e0;
         --tabs-strip-bg: linear-gradient(to bottom, #fdfdfd, #eeeeee);
@@ -179,13 +216,27 @@ Content of the second tab.
         --tabs-active-label: var(--tabs-active-fg);
         --tabs-panel-bg: #fff;
       }
-      :host([dark]) {
-        --tabs-border: rgba(255, 255, 255, 0.15);
-        --tabs-strip-bg: linear-gradient(to bottom, #1b212a, #12161d);
-        --tabs-inactive-fg: rgba(255, 255, 255, 0.7);
-        /* -> A mix of --q-primary, so a re-themed site's own hue comes with it. See block-index. */
-        --tabs-active-label: var(--color-primary-light);
-        --tabs-panel-bg: #1e232a;
+      /*
+        The dark palette, and only where there is a lit screen to read it on.
+
+        The dark attribute comes off the body class, which says nothing about the medium -- so without
+        this a page printed from the dark theme printed a near-black panel, and the app prints the text
+        inside it in black ink (the article's palette is light on paper, by the same reasoning as here:
+        see the note on the dark block in css/_page-contents.scss). Black on #1e232a is a panel of
+        content that cannot be read at all.
+
+        Stated as a media query rather than unpicked token by token in the print block above, so that a
+        token added here later cannot quietly miss it.
+      */
+      @media not print {
+        :host([dark]) {
+          --tabs-border: rgba(255, 255, 255, 0.15);
+          --tabs-strip-bg: linear-gradient(to bottom, #1b212a, #12161d);
+          --tabs-inactive-fg: rgba(255, 255, 255, 0.7);
+          /* -> A mix of --q-primary, so a re-themed site's own hue comes with it. See block-index. */
+          --tabs-active-label: var(--color-primary-light);
+          --tabs-panel-bg: #1e232a;
+        }
       }
     `
   }

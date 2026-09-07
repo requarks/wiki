@@ -21,23 +21,25 @@
     <!-- VERSION ACTIONS -->
     <!--
       What this header has in place of Watch / Print / Edit: the three things there are to do with a
-      snapshot. Two are icons -- taking a copy of it, in either of two forms -- and the third is
+      snapshot, and Print, which is the one button from that row meaning the same thing here. Two of
+      the three are icons -- taking a copy of the version, in either of two forms -- and the third is
       labelled, because it is the one that WRITES, and a button that overwrites the live page should
       not be a glyph somebody presses to find out what it does. Its ellipsis is doing the same work:
       restoring asks first.
 
       Download, Restore and Branch off each do the same as their entry in the history overlay's version
-      menu, through the same code. Export to PDF is the one still disabled, because it is not wired up
-      yet -- disabled rather than inert on purpose: a button that silently does nothing when pressed
-      reads as a bug, where a dimmed one reads as not-yet.
+      menu, through the same code. Print is `PageHeader`'s own button -- the same icon, the same site
+      setting behind it and the same one-line call -- because a snapshot goes on paper exactly as a page
+      does, and `css/_print.scss` keeps this bar on the sheet so the printout says which version it was.
 
       Restore is the only one that WRITES to the live page, which is why it keeps the orange this app
       gives an action that changes a page, and why it asks before doing it. Branch off creates a page
       instead of overwriting one, so it sits with the harmless ones.
 
       They stay on a phone, where `PageHeader` drops its whole row: that row is icons for things
-      reachable elsewhere -- Print is the browser's own menu -- while these three are the only actions
-      this view offers at all, so hiding them would leave the screen with none.
+      reachable elsewhere -- Print is the browser's own menu -- while these are the only actions this
+      view offers at all, so hiding them would leave the screen with none. Print rides along with them
+      rather than being kept for its own sake; it is one glyph in a row that has to be there anyway.
 
       What they do instead is take a row of their own, which is what `w-full` at phone widths buys: the
       bar already wraps, but this block is `flex-none` and about 230px wide, so beside a 32px icon it
@@ -65,14 +67,20 @@
         @click="emit(`download`)">
         <w-tooltip>{{ t('history.downloadVersion') }}</w-tooltip>
       </w-btn>
+      <!--
+        On the site's own Print Button setting, as the page header's is: an administrator who has turned
+        it off has said the wiki does not offer one, and a version of a page is not the exception to
+        that.
+      -->
       <w-btn
         class="acrylic-btn ml-2"
+        v-if="siteStore.theme.showPrintBtn"
         flat
-        icon="la:file-pdf"
+        icon="la:print"
         color="grey"
-        disable
-        :aria-label="t(`history.exportPdf`)">
-        <w-tooltip>{{ t('history.exportPdf') }}</w-tooltip>
+        :aria-label="t(`common.actions.print`)"
+        @click="printPage">
+        <w-tooltip>{{ t('common.actions.print') }}</w-tooltip>
       </w-btn>
       <!--
         Branch off before Restore: it reads as the gentler of the two, and Restore stays next to the
@@ -80,7 +88,7 @@
 
         Indigo, which is the colour this app gives history -- the Schedule tab's calendar, the version
         timeline's dots, the bar at the top of this very screen. It also tells this button apart from
-        the disabled Export to PDF beside it, which grey did not.
+        the grey pair beside it, which a third grey button did not.
 
         Two shades, because one will not do: as a LABEL, `indigo` measures 6.3:1 on the light header
         and 2.5:1 on the dark one, while `indigo-4` is 5.0:1 dark and 3.2:1 light. So each theme takes
@@ -152,6 +160,8 @@ import { useI18n } from 'vue-i18n'
 import { useDark } from '@/composables/dark'
 import { useMinWidth } from '@/composables/screen'
 
+import { useSiteStore } from '@/stores/site'
+
 const emit = defineEmits(['download', 'restore', 'branch'])
 
 defineProps({
@@ -178,6 +188,10 @@ defineProps({
   }
 })
 
+// STORES
+
+const siteStore = useSiteStore()
+
 // COMPOSABLES
 
 const dark = useDark()
@@ -195,4 +209,18 @@ const { t } = useI18n()
  */
 const isAtLeastSm = useMinWidth(600)
 const iconSize = computed(() => (isAtLeastSm.value ? '64px' : '32px'))
+
+// METHODS
+
+/**
+ * Hand the snapshot to the browser's print dialog.
+ *
+ * Here rather than emitted to `PageVersion.vue`, unlike every other button in this header: those three
+ * act on the VERSION and go through the API helpers the history overlay uses, so the parent owns them.
+ * This one acts on the window and knows nothing about what is in it -- the same call `PageHeader` makes
+ * for a live page, and what it prints is decided entirely by `css/_print.scss`.
+ */
+function printPage() {
+  window.print()
+}
 </script>

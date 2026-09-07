@@ -1,0 +1,300 @@
+/*
+  THE PRINTED PAGE
+  ================
+
+  What the page view and the version view become on paper. This file is the app SHELL's half of it --
+  the chrome a page is drawn in. Two other places hold the rest, each because the rules there have to
+  sit next to the ones they override: `_page-contents.scss` typesets the article, over the content
+  palette declared at the top of that same file, and `SiteBanner.vue` handles the banner, for the
+  cascade reason set out at the foot of this file.
+
+  Two problems, and they are different ones.
+
+  The first is that the shell IS a viewport. `WLayout` is `height: 100vh; overflow: hidden`, and the
+  article scrolls inside `.page-container-scrl` rather than the window -- which is what keeps the
+  header, the sidebar and the action rail still while a reader scrolls. On paper that means exactly one
+  screenful is printed and the rest of the page is clipped away with nothing to say it happened. So
+  every fixed height and every scroll container has to be unwound back into normal flow before
+  anything else here is worth doing.
+
+  The second is that most of what is on screen is not the document. Someone printing a page wants the
+  page: its title, where it sits, when it was last written to, and its contents. The navigation, the
+  contents column, the action rail, the footer and the floating buttons are how they GOT here, not
+  what they are taking away.
+
+  `!important` throughout, deliberately, and it is not laziness: what these rules overrule is inline
+  styles (both views write `height: 100%` on the article column in the markup) and scoped rules from
+  single-file components, which carry a data attribute and so outrank a plain class whatever the order.
+  A print stylesheet that loses those fights prints a blank sheet and gives no clue why.
+
+  Colours are the exception -- there `!important` would be the wrong tool, because the rules being
+  beaten are per-theme ones written as `.body--dark .page-header-title`. Naming both theme classes
+  matches that specificity, and `app.scss` loads this file last so the tie goes to print.
+*/
+
+@media print {
+  /* ---------------------------------------------------------------------------
+     THE SHEET
+     --------------------------------------------------------------------------- */
+
+  /*
+    The margin the content gets.
+
+    Nothing here draws a running header or a page number: the browser prints its own -- title, URL,
+    date, page count -- outside this margin, and they are the reader's to keep or turn off in the print
+    dialog. CSS could only compete with them, and not well, since no engine this app targets fills a
+    page margin box with the document's own URL.
+  */
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  /* ---------------------------------------------------------------------------
+     THE SHELL STOPS BEING A VIEWPORT
+     --------------------------------------------------------------------------- */
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    /* -> Every layout paints `body` in the dark theme; on paper the sheet is the ground */
+    background: #fff !important;
+  }
+
+  /*
+    The shell's grid becomes a stack.
+
+    Its three columns exist to seat the drawers beside the page, and both drawers are gone below -- but
+    that is not enough on its own: a grid item is stretched to its track, and the track is sized off a
+    viewport height that means nothing here.
+  */
+  .w-layout--page,
+  .w-layout--container {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /*
+    And every box between the shell and the article gives up whatever it was doing to make one screenful
+    fit -- the flex column, the claimed height, the scroll container. What is left is blocks in normal
+    flow, which is the only arrangement that can run over a page break.
+  */
+  .w-page-container,
+  .w-page,
+  .page-container,
+  .page-container-scrl,
+  .page-container-body,
+  .w-scroll-area {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  /*
+    The article column's own padding goes: `@page` above is the margin now, and a second one inside it
+    only narrows the measure. `--content-bleed` is the padding this one is reaching back through (see
+    `_page-contents.scss`), so the print block there zeroes it to match -- left at 1rem the rule under
+    the page title would overhang the text by exactly the padding that is no longer there.
+  */
+  .page-container-body {
+    /*
+      Sides only, so the article keeps the full measure -- but not the top.
+
+      `.page-contents > :first-child` has its top margin zeroed, since on screen the column's own
+      padding is the space above the article. With that padding gone the first block sat against the
+      header's rule, and a page opening on an h1 -- which is most of them -- put 22pt of display type
+      hard against a line drawn 2px thick. This is the margin that block would otherwise have brought
+      with it.
+    */
+    padding: 1.25rem 0 0 !important;
+  }
+
+  /* ---------------------------------------------------------------------------
+     WHAT DOES NOT GO ON PAPER
+     --------------------------------------------------------------------------- */
+
+  /*
+    Navigation, the contents column, the action rail, the relation buttons under the article, the
+    footer, and every button that floats over the page -- all of them ways to go somewhere else, which
+    is the one thing a sheet of paper cannot do. The relations are the one that reads as content rather
+    than chrome, and they are not: they are the next page and the previous one, drawn as buttons.
+
+    The last five are the transient overlays, and they are here because printing is not a moment anyone
+    prepares for: a tooltip is on screen the instant the Print button is clicked, and Ctrl+P works just
+    as well with a dialog open. Each would otherwise print over the first page.
+  */
+  .w-header,
+  .w-drawer,
+  .w-drawer-scrim,
+  .page-sidebar,
+  .page-sidebar-scrim,
+  .page-actions,
+  .page-header-actions,
+  .page-relations,
+  .w-footer,
+  .w-page-scroller,
+  .corner-btn,
+  .w-tooltip,
+  .w-menu,
+  .w-notifications,
+  .w-loading,
+  .w-dialog-backdrop,
+  .w-dialog-viewport {
+    display: none !important;
+  }
+
+  /* ---------------------------------------------------------------------------
+     WHAT DOES, FLATTENED
+     --------------------------------------------------------------------------- */
+
+  /*
+    The title bar keeps the title, the description and the page's icon, and loses the gradient it sits
+    in. Its 95px is a measurement for a bar in a window; here it is a heading, so it takes the height of
+    what is in it and stays with the page it names.
+  */
+  .page-header {
+    height: auto;
+    break-after: avoid;
+  }
+
+  /*
+    And the words sit closer to the rule under them.
+
+    The 16px below the title column is pitched for a bar in a window, where the gradient it sits on is
+    what ends the header and the space is how the title is given room inside it. On paper the rule ends
+    the header, so the space under the words is doing nothing but pushing the article down the sheet.
+    Halved rather than dropped: the description still needs to clear the line under it.
+
+    Reached through `:has()` because the column is a stack of layout utilities and the two things in it
+    are the only stable names in the markup -- the same column, class for class, in both headers.
+  */
+  .page-header > div:has(> .page-header-title) {
+    padding-bottom: 0.5rem;
+  }
+
+  /* -> Same: the trail says where this page lives, which is no use on the sheet before it */
+  .page-breadcrumbs {
+    break-after: avoid;
+  }
+
+  /*
+    The home crumb becomes the site's own mark.
+
+    On screen that first crumb is a house because it is a BUTTON -- the way back to the root of the
+    wiki. Nothing on a sheet of paper goes anywhere, so what is left is a house standing at the head of
+    a path for no reason. The favicon in its place answers the question a printout actually raises,
+    which is which wiki this page was printed from, and it does it in the width the house was already
+    taking.
+
+    Matched on `data-icon` rather than on the crumb's position: `WIcon` writes the reference it drew
+    onto every branch it renders, so this says "the home icon" instead of "whatever is first", and it
+    stops matching by itself if that crumb ever stops being a house.
+
+    Drawn as a background on the link rather than swapped in the markup, because the swap is a
+    statement about paper and nothing else -- `WBreadcrumbs` is a shared component and this is not a
+    behaviour worth giving it a prop for. `print-color-adjust` because a background is exactly what a
+    print dialog drops by default, and the whole point here is that the mark appears.
+
+    1.25em is the house's own size: `.w-breadcrumbs__el-icon` sets 125%, so the glyph draws at 1.25em
+    of the bar's text. The crumb carries no label, so it needs no margin either.
+  */
+  .page-breadcrumbs [data-icon='la:home'] {
+    display: none;
+  }
+  .page-breadcrumbs .w-breadcrumbs__el:has([data-icon='la:home'])::before {
+    content: '';
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    background-image: url('/_site/current/favicon');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /*
+    The indigo frame the version view draws down both sides and along the bottom goes.
+
+    On screen it is a surround sized to the window and drawn once, and it is how that view says a
+    snapshot is being read. On paper there is no window to frame: it becomes a 5px band of colour down
+    the edge of every sheet, saying what the bar at the top of the first one has already said in words
+    -- which is why that bar keeps a heavier rule here than the page view's.
+  */
+  .page-version {
+    border-width: 0;
+  }
+
+  /*
+    Ink on paper, whichever theme the screen was in.
+
+    Without this a page printed from the dark theme comes out with a white title on white paper -- the
+    header and the bars paint their own foregrounds per theme, and hiding their backgrounds is what
+    leaves the foreground stranded. Both theme classes are named because that is the specificity those
+    rules were written at.
+  */
+  .body--light,
+  .body--dark {
+    .page-breadcrumbs {
+      padding-left: 0;
+      padding-right: 0;
+      background: none;
+      border-bottom: 1px solid #ccc;
+      color: #000;
+    }
+
+    /*
+      The version view's bar keeps a heavier rule than the page view's, which is the one piece of
+      emphasis worth the ink here: on screen it is indigo against grey chrome and unmistakable, and
+      printed flat it would say "this is a record of a page and not the page" in the same voice as a
+      breadcrumb trail. A printout that reads as current when it is not is the failure this view has to
+      avoid.
+    */
+    .page-breadcrumbs--version {
+      border-bottom: 2px solid #000;
+    }
+
+    /*
+      A rule closes the header, in place of the gradient and the hairline it wears on screen.
+
+      Without one the title, the description and the article's first paragraph were three blocks of
+      text with nothing but space between them, and the space alone did not say which of them was the
+      page's name -- the very thing the gradient does on screen.
+
+      A hairline, and the trail's own grey: the same line the trail draws, top and bottom of one
+      masthead. It was 2px, on the reasoning that twice the weight would say which of the two closes
+      the block -- but a rule the full width of the sheet is the widest mark on it, and weight there
+      buys emphasis nobody asked for. The space around it does that work instead.
+
+      1px is also the only width that survives the trip. On paper it is an absolute 1/96in whatever the
+      printer's resolution, but a print PREVIEW is rasterised at the display's scale factor, and on a
+      fractionally-scaled screen 2px lands on 2.5 or 3 device pixels and reads as a bar rather than a
+      rule. A hairline is the one weight both media agree on.
+    */
+    .page-header {
+      background: none;
+      border-top: 0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .page-header-title {
+      color: #000;
+    }
+    .page-header-subtitle {
+      color: #333;
+    }
+  }
+
+  /*
+    The site banner is the third place with print rules of its own, and the reason is the cascade
+    rather than tidiness: `SiteBanner.vue` ships its styles in the page view's own lazily-imported
+    chunk, which the browser adds AFTER this stylesheet. A rule here would tie with it on specificity
+    and lose on order, so the banner's print treatment sits in that component -- and what it does
+    there, in one line, is keep the notice and drop the ink.
+  */
+}
