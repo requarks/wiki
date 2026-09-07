@@ -430,7 +430,39 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             type: 'object',
             additionalProperties: true,
             description:
-              'The rest of the page as it stood: description, icon, tags, publish state and dates, relations, scripts, config, editor and content type.'
+              'The rest of the page as it stood: description, icon, tags, publish state and dates, relations, scripts, config, editor, content type and the contents list (`toc`).'
+          }
+        }
+      }
+    ]
+  })
+
+  /**
+   * PAGE VERSION BY ID - The same again, saying which page it came off
+   */
+  app.addSchema({
+    $id: 'PageVersionById',
+    type: 'object',
+    allOf: [
+      { $ref: 'PageHistoryVersion#' },
+      {
+        type: 'object',
+        properties: {
+          pageId: {
+            type: 'string',
+            format: 'uuid',
+            description:
+              'The page this is a version of. Present because a version URL names only the version, so this is how the reader is told what they are looking at a snapshot OF.'
+          },
+          pagePath: {
+            type: 'string',
+            description:
+              'Where that page is NOW — which is what a link to the live page has to be built from. Not to be confused with `path`, which is where it was when this version was written.'
+          },
+          pageLocale: {
+            type: 'string',
+            description:
+              "The locale that page is in now, needed to prefix the link on a site that brackets its URLs by locale. Its historical counterpart is not recorded on the version's own fields."
           }
         }
       }

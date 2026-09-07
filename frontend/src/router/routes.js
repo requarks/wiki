@@ -117,6 +117,22 @@ const routes = [
     children: [{ path: '', component: () => import('../pages/Index.vue') }]
   },
   // --------------------------------
+  // PAGE VERSION
+  // --------------------------------
+  /*
+    One recorded version of a page, read on its own. Addressed by the version alone -- a version URL is
+    a link somebody was handed, and the page it came off is exactly what the reader is asking to be
+    told, so a URL that already had to name it is one they could not have been given.
+
+    Its own layout rather than `MainLayout`: a snapshot is reached from a link rather than browsed to,
+    so there is no navigation sidebar beside it. See `VersionLayout.vue`.
+  */
+  {
+    path: '/_version/:versionId',
+    component: () => import('@/layouts/VersionLayout.vue'),
+    children: [{ path: '', component: () => import('@/pages/PageVersion.vue') }]
+  },
+  // --------------------------------
   // EDIT
   // --------------------------------
   {

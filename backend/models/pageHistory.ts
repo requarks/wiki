@@ -1,5 +1,6 @@
 import { isEqual } from 'es-toolkit/predicate'
 import { and, desc, eq, lt, sql } from 'drizzle-orm'
+import type { SQL } from 'drizzle-orm'
 import {
   pageHistory as pageHistoryTable,
   pages as pagesTable,
@@ -41,10 +42,18 @@ export type PurgeTimeframe = keyof typeof purgeTimeframes
  * The page fields a version carries beyond the ones with columns of their own.
  *
  * Taken straight off the stored row, so a field added to a page is captured here without this list
- * being touched. The exclusions are either derived from the content (`render`, `toc`, `searchContent`,
+ * being touched. The exclusions are either derived from the content (`render`, `searchContent`,
  * `ts`), fixed for the page's whole life (`id`, `siteId`, `creatorId`, `createdAt`), or bookkeeping
  * that says nothing about the version (`hash`, `updatedAt`, `authorId`, `ratingScore`, `ratingCount`,
  * `historyData`, `isSearchableComputed`).
+ *
+ * `toc` is derived as well and is kept regardless, because the version view draws a contents column
+ * beside the snapshot and there is nowhere else to get one: a version records the page's SOURCE, and
+ * the headings only exist in the render, which is not recorded. Deriving them on the way out would
+ * mean parsing the source a second time to answer what the save had already answered.
+ *
+ * It stays in `NOT_REPORTED_AS_CHANGED` below, which is a different question: a contents list moves
+ * whenever the source does, so naming it among a version's changed fields tells a reader nothing.
  */
 const EXCLUDED_FROM_META = new Set([
   'id',
@@ -55,7 +64,6 @@ const EXCLUDED_FROM_META = new Set([
   'authorId',
   'hash',
   'render',
-  'toc',
   'searchContent',
   'ts',
   'ratingScore',
@@ -113,6 +121,58 @@ export type PageHistoryEntry = {
 export type PageHistoryVersion = PageHistoryEntry & {
   content: string
   meta: Record<string, any>
+}
+
+/**
+ * One version row, by whatever identifies it.
+ *
+ * Shared by the two ways in — page and version, or version alone — because they differ only in the
+ * `where`, and a second copy of this projection is a second place for the two to drift apart.
+ */
+async function selectVersionRow(where: SQL | undefined): Promise<any> {
+  const rows = await WIKI.db
+    .select({
+      id: pageHistoryTable.id,
+      pageId: pageHistoryTable.pageId,
+      action: pageHistoryTable.action,
+      changedFields: pageHistoryTable.changedFields,
+      reason: pageHistoryTable.reason,
+      versionDate: pageHistoryTable.versionDate,
+      path: pageHistoryTable.path,
+      title: pageHistoryTable.title,
+      content: pageHistoryTable.content,
+      meta: pageHistoryTable.meta,
+      authorId: usersTable.id,
+      authorName: usersTable.name,
+      authorEmail: usersTable.email
+    })
+    .from(pageHistoryTable)
+    .leftJoin(usersTable, eq(usersTable.id, pageHistoryTable.authorId))
+    .where(where)
+    .limit(1)
+
+  return rows[0] ?? null
+}
+
+/** That row as a version. `pageId` is deliberately not on it — only one caller wants it. */
+function toVersion(row: any): PageHistoryVersion {
+  return {
+    id: row.id,
+    action: row.action,
+    changedFields: row.changedFields ?? [],
+    reason: row.reason ?? '',
+    versionDate: row.versionDate,
+    path: row.path,
+    title: row.title,
+    content: row.content ?? '',
+    meta: (row.meta ?? {}) as Record<string, any>,
+    author: {
+      // -> Null once the account is gone: the version outlives it, see the column's own note
+      id: row.authorId ?? null,
+      name: row.authorName ?? '',
+      email: row.authorEmail ?? ''
+    }
+  }
 }
 
 /**
@@ -248,52 +308,40 @@ class PageHistory {
     pageId: string,
     versionId: string
   ): Promise<PageHistoryVersion | null> {
-    const rows = await WIKI.db
-      .select({
-        id: pageHistoryTable.id,
-        action: pageHistoryTable.action,
-        changedFields: pageHistoryTable.changedFields,
-        reason: pageHistoryTable.reason,
-        versionDate: pageHistoryTable.versionDate,
-        path: pageHistoryTable.path,
-        title: pageHistoryTable.title,
-        content: pageHistoryTable.content,
-        meta: pageHistoryTable.meta,
-        authorId: usersTable.id,
-        authorName: usersTable.name,
-        authorEmail: usersTable.email
-      })
-      .from(pageHistoryTable)
-      .leftJoin(usersTable, eq(usersTable.id, pageHistoryTable.authorId))
-      .where(
-        and(
-          eq(pageHistoryTable.siteId, siteId),
-          eq(pageHistoryTable.pageId, pageId),
-          eq(pageHistoryTable.id, versionId)
-        )
+    const row = await selectVersionRow(
+      and(
+        eq(pageHistoryTable.siteId, siteId),
+        eq(pageHistoryTable.pageId, pageId),
+        eq(pageHistoryTable.id, versionId)
       )
-      .limit(1)
+    )
+    return row ? toVersion(row) : null
+  }
 
-    const row: any = rows[0]
-    if (!row) {
-      return null
-    }
-    return {
-      id: row.id,
-      action: row.action,
-      changedFields: row.changedFields ?? [],
-      reason: row.reason ?? '',
-      versionDate: row.versionDate,
-      path: row.path,
-      title: row.title,
-      content: row.content ?? '',
-      meta: (row.meta ?? {}) as Record<string, any>,
-      author: {
-        id: row.authorId ?? null,
-        name: row.authorName ?? '',
-        email: row.authorEmail ?? ''
-      }
-    }
+  /**
+   * The same version addressed by its ID ALONE, with the page it belongs to named in the reply.
+   *
+   * What `/_version/<id>` needs. A version URL is a link somebody was handed — out of the history
+   * timeline, a notification, a message — and the one thing such a link can reasonably carry is the
+   * version's own ID: the page it came off is exactly what the reader is asking to be told, and a URL
+   * that already had to name it would be a URL they could not have been given in the first place.
+   *
+   * `pageId` comes back because the caller has permissions to check and they are page rules — the
+   * version carries no access of its own, so it has to be turned back into a page first. Everything
+   * else is what {@link getVersion} returns.
+   *
+   * Scoped to the site regardless, so a version ID from one site cannot be read through another's URL.
+   *
+   * @returns The version and its page, or null when this site has no such version
+   */
+  async getVersionById(
+    siteId: string,
+    versionId: string
+  ): Promise<(PageHistoryVersion & { pageId: string }) | null> {
+    const row = await selectVersionRow(
+      and(eq(pageHistoryTable.siteId, siteId), eq(pageHistoryTable.id, versionId))
+    )
+    return row ? { ...toVersion(row), pageId: row.pageId } : null
   }
 
   /**

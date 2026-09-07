@@ -115,6 +115,23 @@
                       <w-item-section>{{ t('history.setAsTarget') }}</w-item-section>
                     </w-item>
                     <w-separator class="my-1" />
+                    <!--
+                      A real link, unlike everything else in this menu: the others act on the version
+                      where they stand, while this one LEAVES for a screen of its own, so it should
+                      behave like the address it is -- middle-click and ctrl-click open the snapshot in
+                      a tab, and the status bar shows where it goes.
+
+                      `leaveForVersion` is only there because this overlay is held open by
+                      `siteStore.overlay` and not by the route: navigating with it still set would drop
+                      the version view in behind it. It closes on a plain click only, so a click that
+                      opens a TAB leaves the timeline where the reader left it.
+                    -->
+                    <w-item :to="`/_version/${version.id}`" @click="leaveForVersion">
+                      <w-item-section avatar class="!min-w-0 !pr-2">
+                        <w-icon name="la:eye" class="text-blue-7" />
+                      </w-item-section>
+                      <w-item-section>{{ t('history.viewVersion') }}</w-item-section>
+                    </w-item>
                     <w-item clickable @click="viewSource(version)">
                       <w-item-section avatar class="!min-w-0 !pr-2">
                         <w-icon name="la:code" class="text-blue-7" />
@@ -247,9 +264,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import * as monaco from 'monaco-editor'
-import { fileSave } from 'browser-fs-access'
-
-import { MarkdownRenderer } from '@/renderers/markdown'
+import { renderVersionSource, saveVersionSource, versionContentType } from '@/helpers/pageVersions'
 
 import { confirm, dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
@@ -453,21 +468,6 @@ async function loadVersion(id) {
   return version
 }
 
-/** What a version's source is saved as, by the format it was written in. */
-const FILE_TYPES = {
-  markdown: { ext: 'md', mime: 'text/markdown' },
-  html: { ext: 'html', mime: 'text/html' }
-}
-
-/**
- * The format a version was written in — which decides how it colours, how it renders and what it
- * downloads as. Taken from the version rather than from the page, since the page may have been
- * converted since.
- */
-function contentTypeOf(version) {
-  return version?.meta?.contentType || version?.meta?.editor || pageStore.editor || 'markdown'
-}
-
 /** A version with its source, with the spinner and the error report the menu actions all want. */
 async function withVersion(version) {
   state.loading++
@@ -490,20 +490,33 @@ async function withVersion(version) {
  * the markdown pipeline is a frontend one, and the server would otherwise have to drive a headless
  * browser — an extension most instances do not install.
  */
-async function renderOf(version, content) {
-  if (contentTypeOf(version) !== 'markdown') {
-    return content
-  }
+async function renderOf(version) {
   // -> The renderer is configured per site (line breaks, typographer, …), and that configuration
   //    arrives with the editor configs rather than on its own
   if (!editorStore.configIsLoaded) {
     await editorStore.fetchConfigs()
   }
-  // -> Rendered as the page it is a version of, so a relative image in it resolves the way it does
-  //    in the page view rather than against the site root
-  return new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(content, {
+  // -> Rendered as the page it is a version OF, so a relative image in it resolves the way it does in
+  //    the page view rather than against the site root
+  return renderVersionSource(version, {
+    markdownConfig: editorStore.editors.markdown,
     pagePath: pageStore.path
   })
+}
+
+/**
+ * Closing this overlay on the way to a version's own screen.
+ *
+ * Only for an unmodified left click, which is the one that actually leaves this tab. A ctrl-, meta-,
+ * shift- or middle-click opens the snapshot elsewhere and the reader stays here, so the timeline they
+ * were reading should still be in front of them -- and `router-link` declines those for the same
+ * reason, leaving them to the browser.
+ */
+function leaveForVersion(ev) {
+  if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) {
+    return
+  }
+  close()
 }
 
 async function viewSource(version) {
@@ -521,29 +534,15 @@ async function viewSource(version) {
 }
 
 async function downloadVersion(version) {
+  // -> The timeline carries no source, so the version has to be fetched before it can be saved
   const full = await withVersion(version)
   if (!full) {
     return
   }
-  const type = FILE_TYPES[contentTypeOf(full)] ?? { ext: 'txt', mime: 'text/plain' }
-  // -> Named for the page and the moment, since a folder of `page.md` files says nothing
-  const name = full.path.split('/').at(-1) || 'page'
-  const stamp = full.versionDate.slice(0, 19).replace(/[:T]/g, '-')
   try {
-    /*
-      A bare MIME type, with no `;charset=` on it: the save picker uses this as an `accept` key and
-      rejects a type carrying parameters outright. Nothing is lost by dropping it — a Blob built from
-      a JS string is UTF-8 already.
-    */
-    await fileSave(new Blob([full.content ?? ''], { type: type.mime }), {
-      fileName: `${name}-${stamp}.${type.ext}`,
-      extensions: [`.${type.ext}`]
-    })
+    await saveVersionSource(full)
   } catch (err) {
-    // -> Dismissing the file picker is not a failure
-    if (err.name !== 'AbortError') {
-      notify({ type: 'negative', message: t('history.downloadFailed'), caption: err.message })
-    }
+    notify({ type: 'negative', message: t('history.downloadFailed'), caption: err.message })
   }
 }
 
@@ -577,7 +576,7 @@ function restoreVersion(version) {
       const resp = await API_CLIENT.patch(`sites/${siteStore.id}/pages/${pageStore.id}`, {
         json: {
           content,
-          render: await renderOf(full, content),
+          render: await renderOf(full),
           reasonForChange: t('history.restoreReason', { date: humanizeDate(full.versionDate) })
         }
       }).json()
@@ -633,7 +632,7 @@ function branchFrom(version) {
           locale: pageStore.locale,
           editor: full.meta?.editor || pageStore.editor,
           content,
-          render: await renderOf(full, content),
+          render: await renderOf(full),
           description: full.meta?.description ?? '',
           icon: full.meta?.icon ?? '',
           tags: full.meta?.tags ?? [],
@@ -702,7 +701,7 @@ async function mountEditor() {
 
 /** The format the page was written in at the time, which is what colours the two sides. */
 function languageOf(version) {
-  return contentTypeOf(version) === 'html' ? 'html' : 'markdown'
+  return versionContentType(version) === 'html' ? 'html' : 'markdown'
 }
 
 async function applyDiff() {

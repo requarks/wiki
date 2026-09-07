@@ -43,8 +43,8 @@ const nanoid = customAlphabet('1234567890abcdef', 10)
  * First path segments the SERVER itself answers — every prefix registered in `initHTTPServer`.
  *
  * Spelled out rather than tested with `isPageUrl`, because a leading underscore does not mean the
- * server: the frontend router owns `/_admin`, `/_profile`, `/_inbox`, `/_search`, `/_create`, `/_edit`
- * and `/_error` too, and those have to reach the app shell like any page path. The distinction the
+ * server: the frontend router owns `/_admin`, `/_profile`, `/_inbox`, `/_search`, `/_create`, `/_edit`,
+ * `/_version` and `/_error` too, and those have to reach the app shell like any page path. The distinction the
  * shell needs is "does something here serve this", which is this list, and it has to be kept in step
  * with the registrations below.
  *

@@ -351,7 +351,11 @@ import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { splitLocalePath } from '@/helpers/pagePaths'
-import { enhanceRenderedContent, routableHref, sameDocumentHash } from '@/helpers/renderedContent'
+import {
+  enhanceRenderedContent,
+  resolveContentClick,
+  routableHref
+} from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
 
 import { useCommonStore } from '@/stores/common'
@@ -849,45 +853,30 @@ function relationLink(rel) {
 }
 
 function onContentClick(ev) {
-  if (
-    ev.defaultPrevented ||
-    ev.button !== 0 ||
-    ev.metaKey ||
-    ev.ctrlKey ||
-    ev.shiftKey ||
-    ev.altKey
-  ) {
-    return
-  }
-  const anchor = ev.target?.closest?.('a[href]')
-  if (!anchor) {
+  const intent = resolveContentClick(ev, window.location)
+  if (!intent) {
     return
   }
   /*
     A heading on this same page: travelled to rather than jumped at, which is how the contents list
-    and an arriving `#heading` already reach one. Through the helper, so a heading inside a closed tab
-    is revealed first, and only claimed once it says it found somewhere to go -- a fragment naming
-    nothing in the render is left to the browser, as it was.
+    and an arriving `#heading` already reach one. Only claimed once `scrollToAnchor` says it found
+    somewhere to go -- it reveals a heading inside a closed tab first, and a fragment naming nothing
+    in the render is left to the browser, as it was.
 
     The URL still follows, so the address bar can be copied and Back returns to the section before.
     `router.push` rather than assigning `location.hash`, which would jump the page as well -- and since
     a pushed hash sets no target element, marking where the reader landed is the helper's job (see
     `LANDED_CLASS`) rather than `:target`'s.
   */
-  const hash = sameDocumentHash(anchor, window.location)
-  if (hash) {
-    if (scrollToAnchor(hash, { smooth: true })) {
+  if (intent.kind === 'hash') {
+    if (scrollToAnchor(intent.hash, { smooth: true })) {
       ev.preventDefault()
-      router.push({ path: route.path, query: route.query, hash })
+      router.push({ path: route.path, query: route.query, hash: intent.hash })
     }
     return
   }
-  const target = routableHref(anchor, window.location)
-  if (!target) {
-    return
-  }
   ev.preventDefault()
-  router.push(target)
+  router.push(intent.target)
 }
 
 function openTocPanel() {
@@ -944,190 +933,6 @@ function goBack() {
 
 <style lang="scss">
 /*
-  Where the contents column stops being able to afford 300px. This view's own threshold, not one of the
-  app's -- `_palette.scss` is for the breakpoints the whole app shares, and this one is a function of this
-  page's two sidebars. Stated as a `max` value just under 1400px, the way the shared ones are.
-*/
-$toc-narrow-max: 1399.98px;
-
-/*
-  ...and where it stops being a column at all and becomes a panel over the article. The same boundary as
-  the 750px `useMinWidth` above, which decides whether the opener is rendered, and as the one `MainLayout`
-  uses to stand scroll-to-top down from this corner. All three have to agree.
-*/
-$toc-overlay-max: 749.98px;
-
-/*
-  The column in place of the article: the lock screen, the page that does not exist, and the
-  redirection on its way somewhere else. All three are the same shape -- a large faint icon, a
-  sentence, and the one button that does something about it -- and share the styling so they cannot
-  drift apart. `PageRedirect.vue` draws its own screens with these classes for that reason.
-*/
-.page-placeholder {
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* -> Off dead centre: the text reads better a little above the middle of the column */
-  padding: 0 24px 10vh;
-  text-align: center;
-
-  /*
-    Stated per theme, as everything else in this column is: the article's own colours come from
-    `_page-contents.scss`, so a plain block dropped in beside it inherits the document's black and
-    goes invisible on the dark surface. The icon below takes its colour from here as well.
-  */
-  @at-root .body--light & {
-    color: $grey-9;
-  }
-  @at-root .body--dark & {
-    color: #fff;
-  }
-}
-
-/*
-  Large and faint. It is the illustration on an otherwise empty column, not something to look at -- the
-  sentence under it is what the reader is here to read.
-*/
-.page-placeholder-icon {
-  margin-bottom: 24px;
-  font-size: 96px;
-  opacity: 0.12;
-}
-
-.page-breadcrumbs {
-  @at-root .body--light & {
-    background: linear-gradient(to bottom, $grey-1 0%, $grey-3 100%);
-    border-bottom: 1px solid $grey-4;
-  }
-  /*
-    The bar sets a background per theme, so it owes a foreground too: the LAST crumb -- the current
-    page -- deliberately inherits rather than taking `active-color`, and what it was inheriting in
-    dark mode was the document's black.
-  */
-  @at-root .body--light & {
-    color: var(--color-black);
-  }
-  @at-root .body--dark & {
-    background: linear-gradient(to bottom, $dark-3 0%, $dark-4 100%);
-    border-bottom: 1px solid $dark-3;
-    color: var(--color-white);
-  }
-
-  /*
-    A point off the trail on a phone, on the bar rather than on the crumbs: `WBreadcrumbs` sets no size
-    of its own and its icons are 125% of whatever it inherits, so one declaration here takes the text and
-    the icons down together and keeps the two in proportion.
-
-    13px is where it stops. The trail is how a reader gets back out, and it is already the smallest type
-    on the screen -- what is wanted is a bar that gives way to the page under it, not one nobody can read.
-  */
-  @media (max-width: $breakpoint-xs-max) {
-    font-size: 0.8125rem;
-  }
-}
-.page-header {
-  height: 95px;
-
-  /*
-    Sized by its contents on a phone instead, which comes out around 70px: the 95px is pitched for a 64px
-    icon beside 34px display type, and holding it under the halved icon and title of the phone layout left
-    a band of empty gradient under the description.
-
-    `auto` rather than a smaller fixed height, because a fixed one is what the desktop bar can only just
-    afford: a title long enough to wrap has nowhere to go in it. Here the bar grows by a line instead, and
-    a page with no description gets a bar shorter still.
-  */
-  @media (max-width: $breakpoint-xs-max) {
-    height: auto;
-  }
-
-  @at-root .body--light & {
-    background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%);
-    border-bottom: 1px solid $grey-4;
-    border-top: 1px solid #fff;
-  }
-  @at-root .body--dark & {
-    background: linear-gradient(to bottom, $dark-4 0%, $dark-3 100%);
-    // border-bottom: 1px solid $dark-5;
-    border-top: 1px solid $dark-6;
-  }
-
-  .no-height .q-field__control {
-    height: auto;
-  }
-
-  &-title {
-    @at-root .body--light & {
-      color: $grey-9;
-    }
-    @at-root .body--dark & {
-      color: #fff;
-    }
-  }
-  &-subtitle {
-    @at-root .body--light & {
-      color: $grey-7;
-    }
-    @at-root .body--dark & {
-      color: rgba(255, 255, 255, 0.6);
-    }
-  }
-}
-/*
-  The article and the footer under it, stacked inside the one box that scrolls.
-
-  `flex: 1 0 auto` on the article is what keeps the footer at the BOTTOM of a short page instead of
-  leaving it hanging under two lines of content: the article takes the leftover height, and past that
-  grows with its own content and pushes the footer out of view until the reader gets there. It must
-  not shrink either, or a long article would be squeezed to make room rather than scrolling.
-*/
-.page-container-scrl {
-  display: flex;
-  flex-direction: column;
-}
-.page-container-body {
-  flex: 1 0 auto;
-
-  /*
-    The other half of the padding change in the template above.
-
-    `--content-bleed` is how far the rule under an h1 reaches BACK through the padding of whatever holds
-    the content, so that it starts at the sidebar rather than at the text -- so it is a statement about
-    this surface's padding, and left at 1rem against 0.5rem of it the rule overhung the column by 8px.
-    `_page-contents.scss` declares the property expecting exactly this: a surface that pads differently
-    overrides the one property rather than the rule.
-
-    On the `.page-contents` element rather than here, because that is where the default is declared and a
-    custom property set on the parent would simply be shadowed by it. The editor's preview pane carries
-    the class itself and still pads 1rem, so it keeps the default.
-  */
-  @media (max-width: $breakpoint-xs-max) {
-    .page-contents {
-      --content-bleed: 0.5rem;
-    }
-  }
-}
-
-/*
-  A hairline of the page's OWN background between the header and whatever the column starts with, in
-  each theme's colour -- so it is invisible against the article, which is that colour, and reads as one
-  pixel of daylight under anything that starts flush to the top of the column. A site banner does
-  exactly that, and against the header's bottom border it needs the gap.
-
-  Both themes: with the dark one left out the banner butted straight into the header there and not in
-  the light theme, which is the sort of difference that reads as a bug in whichever one you see second.
-*/
-.page-container {
-  @at-root .body--light & {
-    border-top: 1px solid #fff;
-  }
-  @at-root .body--dark & {
-    border-top: 1px solid $dark-6;
-  }
-}
-/*
   The Tags heading's edit toggle. `visibility` is transitioned alongside the opacity so it still fades
   BOTH ways: as a discrete property it flips at the end of the transition when going to hidden, and at
   the start when coming back, which is exactly the timing a fade wants.
@@ -1145,120 +950,6 @@ $toc-overlay-max: 749.98px;
 
 @media (prefers-reduced-motion: reduce) {
   .tags-edit-btn {
-    transition-duration: 0.01ms;
-  }
-}
-
-.page-sidebar {
-  flex: 0 0 300px;
-
-  /*
-    Narrower once the window is: 300px is pitched for a wide desktop, where it is a tenth of the width, and
-    by 1200px it is a quarter of what is left after the nav sidebar. 200px still holds a heading of a few
-    words per line -- the contents list wraps rather than truncating (see `PageToc`) -- and hands the
-    article the other 100px.
-
-    1400px is this view's own threshold rather than one of the app's `--breakpoint-*`: it is where THIS
-    column starts crowding the article, which depends on its own width and the nav's.
-  */
-  @media (max-width: $toc-narrow-max) {
-    flex: 0 0 200px;
-  }
-
-  /*
-    And below 750px it stops being a column at all: even at 200px it is a third of a 600px window, and an
-    article is what the reader came for. It becomes a panel the width of the wide column, parked off the
-    right edge and slid in when asked for -- the same shape as the nav drawer on a narrow screen, and for
-    the same reason, so the two behave alike from opposite sides.
-
-    `position: fixed` is what takes it out of the row, so the article gets the whole width whether the
-    panel is open or not; the reader is never made to choose between the two, only to look at one at a
-    time. `transform` is what animates, being the one property that moves a box without laying anything
-    out again -- and the panel is out of flow, so there is nothing behind it to reflow anyway.
-
-    Right regardless of `tocPosition`: the opener is in the bottom-RIGHT corner, and a panel arriving from
-    the far side of the screen from the button that summoned it reads as something else appearing.
-  */
-  @media (max-width: $toc-overlay-max) {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 40;
-    /* -> The wide column's width, capped so it cannot take the whole of a small screen */
-    width: 300px;
-    max-width: 85vw;
-    transform: translateX(100%);
-    transition: transform 0.2s var(--ease-standard);
-    box-shadow: -2px 0 12px rgb(0 0 0 / 0.3);
-
-    &.is-open {
-      transform: none;
-    }
-  }
-
-  @at-root .body--light & {
-    background-color: $grey-2;
-  }
-  @at-root .body--dark & {
-    background-color: $dark-5;
-  }
-
-  // A light rule on the light sidebar, near-black on the dark one -- it reads as the bevel between
-  // two panels rather than as a drawn line.
-  //
-  // The original set a background-colour here as well as a border. It never showed: the element is
-  // 1px tall with `box-sizing: border-box`, so the content box is 0px and the opaque border covers
-  // it completely. Only the border colour is carried across.
-  .w-separator {
-    --w-hairline-color: #fff;
-  }
-  @at-root .body--dark & .w-separator {
-    --w-hairline-color: #070a0d;
-  }
-
-  /*
-    The column is the height of the shell, so its own content scrolls when there is more of it than
-    there is room -- a long contents list, in practice. Nothing sticky is involved: the shell holds
-    still on its own, and the article beside this scrolls in its own box.
-  */
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(102 102 102 / 0.5) transparent;
-}
-
-/*
-  Behind the panel, and under it: the same tint and the same z-index as the nav drawer's scrim, one step
-  below the panel it dims. The opener is at z-30 as well and is not rendered while the panel is open, so
-  the two never overlap.
-*/
-.page-sidebar-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  background-color: rgb(0 0 0 / 0.4);
-}
-
-.page-sidebar-scrim-enter-active,
-.page-sidebar-scrim-leave-active,
-.toc-open-btn-enter-active,
-.toc-open-btn-leave-active {
-  transition: opacity 0.2s var(--ease-standard);
-}
-.page-sidebar-scrim-enter-from,
-.page-sidebar-scrim-leave-to,
-.toc-open-btn-enter-from,
-.toc-open-btn-leave-to {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-sidebar,
-  .page-sidebar-scrim-enter-active,
-  .page-sidebar-scrim-leave-active,
-  .toc-open-btn-enter-active,
-  .toc-open-btn-leave-active {
     transition-duration: 0.01ms;
   }
 }

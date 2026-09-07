@@ -1582,9 +1582,6 @@ onMounted(async () => {
     wordWrap: 'on'
   })
 
-  // TODO: For debugging, remove at some point...
-  window.edInstance = editor
-
   /*
     "Edit Table" over every table in the page, which opens the table editor on that table.
 
@@ -1856,38 +1853,6 @@ onMounted(async () => {
   EVENT_BUS.on('insertBlock', insertBlockClb)
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
-
-  // this.$root.$on('editorInsert', opts => {
-  //   switch (opts.kind) {
-  //     case 'IMAGE':
-  //       let img = `![${opts.text}](${opts.path})`
-  //       if (opts.align && opts.align !== '') {
-  //         img += `{.align-${opts.align}}`
-  //       }
-  //       this.insertAtCursor({
-  //         content: img
-  //       })
-  //       break
-  //     case 'BINARY':
-  //       this.insertAtCursor({
-  //         content: `[${opts.text}](${opts.path})`
-  //       })
-  //       break
-  //     case 'DIAGRAM':
-  //       const selStartLine = this.cm.getCursor('from').line
-  //       const selEndLine = this.cm.getCursor('to').line + 1
-  //       this.cm.doc.replaceSelection('```diagram\n' + opts.text + '\n```\n', 'start')
-  //       this.processMarkers(selStartLine, selEndLine)
-  //       break
-  //   }
-  // })
-  // // Handle save conflict
-  // this.$root.$on('saveConflict', () => {
-  //   this.toggleModal(`editorModalConflict`)
-  // })
-  // this.$root.$on('overwriteEditorContent', () => {
-  //   this.cm.setValue(this.$store.get('editor/content'))
-  // })
 })
 
 onBeforeUnmount(() => {

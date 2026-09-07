@@ -1264,6 +1264,73 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * PAGE VERSION BY ID
+   */
+  app.get<{ Params: { siteId: string; versionId: string } }>(
+    '/sites/:siteId/versions/:versionId',
+    {
+      // -> Checked per page below, for the same reason as the history routes above
+      schema: {
+        summary: 'Get a page version by its ID alone',
+        description:
+          'The same version as the history route, addressed WITHOUT naming the page — what a `/_version/<id>` link resolves. The page it came off is named in the reply, since that is what the reader is asking to be told.\n\nNeeds `read:history` and the ability to read that page, on the same terms as the history list. A version whose page has since been deleted answers 404: the permissions that would decide who may read it are page rules, and there is no longer a page to check them against.',
+        tags: ['Pages'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            versionId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId', 'versionId']
+        },
+        response: {
+          200: { $ref: 'PageVersionById#' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const version = await WIKI.models.pageHistory.getVersionById(
+        req.params.siteId,
+        req.params.versionId
+      )
+      if (!version) {
+        return reply.notFound('This version does not exist.')
+      }
+      /*
+        The page as it stands, which is what carries the access rules — a version has none of its own.
+        Note the rules are matched against the page's CURRENT path, not the path the version was
+        written at: a page that has moved is one page, and who may read its history is a question about
+        where it is now.
+      */
+      const page = await loadReadablePage(req, req.params.siteId, version.pageId)
+      if (!page) {
+        return reply.notFound('This version does not exist.')
+      }
+      if (!mayOnPage(req, 'read:history', page)) {
+        return reply.forbidden("You are not allowed to read this page's history.")
+      }
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
+      }
+      /*
+        The page's CURRENT path and locale, alongside the historical ones already on the version.
+
+        Both are here so a reader looking at a snapshot can be sent to the page as it stands, and
+        `version.path` cannot do that job: it is where the page was WHEN the version was written, so
+        for a page that has since moved it points at nothing. Free to include — the page is already
+        loaded, one line above, to decide whether this reader may be here at all.
+      */
+      return { ...version, pagePath: page.path, pageLocale: page.locale }
+    }
+  )
+
+  /**
    * RESOLVE ALIAS
    */
   app.get<{ Params: { siteId: string; alias: string } }>(

@@ -925,29 +925,17 @@ function notImplemented() {
 /*
   The phone layout of this row.
 
-  The title comes down from `text-h4`, which is a 34px display size written for a header the width of a
-  desktop window: at 390px a title of any length wrapped, and the description under it was pushed out of
-  the bar. 24px is the same step `text-h5` takes, chosen as a value rather than as that class so the size
-  lives beside the breakpoint that asks for it.
-
-  The text column's padding halves with it, which is most of what brings the bar's own height down --
-  `pages/Index.vue` takes the fixed 95px off on the same breakpoint, so what is left of it is this
-  column. Horizontal too, and deliberately: at 8px the title lines up with the article underneath, which
-  now pads by the same amount.
-
-  And the actions go, all of them -- Watch, Print, the review queue, Edit -- because they are icons
-  squeezed against the right edge of a row that has no room for the title as it is. Nothing is lost that
-  is not reachable elsewhere: Print is the browser's own menu, and a page is edited on a machine with a
+  The actions go, all of them -- Watch, Print, the review queue, Edit -- because they are icons squeezed
+  against the right edge of a row that has no room for the title as it is. Nothing is lost that is not
+  reachable elsewhere: Print is the browser's own menu, and a page is edited on a machine with a
   keyboard. An editor already open keeps its controls, or there would be no way to save or leave it.
 
-  Unlayered scoped rules, so they beat the `text-h4` utility without needing `!important`.
+  The title's own size comes down on the same breakpoint, and the text column's padding with it -- which
+  together are most of what brings the bar's height down, `_page-chrome.scss` taking the fixed 95px off
+  there. Both live in that stylesheet rather than here: they are worn by every header, and a scoped rule
+  reaches only this one's markup.
 */
 @media (max-width: $breakpoint-xs-max) {
-  .page-header-title {
-    font-size: 1.5rem;
-    line-height: 2rem;
-  }
-
   .page-header-actions:not(.has-editor-actions) {
     display: none;
   }

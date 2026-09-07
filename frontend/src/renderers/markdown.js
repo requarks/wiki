@@ -311,13 +311,10 @@ function lineRows(lineCount, lineStart, highlights) {
  * @param {string} str The code, as the author wrote it.
  * @param {string} lang The first word of the info string.
  * @param {object} attributes The rest of it, parsed -- see `parseFenceAttributes`. Ignored by the
- *                            diagram branches, which are a source for something else to draw and have
+ *                            diagram branch, which is a source for something else to draw and has
  *                            no gutter, no title bar and no lines to mark.
  */
 function codeBlock(str, lang, attributes) {
-  if (lang === 'diagram') {
-    return `<pre class="diagram">${Buffer.from(str, 'base64').toString()}</pre>`
-  }
   if (['kroki', 'mermaid', 'plantuml'].includes(lang)) {
     /*
       Left as source, deliberately: a diagram is drawn by the block whose body it is —

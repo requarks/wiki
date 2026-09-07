@@ -10,6 +10,14 @@
   "categories": {
     "correctness": "error"
   },
+  "rules": {
+    // Not in `correctness`, so it has to be named. Free here -- the backend reports none, `WIKI` being
+    // declared above and everything else imported -- and on for the same reason as the frontend's:
+    // a name used but never imported is a runtime error that no build step here would catch, there
+    // being no build step. `npm run typecheck` finds it too, but that is a separate command; this
+    // puts it in the lint everyone runs.
+    "no-undef": "error"
+  },
   "ignorePatterns": [
     "node_modules/**",
     "**/*.min.js",

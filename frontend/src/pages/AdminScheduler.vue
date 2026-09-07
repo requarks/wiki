@@ -85,8 +85,15 @@
                      From `la` rather than `mdi` for weight: every other icon on this page is Line
                      Awesome, which is an outline set, and MDI's solid glyph sat noticeably heavier
                      beside them.
+
+                     `indigo` is a mid-ramp shade that sits nearly black against the dark theme's
+                     table, so dark mode takes the lightest indigo the theme has instead.
                 -->
-                <w-icon class="mr-2" name="la:calendar" color="indigo" size="sm" />
+                <w-icon
+                  class="mr-2 dark:text-indigo-4"
+                  name="la:calendar"
+                  color="indigo"
+                  size="sm" />
               </w-td>
             </template>
             <template v-slot:body-cell-task="props">

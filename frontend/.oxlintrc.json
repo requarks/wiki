@@ -10,8 +10,38 @@
     "chrome": "readonly",
     "API_CLIENT": "readonly",
     "EVENT_BUS": "readonly",
-    "Temporal": "readonly"
+    "Temporal": "readonly",
+
+    // Vue's compiler macros. Not imports and not real globals -- `<script setup>` compiles them away
+    // -- but nothing tells a linter that, so without these `no-undef` below reports every one of the
+    // ~190 uses across `src/`, in the editor as much as on the command line.
+    "defineProps": "readonly",
+    "defineEmits": "readonly",
+    "defineExpose": "readonly",
+    "defineOptions": "readonly",
+
+    // Written into `index.html` by the server before the app boots: the site being served, and the
+    // locales it offers. Absent on a page rendered without them, which is why `App.vue` tests
+    // `typeof siteConfig !== 'undefined'` rather than reading it straight.
+    "siteConfig": "readonly",
+    "siteLangs": "readonly",
+
+    // Node's, reachable only from the `import.meta.env.SSR` branches in `boot/*.js`. Dead code in a
+    // browser build, but it is a real global where those branches run.
+    "global": "readonly"
   },
+  // `scripts/` is Node build tooling, not browser code -- `generate-icons.mjs` and `generate-emoji.mjs`
+  // run under `npm run icons` / `npm run emoji`. Given the node env they get Node's globals, so
+  // `Buffer` there is real. Scoped to that directory deliberately: declaring `Buffer` globally would
+  // also silence it in `src/`, where it is NOT defined and where one use of it is an actual bug.
+  "overrides": [
+    {
+      "files": ["scripts/**"],
+      "env": {
+        "node": true
+      }
+    }
+  ],
   "ignorePatterns": [
     "dist/**",
     "node_modules/**",
@@ -27,6 +57,16 @@
 
     // allow debugger during development only
     "no-debugger": "error",
+
+    // Not in the `correctness` category, so it has to be asked for by name -- and worth asking for:
+    // neither `vite build` nor the rest of this config resolves identifiers, so a name that is used
+    // but never imported builds cleanly and throws at runtime. That is not hypothetical; it is how a
+    // stale import left `routableHref` undefined in `pages/Index.vue` and took the whole page view
+    // down, since `<script setup>` evaluates every top-level binding during setup.
+    //
+    // It needs the `globals` block above to be honest about what really is global -- the compiler
+    // macros especially. That is what made this unusable in the editor before.
+    "no-undef": "error",
 
     // These are valid rule names but currently inert: the `import` plugin is not enabled above.
     // Turning it on reports a false positive for every Vite `?worker` import in boot/monaco.js,

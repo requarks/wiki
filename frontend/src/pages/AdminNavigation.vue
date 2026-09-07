@@ -482,6 +482,17 @@ function copyFromLocale() {
 async function save() {
   this.$store.commit('loadingStart', 'admin-navigation-save')
   try {
+    /*
+      FIXME: This whole handler is dead. `APOLLO_CLIENT` is not defined anywhere -- the GraphQL client
+      went with the rest of Apollo -- so saving the navigation throws here, and the nine
+      `this.$store.commit(...)` calls around it throw too, this being `<script setup>` with no Vuex
+      store in the app at all. Porting it to `API_CLIENT` and a REST route is what fixes it; see
+      "GraphQL is being removed" in CLAUDE.md.
+
+      The disable keeps `no-undef` usable repo-wide rather than hiding this: the rule is what found
+      it, and the comment is here so it stays found.
+    */
+    // eslint-disable-next-line no-undef
     const resp = await APOLLO_CLIENT.mutate({
       mutation: `
         mutation ($tree: [NavigationTreeInput]!, $mode: NavigationMode!) {

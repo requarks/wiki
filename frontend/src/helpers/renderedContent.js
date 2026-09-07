@@ -249,3 +249,43 @@ export function sameDocumentHash({ href, target, download, rel } = {}, current) 
 
   return url.hash
 }
+
+/**
+ * What a click inside rendered content is asking for, if it is asking for anything.
+ *
+ * Every view that draws wiki content faces the same three-way decision -- an anchor on the page in
+ * front of the reader, a link into the wiki, or something to leave to the browser -- so the decision
+ * lives here and each view acts on the answer. `pages/Index.vue` reads a live page and
+ * `pages/PageVersion.vue` a snapshot of one; a link in either behaves the same way, and would drift
+ * if each worked it out for itself.
+ *
+ * The modifier tests are what keeps middle-click, ctrl-click and shift-click doing what they do
+ * everywhere else: opening a tab or a window is the browser's, not the router's.
+ *
+ * @param {MouseEvent} ev The click, as delegated from the element holding the content.
+ * @param {Location|{origin: string, pathname: string}} current Where the reader is now.
+ * @returns {{kind: 'hash', hash: string}|{kind: 'route', target: string}|null} What to do, or null to
+ *   leave the click alone.
+ */
+export function resolveContentClick(ev, current) {
+  if (
+    ev.defaultPrevented ||
+    ev.button !== 0 ||
+    ev.metaKey ||
+    ev.ctrlKey ||
+    ev.shiftKey ||
+    ev.altKey
+  ) {
+    return null
+  }
+  const anchor = ev.target?.closest?.('a[href]')
+  if (!anchor) {
+    return null
+  }
+  const hash = sameDocumentHash(anchor, current)
+  if (hash) {
+    return { kind: 'hash', hash }
+  }
+  const target = routableHref(anchor, current)
+  return target ? { kind: 'route', target } : null
+}

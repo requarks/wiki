@@ -1404,14 +1404,13 @@
   }
 
   /*
-    Diagram sources -- a mermaid, plantuml or kroki fence, or a base64 `diagram` block -- reach the
-    page as code, and are drawn later or not at all. A quiet dashed panel says "this is a diagram that
-    has not been drawn" rather than pretending to be a code sample.
+    Diagram sources -- a mermaid, plantuml or kroki fence -- reach the page as code, and are drawn
+    later or not at all. A quiet dashed panel says "this is a diagram that has not been drawn" rather
+    than pretending to be a code sample.
   */
   pre.codeblock-kroki,
   pre.codeblock-mermaid,
-  pre.codeblock-plantuml,
-  pre.diagram {
+  pre.codeblock-plantuml {
     border-style: dashed;
     border-color: var(--content-rule-strong);
     background-color: var(--content-surface-alt);
