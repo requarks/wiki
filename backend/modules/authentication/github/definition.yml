@@ -31,9 +31,25 @@ props:
   allowedOrganization:
     type: String
     title: Restrict to Organization
-    hint: (optional) Login name of a GitHub organization. Only its members may sign in — which needs the account to be a public member, or the OAuth app to be approved by the organization.
-    icon: user-groups
+    hint: (optional) Login name of a GitHub organization. Only its members may sign in — which needs the account to be a public member, or the OAuth app to be approved by the organization. Required to map groups, since a team belongs to an organization.
+    icon: team
     order: 4
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups their teams in that organization name, on every login. Matched on the team's name as GitHub shows it, not its URL slug — only groups that already exist here are matched, and nothing is created. Needs Restrict to Organization.
+    icon: user-groups
+    default: false
+    order: 5
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer held as a team
+    hint: Off adds what the teams name and takes nothing away, so a membership granted here survives. On makes the organization the authority instead, and a team somebody is removed from there is taken away here — bar the groups this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 6
+    if:
+      - { key: 'mapGroups', eq: true }
 refs:
   callbackUrl:
     title: Authorization Callback URL

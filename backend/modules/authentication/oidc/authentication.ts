@@ -2,7 +2,7 @@ import * as client from 'openid-client'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /**
- * Generic OpenID Connect / OAuth2
+ * OpenID Connect / OAuth2
  *
  * The authorization code flow with PKCE, against any provider that speaks OpenID Connect. What makes
  * it OIDC rather than bare OAuth2 is the ID token: a signed statement of who signed in, which is

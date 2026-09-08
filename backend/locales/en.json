@@ -285,6 +285,7 @@
   "admin.auth.enabled": "Enabled",
   "admin.auth.enabledForced": "This strategy cannot be disabled.",
   "admin.auth.enabledHint": "Should this strategy be available to sites for login.",
+  "admin.auth.enabledSiteHint": "Note that the strategy also needs to be enabled under the site's Login page before it appears on the login screen.",
   "admin.auth.enforceTfa": "Enforce Two-Factor Authentication",
   "admin.auth.enforceTfaHint": "Users will be required to setup 2FA the first time they login and cannot be disabled by the user.",
   "admin.auth.globalAdvSettings": "Global Advanced Settings",

@@ -1,5 +1,8 @@
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
+/** How many pages of a hundred teams are read before the answer is treated as unusable. */
+const MAX_TEAM_PAGES = 10
+
 /**
  * GitHub
  *
@@ -9,11 +12,13 @@ import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../model
  * and no dependency. The parts a library would otherwise be trusted with — `state`, and keeping the
  * client secret off the browser — are done by the flow around it (`api/authentication.ts`).
  *
- * Two GitHub-specific things are worth the code:
+ * Three GitHub-specific things are worth the code:
  *
  *   - the address comes from `/user/emails` rather than `/user`, because a profile's public email is
  *     often empty and always unverified. Only a verified primary address is accepted;
- *   - an organization can be required, checked against the membership API with the user's own token.
+ *   - an organization can be required, checked against the membership API with the user's own token;
+ *   - the teams within that organization can be mapped onto wiki groups, which is why the mapping is
+ *     only offered alongside the restriction — a team is a thing inside one organization.
  */
 export default class GitHubAuthentication {
   strategyId: string
@@ -24,6 +29,34 @@ export default class GitHubAuthentication {
   constructor(strategyId: string, conf: Record<string, any>) {
     this.strategyId = strategyId
     this.conf = conf
+  }
+
+  /**
+   * The strategy's settings, refused if they cannot describe a login.
+   *
+   * Mapping groups without an organization is the one combination worth failing over rather than
+   * working around: a team belongs to an organization, so there would be no teams to read — and
+   * answering with an empty group list is not the same as answering with nothing. Under
+   * `unassignMissingGroups` it is a statement that this person is on no team, which would take every
+   * mapped membership away from everybody who logged in. A misconfiguration must not quietly empty
+   * the groups it was meant to fill.
+   *
+   * @throws `ERR_STRATEGY_MISCONFIGURED`
+   */
+  private settings(): { clientId: string; clientSecret: string; organization: string } {
+    const clientId = (this.conf.clientId || '').trim()
+    const clientSecret = this.conf.clientSecret || ''
+    const organization = (this.conf.allowedOrganization || '').trim()
+    if (!clientId || !clientSecret) {
+      throw new Error('ERR_STRATEGY_MISCONFIGURED')
+    }
+    if (this.conf.mapGroups === true && !organization) {
+      WIKI.logger.warn(
+        `GitHub strategy ${this.strategyId} maps groups but is not restricted to an organization, and a team belongs to one.`
+      )
+      throw new Error('ERR_STRATEGY_MISCONFIGURED')
+    }
+    return { clientId, clientSecret, organization }
   }
 
   /** Where a user signs in, and where the API lives — the two differ on Enterprise Server. */
@@ -106,26 +139,72 @@ export default class GitHubAuthentication {
     throw new Error('ERR_PROVIDER_REQUEST_FAILED')
   }
 
-  async authorizationUrl({ redirectUri, state }: AuthFlow): Promise<string> {
-    if (!this.conf.clientId || !this.conf.clientSecret) {
-      throw new Error('ERR_STRATEGY_MISCONFIGURED')
+  /**
+   * The teams this account is on within the organization the strategy requires, by name.
+   *
+   * `/user/teams` is the only listing a person's own token can spend: it answers with every team
+   * they are on across every organization they belong to, so the answer is filtered down to the one
+   * organization this strategy is about — a team called `admins` in somebody else's organization is
+   * not a claim on a group here.
+   *
+   * **The team's name, not its slug.** They differ as soon as a name has a space or a capital in it
+   * (`Core Developers` against `core-developers`), and the name is the one an administrator reads
+   * off GitHub's own screens. Matching is case-insensitive, in `models/users.ts`.
+   *
+   * A page short of a hundred is the last one; a run past `MAX_TEAM_PAGES` is not treated as the end
+   * of the list but as a failure to read it, because a truncated list under `unassignMissingGroups`
+   * is a list that takes memberships away.
+   *
+   * @throws `ERR_PROVIDER_REQUEST_FAILED` when the teams could not be read
+   */
+  private async teamsIn(org: string, accessToken: string): Promise<string[]> {
+    const wanted = org.toLowerCase()
+    const names: string[] = []
+    for (let page = 1; page <= MAX_TEAM_PAGES; page++) {
+      const batch = await this.api(`/user/teams?per_page=100&page=${page}`, accessToken)
+      if (!Array.isArray(batch)) {
+        throw new Error('ERR_PROVIDER_REQUEST_FAILED')
+      }
+      for (const team of batch) {
+        if (
+          typeof team?.name === 'string' &&
+          team.name.trim().length > 0 &&
+          typeof team.organization?.login === 'string' &&
+          team.organization.login.toLowerCase() === wanted
+        ) {
+          names.push(team.name.trim())
+        }
+      }
+      if (batch.length < 100) {
+        return names
+      }
     }
+    WIKI.logger.warn(
+      `GitHub strategy ${this.strategyId} stopped reading teams after ${MAX_TEAM_PAGES} pages, so the list is incomplete.`
+    )
+    throw new Error('ERR_PROVIDER_REQUEST_FAILED')
+  }
+
+  async authorizationUrl({ redirectUri, state }: AuthFlow): Promise<string> {
+    const { clientId, organization } = this.settings()
     const url = new URL(`${this.hosts.web}/login/oauth/authorize`)
-    url.searchParams.set('client_id', this.conf.clientId)
+    url.searchParams.set('client_id', clientId)
     url.searchParams.set('redirect_uri', redirectUri)
     /*
       `user:email` is what makes the verified addresses readable; `read:org` is only asked for when an
       organization is being enforced, since a scope nobody needs is a scope nobody should be granting.
+      It covers the teams as well as the membership, so mapping groups asks for nothing further.
     */
     url.searchParams.set(
       'scope',
-      this.conf.allowedOrganization ? 'read:user user:email read:org' : 'read:user user:email'
+      organization ? 'read:user user:email read:org' : 'read:user user:email'
     )
     url.searchParams.set('state', state)
     return url.toString()
   }
 
   async profile({ code, redirectUri }: AuthFlowCallback): Promise<ProviderProfile> {
+    const { clientId, clientSecret, organization } = this.settings()
     if (!code) {
       throw new Error('ERR_NO_AUTHORIZATION_CODE')
     }
@@ -138,8 +217,8 @@ export default class GitHubAuthentication {
         'User-Agent': 'Wiki.js'
       },
       body: JSON.stringify({
-        client_id: this.conf.clientId,
-        client_secret: this.conf.clientSecret,
+        client_id: clientId,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         code
       })
@@ -175,9 +254,8 @@ export default class GitHubAuthentication {
       throw new Error('ERR_NO_VERIFIED_EMAIL_FROM_PROVIDER')
     }
 
-    if (this.conf.allowedOrganization) {
-      const org = this.conf.allowedOrganization.trim()
-      if (!(await this.isOrgMember(org, account.login, token.access_token))) {
+    if (organization) {
+      if (!(await this.isOrgMember(organization, account.login, token.access_token))) {
         throw new Error('ERR_ACCOUNT_NOT_ALLOWED')
       }
     }
@@ -185,7 +263,13 @@ export default class GitHubAuthentication {
     return {
       id: String(account.id),
       email,
-      name: account.name || account.login
+      name: account.name || account.login,
+      ...(this.conf.mapGroups === true
+        ? {
+            groups: await this.teamsIn(organization, token.access_token),
+            groupsExclusive: this.conf.unassignMissingGroups === true
+          }
+        : {})
     }
   }
 }

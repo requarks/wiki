@@ -411,6 +411,25 @@
   }
 
   /*
+    The dimmed colour of a `WItemLabel` caption or group heading, here rather than as utilities on
+    the component's own tag for the same reason `.w-card`'s surface is: it is a DEFAULT callers
+    replace. The admin pages colour a caption into a warning with `text-deep-orange` / `text-orange`
+    / `text-red`, and as utilities the two were the same specificity -- so the winner was their
+    order within the utilities layer, not which one the caller wrote. `dark:text-white/70` came
+    last, which is why every one of those warnings turned grey in dark mode and stayed red in light.
+    In this layer it loses to any utility outright, in both modes.
+  */
+  .w-item-label--caption,
+  .w-item-label--header {
+    color: rgb(0 0 0 / 0.54);
+  }
+
+  body.body--dark .w-item-label--caption,
+  body.body--dark .w-item-label--header {
+    color: rgb(255 255 255 / 0.7);
+  }
+
+  /*
     How an image in a `WAvatar` is cropped to the avatar's shape: by taking its radius and filling
     the box, rather than by the avatar clipping its overflow. Same approach as the avatar this
     replaces, and the reason is the same -- a clipping avatar would also cut off a floating badge,

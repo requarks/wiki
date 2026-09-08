@@ -10,6 +10,10 @@ import { computed } from 'vue'
 /**
  * A line of text inside a `WItemSection`. Plain by default, `caption` for the dimmed secondary
  * line, `header` for a group heading between items.
+ *
+ * The dimmed colour of the latter two is a component class in `css/tailwind.css` rather than a
+ * utility here, so that a caller writing `text-deep-orange` on a caption -- which the admin pages do
+ * for a warning under a setting -- wins by layer order instead of losing to `dark:text-white/70`.
  */
 const props = defineProps({
   /** Smaller, dimmed secondary line. */
@@ -32,8 +36,8 @@ const props = defineProps({
 const classes = computed(() => [
   'w-item-label',
   // -> 16px on every side, as the group headings between items have always been
-  props.header ? 'w-item-label--header p-4 text-body2 text-black/54 dark:text-white/70' : '',
-  props.caption && !props.header ? 'w-item-label--caption text-caption text-black/54 dark:text-white/70' : '',
+  props.header ? 'w-item-label--header p-4 text-body2' : '',
+  props.caption && !props.header ? 'w-item-label--caption text-caption' : '',
   !props.caption && !props.header ? 'text-body2' : '',
   // -> `truncate` covers the single-line case; more than one needs line-clamp
   Number(props.lines) === 1 ? 'truncate' : ''

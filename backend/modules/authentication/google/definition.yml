@@ -35,6 +35,34 @@ props:
     icon: received
     default: false
     order: 4
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups their Google Workspace groups name, on every login. Only groups that already exist here are matched — nothing is created. Workspace only, and it needs the Cloud Identity API enabled on the Google Cloud project this OAuth client belongs to.
+    icon: user-groups
+    default: false
+    order: 5
+  groupIdentifier:
+    type: String
+    title: Match Groups By
+    hint: Which of the two things a Workspace group has is matched against the names of the groups here — the address, engineering@example.com, or the display name, Engineering. The address is unique and survives a rename; the display name reads better, but two groups may share one and then both match.
+    icon: rules
+    enum:
+      - email|Group address
+      - name|Display name
+    default: email
+    order: 6
+    if:
+      - { key: 'mapGroups', eq: true }
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer present in Workspace
+    hint: Off adds what Workspace names and takes nothing away, so a membership granted here survives. On makes Workspace the authority instead, and a group somebody is removed from there is taken away here — bar the groups this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 7
+    if:
+      - { key: 'mapGroups', eq: true }
 refs:
   callbackUrl:
     title: Authorized Redirect URI

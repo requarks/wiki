@@ -140,12 +140,15 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
-            <blueprint-icon icon="shutdown" />
+            <blueprint-icon icon="shutdown" top />
             <w-item-section>
               <w-item-label>{{ t(`admin.auth.enabled`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.auth.enabledHint`) }}</w-item-label>
               <w-item-label class="text-deep-orange" v-if="isBuiltInLocal" caption>{{
                 t(`admin.auth.enabledForced`)
+              }}</w-item-label>
+              <w-item-label class="text-deep-orange" caption>{{
+                t(`admin.auth.enabledSiteHint`)
               }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
