@@ -15,6 +15,37 @@ import { useUserStore } from './user'
  */
 export const DEFAULT_PAGE_ICON = 'mdi:file-document-outline'
 
+/**
+ * The page properties a copy of a page starts with, as `pageDuplicate` reads them off the source.
+ *
+ * Everything the properties panel edits, less the four a copy cannot be given. `title`, `path` and
+ * `locale` are what the author just picked in the dialog, and `description` comes across as an
+ * argument of its own. `alias` is unique across the site, so a copy carrying the source's would be
+ * refused with a 409 nobody asked for. `localeRelations` is a translation set that already holds a
+ * page for this locale -- refused the same way. Both are left for the author to fill in on the copy.
+ */
+const DUPLICATED_PAGE_PROPS = [
+  'allowComments',
+  'allowContributions',
+  'allowRatings',
+  'icon',
+  'isBrowsable',
+  'isSearchable',
+  'password',
+  'publishEndDate',
+  'publishStartDate',
+  'publishState',
+  'relations',
+  'scriptCss',
+  'scriptJsLoad',
+  'scriptJsUnload',
+  'showSidebar',
+  'showTags',
+  'showToc',
+  'tags',
+  'tocDepth'
+]
+
 export const usePageStore = defineStore('page', {
   state: () => ({
     alias: '',
@@ -369,6 +400,11 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE
      */
+    /**
+     * @param props Page properties the new page starts with, over the defaults below -- which is
+     *   what duplicating a page carries across from its source. Every key is optional and an absent
+     *   one means the default, so creating a blank page passes none of them.
+     */
     async pageCreate({
       editor,
       locale,
@@ -377,6 +413,7 @@ export const usePageStore = defineStore('page', {
       title = '',
       description = '',
       content = '',
+      props = {},
       fromNavigate = false
     } = {}) {
       const editorStore = useEditorStore()
@@ -432,14 +469,43 @@ export const usePageStore = defineStore('page', {
         editor,
         title: title ?? '',
         description: description ?? '',
-        icon: DEFAULT_PAGE_ICON,
+        icon: props.icon ?? DEFAULT_PAGE_ICON,
+        // -> Never carried over by a copy: see `DUPLICATED_PAGE_PROPS`
         alias: '',
-        publishState: 'published',
-        relations: [],
+        publishState: props.publishState ?? 'published',
+        /*
+          Set here alongside the state they belong to rather than left at whatever page the store
+          last held: a `scheduled` page with no dates is refused, and so is a date on a page that is
+          not scheduled, so the three only ever make sense together.
+        */
+        publishStartDate: props.publishStartDate ?? '',
+        publishEndDate: props.publishEndDate ?? '',
+        relations: props.relations ?? [],
         // -> A page being created is in no translation set yet, whatever the page it was started from
-        //    belonged to
+        //    belonged to -- a copy included, whose set already holds a page for this locale
         localeRelations: [],
-        tags: [],
+        tags: props.tags ?? [],
+        allowComments: props.allowComments ?? false,
+        allowContributions: props.allowContributions ?? true,
+        allowRatings: props.allowRatings ?? true,
+        showSidebar: props.showSidebar ?? true,
+        showTags: props.showTags ?? true,
+        showToc: props.showToc ?? true,
+        tocDepth: props.tocDepth ?? { min: 1, max: 2 },
+        /*
+          Writing either one needs a permission (`write:scripts`, `write:styles`), and the server
+          drops what an author may not write rather than refusing the page -- so a copy made by
+          somebody without them arrives without them, which is the right answer either way.
+        */
+        scriptJsLoad: props.scriptJsLoad ?? '',
+        scriptJsUnload: props.scriptJsUnload ?? '',
+        scriptCss: props.scriptCss ?? '',
+        /*
+          A copy of a protected page is protected too. The source's password is only in the answer
+          for a requester who may edit it -- and that is the same requester the source's CONTENT is
+          in the answer for, so a copy can never end up holding the body without the lock.
+        */
+        password: props.password ?? '',
         content: content ?? '',
         // -> A page being created has no stored source to lose: whatever it starts with IS the source
         contentLoaded: true,
@@ -451,9 +517,13 @@ export const usePageStore = defineStore('page', {
           `createPage` in `models/pages.ts` -- so this is the store agreeing with it rather than
           deciding it. The difference is that browsing is a choice the author can turn back on, in the
           redirect editor or the properties panel, and searching is not offered at all.
+
+          A copy states the source's answer instead, since both are properties panel fields. That
+          cannot smuggle a searchable redirection in: `createPage` forces `isSearchable` false for
+          one whatever it was sent, so the source's own answer was already false.
         */
-        isBrowsable: editor !== 'redirect',
-        isSearchable: editor !== 'redirect',
+        isBrowsable: props.isBrowsable ?? editor !== 'redirect',
+        isSearchable: props.isSearchable ?? editor !== 'redirect',
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         mode: 'edit'
@@ -461,6 +531,16 @@ export const usePageStore = defineStore('page', {
     },
     /**
      * PAGE - DUPLICATE
+     *
+     * A copy is the whole page and not just its text: the properties panel is where most of what
+     * makes a page what it is lives -- its tags, its relations, its per-page CSS and scripts, what
+     * its sidebar shows, whether it is browsable, its password -- and a copy that dropped all of it
+     * left the author reproducing the original by hand beside it. Carried across through
+     * `pageCreate`, which is what makes them survive as far as the save: `pageSave` sends every one
+     * of these fields on a create, so seeding the store is all that was ever missing.
+     *
+     * Nothing is written here. What comes back from the dialog is where the copy should go, and the
+     * editor opens on an unsaved page -- so a duplicate nobody saves never existed.
      */
     async pageDuplicate({ sourcePageId, title, path, locale }) {
       const siteStore = useSiteStore()
@@ -472,7 +552,7 @@ export const usePageStore = defineStore('page', {
         if (!pageData?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
-        this.pageCreate({
+        await this.pageCreate({
           editor: pageData.editor,
           title,
           path,
@@ -480,7 +560,22 @@ export const usePageStore = defineStore('page', {
           //    at the same path, in a locale that does not have it yet
           locale,
           content: pageData.content,
-          description: pageData.description
+          description: pageData.description,
+          /*
+            Picked rather than spread: the answer also carries what identifies the SOURCE -- its id,
+            its hash, its author, its dates, the reader's own standing on it -- and none of that
+            describes the page being written.
+
+            `relations` is narrowed to its own fields on the way in, as `pageLoad` does with it: it
+            is the one field of these whose schema is `additionalProperties: true`, so it is the one
+            whose extra keys survive being serialized and would be written back out on the copy.
+          */
+          props: {
+            ...pick(pageData, DUPLICATED_PAGE_PROPS),
+            relations: (pageData.relations ?? []).map((r) =>
+              pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+            )
+          }
         })
       } catch (err) {
         console.warn(err)

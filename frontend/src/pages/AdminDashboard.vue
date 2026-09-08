@@ -461,9 +461,9 @@ const versionCard = computed(() => {
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('admin.dashboard.title')
-})
+}))
 
 // METHODS
 

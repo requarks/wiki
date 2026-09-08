@@ -266,9 +266,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('admin.icons.title')
-})
+}))
 
 // DATA
 

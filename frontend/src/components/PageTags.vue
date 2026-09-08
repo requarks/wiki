@@ -30,7 +30,7 @@
       v-if="props.edit"
       outlined
       v-model="pageStore.tags"
-      :options="state.tags"
+      :options="sortedTags"
       dense
       options-dense
       use-input
@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -86,6 +86,22 @@ const state = reactive({
   tags: [],
   loading: false
 })
+
+// COMPUTED
+
+/**
+ * The suggestions in the order they are offered: alphabetical.
+ *
+ * `GET /sites/:siteId/tags` answers most-used first, and deliberately -- that ordering is what makes
+ * a `limit` mean the tags a wiki is actually about. It is the wrong order to pick from, though: with
+ * a few hundred tags in the list, WSelect narrows it as you type but never reorders it, so scanning
+ * the remaining suggestions meant reading them in an order nothing on screen explains. Sorted here
+ * rather than in the store, because usage order is the answer another caller may want.
+ *
+ * `localeCompare`, not a plain `sort()`, which would order by code unit and scatter every
+ * non-ASCII tag -- tags are page-authored words, in whatever language the wiki is written in.
+ */
+const sortedTags = computed(() => [...state.tags].sort((a, b) => a.localeCompare(b)))
 
 // WATCHERS
 

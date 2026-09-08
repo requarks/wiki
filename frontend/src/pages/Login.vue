@@ -30,9 +30,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('auth.login.title')
-})
+}))
 </script>
 
 <style lang="scss">

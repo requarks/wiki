@@ -135,9 +135,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('admin.editors.title')
-})
+}))
 
 const state = reactive({
   loading: 0,

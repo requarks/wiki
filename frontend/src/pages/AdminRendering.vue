@@ -93,9 +93,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('admin.rendering.title')
-})
+}))
 
 // DATA
 

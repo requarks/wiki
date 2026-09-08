@@ -69,9 +69,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('common.error.title')
-})
+}))
 
 // MOUNTED
 

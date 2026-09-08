@@ -268,9 +268,9 @@ const { t } = useI18n()
 
 // META
 
-useMeta({
+useMeta(() => ({
   title: t('admin.metrics.title')
-})
+}))
 
 /**
  * The loopback addresses the `local` class is named by, shown beside its label.

@@ -157,7 +157,7 @@ import { loading } from '@/composables/loading'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { scrollToAnchor } from '@/helpers/anchors'
 import { enhanceRenderedContent, resolveContentClick } from '@/helpers/renderedContent'
-import { renderVersionSource, saveVersionSource } from '@/helpers/pageVersions'
+import { renderVersionSource, saveVersionSource, versionPageProps } from '@/helpers/pageVersions'
 import { flattenToc } from '@/helpers/toc'
 
 import { useEditorStore } from '@/stores/editor'
@@ -467,6 +467,8 @@ function branchFrom() {
     try {
       const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
         json: {
+          // -> Everything the page was, as far as a new page may be given it; see `versionPageProps`
+          ...versionPageProps(version),
           path: target.path,
           title: target.title,
           locale: version.pageLocale,
@@ -474,12 +476,6 @@ function branchFrom() {
           content: version.content ?? '',
           // -> Rendered for where it is going, not for where the version came from
           render: await renderFor(version, target.path),
-          description: version.meta?.description ?? '',
-          icon: version.meta?.icon ?? '',
-          tags: version.meta?.tags ?? [],
-          // -> A version that was scheduled carries dates this new page has not got, and the API
-          //    rightly refuses that combination
-          publishState: version.meta?.publishState === 'published' ? 'published' : 'draft',
           reasonForChange: t('history.branchReason', { date: snapshotFrom.value })
         }
       }).json()

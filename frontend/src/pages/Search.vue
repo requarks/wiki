@@ -348,7 +348,16 @@ const publishStates = computed(() => {
   ]
 })
 
-const tags = computed(() => siteStore.tags.map((t) => t.tag))
+/**
+ * The tags offered by the filter, alphabetically.
+ *
+ * `GET /sites/:siteId/tags` answers most-used first, which is deliberate on its side but the wrong
+ * order to pick from: WSelect narrows the list as you type and never reorders it, so the remaining
+ * suggestions read in an order nothing on screen explains. `localeCompare` rather than a plain
+ * `sort()`, since a tag is a page-authored word and code-unit order scatters every non-ASCII one.
+ * `PageTags` sorts the same list the same way for the editor's field.
+ */
+const tags = computed(() => siteStore.tags.map((t) => t.tag).sort((a, b) => a.localeCompare(b)))
 
 const defaultPageIcon = DEFAULT_PAGE_ICON
 

@@ -36,23 +36,24 @@ function apply() {
 }
 
 /**
- * @param {object|(() => object)} source Either a plain `{ title }` / `{ titleTemplate }` object, or
- *   a getter returning one -- pass a getter when the title depends on reactive state, since a plain
- *   object is read once at call time.
+ * @param {() => object} source A getter returning `{ title }` / `{ titleTemplate }`, re-read
+ *   whenever anything it touched changes.
+ *
+ *   A getter and not a plain object, because every caller reads reactive state that is not
+ *   necessarily there yet: the locale strings are fetched after the app mounts (`App.vue` ->
+ *   `applyLocale`) and the site config with them, so a `t()` or a `siteStore.title` evaluated once
+ *   during `setup()` resolves to a raw translation key on a page loaded directly, and nothing would
+ *   ever come back to correct it. Read inside the effect, the tab title fixes itself the moment
+ *   `setLocaleMessage` fills the strings in.
  */
 export function useMeta(source) {
   const entry = {}
   stack.push(entry)
 
-  if (typeof source === 'function') {
-    watchEffect(() => {
-      Object.assign(entry, source())
-      apply()
-    })
-  } else {
-    Object.assign(entry, source)
+  watchEffect(() => {
+    Object.assign(entry, source())
     apply()
-  }
+  })
 
   onScopeDispose(() => {
     const idx = stack.indexOf(entry)

@@ -264,7 +264,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import * as monaco from 'monaco-editor'
-import { renderVersionSource, saveVersionSource, versionContentType } from '@/helpers/pageVersions'
+import {
+  renderVersionSource,
+  saveVersionSource,
+  versionContentType,
+  versionPageProps
+} from '@/helpers/pageVersions'
 
 import { confirm, dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
@@ -627,18 +632,14 @@ function branchFrom(version) {
       const content = full.content ?? ''
       const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
         json: {
+          // -> Everything the page was, as far as a new page may be given it; see `versionPageProps`
+          ...versionPageProps(full),
           path: target.path,
           title: target.title,
           locale: pageStore.locale,
           editor: full.meta?.editor || pageStore.editor,
           content,
           render: await renderOf(full),
-          description: full.meta?.description ?? '',
-          icon: full.meta?.icon ?? '',
-          tags: full.meta?.tags ?? [],
-          // -> A version that was scheduled carries dates this new page has not got, and the API
-          //    rightly refuses that combination
-          publishState: full.meta?.publishState === 'published' ? 'published' : 'draft',
           reasonForChange: t('history.branchReason', { date: humanizeDate(full.versionDate) })
         }
       }).json()
