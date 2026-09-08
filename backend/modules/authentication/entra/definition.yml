@@ -1,0 +1,82 @@
+key: entra
+title: Microsoft Entra ID
+description: Microsoft Entra ID (formerly Azure Active Directory) is Microsoft's cloud-based identity and access management service.
+author: requarks.io
+logo: https://static.requarks.io/logo/azure.svg
+icon: /_assets/icons/ultraviolet-azure.svg
+color: blue-7
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  tenantId:
+    type: String
+    title: Directory (tenant) ID
+    hint: The tenant this wiki signs people in from — its GUID, or one of its verified domains. From the app registration's Overview page.
+    icon: building
+    order: 1
+  clientId:
+    type: String
+    title: Application (client) ID
+    hint: The app registration's own GUID, from the same Overview page.
+    icon: key
+    order: 2
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: A secret value from the app registration's Certificates & secrets page. Note the value, not the secret ID — Entra shows it once.
+    icon: password
+    sensitive: true
+    order: 3
+  emailClaim:
+    type: String
+    title: Email Claim
+    hint: Which claim carries the email address. Entra fills `email` from the account's Mail attribute, or from the optional claim of that name; a tenant that populates neither has the address in `preferred_username` instead.
+    icon: envelope
+    default: email
+    order: 4
+  displayNameClaim:
+    type: String
+    title: Display Name Claim
+    hint: Which claim carries the name to show. Falls back to the email address when the claim is absent.
+    icon: person
+    default: name
+    order: 5
+  pictureClaim:
+    type: String
+    title: Picture Claim
+    hint: Which claim carries the URL of the account's picture, fetched on login and stored as the avatar. Empty by default because Entra sends no such claim unless the app registration is set up to map one.
+    icon: image
+    default: ''
+    order: 6
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups the groups claim names, on every login. Only groups that already exist here are matched — nothing is created.
+    icon: user-groups
+    default: false
+    order: 7
+  groupsClaim:
+    type: String
+    title: Groups Claim
+    hint: Which claim carries the groups. Configure the app registration's token to emit it — note that Entra sends group object IDs unless the tenant is synced from Active Directory and set to emit sAMAccountName, so a wiki group has to be named to match whatever arrives.
+    icon: rules
+    default: groups
+    order: 8
+    if:
+      - { key: 'mapGroups', eq: true }
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer present in claim
+    hint: Off adds what the claim names and takes nothing away, so a membership granted here survives. On makes Entra the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 9
+    if:
+      - { key: 'mapGroups', eq: true }
+refs:
+  callbackUrl:
+    title: Redirect URI
+    hint: Add this to the app registration's redirect URIs, as a Web platform.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'

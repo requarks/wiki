@@ -2118,6 +2118,8 @@
   "editor.unsaved.title": "Discard Unsaved Changes?",
   "editor.unsavedWarning": "You have unsaved edits. Are you sure you want to leave the editor?",
   "error.ERR_ACCOUNT_ALREADY_EXISTS": "An account already exists for that email address.",
+  "error.ERR_ACCOUNT_NOT_ALLOWED": "That account is not in a domain or organization this wiki allows. If you have a separate work account, try that one instead.",
+  "error.ERR_ACR_NOT_SATISFIED": "Your identity provider did not confirm the kind of sign-in this wiki requires. A stronger sign-in method may be available; otherwise ask an administrator.",
   "error.ERR_CHANGE_PASSWORD_FAILED": "The password could not be changed.",
   "error.ERR_EMAIL_NOT_ALLOWED": "That email address is not allowed to sign in through this provider.",
   "error.ERR_EMAIL_NOT_VERIFIED": "The provider has not verified that email address.",

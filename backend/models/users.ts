@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import QRCode from 'qrcode'
 import {
@@ -151,6 +152,15 @@ const profilePrefsKeys = ['timezone', 'dateFormat', 'timeFormat', 'appearance', 
  * one at 180px; nothing displays one larger.
  */
 const avatarSize = 180
+
+/**
+ * How much of a picture an identity provider points at is worth downloading before giving up on it.
+ *
+ * The bytes are on their way to becoming a 180px square, so this is not a quality ceiling — it is the
+ * point past which a claim is pointing at something that was never an avatar, and the wiki should not
+ * be holding it in memory to find out.
+ */
+const remoteAvatarLimit = 5 * 1024 * 1024
 
 /**
  * Escape the LIKE wildcards `%` and `_` (and the escape character itself) so that a user-supplied
@@ -726,6 +736,76 @@ class Users {
   }
 
   /**
+   * Fetch the picture an identity provider pointed at, and store it as the account's avatar.
+   *
+   * Nothing about the URL is taken on trust beyond its being one. It arrived in a claim, so only
+   * http(s) is followed — a `data:` or `file:` URL is not something to go and read on a login — the
+   * download is capped and given a deadline, and the bytes have to sniff as an image exactly as an
+   * uploaded avatar's do. A provider that answers with a login page instead of a picture is a
+   * provider whose HTML must not end up served back as somebody's avatar.
+   *
+   * Failure is never the login's problem: an avatar that could not be fetched is logged and the
+   * person is signed in without it.
+   *
+   * @returns Whether an avatar was stored
+   */
+  async setAvatarFromUrl(userId: string, url: string): Promise<boolean> {
+    try {
+      const target = new URL(url)
+      if (target.protocol !== 'https:' && target.protocol !== 'http:') {
+        throw new Error(`a ${target.protocol} URL is not one to fetch a picture from`)
+      }
+      const resp = await fetch(target, { redirect: 'follow', signal: AbortSignal.timeout(10_000) })
+      if (!resp.ok) {
+        throw new Error(`the server answered ${resp.status}`)
+      }
+      if (!resp.body) {
+        throw new Error('the server answered with nothing')
+      }
+      // -> Read with a running total rather than in one go: `content-length` is the sender's claim
+      //    about the size, and this is a body from somewhere an administrator merely named
+      const chunks: Buffer[] = []
+      let size = 0
+      for await (const chunk of resp.body as unknown as AsyncIterable<Uint8Array>) {
+        size += chunk.byteLength
+        if (size > remoteAvatarLimit) {
+          throw new Error(`it is larger than ${Math.round(remoteAvatarLimit / 1024 / 1024)} MB`)
+        }
+        chunks.push(Buffer.from(chunk))
+      }
+      const data = Buffer.concat(chunks)
+      if (!detectImageMime(data)) {
+        throw new Error('what came back is not a PNG, JPEG, WebP or GIF')
+      }
+      await this.setAvatar(userId, data)
+      return true
+    } catch (err: any) {
+      WIKI.logger.warn(`Could not store the avatar at ${url} for user ${userId}: ${err.message}`)
+      return false
+    }
+  }
+
+  /**
+   * Store bytes an identity provider handed over directly as the account's avatar.
+   *
+   * The same check as an upload and as a fetched picture: what a directory calls `jpegPhoto` is
+   * whatever was put in the attribute, and only an image may be stored and served back. Failure is
+   * logged rather than raised, so a login is never lost over an avatar.
+   *
+   * @returns Whether an avatar was stored
+   */
+  async setAvatarFromBytes(userId: string, data: Buffer): Promise<boolean> {
+    if (!detectImageMime(data)) {
+      WIKI.logger.warn(
+        `Could not store the avatar for user ${userId}: the provider's bytes are not a PNG, JPEG, WebP or GIF`
+      )
+      return false
+    }
+    await this.setAvatar(userId, data)
+    return true
+  }
+
+  /**
    * Remove a user's avatar, leaving it to be rendered as initials again.
    */
   async clearAvatar(userId: string): Promise<void> {
@@ -804,6 +884,62 @@ class Users {
         .insert(userGroups)
         .values(wantedIds.map((groupId: string) => ({ userId, groupId })))
     }
+  }
+
+  /**
+   * Put a user in the wiki groups an identity provider named for them.
+   *
+   * Groups are matched by name, ignoring case, and only ever matched: a claim naming a group this
+   * wiki does not have is not an instruction to create one. A group here is a set of permissions and
+   * page rules that somebody wrote deliberately, and an empty one created from a directory entry
+   * would grant nothing while looking like it grants something.
+   *
+   * What the claim does NOT name is the half worth being careful about. Without `groupsExclusive` the
+   * claim only ever adds, so a membership granted here survives a directory that has never heard of
+   * it. With it, the provider is the authority and a group it stops naming is taken back — except the
+   * strategy's auto-enroll groups, which are granted here to everybody this strategy lets in, so a
+   * claim not mentioning them is not an opinion about them.
+   *
+   * A provider whose claim is missing entirely leaves membership alone; one whose claim is an empty
+   * list has said this person is in none, which under `groupsExclusive` is a removal.
+   */
+  async applyProviderGroups(
+    userId: string,
+    profile: ProviderProfile,
+    strategy: AuthStrategy
+  ): Promise<void> {
+    if (!profile.groups) {
+      return
+    }
+    const claimed = profile.groups.map((name) => name.toLowerCase())
+    const all = await WIKI.db
+      .select({ id: groupsTable.id, name: groupsTable.name })
+      .from(groupsTable)
+    const matched = all.filter((grp) => claimed.includes(grp.name.toLowerCase()))
+    const unmatched = profile.groups.filter(
+      (name) => !all.some((grp) => grp.name.toLowerCase() === name.toLowerCase())
+    )
+    if (unmatched.length > 0) {
+      WIKI.models.flags.authDebug(
+        `Strategy ${strategy.id} named ${unmatched.length} group(s) this wiki does not have, for user ${userId}: ${unmatched.join(', ')}`
+      )
+    }
+
+    const current = await this.getUserGroupIds(userId)
+    const autoEnroll = strategy.autoEnrollGroups ?? []
+    const wanted = profile.groupsExclusive
+      ? uniq([...matched.map((grp) => grp.id), ...current.filter((id) => autoEnroll.includes(id))])
+      : uniq([...current, ...matched.map((grp) => grp.id)])
+
+    // -> Every login goes through here, and most of them change nothing: `setUserGroups` replaces the
+    //    whole membership, which is not worth doing to arrive back where it started
+    if (wanted.length === current.length && wanted.every((id) => current.includes(id))) {
+      return
+    }
+    await this.setUserGroups(userId, wanted)
+    WIKI.models.flags.authDebug(
+      `Set user ${userId} to ${wanted.length} group(s) from strategy ${strategy.id}'s group claim`
+    )
   }
 
   /**
@@ -1222,10 +1358,20 @@ class Users {
         `Login attempt on site ${siteId} using ${str.module} strategy ${strategyId}${username ? ` as "${username}"` : ''} from ${ip}`
       )
 
-      // Authenticate
-      let user
+      /*
+        Two kinds of form module, told apart by which method they implement.
+
+        The local module holds the credential it checks, so it answers with a user of this wiki and
+        the post-login checks run on it directly. A directory module — LDAP — checks the credential
+        somewhere else and answers with a `ProviderProfile` instead, exactly as a redirect login
+        does, so the account behind it is matched or created by `loginWithProvider` along with its
+        groups and its avatar. `profile()` is what says which: sniffing the answer could not, since a
+        user row and a profile both carry an id, an email and a name.
+      */
+      const usesProfile = Boolean(strInfo.useForm) && typeof str.profile === 'function'
+      let authenticated
       try {
-        user = await str.authenticate(context)
+        authenticated = usesProfile ? await str.profile(context) : await str.authenticate(context)
       } catch (err: any) {
         WIKI.models.flags.authDebug(
           `Strategy ${str.module} rejected the attempt${username ? ` for "${username}"` : ''}: ${err.message}`
@@ -1233,9 +1379,22 @@ class Users {
         throw err
       }
 
+      if (usesProfile) {
+        // -> The stored row, not `str`: registration, the email allow-list and the auto-enroll
+        //    groups are the strategy's, and the live instance is only the module
+        const strategy = await WIKI.models.authentication.getStrategyById(strategyId)
+        if (!strategy) {
+          throw new Error('ERR_INVALID_STRATEGY')
+        }
+        return this.loginWithProvider(
+          { siteId, strategy, profile: authenticated as ProviderProfile, ip },
+          req
+        )
+      }
+
       // Perform post-login checks
       return this.afterLoginChecks(
-        user,
+        authenticated,
         strategyId,
         context,
         {
@@ -1332,16 +1491,40 @@ class Users {
       through this strategy.
     */
     const auth = (user.auth ?? {}) as Record<string, any>
-    auth[strategy.id] = {
-      ...auth[strategy.id],
-      id: profile.id,
-      email
+    const link = { ...auth[strategy.id], id: profile.id, email }
+
+    /*
+      The avatar is stored only when this link has not already been given the same one. An avatar is a
+      180px square that will not have changed since the last sign-in, and a login is not where to
+      spend a round trip — or an image decode — establishing that. What is remembered is the URL for a
+      provider that links to the picture and a digest for one that hands the bytes over, and either
+      way it is recorded only once the image is stored, so a provider that was unreachable is tried
+      again next time rather than written off.
+    */
+    const pictureRef = profile.pictureData
+      ? `sha256:${createHash('sha256').update(profile.pictureData).digest('hex')}`
+      : profile.picture
+    if (pictureRef && pictureRef !== link.picture) {
+      const stored = profile.pictureData
+        ? await this.setAvatarFromBytes(user.id, profile.pictureData)
+        : await this.setAvatarFromUrl(user.id, profile.picture!)
+      if (stored) {
+        link.picture = pictureRef
+        // -> The account menu reads this off the session, which is built from `user` below
+        user.hasAvatar = true
+      }
     }
+
+    auth[strategy.id] = link
     user.auth = auth
     await WIKI.db
       .update(usersTable)
       .set({ auth, updatedAt: sql`now()` })
       .where(eq(usersTable.id, user.id))
+
+    // -> After the account exists and before `afterLoginChecks`, which reads the memberships back out
+    //    to resolve this session's permissions and its redirect
+    await this.applyProviderGroups(user.id, profile, strategy)
 
     /*
       Neither 2FA nor a password change is asked for: both are the local strategy's, and this user has
@@ -1489,7 +1672,7 @@ class Users {
     }
 
     // Set Session Data
-    this.updateSession(user, req)
+    this.updateSession(user, strategyId, req)
 
     WIKI.models.flags.authDebug(
       `User ${user.id} <${user.email}> logged in with ${user.groups.length} group(s) and ${req?.session?.permissions?.length ?? 0} permission(s), redirecting to ${redirect}`
@@ -2161,8 +2344,10 @@ class Users {
     })
   }
 
-  updateSession(user: any, req: any): void {
+  updateSession(user: any, strategyId: string, req: any): void {
     req.session.authenticated = true
+    // -> Kept for the logout, which has to ask this strategy's module where to send the browser next
+    req.session.strategyId = strategyId
     req.session.user = {
       id: user.id,
       email: user.email,

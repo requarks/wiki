@@ -124,8 +124,9 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      if (!/^[^<>"]+$/.test(req.body.name)) {
-        throw new CustomError('groupCreateInvalidName', 'Invalid Group Name')
+      const invalid = await WIKI.models.groups.validateName(req.body.name)
+      if (invalid) {
+        throw new CustomError('groupCreateInvalidName', invalid)
       }
 
       try {
@@ -293,6 +294,15 @@ async function routes(app: FastifyInstance) {
 
       if (Object.keys(patch).length < 1) {
         throw new CustomError('groupUpdateEmpty', 'No group fields provided to update.')
+      }
+
+      // -> A rename is held to the same rules as a new name, this group excepted: resending the name
+      //    it already has is how a client that edits the whole group at once saves anything else
+      if (patch.name !== undefined) {
+        const invalidName = await WIKI.models.groups.validateName(patch.name, group.id)
+        if (invalidName) {
+          throw new CustomError('groupUpdateInvalidName', invalidName)
+        }
       }
 
       // -> The root administrators group must keep its permissions, or the instance becomes

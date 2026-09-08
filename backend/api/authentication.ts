@@ -2,8 +2,8 @@ import { nanoid } from 'nanoid'
 import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
 import { limitAuthAttempts } from '../helpers/rateLimit.ts'
-import type { AuthStrategy } from '../models/authentication.ts'
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { AuthRequestTarget, AuthStrategy } from '../models/authentication.ts'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
  * How long a redirect login may take before its callback is refused.
@@ -12,6 +12,43 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
  * enough that a `state` left lying around in a URL somewhere is no longer worth anything.
  */
 const AUTH_FLOW_MINUTES = 15
+
+/**
+ * The flow a redirect login started, as it is kept for the answer to be checked against.
+ *
+ * The same shape the session holds (`types/fastify.d.ts`); named here because a POST-binding provider
+ * needs it in a cookie as well — see `AUTH_FLOW_COOKIE`.
+ */
+interface AuthFlowState {
+  strategyId: string
+  siteId: string
+  state: string
+  nonce: string
+  codeVerifier: string
+  redirect: string
+  startedAt: string
+}
+
+/**
+ * A cookie carrying the same flow, for a provider that answers with a form POST.
+ *
+ * SAML's assertion arrives as a cross-site POST from a page at the identity provider, and a browser
+ * sends no `SameSite=Lax` cookie with one of those — which the session cookie is, so the session that
+ * started the login is simply not there to check the answer against. This cookie says `SameSite=None`
+ * instead, which is the only value a cross-site POST carries, and `Secure` because a browser refuses
+ * that combination otherwise. A wiki serving SAML over plain HTTP therefore falls back to the session
+ * copy, which works for an identity provider on the same site and not otherwise; SAML over HTTP is
+ * not a deployment anybody should have.
+ *
+ * It is scoped to the callback path and signed, and holds nothing a session cookie would not: the
+ * `state` in it is what the provider's `RelayState` has to match, exactly as on the query-string
+ * bindings.
+ */
+const AUTH_FLOW_COOKIE = 'wikiAuthFlow'
+const AUTH_FLOW_COOKIE_PATH = '/_api/auth'
+
+/** How long a logout will wait for a module to say where the provider wants the browser sent. */
+const LOGOUT_URL_BUDGET_MS = 5000
 
 /**
  * Where a provider sends the browser back, as an absolute URL.
@@ -38,6 +75,168 @@ function loginErrorUrl(redirect: string, code: string): string {
     params.set('redirect', redirect)
   }
   return `/login?${params.toString()}`
+}
+
+/**
+ * The flow this browser started, from wherever this binding could carry it.
+ *
+ * The cookie first, because it is the copy that survives a cross-site POST and is therefore the one
+ * present exactly when the session's is not. Both hold the same thing, and whichever is read the
+ * answer still has to match its `state`.
+ */
+function readAuthFlow(req: FastifyRequest): AuthFlowState | undefined {
+  const raw = req.cookies[AUTH_FLOW_COOKIE]
+  if (raw) {
+    const unsigned = req.unsignCookie(raw)
+    if (unsigned.valid && unsigned.value) {
+      try {
+        return JSON.parse(unsigned.value) as AuthFlowState
+      } catch {
+        // -> Not ours, or mangled in transit. The session copy is the remaining chance.
+      }
+    }
+  }
+  return req.session.authFlow
+}
+
+/** Spend the flow, in both places it may be held: one callback per login. */
+function clearAuthFlow(req: FastifyRequest, reply: FastifyReply): void {
+  req.session.authFlow = undefined
+  if (req.cookies[AUTH_FLOW_COOKIE]) {
+    reply.clearCookie(AUTH_FLOW_COOKIE, { path: AUTH_FLOW_COOKIE_PATH })
+  }
+}
+
+/**
+ * What a provider's answer carries, whichever binding brought it.
+ *
+ * The two differ only in where the pieces sit: a query string carries `state` and, on a refusal,
+ * `error`, while a form POST carries the whole assertion in the body and echoes the flow back in a
+ * field of its own. The module is handed both, and reads the one its protocol uses.
+ */
+interface CallbackAnswer {
+  /** The flow identifier as this binding carries it — `state`, or SAML's `RelayState`. */
+  state?: string
+  error?: string
+  errorDescription?: string
+  query: Record<string, string>
+  body?: Record<string, string>
+}
+
+/**
+ * Accept a provider's answer and establish the session, whichever binding it arrived on.
+ *
+ * Everything about the answer is checked against the flow this browser started: a callback with no
+ * flow behind it, for another strategy, carrying a different `state`, or long after the login began
+ * is not this login and is refused without the answer being spent. Ends in a redirect either way —
+ * to where the login was heading, or to the login screen carrying a code it can put in front of the
+ * user.
+ */
+async function finishRedirectLogin(
+  req: FastifyRequest<{ Params: { strategyId: string } }>,
+  reply: FastifyReply,
+  answer: CallbackAnswer
+): Promise<FastifyReply> {
+  const flow = readAuthFlow(req)
+  const redirect = flow?.redirect ?? '/'
+  if (
+    !flow ||
+    flow.strategyId !== req.params.strategyId ||
+    !answer.state ||
+    answer.state !== flow.state ||
+    Temporal.Instant.compare(
+      Temporal.Instant.from(flow.startedAt).add({ minutes: AUTH_FLOW_MINUTES }),
+      Temporal.Now.instant()
+    ) < 0
+  ) {
+    WIKI.models.flags.authDebug(
+      `Callback for strategy ${req.params.strategyId} from ${req.ip} did not match this session's login`
+    )
+    clearAuthFlow(req, reply)
+    return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_EXPIRED'))
+  }
+  // -> Spent, whatever happens next: one callback per login
+  clearAuthFlow(req, reply)
+
+  if (answer.error) {
+    WIKI.models.flags.authDebug(
+      `Provider refused the login for strategy ${flow.strategyId}: ${answer.error} ${answer.errorDescription ?? ''}`
+    )
+    return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
+  }
+
+  const strategy = await WIKI.models.authentication.getStrategyById(flow.strategyId)
+  const instance = WIKI.auth.strategies[flow.strategyId] as any
+  if (!strategy?.isEnabled || typeof instance?.profile !== 'function') {
+    return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
+  }
+
+  try {
+    const query = new URLSearchParams(answer.query).toString()
+    const profile = await instance.profile({
+      redirectUri: callbackUrl(req, strategy.id),
+      state: flow.state,
+      nonce: flow.nonce,
+      codeVerifier: flow.codeVerifier,
+      currentUrl: query
+        ? `${callbackUrl(req, strategy.id)}?${query}`
+        : callbackUrl(req, strategy.id),
+      code: answer.query.code,
+      body: answer.body
+    })
+    const result = await WIKI.models.users.loginWithProvider(
+      { siteId: flow.siteId, strategy, profile, ip: req.ip },
+      req
+    )
+    return reply.redirect(result.redirect || redirect)
+  } catch (err: any) {
+    WIKI.models.flags.authDebug(
+      `Login through ${strategy.module} strategy ${strategy.id} failed: ${err.message}`
+    )
+    return reply.redirect(loginErrorUrl(redirect, err.message))
+  }
+}
+
+/**
+ * Where the provider that signed a session in wants the browser sent once the wiki has logged it out.
+ *
+ * Signing out here destroys the wiki's session and nothing else: the provider still holds its own, so
+ * the next click on "Login" is answered by an identity provider that already knows who this is and
+ * signs them straight back in without asking anything. To an administrator that reads as a logout
+ * that does not work, and on a shared machine it is one.
+ *
+ * A module says where by implementing `logoutUrl()` — the OIDC module does, from the URL its strategy
+ * is configured with, and returns null when there is none. Nothing is guessed for a module that has
+ * no such notion.
+ */
+async function providerLogoutUrl(strategyId: string | undefined): Promise<string | null> {
+  if (!strategyId) {
+    return null
+  }
+  const instance = WIKI.auth.strategies[strategyId] as any
+  if (typeof instance?.logoutUrl !== 'function') {
+    return null
+  }
+  try {
+    /*
+      Bounded, and caught. Answering this can mean reaching the provider — the OIDC module discovers
+      the endpoint rather than being told it — and a logout is exactly when a provider is plausibly
+      the thing that has gone down. Node's `fetch` has no timeout of its own, so without a budget an
+      unreachable issuer would leave somebody who clicked Logout watching a spinner until a socket
+      gave up. Losing the provider's logout is the lesser failure, and the wiki's own session is
+      destroyed either way.
+    */
+    const answered = await Promise.race([
+      instance.logoutUrl(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), LOGOUT_URL_BUDGET_MS))
+    ])
+    return answered || null
+  } catch (err: any) {
+    WIKI.logger.warn(
+      `Could not resolve the provider logout URL for strategy ${strategyId}: ${err.message}`
+    )
+    return null
+  }
 }
 
 /**
@@ -956,7 +1155,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Start a login at an identity provider',
         description:
-          'Answers with a redirect to the provider, for a strategy whose module signs users in there rather than through a form — OpenID Connect, Google, GitHub. The `state`, `nonce` and PKCE verifier that tie the answer back to this browser are generated here and kept on the session; the browser is never trusted with any of them.\n\nOpened by following the link, not by fetching it: what comes back is a page at the provider.',
+          'Answers with a redirect to the provider, for a strategy whose module signs users in there rather than through a form — OpenID Connect, Entra ID, Google, GitHub, SAML. The `state`, `nonce` and PKCE verifier that tie the answer back to this browser are generated here and kept on the session; the browser is never trusted with any of them.\n\nA SAML strategy set to the POST request binding has no URL to be sent to, so it answers 200 with the page carrying the form the browser submits to the provider instead.\n\nOpened by following the link, not by fetching it: what comes back is a page at the provider.',
         tags: ['Authentication'],
         params: {
           type: 'object',
@@ -978,6 +1177,7 @@ async function routes(app: FastifyInstance) {
           }
         },
         response: {
+          200: { description: 'A page that submits the request to the provider', type: 'string' },
           302: { description: 'Redirect to the identity provider', type: 'null' }
         }
       }
@@ -1002,17 +1202,38 @@ async function routes(app: FastifyInstance) {
       }
       req.session.authFlow = flow
 
+      /*
+        A module whose provider answers with a form POST needs the flow somewhere a cross-site POST
+        will carry it, which the session cookie is not. Only for those: every other strategy is
+        answered on a top-level GET, which the session cookie does accompany, and a `SameSite=None`
+        cookie is not something to hand out where nothing reads it.
+      */
+      if (WIKI.models.authentication.getModule(strategy.module)?.postCallback) {
+        reply.setCookie(AUTH_FLOW_COOKIE, JSON.stringify(flow), {
+          signed: true,
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none',
+          path: AUTH_FLOW_COOKIE_PATH,
+          maxAge: AUTH_FLOW_MINUTES * 60
+        })
+      }
+
       try {
-        const url = await instance.authorizationUrl({
+        const target: AuthRequestTarget = await instance.authorizationUrl({
           redirectUri: callbackUrl(req, strategy.id),
           state: flow.state,
           nonce: flow.nonce,
           codeVerifier: flow.codeVerifier
         })
         WIKI.models.flags.authDebug(
-          `Redirecting to ${strategy.module} provider for strategy ${strategy.id} from ${req.ip}`
+          `Sending the browser to the ${strategy.module} provider for strategy ${strategy.id} from ${req.ip}`
         )
-        return reply.redirect(url)
+        // -> A module with no URL to send the browser to answers with the page that gets it there
+        //    instead; see `AuthRequestTarget`
+        return typeof target === 'string'
+          ? reply.redirect(target)
+          : reply.type('text/html; charset=utf-8').send(target.html)
       } catch (err: any) {
         WIKI.logger.warn(`Could not start a login at ${strategy.module}: ${err.message}`)
         return reply.redirect(loginErrorUrl(flow.redirect, err.message))
@@ -1051,66 +1272,103 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
+    async (req, reply) =>
+      finishRedirectLogin(req, reply, {
+        state: req.query.state,
+        error: req.query.error,
+        errorDescription: req.query.error_description,
+        query: req.query as Record<string, string>
+      })
+  )
+
+  /**
+   * FINISH A REDIRECT LOGIN, POST BINDING
+   */
+  app.post<{
+    Params: { strategyId: string }
+    Body: { SAMLResponse?: string; RelayState?: string }
+  }>(
+    '/auth/:strategyId/callback',
+    {
+      config: {
+        publicAccess: true
+      },
+      onRequest: limitAuthAttempts,
+      schema: {
+        summary: 'Finish a login at an identity provider that answers with a form POST',
+        description:
+          "The same callback, for a provider whose answer does not fit on a query string. SAML's assertion arrives this way: as a form the identity provider has the browser submit here, with the flow echoed back in `RelayState`.\n\nSame URL as the GET binding, so an administrator registers one address whichever protocol the strategy speaks.",
+        tags: ['Authentication'],
+        consumes: ['application/x-www-form-urlencoded'],
+        params: {
+          type: 'object',
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          },
+          required: ['strategyId']
+        },
+        body: {
+          type: 'object',
+          additionalProperties: true,
+          properties: {
+            SAMLResponse: {
+              type: 'string',
+              description: 'The base64-encoded SAML response, as the identity provider posted it.'
+            },
+            RelayState: {
+              type: 'string',
+              description: 'The flow identifier this login was started with, echoed back.'
+            }
+          }
+        },
+        response: {
+          302: { description: 'Redirect back into the wiki', type: 'null' }
+        }
+      }
+    },
+    async (req, reply) =>
+      finishRedirectLogin(req, reply, {
+        state: req.body?.RelayState,
+        query: {},
+        body: (req.body ?? {}) as Record<string, string>
+      })
+  )
+
+  /**
+   * SERVICE PROVIDER METADATA
+   */
+  app.get<{ Params: { strategyId: string } }>(
+    '/auth/:strategyId/metadata',
+    {
+      config: {
+        publicAccess: true
+      },
+      schema: {
+        summary: 'Service provider metadata for a strategy',
+        description:
+          'The XML description of this wiki as a service provider — its entity ID, where assertions are to be posted, and the certificate it signs requests with — for a protocol whose setup is an exchange of metadata documents rather than of pasted values. SAML strategies offer one; nothing else does, and asking another strategy for it answers 404.\n\nPublic, because it is what is handed to an identity provider, and it contains no secret: a certificate is the public half of a key pair.',
+        tags: ['Authentication'],
+        params: {
+          type: 'object',
+          properties: {
+            strategyId: { type: 'string', format: 'uuid' }
+          },
+          required: ['strategyId']
+        },
+        response: {
+          200: { description: 'The metadata document', type: 'string' }
+        }
+      }
+    },
     async (req, reply) => {
-      const flow = req.session.authFlow
-      const redirect = flow?.redirect ?? '/'
-      /*
-        Everything about the answer is checked against the flow this session started. A callback that
-        arrives with no flow behind it, for another strategy, with a different `state`, or long after
-        the login began is not this session's login — and is refused without the code being spent.
-      */
-      if (
-        !flow ||
-        flow.strategyId !== req.params.strategyId ||
-        !req.query.state ||
-        req.query.state !== flow.state ||
-        Temporal.Instant.compare(
-          Temporal.Instant.from(flow.startedAt).add({ minutes: AUTH_FLOW_MINUTES }),
-          Temporal.Now.instant()
-        ) < 0
-      ) {
-        WIKI.models.flags.authDebug(
-          `Callback for strategy ${req.params.strategyId} from ${req.ip} did not match this session's login`
-        )
-        req.session.authFlow = undefined
-        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_EXPIRED'))
+      const strategy = await WIKI.models.authentication.getStrategyById(req.params.strategyId)
+      const instance = WIKI.auth.strategies[req.params.strategyId] as any
+      if (!strategy?.isEnabled || typeof instance?.metadata !== 'function') {
+        return reply.notFound('This login provider has no metadata to describe it.')
       }
-      // -> Spent, whatever happens next: one callback per login
-      req.session.authFlow = undefined
-
-      if (req.query.error) {
-        WIKI.models.flags.authDebug(
-          `Provider refused the login for strategy ${flow.strategyId}: ${req.query.error} ${req.query.error_description ?? ''}`
-        )
-        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
-      }
-
-      const strategy = await WIKI.models.authentication.getStrategyById(flow.strategyId)
-      const instance = WIKI.auth.strategies[flow.strategyId] as any
-      if (!strategy?.isEnabled || typeof instance?.profile !== 'function') {
-        return reply.redirect(loginErrorUrl(redirect, 'ERR_LOGIN_FAILED'))
-      }
-
-      try {
-        const profile = await instance.profile({
-          redirectUri: callbackUrl(req, strategy.id),
-          state: flow.state,
-          nonce: flow.nonce,
-          codeVerifier: flow.codeVerifier,
-          currentUrl: `${callbackUrl(req, strategy.id)}?${new URLSearchParams(req.query as Record<string, string>).toString()}`,
-          code: req.query.code
-        })
-        const result = await WIKI.models.users.loginWithProvider(
-          { siteId: flow.siteId, strategy, profile, ip: req.ip },
-          req
-        )
-        return reply.redirect(result.redirect || redirect)
-      } catch (err: any) {
-        WIKI.models.flags.authDebug(
-          `Login through ${strategy.module} strategy ${strategy.id} failed: ${err.message}`
-        )
-        return reply.redirect(loginErrorUrl(redirect, err.message))
-      }
+      return reply
+        .type('application/samlmetadata+xml')
+        .send(await instance.metadata({ callbackUrl: callbackUrl(req, strategy.id) }))
     }
   )
 
@@ -1126,7 +1384,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Logout',
         description:
-          "Destroys the current session and answers with where to send the user next: the first of the user's groups that sets a logout redirect, otherwise the site's own setting, otherwise the site root. A request that was not logged in gets the same answer rather than an error, so that a client acting on a session the server has already forgotten still ends up somewhere sensible.",
+          "Destroys the current session and answers with where to send the user next: the logout URL of the strategy they signed in with, if its module has one — which is how an identity provider's own session is ended as well — otherwise the first of the user's groups that sets a logout redirect, otherwise the site's own setting, otherwise the site root. A request that was not logged in gets the same answer rather than an error, so that a client acting on a session the server has already forgotten still ends up somewhere sensible.",
         tags: ['Authentication'],
         params: {
           type: 'object',
@@ -1158,11 +1416,17 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const user = req.session?.authenticated ? req.session.user : null
 
-      // -> Resolved before the session goes away, since it depends on who was logged in
-      const redirect = await WIKI.models.users.getLogoutRedirect(
-        user?.id ?? null,
-        req.params.siteId
-      )
+      /*
+        Resolved before the session goes away, since both halves depend on it.
+
+        The provider's own logout comes first when there is one, and takes the group's and the site's
+        redirect with it: those say where a reader should end up, which is a preference, whereas an
+        identity provider still holding a session is the logout not having finished. Where the browser
+        goes after that is the provider's business — it is configured with its own return URL.
+      */
+      const redirect =
+        (await providerLogoutUrl(req.session?.strategyId)) ??
+        (await WIKI.models.users.getLogoutRedirect(user?.id ?? null, req.params.siteId))
 
       if (req.session) {
         // -> Drops the stored session, so the cookie the browser still holds refers to nothing

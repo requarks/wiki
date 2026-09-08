@@ -17,6 +17,14 @@ export interface AuthModule {
   color?: string
   isAvailable: boolean
   useForm: boolean
+  /**
+   * Whether the provider answers by having the browser POST a form to the callback rather than by
+   * sending it back with a query string. SAML does; nothing else here does.
+   *
+   * The framework reads it in one place — `api/authentication.ts` gives such a strategy's login flow
+   * a cookie a cross-site POST will actually carry.
+   */
+  postCallback?: boolean
   usernameType: string
   props: Record<string, ModuleProp>
   refs?: Record<string, { title?: string; hint?: string; icon?: string; value: string }>
@@ -39,12 +47,26 @@ export interface AuthFlow {
   codeVerifier: string
 }
 
+/**
+ * Where a redirect login sends the browser to sign in.
+ *
+ * A URL for every protocol that has one, which is nearly all of them. SAML's other request binding
+ * has no URL to give: the AuthnRequest is a form the browser submits to the identity provider, so a
+ * module using it answers with the page carrying that form and the route sends it as the response.
+ */
+export type AuthRequestTarget = string | { html: string }
+
 /** The same flow, once the provider has come back with an answer. */
 export interface AuthFlowCallback extends AuthFlow {
   /** The callback URL as it arrived, query string included — what an OIDC library validates against. */
   currentUrl: string
   /** The authorization code, for a module that reads it directly rather than through a library. */
   code?: string
+  /**
+   * The form the provider had the browser post, for a module whose protocol answers that way — a
+   * SAML assertion is far too big for a query string. Absent on the query-string bindings.
+   */
+  body?: Record<string, string>
 }
 
 /**
@@ -58,6 +80,30 @@ export interface ProviderProfile {
   id: string
   email: string
   name: string
+  /**
+   * Absolute URL of the person's picture at the provider, when it offers one and the module is
+   * configured to take it. Fetched and stored as the account's avatar, once per URL.
+   */
+  picture?: string
+  /**
+   * The picture itself, for a provider that holds the bytes rather than a link to them — a directory
+   * with a `jpegPhoto` attribute. Stored as the avatar, once per distinct image. Takes precedence
+   * over `picture`, since a module offering both has already read the one it means.
+   */
+  pictureData?: Buffer
+  /**
+   * The groups the provider says this person is in, by name.
+   *
+   * Absent when the module does not map groups at all, which is not the same as an empty array —
+   * that is the provider naming none, and with `groupsExclusive` set it costs the user every
+   * mapped membership they had.
+   */
+  groups?: string[]
+  /**
+   * Whether `groups` is the whole truth about this person's membership. Set, a group the claim does
+   * not name is taken away again; unset, the claim only ever adds.
+   */
+  groupsExclusive?: boolean
 }
 
 /** A configured instance of an authentication module. */

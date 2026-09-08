@@ -1,0 +1,159 @@
+key: ldap
+title: LDAP / Active Directory
+description: Lightweight Directory Access Protocol, as spoken by Active Directory, OpenLDAP, FreeIPA and everything else that holds a directory of people.
+author: requarks.io
+logo: https://static.requarks.io/logo/active-directory.svg
+icon: /_assets/icons/ultraviolet-windows8.svg
+color: blue-grey-7
+isAvailable: true
+useForm: true
+usernameType: username
+props:
+  url:
+    type: String
+    title: LDAP URL
+    hint: e.g. ldap://directory.example.com:389, or ldaps://directory.example.com:636 for a connection that is encrypted from the start.
+    icon: internet
+    default: 'ldap://localhost:389'
+    order: 1
+  bindDn:
+    type: String
+    title: Admin Bind DN
+    hint: The distinguished name of the account this wiki searches the directory as. It needs to read the user entries and nothing more.
+    icon: administrator-male
+    default: 'cn=readonly,dc=example,dc=com'
+    order: 2
+  bindCredentials:
+    type: String
+    title: Admin Bind Credentials
+    hint: The password of the account above.
+    icon: password
+    sensitive: true
+    order: 3
+  searchBase:
+    type: String
+    title: Search Base
+    hint: The base DN under which to look for the person signing in.
+    icon: folder
+    default: 'ou=people,dc=example,dc=com'
+    order: 4
+  searchFilter:
+    type: String
+    title: Search Filter
+    hint: How a username is turned into one entry. `{{username}}` must appear and is substituted with what was typed, escaped. e.g. (uid={{username}}) or (sAMAccountName={{username}}).
+    icon: search
+    default: '(uid={{username}})'
+    order: 5
+  tlsEnabled:
+    type: Boolean
+    title: Use StartTLS
+    hint: Upgrade a plain `ldap://` connection to TLS before anything is sent over it. Leave off for an `ldaps://` URL, which is encrypted already.
+    icon: security-ssl
+    default: false
+    order: 6
+  verifyTLSCertificate:
+    type: Boolean
+    title: Verify TLS Certificate
+    hint: Check the directory's certificate against the trusted authorities. Turning this off means the connection is encrypted but the server is not identified, which is no protection at all against something sitting in the middle of it.
+    icon: security-configuration
+    default: true
+    order: 7
+  tlsCertPath:
+    type: String
+    title: TLS Certificate Path
+    hint: (optional) Absolute path, on the server, to the PEM certificate authority to trust in addition to the system's own. For a directory using an internal CA.
+    icon: fingerprint-scan
+    order: 8
+  mappingUID:
+    type: String
+    title: Unique ID Field Mapping
+    hint: The attribute holding the directory's own identifier for the entry. Usually "uid" or "sAMAccountName". It has to be one that is never reassigned.
+    icon: key
+    default: 'uid'
+    order: 20
+  mappingEmail:
+    type: String
+    title: Email Field Mapping
+    hint: The attribute holding the email address, usually "mail". An account here is matched on it, so an entry without one cannot sign in.
+    icon: envelope
+    default: 'mail'
+    order: 21
+  mappingDisplayName:
+    type: String
+    title: Display Name Field Mapping
+    hint: The attribute holding the name to show. Usually "displayName" or "cn". Falls back to the email address when the entry has neither.
+    icon: person
+    default: 'displayName'
+    order: 22
+  mappingPicture:
+    type: String
+    title: Avatar Picture Field Mapping
+    hint: The attribute holding the account's photo, usually "jpegPhoto" or "thumbnailPhoto" — the image itself, not a link to one. Leave empty to let people keep whatever avatar they set here.
+    icon: image
+    default: 'jpegPhoto'
+    order: 23
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups their directory groups are named after, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
+    icon: user-groups
+    default: false
+    order: 24
+  groupSearchBase:
+    type: String
+    title: Group Search Base
+    hint: The base DN under which to look for the groups an entry belongs to.
+    icon: folder
+    default: 'ou=groups,dc=example,dc=com'
+    order: 25
+    if:
+      - { key: 'mapGroups', eq: true }
+  groupSearchFilter:
+    type: String
+    title: Group Search Filter
+    hint: Which groups count as the user's. `{{dn}}` is substituted with the value of the property below, escaped. (member={{dn}}) is right for most directories.
+    icon: search
+    default: '(member={{dn}})'
+    order: 26
+    if:
+      - { key: 'mapGroups', eq: true }
+  groupSearchScope:
+    type: String
+    title: Group Search Scope
+    hint: How far below the Group Search Base to look. `sub` searches the whole subtree, `one` its immediate children, `base` only the entry itself.
+    icon: depth
+    default: sub
+    enum:
+      - base
+      - one
+      - sub
+    order: 27
+    if:
+      - { key: 'mapGroups', eq: true }
+  groupDnProperty:
+    type: String
+    title: Group DN Property
+    hint: Which property of the user's entry `{{dn}}` stands for in the filter above. Usually "dn".
+    icon: symlink-directory
+    default: dn
+    order: 28
+    if:
+      - { key: 'mapGroups', eq: true }
+  groupNameField:
+    type: String
+    title: Group Name Field
+    hint: The attribute on a group entry holding the name to match a wiki group against. Usually "name" or "cn".
+    icon: rename
+    default: name
+    order: 29
+    if:
+      - { key: 'mapGroups', eq: true }
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer present in directory
+    hint: Off adds what the directory says and takes nothing away, so a membership granted here survives. On makes the directory the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 30
+    if:
+      - { key: 'mapGroups', eq: true }

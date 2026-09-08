@@ -34,20 +34,76 @@ export default class GitHubAuthentication {
       : { web: 'https://github.com', api: 'https://api.github.com' }
   }
 
-  /** A GitHub API call as this user, with the headers GitHub asks every client to send. */
+  /** The headers GitHub asks every client to send, as this user. */
+  private apiHeaders(accessToken: string): Record<string, string> {
+    return {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'Wiki.js'
+    }
+  }
+
+  /**
+   * `fetch`, with an unreachable GitHub reported as a provider failure rather than as itself.
+   *
+   * A rejected fetch carries a message about sockets and DNS, and the callback route puts whatever it
+   * caught into the URL it redirects to — so left alone, "fetch failed" is what the person trying to
+   * log in reads. Every call this module makes goes through here for that reason.
+   */
+  private async reach(url: string, init: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, init)
+    } catch (err: any) {
+      WIKI.logger.warn(`GitHub strategy ${this.strategyId} could not reach ${url}: ${err.message}`)
+      throw new Error('ERR_PROVIDER_REQUEST_FAILED')
+    }
+  }
+
+  /** A GitHub API call as this user. */
   private async api(path: string, accessToken: string): Promise<any> {
-    const resp = await fetch(`${this.hosts.api}${path}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'Wiki.js'
-      }
+    const resp = await this.reach(`${this.hosts.api}${path}`, {
+      headers: this.apiHeaders(accessToken)
     })
     if (!resp.ok) {
       throw new Error(`ERR_PROVIDER_REQUEST_FAILED`)
     }
     return resp.json()
+  }
+
+  /**
+   * Whether this account is a member of the organization the strategy requires.
+   *
+   * `GET /orgs/{org}/members/{username}` answers from the point of view of whoever is asking, and the
+   * token asking here belongs to the person signing in — so a member checking themselves gets 204. A
+   * non-member gets a 302 to `/orgs/{org}/public_members/{username}`, which `fetch` follows on its
+   * own (same origin, so the Authorization header survives it). The consequence worth knowing: the
+   * question quietly becomes "is a PUBLIC member" whenever the token cannot see private membership —
+   * an organization with OAuth app access restrictions that has not approved this app — which is why
+   * the setting's hint asks for either a public membership or an approved app.
+   *
+   * **Only 404 is a refusal.** Every other answer is a failure to find out: a token revoked between
+   * the exchange and here, an abuse-detection 403, GitHub being down. Reporting those as "you are not
+   * a member of this organization" sends a legitimate member away with an answer that is wrong,
+   * unactionable, and indistinguishable in the log from a genuine refusal.
+   *
+   * @throws `ERR_PROVIDER_REQUEST_FAILED` when membership could not be determined
+   */
+  private async isOrgMember(org: string, login: string, accessToken: string): Promise<boolean> {
+    const path = `/orgs/${encodeURIComponent(org)}/members/${encodeURIComponent(login)}`
+    const resp = await this.reach(`${this.hosts.api}${path}`, {
+      headers: this.apiHeaders(accessToken)
+    })
+    if (resp.status === 204) {
+      return true
+    }
+    if (resp.status === 404) {
+      return false
+    }
+    WIKI.logger.warn(
+      `GitHub strategy ${this.strategyId} could not check membership of ${org} for ${login}: the API answered ${resp.status}.`
+    )
+    throw new Error('ERR_PROVIDER_REQUEST_FAILED')
   }
 
   async authorizationUrl({ redirectUri, state }: AuthFlow): Promise<string> {
@@ -74,7 +130,7 @@ export default class GitHubAuthentication {
       throw new Error('ERR_NO_AUTHORIZATION_CODE')
     }
     // -> `Accept: application/json`, or GitHub answers this one in form encoding
-    const tokenResp = await fetch(`${this.hosts.web}/login/oauth/access_token`, {
+    const tokenResp = await this.reach(`${this.hosts.web}/login/oauth/access_token`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -88,8 +144,18 @@ export default class GitHubAuthentication {
         code
       })
     })
-    const token = (await tokenResp.json()) as Record<string, any>
-    // -> GitHub reports a refused exchange as 200 with an `error` field, not as a status
+    /*
+      GitHub reports a refused exchange as 200 with an `error` field rather than as a status, so the
+      body has to be read either way — and a body that is not JSON at all is something else answering
+      on GitHub's behalf, a proxy or a captive portal, which is a failed exchange and not a parse
+      error to hand to the person logging in.
+    */
+    let token: Record<string, any>
+    try {
+      token = (await tokenResp.json()) as Record<string, any>
+    } catch {
+      throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
+    }
     if (!tokenResp.ok || token.error || !token.access_token) {
       throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
     }
@@ -111,20 +177,8 @@ export default class GitHubAuthentication {
 
     if (this.conf.allowedOrganization) {
       const org = this.conf.allowedOrganization.trim()
-      const resp = await fetch(
-        `${this.hosts.api}/orgs/${encodeURIComponent(org)}/members/${encodeURIComponent(account.login)}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token.access_token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'User-Agent': 'Wiki.js'
-          }
-        }
-      )
-      // -> 204 is a member, 302 is "ask as somebody who can see", 404 is not a member
-      if (resp.status !== 204) {
-        throw new Error('ERR_LOGIN_RESTRICTED')
+      if (!(await this.isOrgMember(org, account.login, token.access_token))) {
+        throw new Error('ERR_ACCOUNT_NOT_ALLOWED')
       }
     }
 

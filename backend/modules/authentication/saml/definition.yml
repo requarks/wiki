@@ -1,0 +1,242 @@
+key: saml
+title: SAML 2.0
+description: Security Assertion Markup Language 2.0, the standard for exchanging authentication and authorization data between security domains.
+author: requarks.io
+logo: https://static.requarks.io/logo/saml.svg
+icon: /_assets/icons/ultraviolet-saml.svg
+color: red-7
+isAvailable: true
+useForm: false
+usernameType: email
+postCallback: true
+props:
+  entryPoint:
+    type: String
+    title: Entry Point
+    hint: The identity provider's single sign-on URL, where the browser is sent to log in.
+    icon: enter
+    order: 1
+  issuer:
+    type: String
+    title: Issuer
+    hint: The entity ID this wiki identifies itself to the provider as. Any stable string the provider is told to expect — a URL naming this wiki is the convention.
+    icon: address
+    order: 2
+  audience:
+    type: String
+    title: Audience
+    hint: (optional) The audience an assertion must be restricted to for this wiki to accept it. Defaults to the Issuer above, which is what a provider configured against this wiki will send.
+    icon: team
+    order: 3
+  cert:
+    type: String
+    title: Certificate
+    hint: The provider's public PEM-encoded X.509 signing certificate, which is what every assertion is checked against. Join several with the | pipe symbol where the provider is rotating keys.
+    icon: security-ssl
+    multiline: true
+    order: 4
+  privateKey:
+    type: String
+    title: Private Key
+    hint: (optional) PEM-formatted key this wiki signs its authentication requests with. Only needed by a provider that requires signed requests.
+    icon: key
+    multiline: true
+    sensitive: true
+    order: 5
+  signingCert:
+    type: String
+    title: Signing Certificate
+    hint: The public PEM-encoded X.509 certificate matching the private key above. Required alongside it, because it is what the metadata document publishes for the provider to verify this wiki's requests with.
+    icon: validation
+    multiline: true
+    order: 6
+  decryptionPvk:
+    type: String
+    title: Decryption Private Key
+    hint: (optional) PEM-formatted key used to decrypt encrypted assertions. Only needed by a provider that encrypts them.
+    icon: password
+    multiline: true
+    sensitive: true
+    order: 7
+  decryptionCert:
+    type: String
+    title: Decryption Certificate
+    hint: The public PEM-encoded X.509 certificate matching the decryption key above. Required alongside it, because it is what the metadata document publishes for the provider to encrypt assertions to.
+    icon: security-configuration
+    multiline: true
+    order: 8
+  signatureAlgorithm:
+    type: String
+    title: Signature Algorithm
+    hint: Which algorithm this wiki signs its requests with. SHA-1 is broken and is here only for a provider that accepts nothing else.
+    icon: validation
+    default: sha256
+    enum:
+      - sha256|SHA-256
+      - sha512|SHA-512
+      - sha1|SHA-1 (insecure)
+    order: 9
+  digestAlgorithm:
+    type: String
+    title: Digest Algorithm
+    hint: Which algorithm digests the data being signed. Match it to the signature algorithm unless the provider asks otherwise.
+    icon: sigma
+    default: sha256
+    enum:
+      - sha256|SHA-256
+      - sha512|SHA-512
+      - sha1|SHA-1 (insecure)
+    order: 10
+  identifierFormat:
+    type: String
+    title: Name Identifier Format
+    hint: What kind of name the request asks the provider to identify people by. Leave empty to ask for no particular format, which is what a provider that objects to being asked wants.
+    icon: rename
+    default: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+    order: 20
+  wantAssertionsSigned:
+    type: Boolean
+    title: Require Signed Assertions
+    hint: Refuse a response whose assertion is not signed in its own right. Worth leaving on — a signature over the response alone leaves the assertion inside it unprotected.
+    icon: secure
+    default: true
+    order: 21
+  acceptedClockSkewMs:
+    type: Number
+    title: Accepted Clock Skew (ms)
+    hint: How far this server's clock may differ from the provider's before an assertion is judged not yet valid or expired. Set to -1 to stop checking those timestamps entirely, which throws away the assertion's own expiry.
+    icon: timer
+    default: 0
+    order: 22
+  disableRequestedAuthnContext:
+    type: Boolean
+    title: Disable Requested Auth Context
+    hint: Ask for no particular authentication method, rather than the one below. Known to be what AD FS wants.
+    icon: rules
+    default: false
+    order: 23
+  authnContext:
+    type: String
+    title: Auth Context
+    hint: Which authentication method the request asks for. Join several with the | pipe symbol.
+    icon: rules
+    default: 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+    order: 24
+    if:
+      - { key: 'disableRequestedAuthnContext', eq: false }
+  racComparison:
+    type: String
+    title: RAC Comparison Type
+    hint: How the provider is to compare what it actually did against the context asked for.
+    icon: matches
+    default: exact
+    enum:
+      - exact
+      - minimum
+      - maximum
+      - better
+    order: 25
+    if:
+      - { key: 'disableRequestedAuthnContext', eq: false }
+  forceAuthn:
+    type: Boolean
+    title: Force Initial Re-authentication
+    hint: Ask the provider to authenticate the person again even if they already have a session there.
+    icon: renew
+    default: false
+    order: 26
+  passive:
+    type: Boolean
+    title: Passive
+    hint: Ask the provider not to interact with the person at all — so an existing session signs them in and no session sends them straight back.
+    icon: do-not-touch
+    default: false
+    order: 27
+  providerName:
+    type: String
+    title: Provider Name
+    hint: (optional) A human-readable name for this wiki, which a provider may show to the person being asked to log in.
+    icon: website
+    default: Wiki.js
+    order: 28
+  authnRequestBinding:
+    type: String
+    title: Request Binding
+    hint: How the authentication request reaches the provider. Redirect sends the browser straight there; POST answers with a page holding a form that submits itself, which under a content security policy forbidding inline scripts becomes a button the person has to press.
+    icon: share
+    default: 'HTTP-Redirect'
+    enum:
+      - HTTP-Redirect|Redirect
+      - HTTP-POST|POST
+    order: 29
+  skipRequestCompression:
+    type: Boolean
+    title: Skip Request Compression
+    hint: Send the authentication request uncompressed. The Redirect binding requires it to be deflated, so this is for a provider that wants otherwise.
+    icon: downloads
+    default: false
+    order: 30
+  mappingUID:
+    type: String
+    title: Unique ID Field Mapping
+    hint: The attribute holding the provider's own identifier for the account. Falls back to the assertion's NameID, which is what most providers identify people by.
+    icon: key
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'
+    order: 40
+  mappingEmail:
+    type: String
+    title: Email Field Mapping
+    hint: The attribute holding the email address. An account here is matched on it, so an assertion without one cannot sign anybody in.
+    icon: envelope
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
+    order: 41
+  mappingDisplayName:
+    type: String
+    title: Display Name Field Mapping
+    hint: The attribute holding the name to show. Falls back to the email address when the assertion has neither.
+    icon: person
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+    order: 42
+  mappingPicture:
+    type: String
+    title: Avatar Picture Field Mapping
+    hint: The attribute holding the URL of the account's picture, fetched on login and stored as the avatar. Leave empty to let people keep whatever avatar they set here.
+    icon: image
+    default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
+    order: 43
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups the attribute below names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
+    icon: user-groups
+    default: false
+    order: 44
+  mappingGroups:
+    type: String
+    title: User Groups Field Mapping
+    hint: The attribute holding the groups. Either one name or a list of them.
+    icon: rules
+    default: 'memberOf'
+    order: 45
+    if:
+      - { key: 'mapGroups', eq: true }
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer present in assertion
+    hint: Off adds what the assertion names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 46
+    if:
+      - { key: 'mapGroups', eq: true }
+refs:
+  callbackUrl:
+    title: Assertion Consumer Service URL
+    hint: Register this with the provider as where to post assertions. Also called the Reply URL or the ACS URL, depending on whose interface you are in.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'
+  metadataUrl:
+    title: Service Provider Metadata
+    hint: Hand this to a provider that configures itself from a metadata document rather than from pasted values.
+    icon: rescan-document
+    value: '{host}/_api/auth/{id}/metadata'

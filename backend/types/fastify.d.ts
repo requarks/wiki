@@ -38,6 +38,14 @@ declare module 'fastify' {
     /** Ids of the groups the user belongs to, which is what per-group visibility is checked against. */
     groups?: string[]
     /**
+     * The strategy this session signed in with.
+     *
+     * Read on the way out: a provider that wants the browser sent somewhere to end its own session
+     * says so through the module, and only the module knows where. See the logout route in
+     * `api/authentication.ts`.
+     */
+    strategyId?: string
+    /**
      * Ids of the password-protected pages this session has entered the password for. Written by the
      * unlock route in `api/pages.ts`, and the only thing that opens one for a reader who may not edit
      * it — the client is never trusted with that state.

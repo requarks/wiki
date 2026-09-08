@@ -87,7 +87,7 @@ export default class GoogleAuthentication {
       throw new Error('ERR_EMAIL_NOT_VERIFIED')
     }
     if (this.conf.hostedDomain && claims.hd !== this.conf.hostedDomain) {
-      throw new Error('ERR_LOGIN_RESTRICTED')
+      throw new Error('ERR_ACCOUNT_NOT_ALLOWED')
     }
 
     return {

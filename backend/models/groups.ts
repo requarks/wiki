@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import { and, count, eq, ilike, or, sql } from 'drizzle-orm'
+import { and, count, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
 import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
@@ -265,12 +265,47 @@ class Groups {
    * @param name Group name
    * @returns The new group's ID
    */
+  /**
+   * Check a group name, on its way in or on its way to replacing one.
+   *
+   * A name has to be unique because it is an identity, not a label: a group is picked by name in the
+   * group editor, in a strategy's auto-enrollment list and — since the identity-provider modules map
+   * groups — by whatever a directory or a claim calls it. Two groups answering to one name make every
+   * one of those ambiguous, and the group mapping resolves the ambiguity by putting the user in both.
+   *
+   * Compared case-insensitively and with the ends trimmed, because "editors" and "Editors " are the
+   * same name to everybody reading the screen, and a check that let them coexist would be a check
+   * anybody could step around by holding down the space bar.
+   *
+   * @param name The name being asked for
+   * @param exceptId The group being renamed, which does not clash with itself
+   * @returns The reason it cannot be used, or null when it is fine
+   */
+  async validateName(name: string, exceptId?: string): Promise<string | null> {
+    const trimmed = name.trim()
+    if (trimmed.length < 1) {
+      return 'The group name cannot be empty.'
+    }
+    if (!/^[^<>"]+$/.test(trimmed)) {
+      return 'The group name cannot contain <, > or ".'
+    }
+    const sameName = sql`lower(${groupsTable.name}) = lower(${trimmed})`
+    const clash = await WIKI.db
+      .select({ name: groupsTable.name })
+      .from(groupsTable)
+      .where(exceptId ? and(sameName, ne(groupsTable.id, exceptId)) : sameName)
+      .limit(1)
+    return clash.length > 0 ? `There is already a group named "${clash[0].name}".` : null
+  }
+
   async createGroup(name: string): Promise<string> {
     const startingPermissions = ['read:pages', 'read:assets', 'read:comments']
     const result = await WIKI.db
       .insert(groupsTable)
       .values({
-        name,
+        // -> Trimmed here rather than at the boundary, so that what is stored is what `validateName`
+        //    compared and no route can store a name that would not have passed
+        name: name.trim(),
         permissions: startingPermissions,
         rules: [
           {
@@ -331,7 +366,11 @@ class Groups {
   async updateGroup(id: string, patch: GroupPatch): Promise<boolean> {
     const result = await WIKI.db
       .update(groupsTable)
-      .set({ ...this.clampGuestPatch(id, patch), updatedAt: sql`now()` })
+      .set({
+        ...this.clampGuestPatch(id, patch),
+        ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
+        updatedAt: sql`now()`
+      })
       .where(eq(groupsTable.id, id))
     await this.reloadCache()
     return (result.rowCount ?? 0) > 0
