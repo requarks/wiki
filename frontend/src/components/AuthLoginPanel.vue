@@ -52,7 +52,7 @@
             :text-color="
               str.id === state.selectedStrategyId || dark.isActive ? `white` : `blue-grey-9`
             "
-            @click="state.selectedStrategyId = str.id" />
+            @click="selectFormStrategy(str.id)" />
         </div>
       </template>
       <w-form ref="loginForm" @submit="login">
@@ -136,7 +136,7 @@
           flat
           color="primary"
           :text-color="acrylicBtnTextColor"
-          :label="t(`auth.actions.loginWith`, { provider: str.activeStrategy.displayName })"
+          :label="str.activeStrategy.displayName"
           no-caps
           :icon="`img:` + str.activeStrategy.strategy.icon"
           :href="authorizeUrl(str)"
@@ -541,7 +541,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
@@ -736,6 +736,24 @@ const userPasswordVerifyValidation = [
 ]
 
 // METHODS
+
+/**
+ * Switch the form to another strategy, and put the cursor where the credentials start.
+ *
+ * A switch changes what the form is asking for — the username field's label and its validation rules
+ * both belong to the strategy — but it reuses the same elements, so nothing moves focus on its own,
+ * and somebody who has just picked a different provider is left with a form they have to click into.
+ *
+ * Unconditionally, including a click on the strategy already selected: pressing one of these buttons
+ * has already taken the caret out of whichever field it was in and put it on the button itself, so
+ * there is nothing left to preserve and nowhere better for it to go.
+ */
+function selectFormStrategy(strategyId) {
+  state.selectedStrategyId = strategyId
+  nextTick(() => {
+    loginEmailIpt.value?.focus()
+  })
+}
 
 function switchTo(screen) {
   switch (screen) {

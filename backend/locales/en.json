@@ -1463,7 +1463,6 @@
   "admin.webhooks.urlInvalidChars": "The URL contains invalid characters.",
   "admin.webhooks.urlMissing": "The URL is missing or is not valid.",
   "auth.actions.login": "Log In",
-  "auth.actions.loginWith": "Continue with {provider}",
   "auth.actions.register": "Register",
   "auth.changePwd.currentPassword": "Current Password",
   "auth.changePwd.instructions": "You must choose a new password:",
