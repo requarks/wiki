@@ -1,3 +1,4 @@
+import { missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /** Where a person signs in. Not under `/api`, unlike everything else Discord answers. */
@@ -66,6 +67,10 @@ export default class DiscordAuthentication {
     const clientSecret = this.conf.clientSecret || ''
     const serverId = (this.conf.serverId || '').trim()
     if (!clientId || !clientSecret) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Client ID': clientId, 'Client Secret': clientSecret })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     if (this.conf.mapGroups === true && !serverId) {
@@ -114,6 +119,12 @@ export default class DiscordAuthentication {
     if (!resp.ok) {
       WIKI.logger.warn(
         `Discord strategy ${this.strategyId} asked for ${path} and the API answered ${resp.status}.`
+      )
+      // -> The body as well as the status, under the flag: Discord's error payload names the scope
+      //    that was not granted or the intent the bot is missing, which the status alone does not
+      strategyDebug(
+        this,
+        `GET ${path} answered ${resp.status}: ${await resp.text().catch(() => '(no body)')}`
       )
       throw new Error('ERR_PROVIDER_REQUEST_FAILED')
     }
@@ -172,6 +183,10 @@ export default class DiscordAuthentication {
     let names = await this.roleNames(serverId)
     if (names.size < 1) {
       // -> No bot token. The IDs are the whole of what Discord will say about these roles
+      strategyDebug(
+        this,
+        `no Bot Token is configured, so the ${roleIds.length} role(s) held can only be matched by ID: ${roleIds.join(', ') || 'none'}`
+      )
       return roleIds
     }
     if (roleIds.some((id) => !names.has(id))) {
@@ -249,15 +264,26 @@ export default class DiscordAuthentication {
     try {
       token = (await tokenResp.json()) as Record<string, any>
     } catch {
+      strategyDebug(
+        this,
+        `the token exchange answered ${tokenResp.status} with something that is not JSON — is something else answering for ${API}?`
+      )
       throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
     }
     if (!tokenResp.ok || token.error || !token.access_token) {
+      // -> Discord's own account of the refusal, which names the cause: `invalid_client` for a Client
+      //    Secret that has been reset, `invalid_grant` for a Redirect URI it does not have registered
+      strategyDebug(
+        this,
+        `the token exchange answered ${tokenResp.status}: ${[token.error, token.error_description].filter(Boolean).join(': ') || 'no access token'}`
+      )
       throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
     }
     const bearer = `Bearer ${token.access_token}`
 
     const account = await this.api('/users/@me', bearer)
     if (!account?.id) {
+      strategyDebug(this, 'the API answered with no account for this token')
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
     /*
@@ -266,6 +292,10 @@ export default class DiscordAuthentication {
       by, so it is refused rather than trusted.
     */
     if (!account.email || account.verified !== true) {
+      strategyDebug(
+        this,
+        `${account.username} ${account.email ? 'has not confirmed their address with Discord' : 'gave no address — was the `email` scope granted?'}`
+      )
       throw new Error('ERR_NO_VERIFIED_EMAIL_FROM_PROVIDER')
     }
 
@@ -283,12 +313,25 @@ export default class DiscordAuthentication {
         bearer
       )
       if (!member) {
+        // -> 404, which Discord uses for both cases. Said as both, since a mistyped Server ID and a
+        //    person who is not in the server are one answer here and two different things to fix
+        strategyDebug(
+          this,
+          `${account.username} is not in server ${serverId}, or there is no such server`
+        )
         throw new Error('ERR_ACCOUNT_NOT_ALLOWED')
       }
       roleIds = Array.isArray(member.roles)
         ? member.roles.filter((id: unknown): id is string => typeof id === 'string')
         : []
     }
+
+    const groups =
+      this.conf.mapGroups === true ? await this.groupsFor(serverId, roleIds) : undefined
+    strategyDebug(
+      this,
+      `${account.username} (${account.id}) signs in as <${account.email}>${groups ? `, holding ${groups.length} mapped role(s): ${groups.join(', ') || 'none'}` : ', groups not mapped'}`
+    )
 
     return {
       id: String(account.id),
@@ -297,9 +340,9 @@ export default class DiscordAuthentication {
       //    has not set one has
       name: account.global_name || account.username,
       picture: this.pictureFor(account),
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: await this.groupsFor(serverId, roleIds),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})

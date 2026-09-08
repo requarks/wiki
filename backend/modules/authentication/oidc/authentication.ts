@@ -1,4 +1,5 @@
 import * as client from 'openid-client'
+import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /**
@@ -47,12 +48,36 @@ export default class OidcAuthentication {
     }
     const { clientId, clientSecret, issuer } = this.conf
     if (!clientId || !clientSecret || !issuer) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Client ID': clientId, 'Client Secret': clientSecret, Issuer: issuer })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     if (this.conf.useDiscovery !== false) {
-      this.config = await client.discovery(new URL(issuer), clientId, clientSecret)
+      strategyDebug(this, `reading the provider's metadata from ${issuer}`)
+      try {
+        this.config = await client.discovery(new URL(issuer), clientId, clientSecret)
+      } catch (err: any) {
+        // -> The first thing to fail on a new strategy, and it fails for reasons the log has to
+        //    carry: an issuer that is not a URL, one publishing no discovery document, TLS
+        strategyDebug(
+          this,
+          `could not read the provider's metadata from ${issuer}: ${describeAuthError(err)}`
+        )
+        throw err
+      }
+      const meta = this.config.serverMetadata()
+      strategyDebug(
+        this,
+        `the provider is ${meta.issuer} — authorization at ${meta.authorization_endpoint}, token at ${meta.token_endpoint}, userinfo at ${meta.userinfo_endpoint ?? 'nowhere (it publishes none)'}`
+      )
     } else {
       if (!this.conf.authorizationURL || !this.conf.tokenURL || !this.conf.jwksURL) {
+        strategyDebug(
+          this,
+          `has discovery turned off and is not configured: ${missingSettings({ 'Authorization Endpoint URL': this.conf.authorizationURL, 'Token Endpoint URL': this.conf.tokenURL, 'JWKS Endpoint URL': this.conf.jwksURL })}`
+        )
         throw new Error('ERR_STRATEGY_MISCONFIGURED')
       }
       this.config = new client.Configuration(
@@ -146,13 +171,29 @@ export default class OidcAuthentication {
     codeVerifier
   }: AuthFlowCallback): Promise<ProviderProfile> {
     const config = await this.configuration()
-    const tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
-      expectedState: state,
-      expectedNonce: nonce,
-      pkceCodeVerifier: codeVerifier
-    })
+    let tokens
+    try {
+      tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
+        expectedState: state,
+        expectedNonce: nonce,
+        pkceCodeVerifier: codeVerifier
+      })
+    } catch (err: any) {
+      /*
+        Everything the flow is checked by is in here — the state, the PKCE verifier, the code
+        exchange, and the ID token's signature, issuer, audience and nonce — so this one line covers a
+        redirect URI the provider does not have registered, a client secret that has been rotated, a
+        clock that is out, and a token signed by a key the issuer does not publish.
+      */
+      strategyDebug(this, `the provider's answer did not check out: ${describeAuthError(err)}`)
+      throw err
+    }
     const claims = tokens.claims()
     if (!claims?.sub) {
+      strategyDebug(
+        this,
+        'the provider returned no ID token, so there is nothing signed saying who signed in'
+      )
       throw new Error('ERR_NO_ID_TOKEN')
     }
     // -> Before the userinfo round trip: no point spending one on a login already being refused
@@ -166,25 +207,46 @@ export default class OidcAuthentication {
     */
     let info: Record<string, any> = claims
     if (config.serverMetadata().userinfo_endpoint) {
-      info = {
-        ...claims,
-        ...(await client.fetchUserInfo(config, tokens.access_token, claims.sub))
+      try {
+        info = {
+          ...claims,
+          ...(await client.fetchUserInfo(config, tokens.access_token, claims.sub))
+        }
+      } catch (err: any) {
+        strategyDebug(this, `the userinfo endpoint could not be read: ${describeAuthError(err)}`)
+        throw err
       }
     }
+    strategyDebug(this, `the provider says: ${Object.keys(info).join(', ')}`)
 
     /*
       `sub` is the identifier OIDC guarantees is stable and never reassigned, and is what this reads
       unless an administrator names another claim. Whichever it is, it is what the account is linked
       by from here on — the ID token's own subject stays what the library verified the answer against.
     */
-    const id = info[this.conf.idClaim || 'sub']
+    const idClaim = this.conf.idClaim || 'sub'
+    const id = info[idClaim]
     if (!id || typeof id !== 'string') {
+      strategyDebug(
+        this,
+        `the \`${idClaim}\` claim carries no identifier for this account (Unique ID Claim)`
+      )
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
-    const email = info[this.conf.emailClaim || 'email']
+    const emailClaim = this.conf.emailClaim || 'email'
+    const email = info[emailClaim]
     if (!email || typeof email !== 'string') {
+      strategyDebug(
+        this,
+        `the \`${emailClaim}\` claim carries no address, and an account here is matched by address (Email Claim)`
+      )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
+    const groups = this.conf.mapGroups === true ? this.groupsFrom(info) : undefined
+    strategyDebug(
+      this,
+      `${id} signs in as <${email}>${groups ? `, in ${groups.length} provider group(s)` : ', groups not mapped'}`
+    )
     return {
       id,
       email,
@@ -192,9 +254,9 @@ export default class OidcAuthentication {
       picture: this.pictureFrom(info),
       // -> Absent rather than empty when groups are not mapped: an empty list is the provider saying
       //    this person is in none, which with `unassignMissingGroups` on takes memberships away
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: this.groupsFrom(info),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})
@@ -278,11 +340,23 @@ export default class OidcAuthentication {
    * since a name that matches nothing is a membership silently not granted.
    */
   private groupsFrom(info: Record<string, any>): string[] {
-    const value = info[this.conf.groupsClaim || 'groups']
+    const claim = this.conf.groupsClaim || 'groups'
+    const value = info[claim]
     const raw = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
-    return raw
+    const names = raw
       .filter((entry) => typeof entry === 'string' && entry.trim().length > 0)
       .map((entry) => entry.trim())
+    /*
+      Said even when it is empty, and especially then: a provider that emits the groups claim only for
+      a client asking for the right scope — or only once the claim is configured on the application —
+      answers with nothing here, which is not distinguishable on the wiki side from somebody genuinely
+      being in no group.
+    */
+    strategyDebug(
+      this,
+      `the \`${claim}\` claim names ${names.length} group(s): ${names.join(', ') || 'none'}`
+    )
+    return names
   }
 
   /**

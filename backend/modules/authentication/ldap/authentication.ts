@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import type { ConnectionOptions } from 'node:tls'
 import { Client, Filter, InvalidCredentialsError } from 'ldapts'
 import type { Entry, SearchOptions } from 'ldapts'
+import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { ProviderProfile } from '../../../models/authentication.ts'
 
 /** What a form module is handed for one attempt. `login()` in `models/users.ts` assembles it. */
@@ -61,9 +62,17 @@ export default class LdapAuthentication {
   async profile({ username, password }: FormCredential): Promise<ProviderProfile> {
     const { url, bindDn, searchBase, searchFilter } = this.conf
     if (!url || !bindDn || !searchBase || !searchFilter) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'LDAP URL': url, 'Admin Bind DN': bindDn, 'Search Base': searchBase, 'Search Filter': searchFilter })}, so no login can be attempted`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     if (!searchFilter.includes('{{username}}')) {
+      strategyDebug(
+        this,
+        `cannot look anybody up: the Search Filter \`${searchFilter}\` has no {{username}} placeholder for the typed username to go in`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     /*
@@ -72,16 +81,46 @@ export default class LdapAuthentication {
       into an LDAP-backed application and it must never reach the wire.
     */
     if (!username || !password) {
+      strategyDebug(
+        this,
+        `refused an attempt with ${username ? 'an empty password' : 'no username'} without asking the directory`
+      )
       throw new Error('ERR_LOGIN_FAILED')
     }
 
-    const search = await this.connect()
+    /*
+      Opening the connection is inside the same reporting as everything after it: with StartTLS
+      configured, `connect` upgrades the connection there and then, so a directory that cannot be
+      reached fails HERE rather than on the bind below — and left outside, the socket error escaped
+      `asLoginError` and became the code the login screen showed somebody.
+    */
+    let search: Client
     try {
-      await search.bind(bindDn, this.conf.bindCredentials ?? '')
+      search = await this.connect('the user search')
+    } catch (err: any) {
+      throw this.asLoginError(err)
+    }
+    try {
+      try {
+        await search.bind(bindDn, this.conf.bindCredentials ?? '')
+      } catch (err: any) {
+        /*
+          The wiki's own account and not the person signing in — so this refuses every login until it
+          is fixed, and it is worth saying apart from a bad password. Whether the credentials are set
+          at all is said, since an empty one is what a directory that allows anonymous search hides.
+        */
+        strategyDebug(
+          this,
+          `the directory refused the wiki's own bind as \`${bindDn}\` (Admin Bind Credentials ${this.conf.bindCredentials ? 'set' : 'empty'}): ${describeAuthError(err)}`
+        )
+        throw err
+      }
 
+      const filter = searchFilter.replaceAll('{{username}}', Filter.escape(username))
+      strategyDebug(this, `searching \`${searchBase}\` (scope sub) for \`${filter}\``)
       const found = await search.search(searchBase, {
         scope: 'sub',
-        filter: searchFilter.replaceAll('{{username}}', Filter.escape(username)),
+        filter,
         sizeLimit: 2,
         ...this.attributeOptions()
       })
@@ -91,28 +130,55 @@ export default class LdapAuthentication {
         directory happened to return first.
       */
       if (found.searchEntries.length !== 1) {
+        strategyDebug(
+          this,
+          found.searchEntries.length < 1
+            ? `nothing under \`${searchBase}\` matched \`${filter}\` — check the Search Base and the Search Filter against the directory's own tree`
+            : `more than one entry matched \`${filter}\`, so it does not identify one person: ${found.searchEntries.map((one) => one.dn).join(', ')}`
+        )
         throw new Error('ERR_LOGIN_FAILED')
       }
       const entry = found.searchEntries[0]
+      strategyDebug(this, `"${username}" is \`${entry.dn}\``)
 
       await this.verifyPassword(entry.dn, password)
 
-      const id = this.attr(entry, this.conf.mappingUID || 'uid')
+      const uidField = this.conf.mappingUID || 'uid'
+      const id = this.attr(entry, uidField)
       if (!id) {
+        strategyDebug(
+          this,
+          `\`${entry.dn}\` has no \`${uidField}\` to be identified by. Its attributes are: ${this.attributeNames(entry)}`
+        )
         throw new Error('ERR_NO_PROVIDER_ACCOUNT')
       }
-      const email = this.attr(entry, this.conf.mappingEmail || 'mail')
+      const emailField = this.conf.mappingEmail || 'mail'
+      const email = this.attr(entry, emailField)
       if (!email) {
+        strategyDebug(
+          this,
+          `\`${entry.dn}\` has no address in \`${emailField}\`, and an account here is matched by address. Its attributes are: ${this.attributeNames(entry)}`
+        )
         throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
       }
+      // -> Read before the answer rather than in it, so what the directory said about this person's
+      //    groups is logged as part of the attempt and not only once a membership actually changes
+      const groups = this.conf.mapGroups === true ? await this.groupsFor(search, entry) : undefined
+      // -> Before the line below rather than in the answer, so that the log reads in the order the
+      //    work happened and "signs in" is the last thing said about the attempt
+      const pictureData = this.pictureFrom(entry)
+      strategyDebug(
+        this,
+        `\`${entry.dn}\` signs in as <${email}> with id \`${id}\`${groups ? `, in ${groups.length} directory group(s)` : ', groups not mapped'}`
+      )
       return {
         id,
         email,
         name: this.attr(entry, this.conf.mappingDisplayName || 'displayName') || email,
-        pictureData: this.pictureFrom(entry),
-        ...(this.conf.mapGroups === true
+        pictureData,
+        ...(groups
           ? {
-              groups: await this.groupsFor(search, entry),
+              groups,
               groupsExclusive: this.conf.unassignMissingGroups === true
             }
           : {})
@@ -131,12 +197,19 @@ export default class LdapAuthentication {
    * opens in the clear and upgrades before anything is sent, which is a request of its own and so a
    * second round trip. Both end up at the same place, and which one a directory offers is not this
    * module's business — the URL says.
+   *
+   * @param purpose What this connection is for, for the log: there are two per login, and a failure
+   *                on the second one is a different thing from a failure on the first
    */
-  private async connect(): Promise<Client> {
+  private async connect(purpose: string): Promise<Client> {
     const secure = this.conf.url.toLowerCase().startsWith('ldaps://')
     // -> StartTLS on an `ldaps://` URL would be upgrading a connection that is already encrypted
     const startTls = this.conf.tlsEnabled === true && !secure
     const tlsOptions = secure || startTls ? await this.tlsOptions() : undefined
+    strategyDebug(
+      this,
+      `opening a connection for ${purpose} to ${this.conf.url} (${this.protection(secure, startTls)})`
+    )
     const conn = new Client({
       url: this.conf.url,
       timeout: OPERATION_TIMEOUT_MS,
@@ -154,6 +227,24 @@ export default class LdapAuthentication {
       await conn.startTLS(tlsOptions)
     }
     return conn
+  }
+
+  /**
+   * How the connection this login is being made over is protected, as a phrase for the log.
+   *
+   * Worth saying on every attempt because it is derived rather than configured: the URL's scheme
+   * decides it, and "Use StartTLS" is silently ignored on an `ldaps://` URL that is encrypted
+   * already. A wiki whose directory is being talked to in the clear should be able to see that here.
+   */
+  private protection(secure: boolean, startTls: boolean): string {
+    if (!secure && !startTls) {
+      return 'unencrypted'
+    }
+    const scheme = secure ? 'ldaps' : 'StartTLS'
+    if (this.conf.verifyTLSCertificate === false) {
+      return `${scheme}, certificate NOT verified`
+    }
+    return `${scheme}, certificate verified${this.conf.tlsCertPath ? ` against ${this.conf.tlsCertPath}` : ''}`
   }
 
   /**
@@ -181,13 +272,28 @@ export default class LdapAuthentication {
    * a connection bound as somebody else has no further use here.
    */
   private async verifyPassword(dn: string, password: string): Promise<void> {
-    const asUser = await this.connect()
+    const asUser = await this.connect('the password check')
     try {
       await asUser.bind(dn, password)
+      strategyDebug(this, `the directory accepted the password for \`${dn}\``)
     } catch (err: any) {
       if (err instanceof InvalidCredentialsError) {
+        /*
+          Whatever the directory said with it: Active Directory reports a locked, disabled or expired
+          account as invalid credentials too, and names which in a `data` code inside the message that
+          `describe` prints. So this line is what separates "wrong password" from "this account cannot
+          sign in at all", neither of which the login screen is told apart.
+        */
+        strategyDebug(
+          this,
+          `the directory refused the password for \`${dn}\`: ${describeAuthError(err)}`
+        )
         throw new Error('ERR_LOGIN_FAILED')
       }
+      strategyDebug(
+        this,
+        `the directory could not check the password for \`${dn}\`: ${describeAuthError(err)}`
+      )
       throw err
     } finally {
       await this.release(asUser)
@@ -205,23 +311,44 @@ export default class LdapAuthentication {
   private async groupsFor(search: Client, entry: Entry): Promise<string[]> {
     const { groupSearchBase, groupSearchFilter } = this.conf
     if (!groupSearchBase || !groupSearchFilter) {
+      strategyDebug(
+        this,
+        `maps groups but ${missingSettings({ 'Group Search Base': groupSearchBase, 'Group Search Filter': groupSearchFilter })}, so there is nothing to search`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     const nameField = this.conf.groupNameField || 'name'
     const dnProperty = this.conf.groupDnProperty || 'dn'
     const dnValue = dnProperty === 'dn' ? entry.dn : this.attr(entry, dnProperty)
     if (!dnValue) {
+      strategyDebug(
+        this,
+        `maps groups by the \`${dnProperty}\` of \`${entry.dn}\`, which the entry does not have. Its attributes are: ${this.attributeNames(entry)}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
 
+    const scope = (this.conf.groupSearchScope || 'sub') as SearchOptions['scope']
+    const filter = groupSearchFilter.replaceAll('{{dn}}', Filter.escape(dnValue))
+    strategyDebug(this, `searching \`${groupSearchBase}\` (scope ${scope}) for \`${filter}\``)
     const found = await search.search(groupSearchBase, {
-      scope: (this.conf.groupSearchScope || 'sub') as SearchOptions['scope'],
-      filter: groupSearchFilter.replaceAll('{{dn}}', Filter.escape(dnValue)),
+      scope,
+      filter,
       attributes: [nameField]
     })
-    return found.searchEntries
+    const names = found.searchEntries
       .map((grp) => this.attr(grp, nameField))
       .filter((name): name is string => Boolean(name))
+    /*
+      Both numbers, because they differ for a reason worth seeing: an entry counted here but not named
+      is a group whose `groupNameField` is not the attribute this is reading, which reads on the wiki
+      side as a membership the directory did not grant.
+    */
+    strategyDebug(
+      this,
+      `${found.searchEntries.length} group entr${found.searchEntries.length === 1 ? 'y' : 'ies'} matched, ${names.length} named by \`${nameField}\`: ${names.join(', ') || 'none'}`
+    )
+    return names
   }
 
   /**
@@ -264,7 +391,14 @@ export default class LdapAuthentication {
     }
     const value = entry[name]
     const first = Array.isArray(value) ? value[0] : value
-    return Buffer.isBuffer(first) && first.length > 0 ? first : undefined
+    if (!Buffer.isBuffer(first) || first.length < 1) {
+      strategyDebug(
+        this,
+        `\`${entry.dn}\` carries no image in \`${name}\`, so no avatar was taken from the directory`
+      )
+      return undefined
+    }
+    return first
   }
 
   /**
@@ -279,12 +413,23 @@ export default class LdapAuthentication {
     if (typeof err?.message === 'string' && err.message.startsWith('ERR_')) {
       return err
     }
-    // -> The class name as well as the message: `ldapts` raises a result-code error whose message is
-    //    only the code, and "InvalidCredentialsError" is what says the wiki's own bind DN is wrong
     WIKI.logger.warn(
-      `LDAP strategy ${this.strategyId} could not complete a login: ${err.name}: ${err.message}`
+      `LDAP strategy ${this.strategyId} could not complete a login: ${describeAuthError(err)}`
     )
     return new Error('ERR_PROVIDER_REQUEST_FAILED')
+  }
+
+  /**
+   * The attribute names an entry came back with.
+   *
+   * Names only — a directory holds a person's password hash and rather more besides, and none of the
+   * values are anybody's business here. What the list answers is the question a failed mapping raises:
+   * the search asks for every attribute, so this is exactly what the four Field Mapping settings have
+   * to be chosen from.
+   */
+  private attributeNames(entry: Entry): string {
+    const names = Object.keys(entry).filter((key) => key !== 'dn')
+    return names.length > 0 ? names.join(', ') : 'none'
   }
 
   /** Close a connection without letting the close itself fail a login that already succeeded. */

@@ -919,11 +919,15 @@ class Users {
     const unmatched = profile.groups.filter(
       (name) => !all.some((grp) => grp.name.toLowerCase() === name.toLowerCase())
     )
-    if (unmatched.length > 0) {
-      WIKI.models.flags.authDebug(
-        `Strategy ${strategy.id} named ${unmatched.length} group(s) this wiki does not have, for user ${userId}: ${unmatched.join(', ')}`
-      )
-    }
+    /*
+      Both halves of the answer, and logged even when the provider named nothing: an empty claim is
+      the commonest reason a group mapping appears not to work, and it is silent everywhere else — the
+      wanted set below then simply equals the current one. What the provider said about this person is
+      logged by the module; this is what the wiki could do with it.
+    */
+    WIKI.models.flags.authDebug(
+      `Strategy ${strategy.id} named ${profile.groups.length} group(s) for user ${userId}: ${matched.length} matched a wiki group (${matched.map((grp) => grp.name).join(', ') || 'none'})${unmatched.length > 0 ? `, ${unmatched.length} did not (${unmatched.join(', ')})` : ''}`
+    )
 
     const current = await this.getUserGroupIds(userId)
     const autoEnroll = strategy.autoEnrollGroups ?? []

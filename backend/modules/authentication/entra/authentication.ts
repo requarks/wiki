@@ -1,4 +1,5 @@
 import * as client from 'openid-client'
+import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /** Where a tenant's OpenID Connect metadata lives. `{tenant}` is the one thing configurable about it. */
@@ -52,16 +53,30 @@ export default class EntraAuthentication {
     }
     const { tenantId, clientId, clientSecret } = this.conf
     if (!tenantId || !clientId || !clientSecret) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Directory (tenant) ID': tenantId, 'Application (client) ID': clientId, 'Client Secret': clientSecret })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     if (MULTI_TENANT.includes(String(tenantId).toLowerCase())) {
+      strategyDebug(
+        this,
+        `has \`${tenantId}\` as its Directory (tenant) ID, which is a multi-tenant placeholder — this module needs the tenant's own ID, since it accepts tokens from that directory alone (see MULTI_TENANT)`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
-    this.config = await client.discovery(
-      new URL(ISSUER_TEMPLATE.replace('{tenant}', encodeURIComponent(tenantId))),
-      clientId,
-      clientSecret
-    )
+    const issuer = ISSUER_TEMPLATE.replace('{tenant}', encodeURIComponent(tenantId))
+    strategyDebug(this, `reading the tenant's metadata from ${issuer}`)
+    try {
+      this.config = await client.discovery(new URL(issuer), clientId, clientSecret)
+    } catch (err: any) {
+      strategyDebug(
+        this,
+        `could not read the tenant's metadata from ${issuer}: ${describeAuthError(err)}`
+      )
+      throw err
+    }
     return this.config
   }
 
@@ -86,13 +101,26 @@ export default class EntraAuthentication {
     codeVerifier
   }: AuthFlowCallback): Promise<ProviderProfile> {
     const config = await this.configuration()
-    const tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
-      expectedState: state,
-      expectedNonce: nonce,
-      pkceCodeVerifier: codeVerifier
-    })
+    let tokens
+    try {
+      tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
+        expectedState: state,
+        expectedNonce: nonce,
+        pkceCodeVerifier: codeVerifier
+      })
+    } catch (err: any) {
+      // -> The state, the PKCE verifier, the code exchange and the ID token's signature, issuer,
+      //    audience and nonce are all checked in there, so this covers a redirect URI the app
+      //    registration does not have, an expired client secret, and a mismatched tenant alike
+      strategyDebug(this, `the tenant's answer did not check out: ${describeAuthError(err)}`)
+      throw err
+    }
     const claims = tokens.claims()
     if (!claims?.sub) {
+      strategyDebug(
+        this,
+        'the tenant returned no ID token, so there is nothing signed saying who signed in'
+      )
       throw new Error('ERR_NO_ID_TOKEN')
     }
 
@@ -103,16 +131,37 @@ export default class EntraAuthentication {
     */
     let info: Record<string, any> = claims
     if (config.serverMetadata().userinfo_endpoint) {
-      info = {
-        ...claims,
-        ...(await client.fetchUserInfo(config, tokens.access_token, claims.sub))
+      try {
+        info = {
+          ...claims,
+          ...(await client.fetchUserInfo(config, tokens.access_token, claims.sub))
+        }
+      } catch (err: any) {
+        strategyDebug(this, `the userinfo endpoint could not be read: ${describeAuthError(err)}`)
+        throw err
       }
     }
+    strategyDebug(this, `the tenant says: ${Object.keys(info).join(', ')}`)
 
-    const email = info[this.conf.emailClaim || 'email']
+    const emailClaim = this.conf.emailClaim || 'email'
+    const email = info[emailClaim]
     if (!email || typeof email !== 'string') {
+      /*
+        The single most common way an Entra strategy does not work, which is why the log says what to
+        do about it: `email` is only emitted for an account with a Mail attribute or a tenant that
+        maps the optional claim, and `preferred_username` is where the address is otherwise.
+      */
+      strategyDebug(
+        this,
+        `the \`${emailClaim}\` claim carries no address — set Email Claim to \`preferred_username\`, or map the \`email\` optional claim on the app registration`
+      )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
+    const groups = this.conf.mapGroups === true ? this.groupsFrom(info) : undefined
+    strategyDebug(
+      this,
+      `${claims.sub} signs in as <${email}>${groups ? `, in ${groups.length} tenant group(s)` : ', groups not mapped'}`
+    )
     return {
       // -> `oid` is the account's identifier within the tenant and `sub` is its identifier for this
       //    one application. `sub` is the one to link by: it is what the ID token was verified as
@@ -121,9 +170,9 @@ export default class EntraAuthentication {
       email,
       name: (info[this.conf.displayNameClaim || 'name'] as string) || email,
       picture: this.pictureFrom(info),
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: this.groupsFrom(info),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})
@@ -147,10 +196,22 @@ export default class EntraAuthentication {
 
   /** The group names — or, as Entra usually has it, the group object IDs — the claim carries. */
   private groupsFrom(info: Record<string, any>): string[] {
-    const value = info[this.conf.groupsClaim || 'groups']
+    const claim = this.conf.groupsClaim || 'groups'
+    const value = info[claim]
     const raw = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
-    return raw
+    const names = raw
       .filter((entry) => typeof entry === 'string' && entry.trim().length > 0)
       .map((entry) => entry.trim())
+    /*
+      Logged even when it is empty, and especially then: a tenant emits this claim only for an app
+      registration configured to ask for it, and an empty answer is not distinguishable on the wiki
+      side from somebody genuinely being in no group. The values are worth seeing too — object IDs
+      where an administrator expected names is the other half of why a mapping matches nothing.
+    */
+    strategyDebug(
+      this,
+      `the \`${claim}\` claim names ${names.length} group(s): ${names.join(', ') || 'none'}`
+    )
+    return names
   }
 }

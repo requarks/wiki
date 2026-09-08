@@ -8,7 +8,11 @@
 export const FLAGS = {
   /** Consumed by the frontend, which reveals unfinished features when it is on. */
   experimental: 'Unfinished features are offered in the interface.',
-  /** Consumed by `models/users.ts` and `api/authentication.ts` via `authDebug()` below. */
+  /**
+   * Consumed by `models/users.ts` and `api/authentication.ts` via `authDebug()` below, and by every
+   * authentication module through `helpers/authDebug.ts` — which is the half that says *why* a
+   * strategy refused somebody, since what reaches the login screen is only ever a coded error.
+   */
   authDebug: 'Login and account creation attempts are logged in detail.',
   /** Consumed by the query logger in `core/db.ts`. */
   sqlLog: 'Every database query is logged.'

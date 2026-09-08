@@ -196,7 +196,7 @@
           <w-btn
             class="acrylic-btn mr-2"
             flat
-            color="indigo"
+            :color="dark.isActive ? `indigo-4` : `indigo`"
             icon="la:file-export"
             @click="exportRules">
             <w-tooltip>{{ t('admin.groups.exportRules') }}</w-tooltip>
@@ -204,7 +204,7 @@
           <w-btn
             class="acrylic-btn mr-2"
             flat
-            color="indigo"
+            :color="dark.isActive ? `indigo-4` : `indigo`"
             icon="la:file-import"
             v-if="canManage"
             @click="importRules">

@@ -1,5 +1,6 @@
 import { SAML, ValidateInResponseTo } from '@node-saml/node-saml'
 import type { SamlConfig } from '@node-saml/node-saml'
+import { missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import { CustomError } from '../../../helpers/common.ts'
 import type {
   AuthFlow,
@@ -51,6 +52,10 @@ export default class SamlAuthentication {
   private saml(callbackUrl: string): SAML {
     const { entryPoint, issuer, cert } = this.conf
     if (!entryPoint || !issuer || !cert) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Login URL': entryPoint, 'Issuer / Entity ID': issuer, "Identity Provider's Certificate": cert })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     const idpCert = String(cert)
@@ -59,8 +64,16 @@ export default class SamlAuthentication {
       .filter((one) => one.length > 0)
       .slice(0, MAX_CERTS)
     if (idpCert.length < 1) {
+      strategyDebug(
+        this,
+        "the Identity Provider's Certificate holds no certificate, so no assertion can be verified"
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
+    strategyDebug(
+      this,
+      `assertions are expected from ${entryPoint} for audience \`${this.conf.audience || issuer}\`, verified against ${idpCert.length} certificate(s), posted back to ${callbackUrl}`
+    )
 
     const options: SamlConfig = {
       callbackUrl,
@@ -127,6 +140,10 @@ export default class SamlAuthentication {
    */
   async profile({ redirectUri, body }: AuthFlowCallback): Promise<ProviderProfile> {
     if (!body?.SAMLResponse) {
+      strategyDebug(
+        this,
+        `the callback carried no SAMLResponse. It carried: ${Object.keys(body ?? {}).join(', ') || 'nothing'}`
+      )
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
     const saml = this.saml(redirectUri)
@@ -145,8 +162,16 @@ export default class SamlAuthentication {
       throw new Error('ERR_LOGIN_FAILED')
     }
     if (!profile) {
+      strategyDebug(
+        this,
+        'the assertion verified but carried no subject, so there is nobody in it to sign in'
+      )
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
+    // -> The names and not the values: which attributes an identity provider actually asserts is what
+    //    the four Field Mapping settings have to be chosen from, and is never quite what its
+    //    documentation says — AD FS and Entra both send URI-shaped ones
+    strategyDebug(this, `the assertion carries: ${Object.keys(profile).join(', ')}`)
 
     /*
       Attributes are read off the profile, where `node-saml` puts each of them under its own name
@@ -156,20 +181,33 @@ export default class SamlAuthentication {
     */
     const id = this.attr(profile, this.conf.mappingUID) ?? profile.nameID
     if (!id) {
+      strategyDebug(
+        this,
+        `neither \`${this.conf.mappingUID || '(no Unique ID mapping)'}\` nor the NameID identifies this account`
+      )
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
     const email = this.attr(profile, this.conf.mappingEmail)
     if (!email) {
+      strategyDebug(
+        this,
+        `\`${this.conf.mappingEmail || '(no Email mapping)'}\` carries no address, and an account here is matched by address`
+      )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
+    const groups = this.conf.mapGroups === true ? this.groupsFrom(profile) : undefined
+    strategyDebug(
+      this,
+      `${id} signs in as <${email}>${groups ? `, in ${groups.length} asserted group(s)` : ', groups not mapped'}`
+    )
     return {
       id,
       email,
       name: this.attr(profile, this.conf.mappingDisplayName) || email,
       picture: this.attr(profile, this.conf.mappingPicture),
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: this.groupsFrom(profile),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})
@@ -233,10 +271,21 @@ export default class SamlAuthentication {
    * string, and both forms mean the same thing here.
    */
   private groupsFrom(profile: Record<string, any>): string[] {
-    const value = profile[this.conf.mappingGroups || 'memberOf']
+    const attribute = this.conf.mappingGroups || 'memberOf'
+    const value = profile[attribute]
     const raw = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
-    return raw
+    const names = raw
       .filter((entry) => typeof entry === 'string' && entry.trim().length > 0)
       .map((entry) => entry.trim())
+    /*
+      Logged even when it is empty, and especially then: a provider asserts group membership only for
+      a relying party configured to receive it, and an empty answer is not distinguishable on the
+      wiki side from somebody genuinely being in no group.
+    */
+    strategyDebug(
+      this,
+      `\`${attribute}\` names ${names.length} group(s): ${names.join(', ') || 'none'}`
+    )
+    return names
   }
 }

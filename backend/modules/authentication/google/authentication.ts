@@ -1,4 +1,5 @@
 import * as client from 'openid-client'
+import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /** Google's issuer, from which every endpoint and signing key is discovered. */
@@ -58,13 +59,26 @@ export default class GoogleAuthentication {
       return this.config
     }
     if (!this.conf.clientId || !this.conf.clientSecret) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Client ID': this.conf.clientId, 'Client Secret': this.conf.clientSecret })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
-    this.config = await client.discovery(
-      new URL(ISSUER),
-      this.conf.clientId,
-      this.conf.clientSecret
-    )
+    try {
+      this.config = await client.discovery(
+        new URL(ISSUER),
+        this.conf.clientId,
+        this.conf.clientSecret
+      )
+    } catch (err: any) {
+      // -> Google's own metadata, so this is the wiki's outbound connectivity rather than a setting
+      strategyDebug(
+        this,
+        `could not read Google's metadata from ${ISSUER}: ${describeAuthError(err)}`
+      )
+      throw err
+    }
     return this.config
   }
 
@@ -84,6 +98,7 @@ export default class GoogleAuthentication {
       url.searchParams.set('pageToken', pageToken)
     }
     let resp: Response
+    strategyDebug(this, `asking the Cloud Identity API for group memberships: ${query}`)
     try {
       resp = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' }
@@ -97,6 +112,12 @@ export default class GoogleAuthentication {
     if (!resp.ok) {
       WIKI.logger.warn(
         `Google strategy ${this.strategyId} asked the Cloud Identity API for group memberships and it answered ${resp.status}.`
+      )
+      // -> The body as well as the status, under the flag: Google's error payload names the API that
+      //    is not enabled or the permission that is missing, which the status alone does not
+      strategyDebug(
+        this,
+        `the Cloud Identity API answered ${resp.status}: ${await resp.text().catch(() => '(no body)')}`
       )
       throw new Error('ERR_PROVIDER_REQUEST_FAILED')
     }
@@ -122,6 +143,10 @@ export default class GoogleAuthentication {
     accessToken: string
   ): Promise<string[]> {
     if (!hostedDomain) {
+      strategyDebug(
+        this,
+        `<${email}> is in no Workspace (no \`hd\` claim), so it is in no groups either`
+      )
       return []
     }
     /*
@@ -144,6 +169,10 @@ export default class GoogleAuthentication {
       }
       pageToken = body?.nextPageToken
       if (!pageToken) {
+        strategyDebug(
+          this,
+          `the Cloud Identity API names ${names.length} group(s) for <${email}>, read by ${byName ? 'display name' : 'group key'}: ${names.join(', ') || 'none'}`
+        )
         return names
       }
     }
@@ -189,34 +218,66 @@ export default class GoogleAuthentication {
     codeVerifier
   }: AuthFlowCallback): Promise<ProviderProfile> {
     const config = await this.configuration()
-    const tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
-      expectedState: state,
-      expectedNonce: nonce,
-      pkceCodeVerifier: codeVerifier
-    })
+    let tokens
+    try {
+      tokens = await client.authorizationCodeGrant(config, new URL(currentUrl), {
+        expectedState: state,
+        expectedNonce: nonce,
+        pkceCodeVerifier: codeVerifier
+      })
+    } catch (err: any) {
+      strategyDebug(this, `Google's answer did not check out: ${describeAuthError(err)}`)
+      throw err
+    }
     const claims = tokens.claims() as Record<string, any> | undefined
     if (!claims?.sub) {
+      strategyDebug(
+        this,
+        'Google returned no ID token, so there is nothing signed saying who signed in'
+      )
       throw new Error('ERR_NO_ID_TOKEN')
     }
 
     const email = claims.email
     if (!email || typeof email !== 'string') {
+      strategyDebug(
+        this,
+        `the ID token carries no email claim. It carries: ${Object.keys(claims).join(', ')}`
+      )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
     if (claims.email_verified === false && this.conf.allowUnverifiedEmail !== true) {
+      strategyDebug(
+        this,
+        `Google has not verified <${email}>, and this strategy does not allow unverified addresses`
+      )
       throw new Error('ERR_EMAIL_NOT_VERIFIED')
     }
     if (this.conf.hostedDomain && claims.hd !== this.conf.hostedDomain) {
+      // -> Which domain it IS is the whole of the diagnosis: a personal account has no `hd` at all,
+      //    and a Workspace account has the one it is in, misspelled setting or not
+      strategyDebug(
+        this,
+        `<${email}> is in ${claims.hd ? `the \`${claims.hd}\` Workspace` : 'no Workspace'}, and this strategy is restricted to \`${this.conf.hostedDomain}\``
+      )
       throw new Error('ERR_ACCOUNT_NOT_ALLOWED')
     }
+    const groups =
+      this.conf.mapGroups === true
+        ? await this.groupsFor(email, claims.hd, tokens.access_token)
+        : undefined
+    strategyDebug(
+      this,
+      `${claims.sub} signs in as <${email}>${groups ? `, in ${groups.length} Workspace group(s)` : ', groups not mapped'}`
+    )
 
     return {
       id: claims.sub,
       email,
       name: (claims.name as string) || email,
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: await this.groupsFor(email, claims.hd, tokens.access_token),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})

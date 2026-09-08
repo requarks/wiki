@@ -1,3 +1,4 @@
+import { missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
 
 /** How many pages of a hundred teams are read before the answer is treated as unusable. */
@@ -48,6 +49,10 @@ export default class GitHubAuthentication {
     const clientSecret = this.conf.clientSecret || ''
     const organization = (this.conf.allowedOrganization || '').trim()
     if (!clientId || !clientSecret) {
+      strategyDebug(
+        this,
+        `is not configured: ${missingSettings({ 'Client ID': clientId, 'Client Secret': clientSecret })}`
+      )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
     if (this.conf.mapGroups === true && !organization) {
@@ -99,6 +104,12 @@ export default class GitHubAuthentication {
       headers: this.apiHeaders(accessToken)
     })
     if (!resp.ok) {
+      // -> The body as well as the status: GitHub's error payload names the scope that was not
+      //    granted or the resource that is not visible, which the status alone does not
+      strategyDebug(
+        this,
+        `GET ${path} answered ${resp.status}: ${await resp.text().catch(() => '(no body)')}`
+      )
       throw new Error(`ERR_PROVIDER_REQUEST_FAILED`)
     }
     return resp.json()
@@ -128,9 +139,14 @@ export default class GitHubAuthentication {
       headers: this.apiHeaders(accessToken)
     })
     if (resp.status === 204) {
+      strategyDebug(this, `${login} is a member of ${org}`)
       return true
     }
     if (resp.status === 404) {
+      strategyDebug(
+        this,
+        `${login} is not a member of ${org} as far as this token can see — a private membership needs the OAuth app approved by the organization`
+      )
       return false
     }
     WIKI.logger.warn(
@@ -176,6 +192,7 @@ export default class GitHubAuthentication {
         }
       }
       if (batch.length < 100) {
+        strategyDebug(this, `${names.length} team(s) in ${org}: ${names.join(', ') || 'none'}`)
         return names
       }
     }
@@ -233,14 +250,25 @@ export default class GitHubAuthentication {
     try {
       token = (await tokenResp.json()) as Record<string, any>
     } catch {
+      strategyDebug(
+        this,
+        `the token exchange answered ${tokenResp.status} with something that is not JSON — is something else answering for ${this.hosts.web}?`
+      )
       throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
     }
     if (!tokenResp.ok || token.error || !token.access_token) {
+      // -> GitHub's own account of the refusal, which names the cause: `bad_verification_code` for a
+      //    code already spent, `incorrect_client_credentials` for a Client Secret that has been reset
+      strategyDebug(
+        this,
+        `the token exchange answered ${tokenResp.status}: ${[token.error, token.error_description].filter(Boolean).join(': ') || 'no access token'}`
+      )
       throw new Error('ERR_TOKEN_EXCHANGE_FAILED')
     }
 
     const account = await this.api('/user', token.access_token)
     if (!account?.id) {
+      strategyDebug(this, 'the API answered with no account for this token')
       throw new Error('ERR_NO_PROVIDER_ACCOUNT')
     }
 
@@ -251,6 +279,13 @@ export default class GitHubAuthentication {
     const emails: any[] = await this.api('/user/emails', token.access_token)
     const email = emails?.find((entry) => entry.primary && entry.verified)?.email
     if (!email) {
+      // -> Counts rather than the addresses themselves, which are not needed to tell the two cases
+      //    apart: no addresses at all is the `user:email` scope missing, and addresses with no
+      //    verified primary among them is an account that has to confirm one at GitHub first
+      strategyDebug(
+        this,
+        `${account.login} has no verified primary address (${emails?.length ?? 0} address(es) readable, ${emails?.filter((entry) => entry.verified).length ?? 0} verified)`
+      )
       throw new Error('ERR_NO_VERIFIED_EMAIL_FROM_PROVIDER')
     }
 
@@ -260,13 +295,22 @@ export default class GitHubAuthentication {
       }
     }
 
+    const groups =
+      this.conf.mapGroups === true
+        ? await this.teamsIn(organization, token.access_token)
+        : undefined
+    strategyDebug(
+      this,
+      `${account.login} (${account.id}) signs in as <${email}>${groups ? `, on ${groups.length} team(s)` : ', groups not mapped'}`
+    )
+
     return {
       id: String(account.id),
       email,
       name: account.name || account.login,
-      ...(this.conf.mapGroups === true
+      ...(groups
         ? {
-            groups: await this.teamsIn(organization, token.access_token),
+            groups,
             groupsExclusive: this.conf.unassignMissingGroups === true
           }
         : {})
