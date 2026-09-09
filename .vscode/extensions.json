@@ -1,9 +1,7 @@
 {
-  "recommendations": [
-    "EditorConfig.editorconfig",
-    "dbaeumer.vscode-eslint",
-    "christian-kohler.path-intellisense",
-    "mrmlnc.vscode-puglint",
-    "octref.vetur"
-  ]
+    "recommendations": [
+        "myml.vscode-markdown-plantuml-preview",
+        "esbenp.prettier-vscode",
+        "jebbs.plantuml"
+    ]
 }
