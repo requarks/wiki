@@ -21,6 +21,7 @@ import WDialogHost from '@/components/shared/WDialogHost.vue'
 import WLoadingOverlay from '@/components/shared/WLoadingOverlay.vue'
 import WNotifications from '@/components/shared/WNotifications.vue'
 
+import { useAuthConfigStore } from '@/stores/authConfig'
 import { useCommonStore } from './stores/common'
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -48,6 +49,7 @@ const dark = useDark()
 
 // STORES
 
+const authConfigStore = useAuthConfigStore()
 const commonStore = useCommonStore()
 const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
@@ -213,6 +215,7 @@ async function loadBootstrap() {
     siteStore.installedLocales = data.locales ?? []
     siteStore.applySiteInfo(data.site)
     flagsStore.apply(data.flags)
+    authConfigStore.apply(data.auth)
     userStore.applyProfile(data.user)
   } catch (err) {
     console.warn(`Could not load the site configuration: ${err.message}`)

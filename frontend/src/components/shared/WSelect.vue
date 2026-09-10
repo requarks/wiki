@@ -767,6 +767,8 @@ const controlClasses = computed(() => [
   isDisabled.value ? 'pointer-events-none opacity-60' : '',
   // -> readonly keeps full contrast; only the pointer affordance goes away
   props.readonly ? 'cursor-default' : isDisabled.value ? '' : 'cursor-pointer',
+  // -> Says the field is not the reader's to change; see the stripe rule in `tailwind.css`
+  props.readonly || isDisabled.value ? 'w-input-control--locked' : '',
   // -> Room for the floated label above, matched below so the control stays centred in its row; see
   //    the fuller note in WInput
   hasFloatingLabel.value ? (showsBottom.value ? 'relative mt-2' : 'relative my-2') : ''

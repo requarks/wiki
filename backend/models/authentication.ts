@@ -133,9 +133,81 @@ function isBuiltInLocal(id: string): boolean {
 }
 
 /**
+ * The instance-wide authentication settings, i.e. the half of the `auth` settings blob a person
+ * sets. The rest of that blob — the session secret, the signing keypair, the seeded IDs — is the
+ * installation's own and is never read or written through here.
+ */
+export const AUTH_CONFIG_FIELDS = ['allowPasskeys', 'allowProfileEditing'] as const
+
+/**
  * Authentication model
  */
 class Authentication {
+  /**
+   * The instance-wide authentication settings, as the admin area expects them
+   */
+  getConfig(): Record<string, any> {
+    const auth = WIKI.config.auth ?? {}
+    const config: Record<string, any> = {}
+    for (const field of AUTH_CONFIG_FIELDS) {
+      config[field] = auth[field] !== false
+    }
+    return config
+  }
+
+  /**
+   * Keep only the fields this model owns, dropping anything else a client sends.
+   *
+   * Which is what keeps the secrets in the same blob out of reach: `certs` and `secret` are not
+   * fields of this configuration, so no route that goes through here can be talked into writing one.
+   */
+  pickFields(body: Record<string, any>): Record<string, any> {
+    const patch: Record<string, any> = {}
+    for (const field of AUTH_CONFIG_FIELDS) {
+      if (body[field] !== undefined) {
+        patch[field] = Boolean(body[field])
+      }
+    }
+    return patch
+  }
+
+  /**
+   * Save a patch of the instance-wide settings.
+   *
+   * @returns Whether the settings were saved
+   */
+  async updateConfig(patch: Record<string, any>): Promise<boolean> {
+    const previousAuth = WIKI.config.auth
+    WIKI.config.auth = { ...previousAuth, ...patch }
+
+    if (!(await WIKI.configSvc.saveToDb(['auth']))) {
+      WIKI.config.auth = previousAuth
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Whether a passkey may be registered or signed in with.
+   *
+   * Turned off, the passkeys already registered are left where they are rather than deleted — this
+   * is a setting an administrator can turn back on, and a wiki that forgot every passkey in the
+   * meantime would have made that a one-way door.
+   */
+  arePasskeysAllowed(): boolean {
+    return WIKI.config.auth?.allowPasskeys !== false
+  }
+
+  /**
+   * Whether a user may edit their own profile.
+   *
+   * Instance-wide rather than per site: the profile is one record on one account, and an account
+   * that reaches two sites of an instance cannot have it editable on one of them and not the other.
+   */
+  isProfileEditingAllowed(): boolean {
+    return WIKI.config.auth?.allowProfileEditing !== false
+  }
+
   async getStrategy(module: string) {
     return WIKI.db.select().from(authenticationTable).where(eq(authenticationTable.module, module))
   }

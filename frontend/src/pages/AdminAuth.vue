@@ -10,7 +10,21 @@
           {{ t('admin.auth.subtitle') }}
         </div>
       </div>
-      <div class="flex-none">
+      <div class="flex-none flex items-center">
+        <w-btn-toggle
+          class="mr-4"
+          v-model="state.displayMode"
+          push
+          no-caps
+          :toggle-color="dark.isActive ? `white` : `black`"
+          :toggle-text-color="dark.isActive ? `black` : `white`"
+          :text-color="dark.isActive ? `white` : `black`"
+          :color="dark.isActive ? `dark-1` : `white`"
+          :options="[
+            { label: t('admin.auth.strategies'), value: 'strategies' },
+            { label: t('admin.auth.config'), value: 'config' }
+          ]" />
+        <w-separator class="mr-4" vertical />
         <w-btn
           class="mr-2 acrylic-btn"
           icon="la:question-circle"
@@ -41,13 +55,16 @@
       </div>
     </div>
     <w-separator inset />
+    <!-- ========================================== -->
+    <!-- STRATEGIES -->
+    <!-- ========================================== -->
     <!--
       The same shape the storage view uses for a list beside what it selects: the list is as wide as
       it needs to be and the panel takes what is left, wrapping onto its own row when there is no room
       for both. A 12-column grid cannot say that -- the list is 350px, not some number of twelfths --
       which is how this ended up with the panel on `col-span-full`, i.e. underneath.
     -->
-    <div class="flex flex-wrap p-4 gap-4">
+    <div class="flex flex-wrap p-4 gap-4" v-if="state.displayMode === `strategies`">
       <div class="flex-none">
         <w-card class="rounded bg-dark">
           <w-list style="min-width: 350px" padding dark>
@@ -119,281 +136,344 @@
           </w-menu>
         </w-btn>
       </div>
-      <!-- -> `min-w-0`, or a long value inside a field would push the panel wider than the row -->
-      <div class="min-w-0 flex-1" v-if="state.strategy.id">
-        <w-card class="pb-2">
-          <w-card-header>{{ t('admin.auth.info') }}</w-card-header>
-          <w-item>
-            <blueprint-icon icon="information" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.auth.infoName`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.auth.infoNameHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section>
-              <w-input
-                outlined
-                v-model="state.strategy.displayName"
-                dense
-                hide-bottom-space
-                :aria-label="t(`admin.auth.infoName`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="shutdown" top />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.auth.enabled`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.auth.enabledHint`) }}</w-item-label>
-              <w-item-label class="text-deep-orange" v-if="isBuiltInLocal" caption>{{
-                t(`admin.auth.enabledForced`)
-              }}</w-item-label>
-              <w-item-label class="text-deep-orange" caption>{{
-                t(`admin.auth.enabledSiteHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.strategy.isEnabled"
-                :disable="isBuiltInLocal"
-                :aria-label="t(`admin.auth.enabled`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="register" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.auth.registration`) }}</w-item-label>
-              <w-item-label caption>{{
-                state.strategy.strategy.key === `local`
-                  ? t(`admin.auth.registrationLocalHint`)
-                  : t(`admin.auth.registrationHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.strategy.registration"
-                :aria-label="t(`admin.auth.registration`)" />
-            </w-item-section>
-          </w-item>
-          <template v-if="state.strategy.registration">
-            <w-separator class="my-2" inset />
-            <w-item>
-              <blueprint-icon icon="team" />
-              <w-item-section>
-                <w-item-label>{{ t(`admin.auth.autoEnrollGroups`) }}</w-item-label>
-                <w-item-label caption>{{ t(`admin.auth.autoEnrollGroupsHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section>
-                <w-select
-                  outlined
-                  :options="state.groups"
-                  v-model="state.strategy.autoEnrollGroups"
-                  multiple
-                  map-options
-                  emit-value
-                  option-value="id"
-                  option-label="name"
-                  options-dense
-                  dense
-                  hide-bottom-space
-                  :aria-label="t(`admin.users.groups`)"
-                  :loading="state.loadingGroups">
-                  <template #selected>
-                    <div class="text-caption" v-if="state.strategy.autoEnrollGroups?.length > 1">
-                      <i18n-t keypath="admin.users.groupsSelected">
-                        <template #count>
-                          <strong>{{ state.strategy.autoEnrollGroups?.length }}</strong>
-                        </template>
-                      </i18n-t>
-                    </div>
-                    <div
-                      class="text-caption"
-                      v-else-if="state.strategy.autoEnrollGroups?.length === 1">
-                      <i18n-t keypath="admin.users.groupSelected">
-                        <template #group
-                          ><strong>{{ selectedGroupName }}</strong></template
-                        >
-                      </i18n-t>
-                    </div>
-                    <span v-else />
-                  </template>
-                  <template #option="{ itemProps, opt, selected, toggleOption }">
-                    <w-item v-bind="itemProps">
-                      <w-item-section side>
-                        <w-checkbox
-                          size="sm"
-                          :model-value="selected"
-                          @update:model-value="toggleOption(opt)" />
-                      </w-item-section>
-                      <w-item-section
-                        ><w-item-label>{{ opt.name }}</w-item-label></w-item-section
-                      >
-                    </w-item>
-                  </template>
-                </w-select>
-              </w-item-section>
-            </w-item>
-            <w-separator class="my-2" inset />
-            <w-item>
-              <blueprint-icon icon="private" />
-              <w-item-section>
-                <w-item-label>{{ t(`admin.auth.allowedEmailRegex`) }}</w-item-label>
-                <w-item-label caption>{{ t(`admin.auth.allowedEmailRegexHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section>
-                <w-input
-                  outlined
-                  v-model="state.strategy.allowedEmailRegex"
-                  dense
-                  hide-bottom-space
-                  :aria-label="t(`admin.auth.allowedEmailRegex`)"
-                  prefix="/"
-                  suffix="/" />
-              </w-item-section>
-            </w-item>
-          </template>
-        </w-card>
-        <!-- ----------------------- -->
-        <!-- Configuration -->
-        <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
-          <w-card-header>{{ t('admin.auth.strategyConfiguration') }}</w-card-header>
-          <w-card-section>
-            <w-banner
-              class="mt-4"
-              v-if="!state.strategy.config || Object.keys(state.strategy.config).length < 1"
-              :class="dark.isActive ? `bg-dark-4 text-grey-5` : `bg-grey-2 text-grey-7`">
-              <em>{{ t('admin.auth.noConfigOption') }}</em>
-            </w-banner>
-          </w-card-section>
-          <template v-for="(cfg, cfgKey, idx) in state.strategy.config">
-            <template v-if="configIfCheck(cfg.if)">
-              <w-separator class="my-2" inset v-if="idx > 0" />
-              <w-item v-if="cfg.type === `boolean`" :tag="cfg.readOnly ? `div` : `label`">
-                <blueprint-icon :icon="cfg.icon" :hue-rotate="cfg.readOnly ? -45 : 0" />
+      <!--
+        `min(480px, 100%)` rather than `min-w-0`, and the same reasoning applies to the settings
+        column inside: a flex item defaults to `min-width: auto`, i.e. its own min-content, so a long
+        value in a field would push the panel wider than the row -- which is what `min-w-0` was for.
+        But zero is a floor that never stops it shrinking, and `flex-wrap` only wraps once an item
+        cannot fit at its minimum, so nothing ever wrapped: the panel just went on narrowing until
+        the settings were a squeezed strip beside a full-width info column. An explicit length is
+        also a floor, so it replaces `min-w-0` for the overflow it was preventing, and the `min(...,
+        100%)` keeps that promise on a screen narrower than the floor itself.
+      -->
+      <div class="flex-1" style="min-width: min(480px, 100%)" v-if="state.strategy.id">
+        <!--
+          The settings and the infobox beside them, the same shape as the list and this panel
+          above: the infobox is 300px wide and the settings take what is left, and the infobox drops
+          onto its own row once there is no longer room for both.
+        -->
+        <div class="flex flex-wrap gap-4">
+          <div class="flex-1" style="min-width: min(420px, 100%)">
+            <w-card class="pb-2">
+              <w-card-header>{{ t('admin.auth.info') }}</w-card-header>
+              <w-item>
+                <blueprint-icon icon="information" />
                 <w-item-section>
-                  <w-item-label>{{ cfg.title }}</w-item-label>
-                  <w-item-label :class="cfg.readOnly ? `text-orange` : ``" caption>{{
-                    cfg.hint
+                  <w-item-label>{{ t(`admin.auth.infoName`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`admin.auth.infoNameHint`) }}</w-item-label>
+                </w-item-section>
+                <w-item-section>
+                  <w-input
+                    outlined
+                    v-model="state.strategy.displayName"
+                    dense
+                    hide-bottom-space
+                    :aria-label="t(`admin.auth.infoName`)" />
+                </w-item-section>
+              </w-item>
+              <w-separator class="my-2" inset />
+              <w-item tag="label">
+                <blueprint-icon icon="shutdown" top />
+                <w-item-section>
+                  <w-item-label>{{ t(`admin.auth.enabled`) }}</w-item-label>
+                  <w-item-label caption>{{ t(`admin.auth.enabledHint`) }}</w-item-label>
+                  <w-item-label class="text-deep-orange" v-if="isBuiltInLocal" caption>{{
+                    t(`admin.auth.enabledForced`)
+                  }}</w-item-label>
+                  <w-item-label class="text-deep-orange" caption>{{
+                    t(`admin.auth.enabledSiteHint`)
                   }}</w-item-label>
                 </w-item-section>
                 <w-item-section avatar>
-                  <w-toggle v-model="cfg.value" :aria-label="cfg.title" :disable="cfg.readOnly" />
+                  <w-toggle
+                    v-model="state.strategy.isEnabled"
+                    :disable="isBuiltInLocal"
+                    :aria-label="t(`admin.auth.enabled`)" />
                 </w-item-section>
               </w-item>
-              <w-item v-else>
-                <blueprint-icon :icon="cfg.icon" :hue-rotate="cfg.readOnly ? -45 : 0" />
+              <w-separator class="my-2" inset />
+              <w-item tag="label">
+                <blueprint-icon icon="register" />
                 <w-item-section>
-                  <w-item-label>{{ cfg.title }}</w-item-label>
-                  <w-item-label :class="cfg.readOnly ? `text-orange` : ``" caption>{{
-                    cfg.hint
+                  <w-item-label>{{ t(`admin.auth.registration`) }}</w-item-label>
+                  <w-item-label caption>{{
+                    state.strategy.strategy.key === `local`
+                      ? t(`admin.auth.registrationLocalHint`)
+                      : t(`admin.auth.registrationHint`)
                   }}</w-item-label>
                 </w-item-section>
-                <w-item-section
-                  :style="cfg.type === `number` ? `flex: 0 0 150px;` : ``"
-                  :class="{ 'col-auto': cfg.enum && cfg.enumDisplay === `buttons` }">
-                  <w-btn-toggle
-                    v-if="cfg.enum && cfg.enumDisplay === `buttons`"
-                    v-model="cfg.value"
-                    push
-                    glossy
-                    no-caps
-                    toggle-color="primary"
-                    :options="cfg.enum"
-                    :disable="cfg.readOnly" />
-                  <w-select
-                    v-else-if="cfg.enum"
-                    outlined
-                    v-model="cfg.value"
-                    :options="cfg.enum"
-                    emit-value
-                    map-options
-                    dense
-                    options-dense
-                    :aria-label="cfg.title"
-                    :disable="cfg.readOnly" />
-                  <!-- -> `no-autofill` on every prop a strategy declares, not only the sensitive
-                       ones: a manager offers to fill whatever LOOKS like a credential, and a
-                       client ID or an issuer URL beside a secret is exactly that shape. What is
-                       typed here is the wiki's credential with an identity provider, never the
-                       operator's own. -->
+                <w-item-section avatar>
+                  <w-toggle
+                    v-model="state.strategy.registration"
+                    :aria-label="t(`admin.auth.registration`)" />
+                </w-item-section>
+              </w-item>
+              <template v-if="state.strategy.registration">
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="team" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.auth.autoEnrollGroups`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.auth.autoEnrollGroupsHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-select
+                      outlined
+                      :options="state.groups"
+                      v-model="state.strategy.autoEnrollGroups"
+                      multiple
+                      map-options
+                      emit-value
+                      option-value="id"
+                      option-label="name"
+                      options-dense
+                      dense
+                      hide-bottom-space
+                      :aria-label="t(`admin.users.groups`)"
+                      :loading="state.loadingGroups">
+                      <template #selected>
+                        <div
+                          class="text-caption"
+                          v-if="state.strategy.autoEnrollGroups?.length > 1">
+                          <i18n-t keypath="admin.users.groupsSelected">
+                            <template #count>
+                              <strong>{{ state.strategy.autoEnrollGroups?.length }}</strong>
+                            </template>
+                          </i18n-t>
+                        </div>
+                        <div
+                          class="text-caption"
+                          v-else-if="state.strategy.autoEnrollGroups?.length === 1">
+                          <i18n-t keypath="admin.users.groupSelected">
+                            <template #group
+                              ><strong>{{ selectedGroupName }}</strong></template
+                            >
+                          </i18n-t>
+                        </div>
+                        <span v-else />
+                      </template>
+                      <template #option="{ itemProps, opt, selected, toggleOption }">
+                        <w-item v-bind="itemProps">
+                          <w-item-section side>
+                            <w-checkbox
+                              size="sm"
+                              :model-value="selected"
+                              @update:model-value="toggleOption(opt)" />
+                          </w-item-section>
+                          <w-item-section
+                            ><w-item-label>{{ opt.name }}</w-item-label></w-item-section
+                          >
+                        </w-item>
+                      </template>
+                    </w-select>
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="private" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.auth.allowedEmailRegex`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.auth.allowedEmailRegexHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.strategy.allowedEmailRegex"
+                      dense
+                      hide-bottom-space
+                      :aria-label="t(`admin.auth.allowedEmailRegex`)"
+                      prefix="/"
+                      suffix="/" />
+                  </w-item-section>
+                </w-item>
+              </template>
+            </w-card>
+            <!-- ----------------------- -->
+            <!-- Configuration -->
+            <!-- ----------------------- -->
+            <w-card class="pb-2 mt-4">
+              <w-card-header>{{ t('admin.auth.strategyConfiguration') }}</w-card-header>
+              <w-card-section>
+                <w-banner
+                  class="mt-4"
+                  v-if="!state.strategy.config || Object.keys(state.strategy.config).length < 1"
+                  :class="dark.isActive ? `bg-dark-4 text-grey-5` : `bg-grey-2 text-grey-7`">
+                  <em>{{ t('admin.auth.noConfigOption') }}</em>
+                </w-banner>
+              </w-card-section>
+              <template v-for="(cfg, cfgKey, idx) in state.strategy.config">
+                <template v-if="configIfCheck(cfg.if)">
+                  <w-separator class="my-2" inset v-if="idx > 0" />
+                  <w-item v-if="cfg.type === `boolean`" :tag="cfg.readOnly ? `div` : `label`">
+                    <blueprint-icon :icon="cfg.icon" :hue-rotate="cfg.readOnly ? -45 : 0" />
+                    <w-item-section>
+                      <w-item-label>{{ cfg.title }}</w-item-label>
+                      <w-item-label :class="cfg.readOnly ? `text-orange` : ``" caption>{{
+                        cfg.hint
+                      }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section avatar>
+                      <w-toggle
+                        v-model="cfg.value"
+                        :aria-label="cfg.title"
+                        :disable="cfg.readOnly" />
+                    </w-item-section>
+                  </w-item>
+                  <w-item v-else>
+                    <blueprint-icon :icon="cfg.icon" :hue-rotate="cfg.readOnly ? -45 : 0" />
+                    <w-item-section>
+                      <w-item-label>{{ cfg.title }}</w-item-label>
+                      <w-item-label :class="cfg.readOnly ? `text-orange` : ``" caption>{{
+                        cfg.hint
+                      }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section
+                      :style="cfg.type === `number` ? `flex: 0 0 150px;` : ``"
+                      :class="{ 'col-auto': cfg.enum && cfg.enumDisplay === `buttons` }">
+                      <w-btn-toggle
+                        v-if="cfg.enum && cfg.enumDisplay === `buttons`"
+                        v-model="cfg.value"
+                        push
+                        glossy
+                        no-caps
+                        toggle-color="primary"
+                        :options="cfg.enum"
+                        :disable="cfg.readOnly" />
+                      <w-select
+                        v-else-if="cfg.enum"
+                        outlined
+                        v-model="cfg.value"
+                        :options="cfg.enum"
+                        emit-value
+                        map-options
+                        dense
+                        options-dense
+                        :aria-label="cfg.title"
+                        :disable="cfg.readOnly" />
+                      <!-- -> `no-autofill` on every prop a strategy declares, not only the sensitive
+                           ones: a manager offers to fill whatever LOOKS like a credential, and a
+                           client ID or an issuer URL beside a secret is exactly that shape. What is
+                           typed here is the wiki's credential with an identity provider, never the
+                           operator's own. -->
+                      <w-input
+                        v-else
+                        outlined
+                        v-model="cfg.value"
+                        dense
+                        no-autofill
+                        :type="inputTypeFor(cfg)"
+                        :aria-label="cfg.title"
+                        :disable="cfg.readOnly"
+                        @focus="(ev) => selectStoredSecret(ev, cfg)" />
+                    </w-item-section>
+                  </w-item>
+                </template>
+              </template>
+            </w-card>
+            <!-- ----------------------- -->
+            <!-- References -->
+            <!-- ----------------------- -->
+            <w-card class="pb-2 mt-4" v-if="strategyRefs.length > 0">
+              <w-card-header>
+                {{ t('admin.auth.configReference') }}
+                <template #hint>{{ t('admin.auth.configReferenceSubtitle') }}</template>
+              </w-card-header>
+              <w-item v-for="strRef of strategyRefs" :key="strRef.key">
+                <blueprint-icon :icon="strRef.icon" :hue-rotate="-45" />
+                <w-item-section>
+                  <w-item-label>{{ strRef.title }}</w-item-label>
+                  <w-item-label caption>{{ strRef.hint }}</w-item-label>
+                </w-item-section>
+                <w-item-section>
+                  <!--
+                    These carry the strategy's ID, which the server assigns — so until Apply has created
+                    it there is no URL to register with the provider, and showing one built from the
+                    placeholder ID would be showing the wrong one.
+                  -->
+                  <w-item-label v-if="state.strategy.isNew" caption>
+                    {{ t('admin.auth.refAfterSave') }}
+                  </w-item-label>
                   <w-input
                     v-else
                     outlined
-                    v-model="cfg.value"
+                    v-model="strRef.value"
                     dense
-                    no-autofill
-                    :type="inputTypeFor(cfg)"
-                    :aria-label="cfg.title"
-                    :disable="cfg.readOnly"
-                    @focus="(ev) => selectStoredSecret(ev, cfg)" />
+                    :aria-label="strRef.title"
+                    readonly />
                 </w-item-section>
               </w-item>
-            </template>
-          </template>
-        </w-card>
-        <!-- ----------------------- -->
-        <!-- References -->
-        <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4" v-if="strategyRefs.length > 0">
+            </w-card>
+          </div>
+          <div class="flex-none" style="width: 300px">
+            <!-- ----------------------- -->
+            <!-- Infobox -->
+            <!-- ----------------------- -->
+            <w-card class="rounded">
+              <w-card-section class="text-center">
+                <!-- -> The module's own icon, the same one the list on the left draws it with, so
+                     a strategy looks the same wherever this screen shows it -->
+                <w-icon :name="`img:` + state.strategy.strategy.icon" size="100px" />
+                <div class="text-subtitle2 mt-2">{{ state.strategy.strategy.title }}</div>
+                <div class="text-caption mt-2">{{ state.strategy.strategy.description }}</div>
+              </w-card-section>
+            </w-card>
+            <!-- -> Absent rather than disabled on the built-in local strategy: every account's
+                 password is registered against it, so deleting it is not a thing that can be done -->
+            <w-btn
+              v-if="!isBuiltInLocal"
+              class="w-full mt-4 acrylic-btn"
+              icon="la:trash-alt"
+              flat
+              color="negative"
+              :label="t(`admin.auth.deleteStrategy`)"
+              @click="confirmDelete" />
+            <!-- -> An unsaved strategy holds a local `new:` placeholder, not the ID the server
+                 assigns on Apply, so showing it would be showing the wrong one -->
+            <div
+              v-if="!state.strategy.isNew"
+              class="text-caption text-grey mt-4 text-center break-all">
+              ID: {{ state.strategy.id }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- CONFIGURATION -->
+    <!-- ========================================== -->
+    <div class="flex flex-wrap p-4 gap-4" v-if="state.displayMode === `config`">
+      <div class="min-w-0 flex-1">
+        <w-card class="pb-2">
           <w-card-header>
-            {{ t('admin.auth.configReference') }}
-            <template #hint>{{ t('admin.auth.configReferenceSubtitle') }}</template>
+            {{ t('admin.auth.config') }}
+            <template #hint>{{ t('admin.auth.configHint') }}</template>
           </w-card-header>
-          <w-item v-for="strRef of strategyRefs" :key="strRef.key">
-            <blueprint-icon :icon="strRef.icon" :hue-rotate="-45" />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="fingerprint-scan" />
             <w-item-section>
-              <w-item-label>{{ strRef.title }}</w-item-label>
-              <w-item-label caption>{{ strRef.hint }}</w-item-label>
+              <w-item-label>{{ t(`admin.auth.allowPasskeys`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.auth.allowPasskeysHint`) }}</w-item-label>
             </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.allowPasskeys"
+                :aria-label="t(`admin.auth.allowPasskeys`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="administrator-male" />
             <w-item-section>
-              <!--
-                These carry the strategy's ID, which the server assigns — so until Apply has created
-                it there is no URL to register with the provider, and showing one built from the
-                placeholder ID would be showing the wrong one.
-              -->
-              <w-item-label v-if="state.strategy.isNew" caption>
-                {{ t('admin.auth.refAfterSave') }}
-              </w-item-label>
-              <w-input
-                v-else
-                outlined
-                v-model="strRef.value"
-                dense
-                :aria-label="strRef.title"
-                readonly />
+              <w-item-label>{{ t(`admin.auth.allowProfileEditing`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.auth.allowProfileEditingHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.allowProfileEditing"
+                :aria-label="t(`admin.auth.allowProfileEditing`)" />
             </w-item-section>
           </w-item>
         </w-card>
-        <!-- ----------------------- -->
-        <!-- Infobox -->
-        <!-- ----------------------- -->
-        <w-card class="mt-4">
-          <w-card-section class="text-center">
-            <!-- -> `mx-auto`: `text-center` on the section does nothing for a block-level image,
-                 which sat against the left edge of every card wider than its 300px cap -->
-            <img
-              class="w-full mx-auto object-contain rounded"
-              :src="state.strategy.strategy.logo"
-              style="height: 100px; max-width: 300px" />
-            <div class="text-subtitle2 mt-2">{{ state.strategy.strategy.title }}</div>
-            <div class="text-caption mt-2">{{ state.strategy.strategy.description }}</div>
-          </w-card-section>
-        </w-card>
-        <div class="flex mt-4">
-          <div class="text-caption text-grey">ID: {{ state.strategy.id }}</div>
-          <w-space />
-          <w-btn
-            class="acrylic-btn"
-            icon="la:trash-alt"
-            flat
-            color="negative"
-            :disable="isBuiltInLocal"
-            :label="t(`admin.auth.deleteStrategy`)"
-            @click="confirmDelete">
-            <w-tooltip v-if="isBuiltInLocal">{{ t('admin.auth.deleteLocalForbidden') }}</w-tooltip>
-          </w-btn>
-        </div>
       </div>
     </div>
   </w-page>
@@ -410,6 +490,7 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { confirm } from '@/composables/dialog'
 
+import { useAuthConfigStore } from '@/stores/authConfig'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
 
@@ -419,6 +500,7 @@ const dark = useDark()
 
 // STORES
 
+const authConfigStore = useAuthConfigStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -443,12 +525,18 @@ const BUILTIN_LOCAL_STRATEGY_ID = '5a528c4c-0a82-4ad2-96a5-2b23811e6588'
 const state = reactive({
   loading: 0,
   loadingGroups: true,
+  displayMode: 'strategies',
   groups: [],
   strategies: [],
   activeStrategies: [],
   selectedStrategy: '',
   strategy: {
     strategy: {}
+  },
+  /** The instance-wide settings, which belong to no strategy — the Configuration screen. */
+  config: {
+    allowPasskeys: true,
+    allowProfileEditing: true
   }
 })
 
@@ -565,12 +653,21 @@ async function load() {
   state.loadingGroups = true
   loading.show()
   try {
-    const [modules, strategies, groups] = await Promise.all([
+    const [modules, strategies, config, groups] = await Promise.all([
       API_CLIENT.get('authentication/modules').json(),
       API_CLIENT.get('authentication/strategies').json(),
+      API_CLIENT.get('authentication/config').json(),
       API_CLIENT.get('groups').json()
     ])
     state.strategies = modules ?? []
+    state.config = { ...state.config, ...config }
+    /*
+      The running app holds these from `bootstrap`, which answered before this screen touched them —
+      so without this, an administrator who turns passkeys off goes on being offered a passkey on the
+      login screen (and their own profile goes on offering to register one) until the next full load.
+      Here rather than in `save`, so opening the screen also settles a change made from elsewhere.
+    */
+    authConfigStore.apply(state.config)
     state.activeStrategies = (strategies ?? []).map((str) => {
       const mod = state.strategies.find((m) => m.key === str.module) ?? {
         key: str.module,
@@ -666,12 +763,39 @@ async function save() {
     }
   }
 
-  if (failures.length > 0) {
+  /*
+    The instance-wide settings go with them, whichever screen is in front: both are edited in this
+    one page and Apply is the page's own button, so switching tab to check something must not be
+    what loses the edit made on the other.
+  */
+  let configFailure = null
+  try {
+    const resp = await API_CLIENT.put('authentication/config', {
+      json: {
+        allowPasskeys: state.config.allowPasskeys,
+        allowProfileEditing: state.config.allowProfileEditing
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+  } catch (err) {
+    configFailure = apiErrorMessage(err)
+  }
+
+  if (failures.length > 0 || configFailure) {
     for (const failure of failures) {
       notify({
         type: 'negative',
         message: t('admin.auth.saveFailed', { strategy: failure.name }),
         caption: failure.message
+      })
+    }
+    if (configFailure) {
+      notify({
+        type: 'negative',
+        message: t('admin.auth.configSaveFailed'),
+        caption: configFailure
       })
     }
   } else {

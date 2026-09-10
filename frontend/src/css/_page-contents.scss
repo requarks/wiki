@@ -1756,9 +1756,23 @@
     so growing the host box would leave a 1em glyph centred in a 1.4em one. Scaling what that `em`
     measures against grows the drawing. An explicit `width` on the element is in pixels and is
     untouched by this, exactly as the inline style above leaves the inlined form alone.
+
+    Aligned here rather than left alone, which is the other difference: Preflight gives every `svg`
+    `vertical-align: middle`, so the inlined form sits centred on the line without asking, while the
+    element is a custom tag Preflight never matches and its own `:host` rule sits it on the baseline
+    -- a 1.4em box on the baseline rides up over the text it was written into. An outer-tree
+    declaration beats a shadow tree's `:host` whatever the specificity, so this is all it takes, and
+    saying it here is what makes the editor's preview and the saved page the same picture.
+
+    `inline` is the author asking for the baseline instead, and it still means that: the attribute
+    nudges the element to the -0.125em Iconify aligns text-height icons by, which is exactly what
+    `inlineIcons` writes onto the saved `<svg>` for the same attribute.
   */
   iconify-icon {
     font-size: 1.4em;
+  }
+  iconify-icon:not([inline]) {
+    vertical-align: middle;
   }
 
   /* Twemoji, which the renderer swaps in for `:shortcodes:` */

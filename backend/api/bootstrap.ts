@@ -4,14 +4,15 @@ import type { FastifyInstance } from 'fastify'
 /**
  * Bootstrap API Route
  *
- * The three things the app has to know before it can draw anything: which site it is on, which system
- * flags are set, and who is asking. Each has an endpoint of its own — the admin area reads the flags,
- * the login flow asks who is logged in once that has changed — but a full load needs all three at
- * once, and asking for them one at a time is three round trips before the first pixel.
+ * The things the app has to know before it can draw anything: which site it is on, which system flags
+ * are set, how the instance authenticates, and who is asking. Each has an endpoint of its own — the
+ * admin area reads the flags, the login flow asks who is logged in once that has changed — but a full
+ * load needs all of them at once, and asking one at a time is that many round trips before the first
+ * pixel.
  *
- * None of them touches the database: the site configurations, the flags and the locale list are in
- * memory, and the session carries the user. So what this saves is the round trips, which is the whole
- * cost.
+ * None of them touches the database: the site configurations, the flags, the authentication settings
+ * and the locale list are in memory, and the session carries the user. So what this saves is the
+ * round trips, which is the whole cost.
  */
 async function routes(app: FastifyInstance) {
   app.get<{ Querystring: { hostname?: string } }>(
@@ -23,7 +24,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Everything the app needs to start',
         description:
-          'The site for the hostname, the system flags, and the current session — the same answers `sites/{hostname}`, `system/flags` and `users/whoami` give, in one request.\n\nCarries the session, so it is never cached.',
+          'The site for the hostname, the system flags, the instance-wide authentication settings and the current session — the same answers `sites/{hostname}`, `system/flags`, `authentication/config` and `users/whoami` give, in one request.\n\nThe authentication settings are here rather than read from their own endpoint because that one is behind `manage:system`, while what they decide — whether a passkey may be signed in with, whether a profile may be edited — has to be known to whoever is looking, logged in or not.\n\nCarries the session, so it is never cached.',
         tags: ['System'],
         querystring: {
           type: 'object',
@@ -37,11 +38,12 @@ async function routes(app: FastifyInstance) {
         },
         response: {
           200: {
-            description: 'Site, flags and session',
+            description: 'Site, flags, authentication settings and session',
             type: 'object',
             properties: {
               site: { $ref: 'Site#' },
               flags: { $ref: 'SystemFlags#' },
+              auth: { $ref: 'AuthConfig#' },
               user: {
                 type: 'object',
                 description:
@@ -76,6 +78,7 @@ async function routes(app: FastifyInstance) {
           isEnabled: site.isEnabled
         },
         flags: WIKI.models.flags.getFlags(),
+        auth: WIKI.models.authentication.getConfig(),
         user: whoAmI(req),
         locales: await WIKI.models.locales.getInstalledLocales()
       }

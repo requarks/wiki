@@ -202,19 +202,6 @@
             </w-item>
             <w-separator class="my-2" inset />
           </template>
-          <w-item tag="label">
-            <blueprint-icon icon="administrator-male" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.allowProfile`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.allowProfileHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.features.profile"
-                :aria-label="t(`admin.general.allowProfile`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
           <template v-if="flagsStore.experimental">
             <w-item>
               <blueprint-icon icon="star-half-empty" />
@@ -665,8 +652,7 @@ function defaultConfig() {
       ratings: false,
       ratingsMode: 'off',
       comments: false,
-      reasonForChange: 'required',
-      profile: false
+      reasonForChange: 'required'
     },
     discoverable: false,
     defaults: {
@@ -794,7 +780,6 @@ async function save() {
           browse: state.config.features?.browse ?? false,
           comments: state.config.features?.comments ?? false,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
-          profile: state.config.features?.profile ?? false,
           reasonForChange: state.config.features?.reasonForChange ?? 'required',
           search: state.config.features?.search ?? false
         },

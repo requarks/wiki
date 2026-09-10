@@ -106,6 +106,12 @@ defaults:
       hideLocal: false
       loginBgUrl: ''
       secret: 'abcdef1234567890abcdef1234567890abcdef'
+      # Whether passkeys may be used at all. Off, a passkey can neither be registered nor signed in
+      # with — the ones already registered are kept, and work again the moment it is back on.
+      allowPasskeys: true
+      # Whether a user may edit their own profile — their name, their location, their avatar. Off
+      # for an instance whose user records come from an identity provider and are written there.
+      allowProfileEditing: true
     security:
       corsMode: 'OFF'
       corsConfig: ''

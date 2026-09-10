@@ -70,7 +70,9 @@ class Settings {
           secret: crypto.randomBytes(32).toString('hex'),
           rootAdminGroupId: ids.groupAdminId,
           rootAdminUserId: ids.userAdminId,
-          guestUserId: ids.userGuestId
+          guestUserId: ids.userGuestId,
+          allowPasskeys: true,
+          allowProfileEditing: true
         }
       },
       {

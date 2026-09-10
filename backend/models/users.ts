@@ -78,6 +78,8 @@ export interface UserProfileAuthMethod {
     isPasswordLoginEnabled: boolean
     /** Whether the account has another way in, and may therefore turn password login off. */
     canDisablePasswordLogin: boolean
+    /** Whether the strategy lets a user change this password from their own profile. */
+    canChangePassword: boolean
   }
 }
 
@@ -216,16 +218,19 @@ const maxTfaAttempts = 5
  * How many ways into the account remain if the given provider stops working: the other providers
  * linked to it, plus every registered passkey.
  *
- * A provider that is itself restricted does not count — it is no way in either. Passkeys are counted
- * whichever host they were registered against: on a multi-site instance one bound to another site
- * still leaves the account reachable, which is what this guards against.
+ * A provider that is itself restricted does not count — it is no way in either. Neither is a passkey
+ * on an instance where passkeys are turned off, however many the account has registered. The ones
+ * that do count are counted whichever host they were registered against: on a multi-site instance one
+ * bound to another site still leaves the account reachable, which is what this guards against.
  */
 function countAlternativeLogins(user: any, strategyId: string): number {
   const auth = (user.auth ?? {}) as Record<string, any>
   const otherProviders = Object.entries(auth).filter(
     ([id, config]) => id !== strategyId && !config?.restrictLogin
   ).length
-  const passkeys = ((user.passkeys ?? {}).authenticators ?? []).length
+  const passkeys = WIKI.models.authentication.arePasskeysAllowed()
+    ? ((user.passkeys ?? {}).authenticators ?? []).length
+    : 0
   return otherProviders + passkeys
 }
 
@@ -1028,7 +1033,12 @@ class Users {
       return []
     }
 
-    const strategies = await WIKI.db.select().from(authenticationTable)
+    /*
+      The completed strategies rather than the raw rows: a prop declared by a module after a strategy
+      was configured is missing from what is stored, and `allowPasswordChange` — like `enforceTfa`
+      below — has to read as the module's default there rather than as absent.
+    */
+    const strategies = await WIKI.models.authentication.getActiveStrategies()
     const methods: UserProfileAuthMethod[] = []
     for (const [strategyId, rawConfig] of Object.entries(
       (user.auth ?? {}) as Record<string, any>
@@ -1048,7 +1058,11 @@ class Users {
             config.tfaRequired || (strategy?.config as Record<string, any>)?.enforceTfa
           ),
           isPasswordLoginEnabled: !config.restrictLogin,
-          canDisablePasswordLogin: countAlternativeLogins(user, strategyId) > 0
+          canDisablePasswordLogin: countAlternativeLogins(user, strategyId) > 0,
+          // -> `!== false` rather than `=== true`, so a module that declares no such prop at all is
+          //    not read as forbidding something it has no opinion about
+          canChangePassword:
+            (strategy?.config as Record<string, any>)?.allowPasswordChange !== false
         }
       })
     }

@@ -550,6 +550,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { localizeError } from '@/helpers/localization'
 
+import { useAuthConfigStore } from '@/stores/authConfig'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -564,6 +565,7 @@ const dark = useDark()
 
 // STORES
 
+const authConfigStore = useAuthConfigStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -688,8 +690,13 @@ const passwordStrength = computed(() => {
   }
 })
 
+/*
+  Both halves have to hold: an instance can turn passkeys off, and a browser that cannot do WebAuthn
+  cannot answer a challenge. The button is absent rather than disabled either way -- there is nothing
+  a person could do about either one from this screen.
+*/
 const canUsePasskeys = computed(() => {
-  return browserSupportsWebAuthn()
+  return authConfigStore.allowPasskeys && browserSupportsWebAuthn()
 })
 
 /** The 2FA secret in groups of four, which is how a 32-character string stays readable to type. */

@@ -1048,6 +1048,9 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      if (!WIKI.models.authentication.arePasskeysAllowed()) {
+        return reply.forbidden('Passkeys are turned off on this wiki.')
+      }
       try {
         const { authOptions, pending } = await WIKI.models.passkeys.startLogin({
           hostname: req.hostname,
@@ -1112,6 +1115,11 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
+      // -> The challenge is refused too, so this is the case of one issued before the setting was
+      //    turned off. A passkey stops being a way in the moment it is: nothing here is deleted.
+      if (!WIKI.models.authentication.arePasskeysAllowed()) {
+        return reply.forbidden('Passkeys are turned off on this wiki.')
+      }
       try {
         const result = await WIKI.models.passkeys.verifyLogin(
           {
@@ -1461,6 +1469,82 @@ async function routes(app: FastifyInstance) {
       return {
         ok: true,
         redirect
+      }
+    }
+  )
+
+  /**
+   * GET THE INSTANCE-WIDE AUTHENTICATION CONFIGURATION
+   */
+  app.get(
+    '/authentication/config',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the instance-wide authentication settings',
+        description:
+          'The settings that hold for every site: whether passkeys may be used, and whether a user may edit their own profile. Which strategies a site offers is part of that site’s configuration instead.',
+        tags: ['Authentication'],
+        response: {
+          200: { $ref: 'AuthConfig#' }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.authentication.getConfig()
+    }
+  )
+
+  /**
+   * UPDATE THE INSTANCE-WIDE AUTHENTICATION CONFIGURATION
+   */
+  app.put<{ Body: Record<string, any> }>(
+    '/authentication/config',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Update the instance-wide authentication settings',
+        description:
+          'Accepts any subset of the fields, and applies at once on every instance — nothing here is read at boot. Turning passkeys off leaves the registered ones in place: they cannot be used while it is off, and work again as soon as it is back on.',
+        tags: ['Authentication'],
+        body: { $ref: 'AuthConfig#' },
+        response: {
+          200: {
+            description: 'Authentication configuration updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const patch = WIKI.models.authentication.pickFields(req.body)
+      if (Object.keys(patch).length < 1) {
+        return reply.badRequest('No valid authentication setting was provided.')
+      }
+
+      if (!(await WIKI.models.authentication.updateConfig(patch))) {
+        return reply.internalServerError('Failed to save the authentication configuration.')
+      }
+
+      // -> Recorded in full, as the security settings are: neither of these is a secret, and what
+      //    they were set to is exactly what gets asked about after somebody loses a way in
+      await audit(req, 'admin', 'updateAuthConfig', patch)
+
+      return {
+        ok: true,
+        message: 'Authentication configuration saved successfully.'
       }
     }
   )

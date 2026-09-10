@@ -118,7 +118,6 @@ class Sites {
               ratings: false,
               ratingsMode: 'off',
               comments: false,
-              profile: true,
               reasonForChange: 'optional',
               search: true
             },
@@ -384,7 +383,6 @@ class Sites {
           ratings: false,
           ratingsMode: 'off',
           comments: false,
-          profile: true,
           reasonForChange: 'optional',
           search: true
         },

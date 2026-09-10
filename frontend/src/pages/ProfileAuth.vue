@@ -24,6 +24,10 @@
               class="text-caption text-grey">
               {{ t('profile.authPasswordLoginOnlyMethod') }}
             </div>
+            <!-- -> Says where the missing menu item went, for the same reason the line above does -->
+            <div v-if="!auth.config.canChangePassword" class="text-caption text-grey">
+              {{ t('profile.authPasswordChangeDisabled') }}
+            </div>
           </w-item-section>
           <!--
             One trigger rather than a row of buttons: these are occasional actions on a row that also
@@ -68,7 +72,12 @@
                   in the source, so `color="blue-7"` would compile to a class that does not exist.
                 -->
                   <w-list dense padding style="min-width: 240px">
-                    <w-item clickable @click="changePassword(auth.authId)">
+                    <!-- -> Absent rather than disabled when the strategy forbids it: the reason is
+                         on the row itself, and the server refuses the call either way -->
+                    <w-item
+                      v-if="auth.config.canChangePassword"
+                      clickable
+                      @click="changePassword(auth.authId)">
                       <w-item-section avatar class="!min-w-0 !pr-2">
                         <w-icon name="la:key" class="text-blue-7" />
                       </w-item-section>
@@ -143,7 +152,12 @@
           </w-item-section>
         </w-item>
       </w-list>
-      <div class="mt-4">
+      <!--
+        Turned off instance-wide, the passkeys above stay listed and stay removable: the setting can
+        be turned back on, and what is registered then starts working again. What goes is the one
+        thing that cannot be done while it is off.
+      -->
+      <div class="mt-4" v-if="authConfigStore.allowPasskeys">
         <w-btn
           icon="la:plus"
           unelevated
@@ -151,6 +165,7 @@
           color="primary"
           @click="setupPasskey" />
       </div>
+      <div class="text-body2 text-negative mt-4" v-else>{{ t('profile.passkeysDisabled') }}</div>
     </div>
 
     <w-inner-loading :showing="state.loading > 0" />
@@ -172,6 +187,12 @@ import { localizeError } from '@/helpers/localization'
 import ChangePwdDialog from '@/components/ChangePwdDialog.vue'
 import SetupTfaDialog from '@/components/SetupTfaDialog.vue'
 import PasskeyCreateDialog from '@/components/PasskeyCreateDialog.vue'
+
+import { useAuthConfigStore } from '@/stores/authConfig'
+
+// STORES
+
+const authConfigStore = useAuthConfigStore()
 
 // I18N
 

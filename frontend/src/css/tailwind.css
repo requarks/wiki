@@ -466,6 +466,36 @@
   }
 
   /*
+    A field that cannot be typed into, hatched.
+
+    Nothing else said so. A disabled control has `opacity-60`, which reads as "dimmer" rather than
+    "locked" and says nothing at all about a READONLY one -- and readonly is the case that matters
+    here, since a profile whose name comes from an identity provider draws its fields at full
+    contrast with a live-looking cursor. The hatching is the one state a glance can tell apart from
+    an empty field.
+
+    A background-image over the control's own background-color, so it composes with whichever fill
+    the variant chose (white, the dark well, `bg-black/4`) instead of replacing it. Hard stops rather
+    than a soft gradient: the stripe is barely there as it is, and an interpolated edge would blur it
+    into a flat tint at this alpha. Band and gap are the same 4px, so it reads as one alternating
+    pattern rather than as lines ruled across a field -- an 8px period, fine enough to show on a 36px
+    dense field and coarse enough not to moire on a full-height one.
+  */
+  .w-input-control--locked {
+    --w-input-stripe: rgb(0 0 0 / 0.03);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      var(--w-input-stripe) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  /* -> Higher alpha than the light-mode value, since white over a dark fill separates less */
+  body.body--dark .w-input-control--locked {
+    --w-input-stripe: rgb(255 255 255 / 0.045);
+  }
+
+  /*
     The picker button on a date or time field, in dark mode.
 
     The browser draws it itself, as a black glyph, and gives it no colour to set -- so on a dark

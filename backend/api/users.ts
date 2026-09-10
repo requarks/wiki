@@ -76,18 +76,26 @@ async function systemUserGuard(req: FastifyRequest, userId: string): Promise<Cus
 }
 
 /**
- * Whether self-service profile editing is enabled on the site being browsed.
- *
- * It is a per-site feature: an instance whose user data comes from an external identity provider turns
- * it off. The site is resolved from the request hostname, which is how the admin flag is scoped; an
- * unresolvable hostname leaves the feature at its default.
+ * The profile fields an identity provider owns: who the person is, as the wiki displays them.
+ * `allowProfileEditing` is what says whether they are the user's to change here.
  */
-async function isProfileEditable(req: FastifyRequest): Promise<boolean> {
-  const site = req.hostname
-    ? await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname })
-    : null
-  return !site || site.config?.features?.profile !== false
-}
+const IDENTITY_PROFILE_FIELDS = ['name', 'location', 'jobTitle', 'pronouns'] as const
+
+/**
+ * The rest of the profile: how the wiki behaves for this one person.
+ *
+ * Never gated on `allowProfileEditing`, because no identity provider owns them — a time zone, a date
+ * format and a colour-vision setting are properties of whoever is reading, not of the account record
+ * an administrator is keeping authoritative. Turning profile editing off to keep names in step with
+ * a directory must not take somebody's accessibility settings away with it.
+ */
+const PERSONAL_PROFILE_FIELDS = [
+  'timezone',
+  'dateFormat',
+  'timeFormat',
+  'appearance',
+  'cvd'
+] as const
 
 /**
  * Users API Routes
@@ -273,7 +281,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Update the logged in user's own profile",
         description:
-          'Updates any subset of the profile fields; omitted ones are left unchanged. Requires the current site to have the `profile` feature enabled. The email cannot be changed here, and neither can any field an administrator owns.',
+          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the time zone, date and time formats, appearance and colour-vision settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
         tags: ['Users'],
         body: {
           $ref: 'UserProfileUpdate#'
@@ -302,10 +310,6 @@ async function routes(app: FastifyInstance) {
       if (!userId) {
         return reply.unauthorized()
       }
-      if (!(await isProfileEditable(req))) {
-        return reply.forbidden('Profile editing is disabled on this site.')
-      }
-
       // -> A bad time zone would break every date the user sees, and the list of valid zones is only
       //    known at runtime, so it cannot be expressed as a schema enum
       if (req.body.timezone !== undefined && req.body.timezone !== '') {
@@ -318,19 +322,17 @@ async function routes(app: FastifyInstance) {
       }
 
       const patch: UserProfilePatch = {}
-      for (const key of [
-        'name',
-        'location',
-        'jobTitle',
-        'pronouns',
-        'timezone',
-        'dateFormat',
-        'timeFormat',
-        'appearance',
-        'cvd'
-      ] as const) {
+      for (const key of [...IDENTITY_PROFILE_FIELDS, ...PERSONAL_PROFILE_FIELDS] as const) {
         if (req.body[key] !== undefined) {
           patch[key] = req.body[key]
+        }
+      }
+      if (!WIKI.models.authentication.isProfileEditingAllowed()) {
+        const refused = IDENTITY_PROFILE_FIELDS.filter((key) => patch[key] !== undefined)
+        if (refused.length > 0) {
+          return reply.forbidden(
+            `Profile editing is disabled on this wiki: ${refused.join(', ')} cannot be changed here.`
+          )
         }
       }
       if (Object.keys(patch).length < 1) {
@@ -379,7 +381,7 @@ async function routes(app: FastifyInstance) {
     {
       schema: {
         summary: "Replace the logged in user's own avatar",
-        description: `The body is the raw image, not a multipart form — send the file itself with its \`Content-Type\`. At most ${avatarUploadLimit / 1024 / 1024} MB, and it must really be one of the accepted formats: the bytes are checked, not the declared type. Resized to a 180x180 JPEG when the Sharp extension is installed, otherwise stored as uploaded. Requires the current site to have the \`profile\` feature enabled.`,
+        description: `The body is the raw image, not a multipart form — send the file itself with its \`Content-Type\`. At most ${avatarUploadLimit / 1024 / 1024} MB, and it must really be one of the accepted formats: the bytes are checked, not the declared type. Resized to a 180x180 JPEG when the Sharp extension is installed, otherwise stored as uploaded. Requires profile editing to be enabled on this wiki (Administration → Authentication).`,
         tags: ['Users'],
         consumes: [...imageMimeTypes],
         response: {
@@ -403,8 +405,8 @@ async function routes(app: FastifyInstance) {
       if (!userId) {
         return reply.unauthorized()
       }
-      if (!(await isProfileEditable(req))) {
-        return reply.forbidden('Profile editing is disabled on this site.')
+      if (!WIKI.models.authentication.isProfileEditingAllowed()) {
+        return reply.forbidden('Profile editing is disabled on this wiki.')
       }
 
       const data = req.body
@@ -442,7 +444,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Remove the logged in user's own avatar",
         description:
-          'Leaves the user to be rendered as a placeholder again. Succeeds even if there was no avatar to remove. Requires the current site to have the `profile` feature enabled.',
+          'Leaves the user to be rendered as a placeholder again. Succeeds even if there was no avatar to remove. Requires profile editing to be enabled on this wiki (Administration → Authentication).',
         tags: ['Users'],
         response: {
           200: {
@@ -465,8 +467,8 @@ async function routes(app: FastifyInstance) {
       if (!userId) {
         return reply.unauthorized()
       }
-      if (!(await isProfileEditable(req))) {
-        return reply.forbidden('Profile editing is disabled on this site.')
+      if (!WIKI.models.authentication.isProfileEditingAllowed()) {
+        return reply.forbidden('Profile editing is disabled on this wiki.')
       }
 
       await WIKI.models.users.clearAvatar(userId)
@@ -663,6 +665,11 @@ async function routes(app: FastifyInstance) {
                           type: 'boolean',
                           description:
                             'Whether the account has another way in — a passkey or another linked provider — and may therefore turn password login off.'
+                        },
+                        canChangePassword: {
+                          type: 'boolean',
+                          description:
+                            'Whether this strategy lets a user change their own password here. False where an administrator has turned `allowPasswordChange` off, which does not stop a password change the wiki itself demands at sign-in.'
                         }
                       }
                     }
@@ -700,7 +707,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Change the logged in user's own password",
         description:
-          'The current password has to be given, and is what authorizes the change. Only a provider that stores the password on this instance can be changed here. Also clears any pending forced password change.',
+          'The current password has to be given, and is what authorizes the change. Only a provider that stores the password on this instance can be changed here, and only while its `allowPasswordChange` setting is on. Also clears any pending forced password change.',
         tags: ['Users'],
         body: {
           type: 'object',
@@ -731,6 +738,17 @@ async function routes(app: FastifyInstance) {
       const userId = sessionUserId(req)
       if (!userId) {
         return reply.unauthorized()
+      }
+
+      /*
+        The strategy's own setting, not an instance-wide one: a wiki whose passwords are handed out
+        by an administrator turns it off, and the strategy is where that is configured. It governs
+        this route alone — a password change the wiki DEMANDS at sign-in (`mustChangePwd`) runs
+        through the login continuation and is not somebody choosing to change their password.
+      */
+      const strategy = await WIKI.models.authentication.getStrategyById(req.body.strategyId)
+      if (strategy?.config?.allowPasswordChange === false) {
+        return reply.forbidden('This authentication strategy does not allow password changes.')
       }
 
       try {
@@ -1029,6 +1047,10 @@ async function routes(app: FastifyInstance) {
         return reply.unauthorized()
       }
 
+      if (!WIKI.models.authentication.arePasskeysAllowed()) {
+        return reply.forbidden('Passkeys are turned off on this wiki.')
+      }
+
       try {
         const { registrationOptions, pending } = await WIKI.models.passkeys.startRegistration({
           userId,
@@ -1090,6 +1112,10 @@ async function routes(app: FastifyInstance) {
       const userId = sessionUserId(req)
       if (!userId) {
         return reply.unauthorized()
+      }
+
+      if (!WIKI.models.authentication.arePasskeysAllowed()) {
+        return reply.forbidden('Passkeys are turned off on this wiki.')
       }
 
       try {

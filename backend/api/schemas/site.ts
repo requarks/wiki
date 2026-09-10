@@ -96,9 +96,6 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           comments: {
             type: 'boolean'
           },
-          profile: {
-            type: 'boolean'
-          },
           reasonForChange: {
             type: 'string',
             enum: ['off', 'optional', 'required']

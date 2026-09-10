@@ -467,6 +467,8 @@ const controlClasses = computed(() => [
       ? 'bg-white dark:bg-black/20'
       : 'rounded-b-none bg-black/4 dark:bg-white/6',
   props.disable || props.disabled ? 'pointer-events-none opacity-60' : '',
+  // -> Says the field is not the reader's to change; see the stripe rule in `tailwind.css`
+  props.readonly || props.disable || props.disabled ? 'w-input-control--locked' : '',
   /*
     `relative` for the outline and the label. The margin is the room the floated label needs above the
     control, and it is matched below so the field's box stays symmetric about the control -- otherwise

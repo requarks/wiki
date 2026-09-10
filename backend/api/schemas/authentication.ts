@@ -94,6 +94,27 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * AUTH CONFIG - The instance-wide authentication settings. Used both ways: as the response, and
+   * as a partial update body
+   */
+  app.addSchema({
+    $id: 'AuthConfig',
+    type: 'object',
+    properties: {
+      allowPasskeys: {
+        type: 'boolean',
+        description:
+          'Whether a passkey may be registered or signed in with. Turned off, the passkeys already registered are kept and start working again the moment it is turned back on.'
+      },
+      allowProfileEditing: {
+        type: 'boolean',
+        description:
+          'Whether a user may edit their own profile. Off for an instance whose user records are owned by an identity provider.'
+      }
+    }
+  })
+
+  /**
    * AUTH STRATEGY - A configured instance of a module
    */
   app.addSchema({

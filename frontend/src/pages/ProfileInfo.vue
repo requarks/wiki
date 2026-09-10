@@ -119,8 +119,7 @@
           dense
           options-dense
           hide-bottom-space
-          :aria-label="t(`admin.general.defaultTimezone`)"
-          :readonly="!canEdit" />
+          :aria-label="t(`admin.general.defaultTimezone`)" />
       </w-item-section>
     </w-item>
     <w-separator inset spaced="sm" />
@@ -139,8 +138,7 @@
           dense
           hide-bottom-space
           :aria-label="t(`admin.general.defaultDateFormat`)"
-          :options="dateFormats"
-          :readonly="!canEdit" />
+          :options="dateFormats" />
       </w-item-section>
     </w-item>
     <w-separator inset spaced="sm" />
@@ -158,7 +156,6 @@
           no-caps
           toggle-color="primary"
           :options="timeFormats"
-          :disable="!canEdit"
           :aria-label="t(`profile.timeFormat`)" />
       </w-item-section>
     </w-item>
@@ -177,7 +174,6 @@
           no-caps
           toggle-color="primary"
           :options="appearances"
-          :disable="!canEdit"
           :aria-label="t(`profile.appearance`)" />
       </w-item-section>
     </w-item>
@@ -196,11 +192,12 @@
           no-caps
           toggle-color="primary"
           :options="cvdChoices"
-          :disable="!canEdit"
           :aria-label="t(`profile.cvd`)" />
       </w-item-section>
     </w-item>
-    <div v-if="canEdit" class="actions-bar mt-6">
+    <!-- -> Always: the preferences and accessibility settings below are savable whether or not the
+         information above is editable -->
+    <div class="actions-bar mt-6">
       <w-btn
         icon="la:check"
         unelevated
@@ -220,12 +217,12 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 import { computed, onMounted, reactive } from 'vue'
 
-import { useSiteStore } from '@/stores/site'
+import { useAuthConfigStore } from '@/stores/authConfig'
 import { useUserStore } from '@/stores/user'
 
 // STORES
 
-const siteStore = useSiteStore()
+const authConfigStore = useAuthConfigStore()
 const userStore = useUserStore()
 
 // I18N
@@ -281,7 +278,7 @@ const cvdChoices = [
 ]
 const timezones = Intl.supportedValuesOf('timeZone')
 
-const canEdit = computed(() => siteStore.features?.profile)
+const canEdit = computed(() => authConfigStore.allowProfileEditing)
 
 // METHODS
 
@@ -324,13 +321,22 @@ async function save() {
     message: t('profile.saving')
   })
   try {
-    // -> The email is displayed read-only and cannot be changed here, so it is left out entirely
+    /*
+      The email is displayed read-only and cannot be changed here, so it is left out entirely — and
+      so is everything an identity provider owns while profile editing is off, which the server
+      refuses rather than ignores. What is left is this person's own settings, which are theirs to
+      change either way.
+    */
     const resp = await API_CLIENT.put('users/profile', {
       json: {
-        name: state.config.name,
-        location: state.config.location,
-        jobTitle: state.config.jobTitle,
-        pronouns: state.config.pronouns,
+        ...(canEdit.value
+          ? {
+              name: state.config.name,
+              location: state.config.location,
+              jobTitle: state.config.jobTitle,
+              pronouns: state.config.pronouns
+            }
+          : {}),
         timezone: state.config.timezone,
         dateFormat: state.config.dateFormat,
         timeFormat: state.config.timeFormat,

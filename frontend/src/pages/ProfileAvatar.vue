@@ -60,12 +60,12 @@ import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { computed, reactive } from 'vue'
 
-import { useSiteStore } from '@/stores/site'
+import { useAuthConfigStore } from '@/stores/authConfig'
 import { useUserStore } from '@/stores/user'
 
 // STORES
 
-const siteStore = useSiteStore()
+const authConfigStore = useAuthConfigStore()
 const userStore = useUserStore()
 
 // I18N
@@ -88,7 +88,7 @@ const state = reactive({
 /** What the upload endpoint accepts. */
 const acceptedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
-const canEdit = computed(() => siteStore.features?.profile)
+const canEdit = computed(() => authConfigStore.allowProfileEditing)
 
 // METHODS
 

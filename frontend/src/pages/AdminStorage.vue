@@ -77,15 +77,25 @@
           </w-list>
         </w-card>
       </div>
-      <div class="min-w-0 flex-1" v-if="state.target">
+      <!--
+        The floors are what make the wrapping real: a flex item's default `min-width: auto` is its
+        own min-content, which a long value in a field can make wider than the row, and the `min-w-0`
+        that used to prevent that let both columns shrink for ever instead -- `flex-wrap` only wraps
+        an item that cannot fit at its minimum, so the settings became a squeezed strip beside a
+        full-width infobox rather than ever dropping it below. A length is a floor too, so it does
+        `min-w-0`'s job, and `min(..., 100%)` keeps it from overflowing a screen narrower than
+        itself. Same pair on the authentication screen, which is laid out the same way.
+      -->
+      <div class="flex-1" style="min-width: min(480px, 100%)" v-if="state.target">
         <!--
           The settings and the infobox beside them, the same shape as the list and this panel above:
-          the infobox is 300px wide and the settings take what is left, both dropping onto their own
-          row when there is no room. A 12-column grid could not say that -- `col-span-12` on the
-          settings took a whole row of it, which is what put the infobox underneath.
+          the infobox is 300px wide and the settings take what is left, and the infobox drops onto
+          its own row once there is no longer room for both. A 12-column grid could not say that --
+          `col-span-12` on the settings took a whole row of it, which is what put the infobox
+          underneath.
         -->
         <div class="flex flex-wrap gap-4">
-          <div class="min-w-0 flex-1">
+          <div class="flex-1" style="min-width: min(420px, 100%)">
             <!-- ----------------------- -->
             <!-- Content Types -->
             <!-- ----------------------- -->

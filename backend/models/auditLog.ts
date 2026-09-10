@@ -72,6 +72,7 @@ export const AUDIT_ACTIONS = {
     'createApprovalRule',
     'updateApprovalRule',
     'deleteApprovalRule',
+    'updateAuthConfig',
     'createAuthStrategy',
     'updateAuthStrategy',
     'deleteAuthStrategy',
