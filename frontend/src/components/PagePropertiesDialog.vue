@@ -166,10 +166,16 @@
           <w-tooltip>{{ t('editor.props.localeRelationsHint') }}</w-tooltip>
         </w-btn>
       </w-card-section>
-      <w-card-section class="alt-card" id="refCardScripts">
+      <!--
+        Only for an author who may actually write them: the server drops a script or a stylesheet from
+        somebody without the permission rather than refusing the save, so left on show these buttons
+        took an edit, closed on it, and lost it without a word.
+      -->
+      <w-card-section class="alt-card" id="refCardScripts" v-if="mayWriteScripts || mayWriteStyles">
         <div class="w-section-header">{{ t('editor.props.scripts') }}</div>
         <w-btn
           class="w-full"
+          v-if="mayWriteScripts"
           :label="t(`editor.props.jsLoad`)"
           icon="la:js-square"
           no-caps
@@ -180,6 +186,7 @@
         </w-btn>
         <w-btn
           class="w-full mt-2"
+          v-if="mayWriteScripts"
           :label="t(`editor.props.jsUnload`)"
           icon="la:js-square"
           no-caps
@@ -188,8 +195,11 @@
           @click="editScripts(`jsUnload`)">
           <w-tooltip>{{ t('editor.props.jsUnloadHint') }}</w-tooltip>
         </w-btn>
+        <!-- -> The gap above it belongs to the buttons before it, so it goes when they do -->
         <w-btn
-          class="w-full mt-2"
+          class="w-full"
+          :class="{ 'mt-2': mayWriteScripts }"
+          v-if="mayWriteStyles"
           :label="t(`editor.props.styles`)"
           icon="la:css3-alt"
           no-caps
@@ -355,6 +365,7 @@ import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import IconPickerDialog from './IconPickerDialog.vue'
 import PageLocaleRelationsDialog from './PageLocaleRelationsDialog.vue'
@@ -368,6 +379,7 @@ const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -385,23 +397,46 @@ const state = reactive({
   showQuickAccess: true
 })
 
-const quickaccess = [
-  { key: 'refCardInfo', icon: 'la:info-circle', label: t('editor.props.info') },
-  { key: 'refCardPublishState', icon: 'la:power-off', label: t('editor.props.publishState') },
-  { key: 'refCardRelations', icon: 'la:sun', label: t('editor.props.relations') },
-  { key: 'refCardScripts', icon: 'la:code', label: t('editor.props.scripts') },
-  { key: 'refCardSidebar', icon: 'la:ruler-vertical', label: t('editor.props.sidebar') },
-  { key: 'refCardSocial', icon: 'la:comments', label: t('editor.props.social') },
-  { key: 'refCardTags', icon: 'la:tags', label: t('editor.props.tags') },
-  { key: 'refCardVisibility', icon: 'la:eye', label: t('editor.props.visibility') }
-]
-
 // REFS
 
 const iptTitle = ref(null)
 const iptPagePassword = ref(null)
 
 // COMPUTED
+
+/*
+  Whether this author may write a script or a stylesheet onto THIS page.
+
+  Read off `pagePermissions` rather than through `userStore.can()`: both are page rule permissions,
+  granted per path by a group's rules, and `can()` also answers for the group-wide list -- which is a
+  broader question ("somewhere") than the one these buttons ask ("here"). It is the same list
+  `buildScripts` consults on the way in, an administrator holding all of them.
+*/
+const mayWriteScripts = computed(() => userStore.pagePermissions.includes('write:scripts'))
+const mayWriteStyles = computed(() => userStore.pagePermissions.includes('write:styles'))
+
+/*
+  The rail of jump links down the side of the panel. A computed rather than a constant because the
+  Scripts section is not always there, and a link to a section that is not rendered is a link that
+  throws -- `jumpToSection` reads the element straight off the document.
+*/
+const quickaccess = computed(() =>
+  [
+    { key: 'refCardInfo', icon: 'la:info-circle', label: t('editor.props.info') },
+    { key: 'refCardPublishState', icon: 'la:power-off', label: t('editor.props.publishState') },
+    { key: 'refCardRelations', icon: 'la:sun', label: t('editor.props.relations') },
+    {
+      key: 'refCardScripts',
+      icon: 'la:code',
+      label: t('editor.props.scripts'),
+      shown: mayWriteScripts.value || mayWriteStyles.value
+    },
+    { key: 'refCardSidebar', icon: 'la:ruler-vertical', label: t('editor.props.sidebar') },
+    { key: 'refCardSocial', icon: 'la:comments', label: t('editor.props.social') },
+    { key: 'refCardTags', icon: 'la:tags', label: t('editor.props.tags') },
+    { key: 'refCardVisibility', icon: 'la:eye', label: t('editor.props.visibility') }
+  ].filter((qa) => qa.shown !== false)
+)
 
 const publishingRange = computed({
   get() {

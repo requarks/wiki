@@ -52,9 +52,10 @@ import UtilCodeEditor from './UtilCodeEditor.vue'
 // PROPS
 
 const props = defineProps({
+  /** Which of the three the dialog is editing: `jsLoad`, `jsUnload` or `styles`. */
   mode: {
     type: String,
-    default: 'css'
+    default: 'styles'
   }
 })
 
@@ -102,15 +103,28 @@ const languageLabel = computed(() => {
   }
 })
 
-const contentStoreKey = computed(() => {
-  return 'script' + props.mode.charAt(0).toUpperCase() + props.mode.slice(1)
-})
+/*
+  Which store field this dialog is editing. A table rather than a name built from `mode`, because the
+  two do not line up: the CSS mode is called `styles` -- it is the button in the properties panel and
+  the translation key of its label -- while the field it writes is `scriptCss`. Assembled, it spelled
+  `scriptStyles`, a field the store does not have, so the CSS editor opened empty on a page that had
+  CSS and saved into nothing.
+*/
+const STORE_KEYS = {
+  jsLoad: 'scriptJsLoad',
+  jsUnload: 'scriptJsUnload',
+  styles: 'scriptCss'
+}
+
+const contentStoreKey = computed(() => STORE_KEYS[props.mode])
 
 // METHODS
 
 function persist() {
+  // -> `.value`: the computed itself as a key stringifies to `[object Object]`, which is where every
+  //    edit made in this dialog used to go
   pageStore.$patch({
-    [contentStoreKey]: state.content
+    [contentStoreKey.value]: state.content
   })
 }
 
@@ -129,7 +143,7 @@ function saveAndClose() {
 // -> No deferred mount: the quarter-second wait was there to give the old editor a laid-out container
 //    to measure itself against, and a textarea needs no such thing
 onMounted(() => {
-  state.content = pageStore[contentStoreKey.value]
+  state.content = pageStore[contentStoreKey.value] ?? ''
   // -> The editor is what this dialog is for, so the caret starts there. After the tick that renders
   //    the content above, so focus lands on a field that is already populated.
   nextTick(() => {

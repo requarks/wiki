@@ -350,8 +350,10 @@ class Pages {
    * Flatten a row and its blobs into the shape the API returns.
    *
    * @param locked Withhold the body — the source, the rendered HTML, the table of contents drawn from
-   *               it, and the relation links written onto the page. The metadata stays: a reader
-   *               looking at the lock screen is told what page they are being asked for a password to.
+   *               it, the relation links written onto the page, and the page's own CSS and scripts,
+   *               which the page view runs against content this reader has not been given. The
+   *               metadata stays: a reader looking at the lock screen is told what page they are
+   *               being asked for a password to.
    * @param withPassword Include the page's own password. Only for a requester who may edit the page,
    *                     which is the one that has to be able to read it back and save it again.
    * @param withContent Include the source. A redirection's comes back either way: its content is not
@@ -405,9 +407,9 @@ class Pages {
       showTags: config.showTags ?? true,
       showToc: config.showToc ?? true,
       tocDepth: config.tocDepth ?? { min: 1, max: 2 },
-      scriptJsLoad: scripts.jsLoad ?? '',
-      scriptJsUnload: scripts.jsUnload ?? '',
-      scriptCss: scripts.css ?? '',
+      scriptJsLoad: locked ? '' : (scripts.jsLoad ?? ''),
+      scriptJsUnload: locked ? '' : (scripts.jsUnload ?? ''),
+      scriptCss: locked ? '' : (scripts.css ?? ''),
       navigationId: row.navigationId ?? null,
       navigationMode: row.navigationMode ?? 'inherit',
       authorId: row.authorId,

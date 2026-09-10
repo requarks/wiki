@@ -21,8 +21,16 @@
           :class="[dense ? 'size-4' : 'size-5', knobOffset]" />
       </span>
       <span
-        class="w-toggle__knob inline-flex items-center justify-center rounded-full transition-transform duration-200"
+        class="w-toggle__knob relative inline-flex items-center justify-center rounded-full"
         :class="[dense ? 'size-4' : 'size-5', knobOffset]">
+        <!--
+          A second copy of the same glyph, one pixel down-right and under the real one, so the mark
+          keeps an edge against the knob it sits on. Same light source as the rest of the relief.
+        -->
+        <w-icon
+          class="w-toggle__mark-shadow"
+          :name="isOn ? 'mdi:check' : 'mdi:close'"
+          :size="dense ? '11px' : '13px'" />
         <w-icon
           class="w-toggle__mark"
           :name="isOn ? 'mdi:check' : 'mdi:close'"
@@ -40,12 +48,17 @@ import { computed } from 'vue'
  * On/off switch.
  *
  * The track is a recessed channel and the knob sits proud of it, lit from the top left; state is
- * read from where the knob sits plus the mark at its centre -- a tick when on, a cross when off,
- * drawn in a muted tone so it reads as engraved into the knob rather than printed on it.
+ * read from where the knob sits plus the status tone -- a tick when on, a cross when off.
  *
- * A disabled switch drops both its relief and its status colour: no glow, a grey mark, and a flat
- * track. Dimming alone read as "slightly faded" rather than "not available", and a green tick on a
- * control nobody can move says the wrong thing twice over.
+ * WHICH part wears that tone depends on the theme, and it is the one thing about this control that
+ * is not just a change of value between the two. On a dark surface the pin itself is the coloured
+ * element, with a white mark on it, which is what gives the switch something bright to read at a
+ * glance. On a light one the pin stays near-white and the MARK carries the colour, because a
+ * saturated pin on a pale page shouts far louder than the same pin does against a dark one.
+ *
+ * A disabled switch drops both its relief and its status colour: no glow, a neutral pin, a grey
+ * mark, and a flat track. Dimming alone read as "slightly faded" rather than "not available", and a
+ * green mark on a control nobody can move says the wrong thing twice over.
  *
  * The label's `pt-px` is optical centring, the same compensation WInput makes: Roboto's ascent
  * exceeds its descent, so a line box centred by geometry renders its glyphs above the middle of
@@ -140,6 +153,12 @@ function toggle() {
   into glare, and the rim has to be *lighter* than the track where on a light surface it is white.
 */
 .w-toggle {
+  /*
+    The status tone, in one place: the glow always takes it, and each theme points either the pin or
+    the mark at it further down. It lives on the button rather than on the three elements that draw
+    it, so they cannot disagree about which state they are showing.
+  */
+  --w-toggle-status: var(--color-negative);
   --w-toggle-track: #dfe3ea;
   --w-toggle-rim: #ffffff;
   --w-toggle-knob: #fdfdfe;
@@ -148,20 +167,38 @@ function toggle() {
   --w-toggle-highlight: rgb(255 255 255 / 0.95);
   --w-toggle-cast: rgb(0 0 0 / 0.12);
   --w-toggle-glow: 0.62;
+  --w-toggle-mark: var(--w-toggle-status);
   --w-toggle-mark-disabled: #8a8f98;
+  /*
+    A pale pin needs no relief under the mark, so the copy is the pin's own tone and draws nothing.
+    Keeping it painted rather than hidden is what makes the dark theme a change of colour and not a
+    change of markup.
+  */
+  --w-toggle-mark-shadow: #ffffff;
+  /* The pin is neutral here either way, so disabled changes only the mark */
+  --w-toggle-knob-disabled: var(--w-toggle-knob);
+}
+
+.w-toggle[aria-checked='true'] {
+  --w-toggle-status: var(--color-positive);
 }
 
 :global(body.body--dark .w-toggle) {
   --w-toggle-track: #262c38;
   --w-toggle-rim: #39414f;
-  --w-toggle-knob: #6b7382;
+  --w-toggle-knob: var(--w-toggle-status);
   --w-toggle-knob-rim: rgb(255 255 255 / 0.1);
   --w-toggle-shadow: rgb(0 0 0 / 0.6);
   --w-toggle-highlight: rgb(255 255 255 / 0.07);
   --w-toggle-cast: rgb(0 0 0 / 0.45);
   /* Held up a little: the same tone has less to carry against a dark channel than a pale one */
   --w-toggle-glow: 0.72;
+  --w-toggle-mark: #ffffff;
   --w-toggle-mark-disabled: #aeb4bf;
+  /* White on the positive tone is a weak pairing, so the mark gets an edge to read against */
+  --w-toggle-mark-shadow: rgb(0 0 0 / 0.3);
+  /* Shed the status colour when the control cannot be moved; this is the pin's old neutral */
+  --w-toggle-knob-disabled: #6b7382;
 }
 
 .w-toggle__glow-clip {
@@ -183,16 +220,12 @@ function toggle() {
   step with the knob.
 */
 .w-toggle__glow {
-  background-color: var(--color-negative);
+  background-color: var(--w-toggle-status);
   opacity: var(--w-toggle-glow);
   filter: blur(9px);
   transition:
     translate 0.2s var(--ease-standard),
     background-color 0.2s var(--ease-standard);
-}
-
-[aria-checked='true'] .w-toggle__glow {
-  background-color: var(--color-positive);
 }
 
 .w-toggle__track {
@@ -204,30 +237,50 @@ function toggle() {
     2px 3px 6px var(--w-toggle-cast);
 }
 
+/*
+  The transition is declared here rather than with Tailwind's `transition-transform`, because in the
+  dark theme the pin's colour has to travel with its movement. Same duration and easing as the glow,
+  which shares the knob's offset class and so must move in step with it.
+*/
 .w-toggle__knob {
   background-color: var(--w-toggle-knob);
   box-shadow:
     0 0 0 1px var(--w-toggle-knob-rim),
     2px 2px 4px var(--w-toggle-shadow),
     -2px -2px 4px var(--w-toggle-highlight);
+  transition:
+    translate 0.2s var(--ease-standard),
+    background-color 0.2s var(--ease-standard);
 }
 
 /*
-  The mark takes the theme's own positive/negative tones rather than literal green and red. Those
-  two are re-mapped at runtime for colour-vision deficiency (see stores/user.js), which is exactly
-  the case where a green/red pair would otherwise stop distinguishing anything -- and they follow
-  a site's palette for free.
+  The status tones are the theme's own rather than literal green and red. Those two are re-mapped at
+  runtime for colour-vision deficiency (see stores/user.js), which is exactly the case where a
+  green/red pair would otherwise stop distinguishing anything -- and they follow a site's palette
+  for free.
 
-  It stays a confirmation, not the signal: the knob's position is what announces the state, which
-  is what keeps this readable when the two tones are indistinguishable to the viewer.
+  The mark stays a confirmation, not the signal: the knob's position is what announces the state,
+  which is what keeps this readable when the two tones are indistinguishable to the viewer.
 */
 .w-toggle__mark {
-  color: var(--color-negative);
+  position: relative;
+  color: var(--w-toggle-mark);
   transition: color 0.2s var(--ease-standard);
 }
 
-[aria-checked='true'] .w-toggle__mark {
-  color: var(--color-positive);
+/*
+  The mark's drop shadow. Both copies are positioned, so painting order is document order and the
+  real mark covers this one -- `z-index: -1` would put it behind the knob's own background instead.
+
+  What it draws is the theme's business, and both answers are in the variable blocks above: a pixel
+  of dark under a white mark on a coloured pin, or nothing at all on a pale one.
+*/
+.w-toggle__mark-shadow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: calc(-50% + 1px) calc(-50% + 1px);
+  color: var(--w-toggle-mark-shadow);
 }
 
 /*
@@ -241,6 +294,7 @@ function toggle() {
 }
 
 .w-toggle--disabled .w-toggle__knob {
+  background-color: var(--w-toggle-knob-disabled);
   box-shadow: 0 0 0 1px var(--w-toggle-knob-rim);
 }
 
@@ -256,6 +310,14 @@ function toggle() {
 
 .w-toggle--disabled .w-toggle__mark {
   color: var(--w-toggle-mark-disabled);
+}
+
+/*
+  A flat control has nothing for a shadow to be cast onto, and the grey mark is what says the switch
+  is out of reach -- giving it relief the operable one has would undo that.
+*/
+.w-toggle--disabled .w-toggle__mark-shadow {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
