@@ -98,6 +98,33 @@ function isPageUrl(urlPath: string): boolean {
 }
 
 /**
+ * What a site tells a crawler about a document it has already fetched, as an `X-Robots-Tag` value.
+ *
+ * The other half of the **General → SEO** settings, and the half that carries what robots.txt cannot:
+ * that file can only say whether to CRAWL a path (see `controllers/rootFiles.ts`), while `noindex`
+ * and `nofollow` are instructions about a document in hand. A search engine reads this header exactly
+ * as it reads a `<meta name="robots">` tag, and — unlike a tag the frontend would set once it booted —
+ * it is there for a crawler that does not run the page's JavaScript.
+ *
+ * `noindex` is also the setting's only thorough form. `Disallow: /` keeps a crawler off the page, but
+ * a page nobody fetched can still be listed from its inbound links alone; this is what says not to
+ * list it.
+ *
+ * Null when both settings are on, which is every crawler's default anyway: no header says the same
+ * thing as `index, follow`, and a wiki that wants to be found should not have to repeat it on every
+ * response.
+ */
+function robotsTagFor(siteId: string | undefined): string | null {
+  // -> A host matching no site at all is still handed the app shell, and is told not to index it:
+  //    there is no site here whose settings could say otherwise
+  const robots = siteId ? WIKI.sites[siteId]?.config?.robots : undefined
+  if (robots?.index && robots.follow) {
+    return null
+  }
+  return `${robots?.index ? 'index' : 'noindex'}, ${robots?.follow ? 'follow' : 'nofollow'}`
+}
+
+/**
  * The segments a site's locale-prefixed URLs may start with, mapped to the locale each names.
  *
  * Every code a locale answers to, not only the short one it is addressed by now: an alias an
@@ -764,6 +791,11 @@ async function initHTTPServer() {
   app.register(import('./controllers/thumb.ts'), { prefix: '/_thumb' })
   app.register(import('./controllers/user.ts'), { prefix: '/_user' })
 
+  // -> At the root and with no prefix of their own: `robots.txt` and `sitemap.xml` are names a crawler
+  //    asks for by convention, the same way `favicon.ico` is, and `RESERVED_ROOT_FILES` is what keeps
+  //    the SEO hook above from mistaking either for a page path
+  app.register(import('./controllers/rootFiles.ts'))
+
   // ----------------------------------------
   // App Shell
   // ----------------------------------------
@@ -796,6 +828,17 @@ async function initHTTPServer() {
     }
     try {
       const shell = await readFile(appShellPath, 'utf8')
+      /*
+        Every HTML document this wiki serves leaves through here — a page and an app route alike — so
+        this is the one place the site's indexing settings can be attached to all of them.
+
+        Straight off the site caches for the same reason the SEO hook above reads them that way: both
+        lookups are what `getSiteByHostname` would do, minus its optional reload.
+      */
+      const robotsTag = robotsTagFor(WIKI.sitesMappings[req.hostname] || WIKI.sitesMappings['*'])
+      if (robotsTag) {
+        reply.header('X-Robots-Tag', robotsTag)
+      }
       return reply.header('Cache-Control', 'no-store').type('text/html; charset=utf-8').send(shell)
     } catch (err: any) {
       // -> Nothing to serve means the frontend was never built, which is a setup step rather than a

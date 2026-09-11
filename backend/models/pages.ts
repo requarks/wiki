@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, ne, notInArray, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
 import {
   CustomError,
@@ -66,6 +66,30 @@ export function pageEditorForExtension(ext: string): string | null {
  * column carries. See `normalizeRedirectContent`.
  */
 const REDIRECT_EDITOR = 'redirect'
+
+/**
+ * How long a site's sitemap list is held before it is read again, in seconds.
+ *
+ * The same figure as the `Cache-Control` the file goes out with, for the same reason: a sitemap may
+ * be a few minutes out of date without anybody being misled. Note the two compound — see
+ * `listForSitemap`.
+ */
+const SITEMAP_TTL = 600
+
+/** Namespaced so that `invalidateSitemaps` can find every site's entry without knowing the sites. */
+const SITEMAP_CACHE_PREFIX = 'sitemap:'
+
+function sitemapCacheKey(siteId: string): string {
+  return `${SITEMAP_CACHE_PREFIX}${siteId}`
+}
+
+/**
+ * Sitemap lists being built right now, one at most per site.
+ *
+ * Deliberately NOT in `WIKI.cache`: a promise is this process's, and the point of it is to make
+ * concurrent callers in this process wait on one query rather than start their own.
+ */
+const sitemapBuilds = new Map<string, Promise<SitemapPage[]>>()
 
 /** A page path is what ends up in a URL, so it is held to what reads and routes cleanly. */
 const rePagePath = /^[a-zA-Z0-9-_/]*$/
@@ -231,6 +255,15 @@ export interface RecentPage {
   hostname: string | null
   /** Who wrote the version that stands. Null once that account is deleted. */
   authorName: string | null
+}
+
+/** A page as a sitemap entry sees it: where it is, when it last changed, and what it is a translation of. */
+export interface SitemapPage {
+  locale: string
+  path: string
+  updatedAt: Date
+  /** The set of pages this one is a translation of, or null when it has none — see the column. */
+  localeGroupId: string | null
 }
 
 export interface PageActor {
@@ -798,6 +831,118 @@ class Pages {
           : null,
       authorName: row.authorName
     }))
+  }
+
+  /**
+   * Every page of a site that belongs in its sitemap, cached.
+   *
+   * The list is what a sitemap costs: one read of every published page of a site, and then the guests
+   * group's rules resolved against each of them. That is far too much to spend per request on a
+   * document whose whole audience is a handful of crawlers, so it is built on demand and held for
+   * `SITEMAP_TTL` seconds.
+   *
+   * **The LIST is what is cached, not the file.** Rendering reads three things that a cached file
+   * would freeze: the request's own origin, which differs between the hosts a catch-all site answers
+   * on; `urlFor`, which brackets a path by locale exactly as that site's settings say; and whether the
+   * sitemap is enabled at all. Keeping those per request means a change to any of them shows up at
+   * once, that paging re-slices one list instead of caching every part separately, and that a site
+   * reached on several hostnames needs one entry rather than one per host.
+   *
+   * It is not the smaller of the two, mind: measured at about **275 bytes per page** — roughly 2.7 MB
+   * for a 10,000-page site — where the rendered XML for the same pages is nearer 1.5 MB, since a long
+   * one-byte string costs less than an object with four fields and a `Date`. The reasons above are
+   * what pay for the difference.
+   *
+   * What does wait for the TTL is a page appearing, changing or going. That is the deliberate trade —
+   * the file is already served `max-age=600`, so a crawler may be holding one that old regardless, and
+   * a sitemap is a hint about where to look rather than a statement of record. The two compound: a
+   * crawler can be reading a list up to twice the TTL old. Admin → System's **Flush Cache** empties
+   * this with everything else, and does it across an HA set, for when that is not good enough.
+   *
+   * @see `models/groups.ts` → `reloadCache`, which drops this when a group's rules change — the one
+   *      input where being out of date is a permissions question rather than a freshness one.
+   */
+  async listForSitemap(siteId: string): Promise<SitemapPage[]> {
+    const cached = WIKI.cache.get<SitemapPage[]>(sitemapCacheKey(siteId))
+    if (cached) {
+      return cached
+    }
+    /*
+      A burst against a cold cache is one query and not one per request. Without this the endpoint is
+      public, unauthenticated and trivially made to stack full table scans — which is most of what the
+      cache is here to prevent, and exactly when it is not yet populated.
+    */
+    const inFlight = sitemapBuilds.get(siteId)
+    if (inFlight) {
+      return inFlight
+    }
+    const build = this.buildSitemapList(siteId).finally(() => sitemapBuilds.delete(siteId))
+    sitemapBuilds.set(siteId, build)
+    return build
+  }
+
+  /** Drop every site's cached sitemap list, for a change that could have altered any of them. */
+  invalidateSitemaps(): void {
+    WIKI.cache.del(WIKI.cache.keys().filter((key) => key.startsWith(SITEMAP_CACHE_PREFIX)))
+  }
+
+  /**
+   * The read behind `listForSitemap`, which is the only thing that should call it.
+   *
+   * A sitemap is a list handed to search engines, so the question is not what exists but what a
+   * crawler may both reach and index. Four things decide it, three of them in SQL:
+   *
+   * - **Published**, on the same reading as everywhere else — a `scheduled` page is not published yet
+   *   whatever its dates say, and a draft never was.
+   * - **Not a redirection**, which has no body to index and sends its reader elsewhere anyway.
+   * - **Not password protected**, since what a crawler would reach there is the lock screen.
+   * - **`isSearchable`**, the page property whose whole purpose is keeping a page out of search
+   *   results. A sitemap is the most direct way there is of putting one in them.
+   *
+   * The fourth is the guests group's page rules, which no query can express — they match on path,
+   * locale and tags, and are resolved a page at a time — so the candidates are filtered here. The
+   * guests group and nothing else: this document is the same for whoever asks, and what the public
+   * may read is exactly what that group's rules say. An administrator fetching it therefore gets the
+   * file a crawler would, which is also what makes it safe to cache publicly.
+   */
+  private async buildSitemapList(siteId: string): Promise<SitemapPage[]> {
+    const rows = await WIKI.db
+      .select({
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        tags: pagesTable.tags,
+        updatedAt: pagesTable.updatedAt,
+        localeGroupId: pagesTable.localeGroupId
+      })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.publishState, 'published'),
+          eq(pagesTable.isSearchable, true),
+          ne(pagesTable.editor, REDIRECT_EDITOR),
+          isNull(pagesTable.password)
+        )
+      )
+      // -> A stable order, so that a sitemap split into numbered parts means the same thing on the
+      //    next fetch as it did on the one that handed the crawler those numbers
+      .orderBy(pagesTable.locale, pagesTable.path)
+
+    // -> No group-wide permissions rather than the guests group's own: `checkAccess` reads that list
+    //    only for `manage:system`, and a wiki that had somehow handed the public an administrator's
+    //    permission should not also publish an index of every page it has as a consequence
+    const guests = { groupIds: [WIKI.data.systemIds.guestsGroupId], permissions: [] }
+    const pages = rows
+      .filter((row) => WIKI.models.groups.checkAccess(guests, 'read:pages', row))
+      .map(({ locale, path, updatedAt, localeGroupId }) => ({
+        locale,
+        path,
+        updatedAt,
+        localeGroupId
+      }))
+
+    WIKI.cache.set(sitemapCacheKey(siteId), pages, SITEMAP_TTL)
+    return pages
   }
 
   /**

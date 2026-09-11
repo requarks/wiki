@@ -40,7 +40,7 @@ The backend is **TypeScript 7**; `frontend/` and `blocks/` are JavaScript. See
   confirmation link or a password reset lands in a web inbox at `http://localhost:8025` rather than a
   real mailbox. Point the wiki at it under **Admin → Mail** — host `localhost`, port 1025, TLS off,
   no credentials.
-- `localazy.json` — translation sync config; locale strings live in `backend/locales/`.
+- Locale strings live in `backend/locales/`.
 
 ### `backend/`
 
@@ -65,6 +65,10 @@ path in silence.
   background) under `/_site`; `icons.ts` serves icons under `/_icons`, implementing the part of the
   Iconify API protocol the frontend speaks (`/_icons/<prefix>.json?icons=a,b` and
   `/_icons/<prefix>/<name>.svg`). Public and cached hard — see [Icons](#icons).
+  `rootFiles.ts` is the exception that registers at the root rather than under a prefix: `robots.txt`
+  and `sitemap.xml`, the two names in `RESERVED_ROOT_FILES` a crawler asks for by convention, both
+  driven by the site's **General → SEO** settings. The sitemap lists what the GUESTS group may read
+  and nothing else.
 - `core/` — long-lived singletons: `config.ts` (yml + db-backed settings), `db.ts` (pg pool, Drizzle
   instance, migrations, LISTEN/NOTIFY pubsub), `logger.ts`, `scheduler.ts` (poolifier thread pool +
   postgres-backed job queue).
@@ -86,7 +90,7 @@ path in silence.
   file-tree half of the storage modules that address content by path (see [Storage targets](#storage-targets)).
 - `types/` — ambient declarations: `global.d.ts` (the `WIKI` global) and `fastify.d.ts` (session +
   route-permission augmentations).
-- `locales/` — `en.json` source strings (Localazy-managed) + `metadata.js` language table (the one
+- `locales/` — `en.json` source strings (CrowdIn-managed) + `metadata.js` language table (the one
   remaining JavaScript file; typed by its sibling `metadata.d.ts`).
 
 ### `frontend/`
@@ -245,8 +249,7 @@ tracked and will turn up in the next commit.
 ## TypeScript (backend)
 
 The backend is entirely **TypeScript 7** (the native Go compiler — `tsc` is a platform binary, not a
-JS bundle). The only remaining `.js` is `locales/metadata.js`, which is Localazy-generated output and
-is typed by a sibling `locales/metadata.d.ts`.
+JS bundle).
 
 **There is no build step.** Node 26 runs `.ts` files directly by stripping types at load time, so
 `node backend` and nodemon keep working unchanged as files are converted. `tsc` is used purely as a

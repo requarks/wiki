@@ -158,6 +158,11 @@ class Groups {
     for (const row of rows) {
       rulesCache[row.id] = (row.rules ?? []) as GroupRule[]
     }
+    // -> The sitemap is a list of what the GUESTS group may read, held for minutes at a time. Every
+    //    other consumer of these rules asks per request and is correct the moment this returns; that
+    //    one would go on publishing paths a rule had just taken away, which is a permission waiting
+    //    for a timer rather than a document being a little out of date
+    WIKI.models.pages.invalidateSitemaps()
     WIKI.logger.info(`Loaded page rules for ${rows.length} groups [ OK ]`)
   }
 

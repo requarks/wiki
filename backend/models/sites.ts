@@ -83,6 +83,14 @@ class Sites {
     for (const site of sites) {
       WIKI.sitesMappings[site.hostname] = site.id
     }
+    /*
+      Sitemap lists are held per site for minutes at a time, and `WIKI.cache` has no expiry sweeper —
+      an entry is only dropped when its own key is next read. So a site that was deleted, or whose
+      sitemap was just switched off, would hold its last list for the life of the process: nothing
+      will ever ask for that key again. This is the one place every create, update and delete passes
+      through, which makes it the place to let them go.
+    */
+    WIKI.models.pages.invalidateSitemaps()
     WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 
