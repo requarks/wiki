@@ -71,6 +71,16 @@ const HOME_PATH = 'home'
 /** The element the injected copy is wrapped in. `frontend/index.html` styles it; `main.js` removes it. */
 const PRERENDER_ID = 'wiki-prerender'
 
+/**
+ * The `<style>` a site's CSS override is injected as, and the id BOTH sides use for it.
+ *
+ * `applyTheme` in `frontend/App.vue` writes the same element from the site store, which is what makes
+ * the field take effect the moment it is saved rather than on the next hard navigation. It removes
+ * this one first, so the id has to agree — two copies of the override would be two elements to get
+ * out of step with each other.
+ */
+const THEME_CSS_ID = 'theme-css-override'
+
 /** What the shell is enriched with, before it is put into the document. */
 interface ShellFragments {
   /** Replaces the shell's `<title>` and is appended to its `<head>`. */
@@ -431,16 +441,59 @@ async function fragmentsForBrowser(
 }
 
 /**
+ * What an administrator has asked to be put into every document this site serves.
+ *
+ * The three fields under **Admin → Theme**, and the whole of what they do: a stylesheet applied after
+ * the wiki's own, whatever belongs at the end of the `<head>` — a font, a meta tag a service wants,
+ * an analytics snippet — and whatever belongs at the end of the `<body>`, which is where a tag
+ * manager asks to be put. A wiki with none of the three set produces nothing here.
+ *
+ * All three are **raw**, and deliberately: their entire purpose is markup the operator wrote, and
+ * `manage:theme` is the trust boundary. So nothing is escaped and nothing is parsed — what was typed
+ * into the field is what lands in the document, including a mistake in it.
+ *
+ * Read per request off `WIKI.sites`, and never cached with the page fragments. It costs nothing (the
+ * site configurations are in memory, and every instance reloads them on a change), and it is what
+ * makes a saved theme apply to the next request rather than up to ten minutes later — the same
+ * reasoning as re-reading the shell itself. It is also per SITE where a fragment set is per URL, so
+ * caching it with one would be holding the same three strings once per page of the wiki.
+ *
+ * Applied to every document, the app's own screens included. An override is free to reach the editor
+ * or the admin area — the field's own warning in the admin area says as much, and scoping page styles
+ * to `.page-contents` is how that is avoided. A hard navigation to `/_admin` is the way back from one
+ * that makes a screen unusable: injected CSS that came with the document survives client-side
+ * navigation, so returning to the theme screen through the app carries it along.
+ */
+function themeInjections(siteId: string | undefined): { head: string; body: string } {
+  const theme = siteId ? WIKI.sites[siteId]?.config?.theme : undefined
+  const css: string = theme?.injectCSS?.trim() ?? ''
+  return {
+    head: [
+      // -> Last of the three, so it wins over the stylesheets the bundle brought with it
+      theme?.injectHead?.trim() ?? '',
+      css ? `<style id="${THEME_CSS_ID}" type="text/css">\n${css}\n</style>` : ''
+    ]
+      .filter(Boolean)
+      .join('\n  '),
+    body: theme?.injectBody?.trim() ?? ''
+  }
+}
+
+/**
  * The document to answer a request for the app shell with.
  *
  * Every request gets a head describing the page at its URL; which page that is, and what else travels
  * with it, is what `fragmentsForCrawler` and `fragmentsForBrowser` differ about.
  *
+ * The site's own theme injections travel with it (`themeInjections`), which is what puts the CSS
+ * override and the head and body HTML from **Admin → Theme** into the document — the head ones after
+ * everything describing the page, so that an override is the last stylesheet in the document.
+ *
  * Only the public half is cached, and the shell is never cached: the shell is re-read per request so
  * that `npm run build` in `frontend/` takes effect immediately, which a cached whole document would
- * have delayed by the TTL, and the two string insertions that combine them are nothing next to a
- * database read. Both insertions use a replacer function rather than a replacement string — a page
- * containing `$&` would otherwise rewrite itself as it was inserted.
+ * have delayed by the TTL, and the string insertions that combine them are nothing next to a database
+ * read. Every insertion uses a replacer function rather than a replacement string — a page, or an
+ * injection, containing `$&` would otherwise rewrite itself as it was inserted.
  *
  * @param shell The compiled `assets/index.html`, as read for this request
  */
@@ -459,9 +512,11 @@ export async function renderAppShell(
     where there is not, so that a shell built without one is enriched rather than silently skipped.
   */
   const withoutTitle = shell.replace(/[ \t]*<title>[\s\S]*?<\/title>\n?/i, '')
+  const injected = themeInjections(siteId)
+  const head = [fragments.head, injected.head].filter(Boolean).join('\n  ')
   const html = withoutTitle
-    .replace('</head>', () => `  ${fragments.head}\n  </head>`)
-    .replace('</body>', () => `${fragments.body}</body>`)
+    .replace('</head>', () => `  ${head}\n  </head>`)
+    .replace('</body>', () => `${fragments.body}${injected.body}</body>`)
 
   return { html, status: fragments.status, robots: fragments.robots }
 }

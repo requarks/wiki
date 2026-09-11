@@ -136,6 +136,39 @@ async function applyTheme() {
 
   // -> Highlight.js Theme
   await applyCodeBlocksTheme()
+
+  // -> CSS Override. Last, so that it is the last stylesheet in the document
+  applyCssOverride()
+}
+
+/**
+ * The CSS override from Admin → Theme, as its own element at the end of the head.
+ *
+ * The server already puts this element into the document it serves, so a reader never sees the wiki
+ * unstyled while the bundle loads — see `themeInjections` in `backend/helpers/appShell.ts`, and note
+ * that the id is shared with it. This is the same element written again from the site store, which is
+ * what makes the field take effect the moment it is saved rather than on the next hard navigation; the
+ * server's copy is removed first, so there is never more than one of it.
+ *
+ * Applied after the code blocks theme for the reason the admin area states: an override goes after the
+ * wiki's own styles. Both are appended to the head, so the last one appended is the one that wins.
+ *
+ * The head and body HTML injections have no counterpart here, on purpose. They are usually a `<script>`
+ * — an analytics snippet, a tag manager — and a copy of one the document has already run would run it a
+ * second time. Those two belong to the document and apply when it is next loaded.
+ */
+function applyCssOverride() {
+  document.querySelector('#theme-css-override')?.remove()
+
+  const css = siteStore.theme.injectCSS?.trim()
+  if (!css) {
+    return
+  }
+
+  const styleEl = document.createElement('style')
+  styleEl.id = 'theme-css-override'
+  styleEl.textContent = css
+  document.head.appendChild(styleEl)
 }
 
 /**
