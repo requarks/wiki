@@ -3,7 +3,7 @@ import { startCase } from 'es-toolkit/string'
 import crypto from 'node:crypto'
 import mime from 'mime'
 import fs from 'node:fs'
-import type { FastifyReply } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 
 export interface Deferred<T = void> {
   resolve: (value: T) => void
@@ -72,6 +72,49 @@ export function createDeferred<T = void>(): Deferred<T> {
  * convention nothing in the admin area would explain.
  */
 export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
+
+/**
+ * Whether a URL addresses the page tree rather than the server itself.
+ *
+ * Everything the server mounts sits under a leading-underscore segment — `/_api`, `/_assets`,
+ * `/_files`, and the rest registered in `initHTTPServer` — which is what makes the distinction a
+ * prefix test rather than a list to keep in step with the routes.
+ *
+ * Note that the answer is about the URL and not about what is there: a page path with no page at it
+ * is still a page path, which is what lets the app shell answer 404 for one.
+ */
+export function isPageUrl(urlPath: string): boolean {
+  const firstSegment = urlPath.split('/')[1] ?? ''
+  return !firstSegment.startsWith('_') && !RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
+}
+
+/**
+ * The origin a URL this server writes into a document is built against.
+ *
+ * The requester's own, and deliberately not the site's configured hostname: a site may be bound to
+ * the catch-all `*` and have none, and every document this produces — a sitemap, a canonical link, an
+ * unfurl card — has to name the host it was itself fetched from or be discarded as pointing somewhere
+ * else. It comes off a header and is therefore whatever the client said, which is why everything
+ * built from it is escaped before it reaches a document.
+ */
+export function originOf(req: FastifyRequest): string {
+  return `${req.protocol}://${req.host}`
+}
+
+/**
+ * Escape a string for use as HTML text or inside a double-quoted attribute.
+ *
+ * Both at once, which is why the set is all five: an attribute needs the quotes and text needs the
+ * angle brackets, and a value that is safe in both is one fewer thing to get right per call site.
+ */
+export function htmlEscape(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
 
 /**
  * Decode a tree path

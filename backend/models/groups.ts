@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import { and, count, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
+import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError } from '../helpers/common.ts'
 import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
@@ -158,11 +159,13 @@ class Groups {
     for (const row of rows) {
       rulesCache[row.id] = (row.rules ?? []) as GroupRule[]
     }
-    // -> The sitemap is a list of what the GUESTS group may read, held for minutes at a time. Every
-    //    other consumer of these rules asks per request and is correct the moment this returns; that
-    //    one would go on publishing paths a rule had just taken away, which is a permission waiting
-    //    for a timer rather than a document being a little out of date
+    // -> Both of these are what the GUESTS group may read, held for minutes at a time: an index of
+    //    paths, and the page descriptions served to a client that will not run the app. Every other
+    //    consumer of these rules asks per request and is correct the moment this returns; those two
+    //    would go on publishing what a rule had just taken away, which is a permission waiting for a
+    //    timer rather than a document being a little out of date
     WIKI.models.pages.invalidateSitemaps()
+    invalidateAppShellCache()
     WIKI.logger.info(`Loaded page rules for ${rows.length} groups [ OK ]`)
   }
 
@@ -193,6 +196,23 @@ class Groups {
       //    route-level check
       permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
     }
+  }
+
+  /**
+   * The actor the PUBLIC speaks for, which is not the same as a request that happens to be anonymous.
+   *
+   * The guests group and nothing else, asked without a request in hand — which is what "whatever
+   * anybody may read" means, and what makes an answer built from it identical for whoever fetched it.
+   * That is the whole reason it exists separately: the sitemap and the app shell's public document are
+   * both cached and handed to the next requester, so neither may be built from anything a particular
+   * requester holds.
+   *
+   * No group-wide permissions rather than the guests group's own: `checkAccess` reads that list only
+   * for `manage:system`, and a wiki that had somehow handed the public an administrator's permission
+   * should not also publish every page it has as a consequence.
+   */
+  actorForPublic(): AccessActor {
+    return { groupIds: [WIKI.data.systemIds.guestsGroupId], permissions: [] }
   }
 
   /**

@@ -7,6 +7,7 @@ import {
   storage as storageTable
 } from '../db/schema.ts'
 import { and, eq } from 'drizzle-orm'
+import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { detectImageMime, detectSvg, normalizeImage, svgMimeType } from '../helpers/images.ts'
 import type { ImageNormalization } from '../helpers/images.ts'
 import type { SystemIds } from './types.ts'
@@ -84,13 +85,16 @@ class Sites {
       WIKI.sitesMappings[site.hostname] = site.id
     }
     /*
-      Sitemap lists are held per site for minutes at a time, and `WIKI.cache` has no expiry sweeper —
-      an entry is only dropped when its own key is next read. So a site that was deleted, or whose
-      sitemap was just switched off, would hold its last list for the life of the process: nothing
-      will ever ask for that key again. This is the one place every create, update and delete passes
-      through, which makes it the place to let them go.
+      Sitemap lists and app shell fragments are held per site for minutes at a time, and `WIKI.cache`
+      has no expiry sweeper — an entry is only dropped when its own key is next read. So a site that
+      was deleted, or whose sitemap was just switched off, would hold its last list for the life of the
+      process: nothing will ever ask for that key again. This is also the one place every create,
+      update and delete of a site's settings passes through, and those settings are in both — the
+      site's own title and description, whether it wants to be indexed, how it brackets URLs by
+      locale. So it is the place to let them go.
     */
     WIKI.models.pages.invalidateSitemaps()
+    invalidateAppShellCache()
     WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 

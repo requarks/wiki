@@ -1,6 +1,7 @@
 import { chunk } from 'es-toolkit/array'
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyReply } from 'fastify'
 import type { SitemapPage } from '../models/pages.ts'
+import { originOf } from '../helpers/common.ts'
 
 /**
  * The sitemap protocol's own ceiling: 50,000 URLs, and 50MB uncompressed, per file. Past it the
@@ -29,19 +30,14 @@ function xmlEscape(value: string): string {
     .replaceAll("'", '&apos;')
 }
 
-/**
- * The origin a `<loc>` — or robots.txt's `Sitemap:` line — is written against.
- *
- * The requester's own, and deliberately not the site's configured hostname: a sitemap may only list
- * URLs on the host it was itself fetched from — a crawler discards the rest as a cross-submission —
- * so the host in the request IS the answer, whether the site is bound to it or is the catch-all `*`.
- * It comes off a header and is therefore whatever the client said, which is why it is escaped before
- * it reaches the XML. It cannot carry a line break into robots.txt: a header value holding one is
- * rejected by the HTTP parser long before this.
- */
-function originOf(req: FastifyRequest): string {
-  return `${req.protocol}://${req.host}`
-}
+/*
+  `originOf` (helpers/common.ts) is the origin every `<loc>` — and robots.txt's `Sitemap:` line — is
+  written against: a sitemap may only list URLs on the host it was itself fetched from, since a
+  crawler discards the rest as a cross-submission, so the host in the request IS the answer whether
+  the site is bound to it or is the catch-all `*`. It comes off a header and is therefore whatever the
+  client said, which is why it is escaped before it reaches the XML. It cannot carry a line break into
+  robots.txt: a header value holding one is rejected by the HTTP parser long before this.
+*/
 
 /**
  * Where a page is, absolute and ready to be written into an element.

@@ -32,4 +32,8 @@ initializeEventBus()
 initializeIconify()
 initializeExternals(router, store)
 initializeI18n(app, store)
+// The server's copy of the page, for clients that never get this far -- see
+// `backend/helpers/appShell.ts`. It has done its job by now, and Vue is about to draw the real thing.
+document.getElementById('wiki-prerender')?.remove()
+
 app.mount('#app')

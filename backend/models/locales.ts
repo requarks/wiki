@@ -469,6 +469,29 @@ class Locales {
     return match?.code ?? segment
   }
 
+  /**
+   * The segments a site's locale-prefixed URLs may start with, mapped to the locale each names.
+   *
+   * Every code a locale answers to, not only the short one it is addressed by now: an alias an
+   * administrator changed leaves the links people have already saved pointing at the old segment, and
+   * a wiki that answers 404 to them has broken them — the same reasoning as `localeForShortCode`,
+   * built as a map because the request hooks that read a page URL do it on every request.
+   *
+   * @param activeCodes The locales the site offers, i.e. `config.locales.active`
+   */
+  urlPrefixesFor(activeCodes?: string[] | null): Map<string, string> {
+    const prefixes = new Map<string, string>()
+    for (const code of activeCodes ?? []) {
+      const locale = WIKI.cache?.get(`locale:${code}`) as any
+      for (const segment of [locale?.displayCode, locale?.derivedCode, code]) {
+        if (segment) {
+          prefixes.set(segment, code)
+        }
+      }
+    }
+    return prefixes
+  }
+
   async getLocales({ cache = true }: { cache?: boolean } = {}): Promise<any[]> {
     if (!WIKI.cache.has('locales') || !cache) {
       const locales = await WIKI.db

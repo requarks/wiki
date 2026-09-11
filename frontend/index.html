@@ -45,6 +45,19 @@
         animation: initspinner .6s linear infinite;
         z-index: 2000000000;
       }
+
+      /*
+        The copy of the page the server puts into this document for a client that will never run the
+        app -- a crawler, a chat client building an unfurl card, a reader with JavaScript off. See
+        `backend/helpers/appShell.ts` for what goes in it and why.
+
+        Out of sight of anyone whose browser is about to draw the real page, and shown (below) to
+        anyone whose browser is not. `main.js` takes the element out of the document altogether
+        before Vue mounts, so nothing the app does has to know it was ever there.
+      */
+      #wiki-prerender {
+        display: none;
+      }
     </style>
 
     <noscript>
@@ -63,6 +76,74 @@
 
         .scroll.relative-position > .absolute {
           position: relative !important;
+        }
+
+        /* With no app coming, the server's copy of the page is the page. */
+        #wiki-prerender {
+          display: block;
+          max-width: 60rem;
+          margin: 0 auto;
+          padding: 2rem 1.5rem;
+          line-height: 1.6;
+        }
+
+        /*
+          The browser defaults Tailwind's preflight takes away, put back. Deliberately not a copy of
+          the content styles in `css/tailwind.css`: those belong to elements the app draws, which is
+          the one thing that is not going to happen here, and a second copy of them would only drift.
+          What is wanted is prose that reads as prose.
+        */
+        #wiki-prerender h1 { font-size: 2em; }
+        #wiki-prerender h2 { font-size: 1.5em; }
+        #wiki-prerender h3 { font-size: 1.17em; }
+        #wiki-prerender h1,
+        #wiki-prerender h2,
+        #wiki-prerender h3,
+        #wiki-prerender h4,
+        #wiki-prerender h5,
+        #wiki-prerender h6 {
+          font-weight: bold;
+          margin: 1.5em 0 .5em;
+          line-height: 1.25;
+        }
+        #wiki-prerender p,
+        #wiki-prerender ul,
+        #wiki-prerender ol,
+        #wiki-prerender pre,
+        #wiki-prerender blockquote,
+        #wiki-prerender table {
+          margin: 0 0 1em;
+        }
+        #wiki-prerender ul,
+        #wiki-prerender ol {
+          padding-left: 2em;
+          list-style: revert;
+        }
+        #wiki-prerender pre,
+        #wiki-prerender code {
+          font-family: monospace;
+        }
+        #wiki-prerender pre {
+          overflow-x: auto;
+          padding: .75em 1em;
+          background: #f4f4f4;
+        }
+        #wiki-prerender blockquote {
+          padding-left: 1em;
+          border-left: 4px solid #ccc;
+          color: #555;
+        }
+        #wiki-prerender img {
+          max-width: 100%;
+          height: auto;
+        }
+        #wiki-prerender table {
+          border-collapse: collapse;
+        }
+        #wiki-prerender th,
+        #wiki-prerender td {
+          padding: .35em .75em;
+          border: 1px solid #ccc;
         }
       </style>
     </noscript>

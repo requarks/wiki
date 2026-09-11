@@ -6,6 +6,9 @@ import {
   normalizePagePath,
   timingSafeCompare
 } from '../helpers/common.ts'
+import { invalidateAppShellCache } from '../helpers/appShell.ts'
+import type { AccessActor } from './groups.ts'
+import type { FastifyRequest } from 'fastify'
 import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
 import type { StoragePageContent, StoragePageRef } from './storage.ts'
@@ -264,6 +267,40 @@ export interface SitemapPage {
   updatedAt: Date
   /** The set of pages this one is a translation of, or null when it has none — see the column. */
   localeGroupId: string | null
+}
+
+/**
+ * A page as the HTML document served for it describes itself — see `describePageForPublic` and
+ * `describePageForRequest`.
+ *
+ * Everything here is scoped to whoever it was asked for: a page they may not read is not described at
+ * all, and neither are the translations of one they may not reach.
+ */
+export interface PageDescription {
+  locale: string
+  path: string
+  title: string
+  description: string | null
+  /**
+   * The stored render, or null where this page has no body to show a reader who has not asked for
+   * one: a password-protected page, whose body is exactly what the password covers, and a redirection,
+   * which has nowhere to keep one.
+   *
+   * Only wanted by the caller building a document for a client that will never run the app; a browser
+   * about to boot the SPA is served the head alone.
+   */
+  render: string | null
+  updatedAt: Date
+  /**
+   * Whether a search engine should list it — `isSearchable`, and off as well for the two cases with
+   * nothing to list. The same question the sitemap asks, answered for one page.
+   */
+  isIndexable: boolean
+  /**
+   * Every locale this page exists in and this requester may read, this one included. Empty for a page
+   * that is not part of a translation set, since an alternates list naming one document says nothing.
+   */
+  alternates: { locale: string; path: string }[]
 }
 
 export interface PageActor {
@@ -928,10 +965,7 @@ class Pages {
       //    next fetch as it did on the one that handed the crawler those numbers
       .orderBy(pagesTable.locale, pagesTable.path)
 
-    // -> No group-wide permissions rather than the guests group's own: `checkAccess` reads that list
-    //    only for `manage:system`, and a wiki that had somehow handed the public an administrator's
-    //    permission should not also publish an index of every page it has as a consequence
-    const guests = { groupIds: [WIKI.data.systemIds.guestsGroupId], permissions: [] }
+    const guests = WIKI.models.groups.actorForPublic()
     const pages = rows
       .filter((row) => WIKI.models.groups.checkAccess(guests, 'read:pages', row))
       .map(({ locale, path, updatedAt, localeGroupId }) => ({
@@ -943,6 +977,148 @@ class Pages {
 
     WIKI.cache.set(sitemapCacheKey(siteId), pages, SITEMAP_TTL)
     return pages
+  }
+
+  /**
+   * What the PUBLIC may see at a path, for the HTML document served to a client that will not run the
+   * app.
+   *
+   * The question `listForSitemap` asks of a whole site, asked of one page: the guests group's rules
+   * decide and nothing about the requester does, which is what makes the answer the same for whoever
+   * fetched it and therefore safe to cache and hand on.
+   *
+   * Published only, as it is everywhere the public is being answered — which is also what lets the app
+   * shell say 404 rather than 200 at a path with nothing published at it.
+   */
+  async describePageForPublic(
+    siteId: string,
+    ref: { locale: string; path: string }
+  ): Promise<PageDescription | null> {
+    return this.describePage(siteId, ref, WIKI.models.groups.actorForPublic(), true)
+  }
+
+  /**
+   * What THIS REQUESTER may see at a path, for the document a browser is about to boot the app from.
+   *
+   * Deliberately the same cut the page route itself makes (`GET /sites/:siteId/pages/:pageIdOrHash`),
+   * so that the title in the document and the page the app then draws can never be about different
+   * things: its `read:pages` check per path, and its `publicOnly: !actorFrom(req)` — which is to say
+   * any signed-in session sees an unpublished page, and an API key is answered as the public is, since
+   * a draft belongs to the people working on it rather than to whatever holds a token.
+   *
+   * Not for caching across requesters: the answer is one reader's.
+   */
+  async describePageForRequest(
+    siteId: string,
+    ref: { locale: string; path: string },
+    req: FastifyRequest
+  ): Promise<PageDescription | null> {
+    const isSession = Boolean(req.session?.authenticated && req.session.user?.id)
+    return this.describePage(siteId, ref, WIKI.models.groups.actorForRequest(req), !isSession)
+  }
+
+  /**
+   * The read behind both, which is the only thing that should call it.
+   *
+   * `actor` and `publicOnly` are paired by the two methods above rather than left to a caller, because
+   * the wrong pairing — the public actor with unpublished pages included — would describe a draft to
+   * whoever asked.
+   */
+  private async describePage(
+    siteId: string,
+    { locale, path }: { locale: string; path: string },
+    actor: AccessActor,
+    publicOnly: boolean
+  ): Promise<PageDescription | null> {
+    const conditions = [
+      eq(pagesTable.siteId, siteId),
+      eq(pagesTable.locale, locale),
+      // -> By path, and not by the hash `getPage` addresses a page with: that hash is 53 bits and is
+      //    never checked against the path it stands for, which is a collision a document served to
+      //    whoever asked simply need not have — nothing here was handed a hash to look up
+      eq(pagesTable.path, path)
+    ]
+    if (publicOnly) {
+      conditions.push(eq(pagesTable.publishState, 'published'))
+    }
+
+    const rows = await WIKI.db
+      .select({
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        description: pagesTable.description,
+        render: pagesTable.render,
+        updatedAt: pagesTable.updatedAt,
+        tags: pagesTable.tags,
+        editor: pagesTable.editor,
+        isSearchable: pagesTable.isSearchable,
+        password: pagesTable.password,
+        localeGroupId: pagesTable.localeGroupId
+      })
+      .from(pagesTable)
+      .where(and(...conditions))
+      .limit(1)
+
+    const row = rows[0]
+    if (!row) {
+      return null
+    }
+    if (!WIKI.models.groups.checkAccess(actor, 'read:pages', row)) {
+      return null
+    }
+
+    // -> A page and its lock are two things: the title and the description are not what a password
+    //    covers (the search index treats them the same way), so they travel and the body does not.
+    //    Held against the column and not against this requester's unlocks — the public description of
+    //    a page is cached and shared, so a body any one requester had earned must not get into it
+    const isProtected = Boolean(row.password)
+    const isRedirect = row.editor === REDIRECT_EDITOR
+    return {
+      locale: row.locale,
+      path: row.path,
+      title: row.title,
+      description: row.description,
+      render: isProtected || isRedirect ? null : row.render,
+      updatedAt: row.updatedAt,
+      isIndexable: row.isSearchable && !isProtected && !isRedirect,
+      alternates: await this.readableAlternates(siteId, row.localeGroupId, actor)
+    }
+  }
+
+  /**
+   * The locales a page can be read in, for the alternates a document names.
+   *
+   * Published and readable by this actor, and including the page itself, which is what an `hreflang`
+   * set calls for. A translation the asker may not read is not a URL to point them at — for the public
+   * that is the same cut the sitemap makes, which is why the two say the same thing about a page.
+   *
+   * Published regardless of who is asking, unlike the page itself: a draft translation is not an
+   * alternate version of a document, it is one that does not exist yet.
+   */
+  private async readableAlternates(
+    siteId: string,
+    localeGroupId: string | null,
+    actor: AccessActor
+  ): Promise<{ locale: string; path: string }[]> {
+    if (!localeGroupId) {
+      return []
+    }
+    const rows = await WIKI.db
+      .select({ locale: pagesTable.locale, path: pagesTable.path, tags: pagesTable.tags })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.localeGroupId, localeGroupId),
+          eq(pagesTable.publishState, 'published')
+        )
+      )
+      .orderBy(pagesTable.locale)
+    const readable = rows.filter((row) => WIKI.models.groups.checkAccess(actor, 'read:pages', row))
+    // -> One document is not a set of alternates: a page whose only readable version is itself has
+    //    nothing for an annotation to point at
+    return readable.length > 1 ? readable.map(({ locale, path }) => ({ locale, path })) : []
   }
 
   /**
@@ -1244,6 +1420,15 @@ class Pages {
       metadata: { title: page.title, description: page.description, editor }
     })
 
+    /*
+      Everything a document served to a client that will not run the app says about a page comes out
+      of the row this just wrote — its title, its description, its body, whether it is published and
+      searchable, and where it sits. Dropping the lot is cheaper than working out which URLs a change
+      reached: a rename moves a page, and joining or leaving a translation set moves its siblings'
+      alternates with it.
+    */
+    invalidateAppShellCache()
+
     return { page: (await this.getPage({ siteId, id: page.id })) as Page, versionId }
   }
 
@@ -1414,6 +1599,7 @@ class Pages {
       authorId: actor.id,
       metadata: { title: updated.title, description: updated.description }
     })
+    invalidateAppShellCache()
 
     return { page: updated, versionId }
   }
@@ -1547,6 +1733,7 @@ class Pages {
       siteId,
       authorId: actor.id
     })
+    invalidateAppShellCache()
     return { page: moved, versionId }
   }
 
@@ -1590,6 +1777,7 @@ class Pages {
       siteId,
       authorId: actor.id
     })
+    invalidateAppShellCache()
     return { page, versionId }
   }
 
@@ -1691,6 +1879,7 @@ class Pages {
         authorId: actor.id
       })
     }
+    invalidateAppShellCache()
     WIKI.logger.debug(`Deleted ${entries.length} page(s) that went with a deleted folder.`)
   }
 
@@ -2066,6 +2255,8 @@ class Pages {
     // -> Nothing was updated when the page went while it sat in the queue
     if (updated[0]) {
       await WIKI.models.search.indexPage(id, updated[0].locale)
+      // -> This is the column the injected copy of a page IS, so a re-render changes it
+      invalidateAppShellCache()
     }
   }
 
