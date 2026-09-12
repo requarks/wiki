@@ -142,6 +142,14 @@ Blocks style themselves off `:host` and read the theme colors via CSS custom pro
 (`var(--q-primary)` — the `--q-` prefix is historical; the properties are declared in
 `css/tailwind.css` and rewritten at runtime for per-site theming).
 
+**Except where the block's content IS the thing being styled**, which is `block-tab` and
+`block-steps`: both leave what they hold in the light DOM, because it is page content and has to be
+drawn by the article's own stylesheet. A shadow root cannot reach into it either — `::slotted()`
+matches the slotted element and nothing below it, so a slotted `<ol>`'s `<li>` items are already out
+of range — so their appearance lives in `frontend/src/css/_page-contents.scss` with the rest of the
+content typography, and the component itself is a plain `HTMLElement` carrying the definition. Don't
+copy that shape for a block that draws its own furniture; a shadow root is still the default.
+
 **Dark mode goes through `blocks/shared/theme.js`, never `:host-context()`.** The app's source of
 truth is the `body--dark` class on `<body>`, which CSS in a shadow root cannot see; `:host-context()`
 is the selector for exactly that and is what every block used to use, but only Chromium ever shipped

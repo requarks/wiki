@@ -20,6 +20,9 @@
 
   Maths and diagrams are not in that list: they are blocks now -- `block-mathjax`, `block-diagram`,
   `block-plantuml` -- and a block styles itself inside its own shadow root, which nothing here reaches.
+  The exceptions are the two blocks whose content is a page's own markup rather than something the
+  block draws -- `block-steps` under LISTS, and `block-tab` in the print section -- and that is exactly
+  why they are here: their content is styled by this file, which is the whole point of both of them.
 
   The measurements follow what the documentation platforms have converged on -- 16px body text, headings
   at 600 with far more space above than below, ruled h1/h2, tinted code, a table headed by a dark bar
@@ -161,6 +164,41 @@
   /* -> And the empty box of an item still to do, white whatever surface the content sits on */
   --content-tick-empty: #fff;
 
+  /*
+    The chain a steps block is drawn as (`block-steps`): the disc each step is numbered in, and the
+    line running from one disc to the next. The site's own colour, with the number on it in white.
+    Full strength, and the one place in content that spends the brand colour on a filled shape: the
+    discs are what a reader follows down a procedure, and at a tint they read as something the page
+    has greyed out rather than as its spine.
+
+    This is the disc's own colour -- the flat one under the grade the rule lays over it, and the far
+    end that grade arrives at. The lit end is `--color-primary-light`, which is the same mix the dark
+    theme lightens its links with, so a re-themed site carries both ends of it.
+
+    The line is that same colour at 60%, and derived from it rather than stated separately so the two
+    cannot drift into different blues: they are one shape, and a line in a second colour would read as
+    the discs being threaded onto something rather than as the run between them. Quieter than the
+    discs because it is the space between the steps -- at full strength it reads as a rule down the
+    margin, competing with the numbering it exists to join up.
+
+    One value for both themes, like the tick's white and the open tab's edge in `block-tabs`: a filled
+    shape is not writing, and does not need the lightening that keeps a link legible on a dark page.
+    It follows a re-themed site, `--color-primary` being the indirection every other brand colour here
+    goes through.
+  */
+  --content-step: var(--color-primary);
+  --content-step-line: color-mix(in srgb, var(--content-step) 60%, transparent);
+  /*
+    And the glow around a disc: the brand colour again, thrown a few pixels past the edge. One tight
+    layer and no offset -- this is light coming off the disc rather than the disc being lifted above
+    the page, which is what the table's and the links-list's two-layer drops below it are for.
+
+    Half strength and eight pixels is as far as it goes on a white page -- past that the halo starts to
+    read as a second ring around the disc, and the run of them down a long procedure turns into a row
+    of lamps rather than a chain of numbers. The dark theme takes it further; see the note there.
+  */
+  --content-step-glow: 0 0 8px color-mix(in srgb, var(--content-step) 50%, transparent);
+
   /* Admonition hues: the bar and the wash behind it, per severity */
   --content-info: #1867c0;
   --content-info-wash: rgba(24, 103, 192, 0.08);
@@ -284,6 +322,20 @@
       --content-tick: rgba(255, 255, 255, 0.38);
       /* -> A white box would be a lit square on a dark page; the empty one is just its outline */
       --content-tick-empty: transparent;
+
+      /*
+        The glow, which is the one thing here that has to be MORE than its light-theme self.
+
+        A glow is only ever the difference between it and what it sits on, and on a dark page the
+        mid-tone brand blue has almost none to spend: at the light theme's strength it was a halo
+        nobody could see. So it takes the lighter mix, for the same reason links and the page title do
+        -- and then goes up rather than down, because it is spreading light on a surface that gives it
+        room, where on white it was competing with a page already at full brightness.
+
+        The disc itself keeps the plain brand colour, as a filled shape it is read against rather than
+        through.
+      */
+      --content-step-glow: 0 0 10px color-mix(in srgb, var(--color-primary-light) 70%, transparent);
 
       --content-info: #6ab0ff;
       --content-info-wash: rgba(106, 176, 255, 0.12);
@@ -911,6 +963,136 @@
   @media (prefers-reduced-motion: reduce) {
     ul.links-list > li {
       transition-duration: 0.01ms;
+    }
+  }
+
+  /*
+    Steps: a list inside `::block-steps`.
+
+    Every item is numbered in a disc of its own with a line running from one disc down to the next, so
+    that a procedure reads as one path through the page rather than as a list that happens to be
+    numbered. The block is the whole of the syntax -- the content is an ordinary markdown list, which
+    is what lets a step hold anything a list item can hold: paragraphs, a code sample, an admonition,
+    another block.
+
+    Here rather than in `blocks/block-steps`, which draws none of this and has no shadow root at all.
+    The list belongs to the author and is page content like any other, so it is styled by this file --
+    and a list slotted into a shadow root would be out of reach anyway, since its `<li>` elements sit
+    two levels below the host and `::slotted()` reaches only one. The same reasoning `block-tab`'s
+    print rules give, and the same arrangement.
+
+    Ordered or unordered: the numbering is the block's own counter either way, since what is being
+    said is that these are steps and there is a first one. Only the outermost list, so a list nested
+    inside a step is an ordinary list and keeps its markers.
+  */
+  block-steps {
+    /*
+      The disc is exactly one line tall -- `line-height` is 1.6 on this element and the body text is
+      1rem -- which is what puts it on the first line of its step by construction, rather than by a
+      nudge that would have to be re-measured every time the leading moved.
+    */
+    --content-step-size: 1.6rem;
+
+    display: block;
+
+    > ol,
+    > ul {
+      /*
+        Half a disc of indent, so the discs hang off the left edge of the text column the way a
+        marker does, and the step's own content lines up close to where a list's would (1.7rem
+        against a list's 1.6em). The markers themselves go: the number is on the disc.
+      */
+      margin-left: calc(var(--content-step-size) / 2);
+      padding-left: 0;
+      list-style: none;
+      counter-reset: wiki-step;
+    }
+
+    > ol > li,
+    > ul > li {
+      position: relative;
+      /*
+        A step is spaced by what it leaves BELOW it rather than above, so that the gap between two
+        steps is inside the first of them -- which is the length the line has to run down. The
+        margin an item would otherwise carry goes, for the same reason: it would be a gap in the
+        line, outside either step and drawable by neither.
+      */
+      margin-top: 0;
+      padding-bottom: 1.4em;
+      padding-left: calc(var(--content-step-size) / 2 + 0.9rem);
+      counter-increment: wiki-step;
+    }
+
+    > ol > li:last-child,
+    > ul > li:last-child {
+      padding-bottom: 0;
+    }
+
+    /* The disc, straddling the line the steps hang off */
+    > ol > li::before,
+    > ul > li::before {
+      content: counter(wiki-step);
+      position: absolute;
+      top: 0;
+      left: calc(var(--content-step-size) / -2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--content-step-size);
+      height: var(--content-step-size);
+      border-radius: 50%;
+      /*
+        Lit from the top left, the way a small round thing catches light -- which is what makes a disc
+        read as a bead on the line rather than as a flat dot printed over it. The flat colour stays
+        underneath: a gradient is a background IMAGE, so anything that drops one (a very old engine, a
+        forced-colours mode) still gets a disc in the brand colour rather than a white hole with a
+        white number in it.
+      */
+      background-color: var(--content-step);
+      background-image: linear-gradient(
+        to bottom right,
+        var(--color-primary-light),
+        var(--content-step)
+      );
+      box-shadow: var(--content-step-glow);
+      /* -> White in both themes, the way a done task item's tick is: it is read against the disc it
+            sits on and never against the page */
+      color: #fff;
+      /*
+        In `rem`, so that the digits are the same size on every disc: a step that opens with a heading
+        or with small print would otherwise number itself in that step's font size. Tabular figures
+        so 9 and 10 sit in the same place on their discs.
+      */
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /*
+      And the line between one disc and the next, drawn from the bottom of this step's disc to the
+      bottom of the step itself -- which is exactly where the next disc starts, the steps having no
+      margin between them. Not as a border down the side of the item, which is the shorter way to say
+      it and would show through the disc: the fill is a wash, so whatever is behind it is still there
+      to be seen.
+
+      A border rather than a background, so that it prints -- see the note on `h1::after` further
+      down: a print dialog leaves background graphics off by default. Half a hairline to the left,
+      which is what centres it under the discs above and below it.
+    */
+    > ol > li::after,
+    > ul > li::after {
+      content: '';
+      position: absolute;
+      top: var(--content-step-size);
+      bottom: 0;
+      left: -0.5px;
+      border-left: 1px solid var(--content-step-line);
+    }
+
+    /* -> Nothing below the last step for a line to reach */
+    > ol > li:last-child::after,
+    > ul > li:last-child::after {
+      content: none;
     }
   }
 
@@ -1903,6 +2085,9 @@
     --content-table-head-ink: #000;
     --content-table-head-rule: var(--content-rule);
     --content-table-shadow: none;
+    /* -> A glow prints as a grey smudge round the disc and lifts nothing, the same trade `block-tabs`
+          makes with the shadow under a tabset */
+    --content-step-glow: none;
     /* -> And the banding, which on paper is grey ink over every other row for no gain */
     --content-table-row: transparent;
     --content-table-row-alt: transparent;
@@ -2001,6 +2186,21 @@
     }
     pre.codeblock.line-numbers {
       --code-pad-left: var(--code-pad-x);
+    }
+
+    /*
+      A step's disc has to print, which is not the default: a print dialog leaves background graphics
+      off, and the number on the disc is white -- so what came out was a line down the margin with a
+      blank beside every step, the numbering gone altogether. Same pair as a done task item and a tab's
+      label bar, for the same reason, and the one place in content where paper is asked for solid
+      colour: the discs ARE the numbering, and there is nothing left of a steps block without them.
+
+      The line between them needs none of this, being a border rather than a background.
+    */
+    block-steps > ol > li::before,
+    block-steps > ul > li::before {
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
     }
 
     /*
