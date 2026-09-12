@@ -342,11 +342,20 @@ function pageUrl(item) {
   return `${siteStore.localeUrlPrefix(item.locale)}/${item.path}`
 }
 
+/**
+ * Back to wherever the reader came from, and to this locale's home when there is nowhere to go back
+ * to -- a tab opened straight at this screen, a link followed from somewhere else.
+ *
+ * `history.state.back` is the entry vue-router itself records, and is the only thing that answers
+ * whether there is one: `history.length` counts the whole tab and is never 0, so the fallback below
+ * used to be unreachable and `router.back()` walked the reader out of the wiki instead. The fallback
+ * is prefixed because a bare `/` is the PRIMARY locale's home whoever asks -- see `readerHomePath`.
+ */
 function goBack() {
-  if (history.length > 0) {
+  if (window.history.state?.back) {
     router.back()
   } else {
-    router.push('/')
+    router.push(siteStore.readerHomePath)
   }
 }
 

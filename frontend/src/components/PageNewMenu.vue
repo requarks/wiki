@@ -1,40 +1,19 @@
 <template>
   <w-menu class="translucent-menu" auto-close anchor="bottom right" self="top right">
     <w-list padding>
+      <!--
+        The editors this site writes pages with, in the order the store lists them -- which is where
+        the rule lives, so that what can be created here and what a search can be filtered by cannot
+        drift apart. Each still carries its own icon and wording: `redirect` makes a redirection
+        rather than a page, and `wysiwyg` is just "New Page".
+      -->
       <w-item
+        v-for="editor of siteStore.activeEditors"
+        :key="editor"
         clickable
-        @click="create(`wysiwyg`)"
-        v-if="siteStore.editors.wysiwyg && flagsStore.experimental">
-        <blueprint-icon icon="google-presentation" />
-        <w-item-section class="pr-2">New Page</w-item-section>
-      </w-item>
-      <w-item clickable @click="create(`markdown`)" v-if="siteStore.editors.markdown">
-        <blueprint-icon icon="markdown" />
-        <w-item-section class="pr-2">New Markdown Page</w-item-section>
-      </w-item>
-      <template v-if="flagsStore.experimental">
-        <w-item clickable @click="create(`asciidoc`)" v-if="siteStore.editors.asciidoc">
-          <blueprint-icon icon="asciidoc" />
-          <w-item-section class="pr-2">New AsciiDoc Page</w-item-section>
-        </w-item>
-        <w-item clickable @click="create(`channel`)">
-          <blueprint-icon icon="chat" />
-          <w-item-section class="pr-2">New Discussion Space</w-item-section>
-        </w-item>
-        <w-item clickable @click="create(`blog`)">
-          <blueprint-icon icon="typewriter-with-paper" />
-          <w-item-section class="pr-2">New Blog Page</w-item-section>
-        </w-item>
-        <w-item clickable @click="create(`api`)">
-          <blueprint-icon icon="api" />
-          <w-item-section class="pr-2">New API Documentation</w-item-section>
-        </w-item>
-      </template>
-      <!-- -> Not an editor the site can turn off, because it authors nothing: a redirection is a page
-              with a target instead of a body -->
-      <w-item clickable @click="create(`redirect`)">
-        <blueprint-icon icon="advance" />
-        <w-item-section class="pr-2">New Redirection</w-item-section>
+        @click="create(editor)">
+        <blueprint-icon :icon="NEW_PAGE_ITEMS[editor].icon" />
+        <w-item-section class="pr-2">{{ NEW_PAGE_ITEMS[editor].label }}</w-item-section>
       </w-item>
       <template v-if="props.hideAssetBtn === false">
         <w-separator class="my-2" inset />
@@ -62,7 +41,24 @@ import { loading } from '@/composables/loading'
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
-import { useFlagsStore } from '@/stores/flags'
+
+/**
+ * How each editor is offered: its icon, and the wording of the item that creates one with it.
+ *
+ * WHICH of them are offered is `siteStore.activeEditors`, and only that list decides -- these are the
+ * words for the ones that are.
+ */
+const NEW_PAGE_ITEMS = {
+  wysiwyg: { icon: 'google-presentation', label: 'New Page' },
+  markdown: { icon: 'markdown', label: 'New Markdown Page' },
+  asciidoc: { icon: 'asciidoc', label: 'New AsciiDoc Page' },
+  channel: { icon: 'chat', label: 'New Discussion Space' },
+  blog: { icon: 'typewriter-with-paper', label: 'New Blog Page' },
+  api: { icon: 'api', label: 'New API Documentation' },
+  // -> Not an editor the site can turn off, because it authors nothing: a redirection is a page with
+  //    a target instead of a body
+  redirect: { icon: 'advance', label: 'New Redirection' }
+}
 
 // PROPS
 
@@ -97,7 +93,6 @@ const emit = defineEmits(['newFolder', 'newPage'])
 // STORES
 
 const editorStore = useEditorStore()
-const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 

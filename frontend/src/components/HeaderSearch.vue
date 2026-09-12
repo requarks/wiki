@@ -85,7 +85,17 @@
           <div class="searchpanel-header">
             <span>Popular Tags</span>
             <w-space />
-            <w-btn class="acrylic-btn" flat label="View All" size="xs" />
+            <!--
+              `mousedown.prevent` for the same reason the clear button has it: the press would
+              otherwise blur the input, which closes this panel before the click lands.
+            -->
+            <w-btn
+              class="acrylic-btn"
+              flat
+              label="View All"
+              size="xs"
+              @mousedown.prevent
+              @click="viewAllTags" />
           </div>
           <div class="mb-4 flex flex-wrap gap-1">
             <w-chip
@@ -243,6 +253,12 @@ function focus() {
 function clearSearch() {
   siteStore.search = ''
   searchField.value.focus()
+}
+
+/** The tag browser, which is what this panel's handful of popular ones is a shortcut into. */
+function viewAllTags() {
+  state.searchIsFocused = false
+  router.push('/_tags')
 }
 
 function addTag(tag) {

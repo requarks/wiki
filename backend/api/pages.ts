@@ -1,7 +1,12 @@
 import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
-import { SEARCH_ORDER_BY, type SearchOrderBy } from '../models/search.ts'
+import {
+  SEARCH_ORDER_BY,
+  SEARCH_TAGS_MATCH,
+  type SearchOrderBy,
+  type SearchTagsMatch
+} from '../models/search.ts'
 import { audit } from '../helpers/audit.ts'
 import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
@@ -292,6 +297,7 @@ async function routes(app: FastifyInstance) {
       path?: string
       locales?: string
       tags?: string
+      tagsMatch?: SearchTagsMatch
       editor?: string
       publishState?: string
       creatorId?: string
@@ -331,7 +337,15 @@ async function routes(app: FastifyInstance) {
             tags: {
               type: 'string',
               maxLength: 2048,
-              description: 'Comma-separated tags a page must carry all of.'
+              description:
+                "Comma-separated tags to match against a page's own, as `tagsMatch` says."
+            },
+            tagsMatch: {
+              type: 'string',
+              enum: SEARCH_TAGS_MATCH,
+              default: 'all',
+              description:
+                'Whether a page must carry `all` of the tags given (the default) or `any` one of them.'
             },
             editor: {
               type: 'string',
@@ -419,6 +433,7 @@ async function routes(app: FastifyInstance) {
         path: req.query.path,
         locales: splitList(req.query.locales),
         tags: splitList(req.query.tags),
+        tagsMatch: req.query.tagsMatch,
         editor: req.query.editor,
         publishState: req.query.publishState,
         creatorId: req.query.creatorId,

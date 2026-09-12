@@ -106,7 +106,9 @@
             <!-- ) -->
             <!-- template(v-slot:prepend) -->
             <!-- q-icon(name='la:user-edit', size='xs') -->
+            <!-- -> Nothing to choose between on a site with one locale, where every result is in it -->
             <w-select
+              v-if="hasMultipleLocales"
               class="mt-2"
               outlined
               v-model="state.params.filterLocale"
@@ -119,18 +121,7 @@
               option-label="name"
               options-dense
               multiple
-              :display-value="
-                t(
-                  `search.filterLocaleDisplay`,
-                  {
-                    n:
-                      state.params.filterLocale.length > 0
-                        ? state.params.filterLocale[0].toUpperCase()
-                        : state.params.filterLocale.length
-                  },
-                  state.params.filterLocale.length
-                )
-              ">
+              :display-value="localeFilterLabel">
               <template #prepend><w-icon name="la:language" size="xs" /></template>
             </w-select>
             <w-select
@@ -299,7 +290,11 @@ const state = reactive({
   filtersOpen: false,
   params: {
     filterPath: '',
-    filterLocale: [],
+    /*
+      The reader's own locale to start with, rather than every one -- see `defaultLocaleFilter`. Empty
+      is still what "every locale" is, both here and on the wire, so nothing downstream changes.
+    */
+    filterLocale: siteStore.defaultLocaleFilter ? [siteStore.defaultLocaleFilter] : [],
     filterEditor: '',
     filterPublishState: '',
     orderBy: 'relevancy',
@@ -330,14 +325,35 @@ const orderByOptions = computed(() => {
   ]
 })
 
-const editors = computed(() => {
-  return [
-    { label: t('search.editorAny'), value: '' },
-    { label: 'AsciiDoc', value: 'asciidoc' },
-    { label: 'Markdown', value: 'markdown' },
-    { label: 'Visual Editor', value: 'wysiwyg' }
-  ]
+const hasMultipleLocales = computed(() => siteStore.locales.active.length > 1)
+
+/**
+ * What the locale filter's field reads when it is closed: `Any locale`, `FR locale only`, or a count.
+ *
+ * The ALIAS, uppercased, not the stored code -- `fr-FR` is what the wiki files a locale under, `fr`
+ * is what the administrator named it and what every URL, badge and folder on the site already says.
+ * The field was reading the raw code, so French searched as `FR-FR locale only`.
+ */
+const localeFilterLabel = computed(() => {
+  const picked = state.params.filterLocale
+  return t(
+    'search.filterLocaleDisplay',
+    { n: picked.length > 0 ? siteStore.localeAlias(picked[0]).toUpperCase() : picked.length },
+    picked.length
+  )
 })
+
+/**
+ * What the editor filter offers: every editor this site writes pages with, named as the admin area
+ * names it.
+ *
+ * The list was hardcoded, so it offered editors the site had turned off or that do not exist here at
+ * all -- and left out `redirect`, which every site has. `activeEditors` is the one place that knows.
+ */
+const editors = computed(() => [
+  { label: t('search.editorAny'), value: '' },
+  ...siteStore.activeEditors.map((id) => ({ label: t(`admin.editors.${id}Name`), value: id }))
+])
 
 const publishStates = computed(() => {
   return [
@@ -442,21 +458,24 @@ async function performSearch() {
   const filters = {
     ...(state.params.filterPath ? { path: state.params.filterPath } : {}),
     ...(queryTags.length > 0 ? { tags: queryTags.join(',') } : {}),
-    ...(state.params.filterLocale.length > 0
-      ? { locales: state.params.filterLocale.join(',') }
-      : {}),
     ...(state.params.filterEditor ? { editor: state.params.filterEditor } : {}),
     ...(state.params.filterPublishState ? { publishState: state.params.filterPublishState } : {})
   }
 
   // -> Nothing to go on: the empty state says as much, and asking the server would answer with the
-  //    most recently updated pages, which is not what an empty search box means
+  //    most recently updated pages, which is not what an empty search box means. The locale is
+  //    deliberately not counted -- it narrows an answer rather than asking for one, and it now
+  //    arrives already set, so counting it would make an empty box search for every page in it
   if (!q && Object.keys(filters).length < 1) {
     state.results = []
     state.total = 0
     siteStore.searchLastQuery = siteStore.search
     siteStore.searchIsLoading = false
     return
+  }
+
+  if (state.params.filterLocale.length > 0) {
+    filters.locales = state.params.filterLocale.join(',')
   }
 
   state.loading++
@@ -489,11 +508,20 @@ async function performSearch() {
   }
 }
 
+/**
+ * Back to wherever the reader came from, and to this locale's home when there is nowhere to go back
+ * to -- a tab opened straight at this screen, a link followed from somewhere else.
+ *
+ * `history.state.back` is the entry vue-router itself records, and is the only thing that answers
+ * whether there is one: `history.length` counts the whole tab and is never 0, so the fallback below
+ * used to be unreachable and `router.back()` walked the reader out of the wiki instead. The fallback
+ * is prefixed because a bare `/` is the PRIMARY locale's home whoever asks -- see `readerHomePath`.
+ */
 function goBack() {
-  if (history.length > 0) {
+  if (window.history.state?.back) {
     router.back()
   } else {
-    router.push('/')
+    router.push(siteStore.readerHomePath)
   }
 }
 

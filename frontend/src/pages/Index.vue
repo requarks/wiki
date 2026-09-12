@@ -941,7 +941,8 @@ function goBack() {
   if (window.history.state?.back) {
     router.back()
   } else {
-    router.push('/')
+    // -> This locale's home, not the primary locale's, which is all a bare `/` ever addresses
+    router.push(siteStore.readerHomePath)
   }
 }
 </script>

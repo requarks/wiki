@@ -54,7 +54,25 @@ export interface RebuildResult {
   locales: { locale: string; dictionary: string; pages: number }[]
 }
 
-export const SEARCH_ORDER_BY = ['relevancy', 'title', 'createdAt', 'updatedAt'] as const
+/**
+ * How a list of tags is matched against a page's own.
+ *
+ * `all` is the narrowing sense a filter usually has — each tag added takes pages away — and is what
+ * a tag filter alongside a text query means. `any` is the widening one, which is what browsing by
+ * tag wants: two tags picked off a list are two things the reader is interested in, not a demand
+ * that one page be both.
+ */
+export const SEARCH_TAGS_MATCH = ['all', 'any'] as const
+export type SearchTagsMatch = (typeof SEARCH_TAGS_MATCH)[number]
+
+export const SEARCH_ORDER_BY = [
+  'relevancy',
+  'id',
+  'path',
+  'title',
+  'createdAt',
+  'updatedAt'
+] as const
 export type SearchOrderBy = (typeof SEARCH_ORDER_BY)[number]
 
 export interface SearchResult {
@@ -82,6 +100,8 @@ export interface SearchPagesParams {
   path?: string
   locales?: string[]
   tags?: string[]
+  /** Whether a page must carry every tag in `tags` (the default) or merely one of them. */
+  tagsMatch?: SearchTagsMatch
   editor?: string
   publishState?: string
   /**
@@ -229,6 +249,7 @@ class Search {
     path = '',
     locales = [],
     tags = [],
+    tagsMatch = 'all',
     editor = '',
     publishState = '',
     creatorId = '',
@@ -300,7 +321,12 @@ class Search {
       conditions.push(sql`p.locale = ANY(${sql.param(locales)}::text[])`)
     }
     if (tags.length > 0) {
-      conditions.push(sql`p.tags @> ${sql.param(tags)}::text[]`)
+      // -> `@>` is contains-all, `&&` is overlaps; both are indexable the same way
+      conditions.push(
+        tagsMatch === 'any'
+          ? sql`p.tags && ${sql.param(tags)}::text[]`
+          : sql`p.tags @> ${sql.param(tags)}::text[]`
+      )
     }
     if (editor) {
       conditions.push(sql`p.editor = ${editor}`)
@@ -317,6 +343,13 @@ class Search {
     const effectiveOrderBy = orderBy === 'relevancy' && !hasQuery ? 'updatedAt' : orderBy
     const ordering = {
       relevancy: sql`relevancy ${direction}, p."updatedAt" DESC`,
+      id: sql`p.id ${direction}`,
+      /*
+        A path is only unique within a locale, so two translations of the same page would otherwise
+        come back in whatever order the planner chose -- and swap places between two requests for the
+        same list. The locale settles it.
+      */
+      path: sql`p.path ${direction}, p.locale ASC`,
       title: sql`p.title ${direction}`,
       createdAt: sql`p."createdAt" ${direction}`,
       updatedAt: sql`p."updatedAt" ${direction}`

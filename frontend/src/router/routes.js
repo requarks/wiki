@@ -50,6 +50,14 @@ const routes = [
     component: () => import('@/pages/Search.vue')
   },
   /*
+    Browse the site by tag. The selection is in the query (`?t=a,b`) rather than in the path, so a
+    set of tags is a link that can be handed to somebody -- see `pages/Tags.vue`.
+  */
+  {
+    path: '/_tags',
+    component: () => import('@/pages/Tags.vue')
+  },
+  /*
     The public profile of one user. `/_user` is shared with the server, which serves avatars at
     `/_user/<id>/avatar` -- both `backend/index.ts` and the dev proxy in `frontend/vite.config.js`
     split the segment the same way, so this route only ever sees the profile half.

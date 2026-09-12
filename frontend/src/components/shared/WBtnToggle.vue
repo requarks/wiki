@@ -17,6 +17,7 @@
       type="button"
       role="radio"
       :aria-checked="String(opt.value === modelValue)"
+      :aria-label="opt.ariaLabel || undefined"
       class="w-btn-toggle__segment w-unstyled relative cursor-pointer px-3 py-1.5 text-sm font-medium transition-[background-color,color,transform]"
       :class="[
         noCaps ? 'normal-case' : 'uppercase',
@@ -34,8 +35,22 @@
       ]"
       :style="segmentStyle(opt)"
       @click="$emit('update:modelValue', opt.value)">
-      <w-icon v-if="opt.icon" :name="opt.icon" class="mr-1 align-middle" />
+      <!--
+        `mr-1` is the gutter between the icon and the label, so it belongs to segments that HAVE a
+        label. Applied unconditionally it also padded an icon-only segment on one side, which against
+        the segment's symmetric `px-3` left the icon sitting 4px left of centre.
+      -->
+      <w-icon
+        v-if="opt.icon"
+        :name="opt.icon"
+        class="align-middle"
+        :class="opt.label !== undefined ? 'mr-1' : ''" />
       <span v-if="opt.label !== undefined">{{ opt.label }}</span>
+      <!--
+        Inside the segment, so WTooltip's climb to `closest('button, ...)` lands on THIS segment and
+        not on the group -- a tooltip per option is the only kind worth having on a segmented control.
+      -->
+      <w-tooltip v-if="opt.tooltip">{{ opt.tooltip }}</w-tooltip>
     </button>
   </div>
 </template>
@@ -56,7 +71,15 @@ const props = defineProps({
     type: null,
     default: null
   },
-  /** `[{ label, value, icon? }]` */
+  /**
+   * `[{ label, value, icon?, ariaLabel?, tooltip? }]`
+   *
+   * `ariaLabel` names a segment that has only an icon to go on -- an ascending/descending pair, say.
+   * Omit it wherever the label is the name, or it would be read out in place of it.
+   *
+   * `tooltip` is the same idea for the pointer: a line explaining what the segment does, for a
+   * control whose label is an icon or a word too short to say it. It appears on hover and on focus.
+   */
   options: {
     type: Array,
     default: () => []

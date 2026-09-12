@@ -12,7 +12,7 @@
         dense
         :clickable="!props.edit"
         :removable="props.edit"
-        @click="searchTag(tag)"
+        @click="browseTag(tag)"
         @remove="removeTag(tag)"
         v-for="tag of pageStore.tags"
         :key="`tag-` + tag">
@@ -55,6 +55,7 @@ import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { tagBrowserRoute } from '@/helpers/tagBrowser'
 
 // PROPS
 
@@ -177,8 +178,17 @@ function createTag(val) {
  * Only reachable in view mode -- WChip emits `click` only while `clickable`, which the editing chips
  * are not, their control being the remove button instead.
  */
-function searchTag(tag) {
-  router.push({ path: '/_search', query: { q: `#${tag}` } })
+/**
+ * Open the tag browser on this tag.
+ *
+ * It used to push `/_search?q=#tag`, which answered the question by running a search for nothing but
+ * a filter -- the results screen then showed an empty query box above a list it could not explain,
+ * and offered no way to narrow the set except by typing more tags into that box. The browser is the
+ * screen for this: the tag arrives ticked, every other tag on the wiki is beside it to add or swap,
+ * and the address says what is being looked at.
+ */
+function browseTag(tag) {
+  router.push(tagBrowserRoute([tag]))
 }
 
 function removeTag(tag) {

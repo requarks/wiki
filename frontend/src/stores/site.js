@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 
 import { sortBy } from 'es-toolkit/array'
 
+import { useCommonStore } from './common'
+import { useFlagsStore } from './flags'
 import { useUserStore } from './user'
 
 /**
@@ -231,6 +233,73 @@ export const useSiteStore = defineStore('site', {
         this.locales.forcePrefix || code !== this.locales.primary
           ? `/${this.localeAlias(code)}`
           : ''
+    },
+    /**
+     * The editors a page on this site may be written with, as the ids `pages.editor` stores — the
+     * order they are offered in, which is the order a reader meets them.
+     *
+     * Three questions at once, and all three have to be asked or the list is fiction: whether the
+     * site has the editor turned on (`editors`, the admin area's Editors screen), whether it is
+     * implemented at all — `channel`, `blog` and `api` are names with no editor behind them yet, and
+     * `wysiwyg` and `asciidoc` are half-built, so all five are behind the experimental flag — and
+     * `redirect`, which no site can turn off because it authors nothing: a redirection is a page with
+     * a target instead of a body. On a wiki with the flag off that leaves Markdown and Redirection,
+     * which is what most of them run.
+     *
+     * `PageNewMenu` draws its items from this, so what a page can be created with and what a search
+     * can be filtered by cannot drift apart.
+     */
+    activeEditors() {
+      const flagsStore = useFlagsStore()
+      const experimental = flagsStore.experimental
+      return [
+        ...(experimental && this.editors.wysiwyg ? ['wysiwyg'] : []),
+        ...(this.editors.markdown ? ['markdown'] : []),
+        ...(experimental && this.editors.asciidoc ? ['asciidoc'] : []),
+        ...(experimental ? ['channel', 'blog', 'api'] : []),
+        'redirect'
+      ]
+    },
+    /** Whether `code` is one of the locales this site has enabled. */
+    isActiveLocale: (state) => (code) => state.locales.active.some((lc) => lc.code === code),
+    /**
+     * The locale the reader is reading in, as a locale this site actually has.
+     *
+     * The interface locale, which is the one the locale selector ticks and the only thing that
+     * answers the question on a screen that is not a page — `/_tags` and `/_search` carry no locale
+     * in their URLs, so a reader's own choice is all there is to go on. The site's primary where
+     * that choice is not a locale of this site, since every wiki has a primary and a reader has to
+     * be somewhere.
+     */
+    readerLocale() {
+      const commonStore = useCommonStore()
+      return this.isActiveLocale(commonStore.locale) ? commonStore.locale : this.locales.primary
+    },
+    /**
+     * The locale a listing screen opens narrowed to — the tag browser, the search filters — or null
+     * for every locale, which is where a site with one locale lands.
+     *
+     * The reader's own locale, because a list of every translation of everything is mostly pages
+     * they cannot read. Null on a single-locale site, where the control is not drawn at all and a
+     * filter nothing on screen can undo is a trap — it would also quietly hide pages left in a
+     * locale the site has since dropped. Null too where the reader's locale is not one of this
+     * site's, since opening on an empty list says a wiki is empty when it is only foreign.
+     */
+    defaultLocaleFilter() {
+      const commonStore = useCommonStore()
+      return this.locales.active.length > 1 && this.isActiveLocale(commonStore.locale)
+        ? commonStore.locale
+        : null
+    },
+    /**
+     * Where home is for the reader — `/` on a single-locale wiki, `/fr/` for somebody reading the
+     * French half of a wiki whose primary locale is English.
+     *
+     * The one place that answers it, because a bare `/` does not: that is the PRIMARY locale's home
+     * whoever asks, so every screen that fell back to it sent a French reader to the English wiki.
+     */
+    readerHomePath() {
+      return `${this.localeUrlPrefix(this.readerLocale)}/`
     }
   },
   actions: {
