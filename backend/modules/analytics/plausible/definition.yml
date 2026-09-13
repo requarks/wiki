@@ -1,0 +1,20 @@
+title: Plausible Analytics
+description: Plausible is a lightweight, open source analytics tool that sets no cookies and collects no personal data, so a wiki using it needs no consent banner. Available as a hosted service or self-hosted.
+website: https://plausible.io
+icon: '/_assets/icons/ultraviolet-plausible.svg'
+requires: ['domain', 'scriptUrl']
+props:
+  domain:
+    type: String
+    title: Domain
+    default: ''
+    hint: The domain as it is registered in Plausible, without a scheme, e.g. wiki.example.com
+    icon: website
+    order: 1
+  scriptUrl:
+    type: String
+    title: Script URL
+    default: 'https://plausible.io/js/script.js'
+    hint: Where the tracking script is loaded from. Change it only for a self-hosted instance, or to use one of the extension scripts such as script.hash.js.
+    icon: link
+    order: 2

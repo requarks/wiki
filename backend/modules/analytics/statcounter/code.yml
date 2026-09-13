@@ -1,0 +1,10 @@
+head: |
+  <!-- StatCounter -->
+  <script type="text/javascript">
+    var sc_project={{num:projectId}};
+    var sc_invisible=1;
+    var sc_security="{{js:securityToken}}";
+  </script>
+  <script type="text/javascript" src="https://www.statcounter.com/counter/counter.js" async></script>
+  <noscript><div class="statcounter"><img class="statcounter" src="https://c.statcounter.com/{{attr:projectId}}/0/{{attr:securityToken}}/1/" alt="" referrerpolicy="no-referrer-when-downgrade"></div></noscript>
+  <!-- End StatCounter -->

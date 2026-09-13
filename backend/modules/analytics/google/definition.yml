@@ -1,0 +1,13 @@
+title: Google Analytics
+description: Google Analytics is a web analytics service offered by Google that tracks and reports website traffic. The wiki injects the GA4 gtag.js tag; Universal Analytics properties are no longer collected.
+website: https://analytics.google.com
+icon: '/_assets/icons/ultraviolet-google-analytics.svg'
+requires: ['measurementId']
+props:
+  measurementId:
+    type: String
+    title: Measurement ID
+    default: ''
+    hint: The GA4 measurement ID of the data stream, found under Admin > Data streams. Starts with G-.
+    icon: 3d-touch
+    order: 1

@@ -76,6 +76,7 @@ const routes = [
       // -> Site
       { path: ':siteid/general', component: () => import('@/pages/AdminGeneral.vue') },
       { path: ':siteid/approvals', component: () => import('@/pages/AdminApprovals.vue') },
+      { path: ':siteid/analytics/:id?', component: () => import('@/pages/AdminAnalytics.vue') },
       { path: ':siteid/blocks', component: () => import('@/pages/AdminBlocks.vue') },
       { path: ':siteid/editors', component: () => import('@/pages/AdminEditors.vue') },
       { path: ':siteid/locale', component: () => import('@/pages/AdminLocale.vue') },

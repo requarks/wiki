@@ -107,6 +107,7 @@ export const AUDIT_ACTIONS = {
     'updateSiteImage',
     'deleteSiteImage',
     'updateStorage',
+    'updateAnalytics',
     'runStorageAction',
     'updateFlags',
     'updateSecurity',

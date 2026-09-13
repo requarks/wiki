@@ -1,0 +1,20 @@
+title: Fathom Analytics
+description: Fathom Analytics is a paid, privacy-first analytics service that stores no personal data and needs no cookie banner. A single script reports page views and referrers.
+website: https://usefathom.com
+icon: '/_assets/icons/ultraviolet-fathom.svg'
+requires: ['siteId', 'scriptUrl']
+props:
+  siteId:
+    type: String
+    title: Site ID
+    default: ''
+    hint: The short alphanumeric ID Fathom assigned this site, shown in the snippet it gives you.
+    icon: 3d-touch
+    order: 1
+  scriptUrl:
+    type: String
+    title: Script URL
+    default: 'https://cdn.usefathom.com/script.js'
+    hint: Where the tracking script is loaded from. Change it only to use a custom domain configured in Fathom, which is how the script avoids ad blockers.
+    icon: link
+    order: 2

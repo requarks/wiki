@@ -1,0 +1,13 @@
+title: Baidu Tongji
+description: Baidu Tongji is the analytics service of Baidu, and the one that reports on traffic arriving from Baidu search. Its dashboard is in Chinese.
+website: https://tongji.baidu.com
+icon: '/_assets/icons/ultraviolet-baidu.svg'
+requires: ['trackingId']
+props:
+  trackingId:
+    type: String
+    title: Tracking ID
+    default: ''
+    hint: The site key at the end of the tracking URL Baidu gives you, e.g. the XXXX in https://hm.baidu.com/hm.js?XXXX
+    icon: 3d-touch
+    order: 1

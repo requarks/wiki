@@ -1,0 +1,20 @@
+title: Umami
+description: Umami is an open source, privacy-focused alternative to Google Analytics, with a single script and no cookies. Runs as a hosted service or on your own server.
+website: https://umami.is
+icon: '/_assets/icons/ultraviolet-umami.svg'
+requires: ['websiteId', 'scriptUrl']
+props:
+  websiteId:
+    type: String
+    title: Website ID
+    default: ''
+    hint: The ID Umami assigned this site, shown on its Settings > Websites page.
+    icon: 3d-touch
+    order: 1
+  scriptUrl:
+    type: String
+    title: Script URL
+    default: 'https://cloud.umami.is/script.js'
+    hint: Where the tracking script is loaded from. For a self-hosted instance this is your own server, e.g. https://umami.example.com/script.js
+    icon: link
+    order: 2

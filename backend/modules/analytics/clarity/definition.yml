@@ -1,0 +1,13 @@
+title: Microsoft Clarity
+description: Clarity is a free behaviour analytics tool from Microsoft. Alongside page views it records sessions and builds heatmaps, so it answers what readers did on a page rather than only how many arrived.
+website: https://clarity.microsoft.com
+icon: '/_assets/icons/ultraviolet-clarity.svg'
+requires: ['projectId']
+props:
+  projectId:
+    type: String
+    title: Project ID
+    default: ''
+    hint: The project ID shown under Settings > Setup in the Clarity dashboard.
+    icon: 3d-touch
+    order: 1

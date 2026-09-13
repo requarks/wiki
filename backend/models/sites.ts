@@ -212,6 +212,11 @@ class Sites {
               localePrefix: true,
               syncInterval: '5m',
               directAccessFallback: 'stream'
+            },
+            // -> Keyed by the directory name under `modules/analytics`. Empty until an administrator
+            //    turns a provider on; the model completes each one from the module's declared props.
+            analytics: {
+              providers: {}
             }
           },
           config
@@ -475,6 +480,9 @@ class Sites {
           localePrefix: true,
           syncInterval: '5m',
           directAccessFallback: 'stream'
+        },
+        analytics: {
+          providers: {}
         }
       }
     })

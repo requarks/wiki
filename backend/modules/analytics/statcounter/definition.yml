@@ -1,0 +1,20 @@
+title: StatCounter
+description: StatCounter is a long-running hosted analytics service with a free tier, reporting visitors, referrers and pages viewed. It adds a no-script pixel so visits without JavaScript are counted too.
+website: https://statcounter.com
+icon: '/_assets/icons/ultraviolet-statcounter.svg'
+requires: ['projectId', 'securityToken']
+props:
+  projectId:
+    type: Number
+    title: Project ID
+    default: 0
+    hint: The numeric project ID, found in the code snippet StatCounter gives you.
+    icon: 3d-touch
+    order: 1
+  securityToken:
+    type: String
+    title: Security Token
+    default: ''
+    hint: The token beside the project ID in the same snippet. It is public - it identifies the project rather than authenticating you.
+    icon: key
+    order: 2

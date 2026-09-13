@@ -1,0 +1,13 @@
+title: Google Tag Manager
+description: Google Tag Manager loads and manages the tracking tags of other services from one container, so the tags themselves are configured at Google rather than here. Use it instead of the individual providers, not alongside them, or a page will be counted twice.
+website: https://tagmanager.google.com
+icon: '/_assets/icons/ultraviolet-google-tag-manager.svg'
+requires: ['containerId']
+props:
+  containerId:
+    type: String
+    title: Container ID
+    default: ''
+    hint: The container this site loads, shown at the top of the Tag Manager workspace. Starts with GTM-.
+    icon: 3d-touch
+    order: 1

@@ -1,0 +1,20 @@
+title: Yandex Metrica
+description: Yandex Metrica is a free analytics service with session replay and heatmaps built in, widely used where Yandex is the main search engine.
+website: https://metrica.yandex.com
+icon: '/_assets/icons/ultraviolet-yandex-metrica.svg'
+requires: ['tagNumber']
+props:
+  tagNumber:
+    type: Number
+    title: Tag Number
+    default: 0
+    hint: The numeric tag ID. When creating the tag choose "CMS and website builders" and copy the number it gives you.
+    icon: 3d-touch
+    order: 1
+  webvisor:
+    type: Boolean
+    title: Session Replay
+    default: false
+    hint: Record what readers do on a page so it can be played back. Off by default - it captures far more about a reader than a page view does, and may need disclosing in your privacy policy.
+    icon: video-playlist
+    order: 2

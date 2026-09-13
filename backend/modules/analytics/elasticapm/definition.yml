@@ -1,0 +1,34 @@
+title: Elastic APM RUM
+description: Real User Monitoring reports what the browser actually experienced - page load timings, failed requests, JavaScript errors - to an Elastic APM server. Performance monitoring rather than audience analytics.
+website: https://www.elastic.co/observability/application-performance-monitoring
+icon: '/_assets/icons/ultraviolet-elastic.svg'
+requires: ['serviceName', 'serverUrl', 'scriptUrl']
+props:
+  serverUrl:
+    type: String
+    title: APM Server URL
+    default: ''
+    hint: The full URL of the APM server, including the port, e.g. https://apm.example.com:8200
+    icon: dns
+    order: 1
+  serviceName:
+    type: String
+    title: Service Name
+    default: 'wiki-js'
+    hint: What this wiki is called in the APM UI.
+    icon: rename
+    order: 2
+  environment:
+    type: String
+    title: Environment
+    default: ''
+    hint: Which deployment the data came from, e.g. production or staging. Optional - leave empty to report none.
+    icon: geography
+    order: 3
+  scriptUrl:
+    type: String
+    title: Agent Script URL
+    default: 'https://cdn.jsdelivr.net/npm/@elastic/apm-rum@5.17.5/dist/bundles/elastic-apm-rum.umd.min.js'
+    hint: Where the RUM agent is loaded from. Pinned to a version on purpose - point it at a copy you host to keep the wiki off a public CDN.
+    icon: link
+    order: 4

@@ -205,6 +205,10 @@ async function postBoot() {
   await WIKI.models.storage.refreshFromDisk()
   await WIKI.models.storage.syncAllSites()
 
+  // -> No per-site rows to create: what a site has turned on lives in its own config blob, which the
+  //    sites cache above already holds
+  await WIKI.models.analytics.refreshFromDisk()
+
   // -> Optional third-party tooling: report what is available, since features silently degrade
   //    without it
   await WIKI.models.extensions.refreshFromDisk()

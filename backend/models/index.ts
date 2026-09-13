@@ -1,3 +1,4 @@
+import { analytics } from './analytics.ts'
 import { apiKeys } from './apiKeys.ts'
 import { approvals } from './approvals.ts'
 import { assets } from './assets.ts'
@@ -31,6 +32,7 @@ import { tree } from './tree.ts'
 import { users } from './users.ts'
 
 export default {
+  analytics,
   apiKeys,
   approvals,
   assets,

@@ -1,0 +1,20 @@
+title: Matomo
+description: Matomo is an open source web analytics platform that keeps the data on your own server or in a Matomo Cloud account, rather than with an advertising network. It is the closest like-for-like replacement for Google Analytics.
+website: https://matomo.org
+icon: '/_assets/icons/ultraviolet-matomo.svg'
+requires: ['serverUrl', 'siteId']
+props:
+  serverUrl:
+    type: String
+    title: Server URL
+    default: ''
+    hint: The root URL of the Matomo installation, with the scheme and without a trailing slash, e.g. https://example.matomo.cloud
+    icon: dns
+    order: 1
+  siteId:
+    type: String
+    title: Site ID
+    default: '1'
+    hint: The number Matomo assigned this site, shown under Administration > Websites > Manage.
+    icon: 3d-touch
+    order: 2

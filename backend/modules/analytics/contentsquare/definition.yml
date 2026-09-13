@@ -1,0 +1,13 @@
+title: Contentsquare
+description: Contentsquare, which Hotjar was renamed to, records how readers move through a page - heatmaps, session recordings and on-page surveys - rather than counting visits. Useful for finding the documentation nobody can follow.
+website: https://contentsquare.com
+icon: '/_assets/icons/ultraviolet-contentsquare.svg'
+requires: ['siteId']
+props:
+  siteId:
+    type: Number
+    title: Site ID
+    default: 0
+    hint: The numeric site ID, found in the tracking code Contentsquare gives you. Still the Hotjar-style ID an existing account was set up with - the rename did not change how a site is installed.
+    icon: 3d-touch
+    order: 1

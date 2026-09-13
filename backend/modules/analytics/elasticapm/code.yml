@@ -1,0 +1,12 @@
+head: |
+  <!-- Elastic APM RUM -->
+  <script>
+    ;(function(d, s, c) {
+      var j = d.createElement(s),
+        t = d.getElementsByTagName(s)[0]
+
+      j.src = '{{js:scriptUrl}}'
+      j.onload = function() { elasticApm.init(c) }
+      t.parentNode.insertBefore(j, t)
+    })(document, 'script', {serviceName: '{{js:serviceName}}', serverUrl: '{{js:serverUrl}}', environment: '{{js:environment}}'})
+  </script>

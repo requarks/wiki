@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio'
 import type { FastifyRequest } from 'fastify'
+import type { AnalyticsInjections } from '../models/analytics.ts'
 import type { PageDescription } from '../models/pages.ts'
 import { htmlEscape, isPageUrl, normalizePagePath, originOf, splitLocalePath } from './common.ts'
 
@@ -70,6 +71,15 @@ const HOME_PATH = 'home'
 
 /** The element the injected copy is wrapped in. `frontend/index.html` styles it; `main.js` removes it. */
 const PRERENDER_ID = 'wiki-prerender'
+
+/**
+ * The prefix of every URL belonging to the administration area.
+ *
+ * Documents served for a path below it carry no analytics tag — see `analyticsInjections`. Only the
+ * path matters, not who is asking: the question is which document is being built, and a reader with
+ * no access to the admin area gets the same document at that URL as an administrator does.
+ */
+const ADMIN_PATH_PREFIX = '/_admin'
 
 /**
  * The `<style>` a site's CSS override is injected as, and the id BOTH sides use for it.
@@ -464,6 +474,32 @@ async function fragmentsForBrowser(
  * that makes a screen unusable: injected CSS that came with the document survives client-side
  * navigation, so returning to the theme screen through the app carries it along.
  */
+/**
+ * The analytics tags a site has turned on, for the document at this URL.
+ *
+ * The providers configured under **Admin → Analytics**, rendered by `models/analytics.ts` and read
+ * per request off the cached site config — the same reasoning as `themeInjections`, which this lands
+ * beside. It is the whole of how a tag is served: it belongs in the document the server hands out
+ * rather than in something the app adds once it has booted, because several providers verify an
+ * installation by fetching the page and looking for their snippet, and a tag that arrives after boot
+ * has already missed the page load it exists to measure.
+ *
+ * **Nothing is injected for the administration area.** What an administrator does in `/_admin` is the
+ * wiki being configured rather than the wiki being read, and it has no business in a report of what a
+ * site's readers looked at — nor in whatever a session-replay provider would make of somebody typing
+ * a credential into an authentication strategy. This only sorts documents by their own URL: it is a
+ * hard navigation to an admin path that comes back without a tag, while walking into the admin area
+ * through the app carries whatever tag the document it started from already loaded. There is no
+ * getting that back without a per-provider way to stop one, which is the client-side layer this
+ * deliberately does not have.
+ */
+function analyticsInjections(siteId: string | undefined, urlPath: string): AnalyticsInjections {
+  if (urlPath === ADMIN_PATH_PREFIX || urlPath.startsWith(`${ADMIN_PATH_PREFIX}/`)) {
+    return { head: '', bodyStart: '' }
+  }
+  return WIKI.models.analytics.injectionsFor(siteId)
+}
+
 function themeInjections(siteId: string | undefined): { head: string; body: string } {
   const theme = siteId ? WIKI.sites[siteId]?.config?.theme : undefined
   const css: string = theme?.injectCSS?.trim() ?? ''
@@ -487,7 +523,14 @@ function themeInjections(siteId: string | undefined): { head: string; body: stri
  *
  * The site's own theme injections travel with it (`themeInjections`), which is what puts the CSS
  * override and the head and body HTML from **Admin → Theme** into the document — the head ones after
- * everything describing the page, so that an override is the last stylesheet in the document.
+ * everything describing the page, so that an override is the last stylesheet in the document. So do
+ * the analytics tags of whichever providers the site has turned on (`analyticsInjections`), for the
+ * same reasons and read the same way — except in the administration area, which is configuration
+ * rather than reading and is left out of a site's traffic entirely.
+ *
+ * The analytics head goes in FIRST, ahead of the theme's own head injection. A tracking tag is meant
+ * to run as early as it can, and the theme field is the operator's own markup — last is where an
+ * override belongs.
  *
  * Only the public half is cached, and the shell is never cached: the shell is re-read per request so
  * that `npm run build` in `frontend/` takes effect immediately, which a cached whole document would
@@ -513,8 +556,19 @@ export async function renderAppShell(
   */
   const withoutTitle = shell.replace(/[ \t]*<title>[\s\S]*?<\/title>\n?/i, '')
   const injected = themeInjections(siteId)
-  const head = [fragments.head, injected.head].filter(Boolean).join('\n  ')
-  const html = withoutTitle
+  const tags = analyticsInjections(siteId, urlPath)
+  const head = [fragments.head, tags.head, injected.head].filter(Boolean).join('\n  ')
+  /*
+    Immediately after the opening `<body>`, which is the one slot that is not the end of something:
+    Google Tag Manager's `<noscript>` fallback is an `<iframe>`, so it cannot go in the head, and it
+    is specified to go there. Matched as a tag rather than as a literal string because the shell's
+    own carries a class — and matched against the shell BEFORE anything is put into its head, so that
+    `<body` written into a theme's head injection cannot be what the tag lands after.
+  */
+  const withBody = withoutTitle.replace(/<body[^>]*>/i, (match) =>
+    tags.bodyStart ? `${match}\n${tags.bodyStart}` : match
+  )
+  const html = withBody
     .replace('</head>', () => `  ${head}\n  </head>`)
     .replace('</body>', () => `${fragments.body}${injected.body}</body>`)
 

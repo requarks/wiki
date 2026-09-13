@@ -1,0 +1,2 @@
+head: |
+  <script defer data-site="{{attr:siteId}}" src="{{attr:scriptUrl}}"></script>
