@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, exists, inArray, ne, or, sql, type SQL } from 'drizzle-orm'
+import { and, asc, desc, eq, exists, inArray, ne, not, or, sql, type SQL } from 'drizzle-orm'
 import { alias, type PgColumn } from 'drizzle-orm/pg-core'
 import { pages as pagesTable, tree as treeTable } from '../db/schema.ts'
 import {
@@ -1651,6 +1651,108 @@ class Tree {
       pages: deleted.filter((n) => n.type === 'page').map(asEntry),
       assets: deleted.filter((n) => n.type === 'asset').map(asEntry)
     }
+  }
+
+  /**
+   * Delete every folder holding no page and no asset, on every site.
+   *
+   * A folder is empty when nothing at all sits below it, at any depth — so a branch of folders with
+   * no content anywhere in it goes in its entirety, not just the leaf. That is the whole point of it:
+   * emptying a folder usually leaves the one above it empty as well, and a pass that only took the
+   * leaves would have to be run again until it stopped finding things.
+   *
+   * Done as repeated passes of one statement rather than as a walk in memory, and each pass asks what
+   * is empty NOW: a folder whose only child was an empty folder becomes empty the moment that child
+   * goes, and the next pass takes it. It ends when a pass deletes nothing, which cannot be longer
+   * than the tree is deep.
+   *
+   * Two things follow from the emptiness check living inside the DELETE rather than beside it. A page
+   * or an asset written while this runs keeps its folder — the statement that would have deleted it
+   * no longer matches — and nothing this runs can delete anything that is not a folder.
+   *
+   * @returns How many folders were deleted.
+   */
+  async deleteEmptyFolders(): Promise<number> {
+    const child = alias(treeTable, 'childEntry')
+    /*
+      Whether the folder holds nothing — pages, assets and other folders alike. Folders count, because
+      an empty one is what the next pass is for; anything else and the branch stays.
+
+      The folder's own path is built from its row, as `browse` does above: `foo.bar` + `.` + `baz`,
+      and `baz` alone at the root, where `folderPath` is the empty path rather than an absent one.
+    */
+    const holdsNothing = not(
+      exists(
+        WIKI.db
+          .select({ one: sql`1` })
+          .from(child)
+          .where(
+            and(
+              eq(child.siteId, treeTable.siteId),
+              eq(child.locale, treeTable.locale),
+              sql`${child.folderPath} <@ (COALESCE(NULLIF(${treeTable.folderPath}::text, '') || '.', '') || ${treeTable.fileName})::ltree`
+            )
+          )
+      )
+    )
+
+    const deletedIds: string[] = []
+    /** Each deleted folder's OWN path, which is what its children carry — i.e. what a parent is. */
+    const deletedPaths = new Set<string>()
+    /** How many children each folder lost, keyed the same way, applied once the passes are done. */
+    const losses = new Map<
+      string,
+      { siteId: string; locale: string; path: string; count: number }
+    >()
+
+    for (;;) {
+      const deleted = await WIKI.db
+        .delete(treeTable)
+        .where(and(eq(treeTable.type, 'folder'), holdsNothing))
+        .returning({
+          id: treeTable.id,
+          siteId: treeTable.siteId,
+          locale: treeTable.locale,
+          folderPath: treeTable.folderPath,
+          fileName: treeTable.fileName
+        })
+      if (deleted.length < 1) {
+        break
+      }
+      for (const row of deleted) {
+        deletedIds.push(row.id)
+        deletedPaths.add(`${row.siteId}|${row.locale}|${childPathOf(row)}`)
+        const parentPath = row.folderPath ?? ''
+        if (!parentPath) {
+          continue
+        }
+        const key = `${row.siteId}|${row.locale}|${parentPath}`
+        const loss = losses.get(key)
+        if (loss) {
+          loss.count++
+        } else {
+          losses.set(key, { siteId: row.siteId, locale: row.locale, path: parentPath, count: 1 })
+        }
+      }
+    }
+
+    /*
+      The children count lives on the folder, so every parent that survived has to be told what it
+      lost — in one update each rather than one per child, since a run can take a great many folders.
+      A parent that went in a later pass is skipped: there is no row left to correct.
+    */
+    for (const [key, loss] of losses) {
+      if (deletedPaths.has(key)) {
+        continue
+      }
+      await this.countTowardsFolderAt(loss.siteId, loss.locale, loss.path, -loss.count)
+    }
+
+    // -> Any of them may have owned a sidebar menu keyed by its own id
+    await WIKI.models.navigation.deleteNavForEntries(deletedIds)
+
+    WIKI.logger.debug(`Deleted ${deletedIds.length} empty folder(s).`)
+    return deletedIds.length
   }
 
   /**

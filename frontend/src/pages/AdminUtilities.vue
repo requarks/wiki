@@ -32,6 +32,22 @@
       <w-card>
         <w-list separator>
           <w-item>
+            <blueprint-icon icon="opened-folder" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeEmptyFolders`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeEmptyFoldersHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="purgeEmptyFolders"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
             <blueprint-icon icon="disconnected" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.disconnectWS`) }}</w-item-label>
@@ -399,6 +415,45 @@ function invalidateSessionSecret() {
         caption: apiErrorMessage(err)
       })
     }
+  })
+}
+
+/**
+ * Delete every folder that holds no page and no asset, on every site.
+ *
+ * Confirmed, but not coloured as a destruction: what goes is a container with nothing in it, and the
+ * server will not delete anything that is not a folder. The confirmation says the part that is not
+ * obvious — that a folder holding only empty folders counts as empty too, so a whole branch can go at
+ * once.
+ */
+function purgeEmptyFolders() {
+  confirm({
+    title: t('admin.utilities.purgeEmptyFolders'),
+    message: t('admin.utilities.purgeEmptyFoldersConfirm'),
+    caption: t('admin.utilities.purgeEmptyFoldersConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/empty-folders/purge').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.count ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.purgeEmptyFoldersSuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.purgeEmptyFoldersFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
   })
 }
 

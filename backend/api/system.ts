@@ -1386,6 +1386,60 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * PURGE EMPTY FOLDERS
+   *
+   * Housekeeping rather than a destruction: a folder is created for whatever is put in it and stays
+   * behind when that is deleted or moved away, so a wiki that has been reorganised a few times
+   * accumulates folders nobody can see anything in.
+   *
+   * Every site at once, deliberately. What is empty is a question about the tree and not about a
+   * particular site, and an administrator clearing up after a reorganisation would otherwise run this
+   * once per site.
+   */
+  app.post(
+    '/empty-folders/purge',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Delete every folder with no page or asset in it',
+        description:
+          'On every site and in every locale. A folder counts as empty when nothing sits below it at any depth, so a folder holding only empty folders goes as well, and with it the branch above it once its last folder is gone. Nothing that is not a folder is ever deleted — the emptiness check is part of the statement that does the deleting, so a page or an asset written while this runs keeps the folder it was put in.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'Empty folders purged successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              count: {
+                type: 'number',
+                description: 'Folders deleted.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const count = await WIKI.models.tree.deleteEmptyFolders()
+      await audit(req, 'admin', 'purgeEmptyFolders', { count })
+
+      return {
+        ok: true,
+        message: `Deleted ${count} empty folder(s).`,
+        count
+      }
+    }
+  )
+
+  /**
    * CHECK FOR UPDATE
    */
   app.post(

@@ -122,6 +122,7 @@ export const AUDIT_ACTIONS = {
     'invalidateSessions',
     'purgePageHistory',
     'purgeSampleContent',
+    'purgeEmptyFolders',
     'checkForUpdate',
     'createUser',
     'updateUser',
