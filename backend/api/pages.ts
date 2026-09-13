@@ -128,6 +128,23 @@ export function mayOnPage(
 }
 
 /**
+ * Whether this requester may be handed a page's SOURCE.
+ *
+ * `read:source` is the permission that exists to say so, and a rule grants it to whoever it names —
+ * the guests group included, which is how a wiki opens "view source" to the public. Whoever may write
+ * the page is covered as well, since the editor loads the source in order to edit it: a rule granting
+ * `write:pages` without `read:source` would otherwise be a page that cannot be edited.
+ */
+const SOURCE_PERMISSIONS = ['read:source', 'write:pages', 'manage:pages']
+
+export function mayReadSource(
+  req: FastifyRequest,
+  page: { path: string; locale?: string; tags?: string[] }
+): boolean {
+  return SOURCE_PERMISSIONS.some((permission) => mayOnPage(req, permission, page))
+}
+
+/**
  * Every page permission this requester holds at a path.
  *
  * What the interface hides its controls by, and the reason it is a list rather than a question: each
@@ -604,7 +621,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a single page',
         description:
-          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in — but an anonymous request only ever sees published pages, and never their source. Per-page access rules are not implemented yet.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
+          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in — but an anonymous request only ever sees published pages. `withContent` is answered against `read:source` on the page — or `write:pages`, since the editor loads the source to edit it — which a group's rules grant to whoever they name, guests included.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -626,7 +643,8 @@ async function routes(app: FastifyInstance) {
             withContent: {
               type: 'boolean',
               default: false,
-              description: 'Include the source, which only an editor needs.'
+              description:
+                'Include the source. Withheld from a requester who may neither read the source nor write the page here.'
             },
             locale: {
               type: 'string',
@@ -646,8 +664,15 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         ...(isId ? { id: req.params.pageIdOrHash } : { hash: req.params.pageIdOrHash }),
         locale: req.query.locale,
-        // -> The source is what an editor loads, and editing is not something an anonymous reader does
-        withContent: Boolean(req.query.withContent) && Boolean(actor),
+        /*
+          -> The source is a page rule's to grant, not a session's to have: `mayReadSource` is the
+             whole of it, and the guests group holds it wherever a rule says so. Asked as a predicate
+             because the answer depends on the page, which a request addressing one by hash does not
+             have in hand yet.
+        */
+        withContent: req.query.withContent
+          ? (target: { path: string; locale: string; tags: string[] }) => mayReadSource(req, target)
+          : false,
         publicOnly: !actor,
         // -> Answered once the page is known, since a hash does not say which page it is yet
         unlocked: (pageId) => unlockedFor(req, pageId),

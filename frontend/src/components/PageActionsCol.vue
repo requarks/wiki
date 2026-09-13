@@ -116,8 +116,13 @@
         @click="viewPageHistory">
         <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
       </w-btn>
+      <!--
+        `read:source` likewise, granted per path by a rule — so guests have it wherever a rule says so,
+        and the API answers the overlay behind this button on exactly that permission.
+      -->
       <w-btn
         class="h-12"
+        v-if="canViewSource"
         flat
         icon="la:code"
         :color="editorStore.isActive ? `white` : `grey`"
@@ -283,6 +288,15 @@ const isRedirect = computed(() => pageStore.editor === 'redirect')
  * got on every page. Keep this in step with the entries themselves.
  */
 const hasPageActions = computed(() => flagsStore.experimental || userStore.can('write:pages'))
+
+/*
+  Whoever may write the page may read its source too — the editor is what opens it — so the button is
+  not hidden from an author whose rule grants the one and not the other. The API decides the same way.
+*/
+const canViewSource = computed(
+  () =>
+    userStore.can('read:source') || userStore.can('write:pages') || userStore.can('manage:pages')
+)
 
 // METHODS
 

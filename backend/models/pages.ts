@@ -1152,7 +1152,12 @@ class Pages {
     id?: string
     hash?: string
     locale?: string
-    withContent?: boolean
+    /**
+     * Include the source. A predicate for a caller whose answer depends on the page — `read:source`
+     * is granted by a page rule, and a rule is chosen by path, locale and tags, none of which a
+     * request addressing a page by hash has in hand before the row is read.
+     */
+    withContent?: boolean | ((page: { path: string; locale: string; tags: string[] }) => boolean)
     /** Restrict to what a reader with no session may see: published pages. */
     publicOnly?: boolean
     unlocked?: boolean | ((pageId: string) => boolean)
@@ -1193,6 +1198,14 @@ class Pages {
       return null
     }
     const isUnlocked = typeof unlocked === 'function' ? unlocked(row.page.id) : unlocked
+    const includeContent =
+      typeof withContent === 'function'
+        ? withContent({
+            path: row.page.path,
+            locale: row.page.locale,
+            tags: row.page.tags ?? []
+          })
+        : withContent
     return this.toPage(
       {
         ...row.page,
@@ -1206,7 +1219,11 @@ class Pages {
           publicOnly
         })
       },
-      { withContent, withPassword, locked: Boolean(row.page.password) && !isUnlocked }
+      {
+        withContent: includeContent,
+        withPassword,
+        locked: Boolean(row.page.password) && !isUnlocked
+      }
     )
   }
 

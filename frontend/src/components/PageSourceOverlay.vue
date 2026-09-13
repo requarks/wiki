@@ -123,8 +123,8 @@ async function load() {
     if (!pageData?.id) {
       throw new Error(t('pageSource.notFound'))
     }
-    // -> The source is withheld from a reader without a session, the field being left out entirely
-    //    rather than blanked — an empty string is a page that genuinely has no content
+    // -> The source is withheld from a reader whose rules do not grant `read:source` here, the field
+    //    being left out entirely rather than blanked — an empty string is a page with no content
     if (pageData.content === undefined) {
       state.notice = t('pageSource.unavailable')
       return
@@ -134,8 +134,7 @@ async function load() {
     //    contentType was stored
     state.contentType = pageData.contentType || pageData.editor || ''
   } catch (err) {
-    const message =
-      err.response?.status === 404 ? t('pageSource.notFound') : apiErrorMessage(err)
+    const message = err.response?.status === 404 ? t('pageSource.notFound') : apiErrorMessage(err)
     state.notice = message
     notify({
       type: 'negative',
