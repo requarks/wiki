@@ -15,6 +15,8 @@ import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
 import { buildTotpUri, generateTotpSecret, verifyTotpCode } from '../helpers/totp.ts'
+import { CustomError } from '../helpers/common.ts'
+import { HANDLE_PATTERN } from './comments.ts'
 import type { AuthStrategy, ProviderProfile } from './authentication.ts'
 import type { SystemIds } from './types.ts'
 
@@ -87,6 +89,8 @@ export interface UserProfileAuthMethod {
 export interface UserPatch {
   name?: string
   email?: string
+  /** The mention handle, or null to take it off. See the column in `db/schema.ts`. */
+  handle?: string | null
   isActive?: boolean
   isVerified?: boolean
   meta?: Record<string, any>
@@ -102,6 +106,8 @@ export interface UserProfile {
   name: string
   email: string
   hasAvatar: boolean
+  /** The name this user is mentioned by in a comment, without the `@`. Empty when they have none. */
+  handle: string
   location: string
   jobTitle: string
   pronouns: string
@@ -125,6 +131,7 @@ export interface PublicUserProfile {
   id: string
   name: string
   hasAvatar: boolean
+  handle: string
   location: string
   jobTitle: string
   pronouns: string
@@ -135,6 +142,7 @@ export interface PublicUserProfile {
 /** The fields a user may change on its own profile. Notably not the email, nor any admin flag. */
 export interface UserProfilePatch {
   name?: string
+  handle?: string
   location?: string
   jobTitle?: string
   pronouns?: string
@@ -577,6 +585,9 @@ class Users {
       name: user.name,
       email: user.email,
       hasAvatar: user.hasAvatar,
+      // -> A column of its own rather than a `meta` key, because it has to be unique across the
+      //    wiki: `@ana` means one person or it means nothing
+      handle: user.handle ?? '',
       location: meta.location ?? '',
       jobTitle: meta.jobTitle ?? '',
       pronouns: meta.pronouns ?? '',
@@ -611,6 +622,8 @@ class Users {
       id: user.id,
       name: user.name,
       hasAvatar: user.hasAvatar,
+      // -> Public on purpose: it is written into every comment that mentions them
+      handle: user.handle ?? '',
       location: meta.location ?? '',
       jobTitle: meta.jobTitle ?? '',
       pronouns: meta.pronouns ?? '',
@@ -692,7 +705,29 @@ class Users {
     if (patch.name !== undefined) {
       values.name = patch.name
     }
-    await this.updateUser(id, values)
+    if (patch.handle !== undefined) {
+      const handle = patch.handle.trim()
+      if (handle.length > 0 && !HANDLE_PATTERN.test(handle)) {
+        throw new CustomError(
+          'userHandleInvalid',
+          'A handle is 3 to 32 characters of letters, digits, hyphens and underscores.'
+        )
+      }
+      // -> Empty is how a handle is taken off, and null rather than '' is what the unique index
+      //    needs: postgres counts nulls as distinct, so any number of users may have none
+      values.handle = handle.length > 0 ? handle : null
+    }
+
+    try {
+      await this.updateUser(id, values)
+    } catch (err: any) {
+      // -> 23505 is the unique index on `lower(handle)`. It is the one failure here a user can fix,
+      //    and the only one worth turning into a sentence rather than a 500.
+      if (err.code === '23505') {
+        throw new CustomError('userHandleTaken', 'That handle is already taken.', 409)
+      }
+      throw err
+    }
 
     return this.getProfile(id)
   }

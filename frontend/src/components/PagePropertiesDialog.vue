@@ -262,7 +262,7 @@
       <w-card-section class="alt-card pb-6" id="refCardSocial">
         <div class="w-section-header">{{ t('editor.props.social') }}</div>
         <w-form class="gap-4 pt-2">
-          <div v-if="flagsStore.experimental">
+          <div>
             <w-toggle
               v-model="pageStore.allowComments"
               dense

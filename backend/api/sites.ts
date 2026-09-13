@@ -74,7 +74,9 @@ async function routes(app: FastifyInstance) {
         ...s.config,
         id: s.id,
         hostname: s.hostname,
-        isEnabled: s.isEnabled
+        isEnabled: s.isEnabled,
+        // -> See the note in `api/bootstrap.ts`: the stored block is not the one that is served
+        comments: WIKI.models.comments.publicConfigFor(s.id)
       }))
     }
   )
@@ -143,7 +145,8 @@ async function routes(app: FastifyInstance) {
           ...site.config,
           id: site.id,
           hostname: site.hostname,
-          isEnabled: site.isEnabled
+          isEnabled: site.isEnabled,
+          comments: WIKI.models.comments.publicConfigFor(site.id)
         }
       } else {
         return reply.notFound('Site does not exist.')

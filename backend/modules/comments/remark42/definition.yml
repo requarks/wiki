@@ -1,0 +1,36 @@
+title: Remark42
+description: A small, self-hosted comment engine in Go. Anonymous or social sign-in, threaded replies, votes and an admin interface, with no database to run beside it.
+website: https://remark42.com
+icon: '/_assets/icons/ultraviolet-remark42.svg'
+requires: ['host', 'siteId']
+props:
+  host:
+    type: String
+    title: Server URL
+    default: ''
+    hint: 'Publicly reachable URL of your Remark42 server, with the scheme and without a trailing slash, e.g. https://remark42.example.com'
+    icon: dns
+    order: 1
+  siteId:
+    type: String
+    title: Site ID
+    default: 'remark'
+    hint: The site identifier Remark42 was started with (its SITE environment variable).
+    icon: rename
+    order: 2
+  theme:
+    type: String
+    title: Theme
+    default: 'light'
+    enum:
+      - 'light|Light'
+      - 'dark|Dark'
+    icon: 3d-touch
+    order: 3
+  maxShownComments:
+    type: Number
+    title: Comments Shown
+    default: 15
+    hint: How many comments are drawn before the reader has to ask for more.
+    icon: list
+    order: 4

@@ -97,6 +97,22 @@ export const useSiteStore = defineStore('site', {
       search: false
     },
     /**
+     * How this site handles comments, as the server describes it -- `models/comments.ts`.
+     *
+     * `provider` empty is a site with comments turned off, which is also what a provider that is
+     * selected but not finished being configured looks like from here. `isBuiltIn` decides which of
+     * the two things the page view draws: the Talk tab beside the article, or the third-party markup
+     * in `code` mounted under it. Nothing of the stored configuration reaches this -- the built-in
+     * provider's holds an Akismet key, and the server never serializes it.
+     */
+    comments: {
+      provider: '',
+      isBuiltIn: false,
+      code: { head: '', main: '', body: '' },
+      cooldownSeconds: 0,
+      maxLength: 8000
+    },
+    /**
      * What this site does with uploads. Set in the admin area's General section; only the parts the
      * app itself acts on are carried here, which is where a pasted file goes -- the conflict behavior
      * is the server's business alone.
@@ -356,6 +372,10 @@ export const useSiteStore = defineStore('site', {
         features: {
           ...this.features,
           ...siteInfo.features
+        },
+        comments: {
+          ...this.comments,
+          ...siteInfo.comments
         },
         auth: {
           ...this.auth,

@@ -187,21 +187,24 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
-          <template v-if="flagsStore.experimental">
-            <w-item tag="label">
-              <blueprint-icon icon="discussion-forum" />
-              <w-item-section>
-                <w-item-label>{{ t(`admin.general.allowComments`) }}</w-item-label>
-                <w-item-label caption>{{ t(`admin.general.allowCommentsHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section avatar>
-                <w-toggle
-                  v-model="state.config.features.comments"
-                  :aria-label="t(`admin.general.allowComments`)" />
-              </w-item-section>
-            </w-item>
-            <w-separator class="my-2" inset />
-          </template>
+          <!--
+            The site-wide switch. Which provider handles the discussion is the Comments screen's
+            question; this one is whether there is a discussion at all, and it is here because it
+            reads as a feature of the site alongside browsing, ratings and search.
+          -->
+          <w-item tag="label">
+            <blueprint-icon icon="discussion-forum" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowComments`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowCommentsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.comments"
+                :aria-label="t(`admin.general.allowComments`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <template v-if="flagsStore.experimental">
             <w-item>
               <blueprint-icon icon="star-half-empty" />
@@ -651,7 +654,7 @@ function defaultConfig() {
     features: {
       ratings: false,
       ratingsMode: 'off',
-      comments: false,
+      comments: true,
       reasonForChange: 'required'
     },
     discoverable: false,
@@ -778,7 +781,7 @@ async function save() {
         },
         features: {
           browse: state.config.features?.browse ?? false,
-          comments: state.config.features?.comments ?? false,
+          comments: state.config.features?.comments ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',
           search: state.config.features?.search ?? false

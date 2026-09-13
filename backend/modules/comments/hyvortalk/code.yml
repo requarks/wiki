@@ -1,0 +1,4 @@
+head: |
+  <script async type="module" src="https://talk.hyvor.com/embed/embed.js"></script>
+main: |
+  <hyvor-talk-comments website-id="{{attr:websiteId}}" page-id="{{attr:page.path}}" colors="{{attr:colorScheme}}"></hyvor-talk-comments>

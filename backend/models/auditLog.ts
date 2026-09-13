@@ -9,7 +9,7 @@ import { sanitizeMeta } from '../helpers/audit.ts'
  * migration. The admin area's filter is built from this list, and `admin.audit.kinds.<kind>` is the
  * translation of each.
  */
-export const AUDIT_KINDS = ['page', 'asset', 'auth', 'profile', 'admin'] as const
+export const AUDIT_KINDS = ['page', 'asset', 'comment', 'auth', 'profile', 'admin'] as const
 export type AuditKind = (typeof AUDIT_KINDS)[number]
 
 /**
@@ -45,6 +45,7 @@ export const AUDIT_ACTIONS = {
     'deleteFolder'
   ],
   asset: ['uploadAsset', 'updateAsset', 'deleteAsset'],
+  comment: ['createComment', 'updateComment', 'deleteComment'],
   auth: [
     'login',
     'logout',
@@ -108,6 +109,7 @@ export const AUDIT_ACTIONS = {
     'deleteSiteImage',
     'updateStorage',
     'updateAnalytics',
+    'updateComments',
     'runStorageAction',
     'updateFlags',
     'updateSecurity',

@@ -1,0 +1,41 @@
+title: Waline
+description: A self-hosted comment system that runs on a serverless function and a database you already have. Markdown, reactions, anonymous comments and a light client.
+website: https://waline.js.org
+icon: '/_assets/icons/ultraviolet-waline.svg'
+requires: ['serverURL']
+props:
+  serverURL:
+    type: String
+    title: Server URL
+    default: ''
+    hint: 'URL of your Waline server, with the scheme and without a trailing slash, e.g. https://waline.example.com'
+    icon: dns
+    order: 1
+  clientUrl:
+    type: String
+    title: Client Script URL
+    default: 'https://unpkg.com/@waline/client@v3/dist/waline.js'
+    hint: Where the Waline browser client is loaded from. Change it to pin a version, or to serve it from your own host.
+    icon: link
+    order: 2
+  styleUrl:
+    type: String
+    title: Client Stylesheet URL
+    default: 'https://unpkg.com/@waline/client@v3/dist/waline.css'
+    hint: Where the Waline stylesheet is loaded from. It has to match the client version above.
+    icon: link
+    order: 3
+  lang:
+    type: String
+    title: Language
+    default: 'en'
+    hint: Locale code Waline draws its own interface in, e.g. en, fr, zh-CN.
+    icon: geography
+    order: 4
+  reaction:
+    type: Boolean
+    title: Reactions
+    default: false
+    hint: Show the reaction buttons above the comment box.
+    icon: apply
+    order: 5

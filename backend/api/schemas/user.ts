@@ -133,6 +133,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       hasAvatar: {
         type: 'boolean'
       },
+      handle: {
+        type: 'string',
+        description:
+          'The name this user is mentioned by in a comment, without the `@`. An empty string for somebody who has not set one, who is therefore not mentionable — nothing is derived from a display name on anybody’s behalf.'
+      },
       location: {
         type: 'string'
       },
@@ -183,6 +188,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       hasAvatar: {
         type: 'boolean'
       },
+      handle: {
+        type: 'string',
+        description:
+          'The handle this user is mentioned by, without the `@`, or an empty string if they have not set one. Public because it is written into every comment that mentions them.'
+      },
       location: {
         type: 'string'
       },
@@ -220,6 +230,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'string',
         minLength: 1,
         maxLength: 255
+      },
+      handle: {
+        type: 'string',
+        maxLength: 32,
+        pattern: '^$|^[A-Za-z0-9_-]{3,32}$',
+        description:
+          'The name to be mentioned by in comments, without the `@`. Unique across the wiki, case-insensitively; an empty string takes it off. 409 if somebody else already has it.'
       },
       location: {
         type: 'string',

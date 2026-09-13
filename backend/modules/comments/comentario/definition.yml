@@ -1,0 +1,20 @@
+title: Comentario
+description: A privacy-friendly, self-hosted comment engine, and the maintained successor to Commento. No tracking, optional anonymous comments, and moderation built in.
+website: https://comentario.app
+icon: '/_assets/icons/ultraviolet-comentario.svg'
+requires: ['instanceUrl']
+props:
+  instanceUrl:
+    type: String
+    title: Instance URL
+    default: ''
+    hint: 'URL of your Comentario instance, with the scheme and without a trailing slash, e.g. https://comentario.example.com'
+    icon: dns
+    order: 1
+  autoInit:
+    type: Boolean
+    title: Auto Initialize
+    default: true
+    hint: Let Comentario set itself up as soon as its script loads. Turn this off only if you are driving it yourself from the theme's custom code.
+    icon: apply
+    order: 2

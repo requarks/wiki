@@ -1,0 +1,20 @@
+main: |
+  <div id="disqus_thread"></div>
+body: |
+  <script>
+    window.disqus_config = function () {
+      this.page.url = '{{js:page.url}}'
+      this.page.identifier = '{{js:page.id}}'
+      this.page.title = '{{js:page.title}}'
+    }
+    if (window.DISQUS) {
+      // -> Already loaded by an earlier page: Disqus will not re-read the config on its own, and
+      //    reset is what makes it look at the thread the reader is on now
+      window.DISQUS.reset({ reload: true, config: window.disqus_config })
+    } else {
+      var s = document.createElement('script')
+      s.src = 'https://{{js:shortname}}.disqus.com/embed.js'
+      s.setAttribute('data-timestamp', +new Date())
+      document.head.appendChild(s)
+    }
+  </script>

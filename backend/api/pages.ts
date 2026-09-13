@@ -693,7 +693,7 @@ async function routes(app: FastifyInstance) {
         is what makes a page view one request instead of four.
       */
       const actorId = actor?.id ?? null
-      const [approvalState, isWatching] = await Promise.all([
+      const [approvalState, isWatching, commentsCount] = await Promise.all([
         WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
           id: page.id,
           path: page.path,
@@ -701,10 +701,19 @@ async function routes(app: FastifyInstance) {
           allowContributions: page.allowContributions
         }),
         // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
-        WIKI.models.pageWatching.isWatching(page.id, actorId)
+        WIKI.models.pageWatching.isWatching(page.id, actorId),
+        /*
+          The badge on the Talk tab, which has to be there before the tab is opened — so it comes with
+          the page rather than with the comments. One indexed count, and not even that for a site
+          whose discussions live at a third party or that has comments turned off.
+        */
+        WIKI.models.comments.usesBuiltIn(req.params.siteId)
+          ? WIKI.models.comments.countForPage(page.id)
+          : 0
       ])
       return {
         ...page,
+        commentsCount,
         viewer: {
           permissions: pagePermissionsFor(req, page),
           ...approvalState,

@@ -1,0 +1,14 @@
+main: |
+  <div id="discourse-comments"></div>
+body: |
+  <script>
+    window.DiscourseEmbed = {
+      discourseUrl: '{{js:discourseUrl}}',
+      discourseEmbedUrl: '{{js:page.url}}',
+      discourseUserName: '{{js:discourseUserName}}'
+    }
+    var s = document.createElement('script')
+    s.src = window.DiscourseEmbed.discourseUrl + 'javascripts/embed.js'
+    s.async = true
+    document.head.appendChild(s)
+  </script>

@@ -129,9 +129,22 @@ class Sites {
               collaborativeEditing: true,
               ratings: false,
               ratingsMode: 'off',
-              comments: false,
+              // -> On, because what decides whether a site has comments is whether a provider has
+              //    been picked. This is the switch that turns them all off without losing that
+              //    choice, which is only useful to somebody who has already made it.
+              comments: true,
               reasonForChange: 'optional',
               search: true
+            },
+            /*
+              The wiki's own provider, so that a site with comments turned on has somewhere for them
+              to go without an administrator having to choose first. Every alternative is somebody
+              else's service with an account to open; this one needs nothing set up. Whether there
+              are comments at all is `features.comments` above -- see `models/comments.ts`.
+            */
+            comments: {
+              provider: 'default',
+              providers: {}
             },
             logoUrl: '',
             logoText: true,
@@ -399,9 +412,13 @@ class Sites {
           collaborativeEditing: true,
           ratings: false,
           ratingsMode: 'off',
-          comments: false,
+          comments: true,
           reasonForChange: 'optional',
           search: true
+        },
+        comments: {
+          provider: 'default',
+          providers: {}
         },
         logoText: true,
         sitemap: true,

@@ -1,0 +1,13 @@
+title: Disqus
+description: The largest hosted commenting service, with a shared identity across every site that uses it. Free with advertising; paid plans remove it.
+website: https://disqus.com
+icon: '/_assets/icons/ultraviolet-disqus.svg'
+requires: ['shortname']
+props:
+  shortname:
+    type: String
+    title: Shortname
+    default: ''
+    hint: The unique identifier Disqus gave your site, as it appears in its admin under Settings → General.
+    icon: rename
+    order: 1

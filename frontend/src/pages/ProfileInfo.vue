@@ -49,6 +49,30 @@
       </w-item-section>
     </w-item>
     <w-separator inset spaced="sm" />
+    <!--
+      The handle, which is NOT gated on `canEdit` like the name and the fields under it. No identity
+      provider owns a wiki mention handle, so a wiki that keeps its names in step with a directory has
+      no reason to stop anybody choosing one -- and with profile editing off this would otherwise be
+      the one field nobody could ever fill in.
+    -->
+    <w-item>
+      <blueprint-icon icon="rename" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.handle`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.handleHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-input
+          v-model="state.config.handle"
+          outlined
+          dense
+          hide-bottom-space
+          prefix="@"
+          maxlength="32"
+          :aria-label="t(`profile.handle`)" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
     <w-item>
       <blueprint-icon icon="address" />
       <w-item-section>
@@ -214,6 +238,8 @@ import { useI18n } from 'vue-i18n'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
+
+import { apiErrorMessage } from '@/helpers/apiError'
 import { loading } from '@/composables/loading'
 import { computed, onMounted, reactive } from 'vue'
 
@@ -241,6 +267,7 @@ const state = reactive({
   config: {
     name: '',
     email: '',
+    handle: '',
     location: '',
     jobTitle: '',
     pronouns: '',
@@ -305,6 +332,7 @@ async function fetchProfile() {
 function applyProfile(profile) {
   state.config.name = profile.name || ''
   state.config.email = profile.email || ''
+  state.config.handle = profile.handle || ''
   state.config.location = profile.location || ''
   state.config.jobTitle = profile.jobTitle || ''
   state.config.pronouns = profile.pronouns || ''
@@ -337,6 +365,7 @@ async function save() {
               pronouns: state.config.pronouns
             }
           : {}),
+        handle: state.config.handle.trim(),
         timezone: state.config.timezone,
         dateFormat: state.config.dateFormat,
         timeFormat: state.config.timeFormat,
@@ -368,7 +397,9 @@ async function save() {
     notify({
       type: 'negative',
       message: t('profile.saveFailed'),
-      caption: err.message
+      // -> The server's own message, not ky's: a handle somebody else already has comes back as a
+      //    sentence the person can act on, and `err.message` would replace it with "Request failed"
+      caption: apiErrorMessage(err)
     })
   }
   loading.hide()

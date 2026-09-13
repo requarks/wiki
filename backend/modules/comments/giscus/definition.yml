@@ -1,0 +1,71 @@
+title: Giscus
+description: Comments backed by GitHub Discussions, in the repository of your choice. Readers comment with their GitHub account, and every discussion stays in a repository you own.
+website: https://giscus.app
+icon: '/_assets/icons/ultraviolet-giscus.svg'
+requires: ['repo', 'repoId', 'categoryId']
+props:
+  repo:
+    type: String
+    title: Repository
+    default: ''
+    hint: 'Owner and name of the repository discussions are stored in, e.g. requarks/wiki. It must be public, with the giscus app installed and Discussions turned on.'
+    icon: github
+    order: 1
+  repoId:
+    type: String
+    title: Repository ID
+    default: ''
+    hint: The repository identifier giscus.app generates for you, starting with R_.
+    icon: rename
+    order: 2
+  category:
+    type: String
+    title: Discussion Category
+    default: 'Announcements'
+    hint: Name of the category new discussions are created in.
+    icon: list
+    order: 3
+  categoryId:
+    type: String
+    title: Category ID
+    default: ''
+    hint: The category identifier giscus.app generates for you, starting with DIC_.
+    icon: rename
+    order: 4
+  mapping:
+    type: String
+    title: Page Mapping
+    default: 'pathname'
+    enum:
+      - 'pathname|Page path'
+      - 'url|Full page URL'
+      - 'title|Page title'
+      - 'og:title|Open Graph title'
+    hint: What ties a wiki page to its discussion. The page path is the stable choice; a page moved to another path starts a new discussion under any of them.
+    icon: link
+    order: 5
+  theme:
+    type: String
+    title: Theme
+    default: 'preferred_color_scheme'
+    enum:
+      - 'preferred_color_scheme|Follow the reader'
+      - 'light|Light'
+      - 'dark|Dark'
+      - 'transparent_dark|Transparent dark'
+    icon: 3d-touch
+    order: 6
+  reactionsEnabled:
+    type: Boolean
+    title: Reactions
+    default: true
+    hint: Show the reaction buttons for the discussion itself above the comments.
+    icon: apply
+    order: 7
+  lang:
+    type: String
+    title: Language
+    default: 'en'
+    hint: Two-letter code giscus draws its own interface in.
+    icon: geography
+    order: 8

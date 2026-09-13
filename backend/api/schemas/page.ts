@@ -214,6 +214,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
       allowRatings: { type: 'boolean' },
+      commentsCount: {
+        type: 'integer',
+        description:
+          'How many comments this page has, which is what the Talk tab’s badge counts. Always 0 unless the site uses the built-in comments provider. Present when a page is fetched on its own.'
+      },
       showSidebar: { type: 'boolean' },
       showTags: { type: 'boolean' },
       showToc: { type: 'boolean' },

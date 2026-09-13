@@ -1,0 +1,20 @@
+title: Discourse
+description: Turn a Discourse forum into the comments of your wiki. Each page gets a topic in the category you choose, and the discussion carries on in the forum itself.
+website: https://www.discourse.org
+icon: '/_assets/icons/ultraviolet-discourse.svg'
+requires: ['discourseUrl']
+props:
+  discourseUrl:
+    type: String
+    title: Forum URL
+    default: ''
+    hint: 'URL of your Discourse forum, with the scheme and a trailing slash, e.g. https://forum.example.com/ . The wiki''s hostname must be listed under its Embedding settings.'
+    icon: discussion-forum
+    order: 1
+  discourseUserName:
+    type: String
+    title: Posting Username
+    default: ''
+    hint: Discourse account new topics are created as. Leave empty to use the one set as the embeddable host's default.
+    icon: contact
+    order: 2

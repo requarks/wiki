@@ -78,6 +78,7 @@ const routes = [
       { path: ':siteid/approvals', component: () => import('@/pages/AdminApprovals.vue') },
       { path: ':siteid/analytics/:id?', component: () => import('@/pages/AdminAnalytics.vue') },
       { path: ':siteid/blocks', component: () => import('@/pages/AdminBlocks.vue') },
+      { path: ':siteid/comments/:id?', component: () => import('@/pages/AdminComments.vue') },
       { path: ':siteid/editors', component: () => import('@/pages/AdminEditors.vue') },
       { path: ':siteid/locale', component: () => import('@/pages/AdminLocale.vue') },
       { path: ':siteid/login', component: () => import('@/pages/AdminLogin.vue') },

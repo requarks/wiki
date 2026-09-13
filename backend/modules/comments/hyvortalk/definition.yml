@@ -1,0 +1,23 @@
+title: Hyvor Talk
+description: A hosted, privacy-first commenting platform with no ads and no tracking. Paid, with moderation, notifications and single sign-on included.
+website: https://talk.hyvor.com
+icon: '/_assets/icons/ultraviolet-hyvortalk.svg'
+requires: ['websiteId']
+props:
+  websiteId:
+    type: Number
+    title: Website ID
+    default: 0
+    hint: The numeric identifier of your website in the Hyvor Talk console.
+    icon: rename
+    order: 1
+  colorScheme:
+    type: String
+    title: Colour Scheme
+    default: 'os'
+    enum:
+      - 'os|Follow the reader'
+      - 'light|Light'
+      - 'dark|Dark'
+    icon: 3d-touch
+    order: 2

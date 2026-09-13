@@ -41,9 +41,26 @@
     <page-header v-if="!pageStore.notFound" />
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
     <div class="page-container flex min-h-0 flex-nowrap items-stretch" style="flex: 1 1 100%">
+      <!--
+        `flex flex-col min-h-0`: the strip below is fixed to the top of this column and the scrolling
+        article takes what is left, which is what keeps a tab bar at the top of the view rather than
+        at the top of the content -- a strip that scrolled away would take with it the only way back
+        from the discussion to the page.
+      -->
       <div
-        class="min-w-0 flex-1"
+        class="min-w-0 flex-1 flex flex-col min-h-0"
         :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
+        <!--
+          Article / Talk, above the content and only where there is a talk page to go to: the
+          built-in comments provider, on a page that takes comments, for a reader the page rules let
+          read them. Every other provider draws itself UNDER the article instead -- see
+          `PageCommentsEmbed.vue` -- so there is nothing to switch between and no strip.
+
+          Outside the scrolling box rather than at the top of it, which is also what makes an anchor
+          land where it should: the scrollport starts under the strip, so a heading jumped to is not
+          jumped to underneath it.
+        -->
+        <page-view-tabs v-if="showTalkTab" v-model="state.view" />
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
         <!--
           The lock screen, in place of the article. There is nothing to hide here: the server sent no
@@ -111,7 +128,12 @@
           that is not there at all, has no target to have been given yet.
         -->
         <page-redirect v-else-if="pageStore.editor === `redirect`" />
-        <w-scroll-area class="page-container-scrl" ref="pageScroller" v-else style="height: 100%">
+        <!-- -> No height of its own any more: it is the flexible half of the column above, so what
+                is left under the strip is exactly what it gets -->
+        <w-scroll-area
+          class="page-container-scrl page-article-col flex-1 min-h-0"
+          ref="pageScroller"
+          v-else>
           <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
                   the stylesheet has `--content-bleed` to match -->
           <div class="page-container-body p-2 sm:p-4">
@@ -121,12 +143,18 @@
             -->
             <site-banner />
             <!--
+              `v-show` rather than `v-if` on the article below, so that leaving the discussion and
+              coming back does not re-run the page's own scripts or lose where the reader was in it.
+            -->
+            <page-talk v-if="showTalkTab && state.view === `talk`" />
+            <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
             -->
             <div
               class="page-contents"
               ref="pageContents"
+              v-show="!showTalkTab || state.view === `article`"
               v-html="pageStore.render"
               @click="onContentClick" />
             <!--
@@ -137,7 +165,11 @@
             -->
             <div
               class="page-relations"
-              v-if="pageStore.relations && pageStore.relations.length > 0">
+              v-if="
+                pageStore.relations &&
+                pageStore.relations.length > 0 &&
+                (!showTalkTab || state.view === `article`)
+              ">
               <w-separator class="my-6" />
               <div class="flex flex-wrap">
                 <div class="min-w-0 flex-1 text-left" v-if="relationsLeft.length > 0">
@@ -194,6 +226,12 @@
                 </div>
               </div>
             </div>
+            <!--
+              Every provider that is not this wiki's own: at the bottom of the article, which is where
+              a site that uses one of them puts its comments and where a reader who uses that provider
+              elsewhere expects to find them.
+            -->
+            <page-comments-embed v-if="showCommentsEmbed" />
           </div>
           <!--
             Inside the scrolling column, and last: this is the bottom of the PAGE, so it is reached by
@@ -382,8 +420,20 @@ import PageRedirect from '@/components/PageRedirect.vue'
 import PageTags from '@/components/PageTags.vue'
 import PageToc from '@/components/PageToc.vue'
 import PageUnlockDialog from '@/components/PageUnlockDialog.vue'
+import PageViewTabs from '@/components/PageViewTabs.vue'
 import SideDialog from '@/components/SideDialog.vue'
 import SiteBanner from '@/components/SiteBanner.vue'
+
+/*
+  Neither of these is wanted by a page view that has no comments, and the talk view brings a markdown
+  renderer with it -- so they are fetched when a site actually uses a provider rather than shipped in
+  the chunk every reader downloads to read a page.
+*/
+const PageTalk = defineAsyncComponent({
+  loader: () => import('@/components/PageTalk.vue'),
+  loadingComponent: LoadingGeneric
+})
+const PageCommentsEmbed = defineAsyncComponent(() => import('@/components/PageCommentsEmbed.vue'))
 
 const editorComponents = {
   markdown: defineAsyncComponent({
@@ -455,7 +505,16 @@ const state = reactive({
    * panel over the article rather than a column beside it.
    */
   tocPanelOpen: false,
-  currentRating: 3
+  currentRating: 3,
+  /**
+   * Which of the two views the reader is on, `article` or `talk`.
+   *
+   * Local to the view rather than in the store, and re-read from the URL on every page change:
+   * arriving at a page means arriving at what it says, and a reader who went to read one discussion
+   * has not asked to land on the discussion of the next page they open -- unless the link they
+   * followed said so, which is what `#talk` is (see `viewFromHash`).
+   */
+  view: viewFromHash()
 })
 const pageContents = ref(null)
 /** The article column, which is what scrolls -- see `scrollPageToTop`. */
@@ -552,6 +611,42 @@ const canCreatePage = computed(
   () => userStore.pagePermissions.includes('write:pages') && siteStore.editors.markdown
 )
 
+/*
+  Whether this page has a talk page to switch to.
+
+  Four things, and all four have to hold. The site must be using the wiki's OWN comments provider --
+  every other one is a widget under the article, not a second view of the page. The page must take
+  comments at all, which is the switch in its properties dialog. The reader must hold `read:comments`
+  HERE, from the page rules rather than from the group-wide list, since that is what the endpoint
+  behind the tab will check. And the page has to exist: an empty path has nothing to discuss.
+
+  With no tab, the article is simply the view, which is why everything below tests
+  `!showTalkTab || state.view === 'article'` rather than the view alone.
+*/
+const showTalkTab = computed(
+  () =>
+    siteStore.comments.isBuiltIn &&
+    pageStore.allowComments &&
+    !pageStore.notFound &&
+    !editorStore.isActive &&
+    userStore.pagePermissions.includes('read:comments')
+)
+
+/*
+  The other providers, at the bottom of the article. No permission check: what a third-party widget
+  shows and to whom is that provider's own business, and this wiki's page rules say nothing about an
+  account somewhere else. The page's own switch still applies -- an author who turned comments off
+  meant it whichever provider is in use.
+*/
+const showCommentsEmbed = computed(
+  () =>
+    Boolean(siteStore.comments.provider) &&
+    !siteStore.comments.isBuiltIn &&
+    pageStore.allowComments &&
+    !pageStore.notFound &&
+    !editorStore.isActive
+)
+
 const relationsLeft = computed(() => {
   return pageStore.relations ? pageStore.relations.filter((r) => r.position === 'left') : []
 })
@@ -605,6 +700,19 @@ watch(
 )
 
 /*
+  Back to whatever the URL asks for on every page change, which is the article unless the link named
+  the discussion. Reading a discussion is something a reader asked for on ONE page; carrying the view
+  over by itself would mean that following a link out of a talk page lands on the next page's talk
+  page rather than on the page itself.
+*/
+watch(
+  () => pageStore.id,
+  () => {
+    state.view = viewFromHash()
+  }
+)
+
+/*
   A protected page asks for its password the moment it arrives: the reader followed a link to read it,
   and making them press a button first would only add a step. Keyed on the page rather than on the
   flag, so dismissing the prompt does not immediately reopen it -- the lock screen's own button is the
@@ -640,7 +748,26 @@ onBeforeUnmount(() => {
 })
 
 function onHashChange() {
+  // -> A fragment can ask for the discussion as well as for a heading, and one that asks for a
+  //    heading while the discussion is open has to put the article back or there is nothing to
+  //    scroll to: `v-show` leaves the hidden column with no layout, so the anchor is unreachable
+  state.view = viewFromHash()
   scrollToAnchorWhenReady(window.location.hash)
+}
+
+/**
+ * The view the current URL asks for.
+ *
+ * `#talk` opens the discussion instead of the article -- what a link to a comment, or to the talk
+ * page of an article, has to be able to say. Read from `window.location` rather than from the route,
+ * so that it answers the same before the router has resolved anything and when the fragment is
+ * changed from outside the app.
+ *
+ * A page with no discussion to show simply stays on the article: `showTalkTab` gates what is drawn,
+ * so a fragment naming a view this reader does not have is ignored rather than blanking the column.
+ */
+function viewFromHash() {
+  return window.location.hash === '#talk' ? 'talk' : 'article'
 }
 
 watch(

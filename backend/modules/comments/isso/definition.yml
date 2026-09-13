@@ -1,0 +1,20 @@
+title: Isso
+description: A tiny self-hosted comment server written in Python, storing everything in one SQLite file. Comments are anonymous by default and can be edited for a while after posting.
+website: https://isso-comments.de
+icon: '/_assets/icons/ultraviolet-isso.svg'
+requires: ['server']
+props:
+  server:
+    type: String
+    title: Server URL
+    default: ''
+    hint: 'Publicly reachable URL of your Isso server, with the scheme and without a trailing slash, e.g. https://isso.example.com'
+    icon: dns
+    order: 1
+  requireAuthor:
+    type: Boolean
+    title: Require a Name
+    default: false
+    hint: Ask for a name before a comment can be posted. This has to match the server's own configuration to take effect.
+    icon: contact
+    order: 2

@@ -1,0 +1,15 @@
+head: |
+  <link rel="stylesheet" href="{{attr:styleUrl}}">
+main: |
+  <div class="waline-container"></div>
+body: |
+  <script type="module">
+    import { init } from '{{js:clientUrl}}'
+    init({
+      el: '.waline-container',
+      serverURL: '{{js:serverURL}}',
+      path: '/{{js:page.path}}',
+      lang: '{{js:lang}}',
+      reaction: {{bool:reaction}}
+    })
+  </script>

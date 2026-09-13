@@ -600,6 +600,14 @@ defineExpose({
   validate,
   focus: () => inputEl.value?.focus(),
   /**
+   * The underlying `<input>` or `<textarea>`.
+   *
+   * For the few callers that need the control itself rather than its value: a caret position, a
+   * selection range, a scroll offset. The comment composer's mention autocomplete is what asked for
+   * it — where the `@` is in the text is a property of the element, not of the model.
+   */
+  el: inputEl,
+  /**
    * Show the value of a `revealable` password field, as if the eye had been clicked.
    *
    * For a caller that fills the field in itself: a generated password the user never typed is worth

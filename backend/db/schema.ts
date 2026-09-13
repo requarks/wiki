@@ -16,6 +16,7 @@ import {
   uuid,
   varchar
 } from 'drizzle-orm/pg-core'
+import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 
 // == CUSTOM TYPES =====================
 
@@ -207,6 +208,74 @@ export const blocks = pgTable(
       .references(() => sites.id)
   },
   (table) => [index('blocks_siteId_idx').on(table.siteId)]
+)
+
+// COMMENTS ----------------------------
+/**
+ * One comment on one page, for the BUILT-IN comments provider.
+ *
+ * The other providers are a snippet of markup and an account somewhere else, so nothing about them
+ * reaches this table — it exists for the provider that is this wiki. See `models/comments.ts`.
+ *
+ * Replies are one level deep and that is enforced in the model: a reply names the comment it answers
+ * in `parentId`, and a reply to a reply is attached to that reply's own parent rather than nesting
+ * further. The foreign key is self-referential and cascades, so deleting a comment takes the replies
+ * under it — which is the whole of what a thread is here.
+ *
+ * `content` is markdown source and there is no stored render. It is turned into HTML in the reader's
+ * browser (`frontend/src/renderers/comment.js`) with raw HTML disabled, the same way a page's
+ * markdown becomes HTML in the browser — which also means a mention re-resolves every time it is
+ * drawn rather than freezing whatever a handle pointed at on the day it was written.
+ */
+export const comments = pgTable(
+  'comments',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    /**
+     * The comment this one answers, or null for one that starts a thread.
+     *
+     * The annotation breaks the circular inference a self-reference would otherwise cause
+     * (TS7022/TS7024), the same way the generated column on `pages` does.
+     */
+    parentId: uuid().references((): AnyPgColumn => comments.id, { onDelete: 'cascade' }),
+    /** Markdown source as it was typed. Never HTML — see the note above. */
+    content: text().notNull(),
+    /**
+     * The account that wrote it, or null for a guest — and also null once that account is deleted,
+     * which is why the name below is kept alongside rather than only joined for.
+     */
+    authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    /**
+     * Who it says wrote it. What a guest typed into the form, and for a signed-in author a copy of
+     * their display name as it stood — used only when the account behind `authorId` is gone, since a
+     * rename should show through everywhere else.
+     */
+    authorName: varchar({ length: 255 }).notNull(),
+    /**
+     * A guest's email address. Required of a guest, empty for a signed-in author (the account has
+     * one), and never sent to a client: it is here for the spam check and for whatever moderation
+     * grows out of it.
+     */
+    authorEmail: varchar({ length: 255 }).notNull().default(''),
+    /** The address it was posted from, kept for the same reasons as the audit log's. Never served. */
+    authorIP: varchar({ length: 255 }).notNull().default(''),
+    /**
+     * Room for what a comment may grow: votes, a pin, a moderation state. Nothing reads it yet, and
+     * nothing should write a key into it without deciding what an absent one means.
+     */
+    meta: jsonb().notNull().default({}),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    // -> The talk view's own query: every comment on a page, oldest first
+    index('comments_page_created_idx').on(table.pageId, table.createdAt),
+    index('comments_parentId_idx').on(table.parentId),
+    index('comments_authorId_idx').on(table.authorId)
+  ]
 )
 
 // GROUPS ------------------------------
@@ -886,6 +955,15 @@ export const users = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     email: varchar({ length: 255 }).notNull().unique(),
     name: varchar({ length: 255 }).notNull(),
+    /**
+     * The name this user is mentioned by in a comment, without the `@`.
+     *
+     * Null until they pick one, and a user without one is simply not mentionable — nothing is
+     * derived from their name on their behalf. Unique case-insensitively: `@Ana` and `@ana` have to
+     * be the same person for a mention to mean anything, so the index below is on the folded form
+     * while the column keeps the capitalization that was typed.
+     */
+    handle: varchar({ length: 64 }),
     auth: jsonb().notNull().default({}),
     meta: jsonb().notNull().default({}),
     passkeys: jsonb().notNull().default({}),
@@ -898,7 +976,12 @@ export const users = pgTable(
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow()
   },
-  (table) => [index('users_lastLoginAt_idx').on(table.lastLoginAt)]
+  (table) => [
+    index('users_lastLoginAt_idx').on(table.lastLoginAt),
+    // -> Folded, so that two handles differing only in case cannot both exist. Nulls are distinct to
+    //    postgres, which is what lets any number of users have no handle at all.
+    uniqueIndex('users_handle_idx').on(sql`lower(${table.handle})`)
+  ]
 )
 
 // == RELATION TABLES ==================

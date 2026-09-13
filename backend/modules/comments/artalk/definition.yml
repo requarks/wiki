@@ -1,0 +1,27 @@
+title: Artalk
+description: A light, self-hosted comment system with its own moderation dashboard, notifications and captcha. One Artalk instance can serve several sites.
+website: https://artalk.js.org
+icon: '/_assets/icons/ultraviolet-artalk.svg'
+requires: ['server']
+props:
+  server:
+    type: String
+    title: Server URL
+    default: ''
+    hint: 'Publicly reachable URL of your Artalk instance, with the scheme and without a trailing slash, e.g. https://artalk.example.com'
+    icon: dns
+    order: 1
+  siteName:
+    type: String
+    title: Site Name
+    default: ''
+    hint: The site as it is named in the Artalk dashboard. Leave empty to use its default site.
+    icon: rename
+    order: 2
+  darkMode:
+    type: Boolean
+    title: Follow Dark Mode
+    default: true
+    hint: Let Artalk follow the reader's colour scheme instead of always drawing itself light.
+    icon: 3d-touch
+    order: 3

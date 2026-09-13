@@ -1,0 +1,6 @@
+main: |
+  <section id="isso-thread" data-isso-id="/{{attr:page.path}}"></section>
+body: |
+  <script data-isso="{{attr:server}}/"
+          data-isso-require-author="{{bool:requireAuthor}}"
+          src="{{attr:server}}/js/embed.min.js"></script>

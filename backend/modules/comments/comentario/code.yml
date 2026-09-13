@@ -1,0 +1,4 @@
+head: |
+  <script defer src="{{attr:instanceUrl}}/comentario.js"></script>
+main: |
+  <comentario-comments page-id="/{{attr:page.path}}" auto-init="{{bool:autoInit}}"></comentario-comments>

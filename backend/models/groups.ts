@@ -250,9 +250,16 @@ class Groups {
         permissions: ['read:pages', 'read:assets', 'read:comments'],
         rules: [
           {
+            /*
+              `write:comments` is granted here while the group-wide list above leaves it out, and the
+              two lists are answering different questions: the rule is what `checkAccess` reads for a
+              page permission, and the list above is checked by the route hook, which only understands
+              global permissions. Without it in the rule, a wiki that turns comments on has a
+              discussion nobody but an administrator can join.
+            */
             id: uuid(),
             name: 'Default Rule',
-            roles: ['read:pages', 'read:assets', 'read:comments'],
+            roles: ['read:pages', 'read:assets', 'read:comments', 'write:comments'],
             match: 'START',
             mode: 'ALLOW',
             path: '',
@@ -270,7 +277,13 @@ class Groups {
           {
             id: uuid(),
             name: 'Default Rule',
-            roles: ['read:pages', 'read:assets', 'read:comments'],
+            /*
+              Named in a rule that DENIES them, which is a fresh install being private rather than a
+              statement about comments: an operator opening the wiki up flips this one rule to ALLOW,
+              and what they get is the set the guests group is allowed to hold (`GUEST_ROLES`) rather
+              than a public wiki whose readers still cannot say anything.
+            */
+            roles: ['read:pages', 'read:assets', 'read:comments', 'write:comments'],
             match: 'START',
             mode: 'DENY',
             path: '',
@@ -325,6 +338,9 @@ class Groups {
 
   async createGroup(name: string): Promise<string> {
     const startingPermissions = ['read:pages', 'read:assets', 'read:comments']
+    // -> The rule grants one more than the group-wide list does: see the note on the Users group in
+    //    `init()` for why the two differ
+    const startingRoles = [...startingPermissions, 'write:comments']
     const result = await WIKI.db
       .insert(groupsTable)
       .values({
@@ -336,7 +352,7 @@ class Groups {
           {
             id: uuid(),
             name: 'Default Rule',
-            roles: startingPermissions,
+            roles: startingRoles,
             match: 'START',
             mode: 'ALLOW',
             path: '',

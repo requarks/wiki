@@ -293,12 +293,52 @@ $toc-overlay-max: 749.98px;
   the light theme, which is the sort of difference that reads as a bug in whichever one you see second.
 */
 .page-container {
+  /*
+    The colour of the edge drawn round the article: the line along the bottom of the Article / Talk
+    strip, the three sides of the tab raised out of it, and the rule down the right of the column
+    below -- see `.page-article-col` and `PageViewTabs.vue`. One custom property because they are one
+    edge: two of them are drawn by a component and one by this sheet, and a pair of values that have
+    to agree across two files is a pair of values that eventually will not.
+
+    Each theme's is the actions rail's own colour (`.page-actions` in `PageActionsCol.vue`: `$grey-3`
+    light, `$dark-4` dark) or a step off it: the rail closes the far side of the page, so drawing this
+    edge in what the rail is drawn in is what makes the two read as the same piece of chrome rather
+    than as two edges of slightly different greys. The light one stays a step down at `$grey-4`, where
+    the rail's own value is too near the strip to be seen against it.
+  */
+  @at-root .body--light & {
+    --page-chrome-rule: #{$grey-4};
+  }
+  @at-root .body--dark & {
+    /* -> Half a step above the rail's own `$dark-4`, which the edge was drawn in exactly and read a
+          shade too close to the strip it divides */
+    --page-chrome-rule: #{color-mix(in srgb, $dark-3 50%, $dark-4)};
+  }
+
   @at-root .body--light & {
     border-top: 1px solid #fff;
   }
   @at-root .body--dark & {
     border-top: 1px solid $dark-6;
   }
+}
+
+/*
+  The article column's own right-hand edge, which is the strip's rule turned the corner: the strip
+  closes the top of the column, this closes its side, and the two meet at the strip's bottom corner so
+  that what is drawn reads as one line round the content rather than as two borders that happen to
+  touch.
+
+  On the scrolling box rather than on the column that holds it, so it starts UNDER the strip: the
+  strip is the same grey as the contents column beside it and the two are meant to read as one
+  surface, which a line drawn between them for 44px would cut in half.
+
+  Worn whether or not there is a strip above it. What is on the other side is the contents column or
+  the actions rail, both of them chrome, and a column edge that appeared only on pages that take
+  comments would be a difference a reader cannot account for.
+*/
+.page-article-col {
+  border-right: 1px solid var(--page-chrome-rule);
 }
 
 .page-sidebar {

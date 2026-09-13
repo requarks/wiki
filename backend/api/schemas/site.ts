@@ -94,7 +94,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             enum: ['off', 'stars', 'thumbs']
           },
           comments: {
-            type: 'boolean'
+            type: 'boolean',
+            description:
+              'Whether this site has comments at all. Which provider handles them is `comments.provider`; this turns every one of them off without losing that choice, and a page can still opt out on its own with `allowComments`.'
           },
           reasonForChange: {
             type: 'string',
@@ -102,6 +104,42 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           search: {
             type: 'boolean'
+          }
+        }
+      },
+      comments: {
+        type: 'object',
+        description:
+          'What a browser is told about this site’s comments, and all it is told: which provider is selected, and — for a third-party one — the markup to mount under the article. Built by `models/comments.ts`; the stored configuration behind it is not serialized anywhere, because the built-in provider’s holds an Akismet key.',
+        properties: {
+          provider: {
+            type: 'string',
+            description:
+              'Key of the selected provider, or an empty string when this site has comments turned off — which is also the answer for a provider that is selected but not finished being configured.'
+          },
+          isBuiltIn: {
+            type: 'boolean',
+            description:
+              'Whether the provider is the wiki’s own. Only for that one is the Talk tab drawn beside the article; every other provider is mounted under it.'
+          },
+          code: {
+            type: 'object',
+            description:
+              'The third-party markup, with everything but the page placeholders already substituted. Empty for the built-in provider.',
+            properties: {
+              head: { type: 'string' },
+              main: { type: 'string' },
+              body: { type: 'string' }
+            }
+          },
+          cooldownSeconds: {
+            type: 'integer',
+            description:
+              'How long the composer makes a reader wait between two comments. Built-in only, and 0 when there is no cooldown.'
+          },
+          maxLength: {
+            type: 'integer',
+            description: 'The longest a comment may be, in characters of markdown source.'
           }
         }
       },

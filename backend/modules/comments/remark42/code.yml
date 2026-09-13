@@ -1,0 +1,24 @@
+main: |
+  <div id="remark42"></div>
+body: |
+  <script>
+    window.remark_config = {
+      host: '{{js:host}}',
+      site_id: '{{js:siteId}}',
+      url: '{{js:page.url}}',
+      theme: '{{js:theme}}',
+      max_shown_comments: {{num:maxShownComments}},
+      components: ['embed']
+    }
+    if (window.REMARK42) {
+      // -> Loaded by an earlier page. Remark42 keeps one instance per document, so the old one is
+      //    torn down and a new one created against the config just written above.
+      window.REMARK42.destroy()
+      window.REMARK42.createInstance(window.remark_config)
+    } else {
+      var s = document.createElement('script')
+      s.src = window.remark_config.host + '/web/embed.js'
+      s.defer = true
+      document.head.appendChild(s)
+    }
+  </script>

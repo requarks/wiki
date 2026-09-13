@@ -1,0 +1,17 @@
+body: |
+  <script src="https://giscus.app/client.js"
+          data-repo="{{attr:repo}}"
+          data-repo-id="{{attr:repoId}}"
+          data-category="{{attr:category}}"
+          data-category-id="{{attr:categoryId}}"
+          data-mapping="{{attr:mapping}}"
+          data-term="{{attr:page.path}}"
+          data-reactions-enabled="{{bool:reactionsEnabled}}"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="{{attr:theme}}"
+          data-lang="{{attr:lang}}"
+          data-loading="lazy"
+          crossorigin="anonymous"
+          async>
+  </script>

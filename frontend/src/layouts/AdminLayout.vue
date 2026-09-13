@@ -147,17 +147,15 @@
               </w-item-section>
               <w-item-section>{{ t('admin.approval.title') }}</w-item-section>
             </w-item>
-            <template v-if="flagsStore.experimental">
-              <w-item
-                :to="`/_admin/` + adminStore.currentSiteId + `/comments`"
-                active-class="bg-primary text-white"
-                disabled>
-                <w-item-section avatar>
-                  <w-icon name="img:/_assets/icons/fluent-comments.svg" />
-                </w-item-section>
-                <w-item-section>{{ t('admin.comments.title') }}</w-item-section>
-              </w-item>
-            </template>
+            <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/comments`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-comments.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.comments.title') }}</w-item-section>
+            </w-item>
             <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/blocks`"
               active-class="bg-primary text-white"

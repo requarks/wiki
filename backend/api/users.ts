@@ -90,6 +90,13 @@ const IDENTITY_PROFILE_FIELDS = ['name', 'location', 'jobTitle', 'pronouns'] as 
  * a directory must not take somebody's accessibility settings away with it.
  */
 const PERSONAL_PROFILE_FIELDS = [
+  /*
+    The handle is here rather than among the identity fields on purpose. No identity provider owns a
+    wiki mention handle — there is nothing in a directory for it to be kept in step with — so a wiki
+    that turned profile editing off to keep names authoritative would otherwise have taken away the
+    one field that lets anybody be mentioned in a comment.
+  */
+  'handle',
   'timezone',
   'dateFormat',
   'timeFormat',

@@ -10,7 +10,7 @@
     @click="select">
     <span
       class="inline-flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors"
-      :class="isOn ? '' : 'border-black/54 dark:border-white/70'"
+      :class="isOn ? '' : ringClass"
       :style="isOn ? { borderColor: `var(--color-${color})` } : undefined">
       <!-- The inner dot is scaled rather than toggled, so selecting animates instead of snapping -->
       <span
@@ -62,12 +62,28 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Renders for a dark surface regardless of the app theme, as `WList` does.
+   *
+   * Needed where a radio sits on a panel that is dark in both themes -- the provider list on the
+   * admin Comments screen -- because the `dark:` variant keys off the app theme and an unselected
+   * ring would otherwise be drawn near-black on a dark card in light mode. Only the UNSELECTED ring
+   * needs it: the selected one is drawn in `color`, which is legible on either surface.
+   */
+  dark: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['update:modelValue'])
 
 const isOn = computed(() => props.modelValue === props.val)
+
+const ringClass = computed(() =>
+  props.dark ? 'border-white/70' : 'border-black/54 dark:border-white/70'
+)
 const isDisabled = computed(() => props.disable || props.disabled)
 
 function select() {

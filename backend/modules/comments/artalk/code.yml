@@ -1,0 +1,16 @@
+head: |
+  <link href="{{attr:server}}/dist/Artalk.css" rel="stylesheet">
+  <script src="{{attr:server}}/dist/Artalk.js"></script>
+main: |
+  <div class="artalk-container"></div>
+body: |
+  <script>
+    Artalk.init({
+      el: '.artalk-container',
+      pageKey: '{{js:page.path}}',
+      pageTitle: '{{js:page.title}}',
+      server: '{{js:server}}',
+      site: '{{js:siteName}}',
+      darkMode: {{bool:darkMode}} ? 'auto' : false
+    })
+  </script>
