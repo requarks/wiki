@@ -34,14 +34,18 @@ const assetIdParam = {
  * one no locale restriction applies to — so an omitted locale silently widens every such rule. Every
  * asset the API hands around carries one, and the two places that build a destination by hand say
  * which locale they mean.
+ *
+ * The SITE comes off the request instead, since every route in this file addresses one in its path
+ * and an asset row does not have to be asked which site it is in to answer that.
  */
 function mayOnAsset(
-  req: FastifyRequest,
+  req: FastifyRequest<{ Params: { siteId: string } }>,
   permission: string,
   asset: { folderPath?: string | null; fileName: string; locale: string }
 ): boolean {
   const folder = asset.folderPath ?? ''
   return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
+    siteId: req.params.siteId,
     path: folder ? `${folder}/${asset.fileName}` : asset.fileName,
     locale: asset.locale
   })

@@ -78,6 +78,12 @@ export interface BrowseItem {
   icon: string | null
   isPage: boolean
   isFolder: boolean
+  /**
+   * The page's own tags, empty for an entry that is only a folder. Not shown — the response schema
+   * drops it — but a rule may address pages by tag and the route filters this listing by
+   * `read:pages`, which cannot be decided without them.
+   */
+  tags: string[]
 }
 
 /** One level of a browse listing: what a folder holds, plus what the folder itself is called. */
@@ -100,6 +106,12 @@ export interface ListedPage {
   description: string
   /** The page's icon, as an Iconify reference. Empty when it has none. */
   icon: string
+  /**
+   * The page's own tags. Carried for the same reason as on a browse item: the caller filters the
+   * list by `read:pages`, and a tag rule is not answerable without them. Dropped by the response
+   * schema.
+   */
+  tags: string[]
 }
 
 /**
@@ -402,6 +414,7 @@ class Tree {
         folderPath: treeTable.folderPath,
         fileName: treeTable.fileName,
         title: treeTable.title,
+        tags: treeTable.tags,
         description: pagesTable.description,
         icon: pagesTable.icon
       })
@@ -427,7 +440,8 @@ class Tree {
         path: folderPath ? `${folderPath}/${row.fileName}` : row.fileName,
         title: row.title,
         description: row.description ?? '',
-        icon: row.icon ?? ''
+        icon: row.icon ?? '',
+        tags: row.tags ?? []
       }
     })
   }
@@ -522,6 +536,7 @@ class Tree {
         type: treeTable.type,
         fileName: treeTable.fileName,
         title: treeTable.title,
+        tags: treeTable.tags,
         icon: pagesTable.icon,
         holdsVisiblePages: sql<boolean>`${holdsVisiblePages}`.mapWith(Boolean)
       })
@@ -552,15 +567,18 @@ class Tree {
         title: row.title,
         icon: null,
         isPage: false,
-        isFolder: false
+        isFolder: false,
+        tags: []
       }
       if (row.type === 'folder') {
         entry.isFolder = true
       } else {
         entry.isPage = true
-        // -> The page is the thing a reader clicks, so it names the row when both exist
+        // -> The page is the thing a reader clicks, so it names the row when both exist -- and its
+        //    tags are the entry's, a folder having none of its own
         entry.title = row.title
         entry.icon = row.icon
+        entry.tags = row.tags ?? []
       }
       merged.set(row.fileName, entry)
     }

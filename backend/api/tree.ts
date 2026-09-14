@@ -80,6 +80,15 @@ const folderIdParam = {
  * from whatever created it.
  */
 /**
+ * A request to any route in this file, every one of which addresses a site in its path.
+ *
+ * The two helpers below take the site from it rather than from a parameter of their own: a page rule
+ * may be limited to particular sites, so every check needs one, and there are a dozen call sites
+ * that would each have to remember to pass the same value.
+ */
+type SiteRequest = FastifyRequest<{ Params: { siteId: string } }>
+
+/**
  * The entries of a tree listing this caller may see, and the folders leading to them.
  *
  * Filtered here rather than in the query for the same reason as everywhere else: a page rule can be a
@@ -92,7 +101,7 @@ const folderIdParam = {
  * folder on every listing, which is not worth what it costs.
  */
 function visibleTreeItems<T extends { type?: string; folderPath?: string; fileName?: string }>(
-  req: FastifyRequest,
+  req: SiteRequest,
   items: T[]
 ): T[] {
   const actor = WIKI.models.groups.actorForRequest(req)
@@ -100,6 +109,7 @@ function visibleTreeItems<T extends { type?: string; folderPath?: string; fileNa
     const path = item.folderPath ? `${item.folderPath}/${item.fileName}` : (item.fileName ?? '')
     const permission = item.type === 'asset' ? 'read:assets' : 'read:pages'
     return WIKI.models.groups.checkAccess(actor, permission, {
+      siteId: req.params.siteId,
       path,
       tags: (item as any).tags ?? []
     })
@@ -137,13 +147,9 @@ function folderPathOf(folder: { folderPath?: string | null; fileName: string }):
  * branch it opens: a rule denying `read:pages` under `geography` hides the folder as well as the
  * pages in it, and only somebody who may reorganise pages there may rename or remove it.
  */
-function mayOnFolder(
-  req: FastifyRequest,
-  permission: string,
-  path: string,
-  locale: string
-): boolean {
+function mayOnFolder(req: SiteRequest, permission: string, path: string, locale: string): boolean {
   return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, {
+    siteId: req.params.siteId,
     path,
     locale
   })
@@ -337,12 +343,20 @@ async function routes(app: FastifyInstance) {
         A browse row carries a whole path rather than a folder/name pair, and stands for a page, a
         folder, or both at once. Judged on that path either way: for the page it IS the page, and for
         a folder it is the branch, which is what a rule over the branch is talking about.
+
+        With the locale being listed and the row's own tags, both of which a rule may be written
+        against — a row that is only a folder carries no tags, so a tag rule never hides one.
       */
       const actor = WIKI.models.groups.actorForRequest(req)
       return {
         ...level,
         items: level.items.filter((item) =>
-          WIKI.models.groups.checkAccess(actor, 'read:pages', { path: item.path })
+          WIKI.models.groups.checkAccess(actor, 'read:pages', {
+            siteId: req.params.siteId,
+            path: item.path,
+            locale: req.query.locale ?? defaultLocale(req.params.siteId),
+            tags: item.tags
+          })
         )
       }
     }
@@ -442,8 +456,10 @@ async function routes(app: FastifyInstance) {
       const actor = WIKI.models.groups.actorForRequest(req)
       return pages.filter((page) =>
         WIKI.models.groups.checkAccess(actor, 'read:pages', {
+          siteId: req.params.siteId,
           path: page.path,
-          locale: req.query.locale ?? defaultLocale(req.params.siteId)
+          locale: req.query.locale ?? defaultLocale(req.params.siteId),
+          tags: page.tags
         })
       )
     }

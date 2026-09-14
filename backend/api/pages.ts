@@ -1,6 +1,7 @@
 import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import {
   SEARCH_ORDER_BY,
   SEARCH_TAGS_MATCH,
@@ -119,11 +120,7 @@ export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
  * a different question from the one the route-level `config.permissions` hook answers — and the only
  * correct one for anything page-scoped. `helpers/pageRules.ts` sets out how a rule is chosen.
  */
-export function mayOnPage(
-  req: FastifyRequest,
-  permission: string,
-  page: { path: string; locale?: string; tags?: string[] }
-): boolean {
+export function mayOnPage(req: FastifyRequest, permission: string, page: RulePageRef): boolean {
   return WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), permission, page)
 }
 
@@ -137,10 +134,7 @@ export function mayOnPage(
  */
 const SOURCE_PERMISSIONS = ['read:source', 'write:pages', 'manage:pages']
 
-export function mayReadSource(
-  req: FastifyRequest,
-  page: { path: string; locale?: string; tags?: string[] }
-): boolean {
+export function mayReadSource(req: FastifyRequest, page: RulePageRef): boolean {
   return SOURCE_PERMISSIONS.some((permission) => mayOnPage(req, permission, page))
 }
 
@@ -155,10 +149,7 @@ export function mayReadSource(
  * what they say. Answering an empty list for a reader without a session would hide controls a wiki had
  * deliberately opened to everyone.
  */
-export function pagePermissionsFor(
-  req: FastifyRequest,
-  page: { path: string; locale?: string; tags?: string[] }
-): string[] {
+export function pagePermissionsFor(req: FastifyRequest, page: RulePageRef): string[] {
   const actor = WIKI.models.groups.actorForRequest(req)
   /*
     An administrator holds all of them, and holds them here too. Deriving the list from their
@@ -593,7 +584,8 @@ async function routes(app: FastifyInstance) {
       if (!group) {
         return reply.notFound('This page does not exist.')
       }
-      if (!mayOnPage(req, 'read:pages', { path: group.page.path, locale: group.page.locale })) {
+      const siteId = req.params.siteId
+      if (!mayOnPage(req, 'read:pages', { ...group.page, siteId })) {
         return reply.forbidden('You are not allowed to read this page.')
       }
       return {
@@ -602,9 +594,7 @@ async function routes(app: FastifyInstance) {
           Filtered by what the asker may read, one page at a time: the set is a list of pages, and a
           page they have no access to is not one to name at them — even to explain a refusal.
         */
-        relations: group.relations.filter((rel) =>
-          mayOnPage(req, 'read:pages', { path: rel.path, locale: rel.locale })
-        )
+        relations: group.relations.filter((rel) => mayOnPage(req, 'read:pages', { ...rel, siteId }))
       }
     }
   )
@@ -671,7 +661,7 @@ async function routes(app: FastifyInstance) {
              have in hand yet.
         */
         withContent: req.query.withContent
-          ? (target: { path: string; locale: string; tags: string[] }) => mayReadSource(req, target)
+          ? (target: RulePageRef) => mayReadSource(req, target)
           : false,
         publicOnly: !actor,
         // -> Answered once the page is known, since a hash does not say which page it is yet
@@ -857,8 +847,20 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized('Saving a page requires a logged in user.')
       }
-      // -> Against where the page is going: there is no page to ask about yet
-      if (!mayOnPage(req, 'write:pages', { path: req.body.path, locale: req.body.locale })) {
+      /*
+        Against the page as it is about to be, since there is no page to ask about yet: the path it
+        is going to and the tags it is arriving with. A tag rule has nothing else to read here — the
+        tags a new page carries are the ones in this request — and leaving them out would make a
+        rule addressing tags silently miss every page the moment it was created.
+      */
+      if (
+        !mayOnPage(req, 'write:pages', {
+          siteId: req.params.siteId,
+          path: req.body.path,
+          locale: req.body.locale,
+          tags: req.body.tags ?? []
+        })
+      ) {
         return reply.forbidden('You are not allowed to create a page here.')
       }
       const { page, versionId } = await WIKI.models.pages.createPage(
@@ -929,6 +931,23 @@ async function routes(app: FastifyInstance) {
       }
       if (!mayOnPage(req, 'write:pages', target)) {
         return reply.forbidden('You are not allowed to edit this page.')
+      }
+      /*
+        And against the tags the edit gives it, when it changes them. Retagging a page is what a move
+        is to a path: a rule may address pages by tag, so writing a page INTO a set of tags the writer
+        has no say over is the same hole as moving one into a branch they could not have created a
+        page in — and the check below is the tag half of the one the move route makes.
+      */
+      if (
+        req.body.tags !== undefined &&
+        !mayOnPage(req, 'write:pages', {
+          siteId: req.params.siteId,
+          path: target.path,
+          locale: target.locale,
+          tags: req.body.tags
+        })
+      ) {
+        return reply.forbidden('You are not allowed to give this page those tags.')
       }
       const change = await WIKI.models.pages.updatePage(
         req.params.siteId,
@@ -1044,6 +1063,7 @@ async function routes(app: FastifyInstance) {
         is a way to put a page somewhere they could not have created one.
       */
       const destination = {
+        siteId: req.params.siteId,
         path: req.body.path.replace(/^\/+/, ''),
         locale: req.body.locale || target.locale,
         tags: target.tags
@@ -1427,9 +1447,10 @@ async function routes(app: FastifyInstance) {
       }
       // -> Resolving an alias tells the caller a page exists and where it is, which is only theirs
       //    to know if they may read it
-      if (!mayOnPage(req, 'read:pages', { path: target.path })) {
+      if (!mayOnPage(req, 'read:pages', { ...target, siteId: req.params.siteId })) {
         return reply.notFound('No page uses this alias.')
       }
+      // -> `id` and `path` are all the response schema keeps; the locale and tags were for the check
       return target
     }
   )
@@ -1443,7 +1464,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get page user permissions',
         description:
-          "Which page permissions the caller holds AT THIS PATH, as their groups' rules decide. This is what the interface hides its controls by, so it answers the same question the endpoints themselves do rather than a broader one.\n\nAn administrator holds all of them. Everybody else gets whatever their rules grant, which for a path nobody wrote a rule for is nothing at all.",
+          "Which page permissions the caller holds AT THIS PATH, as their groups' rules decide. This is what the interface hides its controls by, so it answers the same question the endpoints themselves do rather than a broader one.\n\nA rule may address pages by tag, so the tags of the page actually sitting at the path are part of the answer — they are read here rather than sent, and a path with no page on it has none.\n\nAn administrator holds all of them. Everybody else gets whatever their rules grant, which for a path nobody wrote a rule for is nothing at all.",
         tags: ['Pages'],
         params: siteIdParam,
         body: {
@@ -1479,9 +1500,23 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      return pagePermissionsFor(req, {
-        path: req.body.path.replace(/^\/+/, ''),
+      const path = req.body.path.replace(/^\/+/, '')
+      /*
+        The page's own tags, looked up rather than taken from the request: a rule may address pages
+        by tag, so the answer is only the same one the endpoints give if it is asked of the page that
+        is actually there. A path with no page answers with none, which is right — there is nothing
+        for a tag rule to have matched, and what may be done at an empty path is a question about the
+        path alone.
+      */
+      const tags = await WIKI.models.pages.tagsAt(req.params.siteId, {
+        path,
         locale: req.body.locale
+      })
+      return pagePermissionsFor(req, {
+        siteId: req.params.siteId,
+        path,
+        locale: req.body.locale,
+        tags
       })
     }
   )

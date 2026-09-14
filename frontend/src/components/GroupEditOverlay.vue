@@ -408,7 +408,33 @@
                           { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
                           { label: t('admin.groups.ruleMatchExact'), value: 'EXACT' }
                         ]" />
+                      <!--
+                        A tag rule matches on tags and a path rule on a path, so the field under the
+                        kind is whichever one that kind reads. They are separate properties of the
+                        rule rather than one field doing double duty: changing the kind and changing
+                        it back leaves both intact.
+                      -->
+                      <w-select
+                        v-if="isTagMatch(rule.match)"
+                        class="mt-2"
+                        standout
+                        v-model="rule.tags"
+                        :options="sortedTags"
+                        dense
+                        options-dense
+                        use-input
+                        use-chips
+                        create
+                        multiple
+                        hide-dropdown-icon
+                        :placeholder="t(`admin.groups.ruleTagsHint`)"
+                        :aria-label="t(`admin.groups.ruleTags`)"
+                        :loading="state.isLoadingTags"
+                        @create="(val) => addRuleTags(rule, val)">
+                        <template #prepend><w-icon name="la:hashtag" size="xs" /></template>
+                      </w-select>
                       <w-input
+                        v-else
                         class="mt-2"
                         standout
                         v-model="rule.path"
@@ -648,6 +674,9 @@ const state = reactive({
     rules: []
   },
   isLoading: false,
+  /** Every tag in use on the instance, as suggestions for the tag rules. */
+  tags: [],
+  isLoadingTags: false,
   users: [],
   isLoadingUsers: false,
   usersFilter: '',
@@ -976,6 +1005,15 @@ const ruleOptions = computed(() =>
   isGuestGroup.value ? rules.filter((rule) => GUEST_ROLES.includes(rule.permission)) : rules
 )
 
+/**
+ * The tag suggestions in the order they are offered: alphabetical.
+ *
+ * `GET /tags` answers most-used first, which is the right order for a limit and the wrong one for a
+ * list to pick from -- WSelect narrows it as you type but never reorders it. `localeCompare`, since
+ * tags are page-authored words in whatever language the wiki is written in.
+ */
+const sortedTags = computed(() => [...state.tags].sort((a, b) => a.localeCompare(b)))
+
 // WATCHERS
 
 watch(() => route.params.section, checkRoute)
@@ -1073,7 +1111,12 @@ async function fetchGroup() {
     if (!resp?.id) {
       throw new Error('An unexpected error occured while fetching group details.')
     }
-    state.group = resp
+    // -> `tags` is optional in the API's rule schema, so a rule written through it may arrive without
+    //    one; the field below binds to an array either way
+    state.group = {
+      ...resp,
+      rules: (resp.rules ?? []).map((r) => ({ ...r, tags: r.tags ?? [] }))
+    }
     state.usersTotal = state.group.userCount ?? 0
   } catch (err) {
     notify({
@@ -1116,6 +1159,45 @@ async function save() {
   state.isLoading = false
 }
 
+/** Whether a rule kind addresses pages by tag, which is what decides the field offered under it. */
+function isTagMatch(match) {
+  return match === 'TAG' || match === 'TAGALL'
+}
+
+/**
+ * Add whatever was typed to a rule, as one tag or as several.
+ *
+ * A comma or a semicolon separates them, so a list can be pasted in one go -- the same as the page
+ * properties panel. A tag that is on no page is perfectly valid here: a rule may be written ahead of
+ * the content it is about, and one that names a tag nobody has used yet simply matches nothing until
+ * somebody does. It does NOT join the suggestions, which are the tags actually in use: a tag exists
+ * because a page carries it, and offering one invented in this field would say otherwise.
+ */
+function addRuleTags(rule, val) {
+  const tags = val
+    .split(/[,;]+/)
+    .map((v) => v.trim().toLowerCase())
+    .filter(Boolean)
+  rule.tags = [...new Set([...(rule.tags ?? []), ...tags])]
+}
+
+async function fetchTags() {
+  state.isLoadingTags = true
+  try {
+    const resp = await API_CLIENT.get('tags').json()
+    state.tags = (resp ?? []).map((tg) => tg.tag)
+  } catch (err) {
+    // -> Suggestions are a convenience: a tag can still be typed in without them, so this is a
+    //    warning rather than a failure
+    notify({
+      type: 'warning',
+      message: t('admin.groups.ruleTagsFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  state.isLoadingTags = false
+}
+
 function newRule() {
   state.group.rules.push({
     id: uuid(),
@@ -1124,6 +1206,7 @@ function newRule() {
     match: 'START',
     roles: [],
     path: '',
+    tags: [],
     locales: [],
     sites: []
   })
@@ -1187,6 +1270,7 @@ async function importRules() {
             : 'START',
           roles: r.roles || [],
           path: r.path || '',
+          tags: Array.isArray(r.tags) ? r.tags.map((tg) => `${tg}`.trim().toLowerCase()) : [],
           locales: r.locales.filter((l) => adminStore.locales.some((loc) => loc.code === l)),
           sites: r.sites.filter((s) => adminStore.sites.some((site) => site.id === s))
         }))
@@ -1301,6 +1385,7 @@ async function unassignUser(user) {
 onMounted(() => {
   checkRoute()
   fetchGroup()
+  fetchTags()
 })
 </script>
 

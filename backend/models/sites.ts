@@ -99,141 +99,149 @@ class Sites {
   }
 
   async createSite(hostname: string, config: Record<string, any> = {}) {
-    const result = await WIKI.db
-      .insert(sitesTable)
-      .values({
-        hostname,
-        isEnabled: true,
-        config: toMerged(
-          {
-            title: 'My Wiki Site',
-            description: '',
-            company: '',
-            contentLicense: '',
-            footerExtra: '',
-            banner: {
-              isEnabled: false,
-              title: '',
-              content: ''
-            },
-            pageExtensions: ['md', 'html', 'txt'],
-            discoverable: false,
-            defaults: {
-              tocDepth: {
-                min: 1,
-                max: 2
-              }
-            },
-            features: {
-              browse: true,
-              collaborativeEditing: true,
-              ratings: false,
-              ratingsMode: 'off',
-              // -> On, because what decides whether a site has comments is whether a provider has
-              //    been picked. This is the switch that turns them all off without losing that
-              //    choice, which is only useful to somebody who has already made it.
-              comments: true,
-              reasonForChange: 'optional',
-              search: true
-            },
-            /*
+    /*
+      The whole configuration the site is created with, defaults and caller's together. Read back
+      below rather than reading `config` again: the caller supplies the handful of fields the create
+      form asks for, so anything else looked up there is undefined — which is what made creating a
+      site through the API fail on `locales.primary` every time.
+    */
+    const siteConfig = toMerged(
+      {
+        title: 'My Wiki Site',
+        description: '',
+        company: '',
+        contentLicense: '',
+        footerExtra: '',
+        banner: {
+          isEnabled: false,
+          title: '',
+          content: ''
+        },
+        pageExtensions: ['md', 'html', 'txt'],
+        discoverable: false,
+        defaults: {
+          tocDepth: {
+            min: 1,
+            max: 2
+          }
+        },
+        features: {
+          browse: true,
+          collaborativeEditing: true,
+          ratings: false,
+          ratingsMode: 'off',
+          // -> On, because what decides whether a site has comments is whether a provider has
+          //    been picked. This is the switch that turns them all off without losing that
+          //    choice, which is only useful to somebody who has already made it.
+          comments: true,
+          reasonForChange: 'optional',
+          search: true
+        },
+        /*
               The wiki's own provider, so that a site with comments turned on has somewhere for them
               to go without an administrator having to choose first. Every alternative is somebody
               else's service with an account to open; this one needs nothing set up. Whether there
               are comments at all is `features.comments` above -- see `models/comments.ts`.
             */
-            comments: {
-              provider: 'default',
-              providers: {}
-            },
-            logoUrl: '',
-            logoText: true,
-            sitemap: true,
-            robots: {
-              index: true,
-              follow: true
-            },
-            // -> Local authentication is the only strategy guaranteed to exist at this point
-            authStrategies: [{ id: WIKI.data.systemIds.localAuthId, order: 0, isVisible: true }],
-            auth: {
-              autoLogin: false,
-              bypassUnauthorized: false,
-              hideLocal: false,
-              loginRedirect: '/',
-              welcomeRedirect: '/',
-              logoutRedirect: '/'
-            },
-            locales: {
-              primary: 'en',
-              active: ['en'],
-              forcePrefix: false,
-              showMenu: true
-            },
-            assets: {
-              logo: false,
-              favicon: false,
-              loginBg: false
-            },
-            theme: {
-              dark: false,
-              codeBlocksTheme: 'github-dark',
-              colorPrimary: '#1976D2',
-              colorSecondary: '#02C39A',
-              colorAccent: '#FF9800',
-              colorHeader: '#000000',
-              colorSidebar: '#1976D2',
-              injectCSS: '',
-              injectHead: '',
-              injectBody: '',
-              contentWidth: 'full',
-              sidebarPosition: 'left',
-              tocPosition: 'right',
-              showPrintBtn: true,
-              baseFont: 'roboto',
-              contentFont: 'roboto'
-            },
-            editors: {
-              asciidoc: {
-                isActive: true,
-                config: {}
-              },
-              markdown: {
-                isActive: true,
-                config: {
-                  allowHTML: true,
-                  lineBreaks: true,
-                  linkify: true,
-                  multimdTable: true,
-                  quotes: 'english',
-                  tabWidth: 2,
-                  typographer: false,
-                  underline: true
-                }
-              },
-              wysiwyg: {
-                isActive: true,
-                config: {}
-              }
-            },
-            uploads: {
-              conflictBehavior: 'overwrite',
-              pastedDestination: ''
-            },
-            storage: {
-              largeThreshold: '25MB',
-              sitePrefix: false,
-              localePrefix: true,
-              syncInterval: '5m',
-              directAccessFallback: 'stream'
-            },
-            // -> Keyed by the directory name under `modules/analytics`. Empty until an administrator
-            //    turns a provider on; the model completes each one from the module's declared props.
-            analytics: {
-              providers: {}
+        comments: {
+          provider: 'default',
+          providers: {}
+        },
+        logoUrl: '',
+        logoText: true,
+        sitemap: true,
+        robots: {
+          index: true,
+          follow: true
+        },
+        // -> Local authentication is the only strategy guaranteed to exist at this point
+        authStrategies: [{ id: WIKI.data.systemIds.localAuthId, order: 0, isVisible: true }],
+        auth: {
+          autoLogin: false,
+          bypassUnauthorized: false,
+          hideLocal: false,
+          loginRedirect: '/',
+          welcomeRedirect: '/',
+          logoutRedirect: '/'
+        },
+        locales: {
+          primary: 'en',
+          active: ['en'],
+          forcePrefix: false,
+          showMenu: true
+        },
+        assets: {
+          logo: false,
+          favicon: false,
+          loginBg: false
+        },
+        theme: {
+          dark: false,
+          codeBlocksTheme: 'github-dark',
+          colorPrimary: '#1976D2',
+          colorSecondary: '#02C39A',
+          colorAccent: '#FF9800',
+          colorHeader: '#000000',
+          colorSidebar: '#1976D2',
+          injectCSS: '',
+          injectHead: '',
+          injectBody: '',
+          contentWidth: 'full',
+          sidebarPosition: 'left',
+          tocPosition: 'right',
+          showPrintBtn: true,
+          baseFont: 'roboto',
+          contentFont: 'roboto'
+        },
+        editors: {
+          asciidoc: {
+            isActive: true,
+            config: {}
+          },
+          markdown: {
+            isActive: true,
+            config: {
+              allowHTML: true,
+              lineBreaks: true,
+              linkify: true,
+              multimdTable: true,
+              quotes: 'english',
+              tabWidth: 2,
+              typographer: false,
+              underline: true
             }
           },
-          config
-        )
+          wysiwyg: {
+            isActive: true,
+            config: {}
+          }
+        },
+        uploads: {
+          conflictBehavior: 'overwrite',
+          pastedDestination: ''
+        },
+        storage: {
+          largeThreshold: '25MB',
+          sitePrefix: false,
+          localePrefix: true,
+          syncInterval: '5m',
+          directAccessFallback: 'stream'
+        },
+        // -> Keyed by the directory name under `modules/analytics`. Empty until an administrator
+        //    turns a provider on; the model completes each one from the module's declared props.
+        analytics: {
+          providers: {}
+        }
+      },
+      config
+    )
+
+    const result = await WIKI.db
+      .insert(sitesTable)
+      .values({
+        hostname,
+        isEnabled: true,
+        config: siteConfig
       })
       .returning({ id: sitesTable.id })
 
@@ -243,7 +251,7 @@ class Sites {
     //    exist before a page can point at it, and a site starts with its primary locale — the rest get
     //    one the first time a page is written in them
     WIKI.logger.debug(`Creating new root navigation for site ${newSite.id}`)
-    await WIKI.models.navigation.siteNavId(newSite.id, config.locales.primary)
+    await WIKI.models.navigation.siteNavId(newSite.id, siteConfig.locales.primary)
 
     // -> Site lookups by id / hostname are served from cache, which must know about the new site
     await WIKI.models.sites.reloadCache()

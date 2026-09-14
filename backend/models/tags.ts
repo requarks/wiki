@@ -59,6 +59,7 @@ class Tags {
     const counts = new Map<string, number>()
     for (const row of (result.rows ?? result) as any[]) {
       const page = {
+        siteId,
         path: row.path as string,
         locale: row.locale as string,
         tags: (row.tags ?? []) as string[]
@@ -74,6 +75,35 @@ class Tags {
       .map(([tag, usageCount]) => ({ tag, usageCount }))
       .sort((a, b) => b.usageCount - a.usageCount || a.tag.localeCompare(b.tag))
       .slice(0, limit)
+  }
+
+  /**
+   * Every tag in use anywhere on the instance, most used first.
+   *
+   * For the group editor, whose page rules are not a site's: one rule may name several sites, or
+   * none at all and mean every one of them, so the tags it offers cannot come from a single site's
+   * list. Counted across sites, so a tag used on two of them counts the pages of both.
+   *
+   * Deliberately NOT filtered by who is asking, unlike `getTags`. Whoever writes page rules is
+   * deciding what everyone else may read, and a list narrowed to the pages they happen to have
+   * access to would quietly leave tags out of the field that their rules still act on — a rule
+   * written against a tag it did not offer works exactly the same as one written against a tag it
+   * did. The route it answers is gated on the permission to read groups instead.
+   *
+   * @param limit Ceiling on how many distinct tags come back, most used first
+   */
+  async getAllTags({ limit = 1000 }: { limit?: number } = {}): Promise<Tag[]> {
+    const result = await WIKI.db.execute(sql`
+      SELECT tag, COUNT(*)::int AS "usageCount"
+      FROM pages, unnest(tags) AS tag
+      GROUP BY tag
+      ORDER BY COUNT(*) DESC, tag ASC
+      LIMIT ${limit}
+    `)
+    return ((result.rows ?? result) as any[]).map((row) => ({
+      tag: row.tag as string,
+      usageCount: row.usageCount as number
+    }))
   }
 }
 

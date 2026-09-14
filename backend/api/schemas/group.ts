@@ -27,7 +27,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       match: {
         type: 'string',
-        description: 'How `path` is compared against the page path.',
+        description:
+          'How the rule addresses pages. `TAG` (any of them) and `TAGALL` (all of them) match on `tags` and ignore `path`; every other kind compares `path` against the page path and ignores `tags`.',
         enum: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT']
       },
       mode: {
@@ -39,6 +40,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       path: {
         type: 'string',
         maxLength: 255
+      },
+      tags: {
+        type: 'array',
+        description:
+          'Tags a `TAG` / `TAGALL` rule matches on, lowercased and de-duplicated when stored. A tag no page carries is accepted: a rule may be written before the content it is about.',
+        items: {
+          type: 'string',
+          maxLength: 255
+        }
       },
       locales: {
         type: 'array',

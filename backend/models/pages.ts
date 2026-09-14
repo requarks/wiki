@@ -8,6 +8,7 @@ import {
 } from '../helpers/common.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import type { AccessActor } from './groups.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { FastifyRequest } from 'fastify'
 import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
@@ -120,6 +121,12 @@ export interface PageLocaleRelation {
   locale: string
   path: string
   title: string
+  /**
+   * The counterpart's own tags. Not something a client is shown — the response schemas drop it —
+   * but a counterpart has to be judged against `read:pages` before it is named at anybody, and a
+   * rule that addresses pages by tag cannot answer without them.
+   */
+  tags: string[]
 }
 
 /**
@@ -137,6 +144,12 @@ export interface PageLocaleRelationInput {
 /** A page as the API exposes it: the columns and both blobs, flattened into one object. */
 export interface Page {
   id: string
+  /**
+   * The site the page belongs to. Carried so that a page in hand is enough to ask a page rule about
+   * it — rules may be limited to particular sites, and `RulePageRef` requires one for that reason.
+   * Dropped by the response schemas: the caller addressed the page through its site to begin with.
+   */
+  siteId: string
   path: string
   hash: string
   alias: string | null
@@ -444,6 +457,7 @@ class Pages {
     const scripts = row.scripts ?? {}
     return {
       id: row.id,
+      siteId: row.siteId,
       path: row.path,
       hash: row.hash,
       alias: row.alias,
@@ -519,7 +533,12 @@ class Pages {
       conditions.push(eq(pagesTable.publishState, 'published'))
     }
     return await WIKI.db
-      .select({ locale: pagesTable.locale, path: pagesTable.path, title: pagesTable.title })
+      .select({
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        tags: pagesTable.tags
+      })
       .from(pagesTable)
       .where(and(...conditions))
       .orderBy(pagesTable.locale)
@@ -550,12 +569,49 @@ class Pages {
       return null
     }
     return {
-      page: { id: page.id, locale: page.locale, path: page.path, title: page.title },
+      page: {
+        id: page.id,
+        locale: page.locale,
+        path: page.path,
+        title: page.title,
+        tags: page.tags
+      },
       relations: await this.localeRelationsFor(siteId, {
         localeGroupId: page.localeGroupId,
         id: page.id
       })
     }
+  }
+
+  /**
+   * The tags carried by the page at a path, or an empty list when there is no page there.
+   *
+   * For the one caller that has a path and no page: the endpoint the interface asks what it may do
+   * at a path it is about to show. A rule can address pages by tag, so answering that from the path
+   * alone would report a permission a tag rule had granted or taken away as though the rule did not
+   * exist — and the interface would then draw controls the endpoint behind them refuses, or hide
+   * ones it would have allowed.
+   *
+   * Read from the database rather than taken from the caller, for the obvious reason: what a page is
+   * tagged decides what may be done to it, and a client that could name the tags could name the ones
+   * that suit it.
+   */
+  async tagsAt(
+    siteId: string,
+    { locale, path }: { locale?: string; path: string }
+  ): Promise<string[]> {
+    const rows = await WIKI.db
+      .select({ tags: pagesTable.tags })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale || this.defaultLocale(siteId)),
+          eq(pagesTable.hash, generatePathHash(path || 'home'))
+        )
+      )
+      .limit(1)
+    return rows[0]?.tags ?? []
   }
 
   /** One page of a site, by the locale and path that address it. */
@@ -568,6 +624,7 @@ class Pages {
     locale: string
     path: string
     title: string
+    tags: string[]
     localeGroupId: string | null
   } | null> {
     const rows = await WIKI.db
@@ -576,6 +633,7 @@ class Pages {
         locale: pagesTable.locale,
         path: pagesTable.path,
         title: pagesTable.title,
+        tags: pagesTable.tags,
         localeGroupId: pagesTable.localeGroupId
       })
       .from(pagesTable)
@@ -967,7 +1025,7 @@ class Pages {
 
     const guests = WIKI.models.groups.actorForPublic()
     const pages = rows
-      .filter((row) => WIKI.models.groups.checkAccess(guests, 'read:pages', row))
+      .filter((row) => WIKI.models.groups.checkAccess(guests, 'read:pages', { ...row, siteId }))
       .map(({ locale, path, updatedAt, localeGroupId }) => ({
         locale,
         path,
@@ -1064,7 +1122,7 @@ class Pages {
     if (!row) {
       return null
     }
-    if (!WIKI.models.groups.checkAccess(actor, 'read:pages', row)) {
+    if (!WIKI.models.groups.checkAccess(actor, 'read:pages', { ...row, siteId })) {
       return null
     }
 
@@ -1115,7 +1173,9 @@ class Pages {
         )
       )
       .orderBy(pagesTable.locale)
-    const readable = rows.filter((row) => WIKI.models.groups.checkAccess(actor, 'read:pages', row))
+    const readable = rows.filter((row) =>
+      WIKI.models.groups.checkAccess(actor, 'read:pages', { ...row, siteId })
+    )
     // -> One document is not a set of alternates: a page whose only readable version is itself has
     //    nothing for an annotation to point at
     return readable.length > 1 ? readable.map(({ locale, path }) => ({ locale, path })) : []
@@ -1157,7 +1217,7 @@ class Pages {
      * is granted by a page rule, and a rule is chosen by path, locale and tags, none of which a
      * request addressing a page by hash has in hand before the row is read.
      */
-    withContent?: boolean | ((page: { path: string; locale: string; tags: string[] }) => boolean)
+    withContent?: boolean | ((page: RulePageRef) => boolean)
     /** Restrict to what a reader with no session may see: published pages. */
     publicOnly?: boolean
     unlocked?: boolean | ((pageId: string) => boolean)
@@ -1203,6 +1263,7 @@ class Pages {
         ? withContent({
             path: row.page.path,
             locale: row.page.locale,
+            siteId,
             tags: row.page.tags ?? []
           })
         : withContent
@@ -2283,9 +2344,16 @@ class Pages {
   async getPathFromAlias(
     siteId: string,
     alias: string
-  ): Promise<{ id: string; path: string } | null> {
+  ): Promise<{ id: string; path: string; locale: string; tags: string[] } | null> {
+    // -> The locale and the tags come back alongside the path because the caller has to decide
+    //    whether this reader may know the page exists, and a rule reads all three
     const results = await WIKI.db
-      .select({ id: pagesTable.id, path: pagesTable.path })
+      .select({
+        id: pagesTable.id,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags
+      })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.alias, alias)))
       .limit(1)

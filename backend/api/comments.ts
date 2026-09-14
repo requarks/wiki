@@ -4,6 +4,7 @@ import { mayOnPage } from './pages.ts'
 import { COMMENT_MAX_LENGTH, COMMENT_MIN_LENGTH } from '../models/comments.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { CommentsProviderInput } from '../models/comments.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 
 const siteIdParam = {
   type: 'object',
@@ -562,7 +563,9 @@ async function requireBuiltInPage(
     reply.notFound('This page does not exist.')
     return null
   }
-  return page
+  // -> Carrying the site, since everything below asks a page rule about this page and a rule may be
+  //    limited to particular sites
+  return { ...page, siteId: req.params.siteId }
 }
 
 /**
@@ -587,7 +590,12 @@ async function requireWritableComment(
     reply.notFound('This comment does not exist.')
     return null
   }
-  const page = { path: comment.path, locale: comment.locale, tags: comment.tags ?? [] }
+  const page = {
+    siteId: req.params.siteId,
+    path: comment.path,
+    locale: comment.locale,
+    tags: comment.tags ?? []
+  }
   if (mayOnPage(req, 'manage:comments', page)) {
     return comment
   }
@@ -615,7 +623,7 @@ async function requireWritableComment(
  */
 async function consumeCooldown(
   req: FastifyRequest<{ Params: { siteId: string; pageId: string } }>,
-  page: { path: string; locale: string; tags: string[] }
+  page: RulePageRef
 ): Promise<number> {
   const seconds = WIKI.models.comments.cooldownFor(req.params.siteId)
   if (seconds < 1 || mayOnPage(req, 'manage:comments', page)) {

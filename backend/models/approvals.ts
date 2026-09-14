@@ -445,6 +445,7 @@ class Approvals {
               WIKI.models.groups.actorForRequest(req),
               'review:pages',
               {
+                siteId,
                 path: page.path,
                 tags: page.tags
               }

@@ -10,7 +10,7 @@ import type { FastifyRequest } from 'fastify'
 /** The permission that bypasses every check, and the one the guards below exist to protect. */
 export const SYSTEM_PERMISSION = 'manage:system'
 
-/** How a rule's `path` is compared against the page path. */
+/** How a rule addresses pages: `TAG` and `TAGALL` read `tags`, everything else reads `path`. */
 export type GroupRuleMatch = 'START' | 'END' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
 
 /** Whether a matching rule grants, denies, or unconditionally grants its roles. */
@@ -24,6 +24,12 @@ export interface GroupRule {
   match: GroupRuleMatch
   mode: GroupRuleMode
   path: string
+  /**
+   * The tags a `TAG` / `TAGALL` rule addresses. Ignored by every other kind, and kept rather than
+   * cleared when one is chosen, so that a rule switched to a path kind and back still says what it
+   * said. A tag named here need not be on any page: a rule may be written ahead of the content.
+   */
+  tags: string[]
   locales: string[]
   sites: string[]
 }
@@ -263,6 +269,7 @@ class Groups {
             match: 'START',
             mode: 'ALLOW',
             path: '',
+            tags: [],
             locales: [],
             sites: []
           }
@@ -287,6 +294,7 @@ class Groups {
             match: 'START',
             mode: 'DENY',
             path: '',
+            tags: [],
             locales: [],
             sites: []
           }
@@ -356,6 +364,7 @@ class Groups {
             match: 'START',
             mode: 'ALLOW',
             path: '',
+            tags: [],
             locales: [],
             sites: []
           }
@@ -408,13 +417,38 @@ class Groups {
     const result = await WIKI.db
       .update(groupsTable)
       .set({
-        ...this.clampGuestPatch(id, patch),
+        ...this.clampGuestPatch(id, this.normalizeRulePatch(patch)),
         ...(patch.name !== undefined ? { name: patch.name.trim() } : {}),
         updatedAt: sql`now()`
       })
       .where(eq(groupsTable.id, id))
     await this.reloadCache()
     return (result.rowCount ?? 0) > 0
+  }
+
+  /**
+   * Tidy the tags on the rules being saved: trimmed, lowercased, de-duplicated, blanks dropped.
+   *
+   * Done on the way in rather than at match time so that the stored rule says exactly what it
+   * matches. `ruleTags` lowercases anyway — a rule written through the API keeps working either
+   * way — but a rule listing `Meeting` and `meeting` as two tags is a `TAGALL` rule that reads as
+   * though it wanted two things and a rule the admin screen would show twice.
+   *
+   * Every rule is tidied, not only the tag kinds: what a path rule carries in `tags` is what it
+   * would match on if it were switched back, and there is no moment at which holding a stray blank
+   * is worth anything.
+   */
+  private normalizeRulePatch(patch: GroupPatch): GroupPatch {
+    if (!patch.rules) {
+      return patch
+    }
+    return {
+      ...patch,
+      rules: patch.rules.map((rule) => ({
+        ...rule,
+        tags: [...new Set((rule.tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean))]
+      }))
+    }
   }
 
   /**

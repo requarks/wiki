@@ -54,7 +54,10 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
  * guests group among its reviewers, or a page rule granting them `review:pages`, would otherwise hand
  * the queue to the public. An empty scope reviews nothing, whatever the rules say.
  */
-function reviewerFor(req: FastifyRequest, page?: { path: string; tags?: string[] }): ReviewerScope {
+function reviewerFor(
+  req: FastifyRequest<{ Params: { siteId: string } }>,
+  page?: { path: string; tags?: string[] }
+): ReviewerScope {
   if (!isReviewerSession(req)) {
     return { groupIds: [], reviewsAll: false }
   }
@@ -63,7 +66,13 @@ function reviewerFor(req: FastifyRequest, page?: { path: string; tags?: string[]
     groupIds: WIKI.models.approvals.getActorGroupIds(req),
     reviewsAll:
       actor.permissions.includes('manage:system') ||
-      WIKI.models.groups.checkAccess(actor, 'review:pages', page ?? { path: '' })
+      // -> The site root stands in for "the queue spanning every page", as above. The site itself is
+      //    never stood in for: a rule limited to other sites has nothing to say about this queue
+      WIKI.models.groups.checkAccess(actor, 'review:pages', {
+        siteId: req.params.siteId,
+        path: page?.path ?? '',
+        tags: page?.tags
+      })
   }
 }
 

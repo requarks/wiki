@@ -398,6 +398,7 @@ class Search {
     const visible = actor
       ? ((rows.rows ?? rows) as any[]).filter((row) =>
           WIKI.models.groups.checkAccess(actor, 'read:pages', {
+            siteId,
             path: row.path as string,
             locale: row.locale as string,
             tags: (row.tags ?? []) as string[]

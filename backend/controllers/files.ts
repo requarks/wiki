@@ -52,6 +52,7 @@ async function routes(app: FastifyInstance) {
     if (
       !asset ||
       !WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), 'read:assets', {
+        siteId: site.id,
         path: asset.folderPath ? `${asset.folderPath}/${asset.fileName}` : asset.fileName,
         locale: asset.locale
       })
