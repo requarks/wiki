@@ -68,6 +68,22 @@ function localeInfoFor(code: string) {
   }
 }
 
+/**
+ * Whether a parsed document is a locale string set.
+ *
+ * Every locale package is one flat object of key to string — `locales/en.json` is the shape, and the
+ * published packages are translations of it. Anything else is a JSON file that is not a locale, and
+ * the two that would otherwise get this far are worth naming: the repository's own `metadata.json`
+ * is an array, and a nested object is a namespaced format this wiki does not read.
+ */
+function isStringsDocument(value: unknown): value is Record<string, string> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false
+  }
+  const entries = Object.entries(value)
+  return entries.length > 0 && entries.every(([, str]) => typeof str === 'string')
+}
+
 /** A locale row, as far as naming it for a list is concerned. */
 interface NameableLocale {
   code: string
@@ -357,6 +373,91 @@ class Locales {
     await this.reloadCache()
     WIKI.events.outbound.emit('reloadLocales')
     WIKI.logger.info(`Locale ${code} installed successfully. [ OK ]`)
+  }
+
+  /**
+   * Install a locale from a strings file an administrator uploaded, rather than from upstream.
+   *
+   * The whole point is the wiki that cannot reach github: an air-gapped instance has no metadata to
+   * read and therefore not even a row to install from, so this creates the row as well as filling
+   * it — it is `install` and the `added` half of `updateFromRemote` at once. The file is one of the
+   * packages published at `requarks/wiki-locales`, carried in by hand.
+   *
+   * **The file name is the identity**, exactly as it is for the remote packages and the files in
+   * `locales/`: `fr-FR.json` is the locale `fr-FR`, and nothing else in the upload says which locale
+   * it is. So a file somebody renamed installs the wrong locale, which is why the name is held to
+   * being a structurally valid language tag rather than just non-empty.
+   *
+   * It is read verbatim, case and all — `refreshFromDisk` reads the files in `locales/` the same way,
+   * and `localeInfoFor` says why neither canonicalizes. The extension is therefore matched exactly
+   * too: taking `FR-FR.JSON` would file the strings under a code that names no published package and
+   * sits beside the `fr-FR` a later fetch would create, so it is refused as the renamed file it is.
+   *
+   * **The hash is left empty**, as it is for a locale that came off disk: no upstream file was
+   * downloaded, so there is nothing a later update run could compare against. That makes the first
+   * run that does reach upstream re-download it, which is the right answer for strings of unknown
+   * provenance — and costs an air-gapped wiki nothing, since it never has such a run.
+   *
+   * @returns The code the file was installed as.
+   */
+  async installFromFile(fileName: string, strings: unknown): Promise<string> {
+    const name = (fileName ?? '').trim()
+    if (!name.endsWith('.json')) {
+      throw new Error(
+        `"${name}" is not a locale package: it must be a .json file named for its locale, e.g. "fr-FR.json".`
+      )
+    }
+    const code = name.slice(0, -'.json'.length)
+
+    // -> Same reasoning as `install`: it ships with the wiki and this build's strings are the
+    //    authority on what the interface says
+    if (code === SOURCE_LOCALE) {
+      throw new Error(`Locale ${code} ships with the wiki and cannot be uploaded.`)
+    }
+
+    let localeInfo: ReturnType<typeof localeInfoFor> | null = null
+    try {
+      localeInfo = localeInfoFor(code)
+    } catch {
+      // -> Not a structurally valid tag. Reported with the rest of what the name can be wrong about
+    }
+    /*
+      Parsing is not enough on its own. BCP 47 allows a primary language subtag of five to eight
+      letters, for subtags nobody ever registered, so `Intl.Locale` happily accepts `french` and
+      `passwd` -- and an upload named either would install a locale called that, sitting in the
+      admin list for ever with nothing to say what it is. Every language strings are published for is
+      ISO 639, which is two or three letters, and that is what makes a name a language tag here.
+
+      A path rather than a bare name fails the same check, which is why nothing is stripped off the
+      front of it: `../../etc/passwd` does not parse as a tag, and a name that is not just a name is
+      not a locale package whatever it ends in.
+    */
+    if (!localeInfo || localeInfo.language.length > 3) {
+      throw new Error(`"${name}" is not named for a valid language tag.`)
+    }
+
+    if (!isStringsDocument(strings)) {
+      throw new Error(`"${name}" does not hold a locale string set.`)
+    }
+
+    WIKI.logger.info(`Installing locale ${code} from an uploaded file...`)
+    await WIKI.db
+      .insert(localesTable)
+      .values({
+        code,
+        ...localeInfo,
+        isInstalled: true,
+        hash: '',
+        strings
+      })
+      .onConflictDoUpdate({
+        target: localesTable.code,
+        set: { strings, isInstalled: true, hash: '', updatedAt: sql`now()` }
+      })
+    await this.reloadCache()
+    WIKI.events.outbound.emit('reloadLocales')
+    WIKI.logger.info(`Locale ${code} installed successfully. [ OK ]`)
+    return code
   }
 
   /**

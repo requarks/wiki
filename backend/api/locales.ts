@@ -124,6 +124,67 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * INSTALL A LOCALE FROM AN UPLOADED FILE
+   *
+   * The way in for a wiki that cannot reach github at all: the same published package, carried in by
+   * hand instead of downloaded. The body is the strings document itself rather than a multipart form
+   * — one file, no fields — and the file name arrives in the query string because it is what says
+   * which locale this is.
+   */
+  app.post<{ Querystring: { fileName: string } }>(
+    '/upload',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Install a locale from an uploaded strings file',
+        description:
+          'The body is the locale package itself — one of the `<tag>.json` files published at `requarks/wiki-locales` — sent as `application/json` rather than as a multipart form. For an installation that cannot reach the internet, where `/locales/fetch` has nothing to read and a locale has no row to be installed from; this creates the row as well as filling it.\n\nThe file name is the identity, exactly as it is upstream: `fr-FR.json` installs `fr-FR`, so a renamed file installs the wrong locale and a name that is not a language tag is refused. So is a body that is not one flat object of strings, and so is `en`, which ships with the wiki.\n\nNo hash is recorded, since nothing was downloaded — a later run of `/locales/fetch` on an instance that does reach upstream will therefore re-download the locale.',
+        tags: ['Locales'],
+        consumes: ['application/json'],
+        querystring: {
+          type: 'object',
+          properties: {
+            fileName: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              description: 'The name of the uploaded file, e.g. `fr-FR.json`.'
+            }
+          },
+          required: ['fileName']
+        },
+        response: {
+          200: {
+            description: 'Locale installed successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              code: {
+                type: 'string',
+                description: 'The locale the file was installed as, read off its name.'
+              },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      let code: string
+      try {
+        code = await WIKI.models.locales.installFromFile(req.query.fileName, req.body)
+      } catch (err: any) {
+        return reply.badRequest(err.message)
+      }
+      await audit(req, 'admin', 'uploadLocale', { code, fileName: req.query.fileName })
+
+      return { ok: true, code, message: 'Locale installed successfully.' }
+    }
+  )
+
+  /**
    * SET A LOCALE'S ALIASES
    */
   app.put<{

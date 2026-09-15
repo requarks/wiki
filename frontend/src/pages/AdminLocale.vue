@@ -22,6 +22,17 @@
           @click="fetchLocales">
           <w-tooltip>{{ t(`admin.locale.fetchHint`) }}</w-tooltip>
         </w-btn>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          flat
+          icon="la:file-upload"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
+          :label="t(`admin.locale.installFile`)"
+          :loading="state.uploading"
+          :disabled="state.loading > 0 || state.uploading || Boolean(state.installing)"
+          @click="promptInstallFile">
+          <w-tooltip>{{ t(`admin.locale.installFileHint`) }}</w-tooltip>
+        </w-btn>
         <w-separator class="mr-2" vertical />
         <w-btn
           class="mr-2 acrylic-btn"
@@ -162,12 +173,18 @@
         </div>
       </div>
     </div>
+    <input
+      type="file"
+      ref="localeFileIpt"
+      accept=".json,application/json"
+      style="display: none"
+      @change="installFromFile" />
   </w-page>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { dialog } from '@/composables/dialog'
@@ -208,12 +225,17 @@ useMeta(() => ({
 const state = reactive({
   loading: 0,
   installing: null,
+  uploading: false,
   locales: [],
   primary: 'en',
   forcePrefix: false,
   showMenu: true,
   active: []
 })
+
+// REFS
+
+const localeFileIpt = ref(null)
 
 // COMPUTED
 
@@ -368,6 +390,56 @@ async function install(code) {
     })
   }
   state.installing = null
+}
+
+function promptInstallFile() {
+  if (state.uploading) {
+    return
+  }
+  // -> Cleared before rather than only after, so that picking the same file twice still fires
+  //    `change` -- a failed upload the administrator wants to retry unchanged is the case
+  localeFileIpt.value.value = null
+  localeFileIpt.value.click()
+}
+
+/**
+ * Install a locale from one of the published package files, carried in by hand.
+ *
+ * For a wiki that cannot reach github, where Fetch Updates has nothing to read. The body is the file
+ * itself rather than a multipart form, and its NAME travels beside it in the query string because
+ * that is what says which locale the strings are: `fr-FR.json` is `fr-FR`. The server is what judges
+ * both -- `accept` on the input is a hint to the file picker and nothing more.
+ */
+async function installFromFile() {
+  const file = localeFileIpt.value?.files?.[0]
+  if (!file || state.uploading) {
+    return
+  }
+  state.uploading = true
+  try {
+    const resp = await API_CLIENT.post('locales/upload', {
+      searchParams: { fileName: file.name },
+      headers: { 'content-type': 'application/json' },
+      body: file
+    }).json()
+    // -> The API client does not throw on 400, so a refused file comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t('admin.locale.installFileSuccess', { code: resp.code })
+    })
+    await load()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.locale.installFileFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  localeFileIpt.value.value = null
+  state.uploading = false
 }
 
 // MOUNTED

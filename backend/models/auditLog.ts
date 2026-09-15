@@ -96,6 +96,7 @@ export const AUDIT_ACTIONS = {
     'flushIconCache',
     'fetchLocales',
     'installLocale',
+    'uploadLocale',
     'updateLocale',
     'updateMailConfig',
     'sendTestEmail',
