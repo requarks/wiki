@@ -18,6 +18,7 @@
 @use 'sass:color';
 @use 'palette' as *;
 @use 'theme' as *;
+@use 'bricks' as *;
 
 /*
   A flex child of the article column, filling whatever it is given rather than a height of its own.
@@ -97,6 +98,12 @@
     height: 32px;
     background-color: $primary;
     color: #fff;
+
+    /*
+      -> The right end steps out of the bar's blue into the editor orange, as brickwork; the whole of
+         how and why is in `css/_bricks.scss`, which the Markdown editor's preview toolbar shares.
+    */
+    @include brick-transition($primary);
 
     /*
       What a pressed button looks like here. The `primary` colour these used to take is the colour of

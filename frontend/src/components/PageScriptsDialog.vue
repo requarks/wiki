@@ -10,32 +10,50 @@
       </w-chip>
     </w-toolbar>
     <div style="min-height: 450px">
-      <!-- -> Square: this one spans the dialog edge to edge, so a radius would cut across its corners -->
+      <!--
+        -> Square: this one spans the dialog edge to edge, so a radius would cut across its corners.
+        -> Dark in either appearance: what is typed here is the page's own code rather than a wiki
+           setting, and a dark field is both what an author reads code in and what tells their code
+           apart from the dialog around it.
+      -->
       <util-code-editor
         ref="editor"
         v-model="state.content"
         :language="language"
         :min-height="450"
         :aria-label="languageLabel"
-        square />
+        square
+        dark />
     </div>
-    <w-card-actions class="card-actions">
+    <!--
+      Its own class rather than the shared `card-actions`: that one follows the app theme, and the
+      editor above is dark whichever theme is on -- a light bar under a dark pane reads as a different
+      component bolted to the bottom. Same treatment, and the same reasoning, as
+      `PageVersionSourceDialog`.
+    -->
+    <w-card-actions class="page-scripts-dialog-actions">
       <w-space />
+      <!-- -> `grey-5`, not the `grey-7` a light bar takes: #757575 on this bar is barely there -->
       <w-btn
         class="acrylic-btn"
         icon="la:times"
         :label="t(`common.actions.discard`)"
-        color="grey-7"
+        color="grey-5"
         padding="xs md"
         flat
         @click="$emit('close')" />
+      <!--
+        -> Apply, not Save: this writes the content into the page store and closes. Nothing reaches
+           the server until the page itself is saved, and a button saying otherwise invites an author
+           to close the editor believing their script is stored.
+      -->
       <w-btn
         icon="la:check"
-        :label="t(`common.actions.save`)"
+        :label="t(`common.actions.apply`)"
         unelevated
         color="primary"
         padding="xs md"
-        @click="saveAndClose" />
+        @click="applyAndClose" />
     </w-card-actions>
   </w-card>
 </template>
@@ -133,7 +151,7 @@ function persist() {
   EXPRESSION, and oxfmt reformats a semicolon-separated pair onto separate lines without the
   semicolon, which stops being one. It broke the build twice while this file was being edited.
 */
-function saveAndClose() {
+function applyAndClose() {
   persist()
   emit('close')
 }
@@ -152,4 +170,13 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss"></style>
+<style lang="scss">
+/* -> Colour only: WCardActions already lays the bar out */
+.page-scripts-dialog-actions {
+  background-color: $dark-3;
+  background-image: radial-gradient(at top left, $dark-3, $dark-5);
+  border-top: 1px solid #000;
+  box-shadow: 0 -1px 0 0 rgba(#fff, 0.06);
+  color: #fff;
+}
+</style>

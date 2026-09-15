@@ -320,7 +320,7 @@
             }}</w-tooltip>
           </w-btn>
 
-          <w-space />
+          <w-separator class="mx-1" vertical inset dark />
 
           <w-btn dense icon="mdi:undo-variant" padding="xs sm" flat @click="runUndo">
             <w-tooltip anchor="top middle" self="bottom middle">{{

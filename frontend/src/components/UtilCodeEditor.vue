@@ -11,7 +11,7 @@
   -->
   <div
     class="util-code-editor"
-    :class="{ 'util-code-editor--square': square }"
+    :class="{ 'util-code-editor--square': square, 'util-code-editor--dark': dark }"
     :style="{ height: `${minHeight}px`, '--util-code-editor-gutter': gutterWidth }">
     <pre class="util-code-editor-view" aria-hidden="true"><code v-html="highlighted" /></pre>
     <textarea
@@ -86,6 +86,19 @@ const props = defineProps({
    * edge instead. Named as `WChip` and `WAvatar` name the same idea.
    */
   square: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Draw dark whatever appearance the rest of the interface is in.
+   *
+   * For a field whose CONTENT is code rather than a setting that happens to be typed -- the page's
+   * own scripts and styles -- where a dark field is what the author is used to reading code in and
+   * what separates their code from the wiki's chrome around it. The editor otherwise follows
+   * `body--dark` like everything else, so this only ever adds the dark palette; there is no light
+   * counterpart, because nothing wants a light field on a dark page.
+   */
+  dark: {
     type: Boolean,
     default: false
   }
@@ -435,22 +448,26 @@ defineExpose({
   }
 }
 
-body.body--dark {
-  .util-code-editor {
-    border-color: rgb(255 255 255 / 0.3);
-    background-color: $dark-5;
-    background-image: linear-gradient(
-      to right,
-      $dark-4 0,
-      $dark-4 var(--util-code-editor-gutter),
-      rgb(255 255 255 / 0.12) var(--util-code-editor-gutter),
-      rgb(255 255 255 / 0.12) calc(var(--util-code-editor-gutter) + 1px),
-      transparent calc(var(--util-code-editor-gutter) + 1px)
-    );
+/*
+  The dark appearance, as a mixin because two different things ask for it: the interface being in
+  dark mode, and the `dark` prop asking for a dark field regardless. Everything is written relative
+  to the root element -- the layers and the gutter numbers are its descendants -- so that one body
+  serves both selectors below.
+*/
+@mixin util-code-editor-dark {
+  border-color: rgb(255 255 255 / 0.3);
+  background-color: $dark-5;
+  background-image: linear-gradient(
+    to right,
+    $dark-4 0,
+    $dark-4 var(--util-code-editor-gutter),
+    rgb(255 255 255 / 0.12) var(--util-code-editor-gutter),
+    rgb(255 255 255 / 0.12) calc(var(--util-code-editor-gutter) + 1px),
+    transparent calc(var(--util-code-editor-gutter) + 1px)
+  );
 
-    &:focus-within {
-      border-color: var(--color-primary);
-    }
+  &:focus-within {
+    border-color: var(--color-primary);
   }
 
   .util-code-editor-view {
@@ -465,54 +482,65 @@ body.body--dark {
     caret-color: #e6edf3;
   }
 
-  .util-code-editor {
-    .hljs-comment,
-    .hljs-quote {
-      color: #8b949e;
-    }
-    .hljs-keyword,
-    .hljs-selector-tag,
-    .hljs-literal,
-    .hljs-doctag,
-    .hljs-formula {
-      color: #ff7b72;
-    }
-    .hljs-string,
-    .hljs-regexp,
-    .hljs-addition,
-    .hljs-selector-attr,
-    .hljs-selector-pseudo {
-      color: #a5d6ff;
-    }
-    .hljs-number,
-    .hljs-variable,
-    .hljs-template-variable,
-    .hljs-symbol,
-    .hljs-bullet,
-    .hljs-attr,
-    .hljs-meta {
-      color: #79c0ff;
-    }
-    .hljs-title,
-    .hljs-section,
-    .hljs-selector-id,
-    .hljs-selector-class {
-      color: #d2a8ff;
-    }
-    .hljs-built_in,
-    .hljs-type,
-    .hljs-attribute,
-    .hljs-property,
-    .hljs-params {
-      color: #ffa657;
-    }
-    .hljs-name,
-    .hljs-tag {
-      color: #7ee787;
-    }
-    .hljs-deletion {
-      color: #ffa198;
-    }
+  .hljs-comment,
+  .hljs-quote {
+    color: #8b949e;
   }
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-doctag,
+  .hljs-formula {
+    color: #ff7b72;
+  }
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition,
+  .hljs-selector-attr,
+  .hljs-selector-pseudo {
+    color: #a5d6ff;
+  }
+  .hljs-number,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-attr,
+  .hljs-meta {
+    color: #79c0ff;
+  }
+  .hljs-title,
+  .hljs-section,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: #d2a8ff;
+  }
+  .hljs-built_in,
+  .hljs-type,
+  .hljs-attribute,
+  .hljs-property,
+  .hljs-params {
+    color: #ffa657;
+  }
+  .hljs-name,
+  .hljs-tag {
+    color: #7ee787;
+  }
+  .hljs-deletion {
+    color: #ffa198;
+  }
+}
+
+body.body--dark .util-code-editor {
+  @include util-code-editor-dark;
+}
+
+/*
+  -> Both classes, not just the modifier: the light palette above is `.util-code-editor .hljs-*`, two
+     classes, so a single-class modifier would tie with it and be settled by which rule the bundler
+     emitted last. Naming the root twice puts this one ahead on specificity rather than on luck.
+*/
+.util-code-editor.util-code-editor--dark {
+  @include util-code-editor-dark;
 }
 </style>

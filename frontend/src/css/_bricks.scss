@@ -1,0 +1,116 @@
+/*
+  The brick transition: a toolbar whose right end stops being its own colour and becomes the editor's
+  orange, through a staircase of brickwork rather than a straight edge.
+
+  Used by the Visual editor's toolbar and the Markdown editor's preview toolbar, which is the whole
+  reason this is a partial rather than a rule in either of them.
+*/
+
+/*
+  The Sass variables, loaded explicitly. `vite.config.js` injects `theme` and `palette` into every SFC
+  through `additionalData`, but that reaches only the files Vite itself hands to Sass -- a partial
+  pulled in by `@use` arrives without them. Same note as `_visual-editor.scss` and `_page-contents.scss`.
+*/
+@use 'sass:color';
+@use 'palette' as *;
+
+/**
+ * Lay the right end of a bar as brickwork stepping from `$cold` into `$hot`.
+ *
+ * Read the bar as five courses of brick. Counting in from the right edge, the last column has all
+ * five of its bricks knocked out, the one before it four, then three, then two, then one -- so the
+ * hot colour behind shows through as a staircase climbing to the right, the cold one thinning course
+ * by course until the corner is hot all the way up.
+ *
+ * Where the two meet, the brick on either side of the step is laid in a lighter shade of its own
+ * colour: one lighter cold and one lighter hot per course, each a single brick, so the seam reads as
+ * two diagonals of highlighted brick running with the step rather than as a hard edge. In every
+ * course the hot colour reaches column N and the cold one starts at N+1, which is what makes each of
+ * those runs a clean diagonal.
+ *
+ * Fifteen background layers rather than a clip path or an SVG, in three groups. The last five are the
+ * staircase: each one step, a hot rectangle anchored to the bottom-right corner, differing only in
+ * `background-size` -- one brick wide by five courses tall, two by four, three by three, four by two,
+ * five by one -- overlapping into the shape rather than tiling it, which is why they need no
+ * coordinates of their own. The first ten are the seam, one brick each, and those DO need
+ * coordinates: they are placed by offset from the right and top edges, a brick further along both per
+ * course. Earlier layers paint over later ones, so the seam is listed first.
+ *
+ * Courses are percentages, so there are five of them whatever the bar's height turns out to be. A
+ * brick's WIDTH is not a share of anything, so it comes from `$height` -- and a brick is square, which
+ * makes the staircase exactly as wide as the bar is tall, its diagonal a true 45 degrees, and the
+ * seam's offsets one and the same measure in both directions.
+ *
+ * `$deep-orange-9` is the default hot colour because that is what the actions rail turns while an
+ * editor is open (`PageActionsCol`): the rail and the bar are on screen together, at opposite edges of
+ * the same editor, so a second orange between them would read as a mistake rather than as a pair.
+ *
+ * The cold seam is emitted as a custom property, not baked into the layers, so that a bar whose own
+ * colour changes with the theme can restate just that one line in its dark branch instead of the
+ * whole stack. `$cold` is still required: it is what makes the default right for the common case, and
+ * an unset `var()` here would take the entire `background-image` down with it.
+ *
+ * @param {Color} $cold The bar's own background colour, which the brickwork steps out of.
+ * @param {Color} $hot The colour it steps into.
+ * @param {Length} $height The bar's height. Five courses are cut from it, and a brick is one square.
+ */
+@mixin brick-transition($cold, $hot: $deep-orange-9, $height: 32px) {
+  --brick: calc(#{$height} / 5);
+  --seam-cold: #{color.adjust($cold, $lightness: 10%)};
+  --seam-hot: #{color.adjust($hot, $lightness: 10%)};
+
+  background-image:
+    /* -> The seam, cold side: the last cold brick of each course */
+    linear-gradient(var(--seam-cold), var(--seam-cold)),
+    linear-gradient(var(--seam-cold), var(--seam-cold)),
+    linear-gradient(var(--seam-cold), var(--seam-cold)),
+    linear-gradient(var(--seam-cold), var(--seam-cold)),
+    linear-gradient(var(--seam-cold), var(--seam-cold)),
+    /* -> The seam, hot side: the first hot brick of each course */
+    linear-gradient(var(--seam-hot), var(--seam-hot)),
+    linear-gradient(var(--seam-hot), var(--seam-hot)),
+    linear-gradient(var(--seam-hot), var(--seam-hot)),
+    linear-gradient(var(--seam-hot), var(--seam-hot)),
+    linear-gradient(var(--seam-hot), var(--seam-hot)),
+    /* -> The staircase */
+    linear-gradient($hot, $hot),
+    linear-gradient($hot, $hot),
+    linear-gradient($hot, $hot),
+    linear-gradient($hot, $hot),
+    linear-gradient($hot, $hot);
+  background-repeat: no-repeat;
+  background-position:
+    /* -> Cold side: course 1 sits one brick in from the right, and each course one further */
+    right calc(var(--brick) * 1) top calc(var(--brick) * 0),
+    right calc(var(--brick) * 2) top calc(var(--brick) * 1),
+    right calc(var(--brick) * 3) top calc(var(--brick) * 2),
+    right calc(var(--brick) * 4) top calc(var(--brick) * 3),
+    right calc(var(--brick) * 5) top calc(var(--brick) * 4),
+    /* -> Hot side: the same diagonal, one column further right */
+    right calc(var(--brick) * 0) top calc(var(--brick) * 0),
+    right calc(var(--brick) * 1) top calc(var(--brick) * 1),
+    right calc(var(--brick) * 2) top calc(var(--brick) * 2),
+    right calc(var(--brick) * 3) top calc(var(--brick) * 3),
+    right calc(var(--brick) * 4) top calc(var(--brick) * 4),
+    right bottom,
+    right bottom,
+    right bottom,
+    right bottom,
+    right bottom;
+  background-size:
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) var(--brick),
+    var(--brick) 100%,
+    calc(var(--brick) * 2) 80%,
+    calc(var(--brick) * 3) 60%,
+    calc(var(--brick) * 4) 40%,
+    calc(var(--brick) * 5) 20%;
+}

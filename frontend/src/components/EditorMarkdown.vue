@@ -284,16 +284,16 @@
       <transition name="editor-markdown-preview">
         <div class="editor-markdown-preview" v-if="state.previewShown">
           <div class="editor-markdown-preview-toolbar">
-            <strong
+            <strong class="editor-markdown-preview-label"
               ><em>{{ t('editor.renderPreview') }}</em></strong
             >
-            <w-separator class="ml-4 mr-2" vertical inset />
+            <w-separator class="ml-4 mr-2" vertical inset dark />
             <w-btn
               icon="mdi:arrow-vertical-lock"
               padding="xs sm"
               flat
               @click="state.previewScrollSync = !state.previewScrollSync"
-              :color="state.previewScrollSync ? `primary` : null">
+              :color="state.previewScrollSync ? `secondary` : null">
               <w-tooltip anchor="top middle" self="bottom middle">{{
                 t('editor.toggleScrollSync')
               }}</w-tooltip>
@@ -1920,6 +1920,7 @@ function notImplemented() {
 
 <style lang="scss">
 @use 'sass:color';
+@use '@/css/_bricks.scss' as *;
 
 $editor-height: calc(100vh - 64px - 96px);
 $editor-preview-height: calc(100vh - 64px - 96px - 32px);
@@ -1998,20 +1999,37 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     &-leave-to {
       max-width: 0;
     }
+    /*
+      Dark in either appearance, where this used to follow the theme. Two reasons, and the second is
+      the one that settled it: the bar labels the render rather than being part of it, so a dark strip
+      reads as a caption on the pane instead of as more page; and the brickwork at its right end needs
+      a colour with room above it -- `$grey-3` is 93% lightness, so a seam brick a shade lighter than
+      it is white, which is a hole rather than a highlight.
+    */
     &-toolbar {
-      color: $grey-8;
       height: 32px;
       display: flex;
       align-items: center;
       padding: 0 1rem;
+      background-color: $dark-2;
+      color: $grey-6;
 
-      @at-root .body--light & {
-        background-color: $grey-3;
-      }
-      @at-root .body--dark & {
-        background-color: $dark-2;
-        color: $grey-6;
-      }
+      /*
+        -> The right end steps out of the bar's grey into the editor orange, as brickwork -- the same
+           treatment the Visual editor's toolbar gets, and for the same reason: the actions rail is
+           orange while an editor is open, and this bar runs up to it. `css/_bricks.scss` has the
+           whole of how and why.
+      */
+      @include brick-transition($dark-2);
+    }
+
+    /*
+      -> A shade lighter than the bar's own text colour, which the two icon buttons beside it still
+         take: this is the one piece of writing on the strip and what names the pane, so it carries
+         slightly more of the reader's attention than the controls do.
+    */
+    &-label {
+      color: $grey-5;
     }
     &-content {
       height: $editor-preview-height;
