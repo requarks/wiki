@@ -780,6 +780,7 @@ function editBlockContent(line, name) {
       block: definition,
       params: blockValues(found, definition),
       source: content.source,
+      lang: content.language,
       // -> Where it goes back, and in what: the editor is handed text and hands text back, and the
       //    fence it lives in is this side's business
       replace: content
@@ -794,6 +795,11 @@ function editBlockContent(line, name) {
  * edit and one undo, and the opening line of the block is not touched at all.
  */
 function replaceBlockContentClb({ source, replace }) {
+  // -> The Visual editor's own answer carries no range; only one editor is ever mounted, so this is
+  //    belt and braces rather than a case that happens
+  if (!replace) {
+    return
+  }
   const model = editor.getModel()
   editor.executeEdits('blockContent', [
     {

@@ -883,6 +883,143 @@ class AbbreviationView {
   }
 }
 
+/**
+ * A definition list, with a bar of its own and every row saying which half of the pair it is.
+ *
+ * The one construct in this editor with nothing to look at. A `dl` is terms and definitions
+ * alternating, both of them empty when the list is made, and the page styles alone say nothing: an
+ * author who pressed the toolbar button got a blank patch, could not tell which of the two invisible
+ * rows the caret was in, and had no way to add a third. So the rows are labelled in a gutter (see
+ * `DefinitionRowView`), an empty one shows what belongs in it, and the bar offers the two things
+ * there are to do to a list that already exists.
+ *
+ * The bar is chrome, so the `dl` the rows live in is a child of it rather than the node's own DOM.
+ */
+class DefinitionListView {
+  constructor(node, view, getPos, context) {
+    this.node = node
+    this.view = view
+    this.getPos = getPos
+    this.context = context
+
+    this.dom = document.createElement('div')
+    this.dom.className = 'visual-deflist'
+
+    this.header = blockHeader({
+      name: context.t('editor.visual.deflist.title'),
+      attrs: null,
+      actions: [
+        {
+          label: context.t('editor.visual.deflist.addTerm'),
+          title: context.t('editor.visual.deflist.addTermHint'),
+          run: () => this.addRow(schema.nodes.definition_term)
+        },
+        {
+          label: context.t('editor.visual.deflist.addDefinition'),
+          title: context.t('editor.visual.deflist.addDefinitionHint'),
+          run: () => this.addRow(schema.nodes.definition_description)
+        },
+        {
+          label: context.t('editor.visual.block.remove'),
+          title: context.t('editor.visual.deflist.removeHint'),
+          run: () => this.context.removeNode(this.getPos())
+        }
+      ]
+    })
+
+    this.contentDOM = document.createElement('dl')
+    this.contentDOM.className = 'visual-deflist-rows'
+    this.dom.append(this.header, this.contentDOM)
+  }
+
+  /**
+   * A new row, and the caret in it.
+   *
+   * After the row the author is in rather than at the end of the list: a list long enough to need
+   * another term in the middle of it is exactly the list where being sent to the bottom is wrong. The
+   * end is the fallback, for a press with the selection somewhere else entirely.
+   */
+  addRow(type) {
+    const pos = this.getPos()
+    if (pos === undefined) {
+      return
+    }
+    const row = type.createAndFill()
+    if (!row) {
+      return
+    }
+    let at = pos + this.node.nodeSize - 1
+    const { from } = this.view.state.selection
+    this.node.forEach((child, offset) => {
+      const start = pos + 1 + offset
+      if (from >= start && from <= start + child.nodeSize) {
+        at = start + child.nodeSize
+      }
+    })
+    const tr = this.view.state.tr.insert(at, row)
+    tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1)))
+    this.view.dispatch(tr.scrollIntoView())
+    this.view.focus()
+  }
+
+  update(node) {
+    if (node.type !== this.node.type) {
+      return false
+    }
+    this.node = node
+    return true
+  }
+
+  ignoreMutation(mutation) {
+    return this.header.contains(mutation.target)
+  }
+
+  stopEvent(event) {
+    return this.header.contains(event.target)
+  }
+}
+
+/**
+ * One row of a definition list — the `dt` or the `dd` itself, told what it is.
+ *
+ * The element is its own content: there is nowhere to put a label INSIDE a node whose children are
+ * the document's own text without ProseMirror reading it as something an author typed. So the label
+ * and the placeholder are data attributes that `_visual-editor.scss` draws as pseudo-elements, and
+ * the only thing this view does is keep them, and the empty flag, in step with the node.
+ */
+class DefinitionRowView {
+  constructor(node, { tag, label, placeholder, isEmpty }) {
+    this.node = node
+    this.isEmpty = isEmpty
+
+    this.dom = document.createElement(tag)
+    // -> Its own content: the row is a textblock, and a wrapper would put a node between the `dl` and
+    //    the rows that the page's own stylesheet does not have
+    this.contentDOM = this.dom
+    this.dom.dataset.label = label
+    this.dom.dataset.placeholder = placeholder
+    this.apply(node)
+  }
+
+  apply(node) {
+    this.dom.classList.toggle('is-empty', this.isEmpty(node))
+  }
+
+  update(node) {
+    if (node.type !== this.node.type) {
+      return false
+    }
+    this.node = node
+    this.apply(node)
+    return true
+  }
+
+  /** The class and the two data attributes are this view's own; the text inside them is not. */
+  ignoreMutation(mutation) {
+    return mutation.type === 'attributes'
+  }
+}
+
 /** A footnote's body, labelled with the reference that points at it. */
 class FootnoteDefinitionView {
   constructor(node) {
@@ -1031,6 +1168,22 @@ export function createNodeViews(context) {
     },
     code_block: (node, view, getPos) => new CodeBlockView(node, view, getPos, context),
     alert: (node, view, getPos) => new AlertView(node, view, getPos, context),
+    definition_list: (node, view, getPos) => new DefinitionListView(node, view, getPos, context),
+    definition_term: (node) =>
+      new DefinitionRowView(node, {
+        tag: 'dt',
+        label: context.t('editor.visual.deflist.term'),
+        placeholder: context.t('editor.visual.deflist.termPlaceholder'),
+        isEmpty: (row) => row.content.size === 0
+      }),
+    definition_description: (node) =>
+      new DefinitionRowView(node, {
+        tag: 'dd',
+        label: context.t('editor.visual.deflist.definition'),
+        placeholder: context.t('editor.visual.deflist.definitionPlaceholder'),
+        // -> A definition holds blocks, so an untouched one is a paragraph with nothing in it
+        isEmpty: (row) => row.childCount === 1 && row.firstChild.content.size === 0
+      }),
     abbreviation: (node, view, getPos) => new AbbreviationView(node, view, getPos, context),
     footnote_definition: (node) => new FootnoteDefinitionView(node),
     raw_block: (node, view, getPos) => new RawBlockView(node, view, getPos, context),

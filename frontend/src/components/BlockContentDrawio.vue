@@ -65,6 +65,19 @@ const props = defineProps({
   params: {
     type: Object,
     default: () => ({})
+  },
+  /*
+    The other two halves of the editor contract, declared so they stay off this component's root
+    element rather than because a canvas has any use for them: a drawing is drawn, not highlighted,
+    and draw.io is the one editor that already knows what it is editing.
+  */
+  block: {
+    type: Object,
+    default: () => ({})
+  },
+  lang: {
+    type: String,
+    default: ''
   }
 })
 

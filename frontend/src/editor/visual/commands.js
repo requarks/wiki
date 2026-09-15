@@ -236,6 +236,57 @@ export function insertNode(type, attrs = {}, content = null) {
   }
 }
 
+/**
+ * An empty definition list — one term and its definition — with the caret in the term.
+ *
+ * Built as nodes rather than parsed from markdown, unlike most of what the toolbar inserts: an empty
+ * definition list is not something markdown can express, since `: ` on a line with nothing above it
+ * is a paragraph that starts with a colon.
+ *
+ * `insertNode` is deliberately not used, and that is the reason this exists. It inserts through
+ * `replaceSelectionWith`, which for this node leaves the caret in the paragraph the button was
+ * pressed in — so the first word an author typed went above the list instead of into it, which is
+ * most of what made the list feel broken. Here the position is worked out first and the caret put
+ * where the typing is meant to start.
+ */
+export function insertDefinitionList() {
+  return (state, dispatch) => {
+    const list = schema.nodes.definition_list.createAndFill(null, [
+      schema.nodes.definition_term.createAndFill(),
+      schema.nodes.definition_description.createAndFill()
+    ])
+    if (!list) {
+      return false
+    }
+    if (dispatch) {
+      const { $from } = state.selection
+      /*
+        Where a block construct goes, by the same rule `insertMarkdown` follows: in place of the
+        textblock the caret is in when that block is empty -- inserting a list into the empty
+        paragraph at the end of a page should not strand that paragraph above it -- and after that
+        block otherwise. A selection with no textblock around it at all (a node selected whole) puts
+        the list at its own position.
+      */
+      const replacing =
+        $from.depth > 0 && $from.parent.isTextblock && $from.parent.content.size === 0
+      let at = $from.pos
+      if ($from.depth > 0) {
+        at = replacing ? $from.before() : $from.after()
+      }
+      const tr = state.tr
+      if (replacing) {
+        tr.replaceWith(at, $from.after(), list)
+      } else {
+        tr.insert(at, list)
+      }
+      // -> Two positions in: past the list's own opening token, then past the term's
+      tr.setSelection(TextSelection.near(tr.doc.resolve(at + 2)))
+      dispatch(tr.scrollIntoView())
+    }
+    return true
+  }
+}
+
 /** A table of `rows` × `cols`, its first row a header. */
 export function insertTable(rows = 3, cols = 3) {
   return (state, dispatch) => {
@@ -250,6 +301,94 @@ export function insertTable(rows = 3, cols = 3) {
     }
     return insertNode(schema.nodes.table, null, body)(state, dispatch)
   }
+}
+
+/**
+ * Whether a row of a definition list has never been typed into.
+ *
+ * A different question of each kind: a term holds inline content, while a definition holds blocks, so
+ * an untouched definition is a paragraph with nothing in it rather than nothing at all.
+ */
+function rowIsEmpty(row) {
+  return row.type === schema.nodes.definition_term
+    ? row.content.size === 0
+    : row.childCount === 1 && row.firstChild.content.size === 0
+}
+
+/**
+ * Enter inside a definition list: term, definition, term, definition — and out at the end.
+ *
+ * The gesture that makes a definition list writable at all. A `dl` is two alternating node types with
+ * no visible difference between them until they hold text, so the default `splitBlock` — which makes
+ * another node of the SAME type — left an author typing a second term where they meant to type its
+ * definition, with no indication that anything was wrong.
+ *
+ * So Enter alternates:
+ *
+ *   - in a term, the definition below it — the caret into the empty one already there, which is the
+ *     shape the toolbar's own button produces, or a new one where there is none;
+ *   - in a definition, the next term, on the same rule;
+ *   - in an EMPTY row that is the last in the list, out of the list entirely, as pressing Enter twice
+ *     leaves any other list.
+ *
+ * An empty row in the MIDDLE is left to the first two rules rather than splitting the list in half:
+ * markdown has no way to write two definition lists in a row without something between them anyway.
+ *
+ * A definition that runs to more than one paragraph is not reachable this way, which is deliberate:
+ * a definition list is one line per definition almost everywhere it is used, and Shift-Enter still
+ * puts a line break in a long one.
+ */
+export function splitDefinitionItem(state, dispatch) {
+  const { $from, empty } = state.selection
+  if (!empty) {
+    return false
+  }
+
+  let depth = $from.depth
+  while (
+    depth > 0 &&
+    $from.node(depth).type !== schema.nodes.definition_term &&
+    $from.node(depth).type !== schema.nodes.definition_description
+  ) {
+    depth -= 1
+  }
+  if (depth === 0 || $from.node(depth - 1).type !== schema.nodes.definition_list) {
+    return false
+  }
+
+  const row = $from.node(depth)
+  const list = $from.node(depth - 1)
+  const index = $from.index(depth - 1)
+  const isLast = index === list.childCount - 1
+  const wanted =
+    row.type === schema.nodes.definition_term
+      ? schema.nodes.definition_description
+      : schema.nodes.definition_term
+  const next = isLast ? null : list.child(index + 1)
+
+  if (!dispatch) {
+    return true
+  }
+
+  const tr = state.tr
+  const at = $from.after(depth)
+  if (next && next.type === wanted && rowIsEmpty(next)) {
+    // -> Into the row that is already there, rather than another empty one beside it
+    tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1)))
+  } else if (isLast && rowIsEmpty(row)) {
+    /*
+      Out of the list. The whole list goes when the empty row was all of it -- a `dl` with no rows is
+      not a document the schema allows, and it is not something markdown can write either.
+    */
+    const from = list.childCount === 1 ? $from.before(depth - 1) : $from.before(depth)
+    tr.replaceWith(from, $from.after(depth - 1), schema.nodes.paragraph.createAndFill())
+    tr.setSelection(TextSelection.near(tr.doc.resolve(from + 1)))
+  } else {
+    tr.insert(at, wanted.createAndFill())
+    tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1)))
+  }
+  dispatch(tr.scrollIntoView())
+  return true
 }
 
 /** Whether a mark is on the selection, or would be on what is typed next. */
@@ -309,7 +448,12 @@ export function buildKeymap({ collab = false } = {}) {
     'Mod-Shift-.': wrapIn(schema.nodes.blockquote),
     'Mod-Shift-Enter': toggleTaskChecked,
 
-    Enter: chainCommands(splitListItem(schema.nodes.list_item), baseKeymap.Enter),
+    // -> Definition lists first: their rows alternate, which neither of the other two knows about
+    Enter: chainCommands(
+      splitDefinitionItem,
+      splitListItem(schema.nodes.list_item),
+      baseKeymap.Enter
+    ),
     Tab: chainCommands(goToNextCell(1), sinkListItem(schema.nodes.list_item)),
     'Shift-Tab': chainCommands(goToNextCell(-1), liftListItem(schema.nodes.list_item)),
 

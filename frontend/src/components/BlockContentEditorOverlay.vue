@@ -40,6 +40,8 @@
           v-if="editorComponent"
           v-model="state.source"
           :params="params"
+          :block="block"
+          :lang="lang"
           @save="apply" />
         <div v-else class="p-6">
           <w-card class="bg-negative rounded text-white" flat>
@@ -81,6 +83,11 @@ import LoadingGeneric from './LoadingGeneric.vue'
  *   - a `modelValue` of the block's body as text, and `update:modelValue` when it changes;
  *   - a `params` object of the block's own parameters, for an editor that is configured by one — the
  *     server it talks to, say. Which of them mean anything is the editor's business alone;
+ *   - a `block` object, the block as the API describes it, for an editor that has to name the element
+ *     it is editing the body of — which is how the code editor draws its preview;
+ *   - a `lang` string, the info string of the fence the body came out of, for an editor that
+ *     highlights it. Both editors declare all four whether or not they read them, so the contract is
+ *     one shape rather than four combinations of it;
  *   - optionally `@save`, for an editor with a save gesture of its own, which applies and closes.
  *     An editor without one is applied by the button up here, which is always there either way.
  *
@@ -96,6 +103,10 @@ import LoadingGeneric from './LoadingGeneric.vue'
  * whole application, and it should not be in the bundle of a wiki that has never drawn one.
  */
 const EDITORS = {
+  code: defineAsyncComponent({
+    loader: () => import('./BlockContentCode.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   drawio: defineAsyncComponent({
     loader: () => import('./BlockContentDrawio.vue'),
     loadingComponent: LoadingGeneric
@@ -120,6 +131,7 @@ const { t } = useI18n()
 const editorKey = siteStore.overlayOpts?.editor ?? ''
 const block = siteStore.overlayOpts?.block ?? {}
 const params = siteStore.overlayOpts?.params ?? {}
+const lang = siteStore.overlayOpts?.lang ?? ''
 const replace = siteStore.overlayOpts?.replace ?? null
 
 const state = reactive({
@@ -132,10 +144,15 @@ const editorComponent = computed(() => EDITORS[editorKey] ?? null)
 
 // METHODS
 
+/*
+  Always emitted, `replace` or no `replace`. It is the MARKDOWN editor that needs one -- a line range
+  to write the body back over -- and the Visual editor deliberately sends none, because a block there
+  is a node and it kept the position of the one it opened. Guarding the emit on it therefore meant
+  Apply did nothing at all on that side: the only block with a body editor was draw.io, where the
+  drawing came back and was then dropped on the floor.
+*/
 function apply() {
-  if (replace) {
-    EVENT_BUS.emit('replaceBlockContent', { source: state.source, replace })
-  }
+  EVENT_BUS.emit('replaceBlockContent', { source: state.source, replace })
   close()
 }
 

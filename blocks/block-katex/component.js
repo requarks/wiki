@@ -55,6 +55,15 @@ export class BlockKatexElement extends LitElement {
     template: `\`\`\`latex
 x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
 \`\`\``,
+    /*
+      The body is a source an author types, so it is edited as one: `BlockContentCode` puts the TeX
+      on the left and this block, drawn from what is being typed, on the right. The key is resolved
+      to a component by `BlockContentEditorOverlay`.
+
+      It is also the ONLY way to edit this block in the Visual editor: a block whose body is a
+      single fence is parsed as an atom there, so there is no caret to put inside it.
+    */
+    contentEditor: 'code',
     props: [
       {
         name: 'caption',

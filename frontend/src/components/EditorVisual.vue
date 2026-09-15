@@ -394,6 +394,7 @@ import 'prosemirror-gapcursor/style/gapcursor.css'
 import { createVisualEditor } from '@/editor/visual'
 import { readFencedBody, writeFencedBody } from '@/editor/visual/blockBody'
 import {
+  insertDefinitionList as insertDefinitionListCommand,
   insertNode,
   insertTable as insertTableCommand,
   markActive,
@@ -889,12 +890,11 @@ function insertIcon(reference) {
  * A definition list with one empty pair, ready to be typed into.
  *
  * The same shape the Markdown editor's own button produces, which is a term and a definition rather
- * than a bare `dl` — an empty list is not something markdown can even express.
+ * than a bare `dl` — an empty list is not something markdown can even express. Where it goes and
+ * where the caret lands afterwards are the command's business; see it for why that matters.
  */
 function insertDefinitionList() {
-  const term = schema.nodes.definition_term.createAndFill()
-  const description = schema.nodes.definition_description.createAndFill()
-  run(insertNode(schema.nodes.definition_list, null, [term, description]))
+  run(insertDefinitionListCommand())
 }
 
 /** The next free footnote label, counting the ones the document already carries. */
@@ -1045,6 +1045,7 @@ function editBlockContent(node, pos) {
       block: definition,
       params: { ...node.attrs.blockAttrs },
       source: body.source,
+      lang: body.lang,
       // -> The Markdown editor puts a line range here; nothing on this side needs one, since the
       //    block is a node and `editingBlockPos` is where it is
       replace: null
@@ -1052,19 +1053,26 @@ function editBlockContent(node, pos) {
   })
 }
 
-/** A block body an editor produced, back onto the node it came from. */
+/**
+ * A block body an editor produced, back onto the node it came from.
+ *
+ * The position is taken into a local BEFORE the field is cleared, and the field is cleared whichever
+ * way this returns: writing it back through `editingBlockPos` wrote it back through `null`, which is
+ * position -1 to ProseMirror and an exception rather than an edit.
+ */
 function replaceBlockContentClb({ source }) {
-  if (editingBlockPos === null || !editor) {
+  const pos = editingBlockPos
+  editingBlockPos = null
+  if (pos === null || !editor) {
     return
   }
   const view = editor.view
-  const node = view.state.doc.nodeAt(editingBlockPos)
-  editingBlockPos = null
+  const node = view.state.doc.nodeAt(pos)
   if (!node || node.type !== schema.nodes.block_component) {
     return
   }
   view.dispatch(
-    view.state.tr.setNodeMarkup(editingBlockPos, undefined, {
+    view.state.tr.setNodeMarkup(pos, undefined, {
       ...node.attrs,
       body: writeFencedBody(node.attrs.body, source)
     })

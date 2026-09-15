@@ -712,6 +712,80 @@
   }
 }
 
+/*
+  A definition list.
+
+  The page draws a `dl` as a term in bold with its definition indented under it, which is all the
+  distinction a READER needs and none of what an author does: both rows are empty when the list is
+  made, and an empty `dt` and an empty `dd` are the same nothing. So the editor adds a gutter that
+  names each row, and shows in the row itself what belongs there while it is empty.
+
+  Everything here is scoped to `.visual-deflist`, the wrapper the node view puts round the list, so
+  the page's own definition lists are untouched -- and the geometry inside is still `_page-contents`'.
+*/
+.visual-deflist {
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  margin: 0 0 1.15em;
+  overflow: hidden;
+
+  .body--dark & {
+    border-color: $grey-8;
+  }
+}
+
+.visual-deflist-rows {
+  /* -> The left padding is the gutter the labels sit in; the rows themselves start after it */
+  margin: 0;
+  padding: 0.6rem 0.75rem 0.7rem 7rem;
+}
+
+.visual-deflist dt,
+.visual-deflist dd {
+  position: relative;
+
+  /*
+    The row's name, in the gutter. Against the row rather than against the list, so a definition's
+    label follows the indent of the definition it names -- the two read as a pair that way.
+  */
+  &::before {
+    content: attr(data-label);
+    position: absolute;
+    right: calc(100% + 0.6rem);
+    top: 0.15em;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: $grey-6;
+    user-select: none;
+
+    .body--dark & {
+      color: $grey-6;
+    }
+  }
+
+  /*
+    What goes in a row nobody has typed in yet. `pointer-events: none` so that clicking the words
+    still puts the caret in the row they are standing in for, rather than at the end of the line.
+  */
+  &.is-empty::after {
+    content: attr(data-placeholder);
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-weight: 400;
+    font-style: italic;
+    color: $grey-5;
+    pointer-events: none;
+
+    .body--dark & {
+      color: $grey-7;
+    }
+  }
+}
+
 /* A footnote's body, labelled with the reference that points at it. */
 .visual-footnote {
   display: flex;

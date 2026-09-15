@@ -11,7 +11,7 @@
             <w-list padding>
               <w-item clickable @click="createHomePage(`visual`)" v-if="siteStore.editors.visual">
                 <blueprint-icon icon="google-presentation" />
-                <w-item-section class="pr-2">Using the Visual Editor</w-item-section>
+                <w-item-section class="pr-2">{{ t(`welcome.createHomeVisual`) }}</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
               </w-item>
               <w-item
@@ -19,7 +19,7 @@
                 @click="createHomePage(`markdown`)"
                 v-if="siteStore.editors.markdown">
                 <blueprint-icon icon="markdown" />
-                <w-item-section class="pr-2">Using the Markdown Editor</w-item-section>
+                <w-item-section class="pr-2">{{ t(`welcome.createHomeMarkdown`) }}</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
               </w-item>
               <w-item
@@ -27,7 +27,7 @@
                 @click="createHomePage(`asciidoc`)"
                 v-if="flagsStore.experimental && siteStore.editors.asciidoc">
                 <blueprint-icon icon="asciidoc" />
-                <w-item-section class="pr-2">Using the AsciiDoc Editor</w-item-section>
+                <w-item-section class="pr-2">{{ t(`welcome.createHomeAsciidoc`) }}</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
               </w-item>
             </w-list>
@@ -107,7 +107,7 @@ async function createHomePage(editor) {
     siteStore.overlay = 'Welcome'
     notify({
       type: 'negative',
-      message: 'Failed to open the editor.',
+      message: t('welcome.createHomeFailed'),
       caption: err.message
     })
   }
@@ -124,9 +124,22 @@ function loadAdmin() {
 .welcome {
   background: #fff radial-gradient(ellipse, #fff, #ddd);
   color: $grey-9;
-  height: 100vh;
+  // -> The panel this is slotted into is what owns the shape: WDialog rounds it and clips to that
+  //    radius, and hands the radius down to its child with `border-radius: inherit`. A radius of its
+  //    own here was the larger of the two, so the panel's own top corners -- the dark first 10px of
+  //    the gradient `.main-overlay` paints on it -- showed in the gap between the two curves.
+  height: 100%;
   border: 1px solid #eee;
-  border-radius: 25px !important;
+
+  // -> This sheet paints over the dialog surface underneath it, so it carries its own colours in
+  //    both themes rather than letting `.main-overlay`'s show through -- which is why it was white
+  //    on a dark wiki, with the menu it opens correctly dark and the two disagreeing. Dark mirrors
+  //    light a step at a time: the sheet, the vignette at its edges, the rule round it, the text.
+  @at-root .body--dark & {
+    background: $dark-5 radial-gradient(ellipse, $dark-4, $dark-6);
+    color: $grey-4;
+    border-color: $dark-2;
+  }
 
   &-bg {
     position: absolute;
@@ -138,6 +151,13 @@ function loadAdmin() {
     border-radius: 50%;
     filter: blur(100px);
     transform: translate(-50%, -55%);
+
+    // -> The lower half of the blob is the sheet's own colour, so what shows is the glow above it
+    //    and not a pale smear across the middle. $blue-8 rather than the lighter $blue-5: the same
+    //    glow needs less lightness to read against near-black than it does against white.
+    @at-root .body--dark & {
+      background: linear-gradient(0, $dark-5 50%, $blue-8 50%);
+    }
   }
 
   &-content {
@@ -179,6 +199,10 @@ function loadAdmin() {
     color: $blue-7;
     line-height: 1.2rem;
     margin-top: 1rem;
+
+    @at-root .body--dark & {
+      color: $blue-4;
+    }
   }
 
   &-actions {
