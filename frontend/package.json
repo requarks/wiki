@@ -14,7 +14,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "icons:check": "node scripts/generate-icons.mjs --check",
     "emoji": "node scripts/generate-emoji.mjs",
-    "emoji:check": "node scripts/generate-emoji.mjs --check"
+    "emoji:check": "node scripts/generate-emoji.mjs --check",
+    "visual:check": "node scripts/check-visual-roundtrip.mjs"
   },
   "dependencies": {
     "@simplewebauthn/browser": "13.3.0",
@@ -49,6 +50,18 @@
     "mitt": "3.0.1",
     "monaco-editor": "0.56.0",
     "pinia": "4.0.2",
+    "prosemirror-commands": "1.7.2",
+    "prosemirror-gapcursor": "1.4.1",
+    "prosemirror-history": "1.5.0",
+    "prosemirror-inputrules": "1.5.1",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-markdown": "1.13.7",
+    "prosemirror-model": "1.25.11",
+    "prosemirror-schema-list": "1.5.1",
+    "prosemirror-state": "1.4.4",
+    "prosemirror-tables": "1.8.5",
+    "prosemirror-transform": "1.12.1",
+    "prosemirror-view": "1.42.3",
     "semver": "7.8.5",
     "slugify": "1.6.9",
     "sortablejs": "1.15.7",
@@ -63,6 +76,7 @@
     "vue3-otp-input": "0.5.40",
     "vuedraggable": "4.1.0",
     "y-monaco": "0.1.6",
+    "y-prosemirror": "1.3.7",
     "y-protocols": "1.0.7",
     "y-websocket": "3.0.0",
     "yjs": "13.6.31",
@@ -83,6 +97,9 @@
   },
   "overrides": {
     "markdown-it-mdc": {
+      "markdown-it": "$markdown-it"
+    },
+    "prosemirror-markdown": {
       "markdown-it": "$markdown-it"
     }
   },

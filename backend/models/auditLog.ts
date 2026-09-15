@@ -28,6 +28,7 @@ export const AUDIT_ACTIONS = {
   page: [
     'createPage',
     'updatePage',
+    'convertPage',
     'movePage',
     'deletePage',
     'renderPage',

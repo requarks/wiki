@@ -17,9 +17,42 @@ import type { StoragePageContent, StoragePageRef } from './storage.ts'
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
   markdown: 'markdown',
+  visual: 'markdown',
   asciidoc: 'asciidoc',
-  wysiwyg: 'html',
   redirect: 'redirect'
+}
+
+/**
+ * The editor a page of a given content type is opened with when nothing says which.
+ *
+ * `markdown` and `visual` both produce markdown — that is what lets a page be converted between them
+ * without touching a byte of what it says — so the content type alone no longer identifies an editor.
+ * A file being imported carries its source and not the editor somebody wrote it in, and this is the
+ * answer for that case.
+ */
+const DEFAULT_EDITOR_FOR_CONTENT_TYPE: Record<string, string> = {
+  markdown: 'markdown',
+  asciidoc: 'asciidoc',
+  redirect: 'redirect'
+}
+
+/**
+ * The editors that can open a page written by `editor`, itself excluded.
+ *
+ * Two editors are interchangeable when they produce the same content type, and only then: converting
+ * is a change of how a page is EDITED, never of what it says, so there is no translation step and
+ * nothing to lose. Markdown and Visual are that pair; asciidoc and redirect have nobody to swap with,
+ * which is the honest answer rather than an offer to rewrite a page into a format it was not written
+ * in.
+ */
+export function interchangeableEditors(editor: string): string[] {
+  const contentType = EDITOR_CONTENT_TYPES[editor]
+  if (!contentType) {
+    return []
+  }
+  return Object.entries(EDITOR_CONTENT_TYPES)
+    .filter(([name, type]) => type === contentType && name !== editor)
+    .map(([name]) => name)
 }
 
 /**
@@ -58,7 +91,7 @@ export function pageEditorForExtension(ext: string): string | null {
   if (!contentType) {
     return null
   }
-  return Object.entries(EDITOR_CONTENT_TYPES).find(([, ct]) => ct === contentType)?.[0] ?? null
+  return DEFAULT_EDITOR_FOR_CONTENT_TYPE[contentType] ?? null
 }
 
 /**
@@ -158,6 +191,8 @@ export interface Page {
   icon: string | null
   locale: string
   editor: string
+  /** The other editors this page could be opened with — see `interchangeableEditors`. */
+  convertibleTo: string[]
   contentType: string
   publishState: 'draft' | 'published' | 'scheduled'
   publishStartDate: Date | null
@@ -466,6 +501,12 @@ class Pages {
       icon: row.icon,
       locale: row.locale,
       editor: row.editor,
+      /*
+        Which other editors could open this page — see `interchangeableEditors`. Derived rather than
+        stored, and answered here so that the rule about what may be converted into what lives in one
+        place: the client has only to intersect it with the editors the site has turned on.
+      */
+      convertibleTo: interchangeableEditors(row.editor),
       contentType: row.contentType,
       publishState: row.publishState,
       publishStartDate: row.publishStartDate,
@@ -1683,6 +1724,75 @@ class Pages {
   }
 
   /**
+   * Open a page with a different editor from now on.
+   *
+   * A page has exactly one editor and everyone who opens it gets that one — there is no scenario
+   * where two people edit the same page through different editors, which is what makes converting a
+   * deliberate act rather than a per-author preference.
+   *
+   * Only between editors that produce the same content type (`interchangeableEditors`), so nothing is
+   * translated and nothing can be lost: Markdown and Visual are two views of one markdown source. The
+   * content the caller sends is that source written the way the new editor writes it — the Visual
+   * editor normalises quote style, list indentation and table padding, and doing it here, once, is
+   * what keeps it out of the next author's first real edit.
+   *
+   * The editor is written before the save rather than as part of it, because `updatePage` will not
+   * change it: which editor authored a page is not something an ordinary save may touch, and that
+   * invariant is worth more than the one statement it costs here. `pageHistory` snapshots the row
+   * after the write, so the single version this produces already records the page as converted.
+   *
+   * @returns The change, or null when the page is not there.
+   */
+  async convertPage(
+    siteId: string,
+    id: string,
+    {
+      editor,
+      content,
+      render,
+      reasonForChange
+    }: { editor: string; content?: string; render?: string; reasonForChange?: string },
+    actor: PageActor
+  ): Promise<PageChange | null> {
+    const results = await WIKI.db
+      .select({ id: pagesTable.id, editor: pagesTable.editor })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.id, id), eq(pagesTable.siteId, siteId)))
+      .limit(1)
+    const existing = results[0]
+    if (!existing) {
+      return null
+    }
+    if (existing.editor === editor) {
+      throw new CustomError('pageAlreadyUsesEditor', 'This page already uses that editor.')
+    }
+    if (!interchangeableEditors(existing.editor).includes(editor)) {
+      throw new CustomError(
+        'pageEditorNotInterchangeable',
+        `A page written with the ${existing.editor} editor cannot be converted to ${editor}.`
+      )
+    }
+
+    await WIKI.db
+      .update(pagesTable)
+      .set({ editor, contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text' })
+      .where(eq(pagesTable.id, id))
+
+    /*
+      Saved through the ordinary path, so the history version, the re-render, the search index and the
+      copy on every storage target all happen exactly as they do for any other edit. `content` is
+      absent when the new editor writes the source the same way the old one did, and `updatePage`
+      leaves the column alone rather than blanking it.
+    */
+    return this.updatePage(
+      siteId,
+      id,
+      { content, render, reasonForChange } as Partial<PageInput>,
+      actor
+    )
+  }
+
+  /**
    * Move a page to another path, taking its tree entry with it.
    */
   async movePage(
@@ -2356,6 +2466,33 @@ class Pages {
       })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.alias, alias)))
+      .limit(1)
+    return results[0] ?? null
+  }
+
+  /**
+   * Where the page with this id lives, for the short link that names it.
+   *
+   * The id half of `getPathFromAlias`, and it answers with the same four fields for the same reason:
+   * the caller has to decide whether this reader may be told the page exists, and a page rule reads
+   * the path, the locale and the tags to say so.
+   *
+   * An id is the one name for a page that never changes — an alias can be retyped and a path can be
+   * moved — which is what makes it worth a link of its own.
+   */
+  async getPathFromId(
+    siteId: string,
+    id: string
+  ): Promise<{ id: string; path: string; locale: string; tags: string[] } | null> {
+    const results = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags
+      })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.id, id)))
       .limit(1)
     return results[0] ?? null
   }

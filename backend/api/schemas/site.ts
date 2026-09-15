@@ -294,7 +294,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
               }
             }
           },
-          wysiwyg: {
+          visual: {
             type: 'object',
             properties: {
               isActive: {

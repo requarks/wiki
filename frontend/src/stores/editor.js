@@ -42,7 +42,29 @@ export const useEditorStore = defineStore('editor', {
     }
   },
   actions: {
-    addPendingAsset (data) {
+    /**
+     * The editor is no longer open.
+     *
+     * One place rather than a `$patch` at each exit, because "closed" is four fields and every site
+     * that wrote its own got a different subset of them -- leaving a mode of `create` behind after a
+     * new page was abandoned, or an `originPageId` naming the page somebody was reading when they
+     * started writing one, weeks of navigation ago. Both are read by the next editing session and
+     * neither is obviously stale when it is.
+     *
+     * `mode` goes back to `edit` rather than to nothing: it describes the editor that is open and
+     * there is none, so the value that matters is what the NEXT one inherits -- and an editor opened
+     * on a page that exists is an edit.
+     */
+    closeEditor() {
+      this.$patch({
+        isActive: false,
+        editor: '',
+        mode: 'edit',
+        // -> Only ever meaningful while a page is being created: it is where Discard goes back to
+        originPageId: ''
+      })
+    },
+    addPendingAsset(data) {
       const blobUrl = URL.createObjectURL(data)
       if (data instanceof File) {
         this.pendingAssets.push({
@@ -81,13 +103,13 @@ export const useEditorStore = defineStore('editor', {
      * Revokes the URLs on the way out, since the browser holds the bytes behind each one until it is
      * told it can let go.
      */
-    clearPendingAssets () {
+    clearPendingAssets() {
       for (const item of this.pendingAssets) {
         URL.revokeObjectURL(item.blobUrl)
       }
       this.pendingAssets = []
     },
-    async fetchConfigs () {
+    async fetchConfigs() {
       const siteStore = useSiteStore()
       try {
         if (!siteStore.id) {
@@ -99,8 +121,7 @@ export const useEditorStore = defineStore('editor', {
         this.$patch({
           editors: {
             asciidoc: siteInfo?.editors?.asciidoc?.config ?? {},
-            markdown: siteInfo?.editors?.markdown?.config ?? {},
-            wysiwyg: siteInfo?.editors?.wysiwyg?.config ?? {}
+            markdown: siteInfo?.editors?.markdown?.config ?? {}
           },
           configIsLoaded: true
         })

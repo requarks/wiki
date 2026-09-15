@@ -39,16 +39,36 @@ export class BlockTabElement extends HTMLElement {
         required: true
       },
       {
+        /*
+          `icon` rather than `string`: the value is an Iconify reference, which is something to pick
+          rather than to spell, and the editor offers the same picker the rest of the app uses.
+        */
         name: 'icon',
-        type: 'string',
+        type: 'icon',
         label: 'Icon',
         hint: 'Iconify reference drawn to the left of the label, e.g. mdi:language-python.'
       },
       {
+        /*
+          The level this tab is listed at in the page contents, as a choice rather than a number:
+          `anchorHeadings` accepts `1`-`6` and nothing else, so a free number field could only be
+          filled in wrongly. The empty value is what "Normal" means -- no attribute is written for it,
+          and the tab is an ordinary tab.
+        */
         name: 'header',
-        type: 'number',
+        type: 'select',
         label: 'Header Level',
-        hint: 'A level from 1 to 6 lists this tab in the page contents under its label, and a reader clicking it there opens the tab. Empty for an ordinary tab.'
+        hint: 'Lists this tab in the page contents under its label, at the level chosen. A reader clicking it there opens the tab.',
+        default: '',
+        options: [
+          { label: 'Normal', value: '' },
+          { label: 'Heading 1', value: '1' },
+          { label: 'Heading 2', value: '2' },
+          { label: 'Heading 3', value: '3' },
+          { label: 'Heading 4', value: '4' },
+          { label: 'Heading 5', value: '5' },
+          { label: 'Heading 6', value: '6' }
+        ]
       }
     ]
   }

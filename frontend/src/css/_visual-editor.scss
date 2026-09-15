@@ -1,0 +1,846 @@
+/*
+  The Visual editor.
+
+  Two kinds of rule live here and it is worth keeping them apart. The editor's own furniture — the
+  toolbars, the frame around a block, a node's header bar — is styled here in full. The CONTENT is
+  not: the editing surface carries `page-contents`, the same class the page view and the Markdown
+  editor's preview use, so an article looks the same in all three places by sharing one stylesheet
+  rather than by three of them agreeing. What is here for content is only what a page never needs —
+  the seams that show an author where a construct begins and ends.
+*/
+
+/*
+  The Sass variables, loaded explicitly. `vite.config.js` injects both of these into every SFC through
+  `additionalData`, but that reaches only the files Vite itself hands to Sass -- a partial pulled in by
+  `@use` arrives without it. Same note as `_page-contents.scss` and `_page-chrome.scss`, which are
+  here for the same reason.
+*/
+@use 'sass:color';
+@use 'palette' as *;
+@use 'theme' as *;
+
+/*
+  A flex child of the article column, filling whatever it is given rather than a height of its own.
+
+  It used to take `calc(100% - 41px)`, carried over from the dead editor this replaced, where the 41px
+  stood for nothing in this layout -- so the editor stopped 41px short of the bottom, the rail stopped
+  with it, and what was left was a white strip belonging to nobody.
+*/
+.editor-visual {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  &-main {
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+  }
+
+  /*
+    The insert rail, dressed exactly as the Markdown editor's is -- same dark grey, same width, same
+    white icons -- because the two editors are the same screen with a different middle, and a reader
+    switching between them should not be switching interfaces.
+
+    The `border-top` is the trick that joins the two bars: the rail runs the full height of the
+    editor, alongside the toolbar as well as below it, so its first 32px are painted in the toolbar's
+    own blue to carry that bar across the corner. Its height and the toolbar's have to agree, which is
+    why both are stated as 32px rather than left to their contents.
+  */
+  &-sidebar {
+    flex: 0 0 auto;
+    width: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 12px 0;
+    background-color: $dark-4;
+    border-top: 32px solid color.adjust($primary, $lightness: -10%);
+    color: #fff;
+  }
+
+  &-type {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding-bottom: 1rem;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.4);
+  }
+
+  &-mid {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  /*
+    The formatting bar, in the Markdown editor's blue with white icons. One line and a fixed height:
+    it has to stay 32px for the rail's blue top to line up with it, and a bar that wrapped would take
+    that join with it.
+
+    No darker block at the left, which is the one thing not carried over from the Markdown editor's
+    bar. There it is a 60px `border-left` capping the column Monaco draws its line numbers in, so the
+    gutter reads as its own thing all the way up. Nothing here has a gutter -- the surface below is
+    the article, starting at the edge -- so the same block would be a darker rectangle standing for
+    nothing.
+  */
+  &-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    height: 32px;
+    background-color: $primary;
+    color: #fff;
+
+    /*
+      What a pressed button looks like here. The `primary` colour these used to take is the colour of
+      the bar itself, so an active button was drawn in the background it sits on and was simply
+      invisible; a wash of white reads on the blue and needs no second colour to maintain.
+    */
+    .w-btn.is-active {
+      background-color: rgb(255 255 255 / 0.22);
+    }
+  }
+
+  /*
+    The scrollport. A flex column so the surface inside it can be told to fill the height rather than
+    stopping at the end of the text -- see `-surface`.
+  */
+  &-editor {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*
+    What ProseMirror is mounted into. It carries no padding of its own: padding here would be outside
+    the editable, so the space it made would be space the caret cannot be put in -- which is the whole
+    complaint against a bottom margin that only looks like room to type. The padding is on the
+    editable itself instead, below.
+
+    `flex: 1 0 auto` on both this and the editable is what makes the document at least as tall as the
+    pane, so a click anywhere in the empty space under a short page lands in the text rather than on
+    nothing. Growing but never shrinking: a page longer than the pane keeps its own height and
+    scrolls.
+  */
+  &-surface {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    /*
+      The containing block for the link bar, which is positioned against this box rather than the
+      viewport -- so it scrolls along with the link it belongs to and nothing has to listen for scroll.
+    */
+    position: relative;
+  }
+}
+
+.visual-editor-content {
+  outline: none;
+  flex: 1 0 auto;
+
+  /*
+    1rem at the sides, and that figure is not free to change: `--content-bleed` is how far the rule
+    under an `h1` reaches back through the padding of whatever holds the content, so that it starts at
+    the edge of the column rather than at the text. `_page-contents.scss` defaults it to 1rem
+    expecting exactly this much, which is also what the Markdown editor's preview pane pads -- pad
+    differently and the rule overhangs or falls short by the difference.
+
+    The bottom is deeper, and is the one measurement here the page itself does not have: it is room to
+    go on typing without the line being written sitting against the bottom edge of the pane. On the
+    editable rather than around it, so it is somewhere the caret can actually go -- clicking it puts
+    the cursor at the end of the document.
+  */
+  padding: 1rem 1rem 6rem;
+
+  /*
+    ProseMirror's own furniture, recoloured. The behaviour of each of these comes from the base
+    stylesheets the component imports; what is set here is only what should follow the site's theme
+    rather than the library's defaults.
+  */
+  &.ProseMirror-selectednode,
+  .ProseMirror-selectednode {
+    outline-color: $primary;
+  }
+
+  /*
+    The narrowest a column may be dragged, which `prosemirror-tables` reads as a custom property and
+    leaves undefined — without it a column with no explicit width has no minimum and collapses.
+  */
+  --default-cell-min-width: 3rem;
+
+  /* The colours only; the geometry of both is in `prosemirror-tables`' own stylesheet. */
+  .column-resize-handle {
+    background-color: $primary;
+  }
+
+  .selectedCell:after {
+    background: rgba(25, 118, 210, 0.2);
+  }
+}
+
+/*
+  Somebody else's caret, while a page is being written by more than one person.
+
+  The markup is y-prosemirror's own `defaultCursorBuilder`: a span carrying the colour on its border,
+  with a label div inside it. Only the geometry is set here -- the colour comes from the awareness
+  state, which is the same per-user colour `collabUserColor` gives the avatars in the header, so one
+  person is one colour everywhere they appear.
+
+  The caret is zero-width and `position: relative`, so it sits BETWEEN two characters rather than
+  taking a column of its own and pushing the text along as people move about.
+*/
+.ProseMirror-yjs-cursor {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-color: orange;
+  word-break: normal;
+  pointer-events: none;
+
+  /* -> The name, above the caret and out of the flow so it never moves the line it is standing in */
+  > div {
+    position: absolute;
+    top: -1.05em;
+    left: -1px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+    font-weight: 600;
+    font-style: normal;
+    user-select: none;
+    color: #fff;
+    padding: 0 4px;
+    border-radius: 3px 3px 3px 0;
+    white-space: nowrap;
+  }
+}
+
+/* -> What they have selected, painted behind the text at the alpha y-prosemirror appends */
+.ProseMirror-yjs-selection {
+  mix-blend-mode: multiply;
+
+  .body--dark & {
+    mix-blend-mode: screen;
+  }
+}
+
+/*
+  The bar under the link the caret is in.
+
+  Absolutely positioned inside the editing surface, which scrolls with the document -- see the
+  `position: relative` there. `max-width` keeps a long address from running off the side of the pane,
+  and the href is elided rather than wrapped so the bar stays one line tall.
+
+  It floats over the text below it, and `pointer-events` is what stops that being a trap: the bar
+  itself is transparent to the mouse and only its controls take clicks, so a link on the line
+  underneath can still be clicked THROUGH the bar hovering over it. Without that, the one thing a
+  reader is most likely to aim at next -- the next link down -- is the one thing the bar makes
+  unreachable, and clicking it silently acts on the link the bar was already showing.
+*/
+.visual-link-bar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(32rem, 100%);
+  padding: 4px 8px;
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  font-size: 0.75rem;
+
+  .body--dark & {
+    border-color: $grey-8;
+    background: $grey-10;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  }
+}
+
+/*
+  The image bar, which is the same furniture placed differently: above the top-left corner of the
+  picture rather than under a line of text, since an image is a box and a link is a run.
+
+  `pointer-events` for the same reason as the link bar, and it matters more here: an image sits in a
+  paragraph of its own, so what the bar hovers over is the last line of the text before it. The bar is
+  transparent to the mouse and only its buttons take clicks, so a word underneath can still be clicked
+  through it -- and the caret still goes where it was aimed.
+*/
+.visual-image-bar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+
+  .body--dark & {
+    border-color: $grey-8;
+    background: $grey-10;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+  }
+}
+
+.visual-link-bar button,
+.visual-link-bar-href,
+.visual-image-bar button {
+  pointer-events: auto;
+}
+
+/*
+  A selected image.
+
+  Its node view says what selection looks like, so ProseMirror's own `ProseMirror-selectednode` class
+  is never added to it -- a node view that implements `selectNode` is taken at its word. The outline
+  is drawn outside the picture rather than over it, so a border in the image itself is still the
+  image's.
+*/
+.visual-editor-content img.is-selected {
+  outline: 2px solid $primary;
+  outline-offset: 2px;
+}
+
+.visual-link-bar-href {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+  color: $primary;
+}
+
+/*
+  The alert kinds offered in the toolbar menu, each in the colour its admonition is drawn in.
+
+  The five hues are copied from `_page-contents.scss` rather than read from it, and the copy is
+  deliberate. They are declared there as custom properties ON `.page-contents`, and `WMenu` teleports
+  its content to `<body>`, where nothing of that element is in scope -- so `var(--content-info)` would
+  resolve to nothing here. Putting `page-contents` on the menu instead would bring the whole content
+  typography with it, since it sets `font-size`, `color` and `line-height` on itself, and a menu is not
+  an article. So these are two places holding one set of values, and they have to be kept in step:
+  `--content-info` and its four siblings are the source, in both themes.
+
+  The dark variants still reach the menu even though it is teleported, because `body--dark` is a class
+  on `<body>` itself -- which IS an ancestor of the teleport target.
+*/
+.visual-alert-choice {
+  &--note {
+    color: #1867c0;
+  }
+  &--tip {
+    color: #0f7b53;
+  }
+  &--important {
+    color: #6f42c1;
+  }
+  &--warning {
+    color: #a35a00;
+  }
+  &--caution {
+    color: #c02636;
+  }
+}
+
+.body--dark {
+  .visual-alert-choice {
+    &--note {
+      color: #6ab0ff;
+    }
+    &--tip {
+      color: #4ecf9a;
+    }
+    &--important {
+      color: #c4a7ff;
+    }
+    &--warning {
+      color: #f3b661;
+    }
+    &--caution {
+      color: #ff8b8b;
+    }
+  }
+}
+
+/*
+  The bar above anything that is more than text — a block, a code fence, an alert. Deliberately quiet:
+  it is scaffolding that has to be reachable without competing with the page it sits in.
+*/
+.visual-node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  background-color: $grey-2;
+  border-bottom: 1px solid $grey-4;
+  user-select: none;
+
+  .body--dark & {
+    background-color: $grey-9;
+    border-bottom-color: $grey-8;
+  }
+}
+
+.visual-node-name {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: $grey-7;
+
+  .body--dark & {
+    color: $grey-5;
+  }
+}
+
+.visual-node-summary {
+  color: $grey-6;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.visual-node-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.visual-node-action {
+  border: 1px solid $grey-4;
+  border-radius: 3px;
+  background: #fff;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: $grey-8;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+  }
+
+  .body--dark & {
+    background: $grey-10;
+    border-color: $grey-8;
+    color: $grey-4;
+  }
+}
+
+/* A block component with no editable content: drawn as the real element. */
+.visual-block,
+.visual-block-container,
+.visual-code,
+.visual-raw {
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  margin: 1rem 0;
+  overflow: hidden;
+
+  .body--dark & {
+    border-color: $grey-8;
+  }
+
+  &.is-selected {
+    border-color: $primary;
+    box-shadow: 0 0 0 1px $primary;
+  }
+}
+
+.visual-block-preview {
+  padding: 0.75rem;
+}
+
+.visual-block-body {
+  padding: 0.75rem;
+}
+
+/*
+  A tabset, drawn as tabs.
+
+  The strip is the block's furniture and the panels are the article, so the seam between them is the
+  one line of colour here: the active tab is lifted out of the strip onto the panel below it, exactly
+  as `block-tabs` draws it on the page.
+*/
+.visual-tabs {
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  margin: 1rem 0;
+  overflow: hidden;
+
+  .body--dark & {
+    border-color: $grey-8;
+  }
+}
+
+.visual-tabs-strip {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px 4px 0;
+  background-color: $grey-2;
+  border-bottom: 1px solid $grey-4;
+  user-select: none;
+
+  .body--dark & {
+    background-color: $grey-9;
+    border-bottom-color: $grey-8;
+  }
+}
+
+.visual-tabs-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  padding: 4px 12px;
+  margin-bottom: -1px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: $grey-8;
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: $primary;
+  }
+
+  /* -> Joined to the panel below by painting over the strip's own bottom rule */
+  &.is-active {
+    background: #fff;
+    border-color: $grey-4;
+    color: $primary;
+    font-weight: 600;
+  }
+
+  .body--dark & {
+    color: $grey-4;
+
+    &.is-active {
+      background: $grey-10;
+      border-color: $grey-8;
+    }
+  }
+}
+
+.visual-tabs-add {
+  border: 1px dashed $grey-5;
+  border-radius: 4px;
+  background: transparent;
+  padding: 2px 10px;
+  margin: 0 0 4px 4px;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  cursor: pointer;
+  color: $grey-7;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+  }
+
+  .body--dark & {
+    border-color: $grey-7;
+    color: $grey-5;
+  }
+}
+
+/* -> What can be done to the panel showing, pushed to the far end so the tabs stay a row of tabs */
+.visual-tabs-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+
+.visual-tabs-panels {
+  padding: 0.75rem;
+}
+
+/*
+  One panel at a time. `display: none` rather than `hidden`, because the tabset toggles a class on
+  elements ProseMirror manages and a class is the least it can touch.
+*/
+.visual-tab-panel {
+  display: none;
+
+  &.is-active {
+    display: block;
+  }
+}
+
+.visual-code {
+  pre {
+    margin: 0;
+    padding: 0.75rem;
+    overflow-x: auto;
+    background-color: $grey-1;
+
+    .body--dark & {
+      background-color: $grey-10;
+    }
+  }
+
+  code {
+    font-family: monospace;
+    font-size: 0.85rem;
+    white-space: pre;
+  }
+}
+
+.visual-code-params {
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: $grey-8;
+  padding: 0 4px;
+  border-radius: 3px;
+  min-width: 8rem;
+
+  &:hover {
+    border-color: $grey-4;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    background: #fff;
+  }
+
+  .body--dark & {
+    color: $grey-4;
+
+    &:focus {
+      background: $grey-10;
+    }
+  }
+}
+
+.visual-raw-source {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0.75rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+  background-color: $grey-1;
+  color: inherit;
+
+  &:focus {
+    outline: none;
+  }
+
+  .body--dark & {
+    background-color: $grey-10;
+  }
+}
+
+/*
+  An alert. The class the page will carry is on the element too, so the admonition colours come from
+  the content stylesheet; only the title row is the editor's own.
+*/
+.visual-alert {
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.visual-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  user-select: none;
+}
+
+.visual-alert-kind {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+.visual-alert-title {
+  flex: 1 1 auto;
+  border: 1px solid transparent;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: inherit;
+  padding: 0 4px;
+  border-radius: 3px;
+
+  &::placeholder {
+    opacity: 0.55;
+    font-weight: 700;
+  }
+
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.12);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+  }
+}
+
+/* A footnote's body, labelled with the reference that points at it. */
+.visual-footnote {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  border-top: 1px dashed $grey-4;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+
+  .body--dark & {
+    border-top-color: $grey-8;
+  }
+}
+
+.visual-footnote-label {
+  flex: 0 0 auto;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: $grey-7;
+  user-select: none;
+}
+
+.visual-footnote-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.visual-footnote-ref {
+  font-family: monospace;
+  font-size: 0.75em;
+  color: $primary;
+  cursor: default;
+}
+
+/* An abbreviation definition: a declaration rather than prose, so it is drawn as a form. */
+.visual-abbreviation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0.5rem 0;
+  padding: 4px 8px;
+  border: 1px dashed $grey-4;
+  border-radius: 4px;
+  background-color: $grey-1;
+
+  .body--dark & {
+    border-color: $grey-8;
+    background-color: $grey-10;
+  }
+
+  input {
+    border: 1px solid transparent;
+    background: transparent;
+    color: inherit;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+
+    &:hover {
+      border-color: $grey-4;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $primary;
+      background: #fff;
+    }
+
+    .body--dark &:focus {
+      background: $grey-9;
+    }
+  }
+}
+
+.visual-abbreviation-label {
+  flex: 0 0 auto;
+  width: 8rem;
+  font-family: monospace;
+}
+
+.visual-abbreviation-title {
+  flex: 1 1 auto;
+}
+
+/* A task item, drawn with the checkbox the source says it has. */
+.visual-task-item {
+  list-style: none;
+  position: relative;
+
+  &:before {
+    content: '';
+    position: absolute;
+    left: -1.4em;
+    top: 0.35em;
+    width: 0.9em;
+    height: 0.9em;
+    border: 1px solid $grey-6;
+    border-radius: 2px;
+  }
+
+  &[data-checked='true']:before {
+    content: '✓';
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75em;
+    line-height: 1;
+    color: #fff;
+    background-color: $primary;
+    border-color: $primary;
+  }
+}
+
+.visual-hr {
+  padding: 0.5rem 0;
+}
+
+.visual-icon {
+  vertical-align: -0.125em;
+}
+
+.visual-raw-inline {
+  font-family: monospace;
+  font-size: 0.85em;
+  padding: 0 3px;
+  border-radius: 3px;
+  background-color: $grey-3;
+
+  .body--dark & {
+    background-color: $grey-9;
+  }
+}

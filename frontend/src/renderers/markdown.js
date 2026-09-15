@@ -93,7 +93,7 @@ function isExternalHref(href) {
  *                          a review, a history entry -- resolves from.
  * @returns {string} The source to render with.
  */
-function fileSrc(src, pagePath = '') {
+export function fileSrc(src, pagePath = '') {
   const value = (src ?? '').trim()
   if (
     !value ||
@@ -205,6 +205,15 @@ function iconShortcode(state, silent) {
   state.pos += match[0].length
   return true
 }
+
+/**
+ * The marker that opens a task list item, as `markdown-it-task-lists` reads it.
+ *
+ * The same three spellings that plugin's own `startsWithTodoMarkdown` accepts, anchored for the same
+ * reason it uses `indexOf(...) === 0`: a marker is only a marker at the start of the item's content.
+ * The trailing space is part of it, which is what keeps a real `[x]{.cls}` span out of this.
+ */
+const TASK_LIST_MARKER = /^\[[ xX]\] /
 
 /**
  * Everything a fence may say about itself beyond its language.
@@ -367,6 +376,32 @@ function codeBlock(str, lang, attributes) {
   return `<pre class="codeblock hljs${numbered ? ' line-numbers' : ''}"${numbering}><code class="language-${escape(lang)}">${highlighted.value}${rows}</code></pre>`
 }
 
+/**
+ * An emoji as the markup a page shows for it: a twemoji SVG served by this instance.
+ *
+ * Exported because the Visual editor draws emoji too, and a character rendered as text is whatever
+ * font the author's machine happens to have — which is not what the page will show, and on a machine
+ * with no emoji font is not anything at all. Going through this means the editor and the page cannot
+ * disagree about it.
+ *
+ * Drawn from this instance, never from a CDN: the callback replaces twemoji's default `base` + size +
+ * extension entirely, so the `src` is the whole path and nothing upstream is contacted for it.
+ * `vite.config.js` puts the SVGs at `/_assets/svg/twemoji/` — copied into the build output, served out
+ * of `node_modules` in dev — so the two have to agree on this path.
+ *
+ * The artwork comes from the same upstream project as this parser, at a pinned tag (see
+ * `twemoji-assets` in `package.json`). They are separate dependencies, so the build checks that every
+ * emoji a page can hold still resolves to a file — an emoji the parser knows and the asset set does
+ * not is a broken image in a page.
+ */
+export function twemojiHtml(char) {
+  return twemoji.parse(char, {
+    callback(icon) {
+      return `/_assets/svg/twemoji/${icon}.svg`
+    }
+  })
+}
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -422,15 +457,32 @@ export class MarkdownRenderer {
       plugins are added in: the span rule is registered before `link`, the footnote rule after
       `image`, so the span always gets there first.
 
-      Wrapped rather than turned off, because the span is worth keeping and the two are only ever
-      confusable at `[^` — which is a footnote reference and nothing else. Reaching into `__rules__`
-      is the only way to get hold of the original: markdown-it can replace a rule by name but has no
-      way to read one back out.
+      The `[x]` of a task list item is the same collision with a nastier ending, because the task list
+      plugin half-succeeds. It runs as a core rule after the inline is parsed, and decides an item is a
+      task by reading the inline's raw `content` — which still says `[x] done`, so the checkbox is
+      added. Removing the marker is the part that fails: `todoify` slices three characters off
+      `children[1]`, expecting the text token the marker was in, and by then that token is the SPAN
+      MDC opened, whose content is the empty string. Slicing nothing off nothing leaves the marker
+      where it was, and every task item on every wiki rendered as a checkbox followed by a stray
+      `<span>x</span>`.
+
+      Wrapped rather than turned off, because the span is worth keeping and these are the only two
+      readings of `[` it gets wrong. Both guards are as narrow as the thing they protect: `[^` is a
+      footnote reference and nothing else, and a marker is the three characters `[ ]`, `[x]` or `[X]`
+      followed by a space, at the very start of the inline — which is the only place the task list
+      plugin looks for one. The trailing space is what keeps `[x]{.cls}` a span, since a marker cannot
+      be followed by a brace.
+
+      Reaching into `__rules__` is the only way to get hold of the original: markdown-it can replace a
+      rule by name but has no way to read one back out.
     */
     const spanRule = this.md.inline.ruler.__rules__.find((rule) => rule.name === 'mdc_inline_span')
     const inlineSpan = spanRule.fn
     this.md.inline.ruler.at('mdc_inline_span', (state, silent) => {
       if (state.src[state.pos] === '[' && state.src[state.pos + 1] === '^') {
+        return false
+      }
+      if (state.pos === 0 && TASK_LIST_MARKER.test(state.src)) {
         return false
       }
       return inlineSpan(state, silent)
@@ -564,24 +616,8 @@ export class MarkdownRenderer {
     // TWEMOJI
     // --------------------------------
 
-    /*
-      Drawn from this instance, never from a CDN: the callback replaces twemoji's default `base` +
-      size + extension entirely, so the `src` is the whole path and nothing upstream is contacted for
-      it. `vite.config.js` puts the SVGs at `/_assets/svg/twemoji/` — copied into the build output,
-      served out of `node_modules` in dev — so the two have to agree on this path.
-
-      The artwork comes from the same upstream project as this parser, at a pinned tag (see
-      `twemoji-assets` in `package.json`). They are separate dependencies, so the build checks that
-      every emoji a page can hold still resolves to a file — an emoji the parser knows and the asset
-      set does not is a broken image in a page.
-    */
-    this.md.renderer.rules.emoji = (token, idx) => {
-      return twemoji.parse(token[idx].content, {
-        callback(icon, opts) {
-          return `/_assets/svg/twemoji/${icon}.svg`
-        }
-      })
-    }
+    // -> See `twemojiHtml`, which the Visual editor draws its emoji through as well
+    this.md.renderer.rules.emoji = (token, idx) => twemojiHtml(token[idx].content)
 
     // --------------------------------
     // Inject line numbers for preview scroll sync

@@ -193,8 +193,8 @@ editors:
       kroki: true
       plantuml: true
       multimdTable: true
-  wysiwyg:
-    contentType: html
+  visual:
+    contentType: markdown
     config: {}
 systemIds:
   localAuthId: '5a528c4c-0a82-4ad2-96a5-2b23811e6588'

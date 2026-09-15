@@ -593,10 +593,7 @@ async function discardChanges() {
     dropped -- and that is an edit to a page that exists, however the editor was last used.
   */
   if (editorStore.isActive && editorStore.mode === 'create') {
-    editorStore.$patch({
-      isActive: false,
-      editor: ''
-    })
+    editorStore.closeEditor()
 
     /*
       Is it the home page in create mode? In whichever locale it was being written -- the test used to
@@ -622,13 +619,10 @@ async function discardChanges() {
       for a moment at the route the editor was on, which a redirection reads as "nobody is holding
       me" and acts on -- taking the author to its target instead of back to the page they discarded.
     */
+    // -> Every field of it, not just `isActive`, and the editor's own path with them: see
+    //    `leaveEditor`. `cancelPageEdit` has already navigated, so this only settles the state.
     await pageStore.cancelPageEdit()
-    editorStore.$patch({
-      isActive: false,
-      editor: '',
-      // -> Back to the ordinary meaning of the editor, or the next thing opened would inherit this one
-      mode: 'edit'
-    })
+    await pageStore.leaveEditor()
     if (hadPendingChanges) {
       notify({
         type: 'positive',
@@ -641,7 +635,7 @@ async function discardChanges() {
   } catch (err) {
     // -> The editor closes either way: the reader asked to leave it, and a page that would not
     //    reload is not a reason to keep them in it
-    editorStore.$patch({ isActive: false, editor: '', mode: 'edit' })
+    await pageStore.leaveEditor()
     notify({
       type: 'negative',
       message: 'Failed to reload page state.'
@@ -680,21 +674,12 @@ async function saveChangesCommit(closeAfter = false) {
     })
     if (closeAfter) {
       /*
-        The editor closes onto the page, and for a redirection that page would take the author
-        straight to the target they just chose. `editorExitPath` holds it instead — a change of query
-        on the route already showing, so nothing is loaded again. Every other page is left alone,
-        down to the fragment it was opened at.
-
-        Before the editor closes, and awaited: the page view drawn at the editor's route would read
-        the query as it stands and follow the redirection out from under this.
+        The editor closes onto the page it was opened on — `editorExitPath`, which for a redirection
+        carries the query that stops the page taking the author straight to the target they have just
+        chosen. `leaveEditor` navigates before it closes anything, which is what keeps that query in
+        front of the page view rather than behind it.
       */
-      if (pageStore.editor === 'redirect' && route.fullPath !== pageStore.editorExitPath) {
-        await router.replace(pageStore.editorExitPath)
-      }
-      editorStore.$patch({
-        isActive: false,
-        editor: ''
-      })
+      await pageStore.leaveEditor()
     }
   } catch (err) {
     notify({
@@ -719,9 +704,7 @@ async function createPage() {
         type: 'positive',
         message: 'Homepage created successfully.'
       })
-      editorStore.$patch({
-        isActive: false
-      })
+      editorStore.closeEditor()
       // -> The home page that was just written, not the site root: unprefixed, the router sends it to
       //    the PRIMARY locale, so creating the French home page landed on the English one
       router.replace(pageStore.editorExitPath)
@@ -768,9 +751,7 @@ async function createPage() {
         type: 'positive',
         message: 'Page created successfully.'
       })
-      editorStore.$patch({
-        isActive: false
-      })
+      editorStore.closeEditor()
     } catch (err) {
       notify({
         type: 'negative',
@@ -797,10 +778,15 @@ async function processPendingAssets() {
   }
 }
 
-async function editPage() {
-  loading.show()
-  await pageStore.pageEdit()
-  loading.hide()
+/**
+ * Into the editor, which is a navigation and nothing else.
+ *
+ * The page view's route watcher is what opens it — `/_edit/...` is its branch, and it calls
+ * `pageEdit` with the path and locale out of the URL. Opening it from here as well would load the
+ * page twice and, worse, would leave the editor open at an address that says nothing about it.
+ */
+function editPage() {
+  router.push(pageStore.editPath)
 }
 
 /**
@@ -841,11 +827,7 @@ async function submitSuggestionCommit(guest = {}) {
     await pageStore.pageSubmitSuggestion(guest)
     // -> Back to the page as everyone else sees it: what was typed is now a suggestion waiting for a
     //    reviewer, not a version of the page, so leaving the editor open on it would be a lie
-    editorStore.$patch({
-      isActive: false,
-      editor: '',
-      mode: 'edit'
-    })
+    editorStore.closeEditor()
     await pageStore.pageLoad({ id: pageStore.id })
     notify({
       type: 'positive',

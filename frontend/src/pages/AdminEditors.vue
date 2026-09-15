@@ -129,7 +129,7 @@ const state = reactive({
     channel: false,
     markdown: false,
     redirect: true,
-    wysiwyg: false
+    visual: false
   }
 })
 const editors = reactive([
@@ -171,9 +171,8 @@ const editors = reactive([
     useRendering: false
   },
   {
-    id: 'wysiwyg',
+    id: 'visual',
     icon: 'google-presentation',
-    isDisabled: true,
     useRendering: true
   }
 ])
@@ -197,7 +196,7 @@ async function load() {
     const data = resp?.editors
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
-    state.config.wysiwyg = data?.wysiwyg?.isActive ?? false
+    state.config.visual = data?.visual?.isActive ?? false
   } catch (err) {
     notify({
       type: 'negative',
@@ -217,7 +216,7 @@ async function save() {
         editors: {
           asciidoc: { isActive: state.config.asciidoc },
           markdown: { isActive: state.config.markdown },
-          wysiwyg: { isActive: state.config.wysiwyg }
+          visual: { isActive: state.config.visual }
         }
       }
     }).json()
@@ -231,7 +230,7 @@ async function save() {
         editors: {
           asciidoc: state.config.asciidoc,
           markdown: state.config.markdown,
-          wysiwyg: state.config.wysiwyg
+          visual: state.config.visual
         }
       })
     }

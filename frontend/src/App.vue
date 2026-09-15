@@ -13,7 +13,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { setCssVar } from '@/helpers/cssVars'
-import { splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
+import { isPagePath, splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
 
@@ -278,8 +278,8 @@ router.beforeEach(async (to, from) => {
     bootstrap above, since that is where the site's extensions come from. A `/_` route is the app
     itself rather than a page, and is left alone as it is by the server.
   */
-  const isPagePath = !to.path.startsWith('/_')
-  const withoutExtension = isPagePath ? stripPageExtension(to.path, siteStore.pageExtensions) : null
+  const isPage = isPagePath(to.path)
+  const withoutExtension = isPage ? stripPageExtension(to.path, siteStore.pageExtensions) : null
   if (withoutExtension) {
     return { path: withoutExtension, query: to.query, hash: to.hash, replace: true }
   }
@@ -292,7 +292,7 @@ router.beforeEach(async (to, from) => {
     locale's short code -- `/fr` for `fr-FR` -- the same segment its content is filed under.
   */
   if (
-    isPagePath &&
+    isPage &&
     siteStore.locales.forcePrefix &&
     !splitLocalePath(to.path, siteStore.localePrefixes)
   ) {
@@ -317,7 +317,7 @@ router.beforeEach(async (to, from) => {
     site's primary is also the fallback for a first visit, and for a stored locale the site no longer
     offers.
   */
-  const pageLocale = isPagePath
+  const pageLocale = isPage
     ? (splitLocalePath(to.path, siteStore.localePrefixes)?.locale ?? siteStore.locales.primary)
     : null
   if (pageLocale) {
@@ -339,7 +339,7 @@ router.beforeEach(async (to, from) => {
     dropping the last page's permissions on the way out of the page view, which takes no request at
     all. A path with no page behind it has nothing to carry them, and asks in `pages/Index.vue`.
   */
-  if (to.path.startsWith('/_')) {
+  if (!isPagePath(to.path)) {
     userStore.$patch({ pagePermissions: [] })
   }
 })

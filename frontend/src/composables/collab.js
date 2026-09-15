@@ -72,6 +72,15 @@ let stopWatchers = []
  * store back into the document does not send it round again.
  */
 let applyingRemote = false
+/**
+ * Whether the room's opening state has been taken in yet.
+ *
+ * Everything that arrives before this is the room as it already was, and a new room is not empty: the
+ * server seeds one with the page's stored title, description and icon (`core/collab.ts`). So until it
+ * is set, an incoming header field is measured against what the page store loaded from the API and
+ * ignored where the two agree — see `adoptProps`. After it, anything arriving is somebody's edit.
+ */
+let initialSyncDone = false
 
 /**
  * A stable colour for a user.
@@ -169,8 +178,19 @@ export function startCollabSession({ siteId, pageId }) {
     /*
       The room may have been holding header fields somebody else changed and has not saved. Those are
       the current state of this edit, so they win over what this browser loaded from the API.
+
+      `initial`, because a room nobody was in is not silent: the server seeds a new one with the
+      page's STORED title, description and icon (`core/collab.ts`), so on this first exchange a value
+      equal to the stored one carries no edit at all — see `adoptProps`.
     */
-    adoptProps()
+    adoptProps({ initial: true })
+    initialSyncDone = true
+    /*
+      And then this browser's own, which the watcher below will never publish: it fires on change, and
+      anything typed into the properties panel before the editor was opened changed before there was a
+      room to tell. Second, so that a genuine edit adopted just above is what gets written back.
+    */
+    publishProps()
     refreshParticipants()
   })
 
@@ -198,10 +218,14 @@ export function startCollabSession({ siteId, pageId }) {
     }
   }, SYNC_TIMEOUT)
 
-  // -> A header field somebody else edited, arriving mid-session
+  /*
+    A header field somebody else edited, arriving mid-session — or the room's own opening state, which
+    lands here as a remote update too and reaches this observer BEFORE the provider says it has
+    synced. `initialSyncDone` is what tells the two apart.
+  */
   yprops.observe((event, transaction) => {
     if (!transaction.local) {
-      adoptProps()
+      adoptProps({ initial: !initialSyncDone })
     }
   })
 
@@ -240,6 +264,20 @@ export function startCollabSession({ siteId, pageId }) {
 }
 
 /**
+ * The session's shared document and awareness, for an editor that binds itself.
+ *
+ * The Markdown editor hands its model to `bindCollabEditor` below and this composable owns the
+ * binding. ProseMirror cannot be bound that way: y-prosemirror is a set of PLUGINS, so joining a
+ * session means rebuilding the editor's state around them, which only the editor can do. So it takes
+ * the two things it needs and does the binding itself — see `enableCollab` in `editor/visual`.
+ *
+ * @returns {?{ ydoc: object, awareness: object }} Null before a session has started.
+ */
+export function collabHandles() {
+  return doc && provider ? { ydoc: doc, awareness: provider.awareness } : null
+}
+
+/**
  * Hand the Monaco model over to the session.
  *
  * Called once the document has synced, and not before: the binding starts by making the model say
@@ -263,6 +301,7 @@ export function stopCollabSession() {
   clearTimeout(typingTimer)
   typingTimer = null
   typing = false
+  initialSyncDone = false
   for (const stop of stopWatchers) {
     stop()
   }
@@ -316,6 +355,17 @@ function markTyping() {
   }, TYPING_IDLE)
 }
 
+/** This browser's header fields into the room, whatever they are. See the call in the sync handler. */
+function publishProps() {
+  const pageStore = usePageStore()
+  const yprops = doc.getMap('props')
+  doc.transact(() => {
+    writeProp(yprops, 'title', pageStore.title)
+    writeProp(yprops, 'description', pageStore.description)
+    writeProp(yprops, 'icon', pageStore.icon)
+  })
+}
+
 function writeProp(yprops, key, value) {
   const next = value ?? ''
   if (yprops.get(key) !== next) {
@@ -323,8 +373,16 @@ function writeProp(yprops, key, value) {
   }
 }
 
-/** Copy the shared header fields into the page store, without echoing them back out. */
-function adoptProps() {
+/**
+ * Copy the shared header fields into the page store, without echoing them back out.
+ *
+ * @param {object} [options]
+ * @param {boolean} [options.initial] Whether this is the first exchange with the room, where a value
+ *        matching the stored one is the server's seed rather than anybody's edit — and so must not
+ *        overwrite a field this author changed in the properties panel before opening the editor.
+ *        Once the session is live, any value arriving IS an edit and wins as it did before.
+ */
+function adoptProps({ initial = false } = {}) {
   const pageStore = usePageStore()
   const yprops = doc.getMap('props')
   const patch = {}
@@ -333,6 +391,9 @@ function adoptProps() {
     // -> An icon is never legitimately empty, and blanking one because a room was seeded from a page
     //    that had none would be a visible regression on every other screen
     if (typeof value !== 'string' || (key === 'icon' && !value)) {
+      continue
+    }
+    if (initial && value === pageStore.storedProps[key]) {
       continue
     }
     if (value !== pageStore[key]) {

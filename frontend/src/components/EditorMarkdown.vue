@@ -408,6 +408,12 @@ const collabEnabled = computed(
 
 let editor
 let md
+/**
+ * The collaboration watchers, which have to be stopped by hand — see where they are created.
+ *
+ * @type {Array<() => void>}
+ */
+const collabWatchers = []
 /** Where the paste listener ended up, so it can be taken off the same node. See the note in onMounted. */
 let pasteCaptureNode = null
 /** The "Edit Table" lens provider, which is registered against the language rather than this editor. */
@@ -1805,38 +1811,48 @@ onMounted(async () => {
     editor.updateOptions({ readOnly: true })
     startCollabSession({ siteId: siteStore.id, pageId: pageStore.id })
 
-    watch(
-      () => collabStore.status,
-      (status) => {
-        if (status === 'connected') {
-          bindCollabEditor(editor)
-        }
-        if (status !== 'connecting') {
-          editor.updateOptions({ readOnly: false })
-        }
-        if (status === 'denied') {
-          notify({
-            type: 'warning',
-            message: t('editor.collab.notAllowed')
-          })
-        }
-      }
-    )
-
     /*
-      Somebody else saved the page. The editor state has already been put back to "nothing pending" by
-      the session -- this is only so that the author is told why their Save button went quiet.
+      Both handles are kept, and both are stopped by hand on the way out.
+
+      A watcher created during `setup` belongs to the component and stops with it. These do not: this
+      hook is `async`, and everything after its first `await` runs with no component instance current
+      — so Vue has nothing to attach them to and they outlive the editor they were written for. Left
+      running they fire on the NEXT session's connection and reach for a Monaco editor that has been
+      disposed, and one more pair is added every time an editor is opened.
     */
-    watch(
-      () => collabStore.lastSave,
-      (lastSave) => {
-        if (lastSave && lastSave.authorId !== userStore.id) {
-          notify({
-            type: 'positive',
-            message: t('editor.collab.savedBy', { name: lastSave.authorName })
-          })
+    collabWatchers.push(
+      watch(
+        () => collabStore.status,
+        (status) => {
+          if (status === 'connected') {
+            bindCollabEditor(editor)
+          }
+          if (status !== 'connecting') {
+            editor.updateOptions({ readOnly: false })
+          }
+          if (status === 'denied') {
+            notify({
+              type: 'warning',
+              message: t('editor.collab.notAllowed')
+            })
+          }
         }
-      }
+      ),
+      /*
+        Somebody else saved the page. The editor state has already been put back to "nothing pending"
+        by the session -- this is only so that the author is told why their Save button went quiet.
+      */
+      watch(
+        () => collabStore.lastSave,
+        (lastSave) => {
+          if (lastSave && lastSave.authorId !== userStore.id) {
+            notify({
+              type: 'positive',
+              message: t('editor.collab.savedBy', { name: lastSave.authorName })
+            })
+          }
+        }
+      )
     )
   }
 
@@ -1856,6 +1872,11 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  // -> First, because everything below is what they reach for: these are not stopped by the component
+  //    going away, and one that fires afterwards finds a disposed editor
+  for (const stop of collabWatchers.splice(0)) {
+    stop()
+  }
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)

@@ -2,7 +2,10 @@
   <div class="site-header bg-header text-white">
     <div class="flex flex-nowrap">
       <w-toolbar style="height: 64px">
-        <w-btn dense flat :to="homePath">
+        <!-- -> `to` still does the navigating, so the logo stays a real link -- middle click, open in
+                a new tab, the address in the status bar. The handler is only what a navigation cannot
+                do on its own; see `leaveEditorForHome` -->
+        <w-btn dense flat :to="homePath" @click="leaveEditorForHome">
           <w-avatar v-if="siteStore.logoText" size="34px" square>
             <img :src="`/_site/current/logo`" />
           </w-avatar>
@@ -140,6 +143,8 @@ import { useMinWidth } from '@/composables/screen'
 import { splitLocalePath } from '@/helpers/pagePaths'
 
 import { useCommonStore } from '@/stores/common'
+import { useEditorStore } from '@/stores/editor'
+import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -158,6 +163,8 @@ import HeaderSearch from '@/components/HeaderSearch.vue'
 // STORES
 
 const commonStore = useCommonStore()
+const editorStore = useEditorStore()
+const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -234,6 +241,38 @@ onBeforeUnmount(() => {
 })
 
 // METHODS
+
+/**
+ * Out of the editor, on the way home. The navigation itself is the link's.
+ *
+ * The logo is the way out of any screen the wiki can get into, which is why it is drawn in every one
+ * of them -- so it has to close the editor as well as go home. Leaving the editor is otherwise the
+ * job of the page view's route watcher, and that cannot help here: the editor opens WITHOUT changing
+ * the URL, so an author editing the home page is already at `/`, the router treats the push as a
+ * duplicate and runs no navigation at all, and the watcher never fires. The result was a logo that
+ * looked broken on the one page it is most likely to be tried from.
+ *
+ * The page is re-read in exactly that case. Nothing else is going to: the store holds what the editor
+ * last wrote into it -- the source AND the render -- so closing the editor over it would draw
+ * somebody's unsaved draft as though it were the page. Where the click really does navigate, the
+ * destination is loaded anyway and a reload here would be a second request for a page already on its
+ * way.
+ *
+ * A page being CREATED never reaches that branch: it is written at `/_create/...`, which is never the
+ * home path, so the click is a real navigation and the page view's watcher does the rest.
+ */
+function leaveEditorForHome() {
+  if (!editorStore.isActive) {
+    return
+  }
+  const isSamePlace = route.path === homePath.value
+  editorStore.closeEditor()
+  if (isSamePlace && pageStore.id) {
+    // -> Failing to put the page back is not a reason to keep the reader in an editor they have just
+    //    left; the view draws what it has
+    pageStore.pageLoad({ id: pageStore.id }).catch(() => {})
+  }
+}
 
 /*
   Ctrl+K below 600px, where the field is not mounted and so cannot claim the shortcut itself: this

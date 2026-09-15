@@ -9,10 +9,7 @@
         <w-btn push color="primary" :label="t(`welcome.createHome`)" icon="la:plus" no-caps>
           <w-menu class="translucent-menu" auto-close anchor="top left" self="bottom left">
             <w-list padding>
-              <w-item
-                clickable
-                @click="createHomePage(`wysiwyg`)"
-                v-if="flagsStore.experimental && siteStore.editors.wysiwyg">
+              <w-item clickable @click="createHomePage(`visual`)" v-if="siteStore.editors.visual">
                 <blueprint-icon icon="google-presentation" />
                 <w-item-section class="pr-2">Using the Visual Editor</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>

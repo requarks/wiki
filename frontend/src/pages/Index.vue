@@ -397,7 +397,7 @@ import { notify } from '@/composables/notify'
 import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
-import { splitLocalePath } from '@/helpers/pagePaths'
+import { isPagePath, splitLocalePath } from '@/helpers/pagePaths'
 import {
   enhanceRenderedContent,
   resolveContentClick,
@@ -440,14 +440,14 @@ const editorComponents = {
     loader: () => import('../components/EditorMarkdown.vue'),
     loadingComponent: LoadingGeneric
   }),
+  visual: defineAsyncComponent({
+    loader: () => import('../components/EditorVisual.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   redirect: defineAsyncComponent({
     loader: () => import('../components/EditorRedirect.vue'),
     loadingComponent: LoadingGeneric
   })
-  // wysiwyg: defineAsyncComponent({
-  //   loader: () => import('../components/EditorWysiwyg.vue'),
-  //   loadingComponent: LoadingGeneric
-  // })
 }
 
 // STORES
@@ -801,23 +801,46 @@ watch(
       return
     }
 
-    // -> Enter Edit Mode?
+    /*
+      -> Enter Edit Mode?
+      This is the only way into the editor: the Edit button navigates here rather than opening one
+      where it stands, so a reload, a shared link and a press of the button all arrive by the same
+      route -- and leaving is a navigation like any other.
+
+      Wrapped, because it is now reached by a click and not only by a hand-typed URL. `pageEdit`
+      throws for a page that is gone or that this reader may not open, and an unguarded throw left the
+      loading overlay up for ever with no way back.
+    */
     if (newValue.startsWith('/_edit')) {
       if (!route.params.pagePath) {
         return router.replace('/')
       }
       loading.show()
-      await pageStore.pageEdit({
-        path: route.params.pagePath,
-        locale: route.query.locale,
-        fromNavigate: true
-      })
-      loading.hide()
+      try {
+        await pageStore.pageEdit({
+          path: route.params.pagePath,
+          locale: route.query.locale,
+          fromNavigate: true
+        })
+      } catch (err) {
+        editorStore.closeEditor()
+        notify({ type: 'negative', message: t('editor.openFailed'), caption: err.message })
+        // -> Onto the page itself, which says what happened properly: not found, or the unauthorized
+        //    screen with its offer to sign in as somebody else
+        router.replace(`/${route.params.pagePath}`)
+      } finally {
+        loading.hide()
+      }
       return
     }
 
-    // -> Moving to a non-page path? Ignore
-    if (newValue.startsWith('/_')) {
+    /*
+      -> Moving to a non-page path? Ignore
+      `isPagePath` and not a bare `/_` test: the sign-in form and `/a/<alias>` are the app's own
+      screens at root paths that carry no underscore, and treating either as a page had this load one
+      by the name of the route.
+    */
+    if (!isPagePath(newValue)) {
       return
     }
 
@@ -855,25 +878,29 @@ watch(
       return isFirstRun ? update() : withViewTransition(update)
     }
 
+    /*
+      Walking away from the editor closes it -- BEFORE the page is loaded rather than after.
+
+      It used to sit below the load, inside the same `try`, so a destination that would not load left
+      the editor standing: the reader got the not-found screen, or the welcome overlay, with an
+      editor still active behind it and a page store describing something else entirely. Every
+      failure of the load was also a failure to close.
+
+      `closeEditor` and not a patch of `isActive`, because closing is more fields than that -- see the
+      store. `mode` above all: left on `create`, it goes on claiming a page is being written long
+      after the reader has moved on to reading one, and everything that asks gets the wrong answer --
+      `pageSave` POSTs a new page instead of patching the one on screen, the header offers Create
+      Page where Save Changes belongs, and Discard throws away a property edit as though it were an
+      abandoned draft, putting the welcome screen over a wiki that has a home page.
+    */
+    if (editorStore.isActive) {
+      editorStore.closeEditor()
+    }
+
     // -> Load Page. The contents panel belongs to the page being left, so it goes with it
     state.tocPanelOpen = false
     try {
       await pageStore.pageLoad({ path: pagePath, locale: pageLocale, applyWith: swapTo })
-      if (editorStore.isActive) {
-        /*
-          Walking away from the editor closes it, and `mode` describes the editor that was open — so
-          it has to go back with it. Left on `create`, it goes on claiming a page is being written
-          long after the reader has moved on to reading one, and everything that asks gets the wrong
-          answer: `pageSave` POSTs a new page instead of patching the one on screen, the header
-          offers Create Page where Save Changes belongs, and Discard throws away a property edit as
-          though it were an abandoned draft — putting the welcome screen over a wiki that has a home
-          page.
-        */
-        editorStore.$patch({
-          isActive: false,
-          mode: 'edit'
-        })
-      }
       // -> Load Blocks. `?.` because a locked page draws its lock screen in place of the article, so
       //    there is no content element to scan -- and nothing in it to scan for.
       nextTick(async () => {

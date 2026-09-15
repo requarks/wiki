@@ -93,51 +93,50 @@
           </w-card>
         </w-menu>
       </w-btn>
-      <!-- -> Nothing follows it on a redirection, and a rule with nothing under it is just a line -->
-      <w-separator class="my-2" v-if="!isRedirect" inset />
+      <!-- -> A rule with nothing under it is just a line: the three groups below can each be absent —
+              on a redirection, on a page that has never been saved, and inside the editor -->
+      <w-separator class="my-2" v-if="showHistory || showSource || showPageActions" inset />
     </template>
     <!--
       The three below are all about a page's TEXT: what it used to say, what it says in source, and
-      the things that can be done to that text. A redirection has none — its content is a target, the
+      the things that can be done to that text. Each carries its own test now rather than sharing a
+      wrapper, because they are absent for three different reasons — see `showHistory`, `showSource`
+      and `showPageActions`. A redirection loses all three either way: its content is a target, the
       form above is the whole of it, and there is no render for any of these to be about.
     -->
-    <template v-if="!isRedirect">
-      <!--
-        `read:history` is the permission that exists to say who may see what a page used to contain, so
-        the button follows it rather than page read access. The API asks the same question.
-      -->
-      <w-btn
-        class="h-12"
-        v-if="userStore.can(`read:history`)"
-        flat
-        icon="la:history"
-        :color="editorStore.isActive ? `white` : `grey`"
-        aria-label="Page History"
-        @click="viewPageHistory">
-        <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
-      </w-btn>
-      <!--
-        `read:source` likewise, granted per path by a rule — so guests have it wherever a rule says so,
-        and the API answers the overlay behind this button on exactly that permission.
-      -->
-      <w-btn
-        class="h-12"
-        v-if="canViewSource"
-        flat
-        icon="la:code"
-        :color="editorStore.isActive ? `white` : `grey`"
-        aria-label="Page Source"
-        @click="viewPageSource">
-        <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
-      </w-btn>
-    </template>
-    <!-- -> `hasPageActions` takes the rule with it: a separator over a button that opens nothing is a
+    <!--
+      `read:history` is the permission that exists to say who may see what a page used to contain, so
+      the button follows it rather than page read access. The API asks the same question.
+    -->
+    <w-btn
+      class="h-12"
+      v-if="showHistory"
+      flat
+      icon="la:history"
+      :color="editorStore.isActive ? `white` : `grey`"
+      aria-label="Page History"
+      @click="viewPageHistory">
+      <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
+    </w-btn>
+    <!--
+      `read:source` likewise, granted per path by a rule — so guests have it wherever a rule says so,
+      and the API answers the overlay behind this button on exactly that permission.
+    -->
+    <w-btn
+      class="h-12"
+      v-if="showSource"
+      flat
+      icon="la:code"
+      :color="editorStore.isActive ? `white` : `grey`"
+      aria-label="Page Source"
+      @click="viewPageSource">
+      <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
+    </w-btn>
+    <!-- -> `showPageActions` takes the rule with it: a separator over a button that opens nothing is a
             line drawn for its own sake -->
-    <template
-      v-if="
-        hasPageActions && !isRedirect && !(editorStore.isActive && editorStore.mode === `create`)
-      ">
-      <w-separator class="my-2" inset />
+    <template v-if="showPageActions">
+      <!-- -> And only where there is something above to separate it FROM -->
+      <w-separator class="my-2" v-if="showHistory || showSource" inset />
       <w-btn
         class="h-12"
         flat
@@ -157,14 +156,21 @@
           auto-close
           transition-show="jump-left">
           <w-list padding style="min-width: 225px">
+            <!--
+              Only where there is somewhere to convert TO: `convertibleTo` is the editors that produce
+              this page's content type, and the site has to have one of them turned on. A redirection
+              has no peer at all, which is why this is absent rather than disabled on one.
+            -->
             <w-item
               clickable
-              disabled
-              v-if="flagsStore.experimental && userStore.can(`manage:pages`)">
+              v-if="userStore.can(`write:pages`) && canConvert"
+              @click="convertPage">
               <w-item-section class="items-center" avatar>
                 <w-icon class="text-deep-orange-9" name="la:atom" size="sm" />
               </w-item-section>
-              <w-item-section><w-item-label>Convert Page</w-item-label></w-item-section>
+              <w-item-section
+                ><w-item-label>{{ t('convertPage.action') }}</w-item-label></w-item-section
+              >
             </w-item>
             <w-item clickable v-if="userStore.can(`write:pages`)" @click="rerenderPage">
               <w-item-section class="items-center" avatar>
@@ -271,6 +277,16 @@ const menuPendingAssets = ref(null)
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
 
 /**
+ * Whether this page has anywhere to be converted to.
+ *
+ * Both halves matter: the server says which editors produce this page's content type, and the site
+ * says which of those anybody can open. A redirection satisfies neither.
+ */
+const canConvert = computed(() =>
+  (pageStore.convertibleTo ?? []).some((editor) => siteStore.activeEditors.includes(editor))
+)
+
+/**
  * Whether the page this rail is for is a redirection — one being read, edited or created alike, since
  * `pageCreate` puts the editor on the page store as well.
  *
@@ -298,6 +314,36 @@ const canViewSource = computed(
     userStore.can('read:source') || userStore.can('write:pages') || userStore.can('manage:pages')
 )
 
+/**
+ * Whether this page exists on the server yet.
+ *
+ * `id` is `0` until the first save — see `pageCreate` — and the two buttons below it gate are both
+ * questions about a stored page: what it used to say, and what it says in source. Asked of a page
+ * that has never been saved, the API has nothing to answer with and both overlays open on an error.
+ *
+ * The id rather than `mode === 'create'`, because the question is about the page and not about how
+ * the editor was opened.
+ */
+const isSaved = computed(() => Boolean(pageStore.id))
+
+/** What a page's stored TEXT can be asked about, which needs a stored page and a page with text. */
+const showHistory = computed(
+  () => !isRedirect.value && isSaved.value && userStore.can('read:history')
+)
+const showSource = computed(() => !isRedirect.value && isSaved.value && canViewSource.value)
+
+/**
+ * Whether the "..." menu is offered at all.
+ *
+ * Never while an editor is open, whatever the page. Converting a page rewrites the source under the
+ * editor holding it, and re-rendering it acts on the version that is STORED — so both are answers to
+ * a question about the saved page, asked from a screen showing an unsaved one. Neither belongs beside
+ * Save and Discard.
+ */
+const showPageActions = computed(
+  () => hasPageActions.value && !isRedirect.value && !editorStore.isActive
+)
+
 // METHODS
 
 function togglePageProperties() {
@@ -320,6 +366,19 @@ function viewPageHistory() {
 
 function viewPageSource() {
   siteStore.$patch({ overlay: 'PageSource', overlayOpts: {} })
+}
+
+/**
+ * Move the page to a different editor.
+ *
+ * The dialog is what decides whether that is safe — see `PageConvertDialog`, which rewrites the source
+ * and compares the two renders before offering to go ahead. Nothing is reloaded here: the dialog does
+ * it, because it knows whether anything was written.
+ */
+function convertPage() {
+  dialog({
+    component: defineAsyncComponent(() => import('../components/PageConvertDialog.vue'))
+  })
 }
 
 function rerenderPage() {

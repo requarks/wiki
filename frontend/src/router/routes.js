@@ -6,15 +6,34 @@ const routes = [
     component: () => import('@/layouts/AuthLayout.vue'),
     children: [{ path: '', component: () => import('@/pages/Login.vue') }]
   },
+  /*
+    The two short links to a page, which resolve and send the reader on rather than drawing anything:
+    `/a/<alias>` names it by the alias somebody chose for it, `/i/<id>` by the id it was born with.
+
+    Neither is a page path — see `RESERVED_ROOT` in `helpers/pagePaths.js`, and the matching set on the
+    server — so neither is locale-prefixed on the way in. What they answer with IS prefixed, because
+    the page they point at may be in any locale and the path alone does not say which.
+  */
   {
     path: '/a/:alias',
     component: () => import('@/layouts/MainLayout.vue'),
-    beforeEnter: async (to, from) => {
+    beforeEnter: async (to) => {
       const pageStore = usePageStore()
       try {
-        const pathPath = await pageStore.pageAlias(to.params.alias)
-        return `/${pathPath}`
-      } catch (err) {
+        return await pageStore.pageAlias(to.params.alias)
+      } catch {
+        return '/_error/notfound'
+      }
+    }
+  },
+  {
+    path: '/i/:pageId',
+    component: () => import('@/layouts/MainLayout.vue'),
+    beforeEnter: async (to) => {
+      const pageStore = usePageStore()
+      try {
+        return await pageStore.pageById(to.params.pageId)
+      } catch {
         return '/_error/notfound'
       }
     }
@@ -145,8 +164,16 @@ const routes = [
   // --------------------------------
   // EDIT
   // --------------------------------
+  /*
+    Editing a page has a path of its own, and that is what makes the editor a screen rather than a
+    mode: opening it is a navigation, and so is every way out of it -- the site logo, a link in the
+    sidebar, the back button. It is also what lets an editor URL be reloaded and linked.
+
+    `(.*)` because a page path is not one segment: `notes/api/errors` is an ordinary page, and a bare
+    `:pagePath` would match only the first segment of it and drop the rest into no route at all.
+  */
   {
-    path: '/_edit/:pagePath?',
+    path: '/_edit/:pagePath(.*)?',
     component: () => import('../layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('../pages/Index.vue') }]
   },

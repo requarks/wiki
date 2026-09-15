@@ -13,7 +13,7 @@
  * The labels are English, as the marker itself is: what the renderer emits is stored as the page's
  * HTML, so nothing here can follow the reader's locale afterwards.
  */
-const KINDS = new Map([
+export const KINDS = new Map([
   ['note', { className: 'is-info', label: 'Note' }],
   ['tip', { className: 'is-success', label: 'Tip' }],
   ['important', { className: 'is-important', label: 'Important' }],
@@ -32,7 +32,7 @@ const KINDS = new Map([
  * Left off, the kind's own label stands in, exactly as before. What is captured is raw markdown and is
  * parsed as such (see `titleTokens`), so a title may hold a link or a `code` span like any other line.
  */
-const MARKER = /^\[!([a-z]+)\][ \t]*([^\n]*)(?:\n|$)/i
+export const MARKER = /^\[!([a-z]+)\][ \t]*([^\n]*)(?:\n|$)/i
 
 /**
  * The title, as three tokens: a paragraph carrying a class, its inline content, and the close.

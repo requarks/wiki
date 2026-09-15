@@ -5,28 +5,28 @@
         The editors this site writes pages with, in the order the store lists them -- which is where
         the rule lives, so that what can be created here and what a search can be filtered by cannot
         drift apart. Each still carries its own icon and wording: `redirect` makes a redirection
-        rather than a page, and `wysiwyg` is just "New Page".
+        rather than a page, and both Markdown and Visual say which of the two they open.
       -->
       <w-item
         v-for="editor of siteStore.activeEditors"
         :key="editor"
         clickable
         @click="create(editor)">
-        <blueprint-icon :icon="NEW_PAGE_ITEMS[editor].icon" />
-        <w-item-section class="pr-2">{{ NEW_PAGE_ITEMS[editor].label }}</w-item-section>
+        <blueprint-icon :icon="EDITOR_ICONS[editor]" />
+        <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
       </w-item>
       <template v-if="props.hideAssetBtn === false">
         <w-separator class="my-2" inset />
         <w-item clickable @click="openFileManager">
           <blueprint-icon icon="add-image" />
-          <w-item-section class="pr-2">Upload Media Asset</w-item-section>
+          <w-item-section class="pr-2">{{ t('common.createPage.uploadAsset') }}</w-item-section>
         </w-item>
       </template>
       <template v-if="props.showNewFolder">
         <w-separator class="my-2" inset />
         <w-item clickable @click="newFolder">
           <blueprint-icon icon="add-folder" />
-          <w-item-section class="pr-2">New Folder</w-item-section>
+          <w-item-section class="pr-2">{{ t('common.actions.newFolder') }}</w-item-section>
         </w-item>
       </template>
     </w-list>
@@ -43,21 +43,23 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 /**
- * How each editor is offered: its icon, and the wording of the item that creates one with it.
+ * The icon each editor is offered under.
  *
- * WHICH of them are offered is `siteStore.activeEditors`, and only that list decides -- these are the
- * words for the ones that are.
+ * WHICH of them are offered, and in what order, is `siteStore.activeEditors` -- only that list
+ * decides. The wording lives in the locale file as `common.createPage.<editor>`, keyed by the same
+ * ids, so an editor added to that list needs an icon here and a string there.
+ *
+ * `redirect` is not an editor the site can turn off, because it authors nothing: a redirection is a
+ * page with a target instead of a body.
  */
-const NEW_PAGE_ITEMS = {
-  wysiwyg: { icon: 'google-presentation', label: 'New Page' },
-  markdown: { icon: 'markdown', label: 'New Markdown Page' },
-  asciidoc: { icon: 'asciidoc', label: 'New AsciiDoc Page' },
-  channel: { icon: 'chat', label: 'New Discussion Space' },
-  blog: { icon: 'typewriter-with-paper', label: 'New Blog Page' },
-  api: { icon: 'api', label: 'New API Documentation' },
-  // -> Not an editor the site can turn off, because it authors nothing: a redirection is a page with
-  //    a target instead of a body
-  redirect: { icon: 'advance', label: 'New Redirection' }
+const EDITOR_ICONS = {
+  markdown: 'markdown',
+  visual: 'google-presentation',
+  asciidoc: 'asciidoc',
+  channel: 'chat',
+  blog: 'typewriter-with-paper',
+  api: 'api',
+  redirect: 'advance'
 }
 
 // PROPS

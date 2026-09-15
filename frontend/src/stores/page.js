@@ -64,6 +64,13 @@ export const usePageStore = defineStore('page', {
      * `pageSave` must not write the second one over a page that has content. See the guard there.
      */
     contentLoaded: false,
+    /**
+     * The other editors this page could be opened with, as the server works it out — every editor
+     * producing the same content type, which is Markdown and Visual for a markdown page and nobody at
+     * all for a redirection. Not filtered by what the site has enabled; `PageConvertDialog` is what
+     * narrows it to the editors somebody could actually open afterwards.
+     */
+    convertibleTo: [],
     createdAt: '',
     description: '',
     editor: '',
@@ -80,6 +87,16 @@ export const usePageStore = defineStore('page', {
     locale: 'en',
     navigationId: null,
     navigationMode: 'inherit',
+    /**
+     * The header fields as the server last told us they are, kept beside the live ones.
+     *
+     * Not a duplicate: `title`, `description` and `icon` hold what is ON SCREEN, which the properties
+     * panel edits long before anything is saved. This is what those were before the author touched
+     * them, and the only thing that asks is the collaborative session — see `adoptProps` in
+     * `composables/collab.js`, which needs to tell a room echoing the database back from a room
+     * holding somebody else's unsaved edit.
+     */
+    storedProps: { title: '', description: '', icon: '' },
     /**
      * Whether the path in the URL has no page at all. Set by `pageNotFound`, which empties everything
      * else here at the same time — so this being true means the store holds the *absence* of a page,
@@ -160,6 +177,28 @@ export const usePageStore = defineStore('page', {
      * this page sends people is the one person who does not want to be sent there. `?redirect=no` is
      * what holds it — see `PageRedirect.vue` — and the screen it lands on offers to follow it.
      */
+    /**
+     * Where the editor for this page lives.
+     *
+     * A path of its own rather than a flag set on the page's own URL. That is the whole point: with
+     * the editor at the page's address, opening it changed nothing the router could see, so leaving it
+     * was left to a watcher on the path — and every way out that did not change the path (the site
+     * logo on the home page, a link to the page being edited) simply did not close it. Here, opening
+     * and closing are both navigations, and `editorExitPath` is the way back.
+     *
+     * The locale rides along as a query rather than as a prefix: `/_edit/...` is the application's own
+     * path and is never bracketed by locale, so the page it names would otherwise be ambiguous on a
+     * site holding the same path in several. Absent for the primary locale, which is what the API
+     * assumes when it is not told.
+     */
+    editPath: (state) => {
+      const siteStore = useSiteStore()
+      const query =
+        state.locale && state.locale !== siteStore.locales.primary
+          ? `?locale=${encodeURIComponent(state.locale)}`
+          : ''
+      return `/_edit/${state.path}${query}`
+    },
     editorExitPath: (state) => {
       // -> Prefixed, on a site that brackets its URLs by locale: an unprefixed path is sent to the
       //    PRIMARY locale, so leaving the editor on a page just written in another one landed the
@@ -220,7 +259,8 @@ export const usePageStore = defineStore('page', {
               needs no such help: every page answers with it, so `...pageData` above has already
               settled whether THIS page is protected.
             */
-            notFound: false
+            notFound: false,
+            storedProps: storedPropsOf(pageData)
           })
           this.applyViewerState(pageData.viewer)
           // Update editor state timestamps
@@ -276,7 +316,8 @@ export const usePageStore = defineStore('page', {
         localeRelations: (pageData.localeRelations ?? []).map((r) =>
           pick(r, ['locale', 'path', 'title'])
         ),
-        tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+        tocDepth: pick(pageData.tocDepth, ['min', 'max']),
+        storedProps: storedPropsOf(pageData)
       })
     },
     /**
@@ -382,13 +423,39 @@ export const usePageStore = defineStore('page', {
      * PAGE - GET PATH FROM ALIAS
      */
     async pageAlias(alias) {
+      return this.resolveShortLink(`alias/${encodeURIComponent(alias)}`)
+    },
+    /**
+     * PAGE - RESOLVE ID
+     *
+     * The same short link by the one name a page never loses. An alias can be retyped and a path can
+     * be moved; the id outlives both, which is what makes `/i/<id>` the link to paste where it has to
+     * keep working.
+     */
+    async pageById(id) {
+      return this.resolveShortLink(`id/${encodeURIComponent(id)}`)
+    },
+    /**
+     * Where a short link points, as a path this app can navigate to.
+     *
+     * The locale comes back with the path and is part of the answer, not decoration: on a site that
+     * brackets its URLs by locale, `/notes/one` is the ENGLISH page and the French one is at
+     * `/fr/notes/one`. Built with `localeUrlPrefix`, which is empty where the site needs no prefix —
+     * so a short link to a page in another locale lands on that page rather than on whatever happens
+     * to sit at the same path in the primary one.
+     *
+     * @param {string} lookup The `alias/<alias>` or `id/<uuid>` half of the endpoint path.
+     * @returns {Promise<string>} A rooted path, prefix and all.
+     * @throws `ERR_PAGE_NOT_FOUND` when nothing answers to it, or the reader may not know it does.
+     */
+    async resolveShortLink(lookup) {
       const siteStore = useSiteStore()
       try {
-        const pagePath = await API_CLIENT.get(`sites/${siteStore.id}/pages/alias/${alias}`).json()
-        if (!pagePath?.id) {
+        const target = await API_CLIENT.get(`sites/${siteStore.id}/pages/${lookup}`).json()
+        if (!target?.id) {
           throw new Error('ERR_PAGE_NOT_FOUND')
         }
-        return pagePath.path
+        return `${siteStore.localeUrlPrefix(target.locale)}/${target.path}`
       } catch (err) {
         if (err.response?.status === 404) {
           throw new Error('ERR_PAGE_NOT_FOUND')
@@ -526,6 +593,8 @@ export const usePageStore = defineStore('page', {
         isSearchable: props.isSearchable ?? editor !== 'redirect',
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
+        // -> Nothing is stored for a page that does not exist, so everything about it is pending
+        storedProps: { title: '', description: '', icon: '' },
         mode: 'edit'
       })
     },
@@ -671,8 +740,21 @@ export const usePageStore = defineStore('page', {
         load would replace every field with what is stored and reset the change timestamps, throwing
         those edits away without a word. The source is the only thing missing in that state, so the
         source is the only thing fetched.
+
+        `isPageInStore` is what keeps that from being a way to open the WRONG page. Pending changes
+        belong to whatever this store is holding, and the flag says nothing about which page that is —
+        so opening the editor on a different one took the shortcut too, skipped the load, and left the
+        author editing the previous page's title, description and icon under the new page's name.
+        Worse where there was no previous page to speak of: a create that was abandoned leaves the
+        store holding a blank one, and every Edit after it opened on empty metadata.
+
+        A page identified by neither an id nor a path is this store's own page by definition, which is
+        what the header's Edit button asks for.
       */
-      if (editorStore.hasPendingChanges) {
+      const isPageInStore = id
+        ? id === this.id
+        : !path || normalizePath(path) === normalizePath(this.path)
+      if (editorStore.hasPendingChanges && isPageInStore) {
         await this.pageLoadSource()
       } else {
         await this.pageLoad(loadArgs)
@@ -857,7 +939,9 @@ export const usePageStore = defineStore('page', {
           localeRelations: (pageData.localeRelations ?? []).map((r) =>
             pick(r, ['locale', 'path', 'title'])
           ),
-          tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+          tocDepth: pick(pageData.tocDepth, ['min', 'max']),
+          // -> What was pending is now what is stored, which is the whole of what a save means here
+          storedProps: storedPropsOf(pageData)
         })
 
         /*
@@ -893,15 +977,55 @@ export const usePageStore = defineStore('page', {
         throw err
       }
     },
+    /**
+     * Out of the editor: the URL first, then the state.
+     *
+     * Editing has a path of its own (see `editPath`), so closing the editor without leaving that path
+     * would strand the author on an editor URL with no editor on it. The order is deliberate and the
+     * navigation is awaited: a page view drawn at the editor's route reads the query as it stands, and
+     * for a redirection that means following it out from under whoever has just finished writing it.
+     *
+     * Where there is no editor path to leave -- a properties-only edit, which never opened one, or a
+     * suggestion, which is written at the page's own address -- nothing navigates and only the state
+     * changes.
+     */
+    async leaveEditor() {
+      const editorStore = useEditorStore()
+      if (this.router.currentRoute.value.path.startsWith('/_edit')) {
+        await this.router.replace(this.editorExitPath)
+      }
+      editorStore.closeEditor()
+    },
+    /**
+     * Throw away what is unsaved and put the stored page back.
+     *
+     * Leaving the editor's own path is what reloads the page — the page view's route watcher does it —
+     * so the load here is for the case where there is no such path to leave: a property edit discarded
+     * without the editor ever having been opened, where the route does not change and nothing else
+     * would put the page back.
+     */
     async cancelPageEdit() {
       const editorStore = useEditorStore()
+      if (this.router.currentRoute.value.path.startsWith('/_edit')) {
+        // -> Awaited for the same reason as in `pageSave`: the editor closes when this resolves
+        await this.router.replace(this.editorExitPath)
+        return
+      }
       await this.pageLoad({ id: editorStore.originPageId ? editorStore.originPageId : this.id })
-      // -> Awaited for the same reason as in `pageSave`: the editor closes when this resolves
       await this.router.replace(this.editorExitPath)
     },
     generateToc() {}
   }
 })
+
+/** The three header fields a collaborative session compares against, as the server just stated them. */
+function storedPropsOf(pageData) {
+  return {
+    title: pageData.title ?? '',
+    description: pageData.description ?? '',
+    icon: pageData.icon ?? ''
+  }
+}
 
 /**
  * Turn a refused request back into an error.

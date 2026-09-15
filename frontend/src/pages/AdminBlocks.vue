@@ -159,7 +159,13 @@ watch(
 async function load() {
   state.loading++
   try {
-    state.blocks = (await API_CLIENT.get(`sites/${adminStore.currentSiteId}/blocks`).json()) ?? []
+    /*
+      Child blocks are dropped: the API lists them so an editor can build a form from the props they
+      declare, but there is nothing here to do with one. `block-tab` has no row, cannot be switched off
+      independently of the tabset it sits in, and cannot be deleted.
+    */
+    const all = (await API_CLIENT.get(`sites/${adminStore.currentSiteId}/blocks`).json()) ?? []
+    state.blocks = all.filter((block) => !block.isChild)
   } catch (err) {
     notify({
       type: 'negative',

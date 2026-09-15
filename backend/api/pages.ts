@@ -989,6 +989,106 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * CONVERT PAGE TO ANOTHER EDITOR
+   */
+  app.put<{
+    Params: { siteId: string; pageId: string }
+    Body: { editor: string; content?: string; render?: string; reasonForChange?: string }
+  }>(
+    '/sites/:siteId/pages/:pageId/editor',
+    {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and page permissions are
+        granted by a group's RULES. Checked against the page in question below instead — which is
+        also what lets a rule open one branch to somebody the group as a whole cannot write to.
+      */
+      schema: {
+        summary: 'Change which editor a page is written with',
+        description:
+          "A page has one editor and everybody who opens it gets that one, so this is how a page moves between them. Only between editors that produce the same content type — Markdown and Visual are two views of one markdown source — which is what makes it a change of tooling rather than a translation.\n\nThe optional `content` is that source written the way the new editor writes it; the Visual editor normalises spelling that markdown leaves free (quote style, list indentation, table padding), and sending it here spends that rewrite on one history version of its own instead of burying it in somebody's next real edit. Left out, the source is untouched.\n\nRecorded as an ordinary page edit, so the version it produces holds the page exactly as it now stands.",
+        tags: ['Pages'],
+        params: pageIdParam,
+        body: {
+          type: 'object',
+          required: ['editor'],
+          properties: {
+            editor: {
+              type: 'string',
+              description: 'The editor to open this page with from now on.'
+            },
+            content: { type: 'string', description: 'The source, rewritten for the new editor.' },
+            render: { type: 'string', description: 'The HTML that source renders to.' },
+            reasonForChange: { type: 'string' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Page converted successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' },
+              page: { $ref: 'Page#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized('Converting a page requires a logged in user.')
+      }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'write:pages', target)) {
+        return reply.forbidden('You are not allowed to edit this page.')
+      }
+      /*
+        The site has to have the editor turned on. A page converted to an editor nobody can open is a
+        page nobody can edit, and the Editors screen is where that is decided.
+      */
+      const editors = WIKI.sites[req.params.siteId]?.config?.editors ?? {}
+      if (!editors[req.body.editor]?.isActive) {
+        return reply.badRequest('That editor is not enabled on this site.')
+      }
+
+      const previousEditor = target.editor
+      const change = await WIKI.models.pages.convertPage(
+        req.params.siteId,
+        req.params.pageId,
+        req.body,
+        actor
+      )
+      if (!change) {
+        return reply.notFound('This page does not exist.')
+      }
+      const { page, versionId } = change
+
+      await audit(req, 'page', 'convertPage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        title: page.title,
+        from: previousEditor,
+        to: page.editor,
+        versionId
+      })
+      return {
+        ok: true,
+        message: 'Page converted successfully.',
+        page
+      }
+    }
+  )
+
+  /**
    * MOVE / RENAME PAGE
    */
   app.put<{
@@ -1434,7 +1534,10 @@ async function routes(app: FastifyInstance) {
             type: 'object',
             properties: {
               id: { type: 'string', format: 'uuid' },
-              path: { type: 'string' }
+              path: { type: 'string' },
+              // -> A path alone does not say where the page IS on a site that brackets its URLs by
+              //    locale, and the caller is about to build one
+              locale: { type: 'string' }
             }
           }
         }
@@ -1450,7 +1553,63 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'read:pages', { ...target, siteId: req.params.siteId })) {
         return reply.notFound('No page uses this alias.')
       }
-      // -> `id` and `path` are all the response schema keeps; the locale and tags were for the check
+      // -> `id`, `path` and `locale` are what the response schema keeps; the tags were for the check
+      return target
+    }
+  )
+
+  /**
+   * RESOLVE ID
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/pages/id/:pageId',
+    {
+      /*
+        No route-level `permissions`, for the reason the alias route above gives: page permissions are
+        granted by a group's RULES and are checked against the page itself.
+      */
+      schema: {
+        summary: 'Resolve a page id to its path',
+        description:
+          'The id half of the alias lookup, for the short link that names a page by the one thing about it that never changes: an alias can be retyped and a path can be moved, and neither breaks a link built on the id.\n\nAnswers 404 rather than 403 for a page the caller may not read — that a page exists at all is only theirs to know if they may read it.',
+        tags: ['Pages'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            pageId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId', 'pageId']
+        },
+        response: {
+          200: {
+            description: 'The page with this id',
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              path: { type: 'string' },
+              locale: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const target = await WIKI.models.pages.getPathFromId(req.params.siteId, req.params.pageId)
+      if (!target) {
+        return reply.notFound('No page has this id.')
+      }
+      // -> Resolving an id tells the caller a page exists and where it is, which is only theirs to
+      //    know if they may read it
+      if (!mayOnPage(req, 'read:pages', { ...target, siteId: req.params.siteId })) {
+        return reply.notFound('No page has this id.')
+      }
       return target
     }
   )

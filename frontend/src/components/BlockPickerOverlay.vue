@@ -152,14 +152,19 @@ const state = reactive({
 // COMPUTED
 
 /**
- * Blocks offered here: the ones this site has switched on, minus the ones the editor inserts itself.
+ * Blocks offered here: the ones this site has switched on, minus the ones the editor inserts itself
+ * and the ones that are not insertable on their own.
  *
  * A block that is off cannot render, so offering it is a trap. Tabs is on but has its own button in
  * the editor's side toolbar, which inserts the very same markup — listing it here as well is a second
- * way to the same place.
+ * way to the same place. A CHILD block is listed by the API for its props alone — `block-tab` is a
+ * panel of a tabset and means nothing on its own — so inserting one from here would only ever produce
+ * something the page cannot draw.
  */
 const blocks = computed(() =>
-  state.blocks.filter((block) => block.isEnabled && !TOOLBAR_BLOCKS.includes(block.block))
+  state.blocks.filter(
+    (block) => block.isEnabled && !block.isChild && !TOOLBAR_BLOCKS.includes(block.block)
+  )
 )
 
 const markdown = computed(() => (state.selected ? blockMarkdown(state.selected, state.values) : ''))

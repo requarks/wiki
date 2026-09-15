@@ -342,6 +342,22 @@
           </div>
         </w-form>
       </w-card-section>
+
+      <!--
+        The page's id, last and quietly.
+
+        Only once there is one: a page being created has no id until the first save, and a field
+        reading `0` would be a fact about this dialog rather than about the page. It is here because
+        it is the one name a page never loses — an alias can be retyped and a path can be moved — so
+        it is what a bug report, a support thread or a link that has to keep working is built on, and
+        `/i/<id>` is where that link goes.
+      -->
+      <w-card-section v-if="pageStore.id" class="pt-3 pb-4">
+        <div class="text-caption text-black/50 dark:text-white/40">
+          {{ t('editor.props.pageId') }}
+          <span class="font-mono select-all">{{ pageStore.id }}</span>
+        </div>
+      </w-card-section>
     </w-scroll-area>
     <w-dialog v-model="state.showLocaleRelationsDialog">
       <page-locale-relations-dialog @close="state.showLocaleRelationsDialog = false" />

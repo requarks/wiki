@@ -33,6 +33,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description: 'False for blocks registered from the compiled block manifest.'
       },
+      isChild: {
+        type: 'boolean',
+        description:
+          'True for a block that only ever appears inside another one — `block-tab` inside `block-tabs`. It has no row of its own and nothing to switch on or off, since it is available wherever its parent is, and `isEnabled` is therefore always true for one. It is listed so that an editor can build a parameters form from the props it declares; a caller offering blocks to INSERT should leave it out.'
+      },
       config: {
         type: 'object',
         additionalProperties: true
@@ -60,7 +65,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             },
             type: {
               type: 'string',
-              enum: ['string', 'number', 'boolean', 'select'],
+              enum: ['string', 'number', 'boolean', 'select', 'icon'],
               description: 'What kind of field to offer for it.'
             },
             label: {
@@ -74,8 +79,20 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             },
             options: {
               type: 'array',
-              description: 'Allowed values, for `select`.',
-              items: { type: 'string' }
+              description:
+                'The choices a `select` offers. A plain string where the value IS the wording; an object where they differ — a tab\'s header level is offered as "Heading 3" and written as `3`.',
+              items: {
+                anyOf: [
+                  { type: 'string' },
+                  {
+                    type: 'object',
+                    properties: {
+                      label: { type: 'string' },
+                      value: { type: 'string' }
+                    }
+                  }
+                ]
+              }
             },
             default: {
               description: 'Value the field starts on, and the one worth leaving out of the markup.'

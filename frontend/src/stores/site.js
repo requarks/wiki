@@ -132,7 +132,7 @@ export const useSiteStore = defineStore('site', {
     editors: {
       asciidoc: false,
       markdown: false,
-      wysiwyg: false
+      visual: false
     },
     /** Every installed locale, as this wiki refers to it. Empty until the app has bootstrapped. */
     installedLocales: [],
@@ -257,10 +257,13 @@ export const useSiteStore = defineStore('site', {
      * Three questions at once, and all three have to be asked or the list is fiction: whether the
      * site has the editor turned on (`editors`, the admin area's Editors screen), whether it is
      * implemented at all — `channel`, `blog` and `api` are names with no editor behind them yet, and
-     * `wysiwyg` and `asciidoc` are half-built, so all five are behind the experimental flag — and
-     * `redirect`, which no site can turn off because it authors nothing: a redirection is a page with
-     * a target instead of a body. On a wiki with the flag off that leaves Markdown and Redirection,
-     * which is what most of them run.
+     * `asciidoc` is half-built, so all four are behind the experimental flag — and `redirect`, which
+     * no site can turn off because it authors nothing: a redirection is a page with a target instead
+     * of a body. On a wiki with the flag off that leaves Markdown, Visual and Redirection, in that
+     * order: Markdown is what most pages are written with, so it is the one offered first.
+     *
+     * Markdown and Visual are two views of the same markdown source, which is what lets a page move
+     * between them — see `interchangeableEditors` on the server.
      *
      * `PageNewMenu` draws its items from this, so what a page can be created with and what a search
      * can be filtered by cannot drift apart.
@@ -269,8 +272,8 @@ export const useSiteStore = defineStore('site', {
       const flagsStore = useFlagsStore()
       const experimental = flagsStore.experimental
       return [
-        ...(experimental && this.editors.wysiwyg ? ['wysiwyg'] : []),
         ...(this.editors.markdown ? ['markdown'] : []),
+        ...(this.editors.visual ? ['visual'] : []),
         ...(experimental && this.editors.asciidoc ? ['asciidoc'] : []),
         ...(experimental ? ['channel', 'blog', 'api'] : []),
         'redirect'
@@ -388,7 +391,7 @@ export const useSiteStore = defineStore('site', {
         editors: {
           asciidoc: siteInfo.editors.asciidoc.isActive,
           markdown: siteInfo.editors.markdown.isActive,
-          wysiwyg: siteInfo.editors.wysiwyg.isActive
+          visual: siteInfo.editors.visual.isActive
         },
         // -> Spread over the state defaults, as `features` and `theme` above do, so a key the
         //    site config has never been saved with reads as its default rather than undefined

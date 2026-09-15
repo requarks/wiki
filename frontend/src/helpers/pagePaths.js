@@ -61,3 +61,28 @@ export function splitLocalePath(urlPath, prefixes) {
   // -> `/fr` alone is the French home page, which is `/` under the prefix
   return { locale, path: slash < 0 ? '/' : urlPath.slice(slash) }
 }
+
+/**
+ * Files a browser or a crawler asks for at the root by convention, and the root segments this app's
+ * own router owns despite carrying no leading underscore.
+ *
+ * Mirrors `RESERVED_ROOT_FILES` and `RESERVED_ROOT_PATHS` in the backend's `helpers/common.ts`.
+ */
+const RESERVED_ROOT = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml', 'login', 'a', 'i'])
+
+/**
+ * Whether a URL addresses the page tree rather than the application itself.
+ *
+ * Everything the app mounts for itself sits under `/_…`, which is what makes this a prefix test
+ * rather than a list — except for the sign-in form and the two short links to a page, `/a/<alias>`
+ * and `/i/<id>`, which predate that convention.
+ *
+ * Mirrors `isPageUrl` in the backend's `helpers/common.ts`, and has to: the two answer the same
+ * question about the same URL, one for a request that reaches the server and one for a link the
+ * router follows on its own. Where they disagreed, `/login` was a page to one of them — locale
+ * prefixed into `/en/login`, which matches no route at all.
+ */
+export function isPagePath(urlPath) {
+  const firstSegment = (urlPath.split('/')[1] ?? '').toLowerCase()
+  return !firstSegment.startsWith('_') && !RESERVED_ROOT.has(firstSegment)
+}

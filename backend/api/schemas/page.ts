@@ -172,6 +172,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       icon: { type: ['string', 'null'] },
       locale: { type: 'string' },
       editor: { type: 'string' },
+      convertibleTo: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          "The other editors this page could be opened with, which is every editor producing the same content type — Markdown and Visual are two views of one markdown source. Read-only, and not filtered by what the site has enabled: intersect it with the site's active editors. See `PUT /sites/{siteId}/pages/{pageId}/editor`."
+      },
       contentType: { type: 'string' },
       publishState: { type: 'string', enum: ['draft', 'published', 'scheduled'] },
       publishStartDate: { type: ['string', 'null'], format: 'date-time' },

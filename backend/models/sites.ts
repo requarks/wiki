@@ -211,7 +211,12 @@ class Sites {
               underline: true
             }
           },
-          wysiwyg: {
+          /*
+            No config of its own, deliberately. The Visual editor writes markdown and its preview is
+            rendered by the markdown pipeline, so it reads `markdown.config` — two settings blobs that
+            had to agree would only be a way for them to disagree.
+          */
+          visual: {
             isActive: true,
             config: {}
           }
@@ -472,7 +477,12 @@ class Sites {
               underline: true
             }
           },
-          wysiwyg: {
+          /*
+            No config of its own, deliberately. The Visual editor writes markdown and its preview is
+            rendered by the markdown pipeline, so it reads `markdown.config` — two settings blobs that
+            had to agree would only be a way for them to disagree.
+          */
+          visual: {
             isActive: true,
             config: {}
           }

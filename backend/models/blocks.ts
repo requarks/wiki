@@ -6,11 +6,19 @@ import { blocks as blocksTable, sites as sitesTable } from '../db/schema.ts'
 /** One authorable attribute of a block, as its `static definition` describes it. */
 export interface BlockProp {
   name: string
-  type: 'string' | 'number' | 'boolean' | 'select'
+  /** `icon` is a string holding an Iconify reference, offered with the app's icon picker. */
+  type: 'string' | 'number' | 'boolean' | 'select' | 'icon'
   label?: string
   hint?: string
   required?: boolean
-  options?: string[]
+  /**
+   * The choices a `select` offers.
+   *
+   * Plain strings where the value IS the wording. An object where they differ -- a tab's header level
+   * is offered as "Heading 3" and written as `3`, because `anchorHeadings` accepts a digit and
+   * nothing else.
+   */
+  options?: (string | { label: string; value: string })[]
   default?: string | number | boolean
 }
 
@@ -59,6 +67,14 @@ export interface SiteBlock {
   template: string
   /** Empty for a block that names no body editor, which is most of them. */
   contentEditor: string
+  /**
+   * Whether this block only ever appears inside another one — `block-tab` inside `block-tabs`.
+   *
+   * Such a block has no row of its own and nothing to switch on or off: it is available wherever its
+   * parent is. It is still listed, because an editor has to be able to build a form for the props it
+   * declares, and a caller offering blocks to INSERT is expected to skip it.
+   */
+  isChild: boolean
 }
 
 const blockSelection = {
@@ -287,15 +303,46 @@ class Blocks {
       updated block's props are correct the moment it is deployed, with nothing to migrate — and a
       custom block, having no manifest entry, simply reports none.
     */
-    return (results as SiteBlock[]).map((row) => {
+    const listed = (results as SiteBlock[]).map((row) => {
       const definition = this.definitions.find((d) => d.block === row.block)
       return {
         ...row,
         props: definition?.props ?? [],
         template: definition?.template ?? '',
-        contentEditor: definition?.contentEditor ?? ''
+        contentEditor: definition?.contentEditor ?? '',
+        isChild: false
       }
     })
+
+    /*
+      And the child blocks, which have no row to have been read above — `registerForSite` skips them,
+      because there is nothing about `block-tab` for a site to turn on or off independently of the
+      tabset it lives in.
+      
+      They are listed all the same, because the props they declare are what an editor builds its
+      parameters form from: without them, the form for a tab's label, icon and header level cannot be
+      built at all, and the button that opens it does nothing. `isChild` is how a caller offering
+      blocks to insert knows to leave them out of the list.
+    */
+    const children = this.definitions
+      .filter((definition) => definition.isChild)
+      .map((definition) => ({
+        id: `child:${definition.block}`,
+        block: definition.block,
+        name: definition.name,
+        description: definition.description,
+        icon: definition.icon,
+        // -> Available exactly when whatever holds it is, which is not a question this row can answer
+        isEnabled: true,
+        isCustom: false,
+        config: {},
+        props: definition.props ?? [],
+        template: definition.template ?? '',
+        contentEditor: definition.contentEditor ?? '',
+        isChild: true
+      }))
+
+    return [...listed, ...children]
   }
 
   /**

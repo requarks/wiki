@@ -74,6 +74,25 @@ export function createDeferred<T = void>(): Deferred<T> {
 export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
 
 /**
+ * Root segments the frontend's own router owns, despite carrying no leading underscore.
+ *
+ * Everything the app mounts for itself sits under `/_…`, which is what makes `isPageUrl` a prefix
+ * test rather than a list to keep in step. These are the exceptions, and each is an address a reader
+ * is HANDED rather than a screen they browse to: the sign-in form, and the two short links that name
+ * a page by something other than its path — `/a/<alias>` and `/i/<id>` — each of which looks its
+ * target up and sends the reader on to it.
+ *
+ * Mistaking one for a page is not cosmetic. A page URL is locale-prefixed on a site that forces
+ * prefixes, so `/login` was answered with a redirect to `/en/login` — a path no route matches, which
+ * left the sign-in form unreachable the moment that setting was turned on. And a page URL is
+ * described by the app shell, which answers 404 where the public may read nothing: on a private wiki
+ * that is a 404 at the one address whose entire purpose is to let somebody in.
+ *
+ * Mirrored in the frontend's `helpers/pagePaths.js`, which asks the same question of the same URLs.
+ */
+export const RESERVED_ROOT_PATHS = new Set(['login', 'a', 'i'])
+
+/**
  * Whether a URL addresses the page tree rather than the server itself.
  *
  * Everything the server mounts sits under a leading-underscore segment — `/_api`, `/_assets`,
@@ -84,8 +103,12 @@ export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitema
  * is still a page path, which is what lets the app shell answer 404 for one.
  */
 export function isPageUrl(urlPath: string): boolean {
-  const firstSegment = urlPath.split('/')[1] ?? ''
-  return !firstSegment.startsWith('_') && !RESERVED_ROOT_FILES.has(firstSegment.toLowerCase())
+  const firstSegment = (urlPath.split('/')[1] ?? '').toLowerCase()
+  return (
+    !firstSegment.startsWith('_') &&
+    !RESERVED_ROOT_FILES.has(firstSegment) &&
+    !RESERVED_ROOT_PATHS.has(firstSegment)
+  )
 }
 
 /**
