@@ -67,7 +67,7 @@ export const approvalRules = pgTable(
     // -> A rule can be turned off without losing what it says, which is how an administrator suspends
     //    suggestions on a section without having to write the rule again afterwards.
     isEnabled: boolean().notNull().default(true),
-    // -> One of START / EXACT / END / REGEX / TAG / TAGALL, the same set group page rules use. A
+    // -> One of START / EXACT / END / REGEX / TAG / TAGALL, matched the way group page rules are. A
     //    varchar rather than an enum so that adding a mode does not need a migration; the API schema
     //    is what rejects an unknown one.
     match: varchar({ length: 16 }).notNull().default('START'),

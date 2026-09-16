@@ -224,9 +224,15 @@ Website: https://montreal.ca
         text-align: center;
       }
 
+      /*
+        Padded on every side, so the picture reads as something sitting in the box rather than as a
+        lid on the rows below it. The bottom edge matters as much as the others: the first row of the
+        list draws no line over it — the card's own border is what closes the header above — so
+        without it the facts start immediately under the image.
+      */
       figure {
         margin: 0;
-        padding: 12px 12px 0;
+        padding: 12px;
         text-align: center;
       }
 

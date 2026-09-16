@@ -403,6 +403,7 @@
                         :options="[
                           { label: t('admin.groups.ruleMatchStart'), value: 'START' },
                           { label: t('admin.groups.ruleMatchEnd'), value: 'END' },
+                          { label: t('admin.groups.ruleMatchSubtree'), value: 'SUBTREE' },
                           { label: t('admin.groups.ruleMatchRegex'), value: 'REGEX' },
                           { label: t('admin.groups.ruleMatchTag'), value: 'TAG' },
                           { label: t('admin.groups.ruleMatchTagAll'), value: 'TAGALL' },
@@ -439,7 +440,9 @@
                         standout
                         v-model="rule.path"
                         dense
-                        :prefix="[`START`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null"
+                        :prefix="
+                          [`START`, `SUBTREE`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null
+                        "
                         :suffix="rule.match === `REGEX` ? `/` : null"
                         :aria-label="t(`admin.groups.rulePath`)" />
                     </w-card-section>
@@ -1265,7 +1268,7 @@ async function importRules() {
           id: uuid(),
           name: r.name || t('admin.groups.ruleUntitled'),
           mode: ['ALLOW', 'DENY', 'FORCEALLOW'].includes(r.mode) ? r.mode : 'DENY',
-          match: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match)
+          match: ['START', 'END', 'SUBTREE', 'REGEX', 'TAG', 'TAGALL', 'EXACT'].includes(r.match)
             ? r.match
             : 'START',
           roles: r.roles || [],

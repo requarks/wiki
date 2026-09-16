@@ -823,7 +823,8 @@ $timeline-turn: 16px;
   /* The subway line: one continuous rule behind the dots, drawn by the list rather than the items. */
   &-timeline {
     position: relative;
-    padding: 1rem 0;
+    /* -> The extra bottom padding is what the line's turn stops short of; see `bottom` below */
+    padding: 1rem 0 calc(#{$timeline-turn} + 1rem);
 
     /*
       The line: down behind the dots, then a quarter turn out to the left edge rather than stopping
@@ -843,7 +844,12 @@ $timeline-turn: 16px;
       content: '';
       position: absolute;
       top: 0;
-      bottom: 0;
+      /*
+        Held off the bottom edge: with enough entries to fill the drawer the turn would otherwise
+        run into the bottom of the overlay, reading as a line that was cut off rather than one that
+        ended.
+      */
+      bottom: $timeline-turn;
       left: 0;
       width: calc(1rem + 14px + 1px);
       border-right: 2px solid $timeline-line;

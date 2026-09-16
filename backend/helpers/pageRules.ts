@@ -28,14 +28,20 @@ import type { GroupRule, GroupRuleMatch, GroupRuleMode } from '../models/groups.
  *
  *   1. MATCH TYPE, as bands. From weakest to strongest:
  *
- *        Path Starts With  <  Path Ends With  <  Path Matches Regex  <
- *        Has Any Tag  <  Has All Tags  <  Path Is Exactly
+ *        Path Starts With  <  Path Ends With  <  Path Is Exactly + Children  <
+ *        Path Matches Regex  <  Has Any Tag  <  Has All Tags  <  Path Is Exactly
  *
  *      The order runs from the vaguest way of naming pages to the most precise: a prefix is a whole
  *      branch of the tree, a tag is something somebody put ON the page to say what it is, and an
  *      exact path is one page and nothing else.
  *
- *      Three BANDS, because path length below only settles a contest inside one of them: the three
+ *      Path Is Exactly + Children is a prefix that stops at a folder boundary: `foo/bar` and
+ *      everything filed under it, where Path Starts With would also take in `foo/barometer`. It
+ *      therefore beats the two loose path kinds — it addresses one branch of the tree rather than
+ *      whatever happens to begin or end that way — while a regex, which can say anything either of
+ *      them can and more, still beats it.
+ *
+ *      Three BANDS, because path length below only settles a contest inside one of them: the four
  *      path-shaped kinds, then the two tag kinds, then Path Is Exactly. A tag rule therefore beats a
  *      prefix rule however deep that prefix is — `confidential` is denied under `docs` as surely as
  *      anywhere else, and a guests group denying the whole site can still be opened on the pages
@@ -52,7 +58,7 @@ import type { GroupRule, GroupRuleMatch, GroupRuleMode } from '../models/groups.
  *
  *   3. MATCH TYPE AGAIN, to separate two kinds sharing a band at the same specificity: Has All Tags
  *      beats Has Any Tag, since every tag in a list is a stronger claim than any one of them, and a
- *      regex beats a suffix beats a prefix.
+ *      regex beats a branch beats a suffix beats a prefix.
  *
  *   4. MODE, when two rules are equally specific and of the same kind:
  *
@@ -94,7 +100,15 @@ export interface RulePageRef {
  * Match kinds from weakest to strongest. The index IS the priority, so the order of this array is
  * the order documented above.
  */
-const MATCH_PRIORITY: GroupRuleMatch[] = ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT']
+const MATCH_PRIORITY: GroupRuleMatch[] = [
+  'START',
+  'END',
+  'SUBTREE',
+  'REGEX',
+  'TAG',
+  'TAGALL',
+  'EXACT'
+]
 
 /**
  * Which band of the ordering each kind sits in, weakest first — step 1 above.
@@ -105,6 +119,7 @@ const MATCH_PRIORITY: GroupRuleMatch[] = ['START', 'END', 'REGEX', 'TAG', 'TAGAL
 const MATCH_BAND: Record<GroupRuleMatch, number> = {
   START: 0,
   END: 0,
+  SUBTREE: 0,
   REGEX: 0,
   TAG: 1,
   TAGALL: 1,
@@ -201,6 +216,13 @@ export function ruleMatchesPage(rule: GroupRule, page: RulePageRef): boolean {
       return pagePath === rulePath
     case 'END':
       return pagePath.endsWith(rulePath)
+    case 'SUBTREE': {
+      // -> A page and everything filed under it, which `START` cannot say: a prefix of `foo/bar`
+      //    also takes in `foo/barometer`, so saying this with prefixes takes two rules. The empty
+      //    path is the root of the tree and therefore every page, the same as an empty `START`
+      const branch = rulePath.replace(/\/+$/, '')
+      return branch.length < 1 || pagePath === branch || pagePath.startsWith(`${branch}/`)
+    }
     case 'REGEX':
       try {
         return new RegExp(rulePath).test(pagePath)

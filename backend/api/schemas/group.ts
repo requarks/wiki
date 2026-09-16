@@ -28,8 +28,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       match: {
         type: 'string',
         description:
-          'How the rule addresses pages. `TAG` (any of them) and `TAGALL` (all of them) match on `tags` and ignore `path`; every other kind compares `path` against the page path and ignores `tags`.',
-        enum: ['START', 'END', 'REGEX', 'TAG', 'TAGALL', 'EXACT']
+          'How the rule addresses pages. `TAG` (any of them) and `TAGALL` (all of them) match on `tags` and ignore `path`; every other kind compares `path` against the page path and ignores `tags`. `SUBTREE` is `path` and everything filed under it, which is `EXACT` and `START` in one rule without the pages that merely begin with it.',
+        enum: ['START', 'END', 'SUBTREE', 'REGEX', 'TAG', 'TAGALL', 'EXACT']
       },
       mode: {
         type: 'string',

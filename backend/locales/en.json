@@ -616,6 +616,7 @@
   "admin.groups.ruleMatchExact": "Path Is Exactly...",
   "admin.groups.ruleMatchRegex": "Path Matches Regex...",
   "admin.groups.ruleMatchStart": "Path Starts With...",
+  "admin.groups.ruleMatchSubtree": "Path Is Exactly... + Children",
   "admin.groups.ruleMatchTag": "Has Any Tag...",
   "admin.groups.ruleMatchTagAll": "Has All Tags...",
   "admin.groups.rulePath": "Path",

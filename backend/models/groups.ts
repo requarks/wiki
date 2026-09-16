@@ -11,7 +11,7 @@ import type { FastifyRequest } from 'fastify'
 export const SYSTEM_PERMISSION = 'manage:system'
 
 /** How a rule addresses pages: `TAG` and `TAGALL` read `tags`, everything else reads `path`. */
-export type GroupRuleMatch = 'START' | 'END' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
+export type GroupRuleMatch = 'START' | 'END' | 'SUBTREE' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
 
 /** Whether a matching rule grants, denies, or unconditionally grants its roles. */
 export type GroupRuleMode = 'ALLOW' | 'DENY' | 'FORCEALLOW'
