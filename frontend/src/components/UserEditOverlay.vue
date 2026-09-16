@@ -863,7 +863,7 @@ function unassignGroup(id) {
       message: t('admin.users.minimumGroupRequired')
     })
   } else {
-    state.user.groups = state.user.groups.filter((gr) => gr.id === id)
+    state.user.groups = state.user.groups.filter((gr) => gr.id !== id)
   }
 }
 
