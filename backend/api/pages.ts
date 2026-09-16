@@ -22,6 +22,20 @@ function splitList(value?: string): string[] {
   )
 }
 
+/**
+ * Whether two tag lists say the same thing.
+ *
+ * A set rather than an array comparison: a tag is on a page or it is not, so a list carrying the same
+ * tags in another order assigns nothing. It matters because the editor sends every field on every
+ * save — a body carrying the tags the page already has is not somebody retagging it, and treating it
+ * as one would need `write:tags` of anybody who ever saved a tagged page.
+ */
+function sameTags(a: string[], b: string[]): boolean {
+  const left = new Set(a)
+  const right = new Set(b)
+  return left.size === right.size && [...left].every((tag) => right.has(tag))
+}
+
 const siteIdParam = {
   type: 'object',
   properties: {
@@ -86,6 +100,7 @@ const PAGE_PERMISSIONS = [
   'review:pages',
   'manage:pages',
   'delete:pages',
+  'write:tags',
   'write:styles',
   'write:scripts',
   'read:source',
@@ -853,15 +868,22 @@ async function routes(app: FastifyInstance) {
         tags a new page carries are the ones in this request — and leaving them out would make a
         rule addressing tags silently miss every page the moment it was created.
       */
-      if (
-        !mayOnPage(req, 'write:pages', {
-          siteId: req.params.siteId,
-          path: req.body.path,
-          locale: req.body.locale,
-          tags: req.body.tags ?? []
-        })
-      ) {
+      const incoming = {
+        siteId: req.params.siteId,
+        path: req.body.path,
+        locale: req.body.locale,
+        tags: req.body.tags ?? []
+      }
+      if (!mayOnPage(req, 'write:pages', incoming)) {
         return reply.forbidden('You are not allowed to create a page here.')
+      }
+      /*
+        Tags are a permission of their own, and creating a page carrying them is assigning them —
+        otherwise the way around `write:tags` would be to make a new page instead of tagging an old
+        one. Only a non-empty list asks anything: a page created untagged assigns nothing.
+      */
+      if (incoming.tags.length > 0 && !mayOnPage(req, 'write:tags', incoming)) {
+        return reply.forbidden('You are not allowed to assign tags to a page here.')
       }
       const { page, versionId } = await WIKI.models.pages.createPage(
         req.params.siteId,
@@ -933,21 +955,36 @@ async function routes(app: FastifyInstance) {
         return reply.forbidden('You are not allowed to edit this page.')
       }
       /*
-        And against the tags the edit gives it, when it changes them. Retagging a page is what a move
-        is to a path: a rule may address pages by tag, so writing a page INTO a set of tags the writer
-        has no say over is the same hole as moving one into a branch they could not have created a
-        page in — and the check below is the tag half of the one the move route makes.
+        Whether this save actually retags the page, which is the only thing any of the checks below
+        are about. Compared against the row rather than read off the body being present, because the
+        editor sends every field on every save — see `sameTags`.
       */
-      if (
-        req.body.tags !== undefined &&
-        !mayOnPage(req, 'write:pages', {
+      if (req.body.tags !== undefined && !sameTags(req.body.tags, target.tags)) {
+        const retagged = {
           siteId: req.params.siteId,
           path: target.path,
           locale: target.locale,
           tags: req.body.tags
-        })
-      ) {
-        return reply.forbidden('You are not allowed to give this page those tags.')
+        }
+        /*
+          Assigning and unassigning tags is a permission of its own, and it is asked of the page on
+          both sides of the change the way the move route asks about both locations: a rule may
+          address pages by tag, so taking the tag that carries the rule off a page is as much a
+          retagging as putting one on. Whoever may edit a page is not therefore whoever may decide
+          which set of rules it falls under.
+        */
+        if (!mayOnPage(req, 'write:tags', target) || !mayOnPage(req, 'write:tags', retagged)) {
+          return reply.forbidden('You are not allowed to change the tags on this page.')
+        }
+        /*
+          And write access to the page as the tags leave it. Retagging a page is what a move is to a
+          path: writing a page INTO a set of tags the writer has no say over is the same hole as
+          moving one into a branch they could not have created a page in — and this is the tag half
+          of the check the move route makes.
+        */
+        if (!mayOnPage(req, 'write:pages', retagged)) {
+          return reply.forbidden('You are not allowed to give this page those tags.')
+        }
       }
       const change = await WIKI.models.pages.updatePage(
         req.params.siteId,

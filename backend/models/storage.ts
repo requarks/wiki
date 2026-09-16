@@ -2,7 +2,14 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
 import { and, eq, inArray } from 'drizzle-orm'
-import { CustomError, isSensitiveMask, parseModuleProps } from '../helpers/common.ts'
+import {
+  CustomError,
+  dataPathRoot,
+  isSensitiveMask,
+  isWithinDataPath,
+  parseModuleProps,
+  resolveLocalPath
+} from '../helpers/common.ts'
 import { sites as sitesTable, storage as storageTable } from '../db/schema.ts'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { AssetKind } from './assets.ts'
@@ -795,14 +802,75 @@ class Storage {
   }
 
   /**
+   * Whether this caller may set a path prop to this value.
+   *
+   * Only reached for a caller who does NOT hold `manage:system`, i.e. a site administrator. Three
+   * things follow from the fact that a path on this server is the operator's territory rather than a
+   * site's, and only the first is about where the path points:
+   *
+   * - **An unchanged value is always allowed.** A `manage:system` operator may point a target
+   *   wherever they like, and a site administrator saving any other field on that target sends the
+   *   whole configuration back — so treating a value they did not touch as a change would lock them
+   *   out of the rest of the form. The comparison is between RESOLVED paths, so re-spelling
+   *   `./data/content` as `data/content` is correctly not a change.
+   * - **A `data` path must land inside the data directory.** That directory is the wiki's own, so
+   *   there is nothing there a site administrator did not already have. Moving a target from an
+   *   outside path INTO it is therefore allowed, and is the one way they can change such a value:
+   *   it gives reach up, never out.
+   * - **A `system` path cannot be set at all.** `gitBinaryPath` is an executable this server runs
+   *   and `sshPrivateKeyPath` is a key it reads; neither has a sensible value inside the data
+   *   directory, so there is no confined form of them to offer. Keeping the stored value is all a
+   *   site administrator can do.
+   *
+   * @param stored The value as it currently stands, absent on a target being created
+   * @returns The reason it is refused, or null when it is allowed
+   */
+  checkLocalPath(prop: ModuleProp, value: unknown, stored: unknown): string | null {
+    if (typeof value !== 'string') {
+      // -> Left to the type check below, which words it for the prop rather than for the path
+      return null
+    }
+    const unchanged =
+      typeof stored === 'string' &&
+      (value === stored ||
+        // -> Both empty, both meaning "not set": neither resolves to a path to compare
+        (value.length > 0 &&
+          stored.length > 0 &&
+          resolveLocalPath(value) === resolveLocalPath(stored)))
+    if (unchanged) {
+      return null
+    }
+    // -> An empty value is a path being REMOVED rather than set — `gitBinaryPath` falls back to the
+    //    one on PATH, and nothing is read where a key path is blank
+    if (value.length < 1) {
+      return null
+    }
+    if (prop.localPath === 'system') {
+      return `Only a system administrator can set ${prop.title}, as it points somewhere on this server rather than inside this wiki.`
+    }
+    if (!isWithinDataPath(value)) {
+      return `${prop.title} has to be inside the wiki's data directory (${dataPathRoot()}). Only a system administrator can point it somewhere else.`
+    }
+    return null
+  }
+
+  /**
    * Check incoming config values against what the module declares.
    *
    * The props are a runtime declaration read from a YAML file, so no JSON Schema can cover them —
    * without this, a boolean prop would happily store the string `"maybe"`.
    *
+   * @param options.stored The config as it currently stands, which is what a path prop is compared
+   *   against to decide whether this request is CHANGING it. Omit on a create, where there is none.
+   * @param options.unconfined Whether the caller may point a path prop anywhere on the machine, i.e.
+   *   whether they hold `manage:system`. See `checkLocalPath`.
    * @returns The reason it is invalid, or null when it is fine
    */
-  validateConfig(moduleKey: string, incoming: Record<string, any> = {}): string | null {
+  validateConfig(
+    moduleKey: string,
+    incoming: Record<string, any> = {},
+    options: { stored?: Record<string, any>; unconfined?: boolean } = {}
+  ): string | null {
     const props = this.getDefinition(moduleKey)?.props ?? {}
     for (const [key, value] of Object.entries(incoming)) {
       const prop = props[key]
@@ -811,6 +879,12 @@ class Storage {
       //    secret rather than one it is setting — `buildConfig` keeps what is stored for both
       if (!prop || prop.readOnly || value === undefined || isSensitiveMask(prop, value)) {
         continue
+      }
+      if (prop.localPath && !options.unconfined) {
+        const refusal = this.checkLocalPath(prop, value, options.stored?.[key])
+        if (refusal) {
+          return refusal
+        }
       }
       if (prop.enum) {
         // -> Enum entries are declared as `value` or `value|label`
@@ -843,9 +917,15 @@ class Storage {
   /**
    * Check a target patch against what its module supports.
    *
+   * @param options.unconfined Whether the caller may point a path prop anywhere on this server, i.e.
+   *   whether they hold `manage:system`. See `checkLocalPath`.
    * @returns The reason it is invalid, or null when it is fine
    */
-  validateTarget(target: StorageTarget, patch: StorageTargetInput): string | null {
+  validateTarget(
+    target: StorageTarget,
+    patch: StorageTargetInput,
+    options: { unconfined?: boolean } = {}
+  ): string | null {
     const definition = this.getDefinition(target.module)!
     if (patch.isEnabled === false && target.module === DB_MODULE) {
       return 'The database storage target cannot be disabled, as content would have nowhere to live.'
@@ -915,7 +995,10 @@ class Storage {
         return 'The Custom Base URL must be an http or https address.'
       }
     }
-    return this.validateConfig(target.module, patch.config)
+    return this.validateConfig(target.module, patch.config, {
+      stored: target.config,
+      unconfined: options.unconfined
+    })
   }
 
   /**

@@ -15,6 +15,7 @@ props:
     icon: symlink-directory
     order: 1
     default: ./data/content
+    localPath: data
 actions:
   exportAll:
     label: Export Everything

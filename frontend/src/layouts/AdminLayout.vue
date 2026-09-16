@@ -124,7 +124,8 @@
             </w-item>
             <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/general`"
-              active-class="bg-primary text-white">
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-web.svg" />
               </w-item-section>
@@ -141,7 +142,8 @@
             </w-item>
             <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/approvals`"
-              active-class="bg-primary text-white">
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-inspection.svg" />
               </w-item-section>

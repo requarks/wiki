@@ -42,7 +42,13 @@ async function routes(app: FastifyInstance) {
     '/fetch',
     {
       config: {
-        permissions: ['manage:system']
+        /*
+          Adding a locale to the installation is additive: it downloads strings nobody had and leaves
+          every site exactly as it was. Site administrators need it because a site can only be given a
+          locale that is installed, so gating it on `manage:system` left them naming a locale they
+          could not fetch. Renaming one is the opposite — see `/:code/aliases` below.
+        */
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Fetch the latest locales from the Wiki.js repository',
@@ -86,7 +92,8 @@ async function routes(app: FastifyInstance) {
     '/:code/install',
     {
       config: {
-        permissions: ['manage:system']
+        // -> Site-bound in effect, like `/fetch` above: adding a locale is what lets a site use it
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Download the strings of an available locale',
@@ -135,7 +142,8 @@ async function routes(app: FastifyInstance) {
     '/upload',
     {
       config: {
-        permissions: ['manage:system']
+        // -> Site-bound in effect, like `/fetch` above: adding a locale is what lets a site use it
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Install a locale from an uploaded strings file',
@@ -194,6 +202,9 @@ async function routes(app: FastifyInstance) {
     '/:code/aliases',
     {
       config: {
+        // -> Not `manage:sites`, unlike installing one above: a locale's name and short code are how
+        //    EVERY site on the instance refers to it and addresses it in a URL, so renaming one from
+        //    a single site's admin area would reach across all of them
         permissions: ['manage:system']
       },
       schema: {

@@ -96,7 +96,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'object',
         additionalProperties: true,
         description:
-          'The module configuration, declared in its `definition.yml`: each entry carries a `type`, `title`, `hint`, `default` and the display hints the admin area renders a control from. A `readOnly` prop is shown but cannot be changed, and is silently kept at its stored value when written to.'
+          'The module configuration, declared in its `definition.yml`: each entry carries a `type`, `title`, `hint`, `default` and the display hints the admin area renders a control from. A `readOnly` prop is shown but cannot be changed, and is silently kept at its stored value when written to.\n\n`localPath` says that a prop holds a path on this server, and what may be put in it: `data` is confined to the wiki data directory, `system` is anywhere on the machine. Without `manage:system` a `system` path also reads back as `readOnly`, since there is no value such a caller could set.'
       },
       config: {
         type: 'object',
@@ -214,7 +214,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'object',
         additionalProperties: true,
         description:
-          'Values for the module props. Validated against what the module declares: an unknown key is dropped, a wrong type is refused, and a read-only prop keeps its stored value. A sensitive prop sent back as the mask it was read as keeps its stored value too; send a new value to replace the secret, or an empty string to remove it.'
+          'Values for the module props. Validated against what the module declares: an unknown key is dropped, a wrong type is refused, and a read-only prop keeps its stored value. A sensitive prop sent back as the mask it was read as keeps its stored value too; send a new value to replace the secret, or an empty string to remove it.\n\nA prop declaring `localPath` is refused rather than dropped when the caller may not point it where they asked: without `manage:system`, a `data` path must resolve inside the wiki data directory and a `system` path cannot be set at all. Sending back the value that is already stored is always accepted, so a caller who may not change a path can still save every other field of the target.'
       }
     }
   })

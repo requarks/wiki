@@ -307,9 +307,14 @@
           </div>
         </w-form>
       </w-card-section>
-      <w-card-section class="pb-6" id="refCardTags">
+      <!--
+        Shown read-only to an author who may not retag the page, and left out altogether when there is
+        nothing to read either: a heading over an empty box says a page has no tags in a place that
+        cannot be used to give it any.
+      -->
+      <w-card-section class="pb-6" id="refCardTags" v-if="showTagsSection">
         <div class="w-section-header">{{ t('editor.props.tags') }}</div>
-        <page-tags edit />
+        <page-tags :edit="mayWriteTags" />
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardVisibility">
         <div class="w-section-header">{{ t('editor.props.visibility') }}</div>
@@ -448,6 +453,16 @@ const mayWriteScripts = computed(() => userStore.pagePermissions.includes('write
 const mayWriteStyles = computed(() => userStore.pagePermissions.includes('write:styles'))
 
 /*
+  And whether they may retag it, which the same rules answer separately: writing a page and deciding
+  which tags — and so which rules — it falls under are two permissions. The field is what assigns one,
+  so without it the section reads the tags out and offers no way to change them, exactly as the
+  PATCH route would refuse a body that did.
+*/
+const mayWriteTags = computed(() => userStore.pagePermissions.includes('write:tags'))
+// -> Named apart from `pageStore.showTags`, which is the page's own choice to display them
+const showTagsSection = computed(() => mayWriteTags.value || pageStore.tags?.length > 0)
+
+/*
   The rail of jump links down the side of the panel. A computed rather than a constant because the
   Scripts section is not always there, and a link to a section that is not rendered is a link that
   throws -- `jumpToSection` reads the element straight off the document.
@@ -465,7 +480,12 @@ const quickaccess = computed(() =>
     },
     { key: 'refCardSidebar', icon: 'la:ruler-vertical', label: t('editor.props.sidebar') },
     { key: 'refCardSocial', icon: 'la:comments', label: t('editor.props.social') },
-    { key: 'refCardTags', icon: 'la:tags', label: t('editor.props.tags') },
+    {
+      key: 'refCardTags',
+      icon: 'la:tags',
+      label: t('editor.props.tags'),
+      shown: showTagsSection.value
+    },
     { key: 'refCardVisibility', icon: 'la:eye', label: t('editor.props.visibility') }
   ].filter((qa) => qa.shown !== false)
 )

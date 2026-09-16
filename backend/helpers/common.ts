@@ -3,6 +3,7 @@ import { startCase } from 'es-toolkit/string'
 import crypto from 'node:crypto'
 import mime from 'mime'
 import fs from 'node:fs'
+import path from 'node:path'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 export interface Deferred<T = void> {
@@ -366,6 +367,23 @@ export function getTypeDefaultValue(type: string): string | number | boolean | u
  */
 export type ModulePropDeclaration = ModulePropDefinition | string
 
+/**
+ * What a prop holding a path ON THIS SERVER is allowed to point at.
+ *
+ * `data` is somewhere inside the wiki's own data directory. A site administrator may set one freely:
+ * that directory is already the wiki's to write, so aiming a site's content tree at another folder
+ * in it reaches nothing they did not have.
+ *
+ * `system` is a path anywhere on the machine — a binary to execute, a private key to read. That is
+ * the operator's business rather than a site's, so only `manage:system` may set one. Confining it to
+ * the data directory instead would be no use: git is not installed there.
+ *
+ * Absent on every prop that is not a local path at all, which includes the ones that look like one:
+ * an object store's key prefix and an SFTP base path name a place on somebody else's server, where
+ * this process has no reach of its own.
+ */
+export type ModuleLocalPathScope = 'data' | 'system'
+
 export interface ModulePropDefinition {
   type: string
   default?: unknown
@@ -376,6 +394,7 @@ export interface ModulePropDefinition {
   multiline?: boolean
   sensitive?: boolean
   readOnly?: boolean
+  localPath?: ModuleLocalPathScope
   icon?: string
   order?: number
   if?: unknown[]
@@ -393,6 +412,8 @@ export interface ModuleProp {
   sensitive: boolean
   /** Shown but not editable — the module declares something this server cannot currently change. */
   readOnly: boolean
+  /** Null unless this prop holds a path on this server. See `ModuleLocalPathScope`. */
+  localPath: ModuleLocalPathScope | null
   icon: string
   order: number
   if: unknown[]
@@ -421,6 +442,43 @@ export const SENSITIVE_MASK = '••••••••'
  */
 export function isSensitiveMask(prop: ModuleProp, value: unknown): boolean {
   return prop.sensitive && value === SENSITIVE_MASK
+}
+
+/**
+ * A path prop's value as an absolute path on this server.
+ *
+ * Relative to the install directory, which is what every hint on these props promises and what the
+ * modules themselves resolve against.
+ */
+export function resolveLocalPath(value: string): string {
+  return path.resolve(WIKI.ROOTPATH, value)
+}
+
+/** The wiki's own data directory, absolute. */
+export function dataPathRoot(): string {
+  return path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath)
+}
+
+/**
+ * Whether a path is the wiki's data directory, or something inside it.
+ *
+ * Compared as resolved paths through `path.relative` rather than as strings, because a prefix test
+ * would accept `/data/wiki-elsewhere` for a data directory of `/data/wiki` — the sibling whose name
+ * merely starts the same way. `..` in the result is what says the path climbs back out; an absolute
+ * result is what says it was never under it at all (a different drive on Windows).
+ *
+ * Symlinks are not resolved: the check is about what an administrator may WRITE in a settings field,
+ * and following links would need the path to exist, which the folder a target is about to create
+ * does not yet.
+ */
+export function isWithinDataPath(value: string): boolean {
+  const root = dataPathRoot()
+  const resolved = resolveLocalPath(value)
+  if (resolved === root) {
+    return true
+  }
+  const relative = path.relative(root, resolved)
+  return relative.length > 0 && !relative.startsWith('..') && !path.isAbsolute(relative)
 }
 
 /**
@@ -464,6 +522,7 @@ export function parseModuleProps(
       multiline: def.multiline || false,
       sensitive: def.sensitive || false,
       readOnly: def.readOnly || false,
+      localPath: def.localPath ?? null,
       icon: def.icon || 'rename',
       order: def.order || 100,
       if: def.if ?? []

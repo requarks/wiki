@@ -153,11 +153,18 @@
           </w-card-section>
           <w-separator />
           <w-card-actions align="right">
+            <!--
+              Guarded like every other action on this dashboard, and on the permission the Analytics
+              screen itself needs. Without this the one card action with no guard handed a live link
+              into a section `access:admin` alone cannot load -- every sibling button was already
+              disabled, so it read as the one thing such a user was meant to be able to open.
+            -->
             <w-btn
               flat
               :color="actionColor"
               icon="la:chart-area"
               :label="t(`admin.analytics.title`)"
+              :disable="!userStore.can(`manage:sites`)"
               :to="`/_admin/` + adminStore.currentSiteId + `/analytics`" />
           </w-card-actions>
         </w-card>

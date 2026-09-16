@@ -52,11 +52,18 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        // -> `manage:navigation` is here because a menu item can be limited to groups, so the
-        //    navigation editor has to be able to name them. It is safe to grant on this route and this
-        //    route only: the listing is `GroupCore`, which carries no permissions, no rules and no
-        //    members — reading one group in full, or its members, keeps needing `manage:groups`.
-        permissions: ['read:groups', 'manage:groups', 'manage:navigation']
+        /*
+          `manage:navigation` is here because a menu item can be limited to groups, and `manage:sites`
+          because an approval rule names the groups that may suggest an edit and the groups that
+          review one — both editors have to be able to name a group they cannot otherwise read, and
+          the approvals screen loads this alongside its rules, so without it the screen does not open
+          at all.
+
+          Safe to grant on this route and this route only: the listing is `GroupCore`, which carries
+          no permissions, no rules and no members — reading one group in full, or its members, keeps
+          needing `manage:groups`.
+        */
+        permissions: ['read:groups', 'manage:groups', 'manage:navigation', 'manage:sites']
       },
       schema: {
         summary: 'List all groups',

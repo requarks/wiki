@@ -31,7 +31,6 @@ const SITE_CONFIG_KEYS = [
   'features',
   'locales',
   'robots',
-  'theme',
   'uploads'
 ] as const
 
@@ -54,7 +53,14 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['read:sites', 'access:admin']
+        /*
+          `manage:sites` as well as `access:admin`, because managing sites starts with seeing which
+          ones there are — the admin area's site selector is filled from here, and every site-bound
+          screen hangs off it. `read:sites` used to stand where `manage:sites` does and was never a
+          permission anybody could hold: nothing validates a name, and one that is not on the list
+          the group editor offers simply never matches.
+        */
+        permissions: ['manage:sites', 'access:admin']
       },
       schema: {
         summary: 'List all sites',
@@ -161,7 +167,8 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['create:sites', 'manage:sites']
+        // -> `create:sites` stood beside this one and matched nobody; see the note on the listing above
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Create a new site',
@@ -291,7 +298,6 @@ async function routes(app: FastifyInstance) {
         showMenu?: boolean
       }
       robots?: Record<string, any>
-      theme?: Record<string, any>
       uploads?: Record<string, any>
     }
   }>(
@@ -302,6 +308,8 @@ async function routes(app: FastifyInstance) {
       },
       schema: {
         summary: 'Update a site',
+        description:
+          'Every site setting except its theme, which has a route of its own because `manage:theme` grants it without granting the rest of this — see `PUT /sites/{siteId}/theme`.',
         tags: ['Sites'],
         params: {
           type: 'object',
@@ -381,9 +389,6 @@ async function routes(app: FastifyInstance) {
             },
             robots: {
               $ref: 'Site#/properties/robots'
-            },
-            theme: {
-              $ref: 'Site#/properties/theme'
             },
             uploads: {
               $ref: 'Site#/properties/uploads'
@@ -526,6 +531,81 @@ async function routes(app: FastifyInstance) {
       } catch (err: any) {
         WIKI.logger.warn(err)
         return reply.internalServerError()
+      }
+    }
+  )
+
+  /**
+   * UPDATE SITE THEME
+   *
+   * Its own route rather than a section of `PUT /:siteId`, because it is its own permission:
+   * `manage:theme` is how a wiki hands somebody the look of a site without handing them its
+   * hostname, its locales, its authentication or its page defaults. Folding the theme into the
+   * general update would mean either refusing a theme manager outright — which is what happened
+   * before this existed, since the admin area offers them the screen — or granting them every
+   * other setting in the same body.
+   *
+   * There is no matching `GET`: a site's theme is public, served with the site itself to every
+   * reader that has to draw it, so `GET /sites/{siteIdorHostname}` already answers with it and a
+   * second copy behind a permission would say the same thing less usefully.
+   */
+  app.put<{ Params: { siteId: string }; Body: Record<string, any> }>(
+    '/:siteId/theme',
+    {
+      config: {
+        // -> `manage:sites` too: whoever administers the site holds everything in it, and this route
+        //    is the only way the theme is written now that the general update has given it up
+        permissions: ['manage:sites', 'manage:theme']
+      },
+      schema: {
+        summary: "Update a site's theme",
+        description:
+          "The site's appearance: its colors, fonts, layout choices and the raw CSS, head and body it injects into every page. Merged onto what is stored, so a partial body leaves the rest alone.\n\nThe three `inject*` fields are served into the document as written — that is what they are for — so this route is a trust boundary, and `manage:theme` is a permission to hand out on that understanding.",
+        tags: ['Sites'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        body: { $ref: 'Site#/properties/theme' },
+        response: {
+          200: {
+            description: 'Site theme updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+      await WIKI.models.sites.updateSite(req.params.siteId, { config: { theme: req.body } })
+
+      // -> Which fields were set, never their values: `injectCSS` and friends are whole stylesheets
+      //    and scripts, and the audit log records what was touched rather than copying content into it
+      await audit(req, 'admin', 'updateSiteTheme', {
+        siteId: req.params.siteId,
+        changedFields: Object.keys(req.body)
+      })
+
+      return {
+        ok: true,
+        message: 'Site theme updated successfully.'
       }
     }
   )

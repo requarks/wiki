@@ -133,7 +133,12 @@
                 <w-item-label>{{ lc.name }}</w-item-label>
                 <w-item-label caption>{{ lc.nativeName }} ({{ lc.displayCode }})</w-item-label>
               </w-item-section>
-              <w-item-section v-if="lc.isInstalled" side>
+              <!--
+                Installing a locale is a site administrator's to do, but renaming one is not: the name
+                and the short code are how every site on the instance addresses it, so the endpoint
+                behind this button asks for `manage:system` and the button is offered to nobody else.
+              -->
+              <w-item-section v-if="lc.isInstalled && userStore.can(`manage:system`)" side>
                 <w-btn
                   flat
                   dense
@@ -198,6 +203,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import { sortBy } from 'es-toolkit/array'
 
@@ -209,6 +215,7 @@ const dark = useDark()
 
 const adminStore = useAdminStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 

@@ -117,7 +117,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'array',
         items: {
           type: 'string'
-        }
+        },
+        description:
+          'Changing these requires the `write:tags` permission, on the page as it stands and as the tags leave it. Sending the tags the page already carries asks nothing, which is what lets somebody without it save a tagged page.'
       },
       allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },

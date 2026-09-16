@@ -1,8 +1,60 @@
 import { audit } from '../helpers/audit.ts'
-import { maskSensitiveProps } from '../helpers/common.ts'
+import { dataPathRoot, maskSensitiveProps } from '../helpers/common.ts'
 import { STORAGE_DIRECT_ACCESS_FALLBACKS, STORAGE_TARGET_STATUSES } from '../models/storage.ts'
 import type { FastifyInstance } from 'fastify'
+import type { ModuleProp } from '../helpers/common.ts'
 import type { StorageSiteConfigInput, StorageTargetInput } from '../models/storage.ts'
+
+/**
+ * A target's path props as they stand for THIS caller.
+ *
+ * `storage.checkLocalPath` is the rule and refuses on save; this is the same rule said in the form,
+ * so that a site administrator reads what they may enter instead of finding out by being refused.
+ * Nothing here is the enforcement, and a client that ignores all of it is still refused.
+ *
+ * A `system` path — the git binary to run, the private key to read — is the operator's to point, so
+ * without `manage:system` there is no value such a caller could put in the field at all. Marked
+ * `readOnly`, which already means exactly that to the admin area: it disables the control and leaves
+ * the prop out of what is sent back, so whatever is stored is kept.
+ *
+ * A `data` path stays editable, because such a caller CAN set one — anywhere inside the wiki's data
+ * directory, which is where the default already is. Only its hint changes, to say where.
+ *
+ * The values are untouched either way: a path is not a secret, and hiding where a site's content is
+ * kept from the person administering that site would help nobody.
+ */
+function describeLocalPaths(
+  props: Record<string, ModuleProp>,
+  unconfined: boolean
+): Record<string, ModuleProp> {
+  if (unconfined) {
+    return props
+  }
+  return Object.fromEntries(
+    Object.entries(props).map(([key, prop]) => {
+      if (prop.localPath === 'system') {
+        return [
+          key,
+          {
+            ...prop,
+            readOnly: true,
+            hint: `${prop.hint} Only a system administrator can change this, as it points somewhere on this server rather than inside this wiki.`.trim()
+          }
+        ]
+      }
+      if (prop.localPath === 'data') {
+        return [
+          key,
+          {
+            ...prop,
+            hint: `${prop.hint} Has to be inside the wiki's data directory (${dataPathRoot()}) unless a system administrator sets it.`.trim()
+          }
+        ]
+      }
+      return [key, prop]
+    })
+  )
+}
 
 /**
  * Storage API Routes
@@ -15,7 +67,16 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/storage',
     {
       config: {
-        permissions: ['manage:system']
+        /*
+          A site's storage configuration is a site's own setting — where this site's content is
+          written and which target it is served from — so it belongs to whoever manages sites, the
+          way its analytics, comments and blocks do. What a target holds is not instance-wide: the
+          modules are installed with the wiki and this only says which of them this site uses.
+
+          Credentials are not what makes it `manage:system` either, because they never come back:
+          every `sensitive` prop is masked on the way out, here and in `PUT` below.
+        */
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Get the storage configuration of a site',
@@ -77,6 +138,7 @@ async function routes(app: FastifyInstance) {
       if (!site) {
         return reply.notFound('Site does not exist.')
       }
+      const unconfined = WIKI.models.groups.holdsSystemPermission(req)
       const layout = WIKI.models.storage.pathLayoutFor(req.params.siteId)
       return {
         largeThreshold: WIKI.models.storage.largeThresholdFor(req.params.siteId),
@@ -94,6 +156,7 @@ async function routes(app: FastifyInstance) {
         */
         targets: (await WIKI.models.storage.getSiteTargets(req.params.siteId)).map((target) => ({
           ...target,
+          props: describeLocalPaths(target.props, unconfined),
           config: maskSensitiveProps(target.props, target.config)
         }))
       }
@@ -107,9 +170,6 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/storage/status',
     {
       config: {
-        // -> Deliberately not `manage:system`, unlike the rest of this file: this answers a status
-        //    light in the admin sidebar, which anybody who can see the storage section at all needs,
-        //    and it carries none of the configuration that makes the rest of these privileged
         permissions: ['manage:sites']
       },
       schema: {
@@ -176,7 +236,8 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/storage',
     {
       config: {
-        permissions: ['manage:system']
+        // -> The same site-bound setting the `GET` above answers with; see the note there
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Update the storage configuration of a site',
@@ -254,6 +315,13 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Site does not exist.')
       }
 
+      /*
+        Whether this caller may point a path prop anywhere on this server. `manage:sites` is enough to
+        configure a site's storage, but a path is a place on the operator's machine rather than a
+        setting of the site — see `storage.checkLocalPath`, which is where the rule is.
+      */
+      const unconfined = WIKI.models.groups.holdsSystemPermission(req)
+
       // -> Validated as a whole first: a partially applied storage configuration is worse than a
       //    refused one, since the admin area saves every target at once
       const invalidConfig = WIKI.models.storage.validateSiteConfig(req.body)
@@ -267,7 +335,7 @@ async function routes(app: FastifyInstance) {
         if (!target) {
           return reply.notFound(`Storage target ${patch.id} does not exist.`)
         }
-        const invalid = WIKI.models.storage.validateTarget(target, patch)
+        const invalid = WIKI.models.storage.validateTarget(target, patch, { unconfined })
         if (invalid) {
           return reply.badRequest(invalid)
         }
@@ -314,7 +382,9 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/storage/targets/:targetId/actions/:action',
     {
       config: {
-        permissions: ['manage:system']
+        // -> An action moves this site's content between this site's targets, so it is the same
+        //    authority as configuring them
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'Run an action on a storage target',

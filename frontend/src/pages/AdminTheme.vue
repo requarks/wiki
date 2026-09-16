@@ -733,10 +733,13 @@ async function save() {
       baseFont: state.config.baseFont,
       contentFont: state.config.contentFont
     }
-    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}`, {
-      json: {
-        theme: patchTheme
-      }
+    /*
+      The theme's own endpoint rather than the general site update, because it is its own permission:
+      `manage:theme` grants the look of a site without granting its hostname, locales or
+      authentication, and the general update asks for `manage:sites`.
+    */
+    const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/theme`, {
+      json: patchTheme
     }).json()
     if (!resp?.ok) {
       throw new Error(

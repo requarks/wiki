@@ -176,7 +176,9 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/approvals/rules',
     {
       config: {
-        permissions: ['read:sites', 'manage:sites']
+        // -> `read:sites` stood beside this one and matched nobody: it is not a permission the group
+        //    editor offers, and nothing validates a name that is not
+        permissions: ['manage:sites']
       },
       schema: {
         summary: 'List the approval rules of a site',

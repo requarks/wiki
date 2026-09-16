@@ -191,7 +191,7 @@
             flat
             color="grey"
             type="a"
-            :href="siteStore.docsBase + `/admin/permissions#rules`"
+            :href="siteStore.docsBase + `/admin/permissions#page-rules`"
             target="_blank" />
           <w-btn
             class="acrylic-btn mr-2"
@@ -470,7 +470,7 @@
                       flat
                       color="grey"
                       type="a"
-                      :href="siteStore.docsBase + `/admin/permissions#system-permissions`"
+                      :href="siteStore.docsBase + `/admin/permissions#global-permissions`"
                       target="_blank" />
                   </template>
                 </w-card-header>
@@ -496,6 +496,55 @@
                   </w-item>
                   <w-separator class="my-2" inset v-if="idx < permissions.length - 1" />
                 </template>
+              </w-card>
+            </div>
+            <!--
+              `manage:system` on a card of its own, because it is not one more thing a group may do:
+              the server checks it FIRST and lets the request through whatever the list on the left
+              says, so ticking it makes every toggle beside it moot. A row at the bottom of that list
+              would have read as the tenth of ten.
+            -->
+            <div class="col-span-12 lg:col-span-6">
+              <w-card class="shadow-1 pb-2">
+                <w-card-header>{{ t(`admin.groups.systemPermission`) }}</w-card-header>
+                <w-item tag="label">
+                  <w-item-section class="items-center" style="flex: 0 0 40px">
+                    <w-icon name="la:snowflake" color="negative" size="sm" />
+                  </w-item-section>
+                  <w-item-section>
+                    <w-item-label>{{ systemPermission.permission }}</w-item-label>
+                    <w-item-label caption>{{ systemPermission.hint }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section avatar>
+                    <!--
+                      No `color` or glyph overrides: WToggle says in its own header that the switch
+                      reads the same everywhere and that a toggle needing to signal danger should say
+                      so in its label. The card, the red mark beside it and the banner below are what
+                      say so here.
+                    -->
+                    <w-toggle
+                      v-model="state.group.permissions"
+                      :val="systemPermission.permission"
+                      :disable="isSystemPermissionLocked(systemPermission.permission)"
+                      :aria-label="systemPermission.permission" />
+                  </w-item-section>
+                </w-item>
+                <w-card-section>
+                  <!--
+                      A pale red panel on a light card and a TINT of the same red on a dark one, the
+                      way the dark surfaces elsewhere in the app are built: filling it solid read as
+                      an error that had happened rather than a caution about what is being granted.
+                    -->
+                  <w-banner class="bg-red-1 text-red-9 dark:bg-red-9/30 dark:text-red-2" dense>
+                    <template #avatar>
+                      <w-icon name="la:exclamation-triangle" color="negative" size="sm" />
+                    </template>
+                    <div class="font-semibold">{{ t('admin.groups.systemPermissionWarn') }}</div>
+                    <div class="mt-1 text-xs opacity-90">
+                      {{ t('admin.groups.systemPermissionWarnHint') }}
+                    </div>
+                  </w-banner>
+                </w-card-section>
               </w-card>
             </div>
           </div>
@@ -744,85 +793,68 @@ const usersHeaders = [
   }
 ]
 
+/**
+ * The group-wide permissions, in the order the screen offers them.
+ *
+ * Grouped by what they are about rather than alphabetically: getting into the admin area, then the
+ * site-bound screens, then the people screens, then the two read-only views. `manage:system` is
+ * deliberately NOT here — it is not one more entry on this list but the absence of the list, so it
+ * has a card of its own. See `systemPermission`.
+ */
 const permissions = [
   {
     permission: 'access:admin',
-    hint: 'Can access the administration area.',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'read:users',
-    hint: 'Can view users, but not create or modify them.',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'manage:users',
-    hint: 'Can create / manage users (but not users with manage:system permissions)',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'read:groups',
-    hint: 'Can view groups and their permissions, but not create or modify them.',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'manage:groups',
-    hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules',
-    warning: true,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'read:audit',
-    hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'read:metrics',
-    hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'manage:navigation',
-    hint: 'Can manage site navigation',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
-  },
-  {
-    permission: 'manage:theme',
-    hint: 'Can modify site theme settings',
-    warning: false,
-    restrictedForSystem: true,
-    disabled: false
+    hint: 'Can access the administration and view the dashboard. Cannot perform any other action unless other permissions are also granted.'
   },
   {
     permission: 'manage:sites',
-    hint: 'Can create / manage sites',
-    warning: true,
-    restrictedForSystem: true,
-    disabled: false
+    hint: 'Can create / manage sites, and every setting bound to one: general, analytics, approvals, comments, content blocks, editors, locale, login, storage and theme.'
   },
   {
-    permission: 'manage:system',
-    hint: 'Can manage and access everything. Root administrator.',
-    warning: true,
-    restrictedForSystem: true,
-    disabled: true
+    permission: 'manage:theme',
+    hint: 'Can modify site theme settings, including the CSS, head and body injected into every page.'
+  },
+  {
+    permission: 'manage:navigation',
+    hint: 'Can manage site navigation'
+  },
+  {
+    permission: 'read:users',
+    hint: 'Can view users, but not create or modify them.'
+  },
+  {
+    permission: 'manage:users',
+    hint: 'Can create / manage users (but not users with manage:system permissions)'
+  },
+  {
+    permission: 'read:groups',
+    hint: 'Can view groups and their permissions, but not create or modify them.'
+  },
+  {
+    permission: 'manage:groups',
+    hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules'
+  },
+  {
+    permission: 'read:audit',
+    hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.'
+  },
+  {
+    permission: 'read:metrics',
+    hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.'
   }
 ]
+
+/**
+ * The one permission that is not a permission to do something in particular.
+ *
+ * `manage:system` bypasses every check on the server rather than adding to what is granted, so a
+ * group holding it holds everything above whether or not any of it is ticked. Offered on a card of
+ * its own so that it cannot be read as the tenth item of a list of ten.
+ */
+const systemPermission = {
+  permission: 'manage:system',
+  hint: 'Can manage and access everything. Root administrator.'
+}
 
 /**
  * The subset of `rules` below that the guests group may be granted. Mirrors `GUEST_ROLES` in
@@ -874,6 +906,14 @@ const rules = [
     permission: 'delete:pages',
     title: 'Delete Pages',
     hint: 'Can delete existing pages.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'write:tags',
+    title: 'Assign Tags',
+    hint: 'Can assign and unassign tags on pages.',
     warning: false,
     restrictedForSystem: true,
     disabled: false

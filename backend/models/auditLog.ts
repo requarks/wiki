@@ -106,6 +106,7 @@ export const AUDIT_ACTIONS = {
     'retryJob',
     'createSite',
     'updateSite',
+    'updateSiteTheme',
     'deleteSite',
     'updateSiteImage',
     'deleteSiteImage',

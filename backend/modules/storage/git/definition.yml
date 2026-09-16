@@ -63,6 +63,7 @@ props:
     hint: Absolute path to the key. The key must NOT be passphrase-protected.
     icon: key
     order: 12
+    localPath: system
     if:
       - { key: 'authType', eq: 'ssh' }
       - { key: 'sshPrivateKeyMode', eq: 'path' }
@@ -129,6 +130,7 @@ props:
     hint: Where the working copy is kept. Give each site its own path unless you turn on Add Site ID Prefix under Configuration, since two sites sharing a repository would otherwise write over each other. Relative paths are resolved from the Wiki.js install directory.
     icon: symlink-directory
     order: 32
+    localPath: data
   gitBinaryPath:
     type: String
     title: Git Binary Path
@@ -136,6 +138,7 @@ props:
     hint: Optional - Absolute path to the Git binary, when not available in PATH. Leave empty to use the default PATH location (recommended).
     icon: run-command
     order: 50
+    localPath: system
 actions:
   sync:
     label: Force Sync

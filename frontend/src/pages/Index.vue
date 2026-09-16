@@ -323,7 +323,7 @@
                 for them it is not a control that happens to be out of sight.
               -->
               <w-btn
-                v-if="canEditPage"
+                v-if="canEditTags"
                 class="tags-edit-btn"
                 :class="{ 'is-hidden': !state.tagEditMode && !state.showTagsEditBtn }"
                 size="sm"
@@ -604,9 +604,9 @@ const showTags = computed(() => {
   return pageStore.showTags && (pageStore.tags?.length > 0 || state.tagEditMode)
 })
 /*
-  Whether this user may save a change to the page, which is what editing the tags amounts to -- the tags
-  go up with the rest of the page rather than through an endpoint of their own. So the test is the pair
-  the PATCH route accepts: `write:pages` or `manage:pages`.
+  Whether this user may save a change to the page. Editing the tags is a save -- they go up with the
+  rest of the page rather than through an endpoint of their own -- so the test is the pair the PATCH
+  route accepts: `write:pages` or `manage:pages`.
 
   Read off `pagePermissions` rather than through `userStore.can()`, which asks a broader question: the
   group-wide list from `whoami` says what a user may do somewhere, and the rules decide where. What
@@ -617,6 +617,16 @@ const canEditPage = computed(() =>
   ['write:pages', 'manage:pages'].some((permission) =>
     userStore.pagePermissions.includes(permission)
   )
+)
+
+/*
+  Whether this user may edit the TAGS, which takes one permission more than saving the page does.
+  Assigning a tag is what decides which rules a page falls under, so it is granted apart from writing
+  the page -- and both are needed here, since the tags travel up with the page and the PATCH route
+  asks for both in turn.
+*/
+const canEditTags = computed(
+  () => canEditPage.value && userStore.pagePermissions.includes('write:tags')
 )
 
 /*
