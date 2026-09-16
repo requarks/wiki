@@ -195,6 +195,14 @@ function onKeydown(ev) {
   /* -> Enough that the last tab's corner reads as a corner, and not so much that the strip stops
         being flush with the side */
   padding-right: 0.5rem;
+  /*
+    The one gap in the strip, and it belongs to what may sit under it rather than to the strip: a
+    site banner is drawn flush to the top of the article column, pulled out of its padding with a
+    hairline of the column left showing either side (`--site-banner-pad` in `SiteBanner.vue`). Its
+    top edge was the one side with none, so a raised banner met the strip's rule with nothing
+    between them. 1px here is that same hairline, turned along the third side.
+  */
+  margin-bottom: 1px;
   flex: none;
 
   /*

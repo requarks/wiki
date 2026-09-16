@@ -138,18 +138,64 @@ async function render() {
     reaches nothing else.
   */
   .site-banner-alert {
+    /*
+      One colour at three alphas: the hue itself for the rule, the icon and the heading, the wash the
+      band is filled with, and the same hue at nothing, which both gradients below fade out to.
+
+      The third is spelled out rather than written as `transparent` or mixed down from the hue. Both
+      of those are transparent BLACK -- `color-mix(in srgb, <hue> 0%, transparent)` computes to
+      `color(srgb 0 0 0 / 0)`, which is the thing it looks like it avoids -- and a gradient running to
+      it drags its middle through grey. Stating the hue with a zero alpha is what keeps every step of
+      the fade the banner's own colour.
+
+      The fourth is where the rule ends, and it is the odd one out: opaque, and a step DARKER than the
+      band it is drawn under -- which is the band as composited, not the wash, so it is the only value
+      here that knows what the page behind it looks like. That coupling is why it is a literal per
+      theme rather than an expression: the wash over white is `#faeeef` and a step down from it is
+      this, while in the dark theme the hue is lighter than the page, so the same expression would
+      walk the wrong way and the value there is derived from `#25191c` instead. The rule has always
+      been opaque -- its other end is the hue itself -- so nothing is given up by stating it.
+    */
     --site-banner-hue: #c02636;
     --site-banner-wash: rgba(192, 38, 54, 0.08);
+    --site-banner-fade: rgba(192, 38, 54, 0);
+    --site-banner-rule-end: #f5dcdf;
 
     position: relative;
     padding: 0.9em 1.1em 0.9em 3.1em;
+    /*
+      The rule that closes the band, run left to right from the hue to the band's own colour taken a
+      step darker -- so it thins away to a line rather than to nothing, and the edge stays drawn all
+      the way across.
+
+      `border-image` rather than a background layer or a pseudo-element: it keeps the line in the
+      border box, so the height and the padding above it are the ones the border already set, and it
+      leaves `::before` to the icon. The `border-bottom` above it is not a fallback that gets
+      overridden -- it is what gives this edge a width, since `border-image` paints the border box
+      and nothing else says how thick the bottom of it is. The other three stay at zero, which is why
+      a slice that nominally covers all four edges only ever draws this one.
+    */
     border-bottom: 4px solid var(--site-banner-hue);
-    background-color: var(--site-banner-wash);
+    border-image: linear-gradient(to right, var(--site-banner-hue), var(--site-banner-rule-end)) 1;
+    /*
+      The wash, thrown as an ellipse centred on the band's top-right corner: nothing at the corner,
+      where the page's own surface shows through, deepening to the full wash across the band.
+
+      A `background-image` and no `background-color`: a flat colour underneath would be painted
+      through the transparent end, which is the one part of this that has to show the page.
+    */
+    background-image: radial-gradient(
+      ellipse at top right,
+      var(--site-banner-fade),
+      var(--site-banner-wash)
+    );
 
     /* -> Lighter, because the notice sits on a dark page rather than in the flow of one */
     @at-root .body--dark & {
       --site-banner-hue: #ff8b8b;
       --site-banner-wash: rgba(255, 139, 139, 0.12);
+      --site-banner-fade: rgba(255, 139, 139, 0);
+      --site-banner-rule-end: #1e1416;
     }
 
     &::before {

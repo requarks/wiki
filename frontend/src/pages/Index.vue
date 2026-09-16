@@ -69,7 +69,7 @@
           :model-value="activeView"
           :talk="showTalkTab"
           :links="showLinksTab"
-          @update:model-value="state.view = $event" />
+          @update:model-value="switchView" />
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
         <!--
           The lock screen, in place of the article. There is nothing to hide here: the server sent no
@@ -149,8 +149,14 @@
             <!--
               Above the article rather than above the toolbars: what an administrator raises a banner
               about is the content, and this is where a reader is already looking.
+
+              The article and nothing else. The band is drawn flush to the top of the column, squared
+              off to its edges and closed by a rule -- it is the lid of the page, and a discussion or
+              a list of what links here is not the page. `v-if` rather than `v-show`, so it takes its
+              own margins with it: hidden, it would still be holding the 1.5rem it puts between
+              itself and what follows.
             -->
-            <site-banner />
+            <site-banner v-if="activeView === `article`" />
             <!--
               `v-show` rather than `v-if` on the article below, so that leaving the discussion and
               coming back does not re-run the page's own scripts or lose where the reader was in it.
@@ -810,8 +816,34 @@ function onHashChange() {
   // -> A fragment can ask for the discussion as well as for a heading, and one that asks for a
   //    heading while the discussion is open has to put the article back or there is nothing to
   //    scroll to: `v-show` leaves the hidden column with no layout, so the anchor is unreachable
-  state.view = viewFromHash()
+  switchView(viewFromHash())
+  /*
+    Not awaited, and deliberately: this polls for its target rather than expecting it to be there
+    (see `helpers/anchors.js`), so it is already written for a heading that arrives a few frames
+    late -- which is exactly what a view that is mid-transition is.
+  */
   scrollToAnchorWhenReady(window.location.hash)
+}
+
+/**
+ * Move to another of the page's views, as a cross-fade.
+ *
+ * The same `withViewTransition` a page swap goes through, for the same reason: what changes here is
+ * an article for a discussion or a list, and cutting between two screenfuls of text reads as a flash
+ * where a fade reads as a turn. Cheap, too -- both views are already in hand, so the callback is one
+ * assignment and none of the caveats about keeping it short are in play.
+ *
+ * The guard is what keeps a fade off a tab that is already open: the strip's arrow keys select as
+ * they move, so holding one down would otherwise start a transition per keypress with nothing
+ * changing in any of them.
+ */
+function switchView(view) {
+  if (view === state.view) {
+    return
+  }
+  withViewTransition(() => {
+    state.view = view
+  })
 }
 
 /**
