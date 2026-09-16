@@ -165,6 +165,22 @@
           @click="state.showLocaleRelationsDialog = true">
           <w-tooltip>{{ t('editor.props.localeRelationsHint') }}</w-tooltip>
         </w-btn>
+        <!--
+          The third kind of relation, and the only one nobody writes: what links to this page is read
+          off the content of every other page, so this is a switch rather than a list. Hidden where
+          the site has the feature off altogether -- a toggle for a tab that cannot appear is a
+          setting that does nothing, and the reason it does nothing is on a screen this author may
+          well not be able to reach.
+        -->
+        <div class="pt-4" v-if="siteStore.features.backlinks">
+          <w-toggle
+            v-model="pageStore.allowBacklinks"
+            dense
+            :label="t(`editor.props.allowBacklinks`)"
+            color="primary"
+            checked-icon="la:check"
+            unchecked-icon="la:times" />
+        </div>
       </w-card-section>
       <!--
         Only for an author who may actually write them: the server drops a script or a stylesheet from

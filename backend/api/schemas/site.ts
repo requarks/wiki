@@ -80,6 +80,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       features: {
         type: 'object',
         properties: {
+          backlinks: {
+            type: 'boolean',
+            description:
+              'Whether a page shows what links to it. Off hides the Links tab across the site and closes the route behind it; a page can still opt out on its own with `allowBacklinks`. Nothing about how links are recorded changes either way — the table is written by every save regardless, so turning this back on shows a list rather than an empty tab.'
+          },
           browse: {
             type: 'boolean'
           },

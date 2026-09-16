@@ -51,16 +51,25 @@
         class="min-w-0 flex-1 flex flex-col min-h-0"
         :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
         <!--
-          Article / Talk, above the content and only where there is a talk page to go to: the
-          built-in comments provider, on a page that takes comments, for a reader the page rules let
-          read them. Every other provider draws itself UNDER the article instead -- see
-          `PageCommentsEmbed.vue` -- so there is nothing to switch between and no strip.
+          Article / Talk / Links, above the content and only where there is somewhere else to go: the
+          talk page needs the built-in comments provider on a page that takes comments, for a reader
+          the page rules let read them, and the links list needs a page that exists. Every other
+          comments provider draws itself UNDER the article instead -- see `PageCommentsEmbed.vue` --
+          so on those sites the strip is Article and Links.
+
+          `activeView` and not `state.view`: what the strip highlights has to be what is drawn below
+          it, and a `#links` fragment followed to a page with no such tab is drawn as the article.
 
           Outside the scrolling box rather than at the top of it, which is also what makes an anchor
           land where it should: the scrollport starts under the strip, so a heading jumped to is not
           jumped to underneath it.
         -->
-        <page-view-tabs v-if="showTalkTab" v-model="state.view" />
+        <page-view-tabs
+          v-if="showTalkTab || showLinksTab"
+          :model-value="activeView"
+          :talk="showTalkTab"
+          :links="showLinksTab"
+          @update:model-value="state.view = $event" />
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
         <!--
           The lock screen, in place of the article. There is nothing to hide here: the server sent no
@@ -146,7 +155,8 @@
               `v-show` rather than `v-if` on the article below, so that leaving the discussion and
               coming back does not re-run the page's own scripts or lose where the reader was in it.
             -->
-            <page-talk v-if="showTalkTab && state.view === `talk`" />
+            <page-talk v-if="activeView === `talk`" />
+            <page-links v-if="activeView === `links`" />
             <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
@@ -154,7 +164,7 @@
             <div
               class="page-contents"
               ref="pageContents"
-              v-show="!showTalkTab || state.view === `article`"
+              v-show="activeView === `article`"
               v-html="pageStore.render"
               @click="onContentClick" />
             <!--
@@ -166,9 +176,7 @@
             <div
               class="page-relations"
               v-if="
-                pageStore.relations &&
-                pageStore.relations.length > 0 &&
-                (!showTalkTab || state.view === `article`)
+                pageStore.relations && pageStore.relations.length > 0 && activeView === `article`
               ">
               <w-separator class="my-6" />
               <div class="flex flex-wrap">
@@ -434,6 +442,14 @@ const PageTalk = defineAsyncComponent({
   loadingComponent: LoadingGeneric
 })
 const PageCommentsEmbed = defineAsyncComponent(() => import('@/components/PageCommentsEmbed.vue'))
+/*
+  Likewise on demand: what links to a page is a list nobody is looking at until they ask for it, and
+  it is a request as well as a chunk -- see the note on the tab's missing badge in `PageViewTabs.vue`.
+*/
+const PageLinks = defineAsyncComponent({
+  loader: () => import('@/components/PageLinks.vue'),
+  loadingComponent: LoadingGeneric
+})
 
 const editorComponents = {
   markdown: defineAsyncComponent({
@@ -507,7 +523,7 @@ const state = reactive({
   tocPanelOpen: false,
   currentRating: 3,
   /**
-   * Which of the two views the reader is on, `article` or `talk`.
+   * Which view the reader is on: `article`, `talk` or `links`.
    *
    * Local to the view rather than in the store, and re-read from the URL on every page change:
    * arriving at a page means arriving at what it says, and a reader who went to read one discussion
@@ -621,7 +637,7 @@ const canCreatePage = computed(
   behind the tab will check. And the page has to exist: an empty path has nothing to discuss.
 
   With no tab, the article is simply the view, which is why everything below tests
-  `!showTalkTab || state.view === 'article'` rather than the view alone.
+  `activeView` rather than the view alone -- see the computed below it.
 */
 const showTalkTab = computed(
   () =>
@@ -631,6 +647,49 @@ const showTalkTab = computed(
     !editorStore.isActive &&
     userStore.pagePermissions.includes('read:comments')
 )
+
+/*
+  Whether this page has a list of what points at it to switch to.
+
+  The same two switches the talk tab has, and in the same order: the site's own, under General →
+  Features, and then the page's, from its properties dialog. Both only decide whether the tab is
+  DRAWN -- what links to what is recorded by every save regardless, so either one going back on shows
+  a complete list rather than an empty one.
+
+  No permission to ask about beyond that: a reader looking at the page already holds `read:pages` on
+  it, which is the whole of what the endpoint behind the tab wants, and which pages are IN the list is
+  filtered per reader by the server.
+
+  A page still waiting for its password is excluded: the server refuses this for a locked page, as it
+  refuses its history, and a tab that answers 403 when it is opened is worse than no tab.
+*/
+const showLinksTab = computed(
+  () =>
+    siteStore.features.backlinks &&
+    pageStore.allowBacklinks &&
+    !pageStore.notFound &&
+    !pageStore.isLocked &&
+    !editorStore.isActive &&
+    Boolean(pageStore.id)
+)
+
+/*
+  The view actually on screen, which is the one asked for only where it exists.
+
+  `state.view` is what the URL and the strip say; this is what is drawn. The two differ whenever a
+  fragment names a view this page does not have -- `#talk` on a page with comments switched off,
+  `#links` while the editor is open -- and without the coercion that is a column with nothing in it,
+  since each view is drawn on its own condition and none of them would match.
+*/
+const activeView = computed(() => {
+  if (state.view === 'talk' && showTalkTab.value) {
+    return 'talk'
+  }
+  if (state.view === 'links' && showLinksTab.value) {
+    return 'links'
+  }
+  return 'article'
+})
 
 /*
   The other providers, at the bottom of the article. No permission check: what a third-party widget
@@ -759,15 +818,16 @@ function onHashChange() {
  * The view the current URL asks for.
  *
  * `#talk` opens the discussion instead of the article -- what a link to a comment, or to the talk
- * page of an article, has to be able to say. Read from `window.location` rather than from the route,
- * so that it answers the same before the router has resolved anything and when the fragment is
- * changed from outside the app.
+ * page of an article, has to be able to say -- and `#links` opens the list of what points here. Read
+ * from `window.location` rather than from the route, so that it answers the same before the router
+ * has resolved anything and when the fragment is changed from outside the app.
  *
- * A page with no discussion to show simply stays on the article: `showTalkTab` gates what is drawn,
- * so a fragment naming a view this reader does not have is ignored rather than blanking the column.
+ * A page with no such view to show simply stays on the article: `activeView` is what is drawn, so a
+ * fragment naming a view this reader does not have is ignored rather than blanking the column.
  */
 function viewFromHash() {
-  return window.location.hash === '#talk' ? 'talk' : 'article'
+  const view = window.location.hash.slice(1)
+  return view === 'talk' || view === 'links' ? view : 'article'
 }
 
 watch(

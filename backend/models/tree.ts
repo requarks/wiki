@@ -1001,6 +1001,13 @@ class Tree {
         // -> A folder rename never crosses locales, so the page's own is where it came from too
         { locale: page.locale, path: page.previousPath }
       )
+      /*
+        And the links each page WRITES, which is the other thing a path carries: a relative link
+        resolved against the folder these pages used to sit in, and resolves against the renamed one
+        now. The links pointing at them are deliberately left alone -- they say where the pages were,
+        which is what makes them findable as the ones this rename has broken.
+      */
+      await WIKI.models.pageLinks.refreshById(folder.siteId, page.id)
     }
 
     // -> A storage target that lays its content out by path has every one of those files to move.
@@ -1205,6 +1212,7 @@ class Tree {
               password: page.password ?? '',
               relations: page.relations,
               tags: page.tags,
+              allowBacklinks: page.allowBacklinks,
               allowComments: page.allowComments,
               allowContributions: page.allowContributions,
               allowRatings: page.allowRatings,
@@ -1470,6 +1478,9 @@ class Tree {
         },
         { locale: folder.locale, path: page.previousPath }
       )
+      // -> As in `renameFolder`: every relative link these pages carry resolved against where they
+      //    were. This move can cross locales as well, which changes what a link's prefix means too
+      await WIKI.models.pageLinks.refreshById(siteId, page.id)
     }
 
     // -> A storage target that lays its content out by path has every one of those files to move.

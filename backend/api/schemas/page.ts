@@ -119,6 +119,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           type: 'string'
         }
       },
+      allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
       allowRatings: { type: 'boolean' },
@@ -217,6 +218,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'Only present when the request asked for it — except on a redirection, whose content is where it sends its reader rather than a body, and comes back either way.'
       },
+      allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
       allowRatings: { type: 'boolean' },

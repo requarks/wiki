@@ -90,6 +90,13 @@ export const useSiteStore = defineStore('site', {
     overlay: null,
     overlayOpts: {},
     features: {
+      /*
+        The one default here that is not the conservative one, and deliberately: the rest read false
+        until the server answers because showing a feature that turns out to be off is worse than the
+        other way round, while a site config blob written before this key existed has to mean "on" --
+        that is what `pageLinks.isAllowed` decides on the server, and the two have to agree.
+      */
+      backlinks: true,
       browse: false,
       collaborativeEditing: false,
       ratingsMode: 'off',

@@ -1615,6 +1615,198 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LIST BACKLINKS
+   *
+   * What links to this page.
+   *
+   * Asked by the page's ADDRESS rather than by its id, which is the whole reason the table stores an
+   * address: a link says where it points, so the pages pointing at one that has moved still point at
+   * where it was. The two short links are folded in by id and by alias, since those two survive a move
+   * by design and belong in the same list.
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/pages/:pageId/backlinks',
+    {
+      /*
+        No route-level `permissions`: reading a page's backlinks is `read:pages` ON THAT PAGE, and on
+        every page in the answer — see below.
+      */
+      schema: {
+        summary: 'List the pages linking to a page',
+        description:
+          "Every page of this instance whose content, redirection target or sidebar relations point at this one, with the href each of them wrote.\n\nAnswers 404 where the site has `features.backlinks` off, which is the switch under General → Features. A page that has turned its own Links tab off with `allowBacklinks` still answers here — that flag hides the tab, and what it hides is not a secret.\n\nFiltered by what the caller may read, one page at a time: a backlink names a page, its title and where it sits, so listing one the caller has no `read:pages` rule for would hand them the existence of a page they cannot open. A link written on another SITE of this instance is included, since a move here breaks it just the same.\n\nNote that links pointing at a page's OLD path are not listed here — after a move they address a path this page no longer has, which is what makes them findable as the links that move broke.",
+        tags: ['Pages'],
+        params: pageIdParam,
+        response: {
+          200: {
+            description: 'Pages linking here',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                siteId: { type: 'string', format: 'uuid' },
+                locale: { type: 'string' },
+                path: { type: 'string' },
+                title: { type: 'string' },
+                description: { type: 'string' },
+                icon: {
+                  type: 'string',
+                  description:
+                    "The page's own icon as an Iconify reference, or empty where it has none."
+                },
+                url: {
+                  type: 'string',
+                  description: 'Where that page is, as a path on its own site.'
+                },
+                hostname: {
+                  type: 'string',
+                  nullable: true,
+                  description:
+                    'The host its site answers on, for a page on another site of this instance. Null when it is on the site being read, or on the catch-all site.'
+                },
+                href: {
+                  type: 'string',
+                  description: 'The link as that page writes it, which is what a repair would edit.'
+                },
+                kind: {
+                  type: 'string',
+                  description: 'How the link addresses this page: by path, by alias or by id.'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      // -> The site-wide switch, as `requireBuiltInPage` checks the comments one: with the feature
+      //    off there is nothing here to answer, however the page itself is set
+      if (!WIKI.models.pageLinks.isAllowed(req.params.siteId)) {
+        return reply.notFound('This site does not show what links to a page.')
+      }
+      const page = await loadReadablePage(req, req.params.siteId, req.params.pageId)
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+      // -> As the history route does: a page withheld until its password is entered withholds what is
+      //    derived from it too, and its link graph names it in one direction and reads its content in
+      //    the other
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
+      }
+
+      const backlinks = await WIKI.models.pageLinks.backlinksFor(
+        { siteId: req.params.siteId, locale: page.locale, path: page.path },
+        { pageId: page.id, alias: page.alias }
+      )
+
+      return backlinks
+        .filter((link) =>
+          mayOnPage(req, 'read:pages', {
+            siteId: link.siteId,
+            locale: link.locale,
+            path: link.path,
+            tags: link.tags
+          })
+        )
+        .map((link) => ({
+          id: link.pageId,
+          siteId: link.siteId,
+          locale: link.locale,
+          path: link.path,
+          title: link.title,
+          description: link.description ?? '',
+          icon: link.icon ?? '',
+          url: link.url,
+          hostname: link.hostname,
+          href: link.href,
+          kind: link.kind
+        }))
+    }
+  )
+
+  /**
+   * LIST OUTBOUND LINKS
+   *
+   * What this page links to, and whether anything is there.
+   *
+   * The red-link question. Resolution is a join rather than a stored flag, so a page created at a path
+   * somebody had already linked to makes that link good without anything having to notice.
+   */
+  app.get<{ Params: { siteId: string; pageId: string } }>(
+    '/sites/:siteId/pages/:pageId/links',
+    {
+      // -> No route-level `permissions`: `read:pages` on the page itself, as above
+      schema: {
+        summary: 'List the links written on a page',
+        description:
+          "Every link this page's content, redirection target or sidebar relations point at, each with the href as written and what it resolves to. `exists` is false for a link addressing a page that is not there — the state a wiki draws as a red link.\n\nLinks leaving the wiki are not recorded and are not listed. Uploaded files are listed but never resolved: they are tracked so a moved file can be traced back to what pointed at it, and answering whether one exists is a different lookup.",
+        tags: ['Pages'],
+        params: pageIdParam,
+        response: {
+          200: {
+            description: 'Links written on this page',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                href: { type: 'string' },
+                kind: { type: 'string' },
+                targetSiteId: { type: 'string', format: 'uuid' },
+                targetLocale: { type: 'string', nullable: true },
+                targetPath: { type: 'string', nullable: true },
+                targetId: { type: 'string', format: 'uuid', nullable: true },
+                targetTitle: { type: 'string', nullable: true },
+                exists: { type: 'boolean' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const page = await loadReadablePage(req, req.params.siteId, req.params.pageId)
+      if (!page) {
+        return reply.notFound('This page does not exist.')
+      }
+      // -> These come out of the page's own body, which is the half a password withholds
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
+      }
+
+      const links = await WIKI.models.pageLinks.outboundFor(page.id)
+
+      return links.map((link) => ({
+        href: link.href,
+        kind: link.kind,
+        targetSiteId: link.targetSiteId,
+        targetLocale: link.targetLocale,
+        targetPath: link.targetPath,
+        targetId: link.targetPageId,
+        /*
+          Only what the caller may read, for the reason the backlinks route filters: whether a page
+          exists at a path is something a rule decides they may know. A link to a page they may not
+          read reads as a link to nothing, which is also what clicking it would give them.
+
+          Judged on where the RESOLVED page sits rather than on what the link said about it — an alias
+          or an id link names no address at all — and with its tags, since a rule may be written
+          against those.
+        */
+        ...(link.targetPageId &&
+        !mayOnPage(req, 'read:pages', {
+          siteId: link.targetSiteId,
+          locale: link.targetPageLocale ?? undefined,
+          path: link.targetPagePath ?? '',
+          tags: link.targetPageTags ?? []
+        })
+          ? { targetTitle: null, exists: false }
+          : { targetTitle: link.targetTitle, exists: Boolean(link.targetPageId) })
+      }))
+    }
+  )
+
+  /**
    * PAGE USER PERMISSIONS
    */
   app.post<{ Params: { siteId: string }; Body: { path: string; locale?: string } }>(

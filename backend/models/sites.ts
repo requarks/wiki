@@ -126,6 +126,11 @@ class Sites {
           }
         },
         features: {
+          // -> On, because what a wiki is for is pages that point at each other, and what points at
+          //    the page in front of you is worth knowing by default. It gates the TAB and the route
+          //    behind it; links are recorded either way, so turning it off and on again shows the
+          //    same list rather than an empty one.
+          backlinks: true,
           browse: true,
           collaborativeEditing: true,
           ratings: false,
@@ -421,6 +426,7 @@ class Sites {
           }
         },
         features: {
+          backlinks: true,
           browse: true,
           collaborativeEditing: true,
           ratings: false,

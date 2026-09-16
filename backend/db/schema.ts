@@ -556,7 +556,15 @@ export const pages = pgTable(
     index('pages_isSearchableComputed_idx').on(table.isSearchableComputed),
     // -> One page per locale in a group, enforced here rather than in the model: a group is edited
     //    from any of its members, so two saves racing each other are two writers of the same set
-    uniqueIndex('pages_localeGroupId_locale_idx').on(table.localeGroupId, table.locale)
+    uniqueIndex('pages_localeGroupId_locale_idx').on(table.localeGroupId, table.locale),
+    /*
+      Where a page sits, which is what a path addresses it by. Unique because two pages at one path in
+      one locale is the thing `createPage` and `movePage` both check for and neither can actually
+      prevent -- their check and their write are two statements, so two saves racing each other both
+      see a clear path. It is also the index the link table resolves against: "is there a page at this
+      address" is asked once per link on a page.
+    */
+    uniqueIndex('pages_siteId_locale_path_idx').on(table.siteId, table.locale, table.path)
   ]
 )
 
@@ -631,6 +639,95 @@ export const pageHistory = pgTable(
     //    this also serves the plain per-site queries.
     index('pageHistory_siteId_idx').on(table.siteId, table.locale, table.path, table.versionDate),
     index('pageHistory_authorId_idx').on(table.authorId)
+  ]
+)
+
+// PAGE LINKS --------------------------
+/**
+ * One row per distinct link written on a page, resolved to what it addresses.
+ *
+ * Derived from the stored render the way `toc` and `searchContent` are, and rewritten wholesale
+ * whenever that render is — see `models/pageLinks.ts`. Three questions are asked of it: what links to
+ * the page being read, whether what a page links to exists, and which pages have to be revisited when
+ * something they point at moves.
+ *
+ * **The address is what is stored, not a resolved page id.** A link is written as a path, and after a
+ * move the pages pointing at the old one still say the old one — which is precisely the thing worth
+ * knowing, and precisely what a foreign key would erase by following the page. It also lets a link to
+ * a page that does not exist yet be a row like any other, which is what a red link is. Whether a
+ * target resolves is a join against `pages` on `(siteId, locale, path)` at read time.
+ *
+ * `/a/<alias>` and `/i/<id>` are the exception and are stored as the reference they carry: those two
+ * survive a move by design, so resolving them to a path at write time would record the opposite of
+ * what they mean.
+ */
+export const pageLinks = pgTable(
+  'pageLinks',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /**
+     * What the link addresses: a page by path (`page`), by alias (`alias`) or by id (`pageId`), or an
+     * uploaded file (`asset`).
+     *
+     * A varchar rather than an enum, for the reason `pageHistory.action` is one — naming another kind
+     * of target later should not need a migration. Links leaving the wiki are not recorded at all:
+     * nothing asks a question about them until there is a link checker to answer it, and they would
+     * be the bulk of the rows on a wiki that cites its sources.
+     */
+    kind: varchar({ length: 16 }).notNull(),
+    /**
+     * The href exactly as it appears in the page.
+     *
+     * Kept because resolving is lossy and the source is what a repair would have to edit: `../two`,
+     * `/en/one/two` and `/one/two.md` are one target and three strings, and only the string that was
+     * written can be found in the markdown again.
+     *
+     * Bounded rather than `text` because it is half of a unique btree index below, and a btree entry
+     * has a hard ceiling of about 2700 bytes — an href past it would fail the INSERT, and that INSERT
+     * is part of saving a page. 2048 is the conventional cap for a URL and far past anything a link
+     * in a wiki page is; `resolveLink` drops the ones that would not fit rather than truncating them
+     * into a different address.
+     */
+    href: varchar({ length: 2048 }).notNull(),
+    /**
+     * Which site the target belongs to. Usually the source's own, and another one for a link written
+     * as an absolute URL to a second site of this instance — those are worth following rather than
+     * writing off as external, since a move on either site breaks them just the same.
+     */
+    targetSiteId: uuid()
+      .notNull()
+      .references(() => sites.id),
+    // -> Both null for `alias` and `pageId`, which address a page without saying where it is
+    targetLocale: varchar({ length: 255 }),
+    targetPath: varchar({ length: 255 }),
+    /** The alias or the page id, for the two kinds that carry one. Null for the rest. */
+    targetRef: varchar({ length: 255 }),
+    createdAt: timestamp().notNull().defaultNow(),
+    // -> The page the link is written on. Its rows go with it: a link is part of a page's content,
+    //    and nothing is left to point at once the page is gone
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id)
+  },
+  (table) => [
+    // -> "What links here", and "what points at this path" for a page about to be moved. Leading with
+    //    the site because every one of those questions is asked within one
+    index('pageLinks_target_idx').on(table.targetSiteId, table.targetLocale, table.targetPath),
+    // -> The same question for the two kinds that address a page without a path
+    index('pageLinks_targetRef_idx').on(table.targetSiteId, table.kind, table.targetRef),
+    // -> Every link on one page, which is both the read for "do these targets exist" and the delete
+    //    half of rewriting a page's links
+    index('pageLinks_pageId_idx').on(table.pageId),
+    index('pageLinks_siteId_idx').on(table.siteId),
+    /*
+      One row per spelling, not per target: a page linking to the same place as `../two` and as
+      `/one/two` has two links to repair and two rows saying so. Two identical hrefs on one page are
+      one row, since there is nothing to tell them apart and nothing that would ask.
+    */
+    uniqueIndex('pageLinks_pageId_href_idx').on(table.pageId, table.href)
   ]
 )
 

@@ -1440,6 +1440,64 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * REBUILD PAGE LINKS
+   *
+   * What every page points at, worked out again from the render each one already stores.
+   *
+   * Not a repair anybody should need after an ordinary edit: a page's links are rewritten every time
+   * its render is. It is for the two cases where there was nothing to derive them from at the time —
+   * content that predates the table, and a site whose locale prefixes or page extensions changed,
+   * which changes what a link already written in a page addresses without touching the page.
+   */
+  app.post(
+    '/page-links/rebuild',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Rebuild the page link index',
+        description:
+          'Queues a job that re-reads the stored render of every page on every site and records what each one links to. Runs in a worker thread because it touches all the content in the instance, so the response only says the job was queued.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'Rebuild queued successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              id: {
+                type: 'string',
+                format: 'uuid',
+                description: 'ID of the queued job, which the scheduler view lists.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const added = await WIKI.scheduler.addJob({ task: 'rebuildPageLinks' })
+      if (!added?.id) {
+        return reply.internalServerError('The scheduler could not queue the rebuild.')
+      }
+
+      await audit(req, 'admin', 'rebuildPageLinks', { jobId: added.id })
+
+      return {
+        ok: true,
+        message: 'Page link rebuild queued successfully.',
+        id: added.id
+      }
+    }
+  )
+
+  /**
    * CHECK FOR UPDATE
    */
   app.post(

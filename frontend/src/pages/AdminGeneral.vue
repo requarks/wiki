@@ -159,6 +159,24 @@
         <!-- ----------------------- -->
         <w-card class="pb-2 mt-4">
           <w-card-header>{{ t('admin.general.features') }}</w-card-header>
+          <!--
+            The site-wide switch for the Links tab. It hides the tab and closes the route behind it;
+            what links to what goes on being recorded regardless, so turning this back on finds a
+            complete answer rather than an empty list.
+          -->
+          <w-item tag="label">
+            <blueprint-icon icon="link" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowBacklinks`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowBacklinksHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.backlinks"
+                :aria-label="t(`admin.general.allowBacklinks`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item tag="label">
             <blueprint-icon icon="tree-structure" />
             <w-item-section>
@@ -652,6 +670,15 @@ function defaultConfig() {
       follow: false
     },
     features: {
+      backlinks: true,
+      /*
+        False, where the site's own default is true, because this is what the SERVER makes of the key
+        being absent: `controllers/collab.ts` tests it for truthiness, so a config blob without it is
+        a site where collaboration is off, and the toggle has to say so rather than offer to turn off
+        something that already is. `backlinks` and `comments` above default the other way for the same
+        reason read the other way -- both are `!== false` on the server.
+      */
+      collaborativeEditing: false,
       ratings: false,
       ratingsMode: 'off',
       comments: true,
@@ -780,7 +807,12 @@ async function save() {
           follow: state.config.robots?.follow ?? false
         },
         features: {
+          backlinks: state.config.features?.backlinks ?? true,
           browse: state.config.features?.browse ?? false,
+          // -> The site config is deep-merged on the server, so a key left out of this object keeps
+          //    whatever is stored rather than being dropped. That is what made leaving this one out
+          //    silent: the toggle moved, the save succeeded, and the next load put it back.
+          collaborativeEditing: state.config.features?.collaborativeEditing ?? false,
           comments: state.config.features?.comments ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',

@@ -134,6 +134,7 @@ const reAlias = /^[a-zA-Z0-9-_]*$/
 
 /** Fields kept in the `config` blob rather than as columns, and flattened again on the way out. */
 const CONFIG_FIELDS = [
+  'allowBacklinks',
   'allowComments',
   'allowContributions',
   'allowRatings',
@@ -207,6 +208,8 @@ export interface Page {
   password?: string | null
   /** Whether the body was withheld because the page is password protected. See `getPage`. */
   isLocked: boolean
+  /** Whether this page shows what links to it. The site-wide switch is `features.backlinks`. */
+  allowBacklinks: boolean
   relations: any[]
   /**
    * This page in the other locales, as far as the requester may see them. Empty for a page that is
@@ -257,6 +260,7 @@ export interface PageInput {
   isBrowsable?: boolean
   isSearchable?: boolean
   password?: string
+  allowBacklinks?: boolean
   relations?: any[]
   /**
    * The page's counterparts in other locales, stating the whole set rather than adding to it: a locale
@@ -525,6 +529,12 @@ class Pages {
       ...((withContent || row.editor === REDIRECT_EDITOR) && !locked
         ? { content: row.content ?? '' }
         : {}),
+      /*
+         Absent means yes, as every one of these does: the key is only written once somebody has
+         edited the page's properties, and a page nobody has touched shows what links to it. The
+         site-wide switch is `features.backlinks` -- see `pageLinks.isAllowed`.
+      */
+      allowBacklinks: config.allowBacklinks ?? true,
       allowComments: config.allowComments ?? true,
       allowContributions: config.allowContributions ?? true,
       allowRatings: config.allowRatings ?? true,
@@ -1436,7 +1446,7 @@ class Pages {
     })
 
     const alias = await this.validateAlias(siteId, input.alias)
-    const { render, toc, text } = await WIKI.models.rendering.postProcess(
+    const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
       siteId,
       input.render ?? '',
       {
@@ -1517,6 +1527,10 @@ class Pages {
       await WIKI.db.delete(pagesTable).where(eq(pagesTable.id, page.id))
       throw err
     }
+
+    // -> What this page points at, which is only knowable once it has an id and an address of its
+    //    own: a relative link resolves against the page holding it
+    await WIKI.models.pageLinks.refreshForPage(page, links)
 
     const versionId = await WIKI.models.pageHistory.record({
       siteId,
@@ -1646,14 +1660,20 @@ class Pages {
     }
 
     // -> A render only means anything next to the content it came from, so the two move together
+    let renderHrefs: string[] | undefined
     if (patch.render !== undefined) {
-      const { render, toc, text } = await WIKI.models.rendering.postProcess(siteId, patch.render, {
-        scripts: hasPermission(actor, 'write:scripts'),
-        styles: hasPermission(actor, 'write:styles')
-      })
+      const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
+        siteId,
+        patch.render,
+        {
+          scripts: hasPermission(actor, 'write:scripts'),
+          styles: hasPermission(actor, 'write:styles')
+        }
+      )
       values.render = render
       values.toc = toc
       values.searchContent = text
+      renderHrefs = links
     }
 
     if (CONFIG_FIELDS.some((field) => patch[field] !== undefined)) {
@@ -1677,6 +1697,14 @@ class Pages {
     await WIKI.db.update(pagesTable).set(values).where(eq(pagesTable.id, id))
 
     const updated = (await this.getPage({ siteId, id })) as Page
+
+    /*
+      Unconditionally, and not only for a save that carried a render: a redirection's destination is
+      its content, and the sidebar relations are a column of their own, so a save touching either of
+      those changes what the page links to without the render moving at all. Read back rather than
+      assembled from the patch, for the same reason `changedFields` is worked out against the row.
+    */
+    await WIKI.models.pageLinks.refreshById(siteId, id, renderHrefs)
 
     const versionId = await WIKI.models.pageHistory.record({
       siteId,
@@ -1905,6 +1933,14 @@ class Pages {
       for a page nobody edits again is never.
     */
     await WIKI.models.search.indexPage(id, newLocale)
+
+    /*
+      Not the pages pointing AT this one -- those still say where it was, which is the thing worth
+      knowing and exactly what the table is for. This is the other direction: every relative link the
+      moved page itself carries resolved against the folder it used to sit in, and now resolves
+      against a different one. Nothing about its content changed and every one of its links may have.
+    */
+    await WIKI.models.pageLinks.refreshById(siteId, id)
 
     // -> Moved and then rewritten, rather than deleted and written afresh: the move is what keeps a
     //    versioned target's history of the file attached to it, and the rewrite is because a move may
@@ -2432,7 +2468,11 @@ class Pages {
     html: string,
     permissions: RenderPermissions
   ): Promise<void> {
-    const { render, toc, text } = await WIKI.models.rendering.postProcess(siteId, html, permissions)
+    const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
+      siteId,
+      html,
+      permissions
+    )
 
     const updated = await WIKI.db
       .update(pagesTable)
@@ -2443,6 +2483,9 @@ class Pages {
     // -> Nothing was updated when the page went while it sat in the queue
     if (updated[0]) {
       await WIKI.models.search.indexPage(id, updated[0].locale)
+      // -> An imported page is saved with no render at all and gets one from here, so this is where
+      //    its links first appear
+      await WIKI.models.pageLinks.refreshById(siteId, id, links)
       // -> This is the column the injected copy of a page IS, so a re-render changes it
       invalidateAppShellCache()
     }
@@ -2547,6 +2590,7 @@ class Pages {
   ): Record<string, any> {
     const defaults = WIKI.sites[siteId]?.config?.defaults ?? {}
     return {
+      allowBacklinks: input.allowBacklinks ?? existing.allowBacklinks ?? true,
       allowComments: input.allowComments ?? existing.allowComments ?? true,
       allowContributions: input.allowContributions ?? existing.allowContributions ?? true,
       allowRatings: input.allowRatings ?? existing.allowRatings ?? true,

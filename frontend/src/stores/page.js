@@ -25,6 +25,7 @@ export const DEFAULT_PAGE_ICON = 'mdi:file-document-outline'
  * page for this locale -- refused the same way. Both are left for the author to fill in on the copy.
  */
 const DUPLICATED_PAGE_PROPS = [
+  'allowBacklinks',
   'allowComments',
   'allowContributions',
   'allowRatings',
@@ -49,6 +50,8 @@ const DUPLICATED_PAGE_PROPS = [
 export const usePageStore = defineStore('page', {
   state: () => ({
     alias: '',
+    /** Whether this page shows its Links tab. The site-wide switch is `siteStore.features.backlinks`. */
+    allowBacklinks: true,
     allowComments: false,
     allowContributions: true,
     allowRatings: true,
@@ -552,6 +555,7 @@ export const usePageStore = defineStore('page', {
         //    belonged to -- a copy included, whose set already holds a page for this locale
         localeRelations: [],
         tags: props.tags ?? [],
+        allowBacklinks: props.allowBacklinks ?? true,
         allowComments: props.allowComments ?? false,
         allowContributions: props.allowContributions ?? true,
         allowRatings: props.allowRatings ?? true,
@@ -848,6 +852,7 @@ export const usePageStore = defineStore('page', {
         const body = {
           ...pick(this, [
             'alias',
+            'allowBacklinks',
             'allowComments',
             'allowContributions',
             'allowRatings',

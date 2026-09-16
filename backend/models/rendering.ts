@@ -4,6 +4,7 @@ import { eq, inArray, sql } from 'drizzle-orm'
 import { flipFromString, rotateFromString } from '@iconify/utils'
 import { jobs as jobsTable, pageRenderQueue as renderQueueTable } from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
+import { hrefsFrom } from '../helpers/pageLinks.ts'
 import type { IconifyIcon } from '@iconify/types'
 import type { IconifyIconCustomisations } from '@iconify/utils'
 
@@ -64,6 +65,15 @@ export interface PostProcessResult {
   toc: TocNode[]
   /** Plain text, for the search index. */
   text: string
+  /**
+   * Every href the page carries, exactly as written and with repeats left in.
+   *
+   * Raw on purpose: what an href ADDRESSES depends on where the page holding it sits, on the site's
+   * locale prefixes and on its page extensions, none of which is rendering's business. See
+   * `helpers/pageLinks.ts`, which reads them, and `models/pageLinks.ts`, which stores what it makes
+   * of them.
+   */
+  links: string[]
 }
 
 /**
@@ -376,7 +386,10 @@ class Rendering {
     return {
       render: $.html(),
       toc,
-      text: this.extractText($)
+      text: this.extractText($),
+      // -> Read off the tree that is already loaded rather than by re-parsing the output, which is
+      //    what `linksFromRender` has to do for a page nobody is saving
+      links: hrefsFrom($)
     }
   }
 

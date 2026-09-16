@@ -226,6 +226,22 @@
             </w-item-section>
           </w-item>
           <w-item>
+            <blueprint-icon icon="link" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.rebuildPageLinks`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.rebuildPageLinksHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="rebuildPageLinks"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
             <blueprint-icon icon="rescan-document" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.scanPageProblems`) }}</w-item-label>
@@ -699,6 +715,44 @@ async function purgeSampleContent() {
       })
     }
     state.sampleLoading = false
+  })
+}
+
+/**
+ * Work out again what every page on every wiki links to, from the render each page already stores.
+ *
+ * Queued rather than done in the request: it reads every page in the instance, so it runs in a worker
+ * thread and the response only says it has been scheduled. Confirmed even so — it is a lot of work on
+ * a large wiki — but not coloured as a destruction, since nothing about the content changes and the
+ * rows it rewrites are derived from that content anyway.
+ */
+function rebuildPageLinks() {
+  confirm({
+    title: t('admin.utilities.rebuildPageLinks'),
+    message: t('admin.utilities.rebuildPageLinksConfirm'),
+    caption: t('admin.utilities.rebuildPageLinksConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/page-links/rebuild').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.rebuildPageLinksSuccess')
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.rebuildPageLinksFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
   })
 }
 

@@ -36,22 +36,37 @@ import { useI18n } from 'vue-i18n'
 import { usePageStore } from '@/stores/page'
 
 /**
- * Article / Talk, above the content of a page that has a discussion beside it.
+ * Article / Talk / Links, above the content of a page that has more than one view of itself.
  *
  * Its own strip rather than `WTabs`, which is a segmented control: a tinted track with the active
  * tab raised out of it as a pill, drawn wherever a caller puts it. What this location wants is the
  * opposite shape -- chrome flush to the top and sides of the article column, with the active tab cut
  * out of it in the article's own colour so the two read as one surface. A pill floating in padding
- * above the article says "a control", where this says "you are looking at one of these two".
+ * above the article says "a control", where this says "you are looking at one of these".
  *
  * The tabs are at the RIGHT end: the article's first heading is what a reader is here for and it
  * starts at the left, so the switch stays out of the way of the column's own beginning.
+ *
+ * Which tabs there are is the caller's decision, not this component's -- each one is gated on things
+ * only `pages/Index.vue` knows (the comments provider in use, the page's own switches, the rules this
+ * reader holds here). Article is always the first, and the strip is not drawn at all when it is the
+ * only one.
  */
 const props = defineProps({
-  /** Which view is on screen: `article` or `talk`. */
+  /** Which view is on screen: `article`, `talk` or `links`. */
   modelValue: {
     type: String,
     required: true
+  },
+  /** Whether the built-in discussion is one of the views. */
+  talk: {
+    type: Boolean,
+    default: false
+  },
+  /** Whether the list of pages linking here is one of the views. */
+  links: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -78,25 +93,46 @@ const tabs = computed(() => [
     label: t('common.comments.tabArticle'),
     count: 0
   },
-  {
-    name: 'talk',
-    icon: 'la:comments',
-    label: t('common.comments.tabTalk'),
-    /*
-      The count the page came with, not the length of a list this strip does not have: the badge has
-      to be there before the discussion is ever opened, which is the whole reason it rides along on
-      the page payload.
-    */
-    count: pageStore.commentsCount
-  }
+  ...(props.talk
+    ? [
+        {
+          name: 'talk',
+          icon: 'la:comments',
+          label: t('common.comments.tabTalk'),
+          /*
+            The count the page came with, not the length of a list this strip does not have: the badge
+            has to be there before the discussion is ever opened, which is the whole reason it rides
+            along on the page payload.
+          */
+          count: pageStore.commentsCount
+        }
+      ]
+    : []),
+  ...(props.links
+    ? [
+        {
+          name: 'links',
+          icon: 'la:link',
+          label: t('common.page.tabLinks'),
+          /*
+            No badge, and not for want of a number to put in one. What links here is filtered by what
+            THIS reader may read, so a count that did not run the same filter would announce pages
+            they cannot open -- and one that did would have to fetch the whole list on every page view
+            to show a digit above a tab nobody has clicked. The list itself is a click away and says
+            how many there are.
+          */
+          count: 0
+        }
+      ]
+    : [])
 ])
 
 // METHODS
 
 /**
  * Arrow keys move between the tabs, which is what a tablist is expected to do. Selecting as it moves
- * (rather than requiring a second key) is the automatic-activation pattern, and is right here: both
- * views are already loaded, so arriving at one costs nothing.
+ * (rather than requiring a second key) is the automatic-activation pattern, and is right here: the
+ * strip has three tabs at most and each is a view of the page the reader is already on.
  */
 function onKeydown(ev) {
   const keys = { ArrowRight: 1, ArrowLeft: -1, Home: 'first', End: 'last' }

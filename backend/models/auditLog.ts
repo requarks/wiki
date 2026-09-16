@@ -117,6 +117,7 @@ export const AUDIT_ACTIONS = {
     'updateSecurity',
     'updateSearchConfig',
     'rebuildSearchIndex',
+    'rebuildPageLinks',
     'installExtension',
     'updateApiState',
     'updateMetricsState',
