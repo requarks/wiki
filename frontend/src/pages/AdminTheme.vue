@@ -736,7 +736,8 @@ async function save() {
     /*
       The theme's own endpoint rather than the general site update, because it is its own permission:
       `manage:theme` grants the look of a site without granting its hostname, locales or
-      authentication, and the general update asks for `manage:sites`.
+      authentication, and the general update asks for `manage:sites` -- which this route deliberately
+      does NOT accept, since the three site permissions do not overlap.
     */
     const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/theme`, {
       json: patchTheme

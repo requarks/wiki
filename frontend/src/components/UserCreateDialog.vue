@@ -183,6 +183,7 @@ import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import { useAdminStore } from '@/stores/admin'
+import { useUserStore } from '@/stores/user'
 
 // EMITS
 
@@ -197,6 +198,7 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
 // STORES
 
 const adminStore = useAdminStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -291,7 +293,17 @@ async function loadGroups() {
   state.loadingGroups = true
   try {
     const groups = await API_CLIENT.get('groups').json()
-    state.groups = (groups ?? []).filter((g) => g.id !== '10000000-0000-4000-8000-000000000001')
+    /*
+      Guests are never a group an account is created into, and neither is a group that administers
+      the wiki: putting a NEW user in one grants whatever it can reach, which is the same act as
+      promoting an existing user and meets the same refusal at the endpoint. Only `manage:system`
+      may, so for everybody else the option is not offered rather than refused on submit.
+    */
+    state.groups = (groups ?? []).filter(
+      (g) =>
+        g.id !== '10000000-0000-4000-8000-000000000001' &&
+        (userStore.can('manage:system') || !g.isElevated)
+    )
   } catch (err) {
     notify({
       type: 'negative',

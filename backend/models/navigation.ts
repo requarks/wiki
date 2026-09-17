@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { navigation as navigationTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError } from '../helpers/common.ts'
+import { CustomError, decodeTreePath } from '../helpers/common.ts'
 
 export const NAVIGATION_MODES = [
   'inherit',
@@ -190,6 +190,100 @@ class Navigation {
   async inheritedNavId(siteId: string, pageId: string): Promise<string | null> {
     const entry = await this.getEntry(siteId, pageId)
     return this.ancestorNavId(siteId, entry.locale, entry.folderPath ?? '')
+  }
+
+  /**
+   * WHERE the menu a page shows actually lives, as a path the page rules can be asked about.
+   *
+   * `manage:navigation` is a page rule, so every question about it is a question about a path — and
+   * the path that decides whether somebody may edit MENU ITEMS is not the page they are standing on
+   * but the entry whose menu those items belong to. A page under `/guides` that inherits is editing
+   * `/guides`'s menu, and changing it changes what every page under `/guides` shows.
+   *
+   * Three shapes come back:
+   *
+   * - **An ancestor entry** — the nearest one that overrides. Its own path is what gets checked.
+   * - **The site root** — when nothing above overrides, the menu is the site-wide one for the locale,
+   *   which in this model is the home page's own (`isSiteRoot` in `updateNavigation`). So the path
+   *   is that page's, and editing the sidebar the whole wiki inherits needs a rule reaching it.
+   * - **Null** — the sidebar above is hidden, so there is no menu and nothing to edit.
+   *
+   * @param ownPath Where the page itself sits, used when the page overrides and so owns its menu
+   */
+  async menuOwnerRef(
+    siteId: string,
+    pageId: string,
+    mode: NavigationMode
+  ): Promise<{ navigationId: string | null; path: string; locale: string; tags: string[] } | null> {
+    const entry = await this.getEntry(siteId, pageId)
+    const folderPath = entry.folderPath ?? ''
+    /*
+      Which menu the items belong to is the MODE's answer, exactly as it is in `updateNavigation`
+      (`targetNavId`): a page that overrides owns the menu it is about to write, so the path to ask
+      about is its own. Only `inherit` reaches upwards. Getting this wrong in either direction is a
+      real bug -- always asking about the ancestor refuses somebody editing their own page's menu,
+      and always asking about the page lets them rewrite one handed down from above.
+    */
+    if (mode !== 'inherit') {
+      const own = decodeTreePath(folderPath) ?? ''
+      return {
+        navigationId: entry.id,
+        path: own ? `${own}/${entry.fileName}` : entry.fileName,
+        locale: entry.locale,
+        tags: (entry.tags ?? []) as string[]
+      }
+    }
+    const navId = await this.ancestorNavId(siteId, entry.locale, folderPath)
+    if (!navId) {
+      return null
+    }
+    return this.refForNavId(siteId, navId, entry.locale)
+  }
+
+  /**
+   * The entry a menu belongs to, as a path the page rules can be asked about.
+   *
+   * A menu belonging to the tree is keyed by its entry's id; the site-wide one is keyed by site and
+   * locale and matches no entry, which is exactly how the two are told apart here.
+   *
+   * @param fallbackLocale The locale to report for the site-wide menu, whose owner is the home page
+   */
+  async refForNavId(
+    siteId: string,
+    navId: string,
+    fallbackLocale?: string
+  ): Promise<{ navigationId: string; path: string; locale: string; tags: string[] } | null> {
+    const owners = await WIKI.db
+      .select({
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        locale: treeTable.locale,
+        tags: treeTable.tags
+      })
+      .from(treeTable)
+      .where(and(eq(treeTable.id, navId), eq(treeTable.siteId, siteId)))
+      .limit(1)
+    const owner = owners[0]
+    if (owner) {
+      const ownerFolder = owner.folderPath ? decodeTreePath(owner.folderPath) : ''
+      return {
+        navigationId: navId,
+        path: ownerFolder ? `${ownerFolder}/${owner.fileName}` : owner.fileName,
+        locale: owner.locale,
+        tags: (owner.tags ?? []) as string[]
+      }
+    }
+    // -> The site-wide menu, which the home page owns. `home` is the path `isSiteRoot` recognises.
+    const siteMenus = await WIKI.db
+      .select({ locale: navigationTable.locale })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+      .limit(1)
+    const locale = siteMenus[0]?.locale ?? fallbackLocale
+    if (!locale) {
+      return null
+    }
+    return { navigationId: navId, path: 'home', locale, tags: [] }
   }
 
   /**

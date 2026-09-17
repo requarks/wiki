@@ -83,7 +83,7 @@
                       :rules="groupNameValidation"
                       hide-bottom-space
                       :aria-label="t(`admin.groups.name`)"
-                      :disable="isGuestGroup" />
+                      :disable="isGuestGroup || !canManage" />
                   </w-item-section>
                 </w-item>
               </w-card>
@@ -100,6 +100,7 @@
                       outlined
                       v-model="state.group.redirectOnLogin"
                       dense
+                      :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogin`)" />
                   </w-item-section>
                 </w-item>
@@ -117,6 +118,7 @@
                       outlined
                       v-model="state.group.redirectOnFirstLogin"
                       dense
+                      :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogin`)" />
                   </w-item-section>
                 </w-item>
@@ -134,6 +136,7 @@
                       outlined
                       v-model="state.group.redirectOnLogout"
                       dense
+                      :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogout`)" />
                   </w-item-section>
                 </w-item>
@@ -192,7 +195,10 @@
             color="grey"
             type="a"
             :href="siteStore.docsBase + `/admin/permissions#page-rules`"
-            target="_blank" />
+            target="_blank"
+            :aria-label="t(`common.actions.viewDocs`)">
+            <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+          </w-btn>
           <w-btn
             class="acrylic-btn mr-2"
             flat
@@ -233,7 +239,7 @@
                   <w-icon
                     :name="getRuleModeIcon(rule.mode)"
                     color="white"
-                    @click="rule.mode = getNextRuleMode(rule.mode)" />
+                    @click="cycleRuleMode(rule)" />
                 </div>
                 <div class="admin-groups-rule-name">
                   <div class="admin-groups-rule-name-text">
@@ -242,7 +248,11 @@
                     }}</strong>
                   </div>
                   <w-separator class="ml-2 mr-1" vertical />
-                  <input type="text" v-model="rule.name" placeholder="Rule Name" />
+                  <input
+                    type="text"
+                    v-model="rule.name"
+                    placeholder="Rule Name"
+                    :disabled="!canManage" />
                 </div>
                 <w-card class="admin-groups-rule-card mt-4" flat>
                   <w-card-section
@@ -257,6 +267,7 @@
                       dense
                       :aria-label="t(`admin.groups.ruleSites`)"
                       :options="ruleOptions"
+                      :disable="!canManage"
                       placeholder="Select permissions..."
                       option-value="permission"
                       option-label="title"
@@ -319,6 +330,7 @@
                         emit-value
                         map-options
                         dense
+                        :disable="!canManage"
                         :aria-label="t(`admin.groups.ruleSites`)"
                         :options="adminStore.sites"
                         option-value="id"
@@ -354,6 +366,7 @@
                         emit-value
                         map-options
                         dense
+                        :disable="!canManage"
                         :aria-label="t(`admin.groups.ruleLocales`)"
                         :options="adminStore.locales"
                         option-value="code"
@@ -399,6 +412,7 @@
                         emit-value
                         map-options
                         dense
+                        :disable="!canManage"
                         :aria-label="t(`admin.groups.ruleMatch`)"
                         :options="[
                           { label: t('admin.groups.ruleMatchStart'), value: 'START' },
@@ -430,6 +444,7 @@
                         hide-dropdown-icon
                         :placeholder="t(`admin.groups.ruleTagsHint`)"
                         :aria-label="t(`admin.groups.ruleTags`)"
+                        :disable="!canManage"
                         :loading="state.isLoadingTags"
                         @create="(val) => addRuleTags(rule, val)">
                         <template #prepend><w-icon name="la:hashtag" size="xs" /></template>
@@ -444,6 +459,7 @@
                           [`START`, `SUBTREE`, `REGEX`, `EXACT`].includes(rule.match) ? `/` : null
                         "
                         :suffix="rule.match === `REGEX` ? `/` : null"
+                        :disable="!canManage"
                         :aria-label="t(`admin.groups.rulePath`)" />
                     </w-card-section>
                   </w-card-section>
@@ -459,10 +475,20 @@
       <w-page v-else-if="route.params.section === `permissions`">
         <div class="p-4">
           <div class="grid grid-cols-12 gap-4">
+            <!--
+              One card per kind of question, rather than one list of ten: what an account gets for
+              being let into the admin area at all, what runs a site, what runs the people. The row
+              inside them is the same everywhere, so it is written once and the cards are data --
+              see `permissionCards`.
+            -->
             <div class="col-span-12 lg:col-span-6">
-              <w-card class="shadow-1 pb-2">
+              <w-card
+                v-for="(card, cardIdx) of leftPermissionCards"
+                :key="card.key"
+                class="shadow-1 pb-2"
+                :class="{ 'mt-4': cardIdx > 0 }">
                 <w-card-header>
-                  {{ t(`admin.groups.permissions`) }}
+                  {{ t(card.title) }}
                   <template #action>
                     <w-btn
                       class="acrylic-btn"
@@ -470,14 +496,17 @@
                       flat
                       color="grey"
                       type="a"
-                      :href="siteStore.docsBase + `/admin/permissions#global-permissions`"
-                      target="_blank" />
+                      :href="siteStore.docsBase + card.docs"
+                      target="_blank"
+                      :aria-label="t(`common.actions.viewDocs`)">
+                      <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+                    </w-btn>
                   </template>
                 </w-card-header>
-                <template v-for="(perm, idx) of permissions" :key="perm.permission">
+                <template v-for="(perm, idx) of card.permissions" :key="perm.permission">
                   <w-item tag="label">
                     <w-item-section class="items-center" style="flex: 0 0 40px">
-                      <w-icon name="la:snowflake" color="primary" size="sm" />
+                      <w-icon :name="card.icon" color="primary" size="sm" />
                     </w-item-section>
                     <w-item-section>
                       <w-item-label>{{ perm.permission }}</w-item-label>
@@ -490,26 +519,88 @@
                         color="primary"
                         checked-icon="la:check"
                         unchecked-icon="la:times"
-                        :disable="isSystemPermissionLocked(perm.permission)"
-                        :aria-label="t(`admin.general.allowComments`)" />
+                        :disable="
+                          isSystemPermissionLocked(perm.permission) || !canManagePermissions
+                        "
+                        :aria-label="perm.permission" />
                     </w-item-section>
                   </w-item>
-                  <w-separator class="my-2" inset v-if="idx < permissions.length - 1" />
+                  <w-separator class="my-2" inset v-if="idx < card.permissions.length - 1" />
                 </template>
               </w-card>
             </div>
-            <!--
-              `manage:system` on a card of its own, because it is not one more thing a group may do:
-              the server checks it FIRST and lets the request through whatever the list on the left
-              says, so ticking it makes every toggle beside it moot. A row at the bottom of that list
-              would have read as the tenth of ten.
-            -->
             <div class="col-span-12 lg:col-span-6">
+              <w-card
+                v-for="card of rightPermissionCards"
+                :key="card.key"
+                class="shadow-1 mb-4 pb-2">
+                <w-card-header>
+                  {{ t(card.title) }}
+                  <template #action>
+                    <w-btn
+                      class="acrylic-btn"
+                      icon="la:question-circle"
+                      flat
+                      color="grey"
+                      type="a"
+                      :href="siteStore.docsBase + card.docs"
+                      target="_blank"
+                      :aria-label="t(`common.actions.viewDocs`)">
+                      <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+                    </w-btn>
+                  </template>
+                </w-card-header>
+                <template v-for="(perm, idx) of card.permissions" :key="perm.permission">
+                  <w-item tag="label">
+                    <w-item-section class="items-center" style="flex: 0 0 40px">
+                      <w-icon :name="card.icon" color="primary" size="sm" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ perm.permission }}</w-item-label>
+                      <w-item-label caption>{{ perm.hint }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section avatar>
+                      <w-toggle
+                        v-model="state.group.permissions"
+                        :val="perm.permission"
+                        color="primary"
+                        checked-icon="la:check"
+                        unchecked-icon="la:times"
+                        :disable="
+                          isSystemPermissionLocked(perm.permission) || !canManagePermissions
+                        "
+                        :aria-label="perm.permission" />
+                    </w-item-section>
+                  </w-item>
+                  <w-separator class="my-2" inset v-if="idx < card.permissions.length - 1" />
+                </template>
+              </w-card>
+              <!--
+                `manage:system` on a card of its own, because it is not one more thing a group may
+                do: the server checks it FIRST and lets the request through whatever the cards beside
+                it say, so ticking it makes every other toggle on this screen moot. A row in any of
+                those lists would have read as one more item in it.
+              -->
               <w-card class="shadow-1 pb-2">
-                <w-card-header>{{ t(`admin.groups.systemPermission`) }}</w-card-header>
+                <w-card-header>
+                  {{ t(`admin.groups.systemPermission`) }}
+                  <template #action>
+                    <w-btn
+                      class="acrylic-btn"
+                      icon="la:question-circle"
+                      flat
+                      color="grey"
+                      type="a"
+                      :href="siteStore.docsBase + `/admin/permissions#full-access`"
+                      target="_blank"
+                      :aria-label="t(`common.actions.viewDocs`)">
+                      <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+                    </w-btn>
+                  </template>
+                </w-card-header>
                 <w-item tag="label">
                   <w-item-section class="items-center" style="flex: 0 0 40px">
-                    <w-icon name="la:snowflake" color="negative" size="sm" />
+                    <w-icon name="la:fire-alt" color="negative" size="sm" />
                   </w-item-section>
                   <w-item-section>
                     <w-item-label>{{ systemPermission.permission }}</w-item-label>
@@ -525,7 +616,10 @@
                     <w-toggle
                       v-model="state.group.permissions"
                       :val="systemPermission.permission"
-                      :disable="isSystemPermissionLocked(systemPermission.permission)"
+                      :disable="
+                        isSystemPermissionLocked(systemPermission.permission) ||
+                        !canManagePermissions
+                      "
                       :aria-label="systemPermission.permission" />
                   </w-item-section>
                 </w-item>
@@ -564,7 +658,10 @@
             color="grey"
             type="a"
             :href="siteStore.docsBase + `/admin/groups#users`"
-            target="_blank" />
+            target="_blank"
+            :aria-label="t(`common.actions.viewDocs`)">
+            <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+          </w-btn>
           <w-input
             class="denser fill-outline mr-2"
             outlined
@@ -794,63 +891,117 @@ const usersHeaders = [
 ]
 
 /**
- * The group-wide permissions, in the order the screen offers them.
+ * The group-wide permissions, as cards, in the order the screen offers them.
  *
- * Grouped by what they are about rather than alphabetically: getting into the admin area, then the
- * site-bound screens, then the people screens, then the two read-only views. `manage:system` is
- * deliberately NOT here — it is not one more entry on this list but the absence of the list, so it
- * has a card of its own. See `systemPermission`.
+ * Grouped by what they are ABOUT rather than listed flat: what getting into the admin area buys on
+ * its own, what runs a site, and what runs the people. A flat list of ten made a reader work out for
+ * themselves that `manage:theme` and `manage:groups` answer completely different questions.
+ *
+ * `column` is which half of the screen a card sits in; `icon` is the mark every row in it wears, so
+ * that a permission is recognisable as belonging to its group at a glance rather than by reading the
+ * heading above it; `docs` is the fragment its help button links to, since each card answers to its
+ * own section of the documentation rather than to one page for the whole screen. `manage:system` is deliberately in
+ * neither list — it is not one more entry but the absence of the list, so it has a card of its own.
+ * See `systemPermission`.
  */
-const permissions = [
+const permissionCards = [
   {
-    permission: 'access:admin',
-    hint: 'Can access the administration and view the dashboard. Cannot perform any other action unless other permissions are also granted.'
+    key: 'general',
+    docs: '/admin/permissions#global-permissions',
+    icon: 'la:snowflake',
+    column: 'left',
+    title: 'admin.groups.permissionsGeneral',
+    permissions: [
+      {
+        permission: 'access:admin',
+        hint: 'Can access the administration and view the dashboard. Cannot perform any other action unless other permissions are also granted.'
+      },
+      {
+        permission: 'read:audit',
+        hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.'
+      },
+      {
+        permission: 'read:metrics',
+        hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.'
+      }
+    ]
   },
   {
-    permission: 'manage:sites',
-    hint: 'Can create / manage sites, and every setting bound to one: general, analytics, approvals, comments, content blocks, editors, locale, login, storage and theme.'
+    key: 'site',
+    docs: '/admin/permissions#site-management-matrix',
+    icon: 'la:landmark',
+    column: 'left',
+    title: 'admin.groups.permissionsSite',
+    permissions: [
+      {
+        permission: 'manage:sites',
+        hint: 'Can create / manage sites and their settings: general, analytics, approvals, comments, content blocks, editors, locale and login. Theme and storage are separate permissions.'
+      },
+      {
+        permission: 'manage:theme',
+        hint: 'Can modify site theme settings, including the CSS, head and body injected into every page. This is the only permission that can.'
+      },
+      {
+        permission: 'manage:storage',
+        hint: "Can modify site storage settings: which targets hold this site's content, where it is served from, and the actions that move it. This is the only permission that can."
+      }
+    ]
   },
   {
-    permission: 'manage:theme',
-    hint: 'Can modify site theme settings, including the CSS, head and body injected into every page.'
+    key: 'webhooks',
+    docs: '/admin/permissions#site-management-matrix',
+    icon: 'la:bolt',
+    column: 'left',
+    title: 'admin.groups.permissionsWebhooks',
+    permissions: [
+      {
+        permission: 'read:webhooks',
+        hint: 'Can view webhooks and their settings, but not create or modify them. The authorization header of each one reads as a mask rather than as its value.'
+      },
+      {
+        permission: 'manage:webhooks',
+        hint: 'Can view, create, modify and delete webhooks.'
+      }
+    ]
   },
   {
-    permission: 'manage:navigation',
-    hint: 'Can manage site navigation'
-  },
-  {
-    permission: 'read:users',
-    hint: 'Can view users, but not create or modify them.'
-  },
-  {
-    permission: 'manage:users',
-    hint: 'Can create / manage users (but not users with manage:system permissions)'
-  },
-  {
-    permission: 'read:groups',
-    hint: 'Can view groups and their permissions, but not create or modify them.'
-  },
-  {
-    permission: 'manage:groups',
-    hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules'
-  },
-  {
-    permission: 'read:audit',
-    hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.'
-  },
-  {
-    permission: 'read:metrics',
-    hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.'
+    key: 'users',
+    docs: '/admin/permissions#user-management-matrix',
+    icon: 'la:user-tie',
+    column: 'right',
+    title: 'admin.groups.permissionsUsers',
+    permissions: [
+      {
+        permission: 'read:users',
+        hint: 'Can view users, but not create or modify them.'
+      },
+      {
+        permission: 'write:users',
+        hint: 'Can create new users, but not modify existing ones. A new user can only be placed in groups that do not administer the wiki.'
+      },
+      {
+        permission: 'manage:users',
+        hint: 'Can create and modify users, except those in a group with manage:system. Cannot move a user in or out of a group that administers the wiki.'
+      },
+      {
+        permission: 'read:groups',
+        hint: 'Can view groups and their permissions, but not create or modify them.'
+      },
+      {
+        permission: 'write:groups',
+        hint: 'Can create and manage groups and their page rules, but cannot change what a group is allowed to do, delete one, or change the membership of a group that administers the wiki.'
+      },
+      {
+        permission: 'manage:groups',
+        hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules'
+      }
+    ]
   }
 ]
 
-/**
- * The one permission that is not a permission to do something in particular.
- *
- * `manage:system` bypasses every check on the server rather than adding to what is granted, so a
- * group holding it holds everything above whether or not any of it is ticked. Offered on a card of
- * its own so that it cannot be read as the tenth item of a list of ten.
- */
+const leftPermissionCards = permissionCards.filter((c) => c.column === 'left')
+const rightPermissionCards = permissionCards.filter((c) => c.column === 'right')
+
 const systemPermission = {
   permission: 'manage:system',
   hint: 'Can manage and access everything. Root administrator.'
@@ -951,6 +1102,14 @@ const rules = [
     disabled: false
   },
   {
+    permission: 'manage:navigation',
+    title: 'Manage Navigation',
+    hint: 'Can change how pages here resolve their sidebar, and edit the menu itself where this rule also covers the page the menu belongs to.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
     permission: 'read:assets',
     title: 'View Assets',
     hint: 'Can view / use assets (such as images and files) in pages.',
@@ -1011,7 +1170,16 @@ const groupNameValidation = [(val) => /^[^<>"]+$/.test(val) || t('admin.groups.n
   `manage:groups` / `write:groups` (see `api/groups.ts`), so the actions that perform one are hidden
   rather than left to fail at the API. Exporting rules stays -- it only reads what is on screen.
 */
-const canManage = computed(() => userStore.can('manage:groups'))
+const canManage = computed(() => userStore.can('manage:groups') || userStore.can('write:groups'))
+
+/*
+  Whether this user may rewrite what the group is ALLOWED to do, which is the Permissions tab and
+  nothing else. `write:groups` builds and arranges groups -- names, page rules, redirects, who is in
+  the ordinary ones -- but granting a group `manage:users` is a way of granting oneself anything, so
+  the global list stays with `manage:groups`. The tab is still shown, because reading what a group
+  may do is the point of being able to open it.
+*/
+const canManagePermissions = computed(() => userStore.can('manage:groups'))
 
 /*
   `manage:system` is the one permission a `manage:groups` holder may not move: granting it hands over
@@ -1253,6 +1421,18 @@ function newRule() {
     locales: [],
     sites: []
   })
+}
+
+/*
+  Cycle a rule between ALLOW, DENY and FORCEALLOW. Guarded here rather than in the template, because
+  the control is an icon with a click handler rather than a form control there is a `disable` to set
+  -- a reader holding `read:groups` may look at a rule, not re-point it.
+*/
+function cycleRuleMode(rule) {
+  if (!canManage.value) {
+    return
+  }
+  rule.mode = getNextRuleMode(rule.mode)
 }
 
 function deleteRule(id) {

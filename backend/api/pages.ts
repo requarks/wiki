@@ -110,7 +110,8 @@ const PAGE_PERMISSIONS = [
   'manage:assets',
   'read:comments',
   'write:comments',
-  'manage:comments'
+  'manage:comments',
+  'manage:navigation'
 ]
 
 export function mayBypassPassword(req: FastifyRequest): boolean {

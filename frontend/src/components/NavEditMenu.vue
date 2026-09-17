@@ -2,7 +2,7 @@
   <w-card style="min-width: 350px">
     <w-card-section class="card-header">
       <w-icon name="img:/_assets/icons/fluent-sidebar-menu.svg" left size="sm" />
-      <span>{{t(`navEdit.title`)}}</span>
+      <span>{{ t(`navEdit.title`) }}</span>
     </w-card-section>
     <w-list padding>
       <template v-if="isRoot">
@@ -114,7 +114,6 @@ const props = defineProps({
   }
 })
 
-
 // STORES
 
 const pageStore = usePageStore()
@@ -139,6 +138,12 @@ const state = reactive({
    * Null means nothing to inherit: the sidebar above this page is hidden.
    */
   inheritedNavId: null,
+  /*
+    Whether the server will accept ITEMS from this page, which is a question about the entry the menu
+    belongs to rather than about this one -- so it is answered by the server and not worked out here.
+    See `manage:navigation` in the permissions section of CLAUDE.md.
+  */
+  canEditItems: false,
   loading: 0
 })
 
@@ -149,9 +154,18 @@ const isRoot = computed(() => {
 })
 
 const canEditMenuItems = computed(() => {
-  // -> Inheriting edits the menu this page shows where it lives, which needs there to be one
+  /*
+    Which menu the items belong to is the mode's answer, so which permission is needed follows it.
+
+    An overriding page owns the menu it writes, so holding `manage:navigation` HERE is the whole of it
+    -- and this menu is only rendered for somebody who does. Inheriting reaches up to an ancestor
+    instead, and changing that menu changes what every page under it shows, which is why the server
+    answers `canEditItems` separately: somebody who runs one section can re-point their own pages
+    without being able to rewrite the menu handed down to them.
+  */
   if (!isRoot.value && state.mode === 'inherit') {
-    return Boolean(state.inheritedNavId)
+    // -> And there has to BE one: an ancestor that hides the sidebar leaves nothing to edit
+    return state.canEditItems && Boolean(state.inheritedNavId)
   }
   return ['inherit', 'override', 'overrideExact'].includes(state.mode)
 })
@@ -183,6 +197,7 @@ async function loadInheritedNav() {
       `sites/${siteStore.id}/navigation/pages/${pageStore.id}/inherited`
     ).json()
     state.inheritedNavId = resp?.navigationId ?? null
+    state.canEditItems = Boolean(resp?.canEditItems)
     // -> A row appearing under the list makes the menu taller than the popup it was measured for
     nextTick(() => {
       props.updatePositionHandler()

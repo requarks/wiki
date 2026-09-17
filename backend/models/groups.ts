@@ -10,6 +10,35 @@ import type { FastifyRequest } from 'fastify'
 /** The permission that bypasses every check, and the one the guards below exist to protect. */
 export const SYSTEM_PERMISSION = 'manage:system'
 
+/**
+ * The permissions that amount to running the instance rather than to running part of it.
+ *
+ * Each one is a route to every other permission on the wiki, so a group holding any of them is a
+ * group whose membership is itself a privilege: somebody who may create users and put them in such a
+ * group, or add themselves to one, has granted themselves whatever that group can reach. That is why
+ * the guards below are written against this list and not against `manage:system` alone — stopping
+ * short at the root permission would leave `manage:users` handing out `manage:groups`, and
+ * `manage:groups` handing back `manage:users`, with neither step looking like an escalation on its
+ * own.
+ *
+ * `manage:system` is the one that also bypasses every route check; the other four get here by being
+ * able to rewrite who holds what.
+ */
+export const ELEVATED_PERMISSIONS = [
+  'write:users',
+  'manage:users',
+  'write:groups',
+  'manage:groups',
+  SYSTEM_PERMISSION
+] as const
+
+/** Whether a permission list carries any of `ELEVATED_PERMISSIONS`. */
+export function isElevated(permissions: readonly string[]): boolean {
+  return permissions.some((permission) =>
+    (ELEVATED_PERMISSIONS as readonly string[]).includes(permission)
+  )
+}
+
 /** How a rule addresses pages: `TAG` and `TAGALL` read `tags`, everything else reads `path`. */
 export type GroupRuleMatch = 'START' | 'END' | 'SUBTREE' | 'REGEX' | 'TAG' | 'TAGALL' | 'EXACT'
 
@@ -238,6 +267,25 @@ class Groups {
     }
     const rule = resolvePageRule(this.rulesForGroups(actor.groupIds), permission, page)
     return rule ? rule.mode !== 'DENY' : false
+  }
+
+  /**
+   * Whether any rule this actor holds grants a page permission ANYWHERE.
+   *
+   * Deliberately not a substitute for `checkAccess`, which is the question every endpoint acting on a
+   * page has to ask. This answers the narrower "is this person a `manage:navigation` holder at all",
+   * which is what a route serving the OPTIONS such an editor needs -- the group names its visibility
+   * field offers -- has to know, since that request names no page of its own.
+   *
+   * A `DENY` rule is not a grant, so a set of rules that only ever denies answers false.
+   */
+  grantsAnywhere(actor: AccessActor, permission: string): boolean {
+    if (actor.permissions.includes('manage:system')) {
+      return true
+    }
+    return this.rulesForGroups(actor.groupIds).some(
+      (rule) => rule.mode !== 'DENY' && (rule.roles ?? []).includes(permission)
+    )
   }
   async init(ids: SystemIds): Promise<void> {
     WIKI.logger.info('Inserting default groups...')
@@ -659,6 +707,21 @@ class Groups {
       .from(groupsTable)
     return rows
       .filter((row) => ((row.permissions ?? []) as string[]).includes(SYSTEM_PERMISSION))
+      .map((row) => row.id)
+  }
+
+  /**
+   * The ids of every group carrying any of `ELEVATED_PERMISSIONS`.
+   *
+   * What the membership guards ask about: putting somebody into one of these, or taking them out,
+   * changes who administers the instance rather than what one account may read.
+   */
+  async elevatedGroupIds(): Promise<string[]> {
+    const rows = await WIKI.db
+      .select({ id: groupsTable.id, permissions: groupsTable.permissions })
+      .from(groupsTable)
+    return rows
+      .filter((row) => isElevated((row.permissions ?? []) as string[]))
       .map((row) => row.id)
   }
 

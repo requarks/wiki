@@ -353,8 +353,21 @@ const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrows
   page. Same call as the page header's authoring actions, at the same breakpoint -- an editing control
   that needs a pointer is not offered on a screen that has none.
 */
+/*
+  `manage:navigation` is a page rule, so this is what the rules grant AT THIS PATH -- read off
+  `pagePermissions` rather than through `userStore.can()`, which also answers for the group-wide list
+  and would say "may manage navigation somewhere". Somewhere is how a button ends up leading to a 403.
+
+  Holding it here buys the MODE at minimum; whether the menu's items are editable too depends on the
+  entry the menu belongs to, which only the server can resolve -- `canEditItems` on the inherited
+  response is what says so, and `NavEditMenu` reads it.
+*/
 const showEditNav = computed(() => {
-  return userStore.authenticated && userStore.can('manage:navigation') && isAtLeastSm.value
+  return (
+    userStore.authenticated &&
+    userStore.pagePermissions.includes('manage:navigation') &&
+    isAtLeastSm.value
+  )
 })
 
 // WATCHERS

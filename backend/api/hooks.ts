@@ -1,6 +1,32 @@
 import { audit } from '../helpers/audit.ts'
-import type { FastifyInstance } from 'fastify'
+import { SENSITIVE_MASK } from '../helpers/common.ts'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { EMITTED_EVENTS, HOOK_EVENTS } from '../models/hooks.ts'
+
+/** Whether this caller may change webhooks, as opposed to only reading them. */
+function mayManage(req: FastifyRequest): boolean {
+  const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
+  return permissions.includes('manage:webhooks') || permissions.includes('manage:system')
+}
+
+/**
+ * A webhook as this caller may read it.
+ *
+ * `authHeader` is sent verbatim as the `Authorization` header of every delivery, so it is a
+ * credential for somebody else's service rather than a setting -- and `read:webhooks` exists to let
+ * somebody see what this wiki is wired to without handing them the keys to it. Masked the way a
+ * module's `sensitive` prop is, and for the reason given there: the value would otherwise end up in
+ * a browser, a cache and a screen share.
+ *
+ * Left intact for whoever may edit the webhook, since the field is theirs to read back and correct.
+ * That asymmetry is the whole point of the read-only rung.
+ */
+function forReader(req: FastifyRequest, hook: Record<string, any>): Record<string, any> {
+  if (mayManage(req)) {
+    return hook
+  }
+  return { ...hook, authHeader: hook.authHeader ? SENSITIVE_MASK : hook.authHeader }
+}
 
 interface HookBody {
   name?: string
@@ -50,10 +76,12 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['read:webhooks', 'manage:webhooks']
       },
       schema: {
         summary: 'List all webhooks',
+        description:
+          'Every webhook and its settings. `authHeader` reads as a fixed mask for a caller who may not change webhooks -- it is a credential for the service at the other end, not a setting to be read.',
         tags: ['Webhooks'],
         response: {
           200: {
@@ -64,8 +92,8 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
-      return WIKI.models.hooks.getHooks()
+    async (req) => {
+      return (await WIKI.models.hooks.getHooks()).map((hook) => forReader(req, hook))
     }
   )
 
@@ -76,7 +104,7 @@ async function routes(app: FastifyInstance) {
     '/events',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['read:webhooks', 'manage:webhooks']
       },
       schema: {
         summary: 'List the events a webhook can subscribe to',
@@ -115,10 +143,12 @@ async function routes(app: FastifyInstance) {
     '/:hookId',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['read:webhooks', 'manage:webhooks']
       },
       schema: {
         summary: 'Get a single webhook',
+        description:
+          'See the listing for how `authHeader` reads.',
         tags: ['Webhooks'],
         params: {
           type: 'object',
@@ -140,7 +170,7 @@ async function routes(app: FastifyInstance) {
       if (!hook) {
         return reply.notFound('Webhook does not exist.')
       }
-      return hook
+      return forReader(req, hook)
     }
   )
 
@@ -151,7 +181,7 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['manage:webhooks']
       },
       schema: {
         summary: 'Create a new webhook',
@@ -219,7 +249,7 @@ async function routes(app: FastifyInstance) {
     '/:hookId',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['manage:webhooks']
       },
       schema: {
         summary: 'Update a webhook',
@@ -275,6 +305,15 @@ async function routes(app: FastifyInstance) {
           patch[field] = req.body[field]
         }
       }
+      /*
+        The mask means "unchanged", exactly as it does for a module's sensitive props: a client that
+        read a masked `authHeader` and posts the whole webhook back must not store a row of dots as
+        the credential. An empty string is not the mask and does clear it, which is how the header is
+        removed.
+      */
+      if (patch.authHeader === SENSITIVE_MASK) {
+        delete patch.authHeader
+      }
       if (Object.keys(patch).length < 1) {
         return reply.badRequest('No webhook fields provided to update.')
       }
@@ -302,7 +341,7 @@ async function routes(app: FastifyInstance) {
     '/:hookId',
     {
       config: {
-        permissions: ['manage:system']
+        permissions: ['manage:webhooks']
       },
       schema: {
         summary: 'Delete a webhook',

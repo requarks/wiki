@@ -775,11 +775,16 @@ There are two kinds, granted separately and checked in different places.
 
 ## Global permissions
 
-Held site-wide, bound to no path. \`access:admin\`, \`read:users\`, \`manage:users\`, \`read:groups\`,
-\`manage:groups\`, \`read:audit\`, \`read:metrics\`, \`manage:navigation\`, \`manage:theme\`,
-\`manage:sites\`, \`manage:system\`. That list is the whole of it.
+Held site-wide, bound to no path. \`access:admin\`, \`read:users\`, \`write:users\`,
+\`manage:users\`, \`read:groups\`, \`write:groups\`, \`manage:groups\`, \`read:audit\`,
+\`read:metrics\`, \`manage:theme\`, \`manage:storage\`, \`manage:sites\`, \`read:webhooks\`,
+\`manage:webhooks\`, \`manage:system\`. That list is the whole of it.
 
 \`manage:system\` bypasses every check everywhere.
+
+A site's settings are split across three permissions that do not overlap: \`manage:sites\` for its
+general settings, \`manage:theme\` for its appearance and \`manage:storage\` for where its content
+is kept. Changing all of them takes all three.
 
 ## Page rule permissions
 

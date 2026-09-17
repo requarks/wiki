@@ -42,6 +42,7 @@
           <w-item-section>
             <w-input
               v-model="state.hook.name"
+              :disable="!canManage"
               outlined
               dense
               :rules="hookNameValidation"
@@ -56,6 +57,7 @@
           <w-item-section>
             <w-select
               v-model="state.hook.events"
+              :disable="!canManage"
               outlined
               :options="events"
               multiple
@@ -103,6 +105,7 @@
             <w-item-label caption>{{ t(`admin.webhooks.urlHint`) }}</w-item-label>
             <w-input
               v-model="state.hook.url"
+              :disable="!canManage"
               class="mt-2"
               outlined
               dense
@@ -126,6 +129,7 @@
           <w-item-section avatar>
             <w-toggle
               v-model="state.hook.includeMetadata"
+              :disable="!canManage"
               :aria-label="t(`admin.webhooks.includeMetadata`)"
               @click.stop />
           </w-item-section>
@@ -139,6 +143,7 @@
           <w-item-section avatar>
             <w-toggle
               v-model="state.hook.includeContent"
+              :disable="!canManage"
               :aria-label="t(`admin.webhooks.includeContent`)"
               @click.stop />
           </w-item-section>
@@ -152,6 +157,7 @@
           <w-item-section avatar>
             <w-toggle
               v-model="state.hook.acceptUntrusted"
+              :disable="!canManage"
               :aria-label="t(`admin.webhooks.acceptUntrusted`)"
               @click.stop />
           </w-item-section>
@@ -163,6 +169,7 @@
             <w-item-label caption>{{ t(`admin.webhooks.authHeaderHint`) }}</w-item-label>
             <w-input
               v-model="state.hook.authHeader"
+              :disable="!canManage"
               class="mt-2"
               outlined
               dense
@@ -179,16 +186,27 @@
           color="grey"
           padding="xs md"
           @click="onDialogCancel" />
+        <!--
+          `read:webhooks` opens this dialog to read a webhook's events and settings; saving needs
+          `manage:webhooks`, so the button is absent rather than left to fail at the API. The fields
+          below stay readable for the same reason the group and user editors keep theirs -- see the
+          `disabled` bindings on each.
+        -->
         <w-btn
-          v-if="props.hookId"
+          v-if="props.hookId && canManage"
           unelevated
           :label="t(`common.actions.save`)"
           color="primary"
           padding="xs md"
           :loading="state.isLoading"
           @click="save" />
+        <!--
+          An explicit condition rather than `v-else`: with `canManage` on the Save button above, a
+          bare else caught the read-only case too and offered a reader a Create button on a webhook
+          that already exists.
+        -->
         <w-btn
-          v-else
+          v-if="!props.hookId && canManage"
           unelevated
           :label="t(`common.actions.create`)"
           color="primary"
@@ -208,6 +226,8 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref } from 'vue'
+
+import { useUserStore } from '@/stores/user'
 import { apiErrorMessage } from '@/helpers/apiError'
 
 // PROPS
@@ -227,9 +247,19 @@ defineEmits([...dialogComponentEmits])
 
 const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
 
+// STORES
+
+const userStore = useUserStore()
+
 // I18N
 
 const { t } = useI18n()
+
+/*
+  Whether this user may change the webhook, as opposed to only reading it. `read:webhooks` opens the
+  dialog; `manage:webhooks` is what the endpoints behind Save and Create ask for.
+*/
+const canManage = computed(() => userStore.can('manage:webhooks'))
 
 // DATA
 

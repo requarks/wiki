@@ -19,13 +19,14 @@
       class="util-code-editor-input"
       :value="modelValue"
       :aria-label="ariaLabel"
+      :readonly="readonly"
       spellcheck="false"
       autocapitalize="off"
       autocomplete="off"
       autocorrect="off"
       @input="onInput"
       @scroll="onScroll"
-      @keydown.tab.exact.prevent="onTab" />
+      @keydown.tab.exact="onTab" />
   </div>
 </template>
 
@@ -77,6 +78,18 @@ const props = defineProps({
   ariaLabel: {
     type: String,
     default: null
+  },
+  /**
+   * Show the code but refuse edits.
+   *
+   * `readonly` rather than `disabled`: the text stays selectable, copyable and at full contrast, and
+   * a screen reader still reads it out -- which is the whole point for somebody who may look at a
+   * setting but not change it. A disabled textarea dims its own content and drops out of the tab
+   * order, so the reader loses the thing they came for.
+   */
+  readonly: {
+    type: Boolean,
+    default: false
   },
   /**
    * Sharp corners, for a field that spans its container edge to edge.
@@ -235,8 +248,17 @@ function onScroll(ev) {
   Tab indents by two, as the editor this replaces did.
   Shift+Tab is deliberately NOT handled, so it still moves focus and a keyboard user is never trapped
   in the field.
+
+  `preventDefault` is called here rather than through the template's `.prevent` modifier, because a
+  readonly field must not swallow Tab -- there it is a key that moves focus on, and this handler has
+  to return before deciding. Guarding the emit matters on its own: `readonly` stops TYPING into a
+  textarea, not a keydown handler that writes the model itself.
 */
 function onTab(ev) {
+  if (props.readonly) {
+    return
+  }
+  ev.preventDefault()
   const el = ev.target
   const { selectionStart: start, selectionEnd: end, value } = el
   emit('update:modelValue', `${value.slice(0, start)}  ${value.slice(end)}`)

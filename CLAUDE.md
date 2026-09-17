@@ -390,11 +390,67 @@ kind a name belongs to decides how it may be enforced, so it is the first thing 
 any permission you touch.
 
 **Global permissions** are held site-wide, bound to no path: `access:admin`, `read:users`,
-`manage:users`, `read:groups`, `manage:groups`, `read:audit`, `read:metrics`,
-`manage:navigation`, `manage:theme`, `manage:sites`, `manage:system`. That is the list as it stands — the one offered by the group editor
+`write:users`, `manage:users`, `read:groups`, `write:groups`, `manage:groups`, `read:audit`,
+`read:metrics`, `manage:theme`, `manage:storage`, `manage:sites`,
+`read:webhooks`, `manage:webhooks`, `manage:system`. That is the
+list as it stands — the one offered by the group editor
 (`GroupEditOverlay.vue`). They live on a group's `permissions` column, are flattened onto
 `req.session.permissions` at login (`models/users.ts` → `updateSession`), and are what the per-route
 `config.permissions` hook checks. `manage:system` bypasses every check everywhere.
+
+**Five of them are ELEVATED ADMIN PERMISSIONS**: `write:users`, `manage:users`, `write:groups`,
+`manage:groups` and `manage:system`. `ELEVATED_PERMISSIONS` in `models/groups.ts` is the list that
+decides, `isElevated()` is the test, and `groups.elevatedGroupIds()` answers which groups carry one.
+
+What makes them a category is that each is a route to every OTHER permission on the wiki: whoever
+can rewrite who holds what can grant themselves anything, in one step or two. So **membership of a
+group carrying one is itself a privilege**, and the guards are written against the whole list rather
+than against `manage:system` alone — stopping at the root permission would leave `manage:users`
+handing out `manage:groups`, and `manage:groups` handing back `manage:users`, with neither step
+looking like an escalation on its own.
+
+Three rules follow, and they are enforced in `api/users.ts` and `api/groups.ts` rather than in the
+models, since they are questions about the CALLER:
+
+- **Nobody but `manage:system` moves a user in or out of an elevated group** — on create as well as
+  on edit, and in both directions. Creating an account already inside one is the same act as
+  promoting an existing one.
+- **`manage:users` may not touch an account that belongs to a `manage:system` group at all**
+  (`systemUserGuard`). That guard is `manage:system` only, not the whole list: a `manage:groups`
+  account is protected from being re-grouped, not from being renamed.
+- **The two group-editing rungs stop at different places** (`elevatedGroupGuard`): `manage:groups` is
+  stopped only by `manage:system`, `write:groups` by any of the five.
+
+The list is exposed to clients as a single `isElevated` boolean on `GroupCore`, never as the
+permissions themselves — a caller who may not read a group still has to know which ones its controls
+must not offer.
+
+**A site's settings are split across three permissions that do not overlap**, so that the look of a
+site, where its content is kept, and everything else about it are three separate grants:
+
+| Permission | Admin screens |
+| ---------- | ------------- |
+| `manage:sites` | General, Analytics, Approvals, Comments, Content Blocks, Editors, Locale, Login — plus creating, deleting and listing sites |
+| `manage:theme` | Theme, and nothing else. `PUT /sites/:siteId/theme` takes this alone |
+| `manage:storage` | Storage, and nothing else. Every route in `api/storage.ts` takes this alone |
+
+An administrator who is to change all of a site's settings therefore holds all three.
+
+**Webhooks are their own pair**, `read:webhooks` and `manage:webhooks` (`api/hooks.ts`), rather than
+part of `manage:system` as they were. A webhook's `authHeader` is sent verbatim as the
+`Authorization` header of every delivery, so it is a credential for somebody else's service: it
+reads back as `SENSITIVE_MASK` for a caller who may not change webhooks, and the mask posted back
+means "unchanged", the same contract module props use. Whoever may edit still sees the value — the
+field is theirs to correct. Don't "helpfully"
+accept `manage:sites` on a theme or storage route — the disjointness is the point, and the general
+site update (`PUT /sites/:siteId`) refuses a `theme` key for the same reason.
+
+**The two `write:*` rungs sit between reading and managing:**
+
+| Permission | May | May not |
+| ---------- | --- | ------- |
+| `write:users` | create an account | change any existing one; see the list (that is `read:users`); create into an elevated group |
+| `write:groups` | create a group, rename it, write its page rules, staff an ordinary one | change what a group is ALLOWED to do (the Permissions tab); delete a group; staff an elevated one |
 
 **Adding a global permission is the maintainer's call, not yours.** The list is not frozen, but a new
 name reshapes who can do what across the whole instance and every existing group silently lacks it —
@@ -405,7 +461,7 @@ that is already on it needs no permission from anybody.
 **Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
 `review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
 `read:history`, `read:assets`, `write:assets`, `manage:assets`, `read:comments`, `write:comments`,
-`manage:comments` (`PAGE_PERMISSIONS` in `api/pages.ts`). A group grants them through **rules**:
+`manage:comments`, `manage:navigation` (`PAGE_PERMISSIONS` in `api/pages.ts`). A group grants them through **rules**:
 each rule names some of them (`roles`) plus how it addresses pages (`match` + `path`, or tags) and
 what it does with them (`mode`: ALLOW / DENY / FORCEALLOW). Nothing is granted by default, and when
 several rules match, the most specific one wins — `helpers/pageRules.ts` documents the ordering.
@@ -426,6 +482,16 @@ Consequences worth knowing:
   treats `manage:system` as a wildcard, so it answers "may do this somewhere". Gate a control over
   the page in front of the reader on `pagePermissions` — that is what the endpoint behind the
   button will check.
+- **`manage:navigation` asks about TWO paths.** It is the one page permission where holding it at the
+  page in front of you is not the whole answer. At the page it buys the navigation MODE — whether
+  this page inherits, overrides or hides its sidebar — which affects nothing above it. Editing the
+  menu's ITEMS additionally needs it on the entry the menu BELONGS to, since those items are shown to
+  every page under that entry: a page that inherits is editing its ancestor's menu, and a page with
+  no overriding ancestor is editing the site-wide one, which `navigation.menuOwnerRef` reports as the
+  home page's path. So a rule over `/guides` lets that section re-point its own pages without letting
+  it rewrite the menu handed down to it. `api/navigation.ts` has the pair of checks
+  (`mayManageNavAt`, `mayEditNavItems`), and the `inherited` route answers `canEditItems` so the
+  editor knows which of its two halves to offer.
 - **An anonymous request is the guests group**, not an absence of groups: that is how a wiki opens
   reading, and suggesting edits, to the public. Deny guests explicitly where an account is genuinely
   required (`reviewerFor` in `api/approvals.ts` is the worked example).
@@ -784,7 +850,7 @@ store; no SVG is ever written into content.
   Components that take an `icon` prop go through it too, so every form works there.
   - Every Iconify reference written **literally in this repo's source** is inlined at build time by
     `scripts/generate-icons.mjs` into `src/assets/icons.generated.js` (committed) and drawn as an
-    inline `<svg>`. Run `npm run icons` after adding or removing one; `check-icons.mjs` fails if the
+    inline `<svg>`. Run `npm run icons` after adding or removing one; `npm run icons:check` fails if the
     bundle drifts. This is why the interface needs no icon webfont — and why nothing an
     administrator does to icon sets can blank it, which fetching at runtime could not promise:
     resolution is gated on the set being enabled, and deleting a set drops every icon stored for it.
@@ -1121,14 +1187,13 @@ An earlier iteration of 3.x used GraphQL/Apollo. **All of it is deprecated** —
 server left in `backend/`, and `APOLLO_CLIENT` is not defined as a global, so any call still going
 through it throws.
 
-**One call is left.** `pages/AdminNavigation.vue`'s `save()` sends the navigation tree and its mode
-through `APOLLO_CLIENT.mutate`, so saving the navigation is broken until it is ported. Nothing else
-under `frontend/src/` references the global. That handler needs more than the endpoint, mind: it also
-calls `this.$store.commit(...)` nine times over, and the file is `<script setup>` with no Vuex store
-anywhere in the app — so `this` is undefined and every one of those throws too.
+**Nothing calls it any more.** The last one was `pages/AdminNavigation.vue`, an admin screen that was
+already experimental, disabled in the nav and broken twice over (its `save()` went through
+`APOLLO_CLIENT.mutate`, and it called `this.$store.commit(...)` nine times in a `<script setup>` file
+with no Vuex store anywhere in the app). It was deleted along with its route when `manage:navigation`
+became a page rule — navigation is edited from the sidebar of the page it belongs to, through
+`api/navigation.ts`. `grep APOLLO_CLIENT frontend/src` now finds nothing.
 
-When touching it, port it to the REST API (`API_CLIENT` + the matching `backend/api/` route)
-rather than extending the GraphQL code. If the REST endpoint doesn't exist yet, add it under
-`backend/api/` following the schema + permissions conventions above — `sites/:siteId/images/:kind`,
-which replaced the logo and favicon upload mutations in `AdminGeneral.vue`, is a recent example of
-doing exactly that.
+If you find yourself wanting a GraphQL endpoint, add a REST one under `backend/api/` following the
+schema + permissions conventions above instead — `sites/:siteId/images/:kind`, which replaced the logo
+and favicon upload mutations in `AdminGeneral.vue`, is an example of doing exactly that.

@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-people.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.groups.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.groups.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.groups.subtitle') }}
         </div>
@@ -95,7 +97,7 @@
                   no-caps />
                 <w-btn
                   class="acrylic-btn"
-                  v-if="canManage"
+                  v-if="canDelete"
                   flat
                   icon="la:trash"
                   :color="props.row.isSystem ? `grey` : `negative`"
@@ -156,10 +158,15 @@ useMeta(() => ({
 // COMPUTED
 
 /*
-  `read:groups` reaches this page too (see the nav in `AdminLayout`), and everything that writes needs
-  `manage:groups` -- so the controls behind it are hidden rather than left to fail at the API.
+  `read:groups` reaches this page too (see the nav in `AdminLayout`), and writing needs one of the two
+  group-editing rungs -- so the controls behind them are hidden rather than left to fail at the API.
+
+  `write:groups` creates and arranges groups; `manage:groups` additionally decides what a group is
+  ALLOWED to do and is the only one that may delete one. Hence two computeds rather than one: the
+  editor and the New button take either, the trash takes only the second.
 */
-const canManage = computed(() => userStore.can('manage:groups'))
+const canManage = computed(() => userStore.can('manage:groups') || userStore.can('write:groups'))
+const canDelete = computed(() => userStore.can('manage:groups'))
 
 // DATA
 

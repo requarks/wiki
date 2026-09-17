@@ -804,7 +804,7 @@ class Storage {
   /**
    * Whether this caller may set a path prop to this value.
    *
-   * Only reached for a caller who does NOT hold `manage:system`, i.e. a site administrator. Three
+   * Only reached for a caller who does NOT hold `manage:system` — i.e. a `manage:storage` holder. Three
    * things follow from the fact that a path on this server is the operator's territory rather than a
    * site's, and only the first is about where the path points:
    *

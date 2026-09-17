@@ -12,6 +12,7 @@
       </div>
       <div class="flex-none flex items-center">
         <w-input
+          v-if="canList"
           class="denser mr-2"
           outlined
           v-model="state.search"
@@ -54,7 +55,7 @@
           <user-defaults-menu />
         </w-btn>
         <w-btn
-          v-if="canManage"
+          v-if="canCreate"
           unelevated
           icon="la:plus"
           :label="t(`admin.users.create`)"
@@ -66,7 +67,11 @@
     <w-separator inset />
     <div class="grid grid-cols-12 p-4 gap-4">
       <div class="col-span-12">
-        <w-card>
+        <!--
+          Left out rather than shown empty for somebody holding `write:users` alone: a table of no
+          users is a statement that there are none, which is not what is being said.
+        -->
+        <w-card v-if="canList">
           <w-table
             :rows="state.users"
             :columns="headers"
@@ -142,7 +147,7 @@
             </template>
           </w-table>
         </w-card>
-        <div class="flex items-center justify-center mt-6" v-if="state.totalPages > 1">
+        <div class="flex items-center justify-center mt-6" v-if="canList && state.totalPages > 1">
           <w-pagination
             v-model="state.currentPage"
             :max="state.totalPages"
@@ -205,10 +210,21 @@ useMeta(() => ({
 // COMPUTED
 
 /*
-  `read:users` reaches this page too (see the nav in `AdminLayout`), and everything that writes needs
-  `manage:users` -- so the controls behind it are hidden rather than left to fail at the API.
+  `read:users` reaches this page too (see the nav in `AdminLayout`), and everything that CHANGES an
+  existing user needs `manage:users` -- so the controls behind it are hidden rather than left to fail
+  at the API.
 */
 const canManage = computed(() => userStore.can('manage:users'))
+
+/*
+  Creating one is a rung of its own: `write:users` brings an account into existence without being
+  trusted with the accounts that already exist, so the New User button answers to either permission
+  while every row control above stays on `manage:users`.
+*/
+const canCreate = computed(() => canManage.value || userStore.can('write:users'))
+
+/** Whether this user may be shown the accounts that already exist. */
+const canList = computed(() => canManage.value || userStore.can('read:users'))
 
 // DATA
 
@@ -289,6 +305,14 @@ watch(
 // METHODS
 
 async function load({ page } = {}) {
+  /*
+    `write:users` reaches this page to use the Create button and nothing else -- seeing the accounts
+    that already exist is `read:users`. Asking anyway would answer 403 and put a red toast over a
+    page that is working exactly as intended, so the listing is simply not requested.
+  */
+  if (!canList.value) {
+    return
+  }
   state.loading++
   loading.show()
   try {

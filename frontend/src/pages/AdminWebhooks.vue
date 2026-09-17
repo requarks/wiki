@@ -7,7 +7,9 @@
           src="/_assets/icons/fluent-lightning-bolt-animated.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.webhooks.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.webhooks.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.webhooks.subtitle') }}
         </div>
@@ -34,6 +36,7 @@
           <w-tooltip>{{ t(`common.actions.refresh`) }}</w-tooltip>
         </w-btn>
         <w-btn
+          v-if="canManage"
           unelevated
           icon="la:plus"
           :label="t(`admin.webhooks.new`)"
@@ -83,11 +86,7 @@
                   }}</w-tooltip>
                 </template>
                 <template v-else-if="hook.state === `error`">
-                  <w-icon
-                    class="mr-2"
-                    color="negative"
-                    size="xs"
-                    name="la:exclamation-triangle" />
+                  <w-icon class="mr-2" color="negative" size="xs" name="la:exclamation-triangle" />
                   <div class="text-caption text-negative">{{ t('admin.webhooks.stateError') }}</div>
                   <w-tooltip anchor="center left" self="center right">{{
                     t('admin.webhooks.stateErrorHint')
@@ -96,15 +95,22 @@
               </w-item-section>
               <w-separator class="ml-4" vertical />
               <w-item-section side style="flex-direction: row; align-items: center">
+                <!--
+                  `read:webhooks` opens this screen to see what the wiki is wired to; changing any of
+                  it is `manage:webhooks`. The edit button becomes a view button rather than
+                  disappearing, as the group and user lists do for their own read-only rungs -- the
+                  dialog is where a webhook's events and settings are actually legible.
+                -->
                 <w-btn
                   class="acrylic-btn mr-2"
                   color="indigo"
-                  icon="la:pen"
-                  label="Edit"
+                  :icon="canManage ? `la:pen` : `la:eye`"
+                  :label="canManage ? t(`common.actions.edit`) : t(`common.actions.view`)"
                   flat
                   no-caps
                   @click="editHook(hook.id)" />
                 <w-btn
+                  v-if="canManage"
                   class="acrylic-btn"
                   color="red"
                   icon="la:trash"
@@ -121,7 +127,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
@@ -130,6 +136,7 @@ import { loading } from '@/composables/loading'
 import { dialog } from '@/composables/dialog'
 
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import WebhookEditDialog from '@/components/WebhookEditDialog.vue'
 import WebhookDeleteDialog from '@/components/WebhookDeleteDialog.vue'
@@ -141,6 +148,15 @@ const dark = useDark()
 // STORES
 
 const siteStore = useSiteStore()
+const userStore = useUserStore()
+
+// COMPUTED
+
+/*
+  `read:webhooks` reaches this page to read it; everything that writes needs `manage:webhooks`, so
+  those controls are hidden rather than left to fail at the API.
+*/
+const canManage = computed(() => userStore.can('manage:webhooks'))
 
 // I18N
 

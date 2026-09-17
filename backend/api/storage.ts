@@ -76,7 +76,7 @@ async function routes(app: FastifyInstance) {
           Credentials are not what makes it `manage:system` either, because they never come back:
           every `sensitive` prop is masked on the way out, here and in `PUT` below.
         */
-        permissions: ['manage:sites']
+        permissions: ['manage:storage']
       },
       schema: {
         summary: 'Get the storage configuration of a site',
@@ -170,7 +170,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/storage/status',
     {
       config: {
-        permissions: ['manage:sites']
+        permissions: ['manage:storage']
       },
       schema: {
         summary: "Get the health of a site's storage targets",
@@ -237,7 +237,7 @@ async function routes(app: FastifyInstance) {
     {
       config: {
         // -> The same site-bound setting the `GET` above answers with; see the note there
-        permissions: ['manage:sites']
+        permissions: ['manage:storage']
       },
       schema: {
         summary: 'Update the storage configuration of a site',
@@ -316,8 +316,8 @@ async function routes(app: FastifyInstance) {
       }
 
       /*
-        Whether this caller may point a path prop anywhere on this server. `manage:sites` is enough to
-        configure a site's storage, but a path is a place on the operator's machine rather than a
+        Whether this caller may point a path prop anywhere on this server. `manage:storage` is enough
+        to configure a site's storage, but a path is a place on the operator's machine rather than a
         setting of the site — see `storage.checkLocalPath`, which is where the rule is.
       */
       const unconfined = WIKI.models.groups.holdsSystemPermission(req)
@@ -384,7 +384,7 @@ async function routes(app: FastifyInstance) {
       config: {
         // -> An action moves this site's content between this site's targets, so it is the same
         //    authority as configuring them
-        permissions: ['manage:sites']
+        permissions: ['manage:storage']
       },
       schema: {
         summary: 'Run an action on a storage target',

@@ -101,7 +101,6 @@ const routes = [
       { path: ':siteid/editors', component: () => import('@/pages/AdminEditors.vue') },
       { path: ':siteid/locale', component: () => import('@/pages/AdminLocale.vue') },
       { path: ':siteid/login', component: () => import('@/pages/AdminLogin.vue') },
-      { path: ':siteid/navigation', component: () => import('@/pages/AdminNavigation.vue') },
       { path: ':siteid/storage/:id?', component: () => import('@/pages/AdminStorage.vue') },
       { path: ':siteid/theme', component: () => import('@/pages/AdminTheme.vue') },
       // -> Users

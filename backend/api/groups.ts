@@ -1,33 +1,57 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
-import { SYSTEM_PERMISSION } from '../models/groups.ts'
+import { ELEVATED_PERMISSIONS, SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { GroupPatch, GroupRule, GroupWithUserCount } from '../models/groups.ts'
 
 /**
- * Refuse a `manage:groups` holder any change to who is in a group that carries `manage:system`.
+ * Refuse a change to who is in a group that administers the instance.
  *
- * Membership of such a group IS the permission: adding somebody hands them the root of the instance,
+ * Membership of such a group IS the permission: adding somebody hands them what the group can reach,
  * and removing somebody takes it away from a real administrator. Deleting the group does both at
  * once, so it asks the same question.
+ *
+ * Where the line falls depends on what the caller holds, and the two rungs are deliberately
+ * different:
+ *
+ * - **`manage:groups`** is stopped only by `manage:system`, the permission that bypasses every check
+ *   on the server. Everything below that is theirs to arrange; managing groups is the job.
+ * - **`write:groups`** is stopped by every one of `ELEVATED_PERMISSIONS`. It is the rung that may
+ *   build and populate ordinary groups without being trusted to decide who administers the wiki —
+ *   and since it cannot edit a group's permissions at all, its only route to an elevated group would
+ *   be through the membership of one that already exists.
  *
  * @param action What the caller was trying to do, as the message reads it back to them
  * @returns The refusal to throw, or null when the caller may proceed
  */
-function systemGroupGuard(
+function elevatedGroupGuard(
   req: FastifyRequest,
   group: GroupWithUserCount,
   action = 'change who belongs to the group'
 ): CustomError | null {
-  if (!group.permissions.includes(SYSTEM_PERMISSION)) {
-    return null
-  }
   if (WIKI.models.groups.holdsSystemPermission(req)) {
     return null
   }
+  const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
+  if (permissions.includes('manage:groups')) {
+    if (!group.permissions.includes(SYSTEM_PERMISSION)) {
+      return null
+    }
+    return new CustomError(
+      'groupMembershipSystemProtected',
+      `This group has the ${SYSTEM_PERMISSION} permission. Only a user who holds it can ${action}.`,
+      403
+    )
+  }
+  if (!isElevated(group.permissions)) {
+    return null
+  }
+  const held = group.permissions.filter((p) =>
+    (ELEVATED_PERMISSIONS as readonly string[]).includes(p)
+  )
   return new CustomError(
-    'groupMembershipSystemProtected',
-    `This group has the ${SYSTEM_PERMISSION} permission. Only a user who holds it can ${action}.`,
+    'groupMembershipElevatedProtected',
+    `This group administers the wiki (${held.join(', ')}). Only a user who holds manage:groups or manage:system can ${action}.`,
     403
   )
 }
@@ -51,20 +75,12 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/',
     {
-      config: {
-        /*
-          `manage:navigation` is here because a menu item can be limited to groups, and `manage:sites`
-          because an approval rule names the groups that may suggest an edit and the groups that
-          review one — both editors have to be able to name a group they cannot otherwise read, and
-          the approvals screen loads this alongside its rules, so without it the screen does not open
-          at all.
-
-          Safe to grant on this route and this route only: the listing is `GroupCore`, which carries
-          no permissions, no rules and no members — reading one group in full, or its members, keeps
-          needing `manage:groups`.
-        */
-        permissions: ['read:groups', 'manage:groups', 'manage:navigation', 'manage:sites']
-      },
+      /*
+        No route-level `permissions`: most of the callers are global-permission holders and the hook
+        could answer for them, but `manage:navigation` is a PAGE RULE now and the hook reads the
+        group-wide list only. Both kinds are checked in the handler instead, so the answer is the
+        same for everyone who needs it.
+      */
       schema: {
         summary: 'List all groups',
         description:
@@ -79,8 +95,45 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async () => {
-      return WIKI.models.groups.getAllGroups()
+    async (req, reply) => {
+      /*
+        Everything that has to NAME a group without being able to read one.
+
+        The global half: `manage:sites` because an approval rule names the groups that may suggest an
+        edit and the groups that review one; `read:users` and `manage:users` because the user editor
+        shows which groups an account belongs to; the group permissions themselves.
+
+        The page-rule half: `manage:navigation`, because a menu item can be limited to groups and the
+        navigation editor has to offer them. Asked as "anywhere" rather than against a path, since
+        this request names no page — see `groups.grantsAnywhere`.
+
+        Safe on this route and this route only: the listing is `GroupCore`, which carries no
+        permissions, no rules and no members. Reading one group in full, or its members, keeps needing
+        `read:groups`, and changing one keeps needing `manage:groups`.
+      */
+      const actor = WIKI.models.groups.actorForRequest(req)
+      const allowed =
+        [
+          'read:groups',
+          'write:groups',
+          'manage:groups',
+          'manage:sites',
+          'read:users',
+          'manage:users'
+        ].some((permission) => actor.permissions.includes(permission)) ||
+        WIKI.models.groups.grantsAnywhere(actor, 'manage:navigation')
+      if (!allowed) {
+        return reply.forbidden('You are not allowed to list groups.')
+      }
+      /*
+        `isElevated` rather than the permissions themselves: this listing is deliberately thin and is
+        granted to callers who may not read a group in full, but every one of those callers has a
+        control to draw that must not offer a group the server will refuse.
+      */
+      return (await WIKI.models.groups.getAllGroups()).map((group) => ({
+        ...group,
+        isElevated: isElevated(group.permissions ?? [])
+      }))
     }
   )
 
@@ -160,7 +213,7 @@ async function routes(app: FastifyInstance) {
     '/:groupId',
     {
       config: {
-        permissions: ['read:groups', 'manage:groups']
+        permissions: ['read:groups', 'write:groups', 'manage:groups']
       },
       schema: {
         summary: 'Get a single group',
@@ -328,18 +381,41 @@ async function routes(app: FastifyInstance) {
       }
 
       /*
-        A `manage:groups` holder may edit a group that carries `manage:system` -- name, rules,
-        redirects, every other permission -- but may not turn that one permission on or off. Granting
-        it is handing over the instance; revoking it is locking the real administrators out.
+        Who may rewrite the global permission list of a group, which is the question the Permissions
+        tab asks and the one thing separating the two group-editing rungs.
+
+        `write:groups` may not touch it at all: it creates and arranges groups, names them, writes
+        their page rules and moves people in and out of the ordinary ones -- but what a group is
+        ALLOWED to do instance-wide is not its to decide, since granting `manage:users` to a group it
+        belongs to would be a way of granting itself anything. The list is compared rather than
+        merely refused when present, so a client that round-trips the whole group back unchanged --
+        which is exactly what the editor does on every save -- still saves the fields it may.
+
+        `manage:groups` may rewrite the list, except for `manage:system` itself: granting that hands
+        over the instance, and revoking it locks the real administrators out.
       */
       if (patch.permissions && !WIKI.models.groups.holdsSystemPermission(req)) {
-        const held = group.permissions.includes(SYSTEM_PERMISSION)
-        if (held !== patch.permissions.includes(SYSTEM_PERMISSION)) {
-          throw new CustomError(
-            'groupUpdateSystemPermission',
-            `Only a user who holds the ${SYSTEM_PERMISSION} permission can grant or revoke it. Every other change to this group is allowed.`,
-            403
-          )
+        const callerPermissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
+        const unchanged =
+          group.permissions.length === patch.permissions.length &&
+          group.permissions.every((permission) => patch.permissions!.includes(permission))
+        if (!callerPermissions.includes('manage:groups')) {
+          if (!unchanged) {
+            throw new CustomError(
+              'groupUpdatePermissionsForbidden',
+              'Only a user who holds manage:groups or manage:system can change what a group is allowed to do. Every other change to this group is allowed.',
+              403
+            )
+          }
+        } else {
+          const held = group.permissions.includes(SYSTEM_PERMISSION)
+          if (held !== patch.permissions.includes(SYSTEM_PERMISSION)) {
+            throw new CustomError(
+              'groupUpdateSystemPermission',
+              `Only a user who holds the ${SYSTEM_PERMISSION} permission can grant or revoke it. Every other change to this group is allowed.`,
+              403
+            )
+          }
         }
       }
 
@@ -418,7 +494,7 @@ async function routes(app: FastifyInstance) {
       }
 
       // -> Deleting the group removes every member from it, so it is the membership guard's question
-      const systemGroupRefusal = systemGroupGuard(req, group, 'delete the group')
+      const systemGroupRefusal = elevatedGroupGuard(req, group, 'delete the group')
       if (systemGroupRefusal) {
         throw systemGroupRefusal
       }
@@ -446,7 +522,7 @@ async function routes(app: FastifyInstance) {
     '/:groupId/users',
     {
       config: {
-        permissions: ['read:groups', 'manage:groups']
+        permissions: ['read:groups', 'write:groups', 'manage:groups']
       },
       schema: {
         summary: 'List the users assigned to a group',
@@ -563,7 +639,7 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('User does not exist.')
       }
 
-      const systemGroupRefusal = systemGroupGuard(req, group)
+      const systemGroupRefusal = elevatedGroupGuard(req, group)
       if (systemGroupRefusal) {
         throw systemGroupRefusal
       }
@@ -643,7 +719,7 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('User is not assigned to this group.')
       }
 
-      const systemGroupRefusal = systemGroupGuard(req, group)
+      const systemGroupRefusal = elevatedGroupGuard(req, group)
       if (systemGroupRefusal) {
         throw systemGroupRefusal
       }

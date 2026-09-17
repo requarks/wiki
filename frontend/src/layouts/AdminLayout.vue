@@ -195,22 +195,9 @@
               <w-item-section>{{ t('admin.login.title') }}</w-item-section>
             </w-item>
             <w-item
-              :to="`/_admin/` + adminStore.currentSiteId + `/navigation`"
-              active-class="bg-primary text-white"
-              disabled
-              v-if="
-                flagsStore.experimental &&
-                (userStore.can(`manage:sites`) || userStore.can(`manage:navigation`))
-              ">
-              <w-item-section avatar>
-                <w-icon name="img:/_assets/icons/fluent-tree-structure.svg" />
-              </w-item-section>
-              <w-item-section>{{ t('admin.navigation.title') }}</w-item-section>
-            </w-item>
-            <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/storage`"
               active-class="bg-primary text-white"
-              v-if="userStore.can(`manage:sites`)">
+              v-if="userStore.can(`manage:storage`)">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-ssd.svg" />
               </w-item-section>
@@ -227,7 +214,7 @@
             <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/theme`"
               active-class="bg-primary text-white"
-              v-if="userStore.can(`manage:sites`) || userStore.can(`manage:theme`)">
+              v-if="userStore.can(`manage:theme`)">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-paint-roller.svg" />
               </w-item-section>
@@ -412,25 +399,31 @@
                 </w-item-section>
                 <w-item-section>{{ t('admin.utilities.title') }}</w-item-section>
               </w-item>
-              <w-item to="/_admin/webhooks" active-class="bg-primary text-white">
-                <w-item-section avatar>
-                  <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
-                </w-item-section>
-                <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
-                <w-item-section side>
-                  <w-badge
-                    color="dark-3"
-                    :label="adminStore.info.webhooksTotal"
-                    :class="countBadgeClass(adminStore.info.webhooksTotal)" />
-                </w-item-section>
-              </w-item>
-              <w-item to="/_admin/flags" active-class="bg-primary text-white">
-                <w-item-section avatar>
-                  <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
-                </w-item-section>
-                <w-item-section>{{ t('admin.flags.title') }}</w-item-section>
-              </w-item>
             </template>
+            <w-item
+              to="/_admin/webhooks"
+              active-class="bg-primary text-white"
+              v-if="webhooksAreVisible">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-lightning-bolt.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.webhooks.title') }}</w-item-section>
+              <w-item-section side>
+                <w-badge
+                  color="dark-3"
+                  :label="adminStore.info.webhooksTotal"
+                  :class="countBadgeClass(adminStore.info.webhooksTotal)" />
+              </w-item-section>
+            </w-item>
+            <w-item
+              to="/_admin/flags"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:system`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-windsock.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.flags.title') }}</w-item-section>
+            </w-item>
           </template>
         </w-list>
       </w-scroll-area>
@@ -570,11 +563,18 @@ const leftDrawerOpen = computed({
 */
 const showSidebarBtn = computed(() => !isWideViewport.value && !narrowSidebarOpen.value)
 
+/*
+  The site section is shown for any permission that reaches one of the screens inside it: a site's
+  settings are split across `manage:sites`, `manage:theme` and `manage:storage`, which do not overlap.
+
+  `manage:navigation` is deliberately absent — it is a page rule now, granted per path, and the screen
+  it used to reach here has gone. Navigation is edited from the sidebar of the page it belongs to.
+*/
 const siteSectionShown = computed(() => {
   return (
     userStore.can('manage:sites') ||
-    userStore.can('manage:navigation') ||
-    userStore.can('manage:theme')
+    userStore.can('manage:theme') ||
+    userStore.can('manage:storage')
   )
 })
 /*
@@ -583,10 +583,14 @@ const siteSectionShown = computed(() => {
   to pages nothing links to.
 */
 const groupsAreVisible = computed(() => {
-  return userStore.can('read:groups') || userStore.can('manage:groups')
+  return (
+    userStore.can('read:groups') || userStore.can('write:groups') || userStore.can('manage:groups')
+  )
 })
 const usersAreVisible = computed(() => {
-  return userStore.can('read:users') || userStore.can('manage:users')
+  return (
+    userStore.can('read:users') || userStore.can('write:users') || userStore.can('manage:users')
+  )
 })
 const usersSectionShown = computed(() => {
   return groupsAreVisible.value || usersAreVisible.value
@@ -594,8 +598,15 @@ const usersSectionShown = computed(() => {
 const auditIsVisible = computed(() => {
   return userStore.can('read:audit')
 })
+/*
+  Webhooks are their own pair of permissions rather than part of `manage:system`, so the item is
+  outside that block and the section opens for it too.
+*/
+const webhooksAreVisible = computed(() => {
+  return userStore.can('read:webhooks') || userStore.can('manage:webhooks')
+})
 const systemSectionShown = computed(() => {
-  return userStore.can('manage:system') || auditIsVisible.value
+  return userStore.can('manage:system') || auditIsVisible.value || webhooksAreVisible.value
 })
 const overlayIsShown = computed(() => {
   return Boolean(adminStore.overlay)
@@ -657,7 +668,7 @@ watch(
       router.push({ params: { siteid: newValue } })
     }
     // -> Storage is configured per site, so the light belongs to whichever one is selected
-    if (newValue && userStore.can('manage:sites')) {
+    if (newValue && userStore.can('manage:storage')) {
       adminStore.fetchStorageStatus(newValue)
     }
   }
@@ -680,7 +691,7 @@ onMounted(async () => {
   }
   adminStore.fetchInfo()
   // -> Only for a role that can see the Storage item at all; anyone else would be asking for a 403
-  if (adminStore.currentSiteId && userStore.can('manage:sites')) {
+  if (adminStore.currentSiteId && userStore.can('manage:storage')) {
     adminStore.fetchStorageStatus(adminStore.currentSiteId)
   }
 })

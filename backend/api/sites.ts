@@ -309,7 +309,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update a site',
         description:
-          'Every site setting except its theme, which has a route of its own because `manage:theme` grants it without granting the rest of this — see `PUT /sites/{siteId}/theme`.',
+          "Every site setting except its theme and its storage, which have routes and permissions of their own — see `PUT /sites/{siteId}/theme` (`manage:theme`) and `PUT /sites/{siteId}/storage` (`manage:storage`). The three do not overlap, so changing all of a site's settings takes all three.",
         tags: ['Sites'],
         params: {
           type: 'object',
@@ -545,6 +545,10 @@ async function routes(app: FastifyInstance) {
    * before this existed, since the admin area offers them the screen — or granting them every
    * other setting in the same body.
    *
+   * `manage:sites` is NOT accepted here, and that is the point rather than an oversight: a site's
+   * settings are split across three permissions that do not overlap (`manage:sites`, `manage:theme`,
+   * `manage:storage`), so somebody who is to change all of them holds all three.
+   *
    * There is no matching `GET`: a site's theme is public, served with the site itself to every
    * reader that has to draw it, so `GET /sites/{siteIdorHostname}` already answers with it and a
    * second copy behind a permission would say the same thing less usefully.
@@ -553,9 +557,9 @@ async function routes(app: FastifyInstance) {
     '/:siteId/theme',
     {
       config: {
-        // -> `manage:sites` too: whoever administers the site holds everything in it, and this route
-        //    is the only way the theme is written now that the general update has given it up
-        permissions: ['manage:sites', 'manage:theme']
+        // -> `manage:theme` alone. The three permissions covering a site's settings are deliberately
+        //    disjoint, so holding `manage:sites` says nothing about the look of the site
+        permissions: ['manage:theme']
       },
       schema: {
         summary: "Update a site's theme",

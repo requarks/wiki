@@ -1399,7 +1399,13 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
-        permissions: ['create:users', 'manage:users']
+        /*
+          `write:users` is the rung that may bring an account into existence without being trusted
+          with the ones that already exist: every route that CHANGES a user keeps asking for
+          `manage:users`. (`create:users` stood here and matched nobody -- it was not a name the
+          group editor offered, and nothing validates one that is not.)
+        */
+        permissions: ['write:users', 'manage:users']
       },
       schema: {
         summary: 'Create a new user',
@@ -1491,6 +1497,25 @@ async function routes(app: FastifyInstance) {
           'userCreateWelcomeEmailUnavailable',
           'No SMTP server is configured, so no welcome email can be sent.'
         )
+      }
+
+      /*
+        Which groups a new account may be born into. Creating a user and putting them in a group that
+        administers the wiki is the same act as promoting an existing one, so it meets the same
+        refusal -- otherwise the way around every guard below would be to make a second account
+        instead of editing the first. Asked of `write:users` and `manage:users` alike: neither is
+        trusted to decide who administers the instance, which is `manage:system`'s to give.
+      */
+      const requestedGroups = req.body.groups ?? []
+      if (requestedGroups.length > 0 && !WIKI.models.groups.holdsSystemPermission(req)) {
+        const elevated = await WIKI.models.groups.elevatedGroupIds()
+        if (requestedGroups.some((id) => elevated.includes(id))) {
+          throw new CustomError(
+            'groupMembershipElevatedProtected',
+            'Only a user who holds manage:system can create a user inside a group that administers the wiki.',
+            403
+          )
+        }
       }
 
       try {
@@ -1698,18 +1723,29 @@ async function routes(app: FastifyInstance) {
         }
 
         /*
-          Handing somebody `manage:system` by putting them in a group that carries it. Only ADDING is
-          checked: a user already in such a group is protected by `systemUserGuard` above, which has
-          refused this request before it gets here.
+          Moving somebody in or out of a group that administers the wiki, which `manage:users` may
+          not do in either direction: adding hands them whatever that group can reach, and removing
+          takes it from a real administrator. Both are checked -- an earlier version looked only at
+          additions, on the grounds that `systemUserGuard` above had already refused anyone already
+          inside such a group, which is true of `manage:system` and not of the rest of
+          `ELEVATED_PERMISSIONS`: a user in a `manage:groups` group is not system-protected, so
+          nothing else would have stopped them being quietly taken out of it.
+
+          Groups this request leaves alone are not consulted, so a save that only renames the user
+          still goes through whatever they belong to.
         */
         if (!WIKI.models.groups.holdsSystemPermission(req)) {
           const current = await WIKI.models.users.getUserGroupIds(req.params.userId)
-          const systemGroupIds = await WIKI.models.groups.systemGroupIds()
-          const added = req.body.groups.filter((id) => !current.includes(id))
-          if (added.some((id) => systemGroupIds.includes(id))) {
+          const requested = req.body.groups
+          const elevated = await WIKI.models.groups.elevatedGroupIds()
+          const moved = [
+            ...requested.filter((id) => !current.includes(id)),
+            ...current.filter((id) => !requested.includes(id))
+          ]
+          if (moved.some((id) => elevated.includes(id))) {
             throw new CustomError(
-              'groupMembershipSystemProtected',
-              'Only a user who holds the manage:system permission can add a user to a group that has it.',
+              'groupMembershipElevatedProtected',
+              'Only a user who holds manage:system can add a user to, or remove one from, a group that administers the wiki.',
               403
             )
           }

@@ -95,6 +95,7 @@
                     <w-input
                       outlined
                       v-model="state.user.name"
+                      :disable="!canManage"
                       dense
                       :rules="[
                         (val) => invalidCharsRegex.test(val) || t('admin.users.nameInvalidChars')
@@ -114,6 +115,7 @@
                     <w-input
                       outlined
                       v-model="state.user.email"
+                      :disable="!canManage"
                       dense
                       :aria-label="t(`admin.users.email`)" />
                   </w-item-section>
@@ -130,6 +132,7 @@
                       <w-input
                         outlined
                         v-model="state.user.meta.location"
+                        :disable="!canManage"
                         dense
                         :aria-label="t(`admin.users.location`)" />
                     </w-item-section>
@@ -145,6 +148,7 @@
                       <w-input
                         outlined
                         v-model="state.user.meta.jobTitle"
+                        :disable="!canManage"
                         dense
                         :aria-label="t(`admin.users.jobTitle`)" />
                     </w-item-section>
@@ -160,6 +164,7 @@
                       <w-input
                         outlined
                         v-model="state.user.meta.pronouns"
+                        :disable="!canManage"
                         dense
                         :aria-label="t(`admin.users.pronouns`)" />
                     </w-item-section>
@@ -178,6 +183,7 @@
                     <w-select
                       outlined
                       v-model="state.user.prefs.timezone"
+                      :disable="!canManage"
                       :options="timezones"
                       option-value="value"
                       option-label="text"
@@ -199,6 +205,7 @@
                     <w-select
                       outlined
                       v-model="state.user.prefs.dateFormat"
+                      :disable="!canManage"
                       emit-value
                       map-options
                       dense
@@ -223,6 +230,7 @@
                   <w-item-section class="flex-none">
                     <w-btn-toggle
                       v-model="state.user.prefs.timeFormat"
+                      :disable="!canManage"
                       push
                       glossy
                       no-caps
@@ -243,6 +251,7 @@
                   <w-item-section class="flex-none">
                     <w-btn-toggle
                       v-model="state.user.prefs.appearance"
+                      :disable="!canManage"
                       push
                       glossy
                       no-caps
@@ -264,6 +273,7 @@
                   <w-item-section class="flex-none">
                     <w-btn-toggle
                       v-model="state.user.prefs.cvd"
+                      :disable="!canManage"
                       push
                       glossy
                       no-caps
@@ -327,6 +337,7 @@
                   <w-input
                     outlined
                     v-model="state.user.meta.notes"
+                    :disable="!canManage"
                     type="textarea"
                     :aria-label="t(`admin.users.notes`)"
                     input-style="min-height: 243px"
@@ -381,6 +392,7 @@
                   <w-item-section avatar>
                     <w-toggle
                       v-model="localAuth.mustChangePwd"
+                      :disable="!canManage"
                       color="primary"
                       checked-icon="la:check"
                       unchecked-icon="la:times"
@@ -397,6 +409,7 @@
                   <w-item-section avatar>
                     <w-toggle
                       v-model="localAuth.restrictLogin"
+                      :disable="!canManage"
                       color="primary"
                       checked-icon="la:check"
                       unchecked-icon="la:times"
@@ -415,6 +428,7 @@
                   <w-item-section avatar>
                     <w-toggle
                       v-model="localAuth.isTfaRequired"
+                      :disable="!canManage"
                       color="primary"
                       checked-icon="la:check"
                       unchecked-icon="la:times"
@@ -485,12 +499,18 @@
                       ><w-item-label>{{ grp.name }}</w-item-label></w-item-section
                     >
                     <w-item-section side>
+                      <!--
+                        Not offered for a group that administers the wiki: moving somebody in or out
+                        of one is `manage:system`'s to do, and the endpoint refuses it. `isElevated`
+                        comes with the group listing rather than being worked out here, since this
+                        screen is never given a group's permissions.
+                      -->
                       <w-btn
                         class="acrylic-btn"
                         flat
                         icon="la:times"
                         color="accent"
-                        v-if="canManage"
+                        v-if="canManage && mayChangeMembershipOf(grp.id)"
                         @click="unassignGroup(grp.id)"
                         :aria-label="t(`admin.users.unassignGroup`)">
                         <w-tooltip anchor="center left" self="center right">{{
@@ -501,13 +521,17 @@
                   </w-item>
                 </template>
               </w-card>
-              <w-card class="shadow-1 py-2 mt-4">
+              <!--
+                The whole card, not just its button: it exists only to assign a group, so for a
+                reader holding `read:users` a picker with nothing to press is worse than no card.
+              -->
+              <w-card class="shadow-1 py-2 mt-4" v-if="canManage">
                 <w-item>
                   <blueprint-icon icon="join" />
                   <w-item-section>
                     <w-select
                       outlined
-                      :options="state.groups"
+                      :options="assignableGroups"
                       v-model="state.groupToAdd"
                       map-options
                       emit-value
@@ -554,6 +578,7 @@
                   <w-item-section>
                     <util-code-editor
                       v-model="metadata"
+                      :readonly="!canManage"
                       language="json"
                       :min-height="500"
                       aria-label="Metadata (JSON)" />
@@ -749,6 +774,25 @@ const timezones = Intl.supportedValuesOf('timeZone')
   The fields stay as they are -- without Save there is nowhere for a typed change to go.
 */
 const canManage = computed(() => userStore.can('manage:users'))
+
+/*
+  Whether this user may move somebody in or out of a given group.
+
+  A group that administers the wiki (`isElevated` on the listing -- `write:users`, `manage:users`,
+  `write:groups`, `manage:groups`, `manage:system`) is `manage:system`'s alone to staff: its
+  membership IS the permission, so `manage:users` handing it out would be `manage:users` granting
+  itself anything. The endpoint refuses either direction; this keeps the control off the screen
+  rather than letting somebody press it and read a 403.
+*/
+function mayChangeMembershipOf(groupId) {
+  if (userStore.can('manage:system')) {
+    return true
+  }
+  return !state.groups.find((g) => g.id === groupId)?.isElevated
+}
+
+/** The groups this user may actually be put into, which is what the picker should offer. */
+const assignableGroups = computed(() => state.groups.filter((g) => mayChangeMembershipOf(g.id)))
 
 const metadata = computed({
   get() {
