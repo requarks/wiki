@@ -1189,9 +1189,9 @@ const syncContentToStore = debounce(() => {
     content: markdown,
     // -> What the author has written IS the source, whatever the load did or did not deliver; see
     //    the guard in `pageSave`
-    contentLoaded: true,
-    render: editor.getRender()
+    contentLoaded: true
   })
+  pageStore.setRender(editor.getRender())
 }, 500)
 
 /**
@@ -1362,7 +1362,7 @@ onMounted(async () => {
     created has no render at all until this runs.
   */
   nextTick(() => {
-    pageStore.$patch({ render: editor.getRender() })
+    pageStore.setRender(editor.getRender())
     refreshActive()
     editor.view.focus()
   })

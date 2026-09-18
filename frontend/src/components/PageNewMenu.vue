@@ -9,10 +9,14 @@
 
         Narrowed by `only` where a caller has a reason to offer fewer -- see the prop.
       -->
-      <w-item v-for="editor of offeredEditors" :key="editor" clickable @click="create(editor)">
-        <blueprint-icon :icon="EDITOR_ICONS[editor]" />
-        <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
-      </w-item>
+      <template v-for="editor of offeredEditors" :key="editor">
+        <!-- -> Where the editors that write an article end; see `dividedAt` -->
+        <w-separator v-if="editor === dividedAt" class="my-2" inset />
+        <w-item clickable @click="create(editor)">
+          <blueprint-icon :icon="EDITOR_ICONS[editor]" />
+          <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
+        </w-item>
+      </template>
       <template v-if="props.hideAssetBtn === false">
         <w-separator class="my-2" inset />
         <w-item clickable @click="openFileManager">
@@ -36,30 +40,18 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { loading } from '@/composables/loading'
+/*
+  The icons, shared with the other two screens that offer editors. WHICH are offered, and in what
+  order, is still `siteStore.activeEditors` alone. The wording lives in the locale file as
+  `common.createPage.<editor>`, keyed by the same ids, so an editor added to that list needs an icon
+  there and a string there.
+*/
+import { EDITOR_ICONS } from '@/helpers/editors'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
-/**
- * The icon each editor is offered under.
- *
- * WHICH of them are offered, and in what order, is `siteStore.activeEditors` -- only that list
- * decides. The wording lives in the locale file as `common.createPage.<editor>`, keyed by the same
- * ids, so an editor added to that list needs an icon here and a string there.
- *
- * `redirect` is not an editor the site can turn off, because it authors nothing: a redirection is a
- * page with a target instead of a body.
- */
-const EDITOR_ICONS = {
-  markdown: 'markdown',
-  visual: 'google-presentation',
-  asciidoc: 'asciidoc',
-  channel: 'chat',
-  blog: 'typewriter-with-paper',
-  api: 'api',
-  redirect: 'advance'
-}
 
 // PROPS
 
@@ -122,6 +114,28 @@ const offeredEditors = computed(() =>
     ? siteStore.activeEditors.filter((editor) => props.only.includes(editor))
     : siteStore.activeEditors
 )
+
+/**
+ * The editor the divider is drawn above, or null where there is nothing to divide.
+ *
+ * It separates the editors that put an author in front of a blank article from the ones that write a
+ * settings document instead -- a blog, a redirection -- because those are a different kind of thing
+ * to be choosing between. `siteStore.articleEditors` is where that partition lives; it is the
+ * server's own, and the blog's New Post button is drawn from the same answer.
+ *
+ * Read off the list rather than fixed at a position, since which editors a site has on is the
+ * store's answer and this menu can be narrowed further by `only`. The first offered editor that is
+ * not an article editor -- and only when something above it was one, so the divider can never open
+ * the menu.
+ *
+ * Null for a menu that is all of one kind: a blog's New Post button offers article editors and
+ * nothing else, and a site with every article editor switched off has nothing above the line.
+ */
+const dividedAt = computed(() => {
+  const offered = offeredEditors.value
+  const first = offered.findIndex((editor) => !siteStore.articleEditors.includes(editor))
+  return first > 0 ? offered[first] : null
+})
 
 // METHODS
 

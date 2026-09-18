@@ -457,7 +457,24 @@ class Rendering {
       }
       const tag = `block-${definition.block}`
       tags.push(tag)
-      attributes[tag] = (definition.props ?? []).map((prop) => prop.name)
+      /*
+        Every prop under both spellings, because the two ends of this see different ones.
+
+        A prop is declared in camelCase (`showIcons`), which is what the renderer writes and what the
+        sanitiser is therefore asked about on the way in. But `postProcess` re-parses its own output
+        with cheerio, and an HTML parser lowercases attribute names -- so what is STORED is
+        `showicons`, and a later save that sends that render back up offers the sanitiser a name its
+        allow list has never heard of, which is dropped. A page properties change made with no editor
+        open sends exactly that, so the props of every block on the page vanished the first time
+        anybody retagged it, silently and for good: nothing renders them again until the page is
+        saved from an editor, which produces the render from the source afresh.
+
+        Matching both is what makes this pass idempotent. Nothing is lost by it either, since HTML
+        attribute names are case-insensitive and Lit observes the lowercased form regardless.
+      */
+      attributes[tag] = [
+        ...new Set((definition.props ?? []).flatMap((prop) => [prop.name, prop.name.toLowerCase()]))
+      ]
     }
     return { tags, attributes }
   }

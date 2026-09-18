@@ -8,26 +8,25 @@
       <div class="welcome-actions">
         <w-btn push color="primary" :label="t(`welcome.createHome`)" icon="la:plus" no-caps>
           <w-menu class="translucent-menu" auto-close anchor="top left" self="bottom left">
+            <!--
+              The editors that author an ARTICLE, which is what a home page is -- so a blog and a
+              redirection are not offered, and nor is anything the site has switched off.
+              `siteStore.articleEditors` is the same answer the New Page menu draws its top group
+              from and the same one a blog's New Post button uses, which is what keeps the three
+              screens showing one set rather than three lists that drift.
+
+              The wording is this screen's own (`welcome.createHome<Editor>`, "Using the Markdown
+              Editor" rather than "New Markdown Page"), because here the choice is how to write the
+              wiki's first page rather than what to add to it.
+            -->
             <w-list padding>
-              <w-item clickable @click="createHomePage(`visual`)" v-if="siteStore.editors.visual">
-                <blueprint-icon icon="google-presentation" />
-                <w-item-section class="pr-2">{{ t(`welcome.createHomeVisual`) }}</w-item-section>
-                <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
-              </w-item>
               <w-item
+                v-for="editor of siteStore.articleEditors"
+                :key="editor"
                 clickable
-                @click="createHomePage(`markdown`)"
-                v-if="siteStore.editors.markdown">
-                <blueprint-icon icon="markdown" />
-                <w-item-section class="pr-2">{{ t(`welcome.createHomeMarkdown`) }}</w-item-section>
-                <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
-              </w-item>
-              <w-item
-                clickable
-                @click="createHomePage(`asciidoc`)"
-                v-if="siteStore.editors.asciidoc">
-                <blueprint-icon icon="asciidoc" />
-                <w-item-section class="pr-2">{{ t(`welcome.createHomeAsciidoc`) }}</w-item-section>
+                @click="createHomePage(editor)">
+                <blueprint-icon :icon="EDITOR_ICONS[editor]" />
+                <w-item-section class="pr-2">{{ t(labelFor(editor)) }}</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>
               </w-item>
             </w-list>
@@ -59,14 +58,16 @@ import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useMeta } from '@/composables/meta'
 
-import { useFlagsStore } from '@/stores/flags'
+import { EDITOR_ICONS } from '@/helpers/editors'
+
+import { capitalize } from 'es-toolkit/string'
+
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 // STORES
 
-const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -86,6 +87,19 @@ useMeta(() => ({
 }))
 
 // METHODS
+
+/**
+ * The locale key naming an editor on this screen.
+ *
+ * Composed rather than tabulated, the same way the admin area names an editor
+ * (`admin.editors.<id>Name`) and the search filter reads it back. The three that exist —
+ * `createHomeMarkdown`, `createHomeVisual`, `createHomeAsciidoc` — are keyed by the editor id with
+ * its first letter raised, so an article editor added later needs a string of its own here or the
+ * menu shows the key.
+ */
+function labelFor(editor) {
+  return `welcome.createHome${capitalize(editor)}`
+}
 
 async function createHomePage(editor) {
   loading.show()

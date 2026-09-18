@@ -1177,9 +1177,7 @@ async function processContent(newContent) {
     (el) => el.active ?? 0
   )
 
-  pageStore.$patch({
-    render: html
-  })
+  pageStore.setRender(html)
   await nextTick()
   // -> With the preview pane closed there is no DOM to attend to. The render is stored either way, so
   //    the store still holds what a save would send

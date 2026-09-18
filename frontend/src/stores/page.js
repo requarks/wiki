@@ -127,6 +127,20 @@ export const usePageStore = defineStore('page', {
      */
     localeRelations: [],
     render: '',
+    /**
+     * Whether `render` above is HTML an editor in this session produced, rather than the page's own.
+     *
+     * Every page load fills `render` from the server, and what comes back has already been through
+     * `postProcess` — so sending it up again re-sanitizes an output rather than an input, which is not
+     * the no-op it looks like. It is done with the SAVING session's permissions, so a save by somebody
+     * without `write:scripts` on the page strips the author's `<script>` out of a render nobody
+     * touched. And the properties panel, the tags editor and the locale relations dialog all reach the
+     * Save button with no editor open at all, which is exactly that case.
+     *
+     * So the render goes up only when an editor made one — `updatePage` leaves the column alone for a
+     * key it was not sent. See the guard in `pageSave`, which is the same shape as `contentLoaded`'s.
+     */
+    renderProduced: false,
     scriptJsLoad: '',
     scriptJsUnload: '',
     scriptCss: '',
@@ -257,6 +271,8 @@ export const usePageStore = defineStore('page', {
             // -> The field is present exactly when the source came with the page, which is what makes
             //    the copy in this store safe to save; a view-mode load leaves the previous one in place
             contentLoaded: Object.hasOwn(pageData, 'content'),
+            // -> `...pageData` above brought the stored render with it; see `renderProduced`
+            renderProduced: false,
             relations: pageData.relations.map((r) =>
               pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
             ),
@@ -321,6 +337,7 @@ export const usePageStore = defineStore('page', {
       this.$patch({
         ...pageData,
         contentLoaded: Object.hasOwn(pageData, 'content'),
+        renderProduced: false,
         relations: pageData.relations.map((r) =>
           pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
         ),
@@ -411,6 +428,7 @@ export const usePageStore = defineStore('page', {
         content: '',
         contentLoaded: false,
         render: '',
+        renderProduced: false,
         toc: [],
         tags: [],
         relations: [],
@@ -608,6 +626,7 @@ export const usePageStore = defineStore('page', {
         // -> A page being created has no stored source to lose: whatever it starts with IS the source
         contentLoaded: true,
         render: '',
+        renderProduced: false,
         /*
           A redirection is in neither the browse menu nor search by default: the first because it is a
           doorway rather than a page to land on, the second because a result for one would stand in
@@ -887,6 +906,20 @@ export const usePageStore = defineStore('page', {
       }
     },
     /**
+     * Take the HTML an editor has just produced for the page in this store.
+     *
+     * The one way `render` is written from the client, so that the flag saying it may be saved cannot
+     * drift from the value it describes — see `renderProduced`.
+     *
+     * @param {string} html
+     */
+    setRender(html) {
+      this.$patch({
+        render: html,
+        renderProduced: true
+      })
+    },
+    /**
      * PAGE SAVE
      */
     async pageSave() {
@@ -951,6 +984,21 @@ export const usePageStore = defineStore('page', {
           console.warn('Page source was never loaded; saving without touching the stored content.')
         }
 
+        /*
+          And never send back a render this store did not make.
+
+          Every page load fills `render` from the server, so unless an editor has replaced it the store
+          is holding the page's own stored HTML — already sanitized, already anchored, already reduced
+          to a table of contents. Sending that up runs `postProcess` over its own output, with this
+          session's permissions and not the author's, which is how changing a tag from the page view
+          strips the `<script>` out of a page somebody else wrote. Dropping the key leaves the column
+          alone, and the only save that has nothing to say about the render is one that did not touch
+          the source.
+        */
+        if (!this.renderProduced) {
+          delete body.render
+        }
+
         let pageData
         if (editorStore.mode === 'create') {
           const resp = unwrap(
@@ -993,6 +1041,8 @@ export const usePageStore = defineStore('page', {
             pick(r, ['locale', 'path', 'title'])
           ),
           tocDepth: pick(pageData.tocDepth, ['min', 'max']),
+          // -> The reply carries the stored render, as any other load does; see `renderProduced`
+          renderProduced: false,
           // -> What was pending is now what is stored, which is the whole of what a save means here
           storedProps: storedPropsOf(pageData)
         })

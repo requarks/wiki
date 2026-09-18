@@ -72,7 +72,18 @@
             color="primary"
             padding="xs md"
             :label="t(`common.blog.newPost`)">
-            <page-new-menu hide-asset-btn :only="POST_EDITORS" :base-path="pageStore.path" />
+            <!--
+              What a post may be written with: the editors that author an ARTICLE, which is what a
+              post is. Not `redirect` and not `blog` — both write a page with no body, and
+              `models/blogs.ts` does not count either as a post, so creating one here would add
+              nothing to this listing. Read from the store rather than listed here, because the
+              same partition decides where `PageNewMenu` draws its divider and because a list
+              written out again is one that can fall behind an editor being added.
+            -->
+            <page-new-menu
+              hide-asset-btn
+              :only="siteStore.articleEditors"
+              :base-path="pageStore.path" />
           </w-btn>
         </template>
       </div>
@@ -177,16 +188,6 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import PageNewMenu from '@/components/PageNewMenu.vue'
-
-/**
- * What a post may be written with, offered by the New Post button on an empty blog.
- *
- * The editors that author an ARTICLE, which is what a post is. Not `redirect` and not `blog` — both
- * write a page with no body, and `models/blogs.ts` does not count either as a post: a redirection is
- * a doorway and a nested blog is its own blog, so creating one here would add nothing to this
- * listing. Filtered against what the site has enabled, so this is a ceiling and not a list.
- */
-const POST_EDITORS = ['markdown', 'visual']
 
 /**
  * A blog's front page: its posts, rather than an article.

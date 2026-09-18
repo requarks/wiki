@@ -636,6 +636,16 @@ const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && 
 const isBlog = computed(() => pageStore.editor === 'blog')
 
 /**
+ * Whether the page on screen is a redirection, which is a page with nowhere to read: it takes the
+ * reader on rather than showing them anything -- see `PageRedirect.vue`, which is drawn in place of
+ * the article column entirely.
+ *
+ * Its own computed rather than the comparison written out at each site, because three things now ask
+ * it and they have to keep agreeing: the two view tabs and the sidebar.
+ */
+const isRedirect = computed(() => pageStore.editor === 'redirect')
+
+/**
  * Whether a blog wants the column beside its listing at all.
  *
  * Its own question, because the blog's front page decides it rather than the page properties the
@@ -656,7 +666,7 @@ const showSidebar = computed(() => {
     // -> Contents, tags and a rating, all of a page that is not there
     !pageStore.notFound &&
     // -> Nor of one nobody stays on: a redirection has no headings to list and is gone in a moment
-    pageStore.editor !== 'redirect' &&
+    !isRedirect.value &&
     // -> A blog keeps the column but fills it with its own thing, and only where it asked for one
     (!isBlog.value || blogWantsSidebar.value)
   )
@@ -750,6 +760,13 @@ const showTalkTab = computed(
     // -> A blog's front page is a listing rather than an article: there is nothing here to discuss,
     //    and the discussion a reader wants belongs on the post they are reading
     !isBlog.value &&
+    /*
+      Nor a redirection, for a stronger version of the same reason: it is a doorway rather than a
+      page, the reader is on their way through it, and the discussion they want is about wherever it
+      leads. There is no article column for a second view to sit beside either -- `PageRedirect`
+      replaces it -- so the strip was chrome over a page nobody is reading.
+    */
+    !isRedirect.value &&
     userStore.pagePermissions.includes('read:comments')
 )
 
@@ -777,6 +794,8 @@ const showLinksTab = computed(
     !editorStore.isActive &&
     // -> As above: the strip is gone on a blog, and a tab with no strip to sit in cannot be reached
     !isBlog.value &&
+    // -> And on a redirection, which is drawn in place of the column the tab would switch
+    !isRedirect.value &&
     Boolean(pageStore.id)
 )
 

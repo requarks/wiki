@@ -53,6 +53,20 @@ function describeLocales(codes, installed) {
   })
 }
 
+/**
+ * The editors whose pages have no article of their own.
+ *
+ * The client's copy of `BODYLESS_EDITORS` in `backend/models/pages.ts`, which is what decides on the
+ * server whether an empty content column is an error and — through `isBodylessEditor` — which pages
+ * under a blog count as its posts. The two have to agree: an editor this list calls bodyless while
+ * the server does not is one the blog offers to write a post with and then never lists.
+ *
+ * Longer than the server's by the two behind the experimental flag, which have no editor there to
+ * have an opinion about them yet. Both plainly belong here: a discussion and a set of API docs are
+ * not somebody being put in front of a blank article, which is the whole of what this divides.
+ */
+const BODYLESS_EDITORS = ['blog', 'channel', 'api', 'redirect']
+
 export const useSiteStore = defineStore('site', {
   state: () => ({
     id: null,
@@ -298,6 +312,21 @@ export const useSiteStore = defineStore('site', {
         ...(experimental ? ['channel', 'api'] : []),
         ...(this.editors.redirect ? ['redirect'] : [])
       ]
+    },
+    /**
+     * The active editors that put an author in front of a blank article.
+     *
+     * `activeEditors` minus the ones that write a settings document instead — a blog's front page is
+     * a listing of the posts under it, a redirection is a target. Derived from that list rather than
+     * written out again, so an editor a site has switched off is missing from both and the order is
+     * the one the menu already uses.
+     *
+     * Two callers, and they want it for the same reason. A blog's **New Post** button offers exactly
+     * these, since a post is an article and `models/blogs.ts` does not count anything else as one.
+     * And `PageNewMenu` draws its divider where this list ends.
+     */
+    articleEditors() {
+      return this.activeEditors.filter((editor) => !BODYLESS_EDITORS.includes(editor))
     },
     /** Whether `code` is one of the locales this site has enabled. */
     isActiveLocale: (state) => (code) => state.locales.active.some((lc) => lc.code === code),
