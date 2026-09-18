@@ -634,6 +634,21 @@ export const usePageStore = defineStore('page', {
         storedProps: { title: '', description: '', icon: '' },
         mode: 'edit'
       })
+
+      /*
+        -> Page permissions at the path the new page will sit at
+
+        Everywhere else they arrive with the page itself (`pageLoad`), and a page being created has
+        no page to carry them -- while `/_create` is not a page path, so the guard in `App.vue` has
+        just dropped whatever the page being left granted. Left empty, the properties panel hid every
+        section that is gated on one -- Scripts, Styles, Tags -- until the page had been saved once.
+
+        Asked of the new path and not of the page the author started from, since a rule is granted
+        per path: starting a page in a section they may write scripts in is what decides it.
+      */
+      if (newPath) {
+        await useUserStore().fetchPagePermissions(newPath, this.locale)
+      }
     },
     /**
      * PAGE - DUPLICATE

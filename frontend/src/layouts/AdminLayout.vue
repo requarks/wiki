@@ -6,7 +6,7 @@
           <w-btn dense flat to="/">
             <w-avatar size="34px" square><img src="/_assets/logo-wikijs.svg" /></w-avatar>
           </w-btn>
-          <w-toolbar-title class="text-h6">Wiki.js</w-toolbar-title>
+          <w-toolbar-title>Wiki.js</w-toolbar-title>
         </w-toolbar>
         <w-toolbar class="max-md:hidden justify-center" style="height: 64px">
           <div class="text-overline uppercase text-grey">{{ t('admin.adminArea') }}</div>

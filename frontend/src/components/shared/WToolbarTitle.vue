@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-toolbar-title min-w-0 grow overflow-hidden pl-3 text-lg leading-6 text-ellipsis whitespace-nowrap">
+    class="w-toolbar-title min-w-0 grow overflow-hidden pl-3 text-h6 text-ellipsis whitespace-nowrap">
     <slot />
   </div>
 </template>

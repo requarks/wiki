@@ -373,7 +373,7 @@
                     :src="`/_site/` + adminStore.currentSiteId + `/logo?` + state.assetTimestamp"
                     style="height: 34px" />
                 </w-btn>
-                <w-toolbar-title class="text-h6" v-if="state.config.logoText">{{
+                <w-toolbar-title v-if="state.config.logoText">{{
                   state.config.title
                 }}</w-toolbar-title>
               </w-toolbar>
