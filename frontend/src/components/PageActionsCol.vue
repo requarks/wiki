@@ -172,7 +172,9 @@
                 ><w-item-label>{{ t('convertPage.action') }}</w-item-label></w-item-section
               >
             </w-item>
-            <w-item clickable v-if="userStore.can(`write:pages`)" @click="rerenderPage">
+            <!-- -> Nothing to render on a page whose content is a settings document rather than an
+                    article, and the endpoint behind this refuses any editor but markdown anyway -->
+            <w-item clickable v-if="userStore.can(`write:pages`) && hasBody" @click="rerenderPage">
               <w-item-section class="items-center" avatar>
                 <w-icon class="text-deep-orange-9" name="la:magic" size="sm" />
               </w-item-section>
@@ -296,14 +298,26 @@ const canConvert = computed(() =>
 const isRedirect = computed(() => pageStore.editor === 'redirect')
 
 /**
+ * Whether the page on screen holds text somebody wrote.
+ *
+ * False for the two editors that keep a settings document where a page keeps content: a redirection
+ * holds where it points, a blog holds how it lists the posts under it. Neither has a source worth
+ * showing a reader, and neither can be re-rendered — the endpoint refuses any editor but markdown.
+ */
+const hasBody = computed(() => !['redirect', 'blog'].includes(pageStore.editor))
+
+/**
  * Whether the "..." menu has anything to show.
  *
- * Every entry in it is behind something: Rerender Page behind `write:pages`, Convert Page and View
- * Backlinks behind the experimental flag (the first behind `manage:pages` as well). So those two tests
- * cover the whole menu -- and with neither of them true it opened an empty panel, which is what a guest
- * got on every page. Keep this in step with the entries themselves.
+ * The disjunction of the three entries' own conditions, spelled out, because with none of them true
+ * it opened an empty panel -- which is what a guest got on every page. Rerender Page needs
+ * `write:pages` and a page with a body; Convert Page needs `write:pages` and somewhere to convert to;
+ * View Backlinks needs the experimental flag. Keep this in step with the entries themselves.
  */
-const hasPageActions = computed(() => flagsStore.experimental || userStore.can('write:pages'))
+const hasPageActions = computed(
+  () =>
+    (userStore.can('write:pages') && (canConvert.value || hasBody.value)) || flagsStore.experimental
+)
 
 /*
   Whoever may write the page may read its source too — the editor is what opens it — so the button is
@@ -330,7 +344,7 @@ const isSaved = computed(() => Boolean(pageStore.id))
 const showHistory = computed(
   () => !isRedirect.value && isSaved.value && userStore.can('read:history')
 )
-const showSource = computed(() => !isRedirect.value && isSaved.value && canViewSource.value)
+const showSource = computed(() => hasBody.value && isSaved.value && canViewSource.value)
 
 /**
  * Whether the "..." menu is offered at all.

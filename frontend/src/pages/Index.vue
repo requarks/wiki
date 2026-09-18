@@ -158,11 +158,37 @@
             -->
             <site-banner v-if="activeView === `article`" />
             <!--
+              That this page is a post, and of what. A wiki page and a blog post look identical
+              otherwise -- the breadcrumbs above name the folder rather than the blog, and nothing
+              else on the page says a listing somewhere is drawing it.
+
+              Above the article rather than below it, because it is context for what follows; a link
+              rather than a label, since the blog is where the rest of the posts are.
+            -->
+            <router-link
+              class="page-blog-byline"
+              v-if="pageStore.blog && activeView === `article`"
+              :to="blogHref">
+              <w-icon name="la:newspaper" size="sm" />
+              <span class="pl-2">{{
+                t('common.blog.postedIn', { blog: pageStore.blog.title })
+              }}</span>
+            </router-link>
+            <!--
               `v-show` rather than `v-if` on the article below, so that leaving the discussion and
               coming back does not re-run the page's own scripts or lose where the reader was in it.
             -->
             <page-talk v-if="activeView === `talk`" />
             <page-links v-if="activeView === `links`" />
+            <!--
+              A blog's front page, which has no article to draw: its posts are what stands in place of
+              one. Inside the scrolling column and not instead of it, unlike a redirection -- a blog is
+              somewhere a reader stays, scrolls, and reaches the footer at the bottom of.
+
+              No `activeView` test, unlike the article below: a blog shows neither tab (see
+              `showTalkTab`), so there is no other view for this column to be on.
+            -->
+            <page-blog v-if="isBlog" />
             <!--
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
@@ -170,7 +196,7 @@
             <div
               class="page-contents"
               ref="pageContents"
-              v-show="activeView === `article`"
+              v-show="activeView === `article` && !isBlog"
               v-html="pageStore.render"
               @click="onContentClick" />
             <!--
@@ -282,35 +308,44 @@
         :class="{ 'is-open': tocPanelIsOpen }"
         :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`"
         @click="onSidebarClick">
-        <template v-if="showToc">
-          <!-- TOC -->
-          <div class="p-4 flex items-center">
-            <w-icon class="mr-2" name="la:stream" color="grey" />
-            <!-- -> Its own string, not `common.page.toc`: this heading labels a column beside the
+        <!--
+          A blog's front page gets its own column. It has none of what the three sections below offer
+          -- no headings to list, no body to rate, and its own tags are the front page's rather than
+          the blog's -- and what it does have is what the blog is about and when it was written.
+          Inside the same element, so the slide-in panel this column becomes below 750px is inherited
+          rather than built a second time.
+        -->
+        <page-blog-sidebar v-if="isBlog" />
+        <template v-else>
+          <template v-if="showToc">
+            <!-- TOC -->
+            <div class="p-4 flex items-center">
+              <w-icon class="mr-2" name="la:stream" color="grey" />
+              <!-- -> Its own string, not `common.page.toc`: this heading labels a column beside the
                  article and reads better short, where "Table of Contents" is the full name of the
                  thing and belongs where there is room for it -->
-            <div class="text-caption text-grey-7">{{ t('common.page.contents') }}</div>
-          </div>
-          <div class="px-4 pb-2">
-            <page-toc
-              :nodes="pageStore.toc"
-              :min-depth="pageStore.tocDepth.min"
-              :max-depth="pageStore.tocDepth.max"
-              v-model:selected="state.tocSelected" />
-          </div>
-        </template>
-        <!-- Tags -->
-        <template v-if="showTags">
-          <w-separator v-if="showToc" />
-          <div
-            class="p-4"
-            @mouseover="state.showTagsEditBtn = true"
-            @mouseleave="state.showTagsEditBtn = false">
-            <div class="flex items-center">
-              <w-icon class="mr-2" name="la:tags" color="grey" />
-              <div class="text-caption text-grey-7">{{ t('common.page.tags') }}</div>
-              <w-space />
-              <!--
+              <div class="text-caption text-grey-7">{{ t('common.page.contents') }}</div>
+            </div>
+            <div class="px-4 pb-2">
+              <page-toc
+                :nodes="pageStore.toc"
+                :min-depth="pageStore.tocDepth.min"
+                :max-depth="pageStore.tocDepth.max"
+                v-model:selected="state.tocSelected" />
+            </div>
+          </template>
+          <!-- Tags -->
+          <template v-if="showTags">
+            <w-separator v-if="showToc" />
+            <div
+              class="p-4"
+              @mouseover="state.showTagsEditBtn = true"
+              @mouseleave="state.showTagsEditBtn = false">
+              <div class="flex items-center">
+                <w-icon class="mr-2" name="la:tags" color="grey" />
+                <div class="text-caption text-grey-7">{{ t('common.page.tags') }}</div>
+                <w-space />
+                <!--
                 Rendered for whoever may save the page, and hidden with `visibility` rather than
                 removed as the pointer comes and goes: `display: none` took the row's height with it,
                 so the heading jumped 6px the moment the pointer arrived. `visibility` also keeps it
@@ -322,41 +357,46 @@
                 A reader gets no button at all -- `v-if`, not the same `visibility` treatment, because
                 for them it is not a control that happens to be out of sight.
               -->
-              <w-btn
-                v-if="canEditTags"
-                class="tags-edit-btn"
-                :class="{ 'is-hidden': !state.tagEditMode && !state.showTagsEditBtn }"
-                size="sm"
-                padding="none xs"
-                :icon="state.tagEditMode ? `la:check` : `la:pen`"
-                color="deep-orange-9"
-                flat
-                :label="state.tagEditMode ? t('common.actions.exitEdit') : t('common.actions.edit')"
-                no-caps
-                @click="state.tagEditMode = !state.tagEditMode" />
+                <w-btn
+                  v-if="canEditTags"
+                  class="tags-edit-btn"
+                  :class="{ 'is-hidden': !state.tagEditMode && !state.showTagsEditBtn }"
+                  size="sm"
+                  padding="none xs"
+                  :icon="state.tagEditMode ? `la:check` : `la:pen`"
+                  color="deep-orange-9"
+                  flat
+                  :label="
+                    state.tagEditMode ? t('common.actions.exitEdit') : t('common.actions.edit')
+                  "
+                  no-caps
+                  @click="state.tagEditMode = !state.tagEditMode" />
+              </div>
+              <page-tags class="mt-2" :edit="state.tagEditMode" />
             </div>
-            <page-tags class="mt-2" :edit="state.tagEditMode" />
-          </div>
-        </template>
-        <template v-if="siteStore.features.ratingsMode !== `off` && pageStore.allowRatings">
-          <w-separator v-if="showToc || showTags" />
-          <!-- Rating -->
-          <div class="p-4 flex items-center">
-            <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
-            <div class="text-caption text-grey-7">{{ t('common.page.ratePage') }}</div>
-          </div>
-          <div class="px-4">
-            <w-rating
-              v-if="siteStore.features.ratingsMode === `stars`"
-              v-model="state.currentRating"
-              icon="la:star"
-              color="secondary"
-              size="sm" />
-            <div class="flex items-center" v-else-if="siteStore.features.ratingsMode === `thumbs`">
-              <w-btn class="acrylic-btn" flat icon="la:thumbs-down" color="secondary" />
-              <w-btn class="acrylic-btn ml-2" flat icon="la:thumbs-up" color="secondary" />
+          </template>
+          <template v-if="siteStore.features.ratingsMode !== `off` && pageStore.allowRatings">
+            <w-separator v-if="showToc || showTags" />
+            <!-- Rating -->
+            <div class="p-4 flex items-center">
+              <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
+              <div class="text-caption text-grey-7">{{ t('common.page.ratePage') }}</div>
             </div>
-          </div>
+            <div class="px-4">
+              <w-rating
+                v-if="siteStore.features.ratingsMode === `stars`"
+                v-model="state.currentRating"
+                icon="la:star"
+                color="secondary"
+                size="sm" />
+              <div
+                class="flex items-center"
+                v-else-if="siteStore.features.ratingsMode === `thumbs`">
+                <w-btn class="acrylic-btn" flat icon="la:thumbs-down" color="secondary" />
+                <w-btn class="acrylic-btn ml-2" flat icon="la:thumbs-up" color="secondary" />
+              </div>
+            </div>
+          </template>
         </template>
       </div>
       <!-- -> Every action on it acts on a page: there is none here to edit, share, rate or delete -->
@@ -418,6 +458,7 @@ import {
   routableHref
 } from '@/helpers/renderedContent'
 import { flattenToc } from '@/helpers/toc'
+import { parseBlog } from '@/helpers/pageBlog'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
@@ -456,6 +497,16 @@ const PageLinks = defineAsyncComponent({
   loader: () => import('@/components/PageLinks.vue'),
   loadingComponent: LoadingGeneric
 })
+/*
+  A blog's two halves, likewise on demand: a page written with the `blog` editor is one page of a
+  wiki, and every other reader of every other page would otherwise be downloading a listing, a tag
+  cloud and an archive they will never see.
+*/
+const PageBlog = defineAsyncComponent({
+  loader: () => import('@/components/PageBlog.vue'),
+  loadingComponent: LoadingGeneric
+})
+const PageBlogSidebar = defineAsyncComponent(() => import('@/components/PageBlogSidebar.vue'))
 
 const editorComponents = {
   markdown: defineAsyncComponent({
@@ -468,6 +519,10 @@ const editorComponents = {
   }),
   redirect: defineAsyncComponent({
     loader: () => import('../components/EditorRedirect.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  blog: defineAsyncComponent({
+    loader: () => import('../components/EditorBlog.vue'),
     loadingComponent: LoadingGeneric
   })
 }
@@ -563,6 +618,24 @@ const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && s
 */
 const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && !state.tocPanelOpen)
 
+/**
+ * Whether the page on screen is a blog's front page, which is drawn as its posts rather than as an
+ * article -- see `PageBlog.vue`. A blog POST is an ordinary page and is not this.
+ */
+const isBlog = computed(() => pageStore.editor === 'blog')
+
+/**
+ * Whether a blog wants the column beside its listing at all.
+ *
+ * Its own question, because the blog's front page decides it rather than the page properties the
+ * three ordinary sections answer to: an author who turned off both the tag cloud and the archive
+ * asked for a blog with no sidebar, and drawing an empty strip beside the posts is not that.
+ */
+const blogWantsSidebar = computed(() => {
+  const sidebar = parseBlog(pageStore.content).sidebar
+  return sidebar.tags || sidebar.archive
+})
+
 const showSidebar = computed(() => {
   return (
     pageStore.showSidebar &&
@@ -572,7 +645,9 @@ const showSidebar = computed(() => {
     // -> Contents, tags and a rating, all of a page that is not there
     !pageStore.notFound &&
     // -> Nor of one nobody stays on: a redirection has no headings to list and is gone in a moment
-    pageStore.editor !== 'redirect'
+    pageStore.editor !== 'redirect' &&
+    // -> A blog keeps the column but fills it with its own thing, and only where it asked for one
+    (!isBlog.value || blogWantsSidebar.value)
   )
 })
 /*
@@ -661,6 +736,9 @@ const showTalkTab = computed(
     pageStore.allowComments &&
     !pageStore.notFound &&
     !editorStore.isActive &&
+    // -> A blog's front page is a listing rather than an article: there is nothing here to discuss,
+    //    and the discussion a reader wants belongs on the post they are reading
+    !isBlog.value &&
     userStore.pagePermissions.includes('read:comments')
 )
 
@@ -686,6 +764,8 @@ const showLinksTab = computed(
     !pageStore.notFound &&
     !pageStore.isLocked &&
     !editorStore.isActive &&
+    // -> As above: the strip is gone on a blog, and a tab with no strip to sit in cannot be reached
+    !isBlog.value &&
     Boolean(pageStore.id)
 )
 
@@ -748,6 +828,11 @@ const lastModified = computed(() => {
  * The trail the breadcrumb bar draws, root first. The Home crumb is prepended here rather than
  * written into the markup, so the bar takes a single flat list.
  */
+/** The blog this page is a post of, as a route on this site. Null-safe: the line is `v-if`'d on it. */
+const blogHref = computed(
+  () => `${siteStore.localeUrlPrefix(pageStore.locale)}/${pageStore.blog?.path ?? ''}`
+)
+
 const breadcrumbs = computed(() => [
   { key: 'home', icon: 'la:home', to: '/', ariaLabel: 'Home', tooltip: 'Home' },
   ...pageStore.breadcrumbs.map((brd) => ({
@@ -1223,6 +1308,29 @@ function goBack() {
 @media (prefers-reduced-motion: reduce) {
   .tags-edit-btn {
     transition-duration: 0.01ms;
+  }
+}
+
+/*
+  The line above a blog post saying which blog it is in. Quiet and inline rather than a banner: it is
+  context for the article below it, not an announcement about it -- and it sits in the same 1.5rem the
+  site banner leaves between itself and the content.
+*/
+.page-blog-byline {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  font-size: 0.8rem;
+  text-decoration: none;
+
+  @at-root .body--light & {
+    color: rgba(0, 0, 0, 0.55);
+  }
+  @at-root .body--dark & {
+    color: rgba(255, 255, 255, 0.55);
+  }
+  &:hover {
+    color: $primary;
   }
 }
 </style>

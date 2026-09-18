@@ -1000,3 +1000,648 @@ const res = await fetch(\`/_api/sites/\${'$'}{siteId}/pages\`, {
 `
   }
 ]
+
+/**
+ * The blog the sample content writes, and the posts filed under it.
+ *
+ * Separate from {@link SAMPLE_PAGES} because a blog is not a page with a body: its front page is
+ * authored with the `blog` editor, and what its content column holds is a settings document rather
+ * than markdown — so it is created differently and cannot go through the same loop untouched. See
+ * `helpers/pageBlog.js` for the shape, and `models/blogs.ts` for what the server does with it.
+ *
+ * Filed at `/my-blog` rather than under `/sample`, so that the one thing on the site that is a
+ * DESTINATION sits where a real one would: a blog's path is its address, and a reader who has to
+ * walk three folders down to find it is not testing what a blog does.
+ *
+ * Twenty-five posts, which is a deliberate figure: at the blog's own `perPage` of ten it is three
+ * pages of listing, so the pager is exercised rather than merely present.
+ *
+ * Their dates fall in twenty distinct months across two calendar years, five of those months holding
+ * two posts — so the sidebar's archive has two years to fold, and counts that are not all 1. Icons
+ * and tags vary for the same reason: a listing whose every row carries the same icon and the same
+ * tag says nothing about how it draws either, and a tag cloud of one tag is not a cloud. The eight
+ * tags are spread unevenly on purpose, since that is what a cloud is for.
+ */
+export const SAMPLE_BLOG = {
+  path: 'my-blog',
+  title: 'My Blog',
+  description: 'A blog of release notes, tips and announcements — sample content.',
+  icon: 'mdi:newspaper-variant-outline',
+  tags: ['guide'],
+  /**
+   * How the front page is set up. Passed through `serializeBlog`, so anything left out here takes
+   * the same default a blog created in the editor would — see `emptyBlog` in `helpers/pageBlog.js`.
+   */
+  settings: {
+    layout: 'cards',
+    perPage: 10,
+    sort: 'newest',
+    depth: 5,
+    intro: `Notes from a team that does not exist, about a wiki that does.
+
+Everything here was written by Generate Sample Content, and every post carries the \`test\` tag — Purge Sample Content takes the whole blog away again.`,
+    show: { icon: true, description: true, author: true, date: true, tags: true },
+    sidebar: { tags: true, archive: true }
+  }
+}
+
+/**
+ * @typedef {object} SampleBlogPost
+ * @property {string} path Absolute from the site root, without a leading slash. Under the blog.
+ * @property {string} title
+ * @property {string} description Shown in the listing under the title.
+ * @property {string} icon An Iconify reference, materialized before the posts are written.
+ * @property {string[]} tags Beside {@link SAMPLE_CONTENT_TAG}, which is added to every page.
+ * @property {string} publishedAt Sent as the page's `publishStartDate`, which is what a blog orders
+ *   and dates a post by — see `BlogPost.publishedAt` in `models/blogs.ts`. Every one is in the past:
+ *   a future date would list the post today under tomorrow's heading, which is a real thing a blog
+ *   does and a confusing thing for a seed to do.
+ * @property {string} content Markdown source. The render is produced from it at generation time.
+ */
+
+/** @type {SampleBlogPost[]} */
+export const SAMPLE_BLOG_POSTS = [
+  {
+    path: 'my-blog/hello-world',
+    title: 'Hello, world',
+    description: 'A first post, which is mostly an excuse to have a second one.',
+    icon: 'mdi:hand-wave',
+    tags: ['announcement'],
+    publishedAt: '2025-01-14T09:00:00.000Z',
+    content: `# Hello, world
+
+This is the first post on a blog that exists so there is a blog to look at. If you are reading it on
+a fresh instance, somebody pressed **Generate Sample Content** in the admin area and this arrived
+with everything else.
+
+A blog in this wiki is a page like any other — it has a path, a title and a place in the tree. What
+makes it a blog is the editor it was written with, and what that editor stores is not an article but
+a set of decisions about how to draw the pages filed underneath it.
+
+So there is nothing to read on the front page except what its author chose to say above the listing.
+That is the paragraph at the top, and this is one of the twenty-five posts under it.
+`
+  },
+  {
+    path: 'my-blog/why-a-wiki',
+    title: 'Why we went back to a wiki',
+    description: 'Three tools became one, and the one is the boring option.',
+    icon: 'mdi:lightbulb-on-outline',
+    tags: ['announcement', 'design'],
+    publishedAt: '2025-02-03T10:30:00.000Z',
+    content: `# Why we went back to a wiki
+
+We had notes in three places: a chat channel nobody searched, a folder of documents nobody opened,
+and a handful of READMEs that were accurate for about a week after each release.
+
+None of those failed because the tool was bad. They failed because none of them had a **path**. A
+document at \`/guides/deploying\` can be linked to, bookmarked, sent to somebody new, and corrected
+by the next person who notices it is wrong. A file called \`deploy-final-v2.docx\` cannot.
+
+> [!TIP]
+> If you are picking a structure, pick one you can say out loud. If the path does not survive being
+> read down the phone, it will not survive being typed from memory either.
+
+That is the whole argument. It is not exciting, which is rather the point.
+`
+  },
+  {
+    path: 'my-blog/markdown-habits',
+    title: 'Five markdown habits worth picking up',
+    description: 'Small things that make a page easier to edit six months later.',
+    icon: 'mdi:language-markdown',
+    tags: ['tips'],
+    publishedAt: '2025-02-25T08:15:00.000Z',
+    content: `# Five markdown habits worth picking up
+
+1. **One sentence per line.** The rendered page is identical, and every diff becomes readable.
+2. **Reference links for anything used twice.** Changing a URL in one place beats finding four.
+3. **Write the heading you would search for**, not the one that sounds tidy in the outline.
+4. **Tables last.** If a table is hard to write in markdown, it is usually a list wearing a costume.
+5. **Leave the blank line after a heading.** Some renderers do not care. Yours will, eventually.
+
+None of these are rules. They are the five things that kept coming up in review, which is a different
+and more useful list.
+`
+  },
+  {
+    path: 'my-blog/three-oh-alpha',
+    title: '3.0 alpha is out',
+    description: 'Early, unstable, and not to be pointed at anything you care about.',
+    icon: 'mdi:rocket-launch-outline',
+    tags: ['release'],
+    publishedAt: '2025-03-11T16:00:00.000Z',
+    content: `# 3.0 alpha is out
+
+An alpha in the sense that means it: there is no upgrade path from 2.x, the database schema changes
+without notice, and a release two weeks from now may well require starting again.
+
+## What works
+
+- Pages, the markdown editor, and the tree
+- Authentication with local accounts
+- The admin area, for most values of "the admin area"
+
+## What does not
+
+- Anything to do with storage targets
+- Search, beyond the most literal kind
+- Roughly half the things the navigation offers
+
+If that reads as a warning, it is meant to.
+`
+  },
+  {
+    path: 'my-blog/organising-early',
+    title: 'Organising pages before you have too many',
+    description: 'The folder structure you can still change is the one worth arguing about.',
+    icon: 'mdi:file-tree',
+    tags: ['tips', 'guide'],
+    publishedAt: '2025-03-29T11:45:00.000Z',
+    content: `# Organising pages before you have too many
+
+At thirty pages a bad structure is an afternoon's work to fix. At three hundred it is a project
+nobody will ever be given time for, so the structure you have at thirty is very likely the structure
+you have for ever.
+
+The one that keeps working: **group by what somebody is trying to do**, not by which team owns it.
+Teams are reorganised roughly once a year. What somebody is trying to do changes far more slowly.
+
+\`\`\`
+guides/          — how to do a thing
+reference/       — what a thing is
+decisions/       — why a thing is the way it is
+\`\`\`
+
+Three folders is usually enough for the first year. Add a fourth when something genuinely will not
+fit, rather than in anticipation of something that might.
+`
+  },
+  {
+    path: 'my-blog/dark-mode',
+    title: 'Dark mode, and why it took a while',
+    description: 'Two themes is not one theme with the colours swapped.',
+    icon: 'mdi:weather-night',
+    tags: ['design'],
+    publishedAt: '2025-04-16T13:20:00.000Z',
+    content: `# Dark mode, and why it took a while
+
+The naive version took an afternoon: invert the greys, lighten the brand colour, ship it. It looked
+fine in screenshots and wrong in use, and it took a while to work out why.
+
+Shadows are the obvious case. A shadow is black in both themes, so the same \`rgba(0, 0, 0, 0.06)\`
+that reads as a card lifted off a white page reads as nothing at all against a near-black one. Every
+shadow needs its own value per theme, and the value is not a formula.
+
+The subtler case is contrast between two *lit* surfaces. In a light theme a raised element is
+brighter than the page. In a dark theme it is brighter too — not darker, which is what inverting
+gives you. Elevation is light, and light does not invert.
+`
+  },
+  {
+    path: 'my-blog/search-that-finds-things',
+    title: 'Making search that actually finds things',
+    description: 'Ranking is the easy half. Knowing what a reader may see is the other one.',
+    icon: 'mdi:magnify',
+    tags: ['design', 'performance'],
+    publishedAt: '2025-05-02T09:10:00.000Z',
+    content: `# Making search that actually finds things
+
+Full-text search over a few thousand pages is a solved problem. Postgres will do it, it will do it
+quickly, and the ranking will be good enough that nobody complains.
+
+The part that is not solved by the database is **permissions**. Which pages a given reader may open
+is decided by rules that match on path, locale and tags, resolved one page at a time — which is not
+something you can express as a \`WHERE\` clause. So the choice is either to filter after reading, or
+to leak the existence of pages somebody was never told about.
+
+We filter after reading. It costs more, and it is the only answer that is actually correct.
+`
+  },
+  {
+    path: 'my-blog/permissions-once',
+    title: 'Permissions, explained once',
+    description: 'Two kinds, granted separately, checked in different places.',
+    icon: 'mdi:shield-key-outline',
+    tags: ['guide'],
+    publishedAt: '2025-05-27T15:40:00.000Z',
+    content: `# Permissions, explained once
+
+There are two kinds, and almost every confusion about this comes from treating them as one.
+
+**Global permissions** are held across the whole site and are bound to no path. \`read:users\`,
+\`manage:sites\`, \`access:admin\` — these say what somebody may do to the wiki as an installation.
+
+**Page rule permissions** are bound to paths. \`read:pages\`, \`write:pages\`, \`manage:comments\` — these
+say what somebody may do at a place in the tree, and a group grants them through rules that match
+paths and tags.
+
+> [!IMPORTANT]
+> Nothing is granted by default, and where several rules match, the most specific one wins. A rule
+> over \`/guides\` does not quietly extend to \`/guides-archive\`.
+
+The practical consequence: if a permission has a path in the question, it is a page rule, and no
+amount of adding global permissions will produce it.
+`
+  },
+  {
+    path: 'my-blog/three-oh-beta',
+    title: '3.0 beta, and what changed',
+    description: 'Still no upgrade path, but the schema has stopped moving under us.',
+    icon: 'mdi:rocket-launch-outline',
+    tags: ['release'],
+    publishedAt: '2025-06-18T12:00:00.000Z',
+    content: `# 3.0 beta, and what changed
+
+The schema is stable enough that migrations are now written rather than regenerated, which is the
+real difference between the alpha and this.
+
+## Added since the alpha
+
+- Storage targets, with disk and git both working
+- Comments, both built in and through a provider
+- The audit log, and a retention setting behind it
+
+## Changed
+
+- Page rules are resolved per path rather than per site
+- The render is stored with the page rather than produced on read
+
+Still no upgrade path from 2.x. That is not an oversight; it is the trade that made the rest of this
+possible.
+`
+  },
+  {
+    path: 'my-blog/writing-for-arrivals',
+    title: 'Writing for the person who arrives from a search',
+    description: 'Most readers do not start at the top. Write the page they land on.',
+    icon: 'mdi:account-search-outline',
+    tags: ['tips'],
+    publishedAt: '2025-07-07T10:05:00.000Z',
+    content: `# Writing for the person who arrives from a search
+
+Nobody reads a wiki front to back. They arrive in the middle, from a search result or a link
+somebody pasted, with one question and no context.
+
+So the first paragraph of every page has a job: say what this page is about and who it is for. Not
+"Overview", not "Introduction" — an actual sentence that somebody can read and decide from.
+
+The test is simple. Open a page at random, read only the title and the first paragraph, and ask
+whether you could tell a colleague what is on it. If not, the page starts one paragraph too late.
+`
+  },
+  {
+    path: 'my-blog/where-content-lives',
+    title: 'Where your content actually lives',
+    description: 'Written to every target that claims it, read from exactly one.',
+    icon: 'mdi:database-outline',
+    tags: ['guide'],
+    publishedAt: '2025-07-24T14:25:00.000Z',
+    content: `# Where your content actually lives
+
+A storage target is somewhere a site keeps its content: the database, a folder on disk, a git
+repository, an object store. A site can have several at once, and this is where people trip.
+
+**Writing and reading are two separate questions.**
+
+- An upload goes to *every* target configured to hold that kind of content. All of them, or the
+  upload fails.
+- A reader's request is answered from *one* — the target nominated for that content type, and the
+  database if nobody is nominated.
+
+Which means enabling a target does not move anything. It changes where the next upload goes, and a
+target switched on today holds nothing that was uploaded yesterday.
+`
+  },
+  {
+    path: 'my-blog/summer-roundup',
+    title: 'Community roundup, summer edition',
+    description: 'What people built, broke and fixed over the last few months.',
+    icon: 'mdi:account-group-outline',
+    tags: ['community'],
+    publishedAt: '2025-08-12T08:50:00.000Z',
+    content: `# Community roundup, summer edition
+
+A few things worth pointing at, none of them ours.
+
+- Somebody wrote a block that embeds a live train departure board. It is completely impractical and
+  we have thought about it every day since.
+- Two separate people reported the same bug in folder renaming within an hour of each other, having
+  found it in entirely different ways. Both reports were better than our test for it.
+- A translation of the admin area into Welsh landed, which took the locale count to a number we no
+  longer have to round down when describing it.
+
+Thank you, genuinely. The bug reports especially — a bug somebody bothered to describe properly is
+worth more than most feature requests.
+`
+  },
+  {
+    path: 'my-blog/faster-page-loads',
+    title: 'Shaving a second off every page load',
+    description: 'Most of it was one query, and it was not the one anybody suspected.',
+    icon: 'mdi:speedometer',
+    tags: ['performance'],
+    publishedAt: '2025-09-01T11:30:00.000Z',
+    content: `# Shaving a second off every page load
+
+The page itself was fast. The *document* was slow, and it took an embarrassing amount of profiling to
+see the difference.
+
+Every request was resolving the site's navigation tree, and the navigation tree was being rebuilt
+from the page table each time rather than read from the cache it was supposedly in. The cache key
+included a timestamp. It never hit. Not once, in about fourteen months.
+
+\`\`\`diff
+- const key = \`nav:\${siteId}:\${Date.now()}\`
++ const key = \`nav:\${siteId}\`
+\`\`\`
+
+Nine hundred milliseconds, on every page, for over a year. The fix is one line and the lesson is
+about instrumenting cache hit rates, which we now do.
+`
+  },
+  {
+    path: 'my-blog/accessibility-pass',
+    title: 'An accessibility pass over the editor',
+    description: 'Keyboard traps, unlabelled controls, and one very confident toolbar.',
+    icon: 'mdi:human',
+    tags: ['design'],
+    publishedAt: '2025-09-23T13:15:00.000Z',
+    content: `# An accessibility pass over the editor
+
+We went through the editor with a keyboard and nothing else for a day. The findings were not subtle.
+
+- The formatting toolbar was fourteen buttons with icons and no accessible names. To a screen reader
+  it was fourteen buttons called "button".
+- Tab order went from the title field into the preview pane and back out of the document entirely,
+  skipping the thing you were meant to be typing in.
+- The unsaved-changes dialog could be opened by keyboard and closed by nothing.
+
+All fixed, none of them hard. The uncomfortable part is that every one of these would have been
+caught by trying it once, at any point in the preceding two years.
+`
+  },
+  {
+    path: 'my-blog/comments-arrive',
+    title: 'Comments arrive',
+    description: 'A discussion tab, a dozen providers, and one deliberate omission.',
+    icon: 'mdi:comment-text-outline',
+    tags: ['release', 'community'],
+    publishedAt: '2025-10-14T09:45:00.000Z',
+    content: `# Comments arrive
+
+Two things wearing one name, and you pick one per site.
+
+The **built-in** provider stores comments in this wiki, shows them on a Talk tab beside the article,
+and resolves \`@handle\` mentions against real accounts. Markdown is rendered at display time with
+HTML disabled outright, so nothing anybody types is ever HTML.
+
+A **third-party** provider — Giscus, Isso, Disqus and the rest — puts somebody else's widget under
+the article instead. The discussion lives in their service and this wiki only carries the snippet.
+
+The deliberate omission is a moderation queue. A comment is accepted or it is not; there is nowhere
+for one to sit and wait. That will change, and it has not yet.
+`
+  },
+  {
+    path: 'my-blog/backup-habits',
+    title: 'Backup habits for small teams',
+    description: 'A backup you have not restored from is a hypothesis.',
+    icon: 'mdi:backup-restore',
+    tags: ['guide', 'tips'],
+    publishedAt: '2025-11-04T16:20:00.000Z',
+    content: `# Backup habits for small teams
+
+Three things, in order of how often they are skipped.
+
+**Back up the database and the data path together.** The database holds the pages; the data path
+holds uploaded files and, if you use the git target, a working copy. Either one alone restores to a
+wiki with holes in it.
+
+**Restore one, on purpose, into somewhere else.** Quarterly is plenty. The point is not to check the
+backup is valid — it is to find out how long a restore takes before the day you need to know.
+
+**Write down where the backups are.** Not in the wiki.
+
+> [!CAUTION]
+> That last one is not a joke. We have watched a team lose an afternoon to credentials stored in the
+> system they were trying to bring back.
+`
+  },
+  {
+    path: 'my-blog/year-in-review',
+    title: 'The year in review',
+    description: 'Twelve months, one major version, and a lot of deleted code.',
+    icon: 'mdi:calendar-check-outline',
+    tags: ['announcement', 'community'],
+    publishedAt: '2025-12-16T10:00:00.000Z',
+    content: `# The year in review
+
+The number we are most pleased with is the amount of code removed. GraphQL went, the icon webfont
+went, two of the three date libraries went, and the result is a build that is smaller than it was in
+January despite doing considerably more.
+
+What shipped: storage targets, comments, the audit log, analytics, a metrics endpoint, and the app
+shell that finally lets a link to a page unfurl properly when somebody pastes it into a chat.
+
+What did not: the upgrade path from 2.x, which remains the single most-asked question and the single
+hardest thing on the list.
+
+Next year's post will say whether that changed.
+`
+  },
+  {
+    path: 'my-blog/three-oh-final',
+    title: '3.0 is here',
+    description: 'Two years, one rewrite, and a version number that finally means something.',
+    icon: 'mdi:party-popper',
+    tags: ['release'],
+    publishedAt: '2026-01-20T12:00:00.000Z',
+    content: `# 3.0 is here
+
+Stable, documented, and safe to point at something you care about — which is more than any previous
+post on this blog has been able to say.
+
+## The short version
+
+- A page stores the HTML its editor produced, sanitized against what its author may embed
+- Content can live in the database, on disk, in git, or in an object store, at the same time
+- Permissions are two systems that no longer pretend to be one
+- Everything is REST, and browsable at \`/_api\`
+
+## The honest version
+
+There is still no automated upgrade from 2.x. Exporting content and importing it is the path, and it
+is a real afternoon of work for a large wiki. We would rather say so than ship a migration that half
+works.
+`
+  },
+  {
+    path: 'my-blog/migrating-from-2x',
+    title: 'Migrating from 2.x',
+    description: 'Export, import, fix the links. In that order, and no shortcuts.',
+    icon: 'mdi:swap-horizontal',
+    tags: ['guide'],
+    publishedAt: '2026-02-10T11:15:00.000Z',
+    content: `# Migrating from 2.x
+
+There is no in-place upgrade. What follows is the path that works.
+
+1. **Export from 2.x to disk.** The storage module writes your pages as markdown files with front
+   matter, laid out by locale and folder.
+2. **Stand up 3.0 empty**, on its own database. Do not point it at the old one.
+3. **Configure a disk target** at the folder you exported to, then run **Import Everything**.
+4. **Fix what moved.** Users, groups and permissions do not come across — the models are different
+   enough that a translation would be a guess.
+
+Budget an afternoon for a few hundred pages, and do it twice: once to find out what breaks, and once
+for real.
+`
+  },
+  {
+    path: 'my-blog/security-notes',
+    title: 'Security notes for self-hosters',
+    description: 'Four settings that matter more than everything else on the page.',
+    icon: 'mdi:lock-outline',
+    tags: ['security', 'guide'],
+    publishedAt: '2026-03-05T14:00:00.000Z',
+    content: `# Security notes for self-hosters
+
+**Turn on \`trustProxy\` if and only if you are behind one.** It decides whether the address in
+\`X-Forwarded-For\` is believed. On, with nothing in front of the wiki, anybody can claim any address
+— which defeats the rate limiter. Off, behind a proxy, every request appears to come from the proxy
+— which also defeats the rate limiter, more quietly.
+
+**Check what the guests group can do.** It is the anonymous reader, and on a public wiki that is
+correct. On a private one it should deny everything, and it is worth verifying rather than assuming.
+
+**Elevated permissions are a category, not a list.** Anything that can rewrite who holds what can
+grant itself the rest, in one step or two.
+
+**Audit log retention has a floor of thirty days**, deliberately, because the permission that
+shortens it belongs to exactly the person the log exists to record.
+`
+  },
+  {
+    path: 'my-blog/blocks-deep-dive',
+    title: 'A deep dive into content blocks',
+    description: 'Web components in a page, and why they are not plugins.',
+    icon: 'mdi:widgets-outline',
+    tags: ['guide', 'design'],
+    publishedAt: '2026-04-01T09:30:00.000Z',
+    content: `# A deep dive into content blocks
+
+A block is a web component you can put in a page. Tabs, diagrams, a map, a set of steps — things
+markdown has no syntax for and never will.
+
+They are deliberately **not** plugins. A block cannot read the wiki's data, call its API or know who
+is reading; it gets its attributes and its slotted content and draws something. That boundary is why
+a block can be added without a security review of what it might reach.
+
+\`\`\`
+::block-steps
+1. Write the block
+2. Build it
+3. Reference it in a page
+::
+\`\`\`
+
+Nothing is fetched until a block's tag actually appears in a page, so a block nobody uses costs a
+reader nothing at all.
+`
+  },
+  {
+    path: 'my-blog/analytics-without-creeping',
+    title: 'Analytics without creeping anybody out',
+    description: 'What a tag can see here, and what it deliberately cannot.',
+    icon: 'mdi:chart-line',
+    tags: ['guide', 'community'],
+    publishedAt: '2026-05-13T10:45:00.000Z',
+    content: `# Analytics without creeping anybody out
+
+A provider is turned on per site, and its snippet is served in the document rather than added by the
+app afterwards. That matters for two reasons: several providers verify an installation by fetching
+the page and looking for their code, and a tag that arrives after boot has already missed the page
+load it exists to measure.
+
+Two deliberate limits.
+
+**The admin area gets no tag at all.** What happens there is the wiki being configured, not read, and
+it has no business in a report about readers — still less in whatever a session-replay tool would
+make of somebody typing a credential into an authentication strategy.
+
+**Nothing here can be marked sensitive.** Every value is rendered into a document served to the
+public, so a setting that had to be kept out of a browser could not be used by a provider anyway.
+`
+  },
+  {
+    path: 'my-blog/editor-shortcuts',
+    title: 'Editor shortcuts worth memorising',
+    description: 'Six of them. The rest you will look up once and forget.',
+    icon: 'mdi:keyboard-outline',
+    tags: ['tips'],
+    publishedAt: '2026-06-09T08:20:00.000Z',
+    content: `# Editor shortcuts worth memorising
+
+| Keys | What it does |
+| ---- | ------------ |
+| \`Ctrl\` + \`S\` | Save, without leaving the editor |
+| \`Ctrl\` + \`B\` / \`I\` | Bold, italic |
+| \`Ctrl\` + \`K\` | Link, around the selection |
+| \`Ctrl\` + \`/\` | Comment out the selected lines |
+| \`Alt\` + \`↑\` / \`↓\` | Move the current line |
+| \`Ctrl\` + \`D\` | Select the next occurrence of the selection |
+
+The last one is the one people are most surprised by and end up using most. Renaming a term through
+a long page is four keystrokes rather than a find and replace you have to check afterwards.
+`
+  },
+  {
+    path: 'my-blog/watching-with-prometheus',
+    title: 'Watching a wiki with Prometheus',
+    description: 'One endpoint, two registries, and a path you can move.',
+    icon: 'mdi:gauge',
+    tags: ['performance', 'guide'],
+    publishedAt: '2026-07-21T15:10:00.000Z',
+    content: `# Watching a wiki with Prometheus
+
+The metrics endpoint is off by default and its path is a setting, which is why it is a hook rather
+than a route — a route table is fixed at boot and this is not.
+
+Two kinds of number come out of it.
+
+**Runtime metrics** are this process: memory, event loop lag, garbage collection. In a cluster a
+scrape lands on whichever instance answered, which is what the \`instance\` label is for.
+
+**Wiki metrics** are the whole installation: pages, users, comments, assets. They are database counts
+built fresh per scrape, so they cost about a dozen queries — which is why they are off unless you ask
+for them.
+
+Anonymous access is decided per address class. Local, private and external are three separate
+answers, and anything that is not an IP address counts as external.
+`
+  },
+  {
+    path: 'my-blog/whats-next',
+    title: "What's next",
+    description: 'Three things being worked on, and one that is not.',
+    icon: 'mdi:map-marker-path',
+    tags: ['announcement'],
+    publishedAt: '2026-08-28T13:00:00.000Z',
+    content: `# What's next
+
+**A moderation queue for comments.** The column is already there; what is missing is the screen and
+the decision about who may see it.
+
+**Better conflict handling on the git target.** A pull is authoritative today, which is correct and
+occasionally brutal. There is room for a middle answer.
+
+**Real-time collaborative editing**, which is further off than anybody wants and involves rather more
+than turning on a library.
+
+And one thing that is not being worked on: server-side rendering. A page's HTML is already a string
+in the database, produced once when it was saved. Rendering it again on the server would solve a
+problem this schema does not have.
+`
+  }
+]

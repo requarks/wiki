@@ -5,7 +5,9 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-cashbook.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.editors.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.editors.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.editors.subtitle') }}
         </div>
@@ -149,8 +151,11 @@ const editors = reactive([
   {
     id: 'blog',
     icon: 'typewriter-with-paper',
-    isDisabled: true,
-    useRendering: true
+    /*
+      No rendering pipeline of its own: a blog's front page has no body, and its POSTS are ordinary
+      pages rendered by whichever editor wrote them. See `models/blogs.ts`.
+    */
+    useRendering: false
   },
   {
     id: 'channel',
@@ -195,6 +200,7 @@ async function load() {
     const resp = await API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
     const data = resp?.editors
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
+    state.config.blog = data?.blog?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
     state.config.visual = data?.visual?.isActive ?? false
   } catch (err) {
@@ -215,6 +221,7 @@ async function save() {
       json: {
         editors: {
           asciidoc: { isActive: state.config.asciidoc },
+          blog: { isActive: state.config.blog },
           markdown: { isActive: state.config.markdown },
           visual: { isActive: state.config.visual }
         }
@@ -229,6 +236,7 @@ async function save() {
       siteStore.$patch({
         editors: {
           asciidoc: state.config.asciidoc,
+          blog: state.config.blog,
           markdown: state.config.markdown,
           visual: state.config.visual
         }

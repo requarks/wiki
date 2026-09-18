@@ -559,7 +559,11 @@ function purgeRevokedKeys() {
  *
  * A development convenience: a fresh instance is empty, so checking a stylesheet, a renderer or the
  * navigation against anything means writing dummy pages first. Every page is tagged so
- * {@link purgeSampleContent} can take them all away again.
+ * {@link purgeSampleContent} can take them all away again — the blog and its posts included, since
+ * the purge asks about the tag and nothing else.
+ *
+ * Three kinds of page come out of it: the markdown set under `/sample`, a blog at `/my-blog`, and
+ * the posts filed under that blog. See `SAMPLE_PAGES` and `SAMPLE_BLOG` in `helpers/sampleContent`.
  *
  * The pages are written one at a time through the ordinary create endpoint — the same one the editor
  * saves through — rather than by a bulk call on the server. That is what makes the content
@@ -573,11 +577,15 @@ function purgeRevokedKeys() {
  * them.
  */
 async function generateSampleContent() {
-  const { SAMPLE_CONTENT_TAG, SAMPLE_PAGES } = await import('@/helpers/sampleContent')
+  const { SAMPLE_CONTENT_TAG, SAMPLE_PAGES, SAMPLE_BLOG, SAMPLE_BLOG_POSTS } =
+    await import('@/helpers/sampleContent')
+  const { serializeBlog } = await import('@/helpers/pageBlog')
+  // -> The blog's own front page as well as its posts: it is a page that gets written like any other
+  const total = SAMPLE_PAGES.length + 1 + SAMPLE_BLOG_POSTS.length
   confirm({
     title: t('admin.utilities.generateSample'),
     message: t('admin.utilities.generateSampleConfirm', {
-      count: SAMPLE_PAGES.length,
+      count: total,
       site: siteName.value
     }),
     caption: t('admin.utilities.generateSampleConfirmWarn', { tag: SAMPLE_CONTENT_TAG }),
@@ -608,7 +616,9 @@ async function generateSampleContent() {
         Best effort: this reaches upstream, which an offline instance does not, and an icon that could
         not be fetched costs a missing picture rather than a page.
       */
-      const icons = new Set(SAMPLE_PAGES.map((page) => page.icon))
+      const icons = new Set(
+        [SAMPLE_BLOG, ...SAMPLE_PAGES, ...SAMPLE_BLOG_POSTS].map((page) => page.icon)
+      )
       for (const page of SAMPLE_PAGES) {
         for (const [, name] of page.content.matchAll(/\bicon="([a-z0-9-]+:[a-z0-9-]+)"/g)) {
           icons.add(name)
@@ -620,9 +630,41 @@ async function generateSampleContent() {
         console.warn(`Could not store the sample content icons: ${apiErrorMessage(err)}`)
       }
 
+      /*
+        Everything to be written, in one list, because there is one way to write a page and three
+        kinds of page to write: the markdown set, a blog front page, and the posts filed under it.
+
+        The blog is the odd one. Its editor is `blog` and its content column holds a settings
+        document rather than a body, which is why it has no `render` — there is nothing to render.
+        `serializeBlog` is what puts those settings into the one spelling the column holds, and is
+        the same call the blog editor makes on save.
+
+        Its posts are ordinary markdown pages that happen to live underneath it: nothing records that
+        a page is a post, and being under the blog's path is the whole of what makes it one. Their
+        `publishStartDate` is what the listing orders and dates them by.
+      */
+      const documents = [
+        ...SAMPLE_PAGES.map((page) => ({
+          ...page,
+          editor: 'markdown',
+          render: md.render(page.content, { pagePath: page.path })
+        })),
+        {
+          ...SAMPLE_BLOG,
+          editor: 'blog',
+          content: serializeBlog(SAMPLE_BLOG.settings)
+        },
+        ...SAMPLE_BLOG_POSTS.map((post) => ({
+          ...post,
+          editor: 'markdown',
+          render: md.render(post.content, { pagePath: post.path }),
+          publishStartDate: post.publishedAt
+        }))
+      ]
+
       let created = 0
       const failures = []
-      for (const page of SAMPLE_PAGES) {
+      for (const page of documents) {
         try {
           const resp = await API_CLIENT.post(`sites/${siteId}/pages`, {
             json: {
@@ -630,9 +672,10 @@ async function generateSampleContent() {
               title: page.title,
               description: page.description,
               icon: page.icon,
-              editor: 'markdown',
+              editor: page.editor,
               content: page.content,
-              render: md.render(page.content, { pagePath: page.path }),
+              ...(page.render ? { render: page.render } : {}),
+              ...(page.publishStartDate ? { publishStartDate: page.publishStartDate } : {}),
               // -> The tag the purge looks for, first, then whatever this page is about
               tags: [SAMPLE_CONTENT_TAG, ...page.tags],
               publishState: 'published'
@@ -644,7 +687,7 @@ async function generateSampleContent() {
           created++
         } catch (err) {
           // -> One page at a time, and one failure does not stop the rest: a path already taken is
-          //    the likely case, and the other twenty pages are still worth having
+          //    the likely case, and the other forty-odd pages are still worth having
           failures.push(`${page.path} — ${apiErrorMessage(err)}`)
         }
       }

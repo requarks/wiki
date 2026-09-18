@@ -20,6 +20,11 @@ export default {
   bin: {
     icon: 'img:/_assets/icons/color-binary-file.svg'
   },
+  // -> Not a file extension, like `folder`, `page` and `redirect`: the type of a page whose content
+  //    is the posts filed under it
+  blog: {
+    icon: 'img:/_assets/icons/color-blog.svg'
+  },
   bz2: {
     icon: 'img:/_assets/icons/color-archive.svg'
   },

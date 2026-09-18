@@ -113,6 +113,13 @@
   --color-primary-lighter: color-mix(in srgb, var(--color-primary) 35%, white);
 
   /*
+    The secondary colour at that same step, so the two can be used as a pair the way a gradient needs
+    them -- the blog's featured card is drawn in it. Mixed rather than named for the reason above: a
+    site that re-themes `--q-secondary` takes its lighter shade with it.
+  */
+  --color-secondary-lighter: color-mix(in srgb, var(--color-secondary) 35%, white);
+
+  /*
     And the sidebar's colour a shade lighter, for the one control that sits INSIDE that column and has
     to read as a button against it rather than as a second accent beside it: scroll-to-top, tucked into
     the bottom of the sidebar in `MainLayout`. Mixed, for the reason above -- a themed sidebar takes its

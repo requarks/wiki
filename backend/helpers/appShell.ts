@@ -342,6 +342,53 @@ function bodyForPage(page: PageDescription): string {
 }
 
 /**
+ * How many of a blog's posts the served document lists.
+ *
+ * A front page is what gets linked, shared and crawled, so it cannot be an empty document — but this
+ * is a summary of the blog rather than the blog, and every post is in the sitemap in its own right.
+ * The first screenful is what says what the blog is about; a crawler follows the links for the rest.
+ */
+const BLOG_CRAWLER_POSTS = 20
+
+/**
+ * A blog's front page, for a client that will not run the app.
+ *
+ * A blog has no `render` — its body is its posts, which the app fetches and draws — so the document
+ * served for one would otherwise be a correct head over an empty page, on exactly the URL somebody
+ * pastes into a chat window. This is the same list the app draws, written out as markup.
+ *
+ * Nothing is rendered: a post contributes its title, its description and its URL, which are three
+ * columns. The public's own view of the blog, built from `actorForPublic()` like everything else that
+ * is cached and handed on, so a post the guests group may not read is not named here.
+ */
+async function bodyForBlog(siteId: string, page: PageDescription): Promise<string> {
+  const blog = await WIKI.models.blogs.blogAt(siteId, page.locale, page.path)
+  if (!blog) {
+    return ''
+  }
+  const { posts } = await WIKI.models.blogs.postsFor({
+    siteId,
+    blog,
+    actor: WIKI.models.groups.actorForPublic(),
+    publicOnly: true
+  })
+  const intro = blog.settings.intro ? `<p>${htmlEscape(blog.settings.intro)}</p>` : ''
+  const items = posts
+    .slice(0, BLOG_CRAWLER_POSTS)
+    .map((post) => {
+      const href = htmlEscape(WIKI.models.pages.urlFor(siteId, page.locale, post.path))
+      const title = htmlEscape(post.title)
+      const description = post.description ? ` &mdash; ${htmlEscape(post.description)}` : ''
+      return `<li><a href="${href}">${title}</a>${description}</li>`
+    })
+    .join('')
+  if (!intro && items.length < 1) {
+    return ''
+  }
+  return `<div id="${PRERENDER_ID}">${intro}<ul>${items}</ul></div>`
+}
+
+/**
  * The fragments for a client that will never run the app — a crawler, an unfurl card, a reader with
  * JavaScript off.
  *
@@ -397,7 +444,8 @@ async function fragmentsForCrawler(
 
   return {
     head: headForPage(originOf(req), siteId, siteConfig, page),
-    body: bodyForPage(page),
+    // -> A blog keeps its body somewhere else: in the pages under it, rather than in a column
+    body: page.editor === 'blog' ? await bodyForBlog(siteId, page) : bodyForPage(page),
     status: 200,
     robots: robotsTagFor(siteId, page.isIndexable)
   }

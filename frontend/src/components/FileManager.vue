@@ -410,11 +410,14 @@
                           </w-item-section>
                           <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
                         </w-item>
-                        <!-- -> Nothing to render on a redirection: it has a target where a page has
-                                content, and the endpoint behind this refuses any editor but markdown -->
+                        <!-- -> Nothing to render on a page whose content is not an article: a
+                                redirection has a target and a blog has the posts under it, and the
+                                endpoint behind this refuses any editor but markdown anyway -->
                         <w-item
                           clickable
-                          v-if="item.type === `page` && item.pageType !== `redirect`"
+                          v-if="
+                            item.type === `page` && ![`redirect`, `blog`].includes(item.pageType)
+                          "
                           @click="rerenderPage(item)">
                           <w-item-section side>
                             <w-icon name="la:magic" color="orange" />
@@ -787,8 +790,13 @@ const files = computed(() => {
           break
         }
         case 'page': {
-          // -> A redirection has a target where a page has content, so it reads as its own kind of row
-          f.icon = f.pageType === 'redirect' ? fileTypes.redirect.icon : fileTypes.page.icon
+          /*
+            A page whose content is not an article reads as its own kind of row: a redirection has a
+            target, a blog has the posts under it. Looked up by editor, which shares a namespace with
+            the file extensions here on purpose -- `folder`, `page` and `redirect` are already in it --
+            so an editor with no icon of its own falls back to the ordinary page.
+          */
+          f.icon = fileTypes[f.pageType]?.icon ?? fileTypes.page.icon
           f.caption = t(`fileman.${f.pageType}PageType`)
           break
         }

@@ -6,12 +6,10 @@
         the rule lives, so that what can be created here and what a search can be filtered by cannot
         drift apart. Each still carries its own icon and wording: `redirect` makes a redirection
         rather than a page, and both Markdown and Visual say which of the two they open.
+
+        Narrowed by `only` where a caller has a reason to offer fewer -- see the prop.
       -->
-      <w-item
-        v-for="editor of siteStore.activeEditors"
-        :key="editor"
-        clickable
-        @click="create(editor)">
+      <w-item v-for="editor of offeredEditors" :key="editor" clickable @click="create(editor)">
         <blueprint-icon :icon="EDITOR_ICONS[editor]" />
         <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
       </w-item>
@@ -34,6 +32,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { loading } from '@/composables/loading'
@@ -78,6 +77,19 @@ const props = defineProps({
     default: null
   },
   /**
+   * Offer only these editors, where the menu is opened somewhere that not every kind of page makes
+   * sense — a blog's New Post button, which wants the editors that write an article and not the ones
+   * that write a redirection or a second blog.
+   *
+   * A filter over `siteStore.activeEditors` rather than a list drawn instead of it, so a site that
+   * has switched an editor off still does not see it here. Empty means no restriction, which is what
+   * every other caller wants.
+   */
+  only: {
+    type: Array,
+    default: () => []
+  },
+  /**
    * The locale to write the new page in. The page store's current one when absent, which is right
    * from the page view and wrong from the file manager -- there the reader is looking at whichever
    * locale the picker is on, not at the page behind the overlay.
@@ -101,6 +113,15 @@ const siteStore = useSiteStore()
 // I18N
 
 const { t } = useI18n()
+
+// COMPUTED
+
+/** What this menu actually offers: the site's editors, narrowed by `only` where one was given. */
+const offeredEditors = computed(() =>
+  props.only.length > 0
+    ? siteStore.activeEditors.filter((editor) => props.only.includes(editor))
+    : siteStore.activeEditors
+)
 
 // METHODS
 

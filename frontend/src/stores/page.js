@@ -57,6 +57,14 @@ export const usePageStore = defineStore('page', {
     allowRatings: true,
     authorId: 0,
     authorName: '',
+    /**
+     * The blog this page is a post of, as `{ path, title }`, or null for a page that is not in one.
+     *
+     * Answered by the server with the page, because it cannot be answered here: a post is a post by
+     * sitting under a blog's path, and which of this page's ancestors is a blog is a lookup. The
+     * NEAREST one, so a blog inside a blog owns its own posts.
+     */
+    blog: null,
     commentsCount: 0,
     content: '',
     /**
@@ -419,6 +427,7 @@ export const usePageStore = defineStore('page', {
         canReview: false,
         pendingSubmissions: [],
         isWatching: false,
+        blog: null,
         notFound: true
       })
     },
@@ -518,11 +527,29 @@ export const usePageStore = defineStore('page', {
         editor
       })
 
-      // -> Default Page Path
+      /*
+        -> Default Page Path
+
+           A new page is a SIBLING of the one it was started from, which is what makes "New Page" from
+           somewhere in a section put the page in that section.
+
+           A blog's front page is the exception, and is the one place the natural default is a CHILD:
+           a post is a post by sitting under the blog's path, so starting a page from a blog and
+           having it land beside the blog rather than in it would be the one mistake the whole feature
+           makes easy. Held to a SAVED blog (`this.id`), since a page being created is not one yet.
+
+           Not for another BLOG, though, which is the one thing somebody standing on a blog cannot
+           mean to put inside it: a nested blog takes that part of the outer blog's posts with it.
+           The reason for the exception is that a page under a blog is a post, and a blog is not one.
+
+           A caller that named a `basePath` -- the file manager, which is looking at a folder rather
+           than at a page -- has already answered the question and is never second-guessed.
+      */
       let newPath = path
       if (!path && path !== '') {
-        const parentPath =
-          basePath || basePath === '' ? basePath : this.path.split('/').slice(0, -1).join('/')
+        const intoBlog = this.editor === 'blog' && Boolean(this.id) && editor !== 'blog'
+        const siblingPath = intoBlog ? this.path : this.path.split('/').slice(0, -1).join('/')
+        const parentPath = basePath || basePath === '' ? basePath : siblingPath
         newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
       }
 
@@ -595,6 +622,12 @@ export const usePageStore = defineStore('page', {
         */
         isBrowsable: props.isBrowsable ?? editor !== 'redirect',
         isSearchable: props.isSearchable ?? editor !== 'redirect',
+        /*
+          A page being created is not a post of anything yet: it has not been saved, so no blog has it
+          under its path. Cleared rather than left at whatever the page this one was started from
+          answered -- which, when that page WAS a post, is the blog it belonged to.
+        */
+        blog: null,
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         // -> Nothing is stored for a page that does not exist, so everything about it is pending

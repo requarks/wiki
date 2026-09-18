@@ -699,7 +699,7 @@ async function routes(app: FastifyInstance) {
         is what makes a page view one request instead of four.
       */
       const actorId = actor?.id ?? null
-      const [approvalState, isWatching, commentsCount] = await Promise.all([
+      const [approvalState, isWatching, commentsCount, blog] = await Promise.all([
         WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
           id: page.id,
           path: page.path,
@@ -715,11 +715,24 @@ async function routes(app: FastifyInstance) {
         */
         WIKI.models.comments.usesBuiltIn(req.params.siteId)
           ? WIKI.models.comments.countForPage(page.id)
-          : 0
+          : 0,
+        /*
+          The blog this page is a post of, so that the page view can say where the reader is and link
+          back to it. Worked out rather than stored -- a post is a post because of where it sits --
+          which is one lookup on the unique `(siteId, locale, path)` index over the page's own
+          ancestors, and no lookup at all for a page at the site root.
+        */
+        WIKI.models.blogs.blogFor(req.params.siteId, page.locale, page.path)
       ])
       return {
         ...page,
         commentsCount,
+        /*
+          Only what the page view draws: a post shows the name of the blog it is in and links to it.
+          The blog's own settings are not a fact about this page -- the front page carries them, and
+          it is the front page that draws a listing.
+        */
+        blog: blog ? { path: blog.path, title: blog.title } : null,
         viewer: {
           permissions: pagePermissionsFor(req, page),
           ...approvalState,

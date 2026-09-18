@@ -203,6 +203,15 @@ class Sites {
             isActive: true,
             config: {}
           },
+          /*
+            No config of its own: how a blog behaves is set up per blog, on its own front page, which
+            is where somebody who wants a blog is already standing. This flag is only whether the site
+            offers `New Blog` at all.
+          */
+          blog: {
+            isActive: true,
+            config: {}
+          },
           markdown: {
             isActive: true,
             config: {
@@ -467,6 +476,15 @@ class Sites {
         },
         editors: {
           asciidoc: {
+            isActive: true,
+            config: {}
+          },
+          /*
+            No config of its own: how a blog behaves is set up per blog, on its own front page, which
+            is where somebody who wants a blog is already standing. This flag is only whether the site
+            offers `New Blog` at all.
+          */
+          blog: {
             isActive: true,
             config: {}
           },

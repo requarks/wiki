@@ -218,7 +218,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       content: {
         type: 'string',
         description:
-          'Only present when the request asked for it — except on a redirection, whose content is where it sends its reader rather than a body, and comes back either way.'
+          'Only present when the request asked for it — except on a page whose editor writes no body (a redirection, a blog’s front page), whose content is the settings that page is made of rather than something to read, and comes back either way.'
       },
       allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },
@@ -248,6 +248,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       authorName: { type: 'string' },
       createdAt: { type: 'string', format: 'date-time' },
       updatedAt: { type: 'string', format: 'date-time' },
+      blog: {
+        type: ['object', 'null'],
+        description:
+          'The blog this page is a post of, or null for a page that is not in one — a page is a post because of where it sits, so this is worked out per request rather than stored. The NEAREST blog above it, so a blog inside a blog owns its own posts. Present when a page is fetched on its own.',
+        properties: {
+          path: { type: 'string', description: 'The blog front page’s path within the site.' },
+          title: { type: 'string' }
+        }
+      },
       viewer: {
         type: 'object',
         description:

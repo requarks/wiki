@@ -37,6 +37,7 @@ async function routes(app: FastifyInstance) {
   app.register(import('./auditLog.ts'), { prefix: '/audit' })
   app.register(import('./authentication.ts'))
   app.register(import('./blocks.ts'))
+  app.register(import('./blogs.ts'))
   app.register(import('./bootstrap.ts'), { prefix: '/bootstrap' })
   app.register(import('./comments.ts'))
   app.register(import('./groups.ts'), { prefix: '/groups' })

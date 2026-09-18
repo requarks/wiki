@@ -138,6 +138,7 @@ export const useSiteStore = defineStore('site', {
     },
     editors: {
       asciidoc: false,
+      blog: false,
       markdown: false,
       visual: false
     },
@@ -263,11 +264,11 @@ export const useSiteStore = defineStore('site', {
      *
      * Three questions at once, and all three have to be asked or the list is fiction: whether the
      * site has the editor turned on (`editors`, the admin area's Editors screen), whether it is
-     * implemented at all — `channel`, `blog` and `api` are names with no editor behind them yet, and
-     * `asciidoc` is half-built, so all four are behind the experimental flag — and `redirect`, which
+     * implemented at all — `channel` and `api` are names with no editor behind them yet, and
+     * `asciidoc` is half-built, so all three are behind the experimental flag — and `redirect`, which
      * no site can turn off because it authors nothing: a redirection is a page with a target instead
-     * of a body. On a wiki with the flag off that leaves Markdown, Visual and Redirection, in that
-     * order: Markdown is what most pages are written with, so it is the one offered first.
+     * of a body. On a wiki with the flag off that leaves Markdown, Visual, Blog and Redirection, in
+     * that order: Markdown is what most pages are written with, so it is the one offered first.
      *
      * Markdown and Visual are two views of the same markdown source, which is what lets a page move
      * between them — see `interchangeableEditors` on the server.
@@ -282,7 +283,13 @@ export const useSiteStore = defineStore('site', {
         ...(this.editors.markdown ? ['markdown'] : []),
         ...(this.editors.visual ? ['visual'] : []),
         ...(experimental && this.editors.asciidoc ? ['asciidoc'] : []),
-        ...(experimental ? ['channel', 'blog', 'api'] : []),
+        /*
+          After the two that write pages and before the one that writes none: a blog's front page is
+          a page somebody creates deliberately and rarely, so it does not belong at the top of the
+          menu, and it is not the afterthought a redirection is.
+        */
+        ...(this.editors.blog ? ['blog'] : []),
+        ...(experimental ? ['channel', 'api'] : []),
         'redirect'
       ]
     },
@@ -395,10 +402,18 @@ export const useSiteStore = defineStore('site', {
           ...this.uploads,
           ...siteInfo.uploads
         },
+        /*
+          Flattened to one boolean apiece: what this store is asked is whether an editor is on, and
+          the `config` blob beside each `isActive` belongs to the editor rather than to the site. A
+          key the site config has never been saved with reads as off, the same answer `features` and
+          `theme` get from being spread over the state defaults below -- an editor a site has never
+          been asked about is not one it offers.
+        */
         editors: {
-          asciidoc: siteInfo.editors.asciidoc.isActive,
-          markdown: siteInfo.editors.markdown.isActive,
-          visual: siteInfo.editors.visual.isActive
+          asciidoc: siteInfo.editors.asciidoc?.isActive ?? false,
+          blog: siteInfo.editors.blog?.isActive ?? false,
+          markdown: siteInfo.editors.markdown?.isActive ?? false,
+          visual: siteInfo.editors.visual?.isActive ?? false
         },
         // -> Spread over the state defaults, as `features` and `theme` above do, so a key the
         //    site config has never been saved with reads as its default rather than undefined

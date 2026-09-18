@@ -46,3 +46,4 @@ test-results/
 !/server/locales/en.json
 
 cloudflared.deb
+/.claude

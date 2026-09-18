@@ -19,21 +19,8 @@ const EDITOR_CONTENT_TYPES: Record<string, string> = {
   markdown: 'markdown',
   visual: 'markdown',
   asciidoc: 'asciidoc',
-  redirect: 'redirect'
-}
-
-/**
- * The editor a page of a given content type is opened with when nothing says which.
- *
- * `markdown` and `visual` both produce markdown — that is what lets a page be converted between them
- * without touching a byte of what it says — so the content type alone no longer identifies an editor.
- * A file being imported carries its source and not the editor somebody wrote it in, and this is the
- * answer for that case.
- */
-const DEFAULT_EDITOR_FOR_CONTENT_TYPE: Record<string, string> = {
-  markdown: 'markdown',
-  asciidoc: 'asciidoc',
-  redirect: 'redirect'
+  redirect: 'redirect',
+  blog: 'blog'
 }
 
 /**
@@ -67,7 +54,8 @@ export const PAGE_FILE_EXTENSIONS: Record<string, string> = {
   markdown: 'md',
   html: 'html',
   asciidoc: 'adoc',
-  redirect: 'json'
+  redirect: 'json',
+  blog: 'json'
 }
 
 /** For a content type added since this was written. */
@@ -75,6 +63,31 @@ const DEFAULT_PAGE_FILE_EXTENSION = 'txt'
 
 export function pageFileExtension(contentType: string): string {
   return PAGE_FILE_EXTENSIONS[contentType] ?? DEFAULT_PAGE_FILE_EXTENSION
+}
+
+/**
+ * Which editor a file of a given extension is taken to belong to, when it did not say.
+ *
+ * Written out rather than derived by reading `PAGE_FILE_EXTENSIONS` backwards, because that map is
+ * one-to-one in neither direction. Two editors write `.json` — `redirect` and `blog` — and an answer
+ * that depended on which of them was declared first would change every time somebody reordered the
+ * table; and `markdown` and `visual` both write `.md`, which is what lets a page be converted between
+ * them without touching a byte of what it says, so the extension alone was never going to identify an
+ * editor. A file being imported carries its source and not the editor somebody wrote it in, and this
+ * is the answer for that case: the one each pair opens in by default.
+ *
+ * `.json` is read as a REDIRECTION. Every `.json` a storage target writes carries its editor at the
+ * top level of the document and never reaches this — see `importTree` — so what is left is a file
+ * somebody wrote by hand, and a redirection is both the older of the two meanings and the one whose
+ * document is a page's whole definition rather than a blog's chrome.
+ *
+ * `.html` has no editor and deliberately keeps none: the content type exists (a page can be stored as
+ * HTML) but nothing in this wiki authors one.
+ */
+const EDITOR_FOR_PAGE_EXTENSION: Record<string, string> = {
+  md: 'markdown',
+  adoc: 'asciidoc',
+  json: 'redirect'
 }
 
 /**
@@ -87,11 +100,7 @@ export function pageFileExtension(contentType: string): string {
  *   reserved something this wiki has no editor for
  */
 export function pageEditorForExtension(ext: string): string | null {
-  const contentType = Object.entries(PAGE_FILE_EXTENSIONS).find(([, e]) => e === ext)?.[0]
-  if (!contentType) {
-    return null
-  }
-  return DEFAULT_EDITOR_FOR_CONTENT_TYPE[contentType] ?? null
+  return EDITOR_FOR_PAGE_EXTENSION[ext] ?? null
 }
 
 /**
@@ -103,6 +112,54 @@ export function pageEditorForExtension(ext: string): string | null {
  * column carries. See `normalizeRedirectContent`.
  */
 const REDIRECT_EDITOR = 'redirect'
+
+/**
+ * The editor whose pages are a blog's front page.
+ *
+ * Like a redirection it is an ordinary page with no body: it has a path, a title, an icon and a place
+ * in the tree, and what an author fills in is how the blog behaves rather than anything to read. That
+ * is what its content column carries — see `normalizeBlogContent` and `BlogContent`.
+ *
+ * Unlike a redirection it is a destination. A blog's front page is what gets linked, bookmarked and
+ * searched for, so it stays in the sitemap, stays indexable and stays searchable; only the three
+ * checks that ask specifically about a REDIRECTION say otherwise, and none of them means "bodyless".
+ *
+ * Which pages are its posts is not recorded anywhere: they are the pages under its path. See
+ * `models/blogs.ts`.
+ */
+const BLOG_EDITOR = 'blog'
+
+/**
+ * The editors whose pages have no body, and whose content column holds a settings document instead.
+ *
+ * A set rather than a flag per editor, because the same three questions get asked of each of them in
+ * `createPage` and `updatePage` — is an empty content column an error, does the content go through a
+ * normalizer, does the source travel to every reader — and answering them with one `isRedirect`
+ * boolean apiece is how those two functions become a lattice. What is NOT in here is anything a
+ * redirection is asked about *as a redirection*: staying out of the sitemap, never being indexable
+ * and never being searchable are facts about a doorway, not about having no body.
+ */
+const BODYLESS_EDITORS = new Set([REDIRECT_EDITOR, BLOG_EDITOR])
+
+/** Whether `editor` writes a settings document rather than something to read. */
+export function isBodylessEditor(editor: string): boolean {
+  return BODYLESS_EDITORS.has(editor)
+}
+
+/**
+ * Put a bodyless editor's content into the one spelling its column holds, refusing what it cannot
+ * use. Returns the content unchanged for an editor that writes an actual body.
+ */
+function normalizeBodylessContent(editor: string, content: string | undefined): string | undefined {
+  switch (editor) {
+    case REDIRECT_EDITOR:
+      return normalizeRedirectContent(content)
+    case BLOG_EDITOR:
+      return normalizeBlogContent(content)
+    default:
+      return content
+  }
+}
 
 /**
  * How long a site's sitemap list is held before it is read again, in seconds.
@@ -220,8 +277,8 @@ export interface Page {
   toc: TocNode[]
   render: string
   /**
-   * The source. Present when the request asked for it, and always for a redirection — see `toPage`,
-   * and `RedirectContent` for what a redirection's holds.
+   * The source. Present when the request asked for it, and always for a bodyless editor — see
+   * `toPage`, and `RedirectContent` / `BlogContent` for what those hold instead of a body.
    */
   content?: string
   allowComments: boolean
@@ -333,6 +390,15 @@ export interface PageDescription {
   path: string
   title: string
   description: string | null
+  /**
+   * Which editor wrote the page.
+   *
+   * Carried so that a caller building a document can tell a page whose body is in `render` from one
+   * that keeps no body at all — a blog's front page has its posts in place of an article, and a
+   * document served to a client that will not run the app has to say what is on it. See
+   * `fragmentsForCrawler`.
+   */
+  editor: string
   /**
    * The stored render, or null where this page has no body to show a reader who has not asked for
    * one: a password-protected page, whose body is exactly what the password covers, and a redirection,
@@ -456,6 +522,190 @@ function normalizeRedirectContent(content: string | undefined): string {
 }
 
 /**
+ * The ways a listing can draw its posts, and the enum the API validates a saved blog against.
+ *
+ * Two, because there are two: a responsive grid of posts, or one post per row. A third narrower grid
+ * was a track width pretending to be a layout — how COMPACT a post reads is `show`, which turns off
+ * the description, the byline and the tags, and that is a choice an author can reason about in a way
+ * that `cards` versus `grid` was not.
+ *
+ * The default leads. Order means nothing to the validation below, but the editor's copy of this list
+ * (`helpers/pageBlog.js`) is mapped straight onto its layout dropdown, and the two are kept in step.
+ */
+export const BLOG_LAYOUTS = ['cards', 'list'] as const
+
+/**
+ * How a blog behaves, as its front page's content column holds it.
+ *
+ * A blog has no state of its own beyond this: its posts are the pages under its path, worked out at
+ * read time (`models/blogs.ts`), so nothing here is a list of anything. Every field is a display
+ * decision, which is why the whole document can be replaced without touching a post.
+ */
+export interface BlogContent {
+  /** How a post is drawn in the listing. */
+  layout: 'list' | 'cards'
+  /** How many posts a page of the listing holds. */
+  perPage: number
+  /** Which end of the blog the listing starts at. */
+  sort: 'newest' | 'oldest'
+  /**
+   * How many folders below the blog's own path posts are collected from.
+   *
+   * Deep by default, so that a blog filed by year (`/my-blog/2026/spring-notes`) is one blog rather
+   * than an empty one — a flat blog is the same setting with the number turned down.
+   */
+  depth: number
+  /** An introduction shown above the listing. Plain text: the front page has no renderer. */
+  intro: string
+  /** Which of a post's fields the listing shows. */
+  show: {
+    icon: boolean
+    description: boolean
+    author: boolean
+    date: boolean
+    tags: boolean
+  }
+  /** What the column beside the listing carries. */
+  sidebar: {
+    tags: boolean
+    archive: boolean
+  }
+}
+
+/** What a blog starts as, and what any missing field falls back to. */
+export const BLOG_DEFAULTS: BlogContent = {
+  /*
+    Cards, because a blog that has just been created has nothing in it to look at: the grid shows an
+    author what the listing is for in a way a stack of single lines does not, and every field a post
+    carries -- the icon, the blurb, the byline, the tags -- has somewhere to sit in it. `list` is the
+    denser reading and stays one option away.
+  */
+  layout: 'cards',
+  perPage: 10,
+  sort: 'newest',
+  depth: 5,
+  intro: '',
+  show: { icon: true, description: true, author: true, date: true, tags: true },
+  sidebar: { tags: true, archive: true }
+}
+
+/** The widest a blog page may be set to, so that one request cannot ask for the whole wiki. */
+const BLOG_MAX_PER_PAGE = 100
+
+/** As deep as posts may be collected from, matching the tree's own ceiling on a recursive listing. */
+const BLOG_MAX_DEPTH = 10
+
+/** As long an introduction as the front page will carry; past this it is an article, not a preamble. */
+const BLOG_MAX_INTRO = 2000
+
+/**
+ * Read a blog's settings back out of what the editor sent.
+ *
+ * Every field is defaulted rather than required, because none of them is a destination the way a
+ * redirection's target is: a blog with nothing filled in is a perfectly good blog, and refusing to
+ * save one would only mean an author cannot create the front page before deciding how it should
+ * look. What IS refused is a number outside what the listing can serve — a `perPage` of a million is
+ * not a preference, it is a request for the whole wiki on one screen.
+ *
+ * Re-serialized rather than stored as it arrived, for the same reason a redirection is: the column
+ * holds one canonical spelling, so a save that changes nothing reports no change.
+ */
+function normalizeBlogContent(content: string | undefined): string {
+  let parsed: any
+  try {
+    parsed = JSON.parse(content ?? '')
+  } catch {
+    parsed = null
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    parsed = {}
+  }
+  const perPage = Number.parseInt(parsed.perPage, 10)
+  if (parsed.perPage !== undefined && (!Number.isFinite(perPage) || perPage < 1)) {
+    throw new CustomError('pageBlogInvalidPerPage', 'A blog must show at least one post per page.')
+  }
+  const depth = Number.parseInt(parsed.depth, 10)
+  if (parsed.depth !== undefined && (!Number.isFinite(depth) || depth < 0)) {
+    throw new CustomError('pageBlogInvalidDepth', 'A blog cannot collect posts from above itself.')
+  }
+  const intro = typeof parsed.intro === 'string' ? parsed.intro.trim() : BLOG_DEFAULTS.intro
+  if (intro.length > BLOG_MAX_INTRO) {
+    throw new CustomError(
+      'pageBlogIntroTooLong',
+      `A blog's introduction cannot be longer than ${BLOG_MAX_INTRO} characters.`
+    )
+  }
+  const blog: BlogContent = {
+    layout: BLOG_LAYOUTS.includes(parsed.layout) ? parsed.layout : BLOG_DEFAULTS.layout,
+    perPage: Number.isFinite(perPage)
+      ? Math.min(perPage, BLOG_MAX_PER_PAGE)
+      : BLOG_DEFAULTS.perPage,
+    sort: parsed.sort === 'oldest' ? 'oldest' : BLOG_DEFAULTS.sort,
+    depth: Number.isFinite(depth) ? Math.min(depth, BLOG_MAX_DEPTH) : BLOG_DEFAULTS.depth,
+    intro,
+    show: {
+      icon: parsed.show?.icon ?? BLOG_DEFAULTS.show.icon,
+      description: parsed.show?.description ?? BLOG_DEFAULTS.show.description,
+      author: parsed.show?.author ?? BLOG_DEFAULTS.show.author,
+      date: parsed.show?.date ?? BLOG_DEFAULTS.show.date,
+      tags: parsed.show?.tags ?? BLOG_DEFAULTS.show.tags
+    },
+    sidebar: {
+      tags: parsed.sidebar?.tags ?? BLOG_DEFAULTS.sidebar.tags,
+      archive: parsed.sidebar?.archive ?? BLOG_DEFAULTS.sidebar.archive
+    }
+  }
+  return JSON.stringify(blog)
+}
+
+/**
+ * Read a stored blog's settings, for a caller that has the page in hand.
+ *
+ * Never throws: a front page whose content is missing or unparseable is a blog with every setting at
+ * its default, which is a working blog rather than a broken screen. The editor's own reading of the
+ * same document is `frontend/src/helpers/pageBlog.js`.
+ */
+export function parseBlogContent(content: string | null | undefined): BlogContent {
+  let parsed: any
+  try {
+    parsed = JSON.parse(content ?? '')
+  } catch {
+    parsed = null
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return {
+      ...BLOG_DEFAULTS,
+      show: { ...BLOG_DEFAULTS.show },
+      sidebar: { ...BLOG_DEFAULTS.sidebar }
+    }
+  }
+  const perPage = Number.parseInt(parsed.perPage, 10)
+  const depth = Number.parseInt(parsed.depth, 10)
+  return {
+    layout: BLOG_LAYOUTS.includes(parsed.layout) ? parsed.layout : BLOG_DEFAULTS.layout,
+    perPage:
+      Number.isFinite(perPage) && perPage > 0
+        ? Math.min(perPage, BLOG_MAX_PER_PAGE)
+        : BLOG_DEFAULTS.perPage,
+    sort: parsed.sort === 'oldest' ? 'oldest' : BLOG_DEFAULTS.sort,
+    depth:
+      Number.isFinite(depth) && depth >= 0 ? Math.min(depth, BLOG_MAX_DEPTH) : BLOG_DEFAULTS.depth,
+    intro: typeof parsed.intro === 'string' ? parsed.intro : BLOG_DEFAULTS.intro,
+    show: {
+      icon: parsed.show?.icon ?? BLOG_DEFAULTS.show.icon,
+      description: parsed.show?.description ?? BLOG_DEFAULTS.show.description,
+      author: parsed.show?.author ?? BLOG_DEFAULTS.show.author,
+      date: parsed.show?.date ?? BLOG_DEFAULTS.show.date,
+      tags: parsed.show?.tags ?? BLOG_DEFAULTS.show.tags
+    },
+    sidebar: {
+      tags: parsed.sidebar?.tags ?? BLOG_DEFAULTS.sidebar.tags,
+      archive: parsed.sidebar?.archive ?? BLOG_DEFAULTS.sidebar.archive
+    }
+  }
+}
+
+/**
  * Pages model
  *
  * A page is a row here plus a row in the tree that gives it its place in the site. The markdown is
@@ -478,11 +728,11 @@ class Pages {
    *               being asked for a password to.
    * @param withPassword Include the page's own password. Only for a requester who may edit the page,
    *                     which is the one that has to be able to read it back and save it again.
-   * @param withContent Include the source. A redirection's comes back either way: its content is not
-   *                    a body somebody wrote, it is where the page sends its reader — which every
-   *                    reader is about to be shown by being taken there. Withholding it would leave
-   *                    the page view unable to do the one thing the page is for, and the page view
-   *                    does not ask for content.
+   * @param withContent Include the source. A bodyless editor's comes back either way: its content is
+   *                    not a body somebody wrote, it is the settings the page view needs to draw
+   *                    anything at all — where a redirection sends its reader, how a blog lists its
+   *                    posts. Withholding it would leave the page view unable to do the one thing the
+   *                    page is for, and the page view does not ask for content.
    */
   private toPage(
     row: any,
@@ -526,7 +776,7 @@ class Pages {
       tags: row.tags ?? [],
       toc: locked ? [] : (row.toc ?? []),
       render: locked ? '' : (row.render ?? ''),
-      ...((withContent || row.editor === REDIRECT_EDITOR) && !locked
+      ...((withContent || isBodylessEditor(row.editor)) && !locked
         ? { content: row.content ?? '' }
         : {}),
       /*
@@ -1188,6 +1438,7 @@ class Pages {
       path: row.path,
       title: row.title,
       description: row.description,
+      editor: row.editor,
       render: isProtected || isRedirect ? null : row.render,
       updatedAt: row.updatedAt,
       isIndexable: row.isSearchable && !isProtected && !isRedirect,
@@ -1417,10 +1668,10 @@ class Pages {
     }
     const editor = input.editor || 'markdown'
     const isRedirect = editor === REDIRECT_EDITOR
-    // -> A redirection has no body to be empty: what it holds instead is where it points, and that has
-    //    its own rules about being filled in
-    const content = isRedirect ? normalizeRedirectContent(input.content) : input.content
-    if (!isRedirect && (!content || content.trim().length < 1)) {
+    // -> A bodyless editor has no body to be empty: what its content column holds instead is a
+    //    settings document, which has its own rules about what it may say
+    const content = normalizeBodylessContent(editor, input.content)
+    if (!isBodylessEditor(editor) && (!content || content.trim().length < 1)) {
       throw new CustomError('pageEmptyContent', 'A page cannot be empty.')
     }
 
@@ -1528,6 +1779,19 @@ class Pages {
       throw err
     }
 
+    /*
+      A blog's posts are the pages under its path, so the folder at that path is where its author is
+      about to be working — and nothing has put one there yet. Created here so that the blog has
+      somewhere to write its first post into rather than looking like a dead end in the file manager.
+
+      Deliberately OUTSIDE the rollback above: the folder is a convenience and the blog is complete
+      without it, so a folder that cannot be made must not take the page with it. `ensureFolder` never
+      throws for that reason.
+    */
+    if (editor === BLOG_EDITOR) {
+      await WIKI.models.blogs.ensureFolder({ siteId, locale, path, title })
+    }
+
     // -> What this page points at, which is only knowable once it has an id and an address of its
     //    own: a relative link resolves against the page holding it
     await WIKI.models.pageLinks.refreshForPage(page, links)
@@ -1600,7 +1864,7 @@ class Pages {
     const values: Record<string, any> = { updatedAt: sql`now()` }
     let treeTitle: string | null = null
     // -> Which editor authored a page is not something a save may change, so the row is the authority
-    //    on whether this is a redirection
+    //    on what kind of page this is
     const isRedirect = existing.editor === REDIRECT_EDITOR
 
     if (patch.title !== undefined) {
@@ -1621,7 +1885,7 @@ class Pages {
       values.alias = await this.validateAlias(siteId, patch.alias, id)
     }
     if (patch.content !== undefined) {
-      values.content = isRedirect ? normalizeRedirectContent(patch.content) : patch.content
+      values.content = normalizeBodylessContent(existing.editor, patch.content)
     }
     if (patch.publishState !== undefined) {
       if (
