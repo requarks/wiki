@@ -46,7 +46,21 @@ Content of the first tab.
 
 ::block-tab{label="Second tab"}
 Content of the second tab.
-::`
+::`,
+    /*
+      The same starter body in AsciiDoc, which cannot be derived from the one above: AsciiDoc nests a
+      block inside another by ALTERNATING the delimiter rather than by growing a fence, so a tab is a
+      `--` open block inside the tabset's `====`.
+    */
+    asciidocTemplate: `[block-tab, label="First tab"]
+--
+Content of the first tab.
+--
+
+[block-tab, label="Second tab"]
+--
+Content of the second tab.
+--`
   }
 
   static get styles() {

@@ -1,0 +1,498 @@
+/*
+  THE RENDERED PAGE, WHERE ASCIIDOC WROTE IT
+  ==========================================
+
+  A companion to `_page-contents.scss`, not a replacement: every selector here is nested under
+  `.page-contents.is-asciidoc`, so a page carries the whole typographic system and then this on top.
+  The flag is set at the three surfaces that draw a render and know which editor wrote it -- the
+  article column (`pages/Index.vue`), a history version (`pages/PageVersion.vue`) and the editor's
+  preview pane. Not on the copy the server puts in the document for a crawler: that one is drawn as
+  plain prose by `frontend/index.html`'s `<noscript>` block and never carries `page-contents` at all.
+
+  It exists because Asciidoctor's HTML is shaped differently from markdown-it's, and that difference
+  divides cleanly in two:
+
+  - **Wrappers.** Asciidoctor puts every block inside a classed `<div>` -- `.paragraph > p`,
+    `.sect1 > .sectionbody`. The elements inside are the same elements markdown produces, so all the
+    typography already applies; what the wrappers break is the LAYOUT rules that reach between
+    siblings or at the edges of the article. The first section below makes them disappear from the box
+    tree so those rules land where they did. (The LIST wrappers are gone before they get here -- the
+    renderer drops them, because a rule reaching a list as a direct child needs more than a box
+    removed. See `convert_ulist`.)
+  - **Constructs markdown has not.** Callouts, example and sidebar blocks, verse, quote attributions,
+    block titles on anything, alphabetic and roman list numbering, table frame and grid variants.
+    None of these has a markdown counterpart to borrow a look from, so each gets one here.
+
+  What is NOT here is anything Asciidoctor and markdown-it both produce and this wiki has already
+  designed: admonitions, task lists, code blocks, footnotes, icons, images and external links are all
+  rewritten by `renderers/asciidoc.js` into the very markup the markdown pipeline emits, because those
+  are this wiki's own components rather than a markup language's -- one set of hues, one icon set, one
+  copy button, one set of print and dark-mode rules. See `WikiConverter`, which says so of each.
+
+  Colours come from the custom properties `_page-contents.scss` declares on the root block, so dark
+  mode and a re-themed site follow without a second palette.
+*/
+
+@use 'palette' as *;
+
+.page-contents.is-asciidoc {
+  /* -- Wrappers ---------------------------------------------------------------- */
+
+  /*
+    Out of the box tree entirely.
+
+    `display: contents` rather than zeroed margins, because the problem is not that these divs are
+    visible -- they carry nothing at all -- but that they STAND BETWEEN the rules in
+    `_page-contents.scss` and the elements those rules were written for. A heading followed by a
+    paragraph is two wrapped divs, so a sibling rule matches neither; a table inside a wrapper cannot
+    scroll itself sideways; the article's first and last block give up margins the wrapper never had.
+    Removing the box is what puts every one of those back at once.
+
+    `.sect1` and friends are in the list for the same reason a section wrapper exists at all -- to
+    hold a heading and its body -- which is precisely the grouping the content rules do not want.
+
+    The LIST wrappers are not here, because taking their boxes away is not enough for them: several
+    rules reach a list as a direct child (`block-steps > ol`, `li > ul`, `dd > ol`) and a wrapper
+    still in the tree matches none of them, whatever its `display` says. `convert_ulist` and
+    `convert_olist` drop those wrappers outright -- see the note there.
+  */
+  .paragraph,
+  .dlist,
+  .colist,
+  .sect1,
+  .sect2,
+  .sect3,
+  .sect4,
+  .sect5,
+  .sectionbody,
+  .openblock,
+  .openblock > .content,
+  .literalblock > .content,
+  .imageblock > .content,
+  .videoblock > .content,
+  .audioblock > .content {
+    display: contents;
+  }
+
+  /*
+    The article's own edges, restored through the wrappers.
+
+    `_page-contents.scss` zeroes the top margin of the first block and the bottom of the last, which
+    it can write as `> :first-child` because markdown puts the block there itself. Here the first
+    child is a wrapper, so the same rule has to reach one and two levels further in -- a first
+    paragraph is `.paragraph > p`, and a first heading is `.sect1 > h2`.
+
+    Written against the wrappers above rather than as a bare `> :first-child > :first-child`, so that
+    a block with a box of its own -- an example block, a sidebar -- keeps the margin it draws with.
+  */
+  > :first-child,
+  > :first-child > :first-child,
+  > :first-child > :first-child > :first-child {
+    margin-top: 0;
+  }
+  > :last-child,
+  > :last-child > :last-child,
+  > :last-child > :last-child > :last-child {
+    margin-bottom: 0;
+  }
+
+  /* -- Block titles ------------------------------------------------------------ */
+
+  /*
+    A caption above whatever it names.
+
+    AsciiDoc lets any block carry a title (`.Figure one` on the line above it), which markdown can
+    only do for a fenced code block -- so this is the general case of the bar `codeblock-titled`
+    draws, and it is deliberately quieter: it sits over a table, an image, a list or an example block,
+    where a filled bar would read as part of the thing rather than as a label on it.
+
+    Not inside a listing block: `convert_listing` draws its own titled box and never produces one of
+    these. Not in an admonition either, where the title IS the admonition's heading line.
+  */
+  .title {
+    margin: 0 0 0.4em;
+    color: var(--content-ink-muted);
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+
+  /* -> The image caption goes UNDER the picture, which is where AsciiDoc puts it in the markup too */
+  .imageblock > .title {
+    margin: 0.5em 0 0;
+    text-align: center;
+  }
+
+  /*
+    A table's title, which Asciidoctor puts INSIDE the table as a `<caption>` rather than above it as
+    a div. A margin does nothing on `display: table-caption`, so the separation has to be padding --
+    and it takes the cells' own horizontal padding, so the caption starts where the first column does
+    rather than hard against the table's border.
+  */
+  caption.title {
+    padding: 0.5em 0.8em;
+    text-align: left;
+  }
+
+  /* -- Boxed blocks ------------------------------------------------------------ */
+
+  /*
+    Example and sidebar blocks: an aside with a panel of its own.
+
+    Neither has a markdown counterpart. An example block is "here is one of those", a sidebar is
+    "related, but step out of the flow for it" -- so both are drawn as a tinted panel, and the sidebar
+    is set apart from the example by a rule down its edge rather than by a second colour, which would
+    only invite the reader to guess at a meaning.
+  */
+  .exampleblock,
+  .sidebarblock {
+    margin: 1.5em 0;
+    padding: var(--code-pad-y) var(--code-pad-x);
+    border: 1px solid var(--content-rule);
+    border-radius: 6px;
+    background-color: var(--content-surface-alt);
+  }
+
+  .sidebarblock {
+    border-left: 4px solid var(--content-rule-strong);
+  }
+
+  /* -> The panel's padding is the margin of what it holds, as it is at the top level */
+  .exampleblock > .content > :first-child,
+  .sidebarblock > .content > :first-child,
+  .exampleblock > .content > :first-child > :first-child,
+  .sidebarblock > .content > :first-child > :first-child {
+    margin-top: 0;
+  }
+  .exampleblock > .content > :last-child,
+  .sidebarblock > .content > :last-child,
+  .exampleblock > .content > :last-child > :last-child,
+  .sidebarblock > .content > :last-child > :last-child {
+    margin-bottom: 0;
+  }
+
+  /*
+    A literal block -- text kept exactly as typed, with no language and nothing to highlight.
+
+    Deliberately NOT drawn as a code block: `pre.codeblock` carries a gutter, a copy button and the
+    highlight.js theme, all of which say "this is source". A literal block is a terminal transcript
+    or a fragment of a file, so it gets the same tinted panel and nothing else.
+  */
+  .literalblock pre {
+    margin: 1.5em 0;
+    padding: var(--code-pad-y) var(--code-pad-x);
+    border-radius: 6px;
+    background-color: var(--content-surface-code);
+    color: var(--content-ink);
+    overflow-x: auto;
+  }
+
+  /* -- Quotes and verse -------------------------------------------------------- */
+
+  /*
+    A quote with an attribution, which markdown cannot express at all -- `[quote, Ada Lovelace, 1843]`
+    names who said it and where. The quote itself is a `blockquote` and is already styled; what is
+    added here is the line under it.
+  */
+  /*
+    -> No em dash added here: `convert_quote` already writes one in front of the name, which is the
+       typographic convention for an attribution and which a rule of our own would only double.
+  */
+  .quoteblock .attribution {
+    margin-top: 0.6em;
+    color: var(--content-ink-muted);
+    font-size: 0.9em;
+    font-style: normal;
+
+    cite {
+      font-style: italic;
+    }
+  }
+
+  /*
+    Verse: a quote whose line breaks are the point -- a poem, an address, a fragment of a licence.
+    Asciidoctor emits it as a `pre`, so the only thing it needs is to stop looking like code.
+  */
+  .verseblock pre {
+    margin: 1.5em 0;
+    padding: 0 0 0 var(--code-pad-x);
+    /* -> `border` before `border-left`, so the box `_page-contents.scss` gives every `pre` goes */
+    border: 0;
+    border-left: 3px solid var(--content-rule);
+    background: none;
+    color: var(--content-ink-muted);
+    font-family: inherit;
+    font-size: 1em;
+    white-space: pre-wrap;
+  }
+
+  /* -- Callouts ---------------------------------------------------------------- */
+
+  /*
+    Callouts: numbered markers in a code sample, and the list that explains them. AsciiDoc's own, with
+    no markdown equivalent to borrow from.
+
+    The marker inside the code is left as the author typed it -- `<1>` reaches the page as text,
+    because the code is highlighted by highlight.js and a marker turned into markup first would be
+    highlighted as part of the language. So this styles the LIST, which is what carries the meaning,
+    and draws its numbers as the discs a marker would have been.
+  */
+  .colist {
+    margin: -0.8em 0 1.5em;
+    font-size: 0.9375em;
+
+    ol {
+      padding-left: 0;
+      list-style: none;
+      counter-reset: wiki-callout;
+    }
+
+    li {
+      position: relative;
+      padding-left: 2em;
+      counter-increment: wiki-callout;
+
+      &::before {
+        content: counter(wiki-callout);
+        position: absolute;
+        left: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 50%;
+        background-color: var(--content-ink-faint);
+        color: #fff;
+        font-size: 0.8em;
+        font-weight: 600;
+      }
+    }
+  }
+
+  /* -> The same disc, for a marker that did reach the page as markup rather than as text */
+  b.conum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    background-color: var(--content-ink-faint);
+    color: #fff;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+
+  /* -- Lists ------------------------------------------------------------------- */
+
+  /*
+    The numbering styles AsciiDoc can ask for by name (`[loweralpha]`), which markdown has no way to
+    request -- it only ever counts in arabic numerals, and the nesting defaults in
+    `_page-contents.scss` are what vary it by depth. An explicit style overrides those.
+
+    On the list itself rather than on a wrapper, because `convert_olist` leaves it none.
+
+    These only ever reach a list whose author NAMED a style. Asciidoctor gives every ordered list one
+    whether it was written or not, and the renderer drops the ones it worked out for itself -- so
+    nothing here can put back a marker something else has taken off, which is what
+    `block-steps > ol { list-style: none }` found out the hard way: `ol.arabic` outranks it, and every
+    step drew its number twice, once on its disc and once as a marker beside it.
+  */
+  ol.arabic {
+    list-style-type: decimal;
+  }
+  ol.loweralpha {
+    list-style-type: lower-alpha;
+  }
+  ol.upperalpha {
+    list-style-type: upper-alpha;
+  }
+  ol.lowerroman {
+    list-style-type: lower-roman;
+  }
+  ol.upperroman {
+    list-style-type: upper-roman;
+  }
+
+  /*
+    A description list laid out across rather than down: `[horizontal]` puts each term beside its
+    definition instead of above it, which Asciidoctor renders as a two-column table.
+
+    The table styling has to be undone rather than inherited -- this is a layout, not data, so the
+    panel, the grid and the dark header bar a real table gets would all be wrong.
+  */
+  .hdlist > table,
+  .hdlist table {
+    display: table;
+    width: 100%;
+    margin: 0 0 1.15em;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 1em;
+
+    > tbody > tr > td {
+      padding: 0 1em 0.35em 0;
+      border: 0;
+      vertical-align: top;
+    }
+
+    .hdlist1 {
+      font-weight: 600;
+    }
+  }
+
+  /*
+    A question-and-answer list, which AsciiDoc spells `[qanda]` and renders as an ordered list whose
+    terms are the questions. The question carries the weight; the answer is ordinary prose under it.
+  */
+  .qanda > ol > li > p:first-child {
+    font-weight: 600;
+  }
+
+  /* -- Tables ------------------------------------------------------------------ */
+
+  /*
+    Asciidoctor says far more about a table than markdown can, and most of it is a request this wiki
+    should honour rather than a look to keep: a width, an alignment per cell, whether the grid and the
+    frame are drawn at all.
+
+    The panel, the radius, the dark header bar and the cell rules all come from `_page-contents.scss`
+    and are left alone -- a table is a table on this wiki whichever syntax built it.
+  */
+
+  /* -> `stretch` is the default and means the full column width; `fit-content` is the other */
+  table.stretch {
+    width: 100%;
+  }
+
+  /* -> Per-cell alignment, which AsciiDoc spells in the column spec (`[cols="<,^,>"]`) */
+  .tableblock.halign-left {
+    text-align: left;
+  }
+  .tableblock.halign-center {
+    text-align: center;
+  }
+  .tableblock.halign-right {
+    text-align: right;
+  }
+  .tableblock.valign-top {
+    vertical-align: top;
+  }
+  .tableblock.valign-middle {
+    vertical-align: middle;
+  }
+  .tableblock.valign-bottom {
+    vertical-align: bottom;
+  }
+
+  /*
+    A cell's own paragraphs. Asciidoctor wraps every cell's text in `p.tableblock`, so without this
+    each one carries the paragraph margin and a single-line row stands taller than it should -- the
+    same adjustment `_page-contents.scss` makes for a multi-line markdown cell.
+  */
+  p.tableblock {
+    margin: 0;
+
+    + p.tableblock {
+      margin-top: 0.6em;
+    }
+  }
+
+  /* -> `[grid=none]` and `[frame=none]`, which are a request to draw the data without the ruling */
+  table.grid-none > * > tr > * {
+    border-right: 0;
+    border-bottom: 0;
+  }
+  table.frame-none {
+    border: 0;
+    box-shadow: none;
+  }
+
+  /* -- Inline ------------------------------------------------------------------ */
+
+  /*
+    The roles AsciiDoc ships and a page can ask for by name. `line-through` is how AsciiDoc spells
+    what markdown writes as `~~struck~~`; the rest have no markdown spelling at all.
+  */
+  .underline {
+    text-decoration: underline;
+  }
+  .line-through {
+    text-decoration: line-through;
+  }
+  .nowrap {
+    white-space: nowrap;
+  }
+  .big {
+    font-size: 1.15em;
+  }
+  .small {
+    font-size: 0.875em;
+  }
+
+  /*
+    A key sequence and a menu path -- `kbd:[Ctrl+S]`, `menu:File[Save As]`. The keys themselves are
+    already drawn by the `kbd` rule in `_page-contents.scss`; these are the joiners between them.
+  */
+  .keyseq,
+  .menuseq {
+    white-space: nowrap;
+  }
+
+  .menuseq .caret {
+    margin: 0 0.25em;
+    color: var(--content-ink-faint);
+  }
+
+  /* -> `btn:[OK]`, drawn as the control it names */
+  .button {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    border: 1px solid var(--content-rule-strong);
+    border-radius: 4px;
+    background-color: var(--content-surface-alt);
+    font-size: 0.9em;
+  }
+
+  /* -- Footnotes --------------------------------------------------------------- */
+
+  /*
+    Asciidoctor collects footnotes into a `#footnotes` block of its own at the end of the document,
+    where markdown-it emits the `.footnotes` list `_page-contents.scss` styles. The two are the same
+    thing under different names, so this is that styling again against these names rather than a
+    second design -- including the landing highlight, which is a behaviour (`helpers/anchors.js`) and
+    not a look.
+  */
+  #footnotes {
+    margin-top: 2em;
+    padding-top: 1em;
+    border-top: 1px solid var(--content-rule);
+    color: var(--content-ink-muted);
+    font-size: 0.9em;
+
+    /* -> The renderer's own rule above the block, which this replaces with the border */
+    hr {
+      display: none;
+    }
+  }
+
+  .footnote {
+    margin-top: 0.5em;
+
+    &:target {
+      background-color: var(--content-surface-alt);
+    }
+  }
+
+  /* -- Unstyled leftovers ------------------------------------------------------ */
+
+  /*
+    Asciidoctor's own icon fallback, which nothing should reach: `convert_inline_image` draws an
+    `icon:` macro as an `<iconify-icon>`. One of these is an icon the converter did not claim, and it
+    is drawn plainly rather than left looking like a broken image.
+  */
+  .icon {
+    color: var(--content-ink-muted);
+  }
+}

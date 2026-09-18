@@ -140,6 +140,7 @@ export const useSiteStore = defineStore('site', {
       asciidoc: false,
       blog: false,
       markdown: false,
+      redirect: false,
       visual: false
     },
     /** Every installed locale, as this wiki refers to it. Empty until the app has bootstrapped. */
@@ -262,13 +263,18 @@ export const useSiteStore = defineStore('site', {
      * The editors a page on this site may be written with, as the ids `pages.editor` stores — the
      * order they are offered in, which is the order a reader meets them.
      *
-     * Three questions at once, and all three have to be asked or the list is fiction: whether the
-     * site has the editor turned on (`editors`, the admin area's Editors screen), whether it is
-     * implemented at all — `channel` and `api` are names with no editor behind them yet, and
-     * `asciidoc` is half-built, so all three are behind the experimental flag — and `redirect`, which
-     * no site can turn off because it authors nothing: a redirection is a page with a target instead
-     * of a body. On a wiki with the flag off that leaves Markdown, Visual, Blog and Redirection, in
-     * that order: Markdown is what most pages are written with, so it is the one offered first.
+     * Two questions at once, and both have to be asked or the list is fiction: whether the site has
+     * the editor turned on (`editors`, the admin area's Editors screen), and whether it is
+     * implemented at all — `channel` and `api` are names with no editor behind them yet, so both are
+     * behind the experimental flag. On a wiki with the flag off that leaves Markdown, Visual,
+     * AsciiDoc, Blog and Redirection, in that order: Markdown is what most pages are written with, so
+     * it is the one offered first.
+     *
+     * Redirection is in the list on the same footing as the rest. It used to be unconditional, on the
+     * reasoning that a redirection authors nothing and so has nothing to turn off — but what the
+     * switch decides is whether the site OFFERS one, which is a question a wiki that does not want
+     * loose redirections lying about has every reason to answer no. Turning it off leaves the
+     * redirections a site already has working and editable; only `New Redirection` goes.
      *
      * Markdown and Visual are two views of the same markdown source, which is what lets a page move
      * between them — see `interchangeableEditors` on the server.
@@ -282,7 +288,7 @@ export const useSiteStore = defineStore('site', {
       return [
         ...(this.editors.markdown ? ['markdown'] : []),
         ...(this.editors.visual ? ['visual'] : []),
-        ...(experimental && this.editors.asciidoc ? ['asciidoc'] : []),
+        ...(this.editors.asciidoc ? ['asciidoc'] : []),
         /*
           After the two that write pages and before the one that writes none: a blog's front page is
           a page somebody creates deliberately and rarely, so it does not belong at the top of the
@@ -290,7 +296,7 @@ export const useSiteStore = defineStore('site', {
         */
         ...(this.editors.blog ? ['blog'] : []),
         ...(experimental ? ['channel', 'api'] : []),
-        'redirect'
+        ...(this.editors.redirect ? ['redirect'] : [])
       ]
     },
     /** Whether `code` is one of the locales this site has enabled. */
@@ -413,6 +419,7 @@ export const useSiteStore = defineStore('site', {
           asciidoc: siteInfo.editors.asciidoc?.isActive ?? false,
           blog: siteInfo.editors.blog?.isActive ?? false,
           markdown: siteInfo.editors.markdown?.isActive ?? false,
+          redirect: siteInfo.editors.redirect?.isActive ?? false,
           visual: siteInfo.editors.visual?.isActive ?? false
         },
         // -> Spread over the state defaults, as `features` and `theme` above do, so a key the

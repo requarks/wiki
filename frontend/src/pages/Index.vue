@@ -195,6 +195,7 @@
             -->
             <div
               class="page-contents"
+              :class="{ 'is-asciidoc': pageStore.editor === `asciidoc` }"
               ref="pageContents"
               v-show="activeView === `article` && !isBlog"
               v-html="pageStore.render"
@@ -511,6 +512,16 @@ const PageBlogSidebar = defineAsyncComponent(() => import('@/components/PageBlog
 const editorComponents = {
   markdown: defineAsyncComponent({
     loader: () => import('../components/EditorMarkdown.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  /*
+    Its chunk carries Asciidoctor, which is about as large as the whole markdown pipeline -- so it is
+    fetched the first time somebody opens this editor and never at all on an instance that has no
+    AsciiDoc pages. Nothing else in the app imports `renderers/asciidoc`, which is what keeps that
+    true; the headless renderer reaches it through a dynamic import for the same reason.
+  */
+  asciidoc: defineAsyncComponent({
+    loader: () => import('../components/EditorAsciidoc.vue'),
     loadingComponent: LoadingGeneric
   }),
   visual: defineAsyncComponent({

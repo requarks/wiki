@@ -75,8 +75,11 @@
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on.
             -->
+            <!-- -> `is-asciidoc` from the version's own editor, not the page's: a version is what the
+                    page WAS, and a page converted between editors has history on both sides of it -->
             <div
               class="page-contents"
+              :class="{ 'is-asciidoc': state.version?.meta?.editor === `asciidoc` }"
               ref="pageContents"
               v-html="state.render"
               @click="onContentClick" />
@@ -363,6 +366,7 @@ async function renderFor(version, pagePath) {
   }
   return renderVersionSource(version, {
     markdownConfig: editorStore.editors.markdown,
+    asciidocConfig: editorStore.editors.asciidoc,
     pagePath
   })
 }

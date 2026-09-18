@@ -34,6 +34,16 @@ import type { IconifyIconCustomisations } from '@iconify/utils'
  * browser. That is a job rather than part of a request: see `queuePage` and `drainQueue`.
  */
 
+/**
+ * The editors whose source the renderer bundle knows how to turn into HTML.
+ *
+ * Both pipelines live in the frontend and both are reached through the same `__wikiRender`, which
+ * picks one by the editor it is handed -- so this list is the server's copy of what that function
+ * will accept, and the two have to agree. An editor missing from it is refused before anything is
+ * queued rather than after a browser has been started for it.
+ */
+const RENDERABLE_EDITORS = new Set(['markdown', 'asciidoc'])
+
 /** How long the renderer bundle gets to load itself in the headless browser, in milliseconds. */
 const RENDER_READY_TIMEOUT = 30000
 
@@ -84,10 +94,13 @@ export interface PostProcessResult {
  */
 interface PageRenderer {
   /**
-   * Markdown in, the editor's own HTML out — before `postProcess` gets to it.
+   * A page's source in, the editor's own HTML out — before `postProcess` gets to it.
    *
-   * `context` carries what the source cannot say about itself, currently the page's own path: a
-   * relative image in a page resolves against the folder it sits in, as it would in a repository.
+   * `context` carries what the source cannot say about itself: the page's own path, since a relative
+   * image in a page resolves against the folder it sits in as it would in a repository, and the
+   * `editor` it was written with, which is what picks the pipeline on the other side. A source is not
+   * self-describing — `= Title` is a heading in one syntax and an attribute list in neither — so
+   * nothing can be guessed from the text.
    */
   render(
     content: string,
@@ -137,6 +150,19 @@ const BASE_ALLOWED_TAGS = [
   */
   'iconify-icon',
   'img',
+  /*
+    The checkbox of a task list, and nothing else worth having.
+
+    `BASE_ALLOWED_ATTRIBUTES` has always named the three attributes one may carry -- `type`, `checked`
+    and `disabled` -- but the tag itself was never on this list, so sanitizing dropped every one of
+    them and a task list came out as two lines of prose. Both editors draw them: `markdown-it-task-lists`
+    writes one, and `convert_checklist` in the AsciiDoc pipeline writes the same element.
+
+    It cannot do anything. An `<input>` submits nothing outside a `<form>`, which is not on this list,
+    and the renderer marks every one of these disabled; `on*` handlers are gated behind
+    `write:scripts` like everywhere else.
+  */
+  'input',
   'ins',
   'kbd',
   'mark',
@@ -257,6 +283,12 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   img: ['src', 'srcset', 'alt', 'width', 'height', 'loading', 'decoding'],
   input: ['type', 'checked', 'disabled'],
   ol: ['start', 'reversed', 'type'],
+  /*
+    Column widths, which the AsciiDoc pipeline emits for every table it draws (`[cols="1,2"]` becomes
+    a `<colgroup>` of percentages). Presentational and inert -- a width is a number and a unit, and
+    `col` is a void element with nothing in it to carry anything else.
+  */
+  col: ['width', 'span'],
   source: ['src', 'srcset', 'type', 'media'],
   td: ['colspan', 'rowspan', 'align'],
   th: ['colspan', 'rowspan', 'align', 'scope'],
@@ -829,7 +861,7 @@ class Rendering {
    * render would leave a page's HTML lying about its content.
    */
   async ensureCanRender(editor: string): Promise<void> {
-    if (editor !== 'markdown') {
+    if (!RENDERABLE_EDITORS.has(editor)) {
       throw new CustomError(
         'renderUnsupportedEditor',
         `Server-side rendering is not implemented for the ${editor} editor.`
@@ -995,7 +1027,7 @@ class Rendering {
             //    for a page that went between the claim and here.
             continue
           }
-          if (page.editor !== 'markdown') {
+          if (!RENDERABLE_EDITORS.has(page.editor)) {
             WIKI.logger.warn(
               `Cannot render page ${page.id}: server-side rendering is not implemented for the ${page.editor} editor.`
             )
@@ -1004,7 +1036,7 @@ class Rendering {
           const html = await renderer.render(
             page.content ?? '',
             WIKI.sites[entry.siteId]?.config?.editors?.[page.editor]?.config ?? {},
-            { pagePath: page.path }
+            { pagePath: page.path, editor: page.editor }
           )
           await WIKI.models.pages.storeRender(entry.siteId, page.id, html, {
             scripts: entry.allowScripts,

@@ -41,7 +41,21 @@ export class BlockStepsElement extends HTMLElement {
 
    What to do next.
 
-3. Done`
+3. Done`,
+    /*
+      The same three steps in AsciiDoc, which spells both halves differently: a `.` opens an ordered
+      item however deep it is, and a paragraph is attached to the item above it with a `+` on a line
+      of its own rather than by being indented under it.
+    */
+    asciidocTemplate: `. First step
++
+What to do, and anything else that belongs with it.
+
+. Second step
++
+What to do next.
+
+. Done`
   }
 
   connectedCallback() {

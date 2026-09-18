@@ -92,10 +92,10 @@
                   class="px-4 pt-4"
                   :fields="state.selected.props"
                   :values="state.values" />
-                <!-- -> The markup itself, since that is what lands in the page -->
+                <!-- -> The markup itself, since that is what lands in the page -- in whichever syntax is open -->
                 <div class="w-section-header mt-6">{{ t('editor.blockPicker.markdown') }}</div>
                 <!-- The same 16px all round, so it sits inside the panel the way the fields do -->
-                <pre class="block-picker-output m-4">{{ markdown }}</pre>
+                <pre class="block-picker-output m-4">{{ source }}</pre>
               </template>
             </div>
           </w-scroll-area>
@@ -110,10 +110,11 @@ import { computed, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
-import { blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
+import { blockAsciidoc, blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
 
 import BlockPropsForm from '@/components/BlockPropsForm.vue'
 
+import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
 
 /**
@@ -133,6 +134,7 @@ const TOOLBAR_BLOCKS = ['tabs']
 
 // STORES
 
+const editorStore = useEditorStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -167,7 +169,22 @@ const blocks = computed(() =>
   )
 )
 
-const markdown = computed(() => (state.selected ? blockMarkdown(state.selected, state.values) : ''))
+/**
+ * The block as source, in the syntax of the editor that asked for it.
+ *
+ * The picker is one screen serving every editor, and a block is one element either way — the same
+ * definition, the same props, the same form above this line. All that differs is the punctuation
+ * around them, which is why the two writers sit side by side in `helpers/blocks.js` rather than one
+ * of them living here.
+ */
+const source = computed(() => {
+  if (!state.selected) {
+    return ''
+  }
+  return editorStore.editor === 'asciidoc'
+    ? blockAsciidoc(state.selected, state.values)
+    : blockMarkdown(state.selected, state.values)
+})
 
 // -> A required prop with nothing in it would insert a block that cannot draw anything
 const canInsert = computed(
@@ -183,7 +200,7 @@ function select(block) {
 }
 
 function insert() {
-  EVENT_BUS.emit('insertBlock', markdown.value)
+  EVENT_BUS.emit('insertBlock', source.value)
   close()
 }
 

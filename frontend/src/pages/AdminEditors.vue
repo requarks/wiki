@@ -130,7 +130,7 @@ const state = reactive({
     blog: false,
     channel: false,
     markdown: false,
-    redirect: true,
+    redirect: false,
     visual: false
   }
 })
@@ -144,8 +144,11 @@ const editors = reactive([
   {
     id: 'asciidoc',
     icon: 'asciidoc',
-    isDisabled: true,
-    hasConfig: true,
+    /*
+      No configuration screen, and none to have: every switch the markdown editor offers is either
+      hardwired in AsciiDoc -- its text replacements and its autolinking are not optional -- or
+      spelled per block rather than per site. See `AsciidocRenderer`.
+    */
     useRendering: true
   },
   {
@@ -172,7 +175,11 @@ const editors = reactive([
   {
     id: 'redirect',
     icon: 'advance',
-    isDisabled: true,
+    /*
+      No rendering pipeline of its own: a redirection has a target instead of a body, so there is
+      nothing to render and nothing to configure about how it is written. The switch is only whether
+      the site offers `New Redirection` — see `activeEditors` in `stores/site.js`.
+    */
     useRendering: false
   },
   {
@@ -202,6 +209,7 @@ async function load() {
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
     state.config.blog = data?.blog?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
+    state.config.redirect = data?.redirect?.isActive ?? false
     state.config.visual = data?.visual?.isActive ?? false
   } catch (err) {
     notify({
@@ -223,6 +231,7 @@ async function save() {
           asciidoc: { isActive: state.config.asciidoc },
           blog: { isActive: state.config.blog },
           markdown: { isActive: state.config.markdown },
+          redirect: { isActive: state.config.redirect },
           visual: { isActive: state.config.visual }
         }
       }
@@ -238,6 +247,7 @@ async function save() {
           asciidoc: state.config.asciidoc,
           blog: state.config.blog,
           markdown: state.config.markdown,
+          redirect: state.config.redirect,
           visual: state.config.visual
         }
       })

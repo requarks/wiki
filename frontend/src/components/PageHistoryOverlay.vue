@@ -505,6 +505,7 @@ async function renderOf(version) {
   //    the page view rather than against the site root
   return renderVersionSource(version, {
     markdownConfig: editorStore.editors.markdown,
+    asciidocConfig: editorStore.editors.asciidoc,
     pagePath: pageStore.path
   })
 }

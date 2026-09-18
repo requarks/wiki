@@ -18,6 +18,7 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 /** What a version's source is saved as, by the format it was written in. */
 const FILE_TYPES = {
   markdown: { ext: 'md', mime: 'text/markdown' },
+  adoc: { ext: 'adoc', mime: 'text/asciidoc' },
   html: { ext: 'html', mime: 'text/html' }
 }
 
@@ -86,21 +87,33 @@ export async function saveVersionSource(version) {
  * directory reaches for a store and this is not the file to start in. The caller has it already, and
  * has to make sure it is loaded (`editorStore.fetchConfigs()`) before asking.
  *
+ * Asynchronous because one of the two pipelines is: Asciidoctor's `convert` returns a promise, and it
+ * is reached through a dynamic import so that a reader looking at the history of a markdown page never
+ * downloads it.
+ *
  * @param {object} version A version WITH its `content`.
  * @param {object} options
  * @param {object} options.markdownConfig `editorStore.editors.markdown` — per-site renderer settings
  *   (line breaks, typographer, …).
+ * @param {object} [options.asciidocConfig] `editorStore.editors.asciidoc`, for a version written in
+ *   that syntax.
  * @param {string} options.pagePath The page this HTML is FOR, which is what a relative image in it
  *   resolves against. Not always the version's own `path`: content being restored onto a page that
  *   has since moved belongs to where that page is now.
- * @returns {string} The HTML, or the source unchanged for a format this does not render.
+ * @returns {Promise<string>} The HTML, or the source unchanged for a format this does not render.
  */
-export function renderVersionSource(version, { markdownConfig, pagePath }) {
+export async function renderVersionSource(version, { markdownConfig, asciidocConfig, pagePath }) {
   const content = version?.content ?? ''
-  if (versionContentType(version) !== 'markdown') {
-    return content
+  switch (versionContentType(version)) {
+    case 'markdown':
+      return new MarkdownRenderer(markdownConfig ?? {}).render(content, { pagePath })
+    case 'adoc': {
+      const { AsciidocRenderer } = await import('@/renderers/asciidoc')
+      return new AsciidocRenderer(asciidocConfig ?? {}).render(content, { pagePath })
+    }
+    default:
+      return content
   }
-  return new MarkdownRenderer(markdownConfig ?? {}).render(content, { pagePath })
 }
 
 /**

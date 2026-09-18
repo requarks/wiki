@@ -1,6 +1,7 @@
 import { TextSelection } from 'prosemirror-state'
 
-import { fileSrc, twemojiHtml } from '@/renderers/markdown'
+import { twemojiHtml } from '@/renderers/markdown'
+import { fileSrc } from '@/renderers/shared'
 
 import { schema } from './schema'
 

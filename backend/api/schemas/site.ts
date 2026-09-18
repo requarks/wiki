@@ -311,6 +311,18 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
               }
             }
           },
+          redirect: {
+            type: 'object',
+            properties: {
+              isActive: {
+                type: 'boolean'
+              },
+              config: {
+                type: 'object',
+                additionalProperties: true
+              }
+            }
+          },
           visual: {
             type: 'object',
             properties: {

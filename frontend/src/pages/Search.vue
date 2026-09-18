@@ -348,7 +348,11 @@ const localeFilterLabel = computed(() => {
  * names it.
  *
  * The list was hardcoded, so it offered editors the site had turned off or that do not exist here at
- * all -- and left out `redirect`, which every site has. `activeEditors` is the one place that knows.
+ * all, and left out `redirect` entirely. `activeEditors` is the one place that knows.
+ *
+ * It follows that an editor a site has since turned off drops out of the filter while the pages
+ * written with it are still there. That is the right trade for a filter: it offers what the site
+ * writes now, and a page is found by what it says rather than by which editor made it.
  */
 const editors = computed(() => [
   { label: t('search.editorAny'), value: '' },

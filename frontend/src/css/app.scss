@@ -2,5 +2,7 @@
 @use 'animation';
 @use 'page-chrome';
 @use 'page-contents';
+/* -> After it, and reads as a layer on top: every selector in it is `.page-contents.is-asciidoc` */
+@use 'page-contents-asciidoc';
 /* -> Last, so that where a print rule ties with a screen rule on specificity, print wins */
 @use 'print';

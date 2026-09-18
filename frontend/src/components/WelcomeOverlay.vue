@@ -25,7 +25,7 @@
               <w-item
                 clickable
                 @click="createHomePage(`asciidoc`)"
-                v-if="flagsStore.experimental && siteStore.editors.asciidoc">
+                v-if="siteStore.editors.asciidoc">
                 <blueprint-icon icon="asciidoc" />
                 <w-item-section class="pr-2">{{ t(`welcome.createHomeAsciidoc`) }}</w-item-section>
                 <w-item-section side><w-icon name="mdi:chevron-right" /></w-item-section>

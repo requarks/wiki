@@ -40,6 +40,17 @@ export interface BlockDefinition {
   /** Body the editor writes between the opening and closing lines when inserting the block. */
   template?: string
   /**
+   * The same starter body in AsciiDoc, for a block whose template cannot be derived from the markdown
+   * one.
+   *
+   * Absent for almost every block, and absent is a complete answer: a body that is one fenced source
+   * is rewritten mechanically, and a body that is plain prose reads identically in both syntaxes.
+   * What needs this is a template that spells STRUCTURE — nested blocks, or a list with paragraphs
+   * attached to its items — since AsciiDoc writes both differently. See `asciidocTemplate` in
+   * `frontend/src/helpers/blocks.js`.
+   */
+  asciidocTemplate?: string
+  /**
    * Names an editor for the block's BODY, which the markdown editor then offers as a second lens
    * above the block — "Edit Content", beside "Edit Block Parameters".
    *
@@ -65,6 +76,8 @@ export interface SiteBlock {
   config: Record<string, any>
   props: BlockProp[]
   template: string
+  /** Empty for a block whose starter body needs no AsciiDoc spelling of its own — see the definition. */
+  asciidocTemplate: string
   /** Empty for a block that names no body editor, which is most of them. */
   contentEditor: string
   /**
@@ -309,6 +322,7 @@ class Blocks {
         ...row,
         props: definition?.props ?? [],
         template: definition?.template ?? '',
+        asciidocTemplate: definition?.asciidocTemplate ?? '',
         contentEditor: definition?.contentEditor ?? '',
         isChild: false
       }
@@ -338,6 +352,7 @@ class Blocks {
         config: {},
         props: definition.props ?? [],
         template: definition.template ?? '',
+        asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',
         isChild: true
       }))

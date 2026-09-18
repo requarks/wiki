@@ -18,7 +18,7 @@ import type { StoragePageContent, StoragePageRef } from './storage.ts'
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
   markdown: 'markdown',
   visual: 'markdown',
-  asciidoc: 'asciidoc',
+  asciidoc: 'adoc',
   redirect: 'redirect',
   blog: 'blog'
 }
@@ -53,7 +53,7 @@ export function interchangeableEditors(editor: string): string[] {
 export const PAGE_FILE_EXTENSIONS: Record<string, string> = {
   markdown: 'md',
   html: 'html',
-  asciidoc: 'adoc',
+  adoc: 'adoc',
   redirect: 'json',
   blog: 'json'
 }

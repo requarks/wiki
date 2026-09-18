@@ -226,6 +226,16 @@ class Sites {
             }
           },
           /*
+            No config of its own: a redirection is a page with a target instead of a body, so there is
+            nothing about how it is written to configure. This flag is only whether the site offers
+            `New Redirection` at all — turning it off leaves the redirections a site already has
+            working and editable, and stops new ones being made.
+          */
+          redirect: {
+            isActive: true,
+            config: {}
+          },
+          /*
             No config of its own, deliberately. The Visual editor writes markdown and its preview is
             rendered by the markdown pipeline, so it reads `markdown.config` — two settings blobs that
             had to agree would only be a way for them to disagree.
@@ -500,6 +510,16 @@ class Sites {
               typographer: false,
               underline: true
             }
+          },
+          /*
+            No config of its own: a redirection is a page with a target instead of a body, so there is
+            nothing about how it is written to configure. This flag is only whether the site offers
+            `New Redirection` at all — turning it off leaves the redirections a site already has
+            working and editable, and stops new ones being made.
+          */
+          redirect: {
+            isActive: true,
+            config: {}
           },
           /*
             No config of its own, deliberately. The Visual editor writes markdown and its preview is
