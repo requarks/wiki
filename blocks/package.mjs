@@ -197,7 +197,7 @@ async function main () {
   console.log(`  ${definition.name} — <block-${definition.block}>`)
   console.log(`  ${entries.length} file(s), ${formatSize(uncompressed)} uncompressed`)
   console.log(`\n  → ${packagePath} (${formatSize(fs.statSync(packagePath).size)})\n`)
-  console.log('  Import it from Administration → Content Blocks → Import Block.\n')
+  console.log('  Install it from Administration → Content Blocks → Install Block...\n')
 }
 
 main().catch(err => {

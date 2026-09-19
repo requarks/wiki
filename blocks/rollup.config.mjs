@@ -14,7 +14,7 @@ import * as glob from 'glob'
  * Only literals, arrays and objects of literals are supported — a block definition is metadata, so
  * anything computed is a mistake worth failing the build over.
  */
-function literalToValue (node, blockDir) {
+function literalToValue(node, blockDir) {
   switch (node.type) {
     case 'Literal':
       return node.value
@@ -22,18 +22,24 @@ function literalToValue (node, blockDir) {
     // write the multi-line ones -- a starter body for a block, say.
     case 'TemplateLiteral':
       if (node.expressions.length > 0) {
-        throw new Error(`${blockDir}: "static definition" must contain only plain literals, got an interpolated template.`)
+        throw new Error(
+          `${blockDir}: "static definition" must contain only plain literals, got an interpolated template.`
+        )
       }
       return node.quasis[0].value.cooked
     case 'ArrayExpression':
-      return node.elements.map(el => literalToValue(el, blockDir))
+      return node.elements.map((el) => literalToValue(el, blockDir))
     case 'ObjectExpression':
-      return Object.fromEntries(node.properties.map(prop => [
-        prop.key.name ?? prop.key.value,
-        literalToValue(prop.value, blockDir)
-      ]))
+      return Object.fromEntries(
+        node.properties.map((prop) => [
+          prop.key.name ?? prop.key.value,
+          literalToValue(prop.value, blockDir)
+        ])
+      )
     default:
-      throw new Error(`${blockDir}: "static definition" must contain only plain literals, got ${node.type}.`)
+      throw new Error(
+        `${blockDir}: "static definition" must contain only plain literals, got ${node.type}.`
+      )
   }
 }
 
@@ -66,10 +72,10 @@ const ASSET_MIME_TYPES = {
  * same face arrives three times over — woff2, woff and ttf are the same glyphs at ~1.5x, ~2x and ~4x
  * the bytes — and every browser that can run a block reads woff2.
  */
-function cssAsString () {
+function cssAsString() {
   return {
     name: 'css-as-string',
-    transform (code, id) {
+    transform(code, id) {
       if (!id.endsWith('.css')) {
         return null
       }
@@ -79,7 +85,7 @@ function cssAsString () {
       const css = code
         .replace(/src\s*:\s*([^;}]+)/g, (declaration, sources) => {
           const parts = sources.split(/,(?![^(]*\))/)
-          const woff2 = parts.filter(part =>
+          const woff2 = parts.filter((part) =>
             /\.woff2\b|format\(\s*['"]?woff2['"]?\s*\)/.test(part)
           )
           return woff2.length > 0 && woff2.length < parts.length
@@ -116,14 +122,14 @@ function cssAsString () {
  * definition the instance importing it will register, and nothing about the blocks that happened to
  * be sitting beside it in the tree it was built from.
  */
-function blocksManifest (only) {
+function blocksManifest(only) {
   const definitions = new Map()
   return {
     name: 'blocks-manifest',
-    buildStart () {
+    buildStart() {
       definitions.clear()
     },
-    transform (code, id) {
+    transform(code, id) {
       if (!id.endsWith('/component.js')) {
         return null
       }
@@ -137,8 +143,11 @@ function blocksManifest (only) {
         if (classNode?.type !== 'ClassDeclaration') {
           continue
         }
-        const definitionNode = classNode.body.body.find(member =>
-          member.type === 'PropertyDefinition' && member.static && member.key.name === 'definition'
+        const definitionNode = classNode.body.body.find(
+          (member) =>
+            member.type === 'PropertyDefinition' &&
+            member.static &&
+            member.key.name === 'definition'
         )
         if (definitionNode) {
           definitions.set(blockDir, literalToValue(definitionNode.value, blockDir))
@@ -149,7 +158,7 @@ function blocksManifest (only) {
       }
       return null
     },
-    generateBundle () {
+    generateBundle() {
       this.emitFile({
         type: 'asset',
         fileName: 'blocks.manifest.json',
@@ -159,10 +168,7 @@ function blocksManifest (only) {
   }
 }
 
-const IGNORED_DIRS = [
-  'dist/**',
-  'node_modules/**'
-]
+const IGNORED_DIRS = ['dist/**', 'node_modules/**']
 
 /**
  * Copies the runtime data files a block's library fetches for itself into `compiled/<block>/`.
@@ -174,18 +180,30 @@ const IGNORED_DIRS = [
  * have to be somewhere the browser can ask for them, and for a block that means beside it in
  * /_blocks, since a block knows no other path it can reach.
  *
- * `assets.json` beside a component lists them: a directory to copy — a package subpath, or one
- * starting with `./` for a directory of the block's own — mapped to the name it should have under
- * `compiled/<block>/`. Everything below it is copied, so a block declares four directories rather
- * than two hundred files.
+ * `assets.json` beside a component lists what to copy: each key is a source — a package subpath, or
+ * one starting with `./` for something of the block's own — and each value is the name it should have
+ * under `compiled/<block>/`.
+ *
+ * A source may be **a directory or a single file**:
+ *
+ *   - a DIRECTORY copies everything below it, keeping its layout, so a block declares four
+ *     directories rather than two hundred files. The value is the folder it lands in; empty puts its
+ *     contents at the root of the block's own directory.
+ *   - a FILE copies just that file. The value is the path it lands at, file name included — or, left
+ *     empty or ending in `/`, the file keeps its own name.
+ *
+ * Both, because a block is as likely to have one JSON document of its own as a package's worth of
+ * character maps, and having to invent a folder to hold a single file is a trap rather than a rule.
  *
  * `only` narrows it to a single block directory, as above.
  */
-function blockAssets (only) {
+function blockAssets(only) {
   return {
     name: 'block-assets',
-    buildStart () {
-      for (const listPath of glob.sync(`@(${only ?? 'block-*'})/assets.json`, { ignore: IGNORED_DIRS })) {
+    buildStart() {
+      for (const listPath of glob.sync(`@(${only ?? 'block-*'})/assets.json`, {
+        ignore: IGNORED_DIRS
+      })) {
         const blockDir = listPath.split('/')[0]
         this.addWatchFile(listPath)
         const list = JSON.parse(fs.readFileSync(listPath, 'utf8'))
@@ -198,6 +216,21 @@ function blockAssets (only) {
             //    would be a block that loads and then quietly cannot read half the documents it is
             //    given, so the build stops instead.
             this.error(`${listPath}: "${source}" does not exist — nothing to copy from.`)
+          }
+          if (fs.statSync(from).isFile()) {
+            // -> A destination that names no file -- empty, or a folder to drop it in -- leaves the
+            //    file called what it is already, which is what somebody listing a file by name meant
+            const target =
+              !destination || destination.endsWith('/')
+                ? path.posix.join(destination, path.basename(from))
+                : destination
+            this.addWatchFile(from)
+            this.emitFile({
+              type: 'asset',
+              fileName: path.posix.join(blockDir, target),
+              source: fs.readFileSync(from)
+            })
+            continue
           }
           for (const entry of fs.readdirSync(from, { recursive: true, withFileTypes: true })) {
             if (!entry.isFile()) {
@@ -237,16 +270,13 @@ function blockAssets (only) {
  *     with: the whole package is `block-<key>.js`, `block-<key>.worker.js` and `block-<key>/**`,
  *     which is the namespace the server hands back out.
  */
-export function buildConfig ({ only, outputDir = 'compiled' } = {}) {
+export function buildConfig({ only, outputDir = 'compiled' } = {}) {
   const entryGlob = only ?? 'block-*'
   return {
     input: Object.fromEntries([
-      ...glob.sync(`@(${entryGlob})/component.js`, { ignore: IGNORED_DIRS }).map(file => {
+      ...glob.sync(`@(${entryGlob})/component.js`, { ignore: IGNORED_DIRS }).map((file) => {
         const fileParts = file.split('/')
-        return [
-          fileParts[0],
-          file
-        ]
+        return [fileParts[0], file]
       }),
       /*
         A `worker.js` beside a component is a second entry point, compiled to `<block>.worker.js`.
@@ -256,12 +286,9 @@ export function buildConfig ({ only, outputDir = 'compiled' } = {}) {
         at it with `new URL('<block>.worker.js', import.meta.url)`. See `block-pdf`, which runs pdf.js's
         parser off the page's thread.
       */
-      ...glob.sync(`@(${entryGlob})/worker.js`, { ignore: IGNORED_DIRS }).map(file => {
+      ...glob.sync(`@(${entryGlob})/worker.js`, { ignore: IGNORED_DIRS }).map((file) => {
         const fileParts = file.split('/')
-        return [
-          `${fileParts[0]}.worker`,
-          file
-        ]
+        return [`${fileParts[0]}.worker`, file]
       })
     ]),
     output: {

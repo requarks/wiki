@@ -169,7 +169,7 @@ A block that must *act* on the change rather than restyle for it passes `onChang
 
 A block need not ship with the wiki. `npm run package -- block-xyz` compiles one block on its own and
 writes `blocks/packages/block-xyz.wkblock`, a single file an administrator uploads under
-**Admin → Content Blocks → Import Block**. So the whole of writing one is: clone this repository, add
+**Admin → Content Blocks → Install Block...**. So the whole of writing one is: clone this repository, add
 a directory under `blocks/`, package it, upload it — nothing of the instance is rebuilt or restarted,
 and the author never touches the wiki they are writing for.
 
