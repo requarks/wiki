@@ -192,6 +192,19 @@ export const authentication = pgTable('authentication', {
 })
 
 // BLOCKS ------------------------------
+/**
+ * One block available to one site — `<block-diagram>` on this wiki.
+ *
+ * A built-in block's row is metadata only: what it can do comes from the compiled manifest, which
+ * `models/blocks.ts` reads off disk at boot and reconciles against these rows. A CUSTOM block has no
+ * disk to read, so the three columns below carry the whole of it — what it declares, and the bytes
+ * that draw it. See `helpers/wkblock.ts` for the package they arrived in.
+ *
+ * Per site, package and all: a `.wkblock` imported into three sites is stored three times. That is
+ * the same answer every other per-site setting gives, and the alternative — one shared copy with the
+ * sites counted off it — buys a few megabytes at the cost of one site's upgrade changing another's
+ * block.
+ */
 export const blocks = pgTable(
   'blocks',
   {
@@ -203,6 +216,28 @@ export const blocks = pgTable(
     isEnabled: boolean().notNull().default(false),
     isCustom: boolean().notNull().default(false),
     config: jsonb().notNull().default({}),
+    /**
+     * What a CUSTOM block declares — its props, its template, its content editor — as its package's
+     * copy of the component's `static definition`. Empty for a built-in, whose definition is read
+     * from the compiled manifest instead, so that an updated block describes itself correctly the
+     * moment it is deployed rather than whenever a row was last written.
+     */
+    definition: jsonb().notNull().default({}),
+    /**
+     * The `.wkblock` file a custom block was imported from, kept verbatim. Null for a built-in.
+     *
+     * This is the only copy: the files served to a browser are unpacked from it into
+     * `<dataPath>/cache/blocks`, which is a cache and starts empty on a fresh container.
+     */
+    packageData: bytea(),
+    /**
+     * SHA-256 of that package, and the name of its directory in the disk cache.
+     *
+     * Which is what makes re-importing a block take effect: the files on disk are stale exactly when
+     * they were unpacked under a different digest, and every instance in an HA set works that out for
+     * itself without being told. Empty for a built-in.
+     */
+    checksum: varchar({ length: 64 }).notNull().default(''),
     siteId: uuid()
       .notNull()
       .references(() => sites.id)

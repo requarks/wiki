@@ -1,4 +1,5 @@
 import { audit } from '../helpers/audit.ts'
+import { MAX_PACKAGE_SIZE } from '../helpers/wkblock.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 /**
@@ -58,6 +59,22 @@ async function mayListBlocks(req: FastifyRequest, siteId: string): Promise<boole
  * Blocks API Routes
  */
 async function routes(app: FastifyInstance) {
+  /*
+    A block package is the raw file rather than a multipart form: one file, no fields. The catch-all
+    only claims content types nothing else parses, so the JSON routes below are unaffected.
+
+    The limit is the format's own (`MAX_PACKAGE_SIZE`) rather than the site's upload limit: that one
+    is about what readers may attach to pages and is usually turned down, while a block carrying a PDF
+    engine and its character maps is legitimately a couple of dozen megabytes.
+  */
+  app.addContentTypeParser(
+    '*',
+    { parseAs: 'buffer', bodyLimit: MAX_PACKAGE_SIZE },
+    (req, body, done) => {
+      done(null, body)
+    }
+  )
+
   /**
    * LIST SITE BLOCKS
    */
@@ -72,7 +89,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'List the blocks available to a site',
         description:
-          'Built-in blocks are registered from the compiled block manifest, so the list reflects what is actually installed. This is what the editor builds its block picker from, so it is available to page authors and to anyone an approval rule lets suggest an edit — guests included, where a site takes public suggestions — as well as to site administrators.',
+          'Built-in blocks are registered from the compiled block manifest, so the list reflects what is actually installed. Ordered by name, built-in and imported blocks together, with the child blocks last. This is what the editor builds its block picker from, so it is available to page authors and to anyone an approval rule lets suggest an edit — guests included, where a site takes public suggestions — as well as to site administrators.',
         tags: ['Blocks'],
         params: {
           type: 'object',
@@ -196,6 +213,109 @@ async function routes(app: FastifyInstance) {
       } catch (err: any) {
         WIKI.logger.warn(err)
         return reply.internalServerError()
+      }
+    }
+  )
+
+  /**
+   * IMPORT A CUSTOM BLOCK
+   */
+  app.post<{ Params: { siteId: string } }>(
+    '/sites/:siteId/blocks/import',
+    {
+      config: {
+        /*
+          The same permission that already governs this screen, and deliberately not a stricter one.
+
+          A block is code that runs in every reader's browser on this site — which is exactly what the
+          raw head and body fields under Administration → Theme already are, and those are `manage:theme`.
+          `manage:sites` is where the trust boundary for markup and script injected into a site's pages
+          sits; a block is not a new kind of power, it is a tidier way to exercise that one.
+        */
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: 'Import a packaged block',
+        description:
+          "The body is the `.wkblock` file itself, not a multipart form — send the bytes with `Content-Type: application/octet-stream`. A package is built by cloning this repository, writing a block under `blocks/block-<key>/` and running `npm run package -- block-<key>` in `blocks/`.\n\nThe key inside the package is the identity: importing a package whose key this site already has REPLACES that block, which is how one is upgraded — what the site had switched on and configured on it is kept. A key that a built-in block already uses is refused, since both would be served from the same address.\n\nThe block is registered enabled and is available to authors immediately. Its compiled files are served from `/_blocks/` like a built-in one, unpacked from the stored package into the instance's cache the first time a browser asks for one.",
+        tags: ['Blocks'],
+        consumes: ['application/octet-stream'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['siteId']
+        },
+        response: {
+          200: {
+            description: 'Block imported successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' },
+              id: {
+                type: 'string',
+                format: 'uuid',
+                description: 'The block row, which is the existing one when a block was replaced.'
+              },
+              block: {
+                type: 'string',
+                description: 'The key it registered under — it renders as `<block-{block}>`.'
+              },
+              name: { type: 'string' },
+              isNew: {
+                type: 'boolean',
+                description: 'False when the package replaced a block this site already had.'
+              },
+              fileCount: {
+                type: 'integer',
+                description: 'How many compiled files the package brought.'
+              },
+              packagedAt: {
+                type: 'string',
+                description: 'When the package was built, or empty if it did not say.'
+              },
+              packagedWith: {
+                type: 'string',
+                description: 'The version of Wiki.js that built it, or empty if it did not say.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      if (!site) {
+        return reply.notFound('Site does not exist.')
+      }
+
+      const data = req.body
+      if (!Buffer.isBuffer(data) || data.length < 1) {
+        return reply.badRequest('No block package was sent.')
+      }
+
+      // -> Everything `importPackage` refuses is a `CustomError` carrying its own status and a message
+      //    the administrator who chose the file can act on, so it is left to the error handler
+      const result = await WIKI.models.blocks.importPackage(req.params.siteId, data)
+
+      await audit(req, 'admin', 'importBlock', {
+        siteId: req.params.siteId,
+        blockId: result.id,
+        block: result.block,
+        name: result.name,
+        isNew: result.isNew,
+        packagedWith: result.packagedWith
+      })
+
+      return {
+        ok: true,
+        message: result.isNew ? 'Block imported successfully.' : 'Block updated successfully.',
+        ...result
       }
     }
   )

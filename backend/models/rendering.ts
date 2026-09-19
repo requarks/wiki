@@ -6,6 +6,7 @@ import { jobs as jobsTable, pageRenderQueue as renderQueueTable } from '../db/sc
 import { CustomError } from '../helpers/common.ts'
 import { hrefsFrom } from '../helpers/pageLinks.ts'
 import type { IconifyIcon } from '@iconify/types'
+import type { RenderableBlocks } from './blocks.ts'
 import type { IconifyIconCustomisations } from '@iconify/utils'
 
 /**
@@ -404,8 +405,8 @@ class Rendering {
     html: string,
     permissions: RenderPermissions
   ): Promise<PostProcessResult> {
-    const enabledBlocks = await WIKI.models.blocks.getEnabledKeys(siteId)
-    const clean = this.sanitize(html ?? '', permissions, enabledBlocks)
+    const siteBlocks = await WIKI.models.blocks.getEnabledForRender(siteId)
+    const clean = this.sanitize(html ?? '', permissions, siteBlocks)
 
     const $ = cheerio.load(clean, null, false)
 
@@ -429,11 +430,12 @@ class Rendering {
    * The block elements a page may carry, and what each of them may be given.
    *
    * A block is the one thing in a page that is not HTML, so sanitising against a list of HTML tags
-   * drops every one of them and no block ever survives being saved. The list is built from the
-   * compiled manifest — a block that is installed may be embedded, one that is not may not — and
-   * each tag gets exactly the attributes its component declares as props, which is the same set the
-   * editor's block picker offers. The markup is inert either way: what makes a block do anything is
-   * the component fetched from `/_blocks` at view time.
+   * drops every one of them and no block ever survives being saved. The list is built from what is
+   * installed — the compiled manifest, plus the definitions of the custom blocks this site has
+   * imported, which are on no disk to be read from — and each tag gets exactly the attributes its
+   * component declares as props, which is the same set the editor's block picker offers. The markup
+   * is inert either way: what makes a block do anything is the component fetched from `/_blocks` at
+   * view time.
    *
    * Installed is not sufficient: the block also has to be switched on for this site. Leaving the
    * picker to decide that would only cover the authors who use it — the content is markdown, so
@@ -445,14 +447,14 @@ class Rendering {
    * Child blocks are exempt, having no switch of their own: a tab is part of the tabs it sits in,
    * and is gated by `unwrapOrphanedChildBlocks` once the parent's fate is known.
    */
-  private blockAllowances(enabledBlocks: Set<string>): {
+  private blockAllowances(siteBlocks: RenderableBlocks): {
     tags: string[]
     attributes: Record<string, string[]>
   } {
     const tags: string[] = []
     const attributes: Record<string, string[]> = {}
-    for (const definition of WIKI.models.blocks.definitions) {
-      if (!definition.isChild && !enabledBlocks.has(definition.block)) {
+    for (const definition of [...WIKI.models.blocks.definitions, ...siteBlocks.custom]) {
+      if (!definition.isChild && !siteBlocks.enabled.has(definition.block)) {
         continue
       }
       const tag = `block-${definition.block}`
@@ -517,9 +519,9 @@ class Rendering {
   private sanitize(
     html: string,
     permissions: RenderPermissions,
-    enabledBlocks: Set<string>
+    siteBlocks: RenderableBlocks
   ): string {
-    const blocks = this.blockAllowances(enabledBlocks)
+    const blocks = this.blockAllowances(siteBlocks)
     const allowedTags = [...BASE_ALLOWED_TAGS, ...blocks.tags]
     const allowedAttributes: Record<string, string[]> = {
       ...BASE_ALLOWED_ATTRIBUTES,

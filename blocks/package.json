@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "rollup -c",
+    "package": "node package.mjs",
     "ncu": "ncu -i",
     "ncu-u": "ncu -u"
   },

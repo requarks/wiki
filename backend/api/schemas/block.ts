@@ -31,7 +31,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       isCustom: {
         type: 'boolean',
-        description: 'False for blocks registered from the compiled block manifest.'
+        description:
+          'False for blocks registered from the compiled block manifest. True for one imported as a `.wkblock` package, which is stored in the database and may be deleted.'
       },
       isChild: {
         type: 'boolean',
@@ -60,7 +61,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       props: {
         type: 'array',
         description:
-          "The block's authorable attributes, as its component declares them — what the editor's block picker turns into a form. Read from the compiled manifest rather than the database, so it describes the code that is installed. Empty for a custom block, which has no manifest entry.",
+          "The block's authorable attributes, as its component declares them — what the editor's block picker turns into a form. Describes the code that is installed rather than a copy of it made when the block was registered: read from the compiled manifest for a built-in block, and from the definition stored with its package for an imported one.",
         items: {
           type: 'object',
           properties: {

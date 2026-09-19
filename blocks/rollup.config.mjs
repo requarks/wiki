@@ -111,8 +111,12 @@ function cssAsString () {
  *
  * The definitions are read from the AST rather than by importing the modules, since a component
  * registers itself with `customElements` on load and so cannot be imported outside a browser.
+ *
+ * `only` narrows it to a single block directory, for `package.mjs` — a package carries the one
+ * definition the instance importing it will register, and nothing about the blocks that happened to
+ * be sitting beside it in the tree it was built from.
  */
-function blocksManifest () {
+function blocksManifest (only) {
   const definitions = new Map()
   return {
     name: 'blocks-manifest',
@@ -124,6 +128,9 @@ function blocksManifest () {
         return null
       }
       const blockDir = id.split('/').at(-2)
+      if (only && blockDir !== only) {
+        return null
+      }
       const ast = this.parse(code)
       for (const node of ast.body) {
         const classNode = node.type === 'ExportNamedDeclaration' ? node.declaration : node
@@ -171,12 +178,14 @@ const IGNORED_DIRS = [
  * starting with `./` for a directory of the block's own — mapped to the name it should have under
  * `compiled/<block>/`. Everything below it is copied, so a block declares four directories rather
  * than two hundred files.
+ *
+ * `only` narrows it to a single block directory, as above.
  */
-function blockAssets () {
+function blockAssets (only) {
   return {
     name: 'block-assets',
     buildStart () {
-      for (const listPath of glob.sync('@(block-*)/assets.json', { ignore: IGNORED_DIRS })) {
+      for (const listPath of glob.sync(`@(${only ?? 'block-*'})/assets.json`, { ignore: IGNORED_DIRS })) {
         const blockDir = listPath.split('/')[0]
         this.addWatchFile(listPath)
         const list = JSON.parse(fs.readFileSync(listPath, 'utf8'))
@@ -211,51 +220,74 @@ function blockAssets () {
   }
 }
 
-export default {
-  input: Object.fromEntries([
-    ...glob.sync('@(block-*)/component.js', { ignore: IGNORED_DIRS }).map(file => {
-      const fileParts = file.split('/')
-      return [
-        fileParts[0],
-        file
-      ]
-    }),
-    /*
-      A `worker.js` beside a component is a second entry point, compiled to `<block>.worker.js`.
+/**
+ * The rollup configuration, for the whole `blocks/` tree or for one block of it.
+ *
+ * `only` is a block directory name (`block-xyz`), and is what `package.mjs` builds a distributable
+ * block with. Two things differ in that mode, both about the block ending up somewhere other than
+ * `compiled/` beside its siblings:
+ *
+ *   - the output goes wherever the packager asks, since it is a staging directory rather than the
+ *     tree the server serves;
+ *   - shared chunks are named into `<block>/`, instead of sitting at the root of the output as they
+ *     do here, where every block's chunks are named by one build and so cannot collide. A package is
+ *     unpacked beside built-in blocks that were compiled separately and by a different version of
+ *     the wiki, so a chunk at the root WOULD collide, and silently — two files of the same name,
+ *     each some other bundle's half. Under the block's own directory there is nothing to collide
+ *     with: the whole package is `block-<key>.js`, `block-<key>.worker.js` and `block-<key>/**`,
+ *     which is the namespace the server hands back out.
+ */
+export function buildConfig ({ only, outputDir = 'compiled' } = {}) {
+  const entryGlob = only ?? 'block-*'
+  return {
+    input: Object.fromEntries([
+      ...glob.sync(`@(${entryGlob})/component.js`, { ignore: IGNORED_DIRS }).map(file => {
+        const fileParts = file.split('/')
+        return [
+          fileParts[0],
+          file
+        ]
+      }),
+      /*
+        A `worker.js` beside a component is a second entry point, compiled to `<block>.worker.js`.
 
-      A web worker is loaded by URL rather than imported, so its code cannot be part of the bundle
-      that starts it -- it has to be a file of its own, sitting in /_blocks where the block can point
-      at it with `new URL('<block>.worker.js', import.meta.url)`. See `block-pdf`, which runs pdf.js's
-      parser off the page's thread.
-    */
-    ...glob.sync('@(block-*)/worker.js', { ignore: IGNORED_DIRS }).map(file => {
-      const fileParts = file.split('/')
-      return [
-        `${fileParts[0]}.worker`,
-        file
-      ]
-    })
-  ]),
-  output: {
-    dir: 'compiled',
-    format: 'es'
-  },
-  plugins: [
-    blocksManifest(),
-    blockAssets(),
-    cssAsString(),
-    // -> `production` is stated rather than left to be inferred: since v16 the plugin picks the
-    //    `development` or `production` export condition off `process.env.NODE_ENV`, and this build
-    //    runs from a bare `npm run build` with no NODE_ENV set. Unstated, lit resolves to its
-    //    development entry and every block ships the dev-mode warnings and asserts.
-    resolve({ exportConditions: ['production'] }),
-    // -> A block's own code is ESM, but a library it pulls in need not be: mermaid reaches for dayjs,
-    //    which ships as UMD, and rollup has no notion of `module.exports` without this
-    commonjs(),
-    terser({
-      ecma: 2019,
-      module: true
-    }),
-    summary()
-  ]
+        A web worker is loaded by URL rather than imported, so its code cannot be part of the bundle
+        that starts it -- it has to be a file of its own, sitting in /_blocks where the block can point
+        at it with `new URL('<block>.worker.js', import.meta.url)`. See `block-pdf`, which runs pdf.js's
+        parser off the page's thread.
+      */
+      ...glob.sync(`@(${entryGlob})/worker.js`, { ignore: IGNORED_DIRS }).map(file => {
+        const fileParts = file.split('/')
+        return [
+          `${fileParts[0]}.worker`,
+          file
+        ]
+      })
+    ]),
+    output: {
+      dir: outputDir,
+      format: 'es',
+      ...(only ? { chunkFileNames: `${only}/[name]-[hash].js` } : {})
+    },
+    plugins: [
+      blocksManifest(only),
+      blockAssets(only),
+      cssAsString(),
+      // -> `production` is stated rather than left to be inferred: since v16 the plugin picks the
+      //    `development` or `production` export condition off `process.env.NODE_ENV`, and this build
+      //    runs from a bare `npm run build` with no NODE_ENV set. Unstated, lit resolves to its
+      //    development entry and every block ships the dev-mode warnings and asserts.
+      resolve({ exportConditions: ['production'] }),
+      // -> A block's own code is ESM, but a library it pulls in need not be: mermaid reaches for dayjs,
+      //    which ships as UMD, and rollup has no notion of `module.exports` without this
+      commonjs(),
+      terser({
+        ecma: 2019,
+        module: true
+      }),
+      summary()
+    ]
+  }
 }
+
+export default buildConfig()

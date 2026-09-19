@@ -5,22 +5,26 @@
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-plugin.svg" />
       </div>
       <div class="min-w-0 flex-1 pl-4">
-        <div class="text-h5 admin-page-title animated fadeInLeft">{{ t('admin.blocks.title') }}</div>
+        <div class="text-h5 admin-page-title animated fadeInLeft">
+          {{ t('admin.blocks.title') }}
+        </div>
         <div class="text-subtitle1 text-grey animated fadeInLeft wait-p2s">
           {{ t('admin.blocks.subtitle') }}
         </div>
       </div>
       <div class="flex-none flex">
-        <template v-if="flagsStore.experimental">
-          <w-btn
-            class="mr-2 acrylic-btn"
-            unelevated
-            icon="la:plus"
-            :label="t(`admin.blocks.add`)"
-            color="primary"
-            @click="addBlock" />
-          <w-separator class="mr-2" vertical />
-        </template>
+        <w-btn
+          class="mr-2 acrylic-btn"
+          flat
+          icon="la:file-upload"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
+          :label="t(`admin.blocks.import`)"
+          :loading="state.importing"
+          :disabled="state.loading > 0 || state.importing"
+          @click="pickPackage">
+          <w-tooltip>{{ t(`admin.blocks.importHint`) }}</w-tooltip>
+        </w-btn>
+        <w-separator class="mr-2" vertical />
         <w-btn
           class="mr-2 acrylic-btn"
           icon="la:question-circle"
@@ -99,12 +103,18 @@
         </w-list>
       </w-card>
     </div>
+    <input
+      type="file"
+      ref="packageFileIpt"
+      accept=".wkblock"
+      style="display: none"
+      @change="importPackage" />
   </w-page>
 </template>
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, watch } from 'vue'
+import { onMounted, reactive, ref, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
@@ -113,7 +123,6 @@ import { loading } from '@/composables/loading'
 import { confirm } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
-import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 import { pick } from 'es-toolkit/object'
@@ -126,7 +135,6 @@ const dark = useDark()
 // STORES
 
 const adminStore = useAdminStore()
-const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -141,8 +149,11 @@ useMeta(() => ({
 
 const state = reactive({
   loading: 0,
+  importing: false,
   blocks: []
 })
+
+const packageFileIpt = ref(null)
 
 // WATCHERS
 
@@ -208,13 +219,50 @@ async function refresh() {
   await load()
 }
 
-function addBlock() {
-  // TODO: registering a custom block means uploading a compiled component, which needs an upload
-  // endpoint that does not exist yet. Built-in blocks come from the compiled block manifest.
-  notify({
-    type: 'warning',
-    message: t('admin.blocks.addUnavailable')
-  })
+function pickPackage() {
+  packageFileIpt.value?.click()
+}
+
+/**
+ * Install a `.wkblock` — a block somebody built outside this instance and packaged into one file.
+ *
+ * The body is the file itself rather than a multipart form, as every other upload here is. A package
+ * whose block this site already has replaces it, which is how a custom block is upgraded, so the
+ * reply says which of the two happened.
+ */
+async function importPackage() {
+  const file = packageFileIpt.value?.files?.[0]
+  if (!file || state.importing) {
+    return
+  }
+  state.importing = true
+  try {
+    const resp = await API_CLIENT.post(`sites/${adminStore.currentSiteId}/blocks/import`, {
+      headers: { 'content-type': 'application/octet-stream' },
+      body: file
+    }).json()
+    // -> The API client does not throw on 400, which is what a package that is not one comes back as,
+    //    so a refusal arrives here as a parsed error. A key a built-in block already has is a 409 and
+    //    does throw — both paths have to be reported
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t(resp.isNew ? 'admin.blocks.importSuccess' : 'admin.blocks.importUpdated', {
+        blockName: resp.name
+      })
+    })
+    await load()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.blocks.importFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+  packageFileIpt.value.value = null
+  state.importing = false
 }
 
 function deleteBlock(id) {

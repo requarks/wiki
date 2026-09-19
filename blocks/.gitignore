@@ -1,3 +1,5 @@
 compiled
 dist
 node_modules
+packages
+.package

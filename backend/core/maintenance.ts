@@ -45,7 +45,7 @@ export default {
   /**
    * Throw away everything this instance holds that the database is the real copy of.
    *
-   * The file and icon caches, in memory and on disk, and the site, group, page rule and locale state
+   * The file, icon and block caches, in memory and on disk, and the site, group, page rule and locale state
    * that answers every request. Nothing is lost and nothing is turned off: what the caches held is
    * read back from the database as it is asked for again, and the four reloaded here are refilled
    * before this returns rather than left for the next visitor to pay for.
@@ -54,6 +54,7 @@ export default {
     WIKI.cache.flushAll()
     await WIKI.models.assets.purgeCache()
     await WIKI.models.icons.purgeCache()
+    await WIKI.models.blocks.purgeCache()
 
     await WIKI.models.locales.reloadCache()
     await WIKI.models.sites.reloadCache()
@@ -77,6 +78,12 @@ export default {
     //    visible everywhere once the others read it back
     WIKI.events.inbound.on('reloadLocales', async () => {
       await WIKI.models.locales.reloadCache()
+    })
+    // -> Which blocks a site imported is held per instance too, and is what `/_blocks` answers from.
+    //    The files themselves need no propagating: each instance unpacks a block it has not got, or
+    //    has at the wrong checksum, the first time a browser asks it for one.
+    WIKI.events.inbound.on('reloadBlocks', async () => {
+      await WIKI.models.blocks.refreshCustomIndex()
     })
   }
 }

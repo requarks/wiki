@@ -200,6 +200,8 @@ async function postBoot() {
   // -> Must follow the sites cache: every site gets a row per installed block
   await WIKI.models.blocks.refreshFromDisk()
   await WIKI.models.blocks.syncAllSites()
+  // -> And which blocks were imported rather than installed, which is what `/_blocks` answers from
+  await WIKI.models.blocks.refreshCustomIndex()
 
   // -> Same: every site gets a row per installed storage module
   await WIKI.models.storage.refreshFromDisk()
@@ -393,17 +395,6 @@ async function initHTTPServer() {
     index: false,
     maxAge: '7d',
     decorateReply: false
-  })
-
-  // ----------------------------------------
-  // Blocks
-  // ----------------------------------------
-
-  app.register(fastifyStatic, {
-    prefix: '/_blocks/',
-    root: path.join(WIKI.ROOTPATH, 'blocks/compiled'),
-    index: false,
-    maxAge: '1h'
   })
 
   // ----------------------------------------
@@ -734,6 +725,7 @@ async function initHTTPServer() {
   // })
 
   app.register(import('./api/index.ts'), { prefix: '/_api' })
+  app.register(import('./controllers/blocks.ts'), { prefix: '/_blocks' })
   app.register(import('./controllers/collab.ts'), { prefix: '/_collab' })
   app.register(import('./controllers/files.ts'), { prefix: '/_files' })
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })

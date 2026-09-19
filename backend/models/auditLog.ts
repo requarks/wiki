@@ -79,6 +79,7 @@ export const AUDIT_ACTIONS = {
     'updateAuthStrategy',
     'deleteAuthStrategy',
     'updateBlock',
+    'importBlock',
     'deleteBlock',
     'createGroup',
     'updateGroup',

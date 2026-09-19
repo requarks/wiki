@@ -1,7 +1,10 @@
-import { readdir, readFile, stat } from 'node:fs/promises'
+import crypto from 'node:crypto'
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { and, eq, inArray } from 'drizzle-orm'
 import { blocks as blocksTable, sites as sitesTable } from '../db/schema.ts'
+import { CustomError } from '../helpers/common.ts'
+import { readBlockPackage } from '../helpers/wkblock.ts'
 
 /** One authorable attribute of a block, as its `static definition` describes it. */
 export interface BlockProp {
@@ -90,6 +93,34 @@ export interface SiteBlock {
   isChild: boolean
 }
 
+/**
+ * What a block is imported from, and what came of it. The reply to an import.
+ */
+export interface BlockImportResult {
+  id: string
+  block: string
+  name: string
+  /** False when the package replaced a block this site already had — an upgrade rather than a new one. */
+  isNew: boolean
+  fileCount: number
+  /** When the package was built, and by which version of the wiki. Empty if it did not say. */
+  packagedAt: string
+  packagedWith: string
+}
+
+/** Everything `postProcess` needs from this model to decide which block tags survive a save. */
+export interface RenderableBlocks {
+  /** The keys of the blocks this site has switched on. */
+  enabled: Set<string>
+  /**
+   * The definitions of this site's CUSTOM blocks, which are on nobody's disk to be read from.
+   *
+   * Read in the same query as the keys above rather than from a cache, for the same reason that
+   * query is not cached: a definition this misses is a block stripped out of somebody's page.
+   */
+  custom: BlockDefinition[]
+}
+
 const blockSelection = {
   id: blocksTable.id,
   block: blocksTable.block,
@@ -98,7 +129,8 @@ const blockSelection = {
   icon: blocksTable.icon,
   isEnabled: blocksTable.isEnabled,
   isCustom: blocksTable.isCustom,
-  config: blocksTable.config
+  config: blocksTable.config,
+  definition: blocksTable.definition
 }
 
 /**
@@ -108,10 +140,36 @@ const blockSelection = {
  * declared as a `static definition` on each Lit component and collected into
  * `blocks/compiled/blocks.manifest.json` by the rollup build, which is what this model reads —
  * the components themselves cannot be imported outside a browser.
+ *
+ * A CUSTOM block is the same thing built outside this tree: one block compiled on its own by
+ * `blocks/package.mjs` into a `.wkblock` file, uploaded here, and kept in the database. It has no
+ * manifest entry and never gets one — its definition is stored on its row, and its compiled files are
+ * unpacked into `<dataPath>/cache/blocks` the first time a browser asks for one. See `importPackage`.
  */
 class Blocks {
   /** Definitions read from the compiled manifest, refreshed by `refreshFromDisk()`. */
   definitions: BlockDefinition[] = []
+
+  /**
+   * Which blocks are custom, per site, and at what version — `siteId` → `block` → checksum.
+   *
+   * This is what `controllers/blocks.ts` answers a request from, so it has to be reachable without a
+   * query: every file of every block on every page goes through it. Filled by `refreshCustomIndex()`
+   * at boot and after an import or a delete, and re-read on the `reloadBlocks` event so that the
+   * other instances of an HA set find out.
+   */
+  private customIndex = new Map<string, Map<string, string>>()
+
+  /**
+   * The checksum this instance has already unpacked into the cache, keyed `siteId:block`.
+   *
+   * Just so a warm instance does not stat the cache on every request. The disk is still the authority
+   * — this only ever says "no need to look".
+   */
+  private materialized = new Map<string, string>()
+
+  /** In-flight unpacks, so that a burst of requests for a cold block does not unpack it many times. */
+  private materializing = new Map<string, Promise<void>>()
 
   /**
    * Whether the last read of the manifest succeeded.
@@ -302,22 +360,37 @@ class Blocks {
   }
 
   /**
-   * Fetch the blocks available to a site, built-in first, then by name
+   * Fetch the blocks available to a site, by name.
+   *
+   * By name ALONE, rather than built-in blocks and then imported ones: both screens that show this
+   * list — the admin area's and the editor's picker — are read to find one block in it, and a reader
+   * looking for "Greeter" should not have to know where it came from first. Which of the two a block is
+   * is on its own row either way.
+   *
+   * The child blocks follow at the end, since they are appended below rather than selected. Nothing
+   * displays one, so they have no order to be in.
    */
   async getSiteBlocks(siteId: string): Promise<SiteBlock[]> {
     const results = await WIKI.db
       .select(blockSelection)
       .from(blocksTable)
       .where(eq(blocksTable.siteId, siteId))
-      .orderBy(blocksTable.isCustom, blocksTable.name)
+      .orderBy(blocksTable.name)
     /*
-      `props` come from the manifest rather than the row: they describe the component's own attributes,
-      so they belong to the installed code and not to a site's copy of it. Reading them here means an
-      updated block's props are correct the moment it is deployed, with nothing to migrate — and a
-      custom block, having no manifest entry, simply reports none.
+      For a built-in, `props` come from the manifest rather than the row: they describe the component's
+      own attributes, so they belong to the installed code and not to a site's copy of it. Reading them
+      here means an updated block's props are correct the moment it is deployed, with nothing to
+      migrate.
+
+      A custom block has no manifest entry, and its row is where the installed code IS — the definition
+      was stored from its package at import, and is replaced whole whenever a newer package is
+      uploaded. Same rule, therefore, read from the other place.
     */
-    const listed = (results as SiteBlock[]).map((row) => {
-      const definition = this.definitions.find((d) => d.block === row.block)
+    const listed = (results as (SiteBlock & { definition: BlockDefinition })[]).map((stored) => {
+      const { definition: storedDefinition, ...row } = stored
+      const definition = row.isCustom
+        ? storedDefinition
+        : this.definitions.find((d) => d.block === row.block)
       return {
         ...row,
         props: definition?.props ?? [],
@@ -361,22 +434,34 @@ class Blocks {
   }
 
   /**
-   * The keys of the blocks a site has switched on.
+   * The blocks a site has switched on, and what the custom ones among them declare.
    *
    * Read from the database on every call rather than kept in a cache like this model's definitions.
    * What this answer gates is which blocks survive a page being saved, and a stale `false` silently
    * strips an author's block out of their page — a wrong answer here destroys content rather than
    * merely showing the wrong list. One indexed read of a handful of rows, on a path that has just
-   * sanitised a whole document, is not worth that risk.
+   * sanitised a whole document, is not worth that risk. The custom definitions ride along in the same
+   * query for exactly the same reason: a block imported a minute ago on another instance of an HA set
+   * must not be stripped out of the first page saved after it.
    *
    * Child blocks never appear: they have no row of their own, and follow the block they sit in.
    */
-  async getEnabledKeys(siteId: string): Promise<Set<string>> {
+  async getEnabledForRender(siteId: string): Promise<RenderableBlocks> {
     const rows = await WIKI.db
-      .select({ block: blocksTable.block })
+      .select({
+        block: blocksTable.block,
+        isCustom: blocksTable.isCustom,
+        definition: blocksTable.definition
+      })
       .from(blocksTable)
       .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.isEnabled, true)))
-    return new Set(rows.map((row) => row.block))
+    return {
+      enabled: new Set(rows.map((row) => row.block)),
+      custom: rows
+        .filter((row) => row.isCustom)
+        .map((row) => row.definition as BlockDefinition)
+        .filter((definition) => definition?.block)
+    }
   }
 
   /**
@@ -410,12 +495,229 @@ class Blocks {
    * @returns Whether a block was deleted
    */
   async deleteCustomBlock(siteId: string, id: string): Promise<boolean> {
-    const result = await WIKI.db
+    const [deleted] = await WIKI.db
       .delete(blocksTable)
       .where(
         and(eq(blocksTable.siteId, siteId), eq(blocksTable.id, id), eq(blocksTable.isCustom, true))
       )
-    return (result.rowCount ?? 0) > 0
+      .returning({ block: blocksTable.block })
+    if (!deleted) {
+      return false
+    }
+    await this.discardCached(siteId, deleted.block)
+    await this.refreshCustomIndex()
+    WIKI.events.outbound.emit('reloadBlocks')
+    return true
+  }
+
+  // == CUSTOM BLOCKS ==================
+
+  /** Where unpacked custom blocks live. Derived and disposable — the packages are in the database. */
+  get cachePath(): string {
+    return path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, 'cache/blocks')
+  }
+
+  /**
+   * Install a packaged block on a site, or replace the one already there.
+   *
+   * Replacing is how a block is upgraded, and is why the row is updated rather than swapped: whether
+   * the site has the block switched on, and whatever it has configured on it, are the site's own
+   * answers and survive a new package. What the package brings is the code, the definition and the
+   * name — the three things that describe the block itself.
+   *
+   * The key is the identity. A package whose key is that of a built-in block is refused rather than
+   * shadowing it: the two would be served from the same URL, and one of them would silently win.
+   */
+  async importPackage(siteId: string, data: Buffer): Promise<BlockImportResult> {
+    const pkg = readBlockPackage(data)
+
+    if (this.definitions.some((definition) => definition.block === pkg.block)) {
+      throw new CustomError(
+        'blockPackageConflict',
+        `This wiki already has a built-in block called "${pkg.block}", and both would be served from the same address. Rename the block and package it again.`,
+        409
+      )
+    }
+
+    const [existing] = await WIKI.db
+      .select({ id: blocksTable.id, isCustom: blocksTable.isCustom })
+      .from(blocksTable)
+      .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.block, pkg.block)))
+    if (existing && !existing.isCustom) {
+      throw new CustomError(
+        'blockPackageConflict',
+        `This site already has a built-in block called "${pkg.block}".`,
+        409
+      )
+    }
+
+    const checksum = crypto.createHash('sha256').update(data).digest('hex')
+    const values = {
+      name: pkg.definition.name,
+      description: pkg.definition.description,
+      icon: pkg.definition.icon,
+      definition: pkg.definition,
+      packageData: data,
+      checksum
+    }
+
+    let id: string
+    if (existing) {
+      await WIKI.db.update(blocksTable).set(values).where(eq(blocksTable.id, existing.id))
+      id = existing.id
+    } else {
+      const [inserted] = await WIKI.db
+        .insert(blocksTable)
+        .values({
+          ...values,
+          siteId,
+          block: pkg.block,
+          isEnabled: true,
+          isCustom: true,
+          config: {}
+        })
+        .returning({ id: blocksTable.id })
+      id = inserted.id
+    }
+
+    /*
+      The files are not written here. `materialize` unpacks them from the row on the first request, so
+      an upgrade lands on every instance of an HA set on its own — including one that was not running
+      when the upload happened. All this has to do is make sure nothing stale is left behind on THIS
+      instance, and tell the others to re-read the index.
+    */
+    await this.discardCached(siteId, pkg.block)
+    await this.refreshCustomIndex()
+    WIKI.events.outbound.emit('reloadBlocks')
+
+    WIKI.logger.info(`Imported block ${pkg.block} (${pkg.files.size} file(s)) into site ${siteId}.`)
+    return {
+      id,
+      block: pkg.block,
+      name: pkg.definition.name,
+      isNew: !existing,
+      fileCount: pkg.files.size,
+      packagedAt: pkg.packagedAt,
+      packagedWith: pkg.packagedWith
+    }
+  }
+
+  /**
+   * Re-read which blocks are custom, on every site.
+   *
+   * Cheap — three small columns and no package bytes — and it is the only thing the serving route
+   * consults per request.
+   */
+  async refreshCustomIndex(): Promise<void> {
+    const rows = await WIKI.db
+      .select({
+        siteId: blocksTable.siteId,
+        block: blocksTable.block,
+        checksum: blocksTable.checksum
+      })
+      .from(blocksTable)
+      .where(eq(blocksTable.isCustom, true))
+    const index = new Map<string, Map<string, string>>()
+    for (const row of rows) {
+      const forSite = index.get(row.siteId) ?? new Map<string, string>()
+      forSite.set(row.block, row.checksum)
+      index.set(row.siteId, forSite)
+    }
+    this.customIndex = index
+  }
+
+  /**
+   * The directory a custom block's files are served from, unpacking them first if need be.
+   *
+   * Null when this site has no custom block by that key, which is the ordinary answer — every request
+   * for a built-in block asks this first.
+   */
+  async servingPathFor(siteId: string, block: string): Promise<string | null> {
+    const checksum = this.customIndex.get(siteId)?.get(block)
+    if (!checksum) {
+      return null
+    }
+    const key = `${siteId}:${block}`
+    if (this.materialized.get(key) !== checksum) {
+      let pending = this.materializing.get(key)
+      if (!pending) {
+        pending = this.materialize(siteId, block, checksum).finally(() => {
+          this.materializing.delete(key)
+        })
+        this.materializing.set(key, pending)
+      }
+      await pending
+    }
+    return path.join(this.cachePath, siteId, `block-${block}`)
+  }
+
+  /**
+   * Unpack a custom block's package into the cache, unless it is already there at this version.
+   *
+   * The marker file beside the directory is what says which version that is, and it is written last —
+   * so an unpack that died halfway leaves no marker, and the next request does it again rather than
+   * serving half a block. The directory is built under a temporary name and moved into place for the
+   * same reason: a request arriving mid-unpack sees the previous version or nothing, never a mixture.
+   */
+  private async materialize(siteId: string, block: string, checksum: string): Promise<void> {
+    const siteDir = path.join(this.cachePath, siteId)
+    const blockDir = path.join(siteDir, `block-${block}`)
+    const markerPath = `${blockDir}.checksum`
+    const key = `${siteId}:${block}`
+
+    if (
+      await readFile(markerPath, 'utf8').then(
+        (value) => value === checksum,
+        () => false
+      )
+    ) {
+      this.materialized.set(key, checksum)
+      return
+    }
+
+    const [row] = await WIKI.db
+      .select({ packageData: blocksTable.packageData })
+      .from(blocksTable)
+      .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.block, block)))
+    if (!row?.packageData) {
+      throw new Error(`Block ${block} has no stored package to unpack.`)
+    }
+    const pkg = readBlockPackage(Buffer.from(row.packageData))
+
+    const stagingDir = `${blockDir}.${crypto.randomBytes(6).toString('hex')}`
+    try {
+      for (const [filePath, bytes] of pkg.files) {
+        const target = path.join(stagingDir, filePath)
+        await mkdir(path.dirname(target), { recursive: true })
+        await writeFile(target, bytes)
+      }
+      await rm(blockDir, { recursive: true, force: true })
+      await rename(stagingDir, blockDir)
+      await writeFile(markerPath, checksum, 'utf8')
+    } catch (err) {
+      await rm(stagingDir, { recursive: true, force: true })
+      throw err
+    }
+    this.materialized.set(key, checksum)
+    WIKI.logger.debug(`Unpacked block ${block} for site ${siteId} into the block cache.`)
+  }
+
+  /** Throw away one block's unpacked files, so that the next request writes them again. */
+  private async discardCached(siteId: string, block: string): Promise<void> {
+    const blockDir = path.join(this.cachePath, siteId, `block-${block}`)
+    this.materialized.delete(`${siteId}:${block}`)
+    await rm(`${blockDir}.checksum`, { force: true })
+    await rm(blockDir, { recursive: true, force: true })
+  }
+
+  /**
+   * Throw away every unpacked block, for `flushCaches`.
+   *
+   * Nothing is lost: the packages are rows, and the next request for each block writes its files back.
+   */
+  async purgeCache(): Promise<void> {
+    this.materialized.clear()
+    await rm(this.cachePath, { recursive: true, force: true })
   }
 }
 
