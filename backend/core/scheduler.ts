@@ -1,4 +1,4 @@
-import { DynamicThreadPool } from 'poolifier'
+import { DynamicThreadPool, FixedThreadPool } from 'poolifier'
 import os from 'node:os'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -69,7 +69,7 @@ export interface AddJobOptions {
 }
 
 export default {
-  workerPool: null as DynamicThreadPool<any, boolean> | null,
+  workerPool: null as FixedThreadPool<any, boolean> | null,
   pubsubClient: null as PoolClient | null,
   maxWorkers: 1,
   activeWorkers: 0,
@@ -86,16 +86,18 @@ export default {
       this.maxWorkers = 1
     }
     WIKI.logger.info(`Initializing Worker Pool (Limit: ${this.maxWorkers})...`)
-    this.workerPool = new DynamicThreadPool(
-      1,
-      this.maxWorkers,
-      path.join(WIKI.SERVERPATH, 'worker.ts'),
-      {
-        errorHandler: (err: Error) => WIKI.logger.warn(err),
-        exitHandler: () => WIKI.logger.debug('A worker has gone offline.'),
-        onlineHandler: () => WIKI.logger.debug('New worker is online.')
-      }
-    )
+    const poolFile = path.join(WIKI.SERVERPATH, 'worker.ts')
+    const poolOptions = {
+      errorHandler: (err: Error) => WIKI.logger.warn(err),
+      exitHandler: () => WIKI.logger.debug('A worker has gone offline.'),
+      onlineHandler: () => WIKI.logger.debug('New worker is online.')
+    }
+    // -> A dynamic pool refuses a minimum equal to its maximum, which is what a single-CPU host
+    //    (or `workers: 1`) asks for. There is nothing to grow there, so it is a fixed pool of one.
+    this.workerPool =
+      this.maxWorkers > 1
+        ? new DynamicThreadPool(1, this.maxWorkers, poolFile, poolOptions)
+        : new FixedThreadPool(1, poolFile, poolOptions)
     this.tasks = {}
     for (const f of await fs.readdir(path.join(WIKI.SERVERPATH, 'tasks/simple'))) {
       const taskName = camelCase(f.replace(/\.[jt]s$/, ''))
