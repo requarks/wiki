@@ -88,7 +88,15 @@ export const useUserStore = defineStore('user', {
     email: '',
     name: '',
     hasAvatar: false,
-    localeCode: '',
+    /**
+     * The language the wiki writes to this user in — the mails, today. Empty means the language of
+     * whichever site the mail is about.
+     *
+     * Deliberately not what the interface is drawn in: that follows the page being read, and on a
+     * screen that is not a page the locale picker's own choice, which `commonStore` keeps per
+     * browser. See the locale block in `App.vue`.
+     */
+    locale: '',
     timezone: '',
     dateFormat: 'YYYY-MM-DD',
     timeFormat: '12h',
@@ -135,6 +143,7 @@ export const useUserStore = defineStore('user', {
         location: resp.location || '',
         jobTitle: resp.jobTitle || '',
         pronouns: resp.pronouns || '',
+        locale: resp.locale || '',
         timezone: resp.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || '',
         dateFormat: resp.dateFormat || '',
         timeFormat: resp.timeFormat || '12h',
@@ -165,6 +174,7 @@ export const useUserStore = defineStore('user', {
         email: '',
         name: '',
         hasAvatar: false,
+        locale: '',
         timezone: '',
         dateFormat: 'YYYY-MM-DD',
         timeFormat: '12h',

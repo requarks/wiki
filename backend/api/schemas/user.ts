@@ -152,6 +152,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       pronouns: {
         type: 'string'
       },
+      locale: {
+        type: 'string',
+        description:
+          'The language the wiki writes to this user in — emails today. An empty string means the language of the site the mail is about.'
+      },
       timezone: {
         type: 'string',
         description: 'IANA time zone name, or an empty string to use the client time zone.'
@@ -253,6 +258,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       pronouns: {
         type: 'string',
+        maxLength: 255
+      },
+      locale: {
+        type: 'string',
+        description:
+          'The language to be written to in, as a locale code the wiki has installed. An empty string follows the site instead. A code naming no installed locale is ignored when the mail is rendered.',
         maxLength: 255
       },
       timezone: {

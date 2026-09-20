@@ -31,7 +31,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
@@ -77,7 +77,14 @@ useMeta(() => {
 
 // DATA
 
-const sidenav = [
+/*
+  Computed, not a plain array: the locale strings are fetched after the app mounts (`App.vue` ->
+  `applyLocale`), so a `t()` called once during `setup()` can resolve before they land and leave
+  the section list showing raw keys for the life of the page — which is what a direct load of this
+  screen does, as opposed to a navigation to it. Inside a computed it re-evaluates when
+  `setLocaleMessage` fills the strings in.
+*/
+const sidenav = computed(() => [
   {
     key: 'messages',
     label: t('inbox.inbox'),
@@ -93,7 +100,7 @@ const sidenav = [
     label: t('inbox.pendingReview'),
     icon: 'la:clipboard-check'
   }
-]
+])
 
 // WATCHERS
 

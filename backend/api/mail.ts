@@ -153,7 +153,7 @@ async function routes(app: FastifyInstance) {
    * password otherwise. Sent through the same transport every other mail goes through, so a failure
    * here is the failure they would have hit.
    */
-  app.post<{ Body: { recipient: string } }>(
+  app.post<{ Body: { recipient: string; locale?: string } }>(
     '/test',
     {
       config: {
@@ -171,6 +171,12 @@ async function routes(app: FastifyInstance) {
             recipient: {
               type: 'string',
               format: 'email',
+              maxLength: 255
+            },
+            locale: {
+              type: 'string',
+              description:
+                'Which language to write the test in, which is how the localized templates are checked. Defaults to the site’s own language, as a mail nobody has a preference on does.',
               maxLength: 255
             }
           }
@@ -205,11 +211,16 @@ async function routes(app: FastifyInstance) {
           siteId,
           to: req.body.recipient,
           template: 'test',
+          locale: req.body.locale,
           data: {
             baseUrl: WIKI.models.mail.baseUrl({ req, siteId })
           }
         })
-        await audit(req, 'admin', 'sendTestEmail', { recipient: req.body.recipient, siteId })
+        await audit(req, 'admin', 'sendTestEmail', {
+          recipient: req.body.recipient,
+          siteId,
+          locale: req.body.locale
+        })
 
         return {
           ok: true,

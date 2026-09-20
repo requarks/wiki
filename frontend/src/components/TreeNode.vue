@@ -81,6 +81,8 @@ const opened = inject('opened')
 const displayMode = inject('displayMode')
 const selection = inject('selection')
 const emitLazyLoad = inject('emitLazyLoad')
+// -> A computed, not a plain array: see the note where `TreeNav` provides it. Unwrapped by the
+//    template, which is the only place it is read here.
 const contextActionList = inject('contextActionList')
 
 // DATA

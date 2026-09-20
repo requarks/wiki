@@ -72,6 +72,7 @@ const props = defineProps({
 const roots = inject('roots')
 const nodes = inject('nodes')
 const selection = inject('selection')
+// -> A computed, not a plain array: see the note where `TreeNav` provides it
 const contextActionList = inject('contextActionList')
 
 // COMPOSABLES
@@ -84,7 +85,7 @@ const rootContextActionList = computed(() => {
   if (props.parentId) {
     return []
   }
-  return contextActionList.filter((c) => c.key === 'newFolder')
+  return contextActionList.value.filter((c) => c.key === 'newFolder')
 })
 
 const level = computed(() => {

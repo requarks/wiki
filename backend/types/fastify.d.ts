@@ -27,6 +27,7 @@ declare module 'fastify' {
       email: string
       name: string
       hasAvatar?: boolean
+      locale?: string
       timezone?: string
       dateFormat?: string
       timeFormat?: string

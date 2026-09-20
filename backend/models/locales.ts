@@ -21,6 +21,24 @@ const REMOTE_BASE_URL = 'https://github.com/requarks/wiki-locales/raw/main'
  */
 const SOURCE_LOCALE = 'en'
 
+/**
+ * A `{name}` placeholder in a locale string, as vue-i18n writes them.
+ *
+ * A name with nothing to put in it is left as it stands rather than emptied: the string is then
+ * visibly wrong in the place the mistake actually is, instead of quietly missing a word.
+ */
+const INTERPOLATION = /\{([A-Za-z0-9_]+)\}/g
+
+/** One locale's strings, bound and ready to render with. See `translator`. */
+export interface Translator {
+  /** The locale these strings are actually for, which need not be the one that was asked for. */
+  locale: string
+  /** Whether it is written right to left, which is what a document rendered in it has to declare. */
+  isRTL: boolean
+  /** One string, with its `{name}` placeholders filled in. */
+  t(key: string, params?: Record<string, string | number>): string
+}
+
 /** One entry of the remote `metadata.json`: a strings file and the hash of its contents. */
 interface RemoteLocale {
   file: string
@@ -634,9 +652,78 @@ class Locales {
     return results.length === 1 ? results[0].strings : []
   }
 
+  /**
+   * One locale's string set, held in memory after the first read.
+   *
+   * Only the locale METADATA is cached by `getLocales`; the strings are a blob of a few thousand
+   * entries that the interface fetches from the db per request and has no reason to keep. What
+   * reads them here does: a mail is rendered from a handful of keys, and paying a query for each
+   * send — of a set that changes only when a locale is installed or updated — is the wrong trade.
+   *
+   * Dropped by `reloadCache`, which is what every install and update already calls and what the
+   * `reloadLocales` event runs on the other instances of an HA set.
+   */
+  async #stringsFor(code: string): Promise<Record<string, string>> {
+    const cacheKey = `localeStrings:${code}`
+    const cached = WIKI.cache.get(cacheKey) as Record<string, string> | undefined
+    if (cached) {
+      return cached
+    }
+    const strings = (await this.getStrings(code)) as Record<string, string>
+    // -> `getStrings` answers `[]` for a locale that has no row at all
+    const resolved = Array.isArray(strings) ? {} : (strings ?? {})
+    WIKI.cache.set(cacheKey, resolved)
+    return resolved
+  }
+
+  /**
+   * Resolve strings server-side, the way the interface resolves them in the browser.
+   *
+   * Everything the wiki writes for a person to read rather than for a machine to parse belongs in
+   * `locales/en.json` and is translated with the rest of it — today that is the mails, which used to
+   * be English literals in `models/mail.ts`. The keys and the `{name}` placeholders are vue-i18n's,
+   * because a translator working on CrowdIn should not have to know which side of the wire a string
+   * is rendered on.
+   *
+   * **It is a bound translator rather than a `t(locale, key)` call** because the strings have to be
+   * fetched, and everything that renders text does it one locale at a time and several strings at a
+   * time: awaiting the locale once and then filling in a template synchronously is what keeps the
+   * rendering itself readable.
+   *
+   * Two fallbacks, and they are not the same thing. A locale that is not installed — or is not a
+   * locale this wiki has heard of — is not used at all, so that an unvalidated code from a request
+   * body cannot put an entry in the cache above. A locale that IS installed but is missing the key
+   * asked for falls back to `en` for that key alone, because a translation lags the release that
+   * added the string and a half-translated locale must not emit raw keys at a reader.
+   *
+   * @param code The locale wanted, if there is one
+   */
+  async translator(code?: string | null): Promise<Translator> {
+    const known = this.#cachedLocales().find((lc) => lc.code === code && lc.isInstalled)
+    const locale = known?.code ?? SOURCE_LOCALE
+    const strings = await this.#stringsFor(locale)
+    const fallback = locale === SOURCE_LOCALE ? strings : await this.#stringsFor(SOURCE_LOCALE)
+    return {
+      locale,
+      isRTL: known?.isRTL ?? false,
+      t(key, params = {}) {
+        // -> The key itself for a string no locale has, which is what vue-i18n shows and is the one
+        //    form of this that says what is missing
+        const template = strings[key] ?? fallback[key] ?? key
+        return template.replace(INTERPOLATION, (match, name: string) =>
+          name in params ? String(params[name]) : match
+        )
+      }
+    }
+  }
+
   async reloadCache(): Promise<void> {
     WIKI.logger.info('Reloading locales cache...')
     const locales = await WIKI.models.locales.getLocales({ cache: false })
+    // -> The string sets too, since an update run is exactly what changes them
+    for (const locale of locales) {
+      WIKI.cache.del(`localeStrings:${locale.code}`)
+    }
     WIKI.logger.info(`Loaded ${locales.length} locales into cache [ OK ]`)
   }
 }

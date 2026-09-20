@@ -551,6 +551,7 @@ import { copyToClipboard } from '@/helpers/clipboard'
 import { localizeError } from '@/helpers/localization'
 
 import { useAuthConfigStore } from '@/stores/authConfig'
+import { useCommonStore } from '@/stores/common'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -566,6 +567,7 @@ const dark = useDark()
 // STORES
 
 const authConfigStore = useAuthConfigStore()
+const commonStore = useCommonStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -1050,7 +1052,14 @@ async function forgotPassword() {
     const resp = await API_CLIENT.post(`sites/${siteStore.id}/auth/forgotPassword`, {
       json: {
         strategyId: state.selectedStrategyId,
-        email: state.username
+        email: state.username,
+        /*
+          What language to write the mail in, for an account whose owner has never said. There is
+          nothing else to go on at this point -- the form is filled by somebody who is not signed in
+          -- and the language the wiki is being read in right now is a better guess than the site's
+          own, which is what the server falls back to.
+        */
+        locale: commonStore.locale
       },
       throwHttpErrors: (statusNumber) => statusNumber > 400 // Don't throw for 400
     }).json()
@@ -1139,7 +1148,10 @@ async function register() {
         strategyId: state.selectedStrategyId,
         name: state.newName,
         email: state.newEmail,
-        password: state.newPassword
+        password: state.newPassword,
+        // -> Kept as the new account's own language preference, as well as used for the welcome
+        //    mail: signing up while reading the wiki in French says which language to write in
+        locale: commonStore.locale
       },
       throwHttpErrors: (statusNumber) => statusNumber > 400 // Don't throw for 400
     }).json()

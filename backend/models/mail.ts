@@ -1,13 +1,18 @@
 import { createTransport } from 'nodemailer'
 import type { Transporter } from 'nodemailer'
+import type { Translator } from './locales.ts'
 
 /**
  * The templates this wiki sends, and what each one needs.
  *
- * Two of them are the ones the admin area names under Mail Templates; `test` is the button beside
- * them. Held as literals rather than rows in a table because nothing sends a mail this wiki did not
- * ask it to — a template is part of the flow that uses it, and a flow that gained one would have to
- * gain code here anyway.
+ * Two of them belong to a flow — registration and a forgotten password; `test` is the admin area's
+ * button. Held as literals rather than rows in a table because nothing sends a mail this wiki did
+ * not ask it to — a template is part of the flow that uses it, and a flow that gained one would
+ * have to gain code here anyway.
+ *
+ * **What each one SAYS is not here**: every string lives in `locales/en.json` under `mail.*` and is
+ * translated with the rest of the interface, so adding a template means adding its keys there. See
+ * `render`.
  */
 export interface MailTemplateData {
   welcome: {
@@ -39,11 +44,23 @@ export interface MailTemplateData {
 /** A template key, i.e. one of the keys of `MailTemplateData`. */
 export type MailTemplate = keyof MailTemplateData
 
-/** What a rendered template is: a subject line and the two bodies every mail carries. */
-interface RenderedMail {
+/**
+ * One mail as its template describes it, before either body exists.
+ *
+ * Every mail this wiki sends is the same shape — a heading, some paragraphs, at most one thing to
+ * press — so a template says what goes in those slots and nothing about how they are drawn. Which
+ * is what lets the HTML body and the text body be two renderings of one description rather than
+ * two hand-written copies that drift: the pair of them used to be written out per template, and a
+ * string changed in one was a string not changed in the other.
+ */
+interface MailContent {
   subject: string
-  text: string
-  html: string
+  /** The heading, which is the subject without the site's name repeated in it. */
+  title: string
+  /** Paragraphs, as plain text: escaping is the business of whichever body they end up in. */
+  body: string[]
+  action?: { label: string; url: string }
+  footer: string
 }
 
 /**
@@ -76,6 +93,17 @@ export interface MailRequest<K extends MailTemplate = MailTemplate> {
   to: string
   template: K
   data: MailTemplateData[K]
+  /**
+   * What language to write it in, when anything is known about the recipient's.
+   *
+   * The caller's job rather than this model's, because what is known differs at every send site and
+   * none of it is reachable from here: an account's own `prefs.locale`, the locale the browser
+   * making the request was reading the wiki in, or nothing at all for a mail nobody asked for. A
+   * locale that is not installed is ignored, so a value straight off a request body is safe to pass.
+   *
+   * Left empty, the mail is written in the site's primary locale — see `localeFor`.
+   */
+  locale?: string | null
 }
 
 /**
@@ -98,39 +126,56 @@ function escapeHtml(str: string): string {
  * Written as a table with inline styles and no external anything, which is what a mail client will
  * actually render — the stylesheet, the web font and the background image a page would use are all
  * either stripped or blocked by the ones people read mail in.
+ *
+ * **The direction is declared three times on purpose.** Gmail and Outlook.com drop the `<html>` and
+ * `<body>` elements and paste what is between them into their own document, taking any `dir` on
+ * them with it — so a right-to-left mail read there would come out left-aligned, with its
+ * punctuation at the wrong end, unless the cell that survives carries the direction itself.
  */
-function htmlShell({
-  title,
-  body,
-  action,
-  footer
-}: {
-  title: string
-  /** Paragraphs, already escaped. */
-  body: string[]
-  action?: { label: string; url: string }
-  footer: string
-}): string {
+function htmlShell({ title, body, action, footer }: MailContent, isRTL: boolean): string {
+  const dir = isRTL ? 'rtl' : 'ltr'
+  const align = isRTL ? 'right' : 'left'
   const paragraphs = body
-    .map((p) => `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#37474f;">${p}</p>`)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#37474f;">${escapeHtml(p)}</p>`
+    )
     .join('')
   const button = action
     ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(action.url)}" style="display:inline-block;padding:12px 24px;border-radius:4px;background:#1976d2;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">${escapeHtml(action.label)}</a></p>` +
       // -> The same link in full, for the client that will not render the button and for the reader
-      //    who wants to see where it goes before following it
-      `<p style="margin:0 0 16px;font-size:12px;line-height:1.6;color:#78909c;word-break:break-all;">${escapeHtml(action.url)}</p>`
+      //    who wants to see where it goes before following it. Always left to right: a URL is not
+      //    written in the language around it, and bidi reordering makes one unreadable.
+      `<p dir="ltr" style="margin:0 0 16px;font-size:12px;line-height:1.6;color:#78909c;word-break:break-all;text-align:${align};">${escapeHtml(action.url)}</p>`
     : ''
   return [
     '<!DOCTYPE html>',
-    '<html><body style="margin:0;padding:24px;background:#eceff1;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;">',
+    `<html dir="${dir}"><body dir="${dir}" style="margin:0;padding:24px;background:#eceff1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:6px;">',
-    '<tr><td style="padding:32px;">',
+    `<tr><td dir="${dir}" style="padding:32px;text-align:${align};">`,
     `<h1 style="margin:0 0 24px;font-size:20px;line-height:1.4;color:#263238;">${escapeHtml(title)}</h1>`,
     paragraphs,
     button,
     `<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #eceff1;font-size:12px;line-height:1.6;color:#90a4ae;">${escapeHtml(footer)}</p>`,
     '</td></tr></table></body></html>'
   ].join('')
+}
+
+/**
+ * The text body, which is the same description with nothing drawn around it.
+ *
+ * Every client that will not render HTML shows this one, and it is also what keeps a mail out of
+ * the spam folder a filter puts HTML-only messages in. Every field of the description appears,
+ * including the title: it is a heading in the HTML body and a first line here, and a paragraph
+ * written under one refers to it — "if you are reading it" has nothing to point at in a text body
+ * that opened with the sentence itself.
+ *
+ * The action's URL goes after the paragraphs rather than beside whichever sentence introduces it,
+ * so that the two bodies say things in the same order — the button sits after the paragraphs in
+ * the HTML one for the same reason.
+ */
+function textBody({ title, body, action, footer }: MailContent): string {
+  return [title, ...body, ...(action ? [action.url] : []), footer].join('\n\n')
 }
 
 /**
@@ -149,6 +194,11 @@ function htmlShell({
  * The transport is built once and kept, and rebuilt when the settings behind it change —
  * `configFingerprint()` is how that is noticed, rather than an event, because the settings can be
  * changed on another instance in an HA set and this one would never hear about it.
+ *
+ * **Nothing here is written in English.** Every string comes out of `locales/en.json` under `mail.*`
+ * through `locales.translator`, which is the same string set and the same CrowdIn pipeline the
+ * interface uses — so a locale somebody translates arrives in the mails as well, and a template
+ * added here is a set of keys added there. Which language one mail is written in is `localeFor`.
  */
 class Mail {
   private transporter: Transporter | null = null
@@ -272,118 +322,76 @@ class Mail {
   }
 
   /**
-   * Render one of the templates.
+   * The language a mail is written in.
    *
-   * Both bodies are built from the same values: the text one is what a client that will not render
-   * HTML shows, and is also what keeps the mail out of a spam folder that scores HTML-only mail.
+   * What the caller knows about the recipient, and the site's primary locale when it knows nothing
+   * — which is the wiki's own language, and the right answer for a mail about a site rather than
+   * one addressed to a reader with a preference. `translator` takes it from there: a code naming a
+   * locale that is not installed falls back to English rather than sending a mail full of keys.
+   */
+  private localeFor(locale: string | null | undefined, siteId: string): string | null {
+    return locale || WIKI.sites[siteId]?.config?.locales?.primary || null
+  }
+
+  /**
+   * Describe one of the templates in the locale it is being sent in.
+   *
+   * Strings come from `locales/en.json` under `mail.*` and are translated with the rest of the
+   * interface, so what is left here is which keys a template uses and what it puts in them. Both
+   * bodies are rendered from the one description that comes out — see `MailContent`.
    */
   private render<K extends MailTemplate>(
+    { t }: Translator,
     siteName: string,
     template: K,
     data: MailTemplateData[K]
-  ): RenderedMail {
+  ): MailContent {
     switch (template) {
       case 'welcome': {
         const d = data as MailTemplateData['welcome']
-        const footer = `You are receiving this because an account was created for this address on ${siteName}.`
         if (d.verifyUrl) {
           return {
-            subject: `Confirm your email address — ${siteName}`,
-            text: [
-              `Hi ${d.name},`,
-              '',
-              `An account was created for this address on ${siteName}. Confirm that it is yours to finish signing up:`,
-              '',
-              d.verifyUrl,
-              '',
-              'This link is valid for 24 hours. If you did not create this account, you can ignore this message.',
-              '',
-              footer
-            ].join('\n'),
-            html: htmlShell({
-              title: 'Confirm your email address',
-              body: [
-                `Hi ${escapeHtml(d.name)},`,
-                `An account was created for this address on ${escapeHtml(siteName)}. Confirm that it is yours to finish signing up.`,
-                'This link is valid for 24 hours. If you did not create this account, you can ignore this message.'
-              ],
-              action: { label: 'Confirm my email address', url: d.verifyUrl },
-              footer
-            })
+            subject: t('mail.welcome.verify.subject', { siteName }),
+            title: t('mail.welcome.verify.title'),
+            body: [
+              t('mail.common.greeting', { name: d.name }),
+              t('mail.welcome.verify.body', { siteName }),
+              t('mail.welcome.verify.expiry')
+            ],
+            action: { label: t('mail.welcome.verify.action'), url: d.verifyUrl },
+            footer: t('mail.welcome.footer', { siteName })
           }
         }
         return {
-          subject: `Welcome to ${siteName}`,
-          text: [
-            `Hi ${d.name},`,
-            '',
-            `Your account on ${siteName} is ready. You can sign in at any time:`,
-            '',
-            `${d.baseUrl}/login`,
-            '',
-            footer
-          ].join('\n'),
-          html: htmlShell({
-            title: `Welcome to ${escapeHtml(siteName)}`,
-            body: [
-              `Hi ${escapeHtml(d.name)},`,
-              'Your account is ready. You can sign in at any time.'
-            ],
-            action: { label: 'Go to the wiki', url: `${d.baseUrl}/login` },
-            footer
-          })
+          subject: t('mail.welcome.subject', { siteName }),
+          title: t('mail.welcome.subject', { siteName }),
+          body: [t('mail.common.greeting', { name: d.name }), t('mail.welcome.body', { siteName })],
+          action: { label: t('mail.welcome.action'), url: `${d.baseUrl}/login` },
+          footer: t('mail.welcome.footer', { siteName })
         }
       }
       case 'resetPwd': {
         const d = data as MailTemplateData['resetPwd']
-        const footer = `You are receiving this because a password reset was requested for this address on ${siteName}.`
         return {
-          subject: `Reset your password — ${siteName}`,
-          text: [
-            `Hi ${d.name},`,
-            '',
-            `Somebody asked to reset the password for your account on ${siteName}. Choose a new one here:`,
-            '',
-            d.resetUrl,
-            '',
-            'This link is valid for 24 hours and can only be used once. If you did not ask for this, nothing has changed and you can ignore this message.',
-            '',
-            footer
-          ].join('\n'),
-          html: htmlShell({
-            title: 'Reset your password',
-            body: [
-              `Hi ${escapeHtml(d.name)},`,
-              `Somebody asked to reset the password for your account on ${escapeHtml(siteName)}.`,
-              'This link is valid for 24 hours and can only be used once. If you did not ask for this, nothing has changed and you can ignore this message.'
-            ],
-            action: { label: 'Choose a new password', url: d.resetUrl },
-            footer
-          })
+          subject: t('mail.resetPwd.subject', { siteName }),
+          title: t('mail.resetPwd.title'),
+          body: [
+            t('mail.common.greeting', { name: d.name }),
+            t('mail.resetPwd.body', { siteName }),
+            t('mail.resetPwd.expiry')
+          ],
+          action: { label: t('mail.resetPwd.action'), url: d.resetUrl },
+          footer: t('mail.resetPwd.footer', { siteName })
         }
       }
       default: {
         const d = data as MailTemplateData['test']
-        const footer =
-          'You are receiving this because somebody sent a test email from the Wiki.js admin area.'
         return {
-          subject: `Test email — ${siteName}`,
-          text: [
-            'This is a test email.',
-            '',
-            `If you are reading it, ${siteName} can send mail through the SMTP server it is configured with.`,
-            '',
-            d.baseUrl,
-            '',
-            footer
-          ].join('\n'),
-          html: htmlShell({
-            title: 'This is a test email',
-            body: [
-              `If you are reading it, ${escapeHtml(siteName)} can send mail through the SMTP server it is configured with.`
-            ],
-            footer
-          })
+          subject: t('mail.test.subject', { siteName }),
+          title: t('mail.test.title'),
+          body: [t('mail.test.body', { siteName })],
+          action: { label: t('mail.test.action'), url: d.baseUrl },
+          footer: t('mail.test.footer')
         }
       }
     }
@@ -403,15 +411,20 @@ class Mail {
     siteId,
     to,
     template,
-    data
+    data,
+    locale
   }: MailRequest<K>): Promise<void> {
     if (!this.isConfigured) {
       throw new Error('ERR_MAIL_NOT_CONFIGURED')
     }
     const conf = this.config
     const siteName = this.siteName(siteId)
-    const { subject, text, html } = this.render(siteName, template, data)
-    WIKI.logger.debug(`Sending ${template} email to <${to}>...`)
+    const translator = await WIKI.models.locales.translator(this.localeFor(locale, siteId))
+    const content = this.render(translator, siteName, template, data)
+    const { subject } = content
+    const text = textBody(content)
+    const html = htmlShell(content, translator.isRTL)
+    WIKI.logger.debug(`Sending ${template} email to <${to}> in ${translator.locale}...`)
     await this.getTransporter().sendMail({
       from: {
         name: conf.senderName?.trim() || siteName,

@@ -90,7 +90,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 import { notify } from '@/composables/notify'
 
@@ -109,18 +109,25 @@ const state = reactive({
 
 const menuRef = ref(null)
 
-const dateFormats = [
+/*
+  Computed, not plain arrays: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave both selects showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  they re-evaluate when `setLocaleMessage` fills the strings in.
+*/
+const dateFormats = computed(() => [
   { value: '', label: t('profile.localeDefault') },
   { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
   { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY' },
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
   { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
   { value: 'YYYY/MM/DD', label: 'YYYY/MM/DD' }
-]
-const timeFormats = [
+])
+const timeFormats = computed(() => [
   { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
   { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
-]
+])
 const timezones = Intl.supportedValuesOf('timeZone')
 
 // METHODS

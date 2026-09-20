@@ -201,6 +201,26 @@
           :aria-label="t(`profile.appearance`)" />
       </w-item-section>
     </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="translation" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.language`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.languageHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section>
+        <w-select
+          v-model="state.config.locale"
+          outlined
+          emit-value
+          map-options
+          dense
+          options-dense
+          hide-bottom-space
+          :aria-label="t(`profile.language`)"
+          :options="languages" />
+      </w-item-section>
+    </w-item>
     <div class="w-section-header mt-6">{{ t('profile.accessibility') }}</div>
     <w-item>
       <blueprint-icon icon="visualy-impaired" />
@@ -244,11 +264,13 @@ import { loading } from '@/composables/loading'
 import { computed, onMounted, reactive } from 'vue'
 
 import { useAuthConfigStore } from '@/stores/authConfig'
+import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 // STORES
 
 const authConfigStore = useAuthConfigStore()
+const siteStore = useSiteStore()
 const userStore = useUserStore()
 
 // I18N
@@ -271,6 +293,7 @@ const state = reactive({
     location: '',
     jobTitle: '',
     pronouns: '',
+    locale: '',
     timezone: '',
     dateFormat: '',
     timeFormat: '12h',
@@ -280,29 +303,47 @@ const state = reactive({
   loading: 0
 })
 
-const dateFormats = [
+/*
+  Computed, not plain arrays: the locale strings are fetched after the app mounts (`App.vue` ->
+  `applyLocale`), so a `t()` called once during `setup()` can resolve before they land and leave
+  every one of these selects showing raw keys for the life of the page -- which is exactly what a
+  profile screen opened by a full page load, rather than navigated to, does. Inside a computed they
+  re-evaluate when `setLocaleMessage` fills the strings in.
+*/
+
+/*
+  The site's own languages, and nothing else: those are the ones this wiki can actually be written
+  in. Named the way the locale picker in the sidebar names them -- natively, or by whatever an
+  administrator renamed them to -- so the two lists read alike.
+*/
+const languages = computed(() => [
+  { value: '', label: t('profile.languageSiteDefault') },
+  ...siteStore.locales.active.map((lc) => ({ value: lc.code, label: lc.displayName }))
+])
+
+const dateFormats = computed(() => [
   { value: '', label: t('profile.localeDefault') },
   { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
   { value: 'DD.MM.YYYY', label: 'DD.MM.YYYY' },
   { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
   { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
   { value: 'YYYY/MM/DD', label: 'YYYY/MM/DD' }
-]
-const timeFormats = [
+])
+const timeFormats = computed(() => [
   { value: '12h', label: t('admin.general.defaultTimeFormat12h') },
   { value: '24h', label: t('admin.general.defaultTimeFormat24h') }
-]
-const appearances = [
+])
+const appearances = computed(() => [
   { value: 'site', label: t('profile.appearanceDefault') },
   { value: 'light', label: t('profile.appearanceLight') },
   { value: 'dark', label: t('profile.appearanceDark') }
-]
-const cvdChoices = [
+])
+const cvdChoices = computed(() => [
   { value: 'none', label: t('profile.cvdNone') },
   { value: 'protanopia', label: t('profile.cvdProtanopia') },
   { value: 'deuteranopia', label: t('profile.cvdDeuteranopia') },
   { value: 'tritanopia', label: t('profile.cvdTritanopia') }
-]
+])
 const timezones = Intl.supportedValuesOf('timeZone')
 
 const canEdit = computed(() => authConfigStore.allowProfileEditing)
@@ -336,6 +377,7 @@ function applyProfile(profile) {
   state.config.location = profile.location || ''
   state.config.jobTitle = profile.jobTitle || ''
   state.config.pronouns = profile.pronouns || ''
+  state.config.locale = profile.locale || ''
   // -> No stored time zone means "whatever the browser resolves"
   state.config.timezone = profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || ''
   state.config.dateFormat = profile.dateFormat || ''
@@ -366,6 +408,7 @@ async function save() {
             }
           : {}),
         handle: state.config.handle.trim(),
+        locale: state.config.locale,
         timezone: state.config.timezone,
         dateFormat: state.config.dateFormat,
         timeFormat: state.config.timeFormat,
@@ -383,6 +426,7 @@ async function save() {
     //    app shell, so saving them takes effect right away
     userStore.$patch({
       name: state.config.name,
+      locale: state.config.locale,
       timezone: state.config.timezone,
       dateFormat: state.config.dateFormat,
       timeFormat: state.config.timeFormat,

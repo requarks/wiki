@@ -50,7 +50,14 @@ const { t } = useI18n()
 
 // Context Actions
 
-const contextActions = {
+/*
+  Computed, and PROVIDED as a computed: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the right-click menu showing raw keys for the life of the page — which is what a
+  direct load of a screen carrying this tree does, as opposed to a navigation to it. Wrapping the
+  labels alone would not be enough: the list handed to the descendants is built here too.
+*/
+const contextActions = computed(() => ({
   newFolder: {
     icon: 'la:plus-circle',
     iconColor: 'blue',
@@ -82,16 +89,18 @@ const contextActions = {
     label: t('common.actions.delete'),
     labelColor: 'negative'
   }
-}
+}))
 provide(
   'contextActionList',
-  props.contextActionList.map((key) => ({
-    key,
-    ...contextActions[key],
-    handler: (nodeId) => {
-      emit('contextAction', nodeId, key)
-    }
-  }))
+  computed(() =>
+    props.contextActionList.map((key) => ({
+      key,
+      ...contextActions.value[key],
+      handler: (nodeId) => {
+        emit('contextAction', nodeId, key)
+      }
+    }))
+  )
 )
 
 // DATA

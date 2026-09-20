@@ -607,7 +607,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
@@ -712,7 +712,14 @@ const state = reactive({
   config: defaultConfig()
 })
 
-const contentLicenses = [
+/*
+  Computed, not plain arrays: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave each of these selects showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  they re-evaluate when `setLocaleMessage` fills the strings in.
+*/
+const contentLicenses = computed(() => [
   { value: '', text: t('common.license.none') },
   { value: 'alr', text: t('common.license.alr') },
   { value: 'cc0', text: t('common.license.cc0') },
@@ -722,22 +729,22 @@ const contentLicenses = [
   { value: 'ccbync', text: t('common.license.ccbync') },
   { value: 'ccbyncsa', text: t('common.license.ccbyncsa') },
   { value: 'ccbyncnd', text: t('common.license.ccbyncnd') }
-]
-const ratingsModes = [
+])
+const ratingsModes = computed(() => [
   { value: 'off', label: t('admin.general.ratingsOff') },
   { value: 'thumbs', label: t('admin.general.ratingsThumbs') },
   { value: 'stars', label: t('admin.general.ratingsStars') }
-]
-const reasonForChangeModes = [
+])
+const reasonForChangeModes = computed(() => [
   { value: 'off', label: t('admin.general.reasonForChangeOff') },
   { value: 'optional', label: t('admin.general.reasonForChangeOptional') },
   { value: 'required', label: t('admin.general.reasonForChangeRequired') }
-]
-const uploadConflictBehaviors = [
+])
+const uploadConflictBehaviors = computed(() => [
   { value: 'overwrite', label: t('admin.general.uploadConflictBehaviorOverwrite') },
   { value: 'reject', label: t('admin.general.uploadConflictBehaviorReject') },
   { value: 'new', label: t('admin.general.uploadConflictBehaviorNew') }
-]
+])
 
 const rulesTitle = [(val) => /^[^<>"]+$/.test(val) || t('admin.general.siteTitleInvalidChars')]
 const rulesHostname = [

@@ -153,13 +153,20 @@ const state = reactive({
  */
 const GUESTS_GROUP_ID = '10000000-0000-4000-8000-000000000001'
 
-const expirations = [
+/*
+  A computed, not a plain array: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the expiry choices showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  it re-evaluates when `setLocaleMessage` fills the strings in.
+*/
+const expirations = computed(() => [
   { value: '30d', text: t('admin.api.expiration30d') },
   { value: '90d', text: t('admin.api.expiration90d') },
   { value: '180d', text: t('admin.api.expiration180d') },
   { value: '1y', text: t('admin.api.expiration1y') },
   { value: '3y', text: t('admin.api.expiration3y') }
-]
+])
 
 // REFS
 

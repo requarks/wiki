@@ -182,7 +182,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { confirm } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
@@ -224,7 +224,14 @@ const state = reactive({
   tmpl: null
 })
 
-const inventoryMisc = [
+/*
+  Computed, not plain arrays: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the field inventory showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  they re-evaluate when `setLocaleMessage` fills the strings in.
+*/
+const inventoryMisc = computed(() => [
   {
     key: 'header',
     label: t('editor.pageData.fieldTypeHeader'),
@@ -235,9 +242,9 @@ const inventoryMisc = [
     label: t('editor.pageData.fieldTypeImage'),
     icon: 'la:image'
   }
-]
+])
 
-const inventoryKV = [
+const inventoryKV = computed(() => [
   {
     key: 'text',
     label: t('editor.pageData.fieldTypeText'),
@@ -258,7 +265,7 @@ const inventoryKV = [
     label: t('editor.pageData.fieldTypeLink'),
     icon: 'la:link'
   }
-]
+])
 
 // REFS
 

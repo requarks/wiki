@@ -506,7 +506,6 @@ const overlays = {
     loader: () => import('../components/GroupEditOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
-  // MailTemplateEditorOverlay: defineAsyncComponent({ loader: () => import('../components/MailTemplateEditorOverlay.vue'), loadingComponent: LoadingGeneric }),
   UserEditOverlay: defineAsyncComponent({
     loader: () => import('../components/UserEditOverlay.vue'),
     loadingComponent: LoadingGeneric

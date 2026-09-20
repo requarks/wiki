@@ -579,10 +579,17 @@ const sortableOptions = {
   animation: 150
 }
 
-const visibilityOptions = [
+/*
+  A computed, not a plain array: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the visibility choices showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  it re-evaluates when `setLocaleMessage` fills the strings in.
+*/
+const visibilityOptions = computed(() => [
   { value: false, label: t('navEdit.visibilityAll') },
   { value: true, label: t('navEdit.visibilityLimited') }
-]
+])
 
 // COMPUTED
 

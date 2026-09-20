@@ -583,7 +583,7 @@ async function routes(app: FastifyInstance) {
    */
   app.post<{
     Params: { siteId: string }
-    Body: { strategyId: string; name: string; email: string; password: string }
+    Body: { strategyId: string; name: string; email: string; password: string; locale?: string }
   }>(
     '/sites/:siteId/auth/register',
     {
@@ -629,6 +629,12 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               minLength: 8,
               maxLength: 255
+            },
+            locale: {
+              type: 'string',
+              description:
+                'The language the wiki was being read in while this form was filled. Kept as the new account’s own language preference and used for the mail that follows. Omitted, or naming a locale this wiki has not installed, the site’s own language is used.',
+              maxLength: 255
             }
           }
         },
@@ -650,7 +656,8 @@ async function routes(app: FastifyInstance) {
             email: req.body.email,
             password: req.body.password,
             ip: req.ip,
-            baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId })
+            baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId }),
+            locale: req.body.locale
           },
           req
         )
@@ -754,7 +761,10 @@ async function routes(app: FastifyInstance) {
    * for why. What it does report is the two things that are about this wiki rather than about a user:
    * a strategy that does not offer resets, and an instance with no mail server configured.
    */
-  app.post<{ Params: { siteId: string }; Body: { strategyId: string; email: string } }>(
+  app.post<{
+    Params: { siteId: string }
+    Body: { strategyId: string; email: string; locale?: string }
+  }>(
     '/sites/:siteId/auth/forgotPassword',
     {
       config: {
@@ -789,6 +799,12 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               format: 'email',
               maxLength: 255
+            },
+            locale: {
+              type: 'string',
+              description:
+                'The language the wiki was being read in while this form was filled, used for the mail when the account has no language of its own. Omitted, or naming a locale this wiki has not installed, the site’s own language is used.',
+              maxLength: 255
             }
           }
         },
@@ -812,7 +828,8 @@ async function routes(app: FastifyInstance) {
           strategyId: req.body.strategyId,
           email: req.body.email,
           ip: req.ip,
-          baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId })
+          baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId }),
+          locale: req.body.locale
         })
         return { ok: true }
       } catch (err: any) {

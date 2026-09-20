@@ -63,9 +63,10 @@ const IDENTITY_PROFILE_FIELDS = ['name', 'location', 'jobTitle', 'pronouns'] as 
  * The rest of the profile: how the wiki behaves for this one person.
  *
  * Never gated on `allowProfileEditing`, because no identity provider owns them — a time zone, a date
- * format and a colour-vision setting are properties of whoever is reading, not of the account record
- * an administrator is keeping authoritative. Turning profile editing off to keep names in step with
- * a directory must not take somebody's accessibility settings away with it.
+ * format, a colour-vision setting and the language to be written to in are properties of whoever is
+ * reading, not of the account record an administrator is keeping authoritative. Turning profile
+ * editing off to keep names in step with a directory must not take somebody's accessibility settings
+ * away with it.
  */
 const PERSONAL_PROFILE_FIELDS = [
   /*
@@ -75,6 +76,7 @@ const PERSONAL_PROFILE_FIELDS = [
     one field that lets anybody be mentioned in a comment.
   */
   'handle',
+  'locale',
   'timezone',
   'dateFormat',
   'timeFormat',
@@ -266,7 +268,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Update the logged in user's own profile",
         description:
-          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the time zone, date and time formats, appearance and colour-vision settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
+          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the language, time zone, date and time formats, appearance and colour-vision settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
         tags: ['Users'],
         body: {
           $ref: 'UserProfileUpdate#'
@@ -337,6 +339,7 @@ async function routes(app: FastifyInstance) {
       req.session.user = {
         ...req.session.user!,
         name: profile.name,
+        locale: profile.locale,
         timezone: profile.timezone,
         dateFormat: profile.dateFormat,
         timeFormat: profile.timeFormat,

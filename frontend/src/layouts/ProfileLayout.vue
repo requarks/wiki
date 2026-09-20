@@ -116,7 +116,14 @@ useMeta(() => {
 
 // DATA
 
-const sidenav = [
+/*
+  A computed, not a plain array: the locale strings are fetched after the app mounts (`App.vue` ->
+  `applyLocale`), so a `t()` called once during `setup()` can resolve before they land and leave the
+  whole section list showing raw keys for the life of the page. That is what a profile URL opened
+  directly does, as opposed to one navigated to from a page the app had already drawn. Inside a
+  computed it re-evaluates when `setLocaleMessage` fills the strings in.
+*/
+const sidenav = computed(() => [
   {
     key: 'info',
     label: t('profile.title'),
@@ -155,7 +162,7 @@ const sidenav = [
     icon: 'la:history',
     disabled: true
   }
-]
+])
 
 const state = reactive({
   /** Whether the section list is open. Only consulted below 900px, where it is a disclosure. */
@@ -182,7 +189,7 @@ const isNavCollapsed = computed(() => !isAtLeast900.value)
  */
 const currentSection = computed(() => {
   return (
-    sidenav.find((item) => route.path === `/_profile/${item.key}`) ?? {
+    sidenav.value.find((item) => route.path === `/_profile/${item.key}`) ?? {
       label: t('profile.title'),
       icon: 'la:user-circle'
     }

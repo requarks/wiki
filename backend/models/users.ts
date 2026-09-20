@@ -120,6 +120,11 @@ export interface UserProfile {
   location: string
   jobTitle: string
   pronouns: string
+  /**
+   * The language this wiki writes to this person in, or an empty string to be written to in
+   * whatever the site's own language is. See `prefs.locale` in `createUser`.
+   */
+  locale: string
   timezone: string
   dateFormat: string
   timeFormat: string
@@ -155,6 +160,7 @@ export interface UserProfilePatch {
   location?: string
   jobTitle?: string
   pronouns?: string
+  locale?: string
   timezone?: string
   dateFormat?: string
   timeFormat?: string
@@ -164,7 +170,14 @@ export interface UserProfilePatch {
 
 /** The `meta` keys the profile owns, and the `prefs` keys it owns. */
 const profileMetaKeys = ['location', 'jobTitle', 'pronouns'] as const
-const profilePrefsKeys = ['timezone', 'dateFormat', 'timeFormat', 'appearance', 'cvd'] as const
+const profilePrefsKeys = [
+  'locale',
+  'timezone',
+  'dateFormat',
+  'timeFormat',
+  'appearance',
+  'cvd'
+] as const
 
 /**
  * The square, in pixels, an avatar is resized to. The profile page and the account menu both display
@@ -486,7 +499,8 @@ class Users {
     isVerified = true,
     isProvisioned = false,
     externalId,
-    strategyId
+    strategyId,
+    locale = ''
   }: {
     name: string
     email: string
@@ -520,6 +534,14 @@ class Users {
      * it under the strategy that was registered through, rather than assuming the built-in one.
      */
     strategyId?: string
+    /**
+     * The language to write to this person in, where the account was created somewhere that knows
+     * — a registration knows which language the wiki was being read in when the form was filled.
+     *
+     * Empty for an account created for somebody who is not there to say, which leaves the mails in
+     * the site's own language until they pick one on their profile.
+     */
+    locale?: string
   }): Promise<string> {
     const localStrategyId = strategyId ?? WIKI.data.systemIds.localAuthId
     const result = await WIKI.db
@@ -550,6 +572,7 @@ class Users {
           pronouns: ''
         },
         prefs: {
+          locale,
           // -> Seeded from the instance-wide user defaults, which an administrator can change
           timezone: WIKI.config.userDefaults?.timezone ?? 'America/New_York',
           dateFormat: WIKI.config.userDefaults?.dateFormat ?? 'YYYY-MM-DD',
@@ -621,6 +644,9 @@ class Users {
       location: meta.location ?? '',
       jobTitle: meta.jobTitle ?? '',
       pronouns: meta.pronouns ?? '',
+      // -> An empty locale means "whatever the site is written in", which is what the mails fall
+      //    back to and what the profile page offers as the first choice
+      locale: prefs.locale ?? '',
       // -> An empty time zone / date format means "whatever the client resolves", which is what the
       //    profile page falls back to
       timezone: prefs.timezone ?? '',
@@ -2062,6 +2088,10 @@ class Users {
    * sent a link, and `verifyEmail` is what comes back: there is nothing to log in to yet.
    *
    * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @param locale What language the wiki was being read in while the form was filled. It is kept as
+   *               the account's own preference as well as used for the mail that follows: somebody
+   *               who signed up reading the wiki in French has said something about which language
+   *               to write to them in, and there is nowhere else for a brand new account to get one.
    * @throws `ERR_INVALID_STRATEGY`, `ERR_REGISTRATION_DISABLED`, `ERR_EMAIL_NOT_ALLOWED`,
    *         `ERR_ACCOUNT_ALREADY_EXISTS`, `ERR_PASSWORD_TOO_SHORT`, `ERR_MAIL_NOT_CONFIGURED`
    */
@@ -2073,7 +2103,8 @@ class Users {
       email,
       password,
       ip,
-      baseUrl
+      baseUrl,
+      locale
     }: {
       siteId: string
       strategyId: string
@@ -2082,6 +2113,7 @@ class Users {
       password: string
       ip?: string
       baseUrl: string
+      locale?: string | null
     },
     req: any
   ): Promise<AfterLoginResult> {
@@ -2142,7 +2174,8 @@ class Users {
       password,
       groups: strategy.autoEnrollGroups ?? [],
       isVerified: !mustVerify,
-      strategyId: strategy.id
+      strategyId: strategy.id,
+      locale: locale ?? ''
     })
 
     /*
@@ -2169,6 +2202,7 @@ class Users {
           siteId,
           to: address,
           template: 'welcome',
+          locale,
           data: {
             name: name.trim(),
             baseUrl,
@@ -2207,6 +2241,7 @@ class Users {
           siteId,
           to: address,
           template: 'welcome',
+          locale,
           data: { name: name.trim(), baseUrl }
         })
       } catch (err: any) {
@@ -2254,6 +2289,8 @@ class Users {
       siteId: targetSiteId,
       to: user.email,
       template: 'welcome',
+      // -> Theirs, never the administrator's: the request that triggers this is somebody else's
+      locale: (user.prefs as Record<string, any>)?.locale,
       data: {
         name: user.name,
         baseUrl: WIKI.models.mail.baseUrl({ req, siteId: targetSiteId })
@@ -2301,6 +2338,8 @@ class Users {
    * both misconfigurations rather than answers about a user.
    *
    * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @param locale What language the wiki was being read in when the form was filled, which is what
+   *               the mail is written in for an account whose owner has never picked one
    * @throws `ERR_INVALID_STRATEGY`, `ERR_FORGOT_PASSWORD_DISABLED`, `ERR_MAIL_NOT_CONFIGURED`
    */
   async requestPasswordReset({
@@ -2308,13 +2347,15 @@ class Users {
     strategyId,
     email,
     ip,
-    baseUrl
+    baseUrl,
+    locale
   }: {
     siteId: string
     strategyId: string
     email: string
     ip?: string
     baseUrl: string
+    locale?: string | null
   }): Promise<void> {
     const strategy = await WIKI.models.authentication.getSiteStrategy(siteId, strategyId)
     if (!strategy || strategy.module !== 'local') {
@@ -2349,6 +2390,10 @@ class Users {
       siteId,
       to: user.email,
       template: 'resetPwd',
+      // -> Their own preference where they have one, and otherwise the language the wiki was being
+      //    read in by whoever filled the form — which is the same person often enough to be the
+      //    better guess, and is only ever a guess either way
+      locale: (user.prefs as Record<string, any>)?.locale || locale,
       data: {
         name: user.name,
         baseUrl,
@@ -2435,6 +2480,7 @@ class Users {
       email: user.email,
       name: user.name,
       hasAvatar: user.hasAvatar,
+      locale: user.prefs?.locale,
       timezone: user.prefs?.timezone,
       dateFormat: user.prefs?.dateFormat,
       timeFormat: user.prefs?.timeFormat,

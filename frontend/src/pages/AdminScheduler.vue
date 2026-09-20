@@ -403,7 +403,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
@@ -455,7 +455,14 @@ const MODE_STATES = {
   failed: ['failed', 'interrupted']
 }
 
-const scheduledJobsHeaders = [
+/*
+  Computed, not plain arrays: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave every table header row showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  they re-evaluate when `setLocaleMessage` fills the strings in.
+*/
+const scheduledJobsHeaders = computed(() => [
   {
     align: 'center',
     field: 'id',
@@ -507,9 +514,9 @@ const scheduledJobsHeaders = [
     sortable: false,
     style: 'width: 15px;'
   }
-]
+])
 
-const upcomingJobsHeaders = [
+const upcomingJobsHeaders = computed(() => [
   {
     align: 'center',
     field: 'id',
@@ -561,9 +568,9 @@ const upcomingJobsHeaders = [
     sortable: false,
     style: 'width: 15px;'
   }
-]
+])
 
-const jobsHeaders = [
+const jobsHeaders = computed(() => [
   {
     align: 'center',
     field: 'id',
@@ -614,7 +621,7 @@ const jobsHeaders = [
     sortable: false,
     style: 'width: 15px;'
   }
-]
+])
 
 // WATCHERS
 

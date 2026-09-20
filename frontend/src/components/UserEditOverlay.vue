@@ -174,6 +174,26 @@
               <w-card class="shadow-1 pb-2 mt-4" v-if="state.user.meta">
                 <w-card-header>{{ t('admin.users.preferences') }}</w-card-header>
                 <w-item>
+                  <blueprint-icon icon="translation" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.users.language`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.users.languageHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-select
+                      outlined
+                      v-model="state.user.prefs.locale"
+                      :disable="!canManage"
+                      :options="languages"
+                      emit-value
+                      map-options
+                      dense
+                      options-dense
+                      :aria-label="t(`admin.users.language`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
                   <blueprint-icon icon="timezone" />
                   <w-item-section>
                     <w-item-label>{{ t(`admin.users.timezone`) }}</w-item-label>
@@ -713,6 +733,7 @@ import { notify } from '@/composables/notify'
 
 import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
+import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { apiErrorMessage } from '@/helpers/apiError'
@@ -728,6 +749,7 @@ const dark = useDark()
 
 const adminStore = useAdminStore()
 const flagsStore = useFlagsStore()
+const siteStore = useSiteStore()
 const userStore = useUserStore()
 
 // ROUTER
@@ -755,14 +777,21 @@ const state = reactive({
   metadataInvalidJSON: false
 })
 
-const sections = [
+/*
+  A computed, not a plain array: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the tab strip showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  it re-evaluates when `setLocaleMessage` fills the strings in.
+*/
+const sections = computed(() => [
   { key: 'overview', text: t('admin.users.overview'), icon: 'la:user' },
   { key: 'activity', text: t('admin.users.activity'), icon: 'la:chart-area', disabled: true },
   { key: 'auth', text: t('admin.users.auth'), icon: 'la:key' },
   { key: 'groups', text: t('admin.users.groups'), icon: 'la:users' },
   { key: 'metadata', text: t('admin.users.metadata'), icon: 'la:clipboard-list' },
   { key: 'operations', text: t('admin.users.operations'), icon: 'la:tools' }
-]
+])
 
 const timezones = Intl.supportedValuesOf('timeZone')
 
@@ -774,6 +803,16 @@ const timezones = Intl.supportedValuesOf('timeZone')
   The fields stay as they are -- without Save there is nowhere for a typed change to go.
 */
 const canManage = computed(() => userStore.can('manage:users'))
+
+/*
+  Every INSTALLED locale, not one site's active ones: this screen is not opened on behalf of a site,
+  and an account may well be welcomed to a different one from the one the admin area is being read
+  on. Empty is the language of whichever site the mail turns out to be about.
+*/
+const languages = computed(() => [
+  { label: t('admin.users.languageSiteDefault'), value: '' },
+  ...siteStore.installedLocales.map((lc) => ({ label: lc.displayName, value: lc.code }))
+])
 
 /*
   Whether this user may move somebody in or out of a given group.

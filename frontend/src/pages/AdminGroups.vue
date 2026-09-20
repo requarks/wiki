@@ -184,7 +184,14 @@ const state = reactive({
   search: ''
 })
 
-const headers = [
+/*
+  A computed, not a plain array: the locale strings are fetched after the app mounts
+  (`App.vue` -> `applyLocale`), so a `t()` called once during `setup()` can resolve before they
+  land and leave the table header row showing raw keys for the life of the page — which is what a
+  direct load of this screen does, as opposed to a navigation to it. Inside a computed
+  it re-evaluates when `setLocaleMessage` fills the strings in.
+*/
+const headers = computed(() => [
   {
     align: 'center',
     field: 'id',
@@ -215,7 +222,7 @@ const headers = [
     sortable: false,
     style: 'width: 250px'
   }
-]
+])
 
 // WATCHERS
 
