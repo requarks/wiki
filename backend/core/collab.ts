@@ -157,12 +157,30 @@ function toBytes(data: unknown): Uint8Array {
 }
 
 /**
+ * The editors whose source is not text, and whose shared document the server therefore cannot build.
+ *
+ * A room holds the header fields for every editor, and the `content` text for the ones that edit one.
+ * Markdown and AsciiDoc are bound straight to that text. The Visual editor is not — a ProseMirror
+ * document is a tree, shared as a `Y.XmlFragment` — but its SOURCE is still the markdown in `content`,
+ * so seeding the text costs nothing and the two live side by side.
+ *
+ * Excalidraw is the case where seeding it is wrong rather than merely unused. Its source is a JSON
+ * scene, routinely tens of kilobytes of it, and putting that in a `Y.Text` nobody binds would push a
+ * dead copy of the whole drawing through the sync, through the relay and into every participant — a
+ * second representation of the page, growing with it, that no client ever reads. So the room gets the
+ * header fields and nothing else, and the drawing is seeded by the first browser in, the way the
+ * Visual editor seeds its fragment. See `editor/excalidraw/collab.js`.
+ */
+const CANVAS_EDITORS = new Set(['excalidraw'])
+
+/**
  * The state a room starts from when it has to build one itself, as a Yjs update.
  *
  * Built in a scratch document whose client id is pinned to 0, so that the bytes depend on nothing but
  * the page — see the note at the top of this file on why that matters.
  */
 function buildSeed(page: {
+  editor?: string | null
   content?: string | null
   title?: string | null
   description?: string | null
@@ -171,7 +189,9 @@ function buildSeed(page: {
   const seed = new Y.Doc()
   seed.clientID = 0
   seed.transact(() => {
-    seed.getText('content').insert(0, page.content ?? '')
+    if (!CANVAS_EDITORS.has(page.editor ?? '')) {
+      seed.getText('content').insert(0, page.content ?? '')
+    }
     const props = seed.getMap('props')
     props.set('title', page.title ?? '')
     props.set('description', page.description ?? '')

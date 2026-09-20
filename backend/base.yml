@@ -180,6 +180,9 @@ editors:
   asciidoc:
     contentType: adoc
     config: {}
+  excalidraw:
+    contentType: excalidraw
+    config: {}
   markdown:
     contentType: markdown
     config:

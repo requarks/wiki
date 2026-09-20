@@ -129,6 +129,7 @@ const state = reactive({
     asciidoc: false,
     blog: false,
     channel: false,
+    excalidraw: false,
     markdown: false,
     redirect: false,
     visual: false
@@ -164,6 +165,15 @@ const editors = reactive([
     id: 'channel',
     icon: 'chat',
     isDisabled: true,
+    useRendering: false
+  },
+  {
+    id: 'excalidraw',
+    icon: 'draw',
+    /*
+      No configuration screen, and none to have: a drawing is drawn rather than written, so there is
+      no syntax to switch on or off and no pipeline to point at anything. See `EditorExcalidraw.vue`.
+    */
     useRendering: false
   },
   {
@@ -208,6 +218,7 @@ async function load() {
     const data = resp?.editors
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
     state.config.blog = data?.blog?.isActive ?? false
+    state.config.excalidraw = data?.excalidraw?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
     state.config.redirect = data?.redirect?.isActive ?? false
     state.config.visual = data?.visual?.isActive ?? false
@@ -230,6 +241,7 @@ async function save() {
         editors: {
           asciidoc: { isActive: state.config.asciidoc },
           blog: { isActive: state.config.blog },
+          excalidraw: { isActive: state.config.excalidraw },
           markdown: { isActive: state.config.markdown },
           redirect: { isActive: state.config.redirect },
           visual: { isActive: state.config.visual }
@@ -246,6 +258,7 @@ async function save() {
         editors: {
           asciidoc: state.config.asciidoc,
           blog: state.config.blog,
+          excalidraw: state.config.excalidraw,
           markdown: state.config.markdown,
           redirect: state.config.redirect,
           visual: state.config.visual

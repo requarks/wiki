@@ -1870,6 +1870,35 @@
   }
 
   /*
+    A drawing, which is a whole page rather than a picture in one -- the Excalidraw editor exports it
+    at save time and it is the entire render (`editor/excalidraw/index.js`).
+
+    The export carries no `width` or `height`, deliberately: Excalidraw writes the drawing's own
+    dimensions onto the element, which in an article is a picture that refuses to shrink on a narrow
+    screen. The `viewBox` it also writes is what carries the shape, so giving the width to CSS scales
+    the drawing rather than cropping it. Centred, because a drawing that is narrower than the column
+    reads as a figure and not as a paragraph that stops early.
+  */
+  svg.excalidraw-render {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+
+    /*
+      Dark mode, the way Excalidraw itself does it: the picture is inverted rather than recoloured,
+      because a drawing is strokes and fills an author chose and there is no way to know which of them
+      meant "ink" and which meant "a red box". This is `THEME_FILTER` from Excalidraw, and it is here
+      rather than in the export because there is ONE stored render and two themes to show it in -- see
+      `exportSceneSvg`, which is deliberately always light and must stay that way for this to be right.
+    */
+    @at-root .body--dark & {
+      filter: invert(93%) hue-rotate(180deg);
+    }
+  }
+
+  /*
     An image in a list item stays in the sentence. Tailwind's preflight declares `img { display:
     block }`, so without this the image takes a line of its own and the item's own words go under it,
     which reads as a broken item rather than as an illustrated one.

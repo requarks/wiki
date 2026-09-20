@@ -20,6 +20,7 @@ export const EDITOR_ICONS = {
   markdown: 'markdown',
   visual: 'google-presentation',
   asciidoc: 'asciidoc',
+  excalidraw: 'draw',
   channel: 'chat',
   blog: 'typewriter-with-paper',
   api: 'api',

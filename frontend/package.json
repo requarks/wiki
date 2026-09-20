@@ -1,10 +1,9 @@
 {
   "name": "wiki-ux",
   "version": "3.0.0",
-  "description": "The most powerful and extensible open source Wiki software",
-  "productName": "Wiki.js",
-  "author": "Nicolas Giard <nick@requarks.io>",
   "private": true,
+  "description": "The most powerful and extensible open source Wiki software",
+  "author": "Nicolas Giard <nick@requarks.io>",
   "type": "module",
   "scripts": {
     "dev": "vite --force",
@@ -19,6 +18,7 @@
   },
   "dependencies": {
     "@asciidoctor/core": "4.0.11",
+    "@excalidraw/excalidraw": "0.18.1",
     "@simplewebauthn/browser": "13.3.0",
     "@tailwindcss/vite": "4.3.3",
     "@twemoji/api": "17.0.2",
@@ -63,6 +63,8 @@
     "prosemirror-tables": "1.8.5",
     "prosemirror-transform": "1.12.1",
     "prosemirror-view": "1.42.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "semver": "7.8.5",
     "slugify": "1.6.9",
     "sortablejs": "1.15.7",
@@ -106,5 +108,6 @@
   },
   "engines": {
     "node": ">= 26.0"
-  }
+  },
+  "productName": "Wiki.js"
 }

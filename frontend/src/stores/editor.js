@@ -64,6 +64,14 @@ export const useEditorStore = defineStore('editor', {
         originPageId: ''
       })
     },
+    /**
+     * Take a file the author has just put into a page, to be uploaded when the page is saved.
+     *
+     * @param {File|Blob} data A `File` keeps the name it arrived with; a `Blob` is given one, since
+     *   it has none and only its media type to name it by.
+     * @returns {string} A `blob:` URL to write into the content, which the upload rewrites to a
+     *   stored path — see `UploadPendingAssetsDialog`.
+     */
     addPendingAsset(data) {
       const blobUrl = URL.createObjectURL(data)
       if (data instanceof File) {
@@ -80,7 +88,11 @@ export const useEditorStore = defineStore('editor', {
         this.pendingAssets.push({
           id: fileId,
           kind: 'blob',
-          file: new File(data, fileName, { type: data.type }),
+          // -> `[data]`, because the constructor takes the PARTS of a file rather than a file: a bare
+          //    blob is not iterable and throws. Nothing reached this branch until the drawing editor
+          //    did -- a paste and a drop both arrive as a `File`, so every other caller takes the
+          //    branch above, and an image out of an Excalidraw scene is the first that is only a blob
+          file: new File([data], fileName, { type: data.type }),
           fileName,
           blobUrl
         })

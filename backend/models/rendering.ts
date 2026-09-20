@@ -212,6 +212,17 @@ const BASE_ALLOWED_TAGS = [
   'desc',
   'ellipse',
   'g',
+  /*
+    A bitmap placed inside a drawing. `href` is scheme-checked like every other link here -- it is on
+    sanitize-html's `allowedSchemesAppliedToAttributes` list, so `javascript:` never survives -- and
+    what remains is a URL that fetches a picture, which `img` beside it has always been allowed to do.
+    So this grants nothing `img` did not already.
+
+    `data:` is NOT among the allowed schemes, here or on `img`, so an inline bitmap is dropped rather
+    than stored. That is the reason the Excalidraw editor puts a pasted image in the asset store and
+    refers to it -- see `pendingAssets` in `EditorExcalidraw.vue`.
+  */
+  'image',
   'line',
   'linearGradient',
   'marker',
@@ -229,21 +240,44 @@ const BASE_ALLOWED_TAGS = [
   'use'
 ]
 
-/** Presentation attributes shared across the SVG subset above. None of them can execute. */
+/**
+ * Presentation attributes shared across the SVG subset above. None of them can execute.
+ *
+ * The text and font half of the list is here rather than on `text` alone, where three of them used to
+ * be. An Excalidraw export gives every line of every label its own `text` element carrying the family,
+ * the size, the anchor, the writing direction and the baseline it was drawn with, and an attribute
+ * missing from here is dropped in silence -- which is not a mangled attribute but a mangled picture,
+ * in the wrong font, at the wrong size, aligned from the wrong edge. Text is also not the only element
+ * that inherits a font: a `g` around a label carries one just as well, which is why these are shared
+ * rather than spelled per tag.
+ *
+ * They are inert in the same way the shape attributes above are: each names a length, a colour, a
+ * keyword or a font family, and none of them is a URL or a script.
+ */
 const SVG_ATTRIBUTES = [
   'clip-path',
   'clip-rule',
+  'color',
   'cx',
   'cy',
   'd',
+  'direction',
+  'dominant-baseline',
   'fill',
   'fill-opacity',
   'fill-rule',
+  'font-family',
+  'font-size',
+  'font-style',
+  'font-variant',
+  'font-weight',
   'height',
   'href',
+  'letter-spacing',
   'mask',
   'offset',
   'opacity',
+  'paint-order',
   'points',
   'preserveAspectRatio',
   'r',
@@ -253,13 +287,20 @@ const SVG_ATTRIBUTES = [
   'stop-opacity',
   'stroke',
   'stroke-dasharray',
+  'stroke-dashoffset',
   'stroke-linecap',
   'stroke-linejoin',
+  'stroke-miterlimit',
   'stroke-opacity',
   'stroke-width',
+  'text-anchor',
+  'text-decoration',
   'transform',
+  'vector-effect',
   'viewBox',
   'width',
+  'word-spacing',
+  'writing-mode',
   'x',
   'x1',
   'x2',
@@ -310,6 +351,7 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   defs: SVG_ATTRIBUTES,
   ellipse: SVG_ATTRIBUTES,
   g: SVG_ATTRIBUTES,
+  image: SVG_ATTRIBUTES,
   line: SVG_ATTRIBUTES,
   linearGradient: [...SVG_ATTRIBUTES, 'gradientUnits', 'gradientTransform'],
   marker: [...SVG_ATTRIBUTES, 'markerWidth', 'markerHeight', 'orient', 'refX', 'refY'],
@@ -322,7 +364,8 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   rect: SVG_ATTRIBUTES,
   stop: SVG_ATTRIBUTES,
   symbol: SVG_ATTRIBUTES,
-  text: [...SVG_ATTRIBUTES, 'dx', 'dy', 'text-anchor', 'font-size', 'font-family'],
+  // -> `text-anchor`, `font-size` and `font-family` were spelled here; they are in SVG_ATTRIBUTES now
+  text: [...SVG_ATTRIBUTES, 'dx', 'dy'],
   tspan: [...SVG_ATTRIBUTES, 'dx', 'dy'],
   use: SVG_ATTRIBUTES
 }
@@ -854,10 +897,17 @@ class Rendering {
    *
    * Works on a copy: scripts and styles read as text but are not prose, and a page carrying them
    * would otherwise turn up in results for whatever its code happens to mention.
+   *
+   * An SVG `text` element is given a space after it, because nothing in the markup separates one from
+   * the next. `text()` concatenates, the way `textContent` does, and a drawing has no prose to carry
+   * the gaps: an Excalidraw export writes every LINE of every label as a `text` of its own, so a
+   * two-line note came out of here as one unsearchable run of letters. Only inside an `svg`, and only
+   * for that element, so nothing about how a page's own paragraphs are indexed changes.
    */
   private extractText($: cheerio.CheerioAPI): string {
     const $copy = cheerio.load($.html(), null, false)
     $copy('script, style').remove()
+    $copy('svg text').after(' ')
     return $copy.root().text().replaceAll(/\s+/g, ' ').trim()
   }
 

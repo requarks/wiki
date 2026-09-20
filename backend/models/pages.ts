@@ -19,6 +19,7 @@ const EDITOR_CONTENT_TYPES: Record<string, string> = {
   markdown: 'markdown',
   visual: 'markdown',
   asciidoc: 'adoc',
+  excalidraw: 'excalidraw',
   redirect: 'redirect',
   blog: 'blog'
 }
@@ -54,6 +55,14 @@ export const PAGE_FILE_EXTENSIONS: Record<string, string> = {
   markdown: 'md',
   html: 'html',
   adoc: 'adoc',
+  /*
+    Not `json`, though the document is one. `.excalidraw` is the extension the format already has
+    everywhere else -- it is what Excalidraw itself saves, and what every tool that reads a drawing
+    looks for -- so a tree exported to disk holds files that open in the editor they came from. It
+    also keeps this out of the `.json` ambiguity that `EDITOR_FOR_PAGE_EXTENSION` below has to
+    arbitrate, since nothing else writes it.
+  */
+  excalidraw: 'excalidraw',
   redirect: 'json',
   blog: 'json'
 }
@@ -87,6 +96,7 @@ export function pageFileExtension(contentType: string): string {
 const EDITOR_FOR_PAGE_EXTENSION: Record<string, string> = {
   md: 'markdown',
   adoc: 'asciidoc',
+  excalidraw: 'excalidraw',
   json: 'redirect'
 }
 

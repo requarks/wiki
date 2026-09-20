@@ -13,6 +13,14 @@ import { initializeHairlines } from './helpers/hairline'
 
 import './css/tailwind.css'
 import './css/app.scss'
+/*
+  The `@font-face` rules for the fonts a drawing is lettered in, generated at build time from the
+  Excalidraw package — see `excalidrawAssets` in `vite.config.js`. Here rather than in the editor's own
+  chunk because a READER of a drawing never loads the editor: the page holds the SVG it exported, which
+  names its fonts and does not carry them. About a kilobyte, and it fetches nothing until a glyph on
+  the page actually calls for one.
+*/
+import 'virtual:excalidraw-fonts.css'
 
 import RootApp from './App.vue'
 

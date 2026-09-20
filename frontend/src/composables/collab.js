@@ -1,6 +1,5 @@
 import { watch } from 'vue'
 
-import { MonacoBinding } from 'y-monaco'
 import { WebsocketProvider } from 'y-websocket'
 import * as Y from 'yjs'
 
@@ -59,6 +58,10 @@ const USER_COLORS = [
 
 let doc = null
 let provider = null
+/**
+ * The Monaco binding, once there is one. `pending` while it is being fetched, which is what keeps two
+ * calls arriving in the same tick from each making one — see `bindCollabEditor`.
+ */
 let binding = null
 let styleEl = null
 let syncTimer = null
@@ -283,12 +286,30 @@ export function collabHandles() {
  * Called once the document has synced, and not before: the binding starts by making the model say
  * what the document says, and a document that has not synced yet says nothing at all.
  */
-export function bindCollabEditor(editor) {
+export async function bindCollabEditor(editor) {
   if (!doc || binding) {
     return
   }
   const model = editor.getModel()
   if (!model) {
+    return
+  }
+  /*
+    Fetched here rather than imported at the top of this file, and the reason is nothing to do with
+    this function: `y-monaco` pulls in Monaco, and a static import would put the whole code editor
+    into the chunk of EVERY editor that collaborates. The Visual editor was downloading it to draw a
+    ProseMirror document, and the Excalidraw one would download it to draw a picture — some 650 kB
+    gzipped apiece, for a module neither of them has any use for.
+
+    Nothing is paid for it here: the two editors that call this are the two built ON Monaco, so by the
+    time they do, the module is loaded and this resolves from cache.
+  */
+  binding = 'pending'
+  const { MonacoBinding } = await import('y-monaco')
+  // -> The session may have been closed while that was in the air, and `stopCollabSession` cannot
+  //    destroy a binding that did not exist yet
+  if (binding !== 'pending' || !doc) {
+    binding = null
     return
   }
   binding = new MonacoBinding(doc.getText('content'), model, new Set([editor]), provider.awareness)
@@ -307,7 +328,9 @@ export function stopCollabSession() {
   }
   stopWatchers = []
   if (binding) {
-    binding.destroy()
+    // -> A string here means the import above is still in flight; clearing it is what tells that call
+    //    the session it was binding is gone
+    binding.destroy?.()
     binding = null
   }
   if (provider) {

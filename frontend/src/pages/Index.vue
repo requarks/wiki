@@ -524,6 +524,16 @@ const editorComponents = {
     loader: () => import('../components/EditorAsciidoc.vue'),
     loadingComponent: LoadingGeneric
   }),
+  /*
+    Its chunk carries React as well as Excalidraw, which is the largest thing this app loads on demand
+    -- so it is fetched the first time somebody opens a drawing and never at all on an instance that
+    has none. Nothing else in the app imports React, which is what keeps that true; a READER of a
+    drawing is served the SVG the editor exported at save time and comes nowhere near this.
+  */
+  excalidraw: defineAsyncComponent({
+    loader: () => import('../components/EditorExcalidraw.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   visual: defineAsyncComponent({
     loader: () => import('../components/EditorVisual.vue'),
     loadingComponent: LoadingGeneric

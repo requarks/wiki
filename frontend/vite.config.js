@@ -12,6 +12,29 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 const TWEMOJI_ROUTE = '/_assets/svg/twemoji'
 
 /**
+ * Where the Excalidraw editor's own assets are served from.
+ *
+ * Handed to it as `window.EXCALIDRAW_ASSET_PATH` (`src/editor/excalidraw/index.js`), which is what it
+ * resolves every font it fetches at runtime against. Setting it matters beyond tidiness: left unset,
+ * Excalidraw falls back to a CDN of its own -- and it appends that fallback even when the variable IS
+ * set, so a font this build fails to ship does not break, it quietly fetches from a third party. That
+ * is exactly what `WIKI.config.offline` exists to prevent, and there is no switch in Excalidraw to
+ * turn it off, so shipping the complete set is the only thing that keeps the reader's browser at home.
+ */
+const EXCALIDRAW_ROUTE = '/_assets/excalidraw'
+
+/**
+ * The drawing fonts NOT shipped with the build, by the directory they live in.
+ *
+ * Xiaolai is Excalidraw's CJK handwriting fallback and is 13 MB across a thousand subset files -- more
+ * than the rest of the wiki's assets put together, for a font most instances will never draw a glyph
+ * of. Left out, a drawing containing CJK text falls through to the CDN described above and needs the
+ * internet to come out right; everything else is local. Revisit if that trade stops being the right
+ * one -- it is one name in this set.
+ */
+const EXCALIDRAW_SKIPPED_FONTS = new Set(['Xiaolai'])
+
+/**
  * Fails the build unless every emoji a page can contain has an SVG in `svgDir`.
  *
  * The parser and the artwork are two dependencies of the same upstream release (see below), so they
@@ -116,6 +139,152 @@ function twemojiAssets() {
   }
 }
 
+/**
+ * Excalidraw's drawing fonts, as the package describes them to itself.
+ *
+ * Read out of the UNMINIFIED build in `dist/dev`, which carries the same registry the minified one
+ * runs and is the only copy with names left on it. Nothing is imported or executed: it is browser code
+ * that touches `window` as it loads, and all that is wanted from it is a table.
+ *
+ * Each family is `var <Group>FontFaces = [{ uri, descriptors: { unicodeRange } }]`, where `uri` names a
+ * `var <X>_default = "./fonts/..."` beside it, and `init("Family Name", ...<Group>FontFaces)` further
+ * down is what gives the family the name CSS has to match. A face whose `uri` resolves to no file is a
+ * system font (`LOCAL_FONT_PROTOCOL` -- Helvetica and the emoji fallback) and has nothing to serve.
+ *
+ * @throws When the shape has changed, which on an upgrade is the difference between noticing here and
+ *   shipping a wiki whose drawings all render in the browser's default font.
+ */
+function readExcalidrawFonts(distDir) {
+  const devDir = path.join(distDir, 'dev')
+  const chunk = fs
+    .readdirSync(devDir)
+    .filter((name) => name.endsWith('.js'))
+    .map((name) => path.join(devDir, name))
+    .find((file) => fs.readFileSync(file, 'utf8').includes('FontFaces = ['))
+  if (!chunk) {
+    throw new Error(`excalidraw: no font registry found in ${devDir}`)
+  }
+  const src = fs.readFileSync(chunk, 'utf8')
+
+  const files = new Map()
+  for (const m of src.matchAll(/var (\w+_default) = "\.\/(fonts\/[^"]+)";/g)) {
+    files.set(m[1], m[2])
+  }
+  const names = new Map()
+  for (const m of src.matchAll(/init\(\s*"([^"]+)"\s*,\s*\.\.\.(\w+)FontFaces\s*\)/g)) {
+    names.set(m[2], m[1])
+  }
+
+  const families = []
+  for (const m of src.matchAll(/var (\w+)FontFaces = \[([\s\S]*?)\n\];/g)) {
+    const [, group, body] = m
+    const family = names.get(group)
+    if (!family || EXCALIDRAW_SKIPPED_FONTS.has(group)) {
+      continue
+    }
+    const faces = []
+    for (const face of body.matchAll(
+      /\{\s*uri:\s*(\w+)\s*(?:,\s*descriptors:\s*\{([\s\S]*?)\}\s*)?\}/g
+    )) {
+      const file = files.get(face[1])
+      if (file) {
+        faces.push({ file, unicodeRange: face[2]?.match(/unicodeRange:\s*"([^"]*)"/)?.[1] ?? '' })
+      }
+    }
+    if (faces.length > 0) {
+      families.push({ group, family, faces })
+    }
+  }
+  if (families.length === 0) {
+    throw new Error(
+      `excalidraw: the font registry in ${path.basename(chunk)} parsed to nothing. Its shape has changed — see readExcalidrawFonts.`
+    )
+  }
+  return families
+}
+
+/**
+ * The Excalidraw editor's fonts: served in dev, copied on build, and declared to CSS.
+ *
+ * Two halves, because two different things need them and only one of them loads Excalidraw.
+ *
+ * The EDITOR fetches them itself, by the URL above, and would do so from a CDN if they were not here.
+ *
+ * A READER never loads Excalidraw at all -- a drawing is stored as the SVG the editor exported at save
+ * time, and that SVG names its fonts and does not carry them. Excalidraw's own `@font-face` rules are
+ * registered from JavaScript, so there is nothing for a page without it to inherit; hence the
+ * generated stylesheet, which `main.js` imports so that every page has the declarations. It costs
+ * about a kilobyte and downloads no font until a glyph actually needs one, so a wiki with no drawings
+ * in it pays the kilobyte and nothing else.
+ *
+ * The files are neither committed nor imported, for the reason the twemoji assets above are not: they
+ * are a directory of hashed subsets that no source file names, so Vite cannot discover them.
+ */
+function excalidrawAssets() {
+  const distDir = path.resolve(
+    path.dirname(createRequire(import.meta.url).resolve('@excalidraw/excalidraw')),
+    '..'
+  )
+  const fontsDir = path.join(distDir, 'prod', 'fonts')
+  const VIRTUAL_CSS = 'virtual:excalidraw-fonts.css'
+  const RESOLVED_CSS = `\0${VIRTUAL_CSS}`
+  let outDir = null
+
+  return {
+    name: 'wiki-excalidraw-assets',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir)
+    },
+    resolveId(id) {
+      return id === VIRTUAL_CSS ? RESOLVED_CSS : null
+    },
+    load(id) {
+      if (id !== RESOLVED_CSS) {
+        return null
+      }
+      return readExcalidrawFonts(distDir)
+        .flatMap(({ family, faces }) =>
+          faces.map(
+            ({ file, unicodeRange }) =>
+              `@font-face{font-family:"${family}";font-style:normal;font-weight:400;font-display:swap;` +
+              `src:url("${EXCALIDRAW_ROUTE}/${file}") format("woff2")` +
+              `${unicodeRange ? `;unicode-range:${unicodeRange}` : ''}}`
+          )
+        )
+        .join('\n')
+    },
+    configureServer(server) {
+      // -> connect strips the prefix, so `req.url` starts at `/fonts/...` here
+      server.middlewares.use(EXCALIDRAW_ROUTE, (req, res, next) => {
+        const rel = path.normalize(req.url.split('?')[0]).replace(/^(\.\.[/\\])+/, '')
+        const file = path.join(distDir, 'prod', rel)
+        // -> Both a traversal guard and a cheap 404 for anything that is not one of these files
+        if (!file.startsWith(fontsDir + path.sep) || !file.endsWith('.woff2')) {
+          next()
+          return
+        }
+        fs.promises.readFile(file).then((font) => {
+          res.setHeader('Content-Type', 'font/woff2')
+          res.end(font)
+        }, next)
+      })
+    },
+    // -> Not `emitFile`: these need no processing, and their names already carry a content hash
+    async writeBundle() {
+      const target = path.join(outDir, EXCALIDRAW_ROUTE.slice(1), 'fonts')
+      await fs.promises.rm(target, { recursive: true, force: true })
+      for (const family of await fs.promises.readdir(fontsDir)) {
+        if (EXCALIDRAW_SKIPPED_FONTS.has(family)) {
+          continue
+        }
+        await fs.promises.cp(path.join(fontsDir, family), path.join(target, family), {
+          recursive: true
+        })
+      }
+    }
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const userConfig =
@@ -169,6 +338,7 @@ export default defineConfig(({ mode }) => {
       }),
       tailwindcss(),
       twemojiAssets(),
+      excalidrawAssets(),
       vueDevTools()
     ],
     css: {

@@ -212,6 +212,15 @@ class Sites {
             isActive: true,
             config: {}
           },
+          /*
+            No config of its own: a drawing is drawn rather than written, so there is no syntax, no
+            pipeline and nothing about how it is authored to set per site. This flag is only whether
+            the site offers `New Drawing` at all.
+          */
+          excalidraw: {
+            isActive: true,
+            config: {}
+          },
           markdown: {
             isActive: true,
             config: {
@@ -495,6 +504,15 @@ class Sites {
             offers `New Blog` at all.
           */
           blog: {
+            isActive: true,
+            config: {}
+          },
+          /*
+            No config of its own: a drawing is drawn rather than written, so there is no syntax, no
+            pipeline and nothing about how it is authored to set per site. This flag is only whether
+            the site offers `New Drawing` at all.
+          */
+          excalidraw: {
             isActive: true,
             config: {}
           },

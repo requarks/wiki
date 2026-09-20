@@ -19,6 +19,13 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 const FILE_TYPES = {
   markdown: { ext: 'md', mime: 'text/markdown' },
   adoc: { ext: 'adoc', mime: 'text/asciidoc' },
+  /*
+    A drawing is a JSON document, but `.excalidraw` is what names it everywhere outside this wiki --
+    it is what Excalidraw itself writes and what opens one again. The same reasoning as
+    `PAGE_FILE_EXTENSIONS` on the server, which is where a drawing lands when a storage target writes
+    the tree out as files.
+  */
+  excalidraw: { ext: 'excalidraw', mime: 'application/json' },
   html: { ext: 'html', mime: 'text/html' }
 }
 
@@ -87,9 +94,9 @@ export async function saveVersionSource(version) {
  * directory reaches for a store and this is not the file to start in. The caller has it already, and
  * has to make sure it is loaded (`editorStore.fetchConfigs()`) before asking.
  *
- * Asynchronous because one of the two pipelines is: Asciidoctor's `convert` returns a promise, and it
- * is reached through a dynamic import so that a reader looking at the history of a markdown page never
- * downloads it.
+ * Asynchronous because all but one of the pipelines is: Asciidoctor's `convert` returns a promise and
+ * so does drawing an Excalidraw scene, and both are reached through a dynamic import so that a reader
+ * looking at the history of a markdown page downloads neither.
  *
  * @param {object} version A version WITH its `content`.
  * @param {object} options
@@ -110,6 +117,16 @@ export async function renderVersionSource(version, { markdownConfig, asciidocCon
     case 'adoc': {
       const { AsciidocRenderer } = await import('@/renderers/asciidoc')
       return new AsciidocRenderer(asciidocConfig ?? {}).render(content, { pagePath })
+    }
+    case 'excalidraw': {
+      /*
+        The drawing as it was, rather than the JSON that describes it -- which is what the default
+        below would show, and is unreadable. Excalidraw is a large thing to fetch for a history
+        screen, so it is dynamically imported like the AsciiDoc pipeline above: a reader looking
+        through the history of a page that is not a drawing never downloads it.
+      */
+      const { exportSceneSvg, parseScene } = await import('@/editor/excalidraw')
+      return exportSceneSvg(parseScene(content))
     }
     default:
       return content
