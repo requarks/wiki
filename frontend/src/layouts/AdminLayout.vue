@@ -249,6 +249,23 @@
                   :class="countBadgeClass(adminStore.info.groupsTotal)" />
               </w-item-section>
             </w-item>
+            <!--
+              `manage:system` rather than `manage:scim`: this screen turns provisioning on and decides
+              what deprovisioning does, which is a decision ABOUT the directory's write access rather
+              than an exercise of it. `manage:scim` is what the connector's API key carries.
+            -->
+            <w-item
+              to="/_admin/scim"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:system`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-scim.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.scim.title') }}</w-item-section>
+              <w-item-section side>
+                <status-light :color="scimLight.color" :pulse="scimLight.pulse" />
+              </w-item-section>
+            </w-item>
             <w-item to="/_admin/users" active-class="bg-primary text-white" v-if="usersAreVisible">
               <w-item-section avatar>
                 <w-icon name="img:/_assets/icons/fluent-account.svg" />
@@ -631,6 +648,26 @@ function countBadgeClass(count) {
  * moment it learns something without the sidebar having to ask again.
  */
 const storageHealthy = computed(() => adminStore.storageHealth.status === 'healthy')
+
+/**
+ * The SCIM item's light, which has three states rather than the usual on/off.
+ *
+ * Provisioning being switched on is not the same as it working: a connector arrives holding an API
+ * key, and every API key is refused while the REST API master switch is off. So a wiki with SCIM
+ * enabled and the API disabled is configured for something it cannot actually do, and the light
+ * says so in orange rather than claiming green — pulsing, because it is a state somebody has to go
+ * and fix rather than one to be read and left alone.
+ *
+ * Off is red like every other endpoint light here: nothing is wrong, it is simply not serving.
+ */
+const scimLight = computed(() => {
+  if (!adminStore.info.isScimEnabled) {
+    return { color: 'negative', pulse: false }
+  }
+  return adminStore.info.isApiEnabled
+    ? { color: 'positive', pulse: false }
+    : { color: 'warning', pulse: true }
+})
 
 // WATCHERS
 

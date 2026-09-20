@@ -107,6 +107,7 @@ const routes = [
       { path: 'auth', component: () => import('@/pages/AdminAuth.vue') },
       { path: 'groups/:id?/:section?', component: () => import('@/pages/AdminGroups.vue') },
       { path: 'users/:id?/:section?', component: () => import('@/pages/AdminUsers.vue') },
+      { path: 'scim', component: () => import('@/pages/AdminScim.vue') },
       // -> System
       { path: 'api', component: () => import('@/pages/AdminApi.vue') },
       { path: 'audit', component: () => import('@/pages/AdminAudit.vue') },

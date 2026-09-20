@@ -314,18 +314,39 @@ export const comments = pgTable(
 )
 
 // GROUPS ------------------------------
-export const groups = pgTable('groups', {
-  id: uuid().primaryKey().defaultRandom(),
-  name: varchar({ length: 255 }).notNull(),
-  permissions: jsonb().notNull(),
-  rules: jsonb().notNull(),
-  redirectOnLogin: varchar({ length: 255 }).notNull().default(''),
-  redirectOnFirstLogin: varchar({ length: 255 }).notNull().default(''),
-  redirectOnLogout: varchar({ length: 255 }).notNull().default(''),
-  isSystem: boolean().notNull().default(false),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow()
-})
+export const groups = pgTable(
+  'groups',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    name: varchar({ length: 255 }).notNull(),
+    permissions: jsonb().notNull(),
+    rules: jsonb().notNull(),
+    redirectOnLogin: varchar({ length: 255 }).notNull().default(''),
+    redirectOnFirstLogin: varchar({ length: 255 }).notNull().default(''),
+    redirectOnLogout: varchar({ length: 255 }).notNull().default(''),
+    isSystem: boolean().notNull().default(false),
+    /**
+     * What the directory provisioning this group calls it, as SCIM's `externalId`.
+     *
+     * Null for a group created here, and optional even for one that was not: `externalId` is a
+     * SHOULD in RFC 7643 and not every client sends it. Which is why it is not the thing that says
+     * who owns the group — `isProvisioned` is.
+     */
+    externalId: varchar({ length: 255 }),
+    /**
+     * Whether a SCIM client owns this group. Set by the first provisioning write and never cleared
+     * automatically; it is what lets SCIM delete a group it created while leaving one an
+     * administrator made by hand alone. See `models/scim.ts`.
+     */
+    isProvisioned: boolean().notNull().default(false),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    // -> Nulls are distinct to postgres, which is what lets any number of groups have no external id
+    uniqueIndex('groups_externalId_idx').on(table.externalId)
+  ]
+)
 
 // HOOKS -------------------------------
 export const hookStateEnum = pgEnum('hookState', ['pending', 'success', 'error'])
@@ -1096,6 +1117,23 @@ export const users = pgTable(
      * while the column keeps the capitalization that was typed.
      */
     handle: varchar({ length: 64 }),
+    /**
+     * What the directory provisioning this account calls it, as SCIM's `externalId`.
+     *
+     * The identifier that survives a rename or a change of address at the provider, so it is what a
+     * SCIM client looks an account up by. Null for an account created here, and optional even for a
+     * provisioned one — see the same column on `groups`.
+     */
+    externalId: varchar({ length: 255 }),
+    /**
+     * Whether a SCIM client owns this account. Set by the first provisioning write, which is how an
+     * account created by hand is adopted by a directory that later claims it.
+     *
+     * What it gates is destruction: `DELETE /Users/:id` is only honoured for an account the client
+     * owns, so a token sitting in somebody else's console cannot empty the wiki's user list. See
+     * `models/scim.ts`.
+     */
+    isProvisioned: boolean().notNull().default(false),
     auth: jsonb().notNull().default({}),
     meta: jsonb().notNull().default({}),
     passkeys: jsonb().notNull().default({}),
@@ -1110,6 +1148,8 @@ export const users = pgTable(
   },
   (table) => [
     index('users_lastLoginAt_idx').on(table.lastLoginAt),
+    // -> Nulls are distinct to postgres, as for the handle below
+    uniqueIndex('users_externalId_idx').on(table.externalId),
     // -> Folded, so that two handles differing only in case cannot both exist. Nulls are distinct to
     //    postgres, which is what lets any number of users have no handle at all.
     uniqueIndex('users_handle_idx').on(sql`lower(${table.handle})`)

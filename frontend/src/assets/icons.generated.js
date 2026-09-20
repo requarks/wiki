@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  275 icons.
+  276 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-down": {"body":"<path fill=\"currentColor\" d=\"M4.219 10.781L2.78 12.22l12.5 12.5l.719.687l.719-.687l12.5-12.5l-1.438-1.438L16 22.562z\"/>","width":32,"height":32},
@@ -57,6 +57,7 @@ export const BUNDLED_ICONS = {
   "la:ellipsis-v": {"body":"<path fill=\"currentColor\" d=\"M16 6a1.999 1.999 0 1 0 0 4a1.999 1.999 0 1 0 0-4m0 8a1.999 1.999 0 1 0 0 4a1.999 1.999 0 1 0 0-4m0 8a1.999 1.999 0 1 0 0 4a1.999 1.999 0 1 0 0-4\"/>","width":32,"height":32},
   "la:envelope": {"body":"<path fill=\"currentColor\" d=\"M3 8v18h26V8zm4.313 2h17.375L16 15.781zM5 10.875l10.438 6.969l.562.343l.563-.343L27 10.875V24H5z\"/>","width":32,"height":32},
   "la:eraser": {"body":"<path fill=\"currentColor\" d=\"M18.906 4.094c-.804 0-1.64.273-2.281.843v.032L16.594 5L4.906 16.594c-1.21 1.21-1.203 3.183-.062 4.468l.031.032h.031l6 6c1.211 1.21 3.184 1.203 4.469.062v-.031L27 15.5c1.266-1.266 1.305-3.29.094-4.5l-6-6a3.06 3.06 0 0 0-2.188-.906m-.031 2.031c.32 0 .617.086.813.281l6 6c.386.387.44 1.153-.094 1.688l-5.032 5.031l-7.656-7.656l5.063-5.031l.031-.032c.254-.21.57-.281.875-.281m-7.406 6.781l7.656 7.656l-5.094 5.094c-.011.008-.02.024-.031.032c-.516.43-1.309.378-1.688 0L6.345 19.75c-.016-.02-.016-.043-.032-.063c-.41-.515-.375-1.312 0-1.687z\"/>","width":32,"height":32},
+  "la:exclamation-circle": {"body":"<path fill=\"currentColor\" d=\"M16 4C9.383 4 4 9.383 4 16s5.383 12 12 12s12-5.383 12-12S22.617 4 16 4m0 2c5.535 0 10 4.465 10 10s-4.465 10-10 10S6 21.535 6 16S10.465 6 16 6m-1 4v8h2v-8zm0 10v2h2v-2z\"/>","width":32,"height":32},
   "la:exclamation-triangle": {"body":"<path fill=\"currentColor\" d=\"m16 3.219l-.875 1.5l-12 20.781l-.844 1.5H29.72l-.844-1.5l-12-20.781zm0 4L26.25 25H5.75zM15 14v6h2v-6zm0 7v2h2v-2z\"/>","width":32,"height":32},
   "la:external-link-alt": {"body":"<path fill=\"currentColor\" d=\"M18 5v2h5.563L11.28 19.281l1.438 1.438L25 8.437V14h2V5zM5 9v18h18V14l-2 2v9H7V11h9l2-2z\"/>","width":32,"height":32},
   "la:external-link-square-alt": {"body":"<path fill=\"currentColor\" d=\"M5 5v22h22V5zm2 2h18v18H7zm6 3v2h5.563L9.28 21.281l1.438 1.438L20 13.437V19h2v-9z\"/>","width":32,"height":32},

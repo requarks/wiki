@@ -123,6 +123,7 @@ export const AUDIT_ACTIONS = {
     'installExtension',
     'updateApiState',
     'updateMetricsState',
+    'updateScimState',
     'disconnectWebsockets',
     'flushCache',
     'regenerateCertificates',

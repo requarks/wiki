@@ -1,6 +1,7 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError, rethrowAsBadRequest } from '../helpers/common.ts'
 import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
+import { elevatedMembershipGuard, systemUserGuard } from '../helpers/userGuards.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { UserPatch, UserProfilePatch } from '../models/users.ts'
 
@@ -50,29 +51,6 @@ export function whoAmI(req: FastifyRequest): Record<string, any> {
     */
     permissions: req.session.permissions ?? []
   }
-}
-
-/**
- * Refuse a `manage:users` holder any change to a user who is protected by `manage:system`.
- *
- * `manage:users` is deliberately short of the root: an administrator who can rename, re-group, reset
- * the password of, or delete a `manage:system` account can take the instance over through it. Only
- * somebody who already holds `manage:system` may touch one.
- *
- * @returns The refusal to throw, or null when the caller may proceed
- */
-async function systemUserGuard(req: FastifyRequest, userId: string): Promise<CustomError | null> {
-  if (WIKI.models.groups.holdsSystemPermission(req)) {
-    return null
-  }
-  if (!(await WIKI.models.groups.userHoldsSystemPermission(userId))) {
-    return null
-  }
-  return new CustomError(
-    'userSystemProtected',
-    'This user belongs to a group with the manage:system permission. Only a user who holds manage:system can modify them.',
-    403
-  )
 }
 
 /**
@@ -1506,16 +1484,9 @@ async function routes(app: FastifyInstance) {
         instead of editing the first. Asked of `write:users` and `manage:users` alike: neither is
         trusted to decide who administers the instance, which is `manage:system`'s to give.
       */
-      const requestedGroups = req.body.groups ?? []
-      if (requestedGroups.length > 0 && !WIKI.models.groups.holdsSystemPermission(req)) {
-        const elevated = await WIKI.models.groups.elevatedGroupIds()
-        if (requestedGroups.some((id) => elevated.includes(id))) {
-          throw new CustomError(
-            'groupMembershipElevatedProtected',
-            'Only a user who holds manage:system can create a user inside a group that administers the wiki.',
-            403
-          )
-        }
+      const elevatedRefusal = await elevatedMembershipGuard(req, [], req.body.groups ?? [])
+      if (elevatedRefusal) {
+        throw elevatedRefusal
       }
 
       try {
@@ -1734,21 +1705,13 @@ async function routes(app: FastifyInstance) {
           Groups this request leaves alone are not consulted, so a save that only renames the user
           still goes through whatever they belong to.
         */
-        if (!WIKI.models.groups.holdsSystemPermission(req)) {
-          const current = await WIKI.models.users.getUserGroupIds(req.params.userId)
-          const requested = req.body.groups
-          const elevated = await WIKI.models.groups.elevatedGroupIds()
-          const moved = [
-            ...requested.filter((id) => !current.includes(id)),
-            ...current.filter((id) => !requested.includes(id))
-          ]
-          if (moved.some((id) => elevated.includes(id))) {
-            throw new CustomError(
-              'groupMembershipElevatedProtected',
-              'Only a user who holds manage:system can add a user to, or remove one from, a group that administers the wiki.',
-              403
-            )
-          }
+        const elevatedRefusal = await elevatedMembershipGuard(
+          req,
+          await WIKI.models.users.getUserGroupIds(req.params.userId),
+          req.body.groups
+        )
+        if (elevatedRefusal) {
+          throw elevatedRefusal
         }
 
         const rootAdminGroupId = WIKI.config.auth.rootAdminGroupId

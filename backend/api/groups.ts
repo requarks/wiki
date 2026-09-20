@@ -1,60 +1,9 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
-import { ELEVATED_PERMISSIONS, SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
-import type { FastifyInstance, FastifyRequest } from 'fastify'
-import type { GroupPatch, GroupRule, GroupWithUserCount } from '../models/groups.ts'
-
-/**
- * Refuse a change to who is in a group that administers the instance.
- *
- * Membership of such a group IS the permission: adding somebody hands them what the group can reach,
- * and removing somebody takes it away from a real administrator. Deleting the group does both at
- * once, so it asks the same question.
- *
- * Where the line falls depends on what the caller holds, and the two rungs are deliberately
- * different:
- *
- * - **`manage:groups`** is stopped only by `manage:system`, the permission that bypasses every check
- *   on the server. Everything below that is theirs to arrange; managing groups is the job.
- * - **`write:groups`** is stopped by every one of `ELEVATED_PERMISSIONS`. It is the rung that may
- *   build and populate ordinary groups without being trusted to decide who administers the wiki —
- *   and since it cannot edit a group's permissions at all, its only route to an elevated group would
- *   be through the membership of one that already exists.
- *
- * @param action What the caller was trying to do, as the message reads it back to them
- * @returns The refusal to throw, or null when the caller may proceed
- */
-function elevatedGroupGuard(
-  req: FastifyRequest,
-  group: GroupWithUserCount,
-  action = 'change who belongs to the group'
-): CustomError | null {
-  if (WIKI.models.groups.holdsSystemPermission(req)) {
-    return null
-  }
-  const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
-  if (permissions.includes('manage:groups')) {
-    if (!group.permissions.includes(SYSTEM_PERMISSION)) {
-      return null
-    }
-    return new CustomError(
-      'groupMembershipSystemProtected',
-      `This group has the ${SYSTEM_PERMISSION} permission. Only a user who holds it can ${action}.`,
-      403
-    )
-  }
-  if (!isElevated(group.permissions)) {
-    return null
-  }
-  const held = group.permissions.filter((p) =>
-    (ELEVATED_PERMISSIONS as readonly string[]).includes(p)
-  )
-  return new CustomError(
-    'groupMembershipElevatedProtected',
-    `This group administers the wiki (${held.join(', ')}). Only a user who holds manage:groups or manage:system can ${action}.`,
-    403
-  )
-}
+import { elevatedGroupGuard } from '../helpers/userGuards.ts'
+import { SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
+import type { FastifyInstance } from 'fastify'
+import type { GroupPatch, GroupRule } from '../models/groups.ts'
 
 interface GroupUpdateBody {
   name?: string

@@ -994,6 +994,10 @@ const permissionCards = [
       {
         permission: 'manage:groups',
         hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules'
+      },
+      {
+        permission: 'manage:scim',
+        hint: 'Can drive SCIM provisioning at /_scim/v2: create and deactivate accounts, and set the membership of groups that do not administer the wiki. Meant for an API key issued to an identity provider, not for a person.'
       }
     ]
   }

@@ -131,6 +131,20 @@ class Settings {
         }
       },
       {
+        key: 'scim',
+        value: {
+          isEnabled: false,
+          deleteAction: 'deactivate',
+          emailSource: 'userName',
+          allowGroupCreate: true,
+          rateLimitEnabled: true,
+          rateLimitMax: 600,
+          rateLimitWindow: '1m',
+          rateLimitBan: '1m',
+          ipAllowList: []
+        }
+      },
+      {
         key: 'search',
         value: {
           termHighlighting: true,

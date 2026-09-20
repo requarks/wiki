@@ -143,6 +143,11 @@ async function routes(app: FastifyInstance) {
                 type: 'boolean',
                 description: 'Whether the Prometheus metrics endpoint is turned on.'
               },
+              isScimEnabled: {
+                type: 'boolean',
+                description:
+                  'Whether the SCIM provisioning endpoint is turned on. Note that it cannot authenticate anybody unless `isApiEnabled` is also true, since a connector arrives holding an API key.'
+              },
               isSchedulerHealthy: {
                 type: 'boolean',
                 description:
@@ -208,6 +213,7 @@ async function routes(app: FastifyInstance) {
         isApiEnabled: WIKI.config.api.isEnabled === true,
         isMailConfigured: WIKI.config?.mail?.host?.length > 2,
         isMetricsEnabled: WIKI.config.metrics.isEnabled === true,
+        isScimEnabled: WIKI.models.scim.isEnabled(),
         isSchedulerHealthy: await WIKI.models.jobs.isHealthy(),
         latestVersion: WIKI.config.update.version,
         latestVersionReleaseDate: WIKI.config.update.versionDate,
@@ -860,6 +866,115 @@ async function routes(app: FastifyInstance) {
         ok: true,
         message: 'Metrics configuration saved successfully.'
       }
+    }
+  )
+
+  /**
+   * GET SCIM CONFIGURATION
+   */
+  app.get(
+    '/scim',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the SCIM provisioning configuration',
+        description:
+          'Whether the SCIM 2.0 endpoint at `/_scim/v2` is turned on, and how it behaves. Instance-wide: users and groups are not per site, so neither is provisioning.',
+        tags: ['System'],
+        response: {
+          200: { $ref: 'ScimConfig#' }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.scim.getConfig()
+    }
+  )
+
+  /**
+   * UPDATE SCIM CONFIGURATION
+   */
+  app.put<{ Body: Record<string, any> }>(
+    '/scim',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Update the SCIM provisioning configuration',
+        description:
+          'Accepts any subset of the fields, and applies at once on every instance — nothing here is read at boot. Turning the endpoint on does not by itself let anything in: a connector also needs an API key belonging to a group that holds `manage:scim`.',
+        tags: ['System'],
+        body: { $ref: 'ScimConfig#' },
+        response: {
+          200: {
+            description: 'SCIM configuration updated successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const patch = WIKI.models.scim.pickFields(req.body)
+      if (Object.keys(patch).length < 1) {
+        return reply.badRequest('No valid SCIM setting was provided.')
+      }
+
+      const invalid = WIKI.models.scim.validate(patch)
+      if (invalid) {
+        return reply.badRequest(invalid)
+      }
+
+      if (!(await WIKI.models.scim.updateConfig(patch))) {
+        return reply.internalServerError('Failed to save the SCIM configuration.')
+      }
+
+      // -> Fields rather than values, with `isEnabled` spelled out for the same reason the metrics
+      //    route spells it out: whether a directory may write to the user list is the part that gets
+      //    asked about afterwards.
+      await audit(req, 'admin', 'updateScimState', {
+        fields: Object.keys(patch).sort(),
+        ...(patch.isEnabled === undefined ? {} : { isEnabled: patch.isEnabled })
+      })
+
+      return {
+        ok: true,
+        message: 'SCIM configuration saved successfully.'
+      }
+    }
+  )
+
+  /**
+   * GET SCIM STATUS
+   */
+  app.get(
+    '/scim/status',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Get the SCIM provisioning status',
+        description:
+          'How many users and groups a directory currently owns, and the last SCIM request this instance answered.',
+        tags: ['System'],
+        response: {
+          200: { $ref: 'ScimStatus#' }
+        }
+      }
+    },
+    async () => {
+      return WIKI.models.scim.getStats()
     }
   )
 

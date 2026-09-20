@@ -100,6 +100,39 @@ defaults:
       # about a dozen database queries.
       includeRuntime: true
       includeWiki: false
+    scim:
+      # SCIM 2.0 provisioning, served at /_scim/v2. Off by default: it is a directory's write access
+      # to the wiki's user and group lists, and nothing about it is useful until an administrator has
+      # deliberately turned it on and minted a key for it.
+      isEnabled: false
+      # What DELETE /Users/:id does to an account the client owns. `deactivate` clears its sessions
+      # and its group memberships but keeps the row, so authorship on pages and history survives;
+      # `delete` removes the row. Deactivation is the default because a wiki's users are authors.
+      deleteAction: 'deactivate'
+      # Where a provisioned account's email address is read from. `userName` is the SCIM attribute
+      # every connector sends and is right wherever the login name is the mailbox; `emails` reads the
+      # primary (or first work) entry of `emails[]` instead, for a directory whose UPN is not.
+      emailSource: 'userName'
+      # Whether POST /Groups may create a wiki group. A created group holds no permissions and no
+      # page rules, so it grants nothing until an administrator fills it in. Off, a directory may
+      # only manage the membership of groups that already exist here.
+      allowGroupCreate: true
+      # Per-address rate limit on /_scim/v2, counted the same way the login limit is and sharing the
+      # same postgres-backed counter, so instances behind a load balancer agree about it.
+      #
+      # Far more generous than the auth limit, because the traffic is not the same shape: a first
+      # sync of a large directory is hundreds of requests in a minute, and that is the endpoint
+      # working. The ban is short for the same reason -- a connector that trips this should recover
+      # on its next cycle rather than leave provisioning broken for a quarter of an hour.
+      rateLimitEnabled: true
+      rateLimitMax: 600
+      rateLimitWindow: '1m'
+      rateLimitBan: '1m'
+      # Addresses allowed to reach /_scim/v2 at all, as single addresses or CIDR subnets. EMPTY
+      # means no restriction: the bearer token is then the only thing standing in front of the
+      # endpoint. Note that what an address means depends on `security.trustProxy` -- with it off, a
+      # wiki behind a reverse proxy sees the proxy for every request.
+      ipAllowList: []
     auth:
       autoLogin: false
       enforce2FA: false

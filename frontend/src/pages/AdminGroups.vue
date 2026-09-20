@@ -70,6 +70,14 @@
                 <div class="flex items-center">
                   <strong>{{ props.value }}</strong>
                   <w-icon class="ml-2" v-if="props.row.isSystem" name="la:lock" color="pink" />
+                  <!-- -> A group a directory owns, which is the one kind SCIM may delete -->
+                  <w-icon
+                    class="ml-2"
+                    v-if="props.row.isProvisioned"
+                    name="la:cloud-download-alt"
+                    color="blue-grey">
+                    <w-tooltip>{{ t('admin.groups.provisioned') }}</w-tooltip>
+                  </w-icon>
                 </div>
               </w-td>
             </template>

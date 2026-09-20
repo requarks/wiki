@@ -92,10 +92,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'number',
         description: 'Number of users assigned to this group.'
       },
+      isProvisioned: {
+        type: 'boolean',
+        description:
+          'Whether a SCIM client owns this group. See the same field on `UserCore`; it gates deletion through the provisioning endpoint in the same way.'
+      },
       isElevated: {
         type: 'boolean',
         description:
-          'Whether this group carries a permission that administers the wiki (`write:users`, `manage:users`, `write:groups`, `manage:groups`, `manage:system`). Membership of such a group is itself a privilege, so only `manage:system` may move a user in or out of one. A flag rather than the permissions themselves, so that a caller who may not read a group can still be told which ones are out of bounds.'
+          'Whether this group carries a permission that administers the wiki (`write:users`, `manage:users`, `write:groups`, `manage:groups`, `manage:scim`, `manage:system`). Membership of such a group is itself a privilege, so only `manage:system` may move a user in or out of one. A flag rather than the permissions themselves, so that a caller who may not read a group can still be told which ones are out of bounds.'
       },
       createdAt: {
         type: 'string',

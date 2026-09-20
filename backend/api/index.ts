@@ -23,6 +23,7 @@ async function routes(app: FastifyInstance) {
   await import('./schemas/metrics.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/page.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/scheduler.ts').then((m) => m.registerSchemas(app))
+  await import('./schemas/scim.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/security.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/site.ts').then((m) => m.registerSchemas(app))
   await import('./schemas/storage.ts').then((m) => m.registerSchemas(app))

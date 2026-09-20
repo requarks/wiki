@@ -22,6 +22,7 @@ export const useAdminStore = defineStore('admin', {
       isMCPEnabled: false,
       isMailConfigured: false,
       isMetricsEnabled: false,
+      isScimEnabled: false,
       isSchedulerHealthy: false
     },
     /**
@@ -81,6 +82,7 @@ export const useAdminStore = defineStore('admin', {
       this.info.latestVersion = resp?.latestVersion ?? 'n/a'
       this.info.isApiEnabled = resp?.isApiEnabled ?? false
       this.info.isMetricsEnabled = resp?.isMetricsEnabled ?? false
+      this.info.isScimEnabled = resp?.isScimEnabled ?? false
       this.info.isMailConfigured = resp?.isMailConfigured ?? false
       this.info.isSchedulerHealthy = resp?.isSchedulerHealthy ?? false
     },

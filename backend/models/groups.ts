@@ -21,14 +21,21 @@ export const SYSTEM_PERMISSION = 'manage:system'
  * `manage:groups` handing back `manage:users`, with neither step looking like an escalation on its
  * own.
  *
- * `manage:system` is the one that also bypasses every route check; the other four get here by being
- * able to rewrite who holds what.
+ * `manage:system` is the one that also bypasses every route check; the others get here by being able
+ * to rewrite who holds what.
+ *
+ * `manage:scim` is on the list for exactly that reason and not because of what it is called: a SCIM
+ * client creates accounts and sets their group membership, which is the same power `write:groups`
+ * has when it staffs an ordinary group — and that one is here too. What keeps it from being a route
+ * to the elevated permissions themselves is the membership guard in `helpers/userGuards.ts`, which a
+ * SCIM request passes through like any other caller.
  */
 export const ELEVATED_PERMISSIONS = [
   'write:users',
   'manage:users',
   'write:groups',
   'manage:groups',
+  'manage:scim',
   SYSTEM_PERMISSION
 ] as const
 
@@ -73,6 +80,8 @@ export interface GroupWithUserCount {
   redirectOnFirstLogin: string
   redirectOnLogout: string
   isSystem: boolean
+  /** Whether a SCIM client owns this group, which is what the admin list badges. */
+  isProvisioned: boolean
   userCount: number
   createdAt: Date
   updatedAt: Date
@@ -86,6 +95,9 @@ export interface GroupPatch {
   redirectOnLogout?: string
   permissions?: string[]
   rules?: GroupRule[]
+  /** SCIM's bookkeeping; see the same two fields on `UserPatch`. */
+  isProvisioned?: boolean
+  externalId?: string | null
 }
 
 /**
@@ -131,6 +143,7 @@ const groupSelection = {
   redirectOnFirstLogin: groupsTable.redirectOnFirstLogin,
   redirectOnLogout: groupsTable.redirectOnLogout,
   isSystem: groupsTable.isSystem,
+  isProvisioned: groupsTable.isProvisioned,
   createdAt: groupsTable.createdAt,
   updatedAt: groupsTable.updatedAt,
   userCount: count(userGroups.userId)

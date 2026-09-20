@@ -61,6 +61,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       isVerified: {
         type: 'boolean'
       },
+      isProvisioned: {
+        type: 'boolean',
+        description:
+          'Whether a SCIM client owns this account. Set by the first provisioning write, so an account created here is adopted by a directory that later claims it — and it is what gates deprovisioning: `DELETE /_scim/v2/Users/:id` answers 404 for an account no directory owns.'
+      },
       createdAt: {
         type: 'string',
         format: 'date-time',

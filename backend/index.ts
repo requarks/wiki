@@ -65,6 +65,7 @@ const SERVER_ROUTE_SEGMENTS = new Set([
   '_files',
   '_icons',
   '_render',
+  '_scim',
   '_site',
   '_terminal',
   '_thumb'
@@ -560,10 +561,11 @@ async function initHTTPServer() {
 
   app.addHook('onRequest', async (req, reply) => {
     /*
-      Bearer tokens authenticate API calls and the metrics endpoint; everything else is
-      cookie-authenticated. The metrics path is here rather than verifying a key of its own, so that
-      there is one place a bearer token is checked — it is served by a hook below, at a path that is
-      a setting, so it cannot declare itself part of the API by its prefix.
+      Bearer tokens authenticate API calls, the SCIM endpoint and the metrics endpoint; everything
+      else is cookie-authenticated. Neither of the latter two verifies a key of its own, so that
+      there is one place a bearer token is checked — metrics is served by a hook below, at a path
+      that is a setting, and SCIM has a prefix of its own because its errors and its media type are
+      not the API's.
 
       Note that the session is deliberately left untouched: writing to it would have
       @fastify/session persist a session row for every scraped request.
@@ -572,7 +574,11 @@ async function initHTTPServer() {
     if (!header?.startsWith('Bearer ')) {
       return
     }
-    if (!req.url.startsWith('/_api/') && !WIKI.models.metrics.matches(req.url.split('?')[0]!)) {
+    if (
+      !req.url.startsWith('/_api/') &&
+      !req.url.startsWith('/_scim/') &&
+      !WIKI.models.metrics.matches(req.url.split('?')[0]!)
+    ) {
       return
     }
     const token = header.slice('Bearer '.length).trim()
@@ -731,6 +737,7 @@ async function initHTTPServer() {
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
   app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
   app.register(import('./controllers/render.ts'), { prefix: '/_render' })
+  app.register(import('./controllers/scim.ts'), { prefix: '/_scim' })
   app.register(import('./controllers/terminal.ts'), { prefix: '/_terminal' })
   app.register(import('./controllers/thumb.ts'), { prefix: '/_thumb' })
   app.register(import('./controllers/user.ts'), { prefix: '/_user' })

@@ -29,6 +29,8 @@ export interface UserCore {
   isSystem: boolean
   isActive: boolean
   isVerified: boolean
+  /** Whether a SCIM client owns this account, which is what the admin list badges. */
+  isProvisioned: boolean
   createdAt: Date
   updatedAt: Date
   lastLoginAt: Date | null
@@ -93,6 +95,13 @@ export interface UserPatch {
   handle?: string | null
   isActive?: boolean
   isVerified?: boolean
+  /**
+   * SCIM's bookkeeping, and only SCIM writes either: whether a directory owns this account and what
+   * that directory calls it. The admin API's update route enumerates the fields it accepts, so
+   * neither is reachable from a browser — see `models/scim.ts`.
+   */
+  isProvisioned?: boolean
+  externalId?: string | null
   meta?: Record<string, any>
   prefs?: Record<string, any>
 }
@@ -251,6 +260,7 @@ const userSelection = {
   isSystem: usersTable.isSystem,
   isActive: usersTable.isActive,
   isVerified: usersTable.isVerified,
+  isProvisioned: usersTable.isProvisioned,
   createdAt: usersTable.createdAt,
   updatedAt: usersTable.updatedAt,
   lastLoginAt: usersTable.lastLoginAt
@@ -450,6 +460,8 @@ class Users {
       isSystem: user.isSystem,
       isActive: user.isActive,
       isVerified: user.isVerified,
+      isProvisioned: user.isProvisioned,
+      externalId: user.externalId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       lastLoginAt: user.lastLoginAt,
@@ -461,7 +473,7 @@ class Users {
   }
 
   /**
-   * Create a new user, authenticated against the local strategy.
+   * Create a new user.
    *
    * @returns The new user's ID
    */
@@ -472,11 +484,21 @@ class Users {
     groups = [],
     mustChangePassword = false,
     isVerified = true,
+    isProvisioned = false,
+    externalId,
     strategyId
   }: {
     name: string
     email: string
-    password: string
+    /**
+     * The local-strategy password, for an account that has one.
+     *
+     * Omitted for an account that authenticates somewhere else — one created by a provider login or
+     * by SCIM. Such a user gets no entry in `auth` at all, rather than an entry holding a random
+     * string nothing can sign in with: an empty blob is what `getProfileAuthMethods` reads as "this
+     * account has no password", and a hash of a value nobody holds reads as though it had one.
+     */
+    password?: string
     groups?: string[]
     mustChangePassword?: boolean
     /**
@@ -485,6 +507,10 @@ class Users {
      * registration email or by an administrator marking the account verified.
      */
     isVerified?: boolean
+    /** Whether a SCIM client owns this account from the moment it exists. See `models/scim.ts`. */
+    isProvisioned?: boolean
+    /** What the directory provisioning it calls it, for an account SCIM created. */
+    externalId?: string | null
     /**
      * Which local strategy the password is filed under. Defaults to the built-in one, which is where
      * every account seeded or created by an administrator keeps it.
@@ -501,19 +527,23 @@ class Users {
       .values({
         email: email.toLowerCase(),
         name,
-        auth: {
-          [localStrategyId]: {
-            password: await bcrypt.hash(password, 12),
-            mustChangePwd: mustChangePassword,
-            restrictLogin: false,
-            tfaIsActive: false,
-            tfaRequired: false,
-            tfaSecret: ''
-          }
-        },
+        auth: password
+          ? {
+              [localStrategyId]: {
+                password: await bcrypt.hash(password, 12),
+                mustChangePwd: mustChangePassword,
+                restrictLogin: false,
+                tfaIsActive: false,
+                tfaRequired: false,
+                tfaSecret: ''
+              }
+            }
+          : {},
         isSystem: false,
         isActive: true,
         isVerified,
+        isProvisioned,
+        externalId: externalId ?? null,
         meta: {
           location: '',
           jobTitle: '',
@@ -536,7 +566,7 @@ class Users {
     }
 
     WIKI.models.flags.authDebug(
-      `Created user ${userId} <${email.toLowerCase()}> in ${groups.length} group(s), mustChangePwd: ${mustChangePassword}, verified: ${isVerified}`
+      `Created user ${userId} <${email.toLowerCase()}> in ${groups.length} group(s), password: ${password ? 'yes' : 'no'}, mustChangePwd: ${mustChangePassword}, verified: ${isVerified}`
     )
 
     await WIKI.models.hooks.emit('user:join', {
@@ -1519,9 +1549,8 @@ class Users {
       const userId = await this.createUser({
         name: profile.name || email,
         email,
-        // -> Nothing signs in with it: this account authenticates at the provider, and the local
-        //    strategy's own entry is what a password would live under
-        password: nanoid(32),
+        // -> No password at all: this account authenticates at the provider, and the local strategy's
+        //    own entry is what one would live under
         groups: strategy.autoEnrollGroups ?? [],
         isVerified: true
       })

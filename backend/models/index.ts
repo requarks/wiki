@@ -24,6 +24,7 @@ import { pageWatching } from './pageWatching.ts'
 import { passkeys } from './passkeys.ts'
 import { rateLimits } from './rateLimits.ts'
 import { rendering } from './rendering.ts'
+import { scim } from './scim.ts'
 import { search } from './search.ts'
 import { security } from './security.ts'
 import { sessions } from './sessions.ts'
@@ -61,6 +62,7 @@ export default {
   passkeys,
   rateLimits,
   rendering,
+  scim,
   search,
   security,
   sessions,
