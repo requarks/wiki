@@ -203,6 +203,10 @@ async function postBoot() {
   await WIKI.models.blocks.syncAllSites()
   // -> And which blocks were imported rather than installed, which is what `/_blocks` answers from
   await WIKI.models.blocks.refreshCustomIndex()
+  // -> Then drop whatever is cached for a block or a site that has gone since this instance last ran.
+  //    The cache is a directory in a container while the blocks are rows elsewhere, so an instance
+  //    coming back to a volume it left behind is exactly where stale files accumulate.
+  await WIKI.models.blocks.sweepCache()
 
   // -> Same: every site gets a row per installed storage module
   await WIKI.models.storage.refreshFromDisk()

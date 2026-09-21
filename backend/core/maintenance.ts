@@ -82,8 +82,15 @@ export default {
     // -> Which blocks a site imported is held per instance too, and is what `/_blocks` answers from.
     //    The files themselves need no propagating: each instance unpacks a block it has not got, or
     //    has at the wrong checksum, the first time a browser asks it for one.
+    //
+    //    Going the other way does need doing here. The event says the set of custom blocks changed
+    //    but not how, and the instance that deleted one dropped its own files as it went -- so this
+    //    is where every other instance finds out that files it holds are for a block that no longer
+    //    exists. Reconciled rather than told, so an instance that was down for the delete gets there
+    //    too, on the sweep at boot.
     WIKI.events.inbound.on('reloadBlocks', async () => {
       await WIKI.models.blocks.refreshCustomIndex()
+      await WIKI.models.blocks.sweepCache()
     })
   }
 }

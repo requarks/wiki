@@ -6,22 +6,30 @@ import type { BlockDefinition, BlockProp } from '../models/blocks.ts'
 /**
  * Reading a `.wkblock` — the single file a block is distributed as.
  *
- * `blocks/package.mjs` is the other half of this, and the two have to agree. There is no module to
- * share between them: `blocks/` and `backend/` are separately installed workspaces and the backend
- * does not type-check JavaScript, so the format is written twice and stated in full in both places.
+ * ## The format is specified in `dev/specs/wkblock.md`
  *
- *     magic     8 bytes   "WKBLOCK\0"
- *     version   uint32be  format version, 1
- *     headerLen uint32be  byte length of the header that follows
- *     header    gzip'd JSON — see `PackageHeader`
- *     payload   each file's gzip'd bytes, concatenated in the header's order
+ * Read it before changing anything here. This file and `blocks/package.mjs` are two independent
+ * implementations of that document — `blocks/` and `backend/` are separately installed workspaces
+ * with no module between them, and the backend does not type-check JavaScript, so there is nothing
+ * the two halves could share and nothing that checks one against the other. The spec is what holds
+ * them together, so a change to the format is a change to the spec first.
+ *
+ * ## Why this file is written the way it is
  *
  * Everything here treats the package as something a person uploaded, because that is what it is:
  * `manage:sites` is the trust boundary for the CODE in it — which runs in every reader's browser on
  * that site, and is no more and no less than what the raw head and body fields under Theme already
- * allow — but the container itself is parsed before anybody has vouched for anything. So every
- * length is bounded before it is acted on, every digest is checked, and every path has to fall inside
- * the block's own namespace.
+ * allow — but the container itself is parsed before anybody has vouched for anything.
+ *
+ * So every length the header CLAIMS is bounded before a byte of the payload is touched, every file's
+ * digest is checked against what was decompressed, and every path has to fall inside the block's own
+ * namespace. That last one is not tidiness: the serving route decides which block answers a request
+ * from the first path segment alone, so a package reaching outside its namespace would answer for a
+ * block it is not.
+ *
+ * Every refusal is a `CustomError` naming what is wrong, because every one of them is something the
+ * administrator who uploaded the file can act on — a truncated download, the wrong file, a package
+ * built by a newer wiki.
  */
 
 const MAGIC = Buffer.from('WKBLOCK\0', 'latin1')

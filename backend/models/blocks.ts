@@ -6,6 +6,20 @@ import { blocks as blocksTable, sites as sitesTable } from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
 import { readBlockPackage } from '../helpers/wkblock.ts'
 
+/** A site's directory in the block cache, which is named for its id and nothing else. */
+const CACHE_SITE_DIR = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Everything `materialize` can leave in a site's cache directory for one block, and the key it
+ * belongs to: the unpacked directory, the checksum marker beside it, and a staging directory that a
+ * process killed mid-unpack never cleaned up.
+ *
+ * A block key cannot contain a dot, so the three are told apart by what follows the key without any
+ * ambiguity. Anything else in the directory matches nothing and is left alone — a sweep deleting
+ * what it does not recognise is a worse failure than the leak it is fixing.
+ */
+const CACHE_ENTRY = /^block-([a-z0-9][a-z0-9-]*)(?:\.checksum|\.[0-9a-f]{12})?$/
+
 /** One authorable attribute of a block, as its `static definition` describes it. */
 export interface BlockProp {
   name: string
@@ -708,6 +722,58 @@ class Blocks {
     this.materialized.delete(`${siteId}:${block}`)
     await rm(`${blockDir}.checksum`, { force: true })
     await rm(blockDir, { recursive: true, force: true })
+  }
+
+  /**
+   * Delete cached files for every block this instance has no business serving, and report how many
+   * entries went.
+   *
+   * `discardCached` covers the instance that handled the delete and only that one. The `reloadBlocks`
+   * event carries no payload, so the others learn that a block is gone but not which files to drop —
+   * and an instance that was down when it happened hears nothing at all. So this reconciles the cache
+   * against the index rather than being told what changed, which is the same bargain `materialize`
+   * already makes: every instance works out for itself whether the files it holds are the right ones.
+   *
+   * Whole site directories go too. `customIndex` holds only the sites that have a custom block, so a
+   * directory for any other site is stale by definition — which is what eventually clears up after a
+   * site that was deleted.
+   *
+   * Removing a block's files while a request is mid-`materialize` for that same block is possible and
+   * harmless: it only happens for a block already gone from the index, so the request is going to 404
+   * whichever of the two lands last, and anything left behind goes on the next sweep.
+   */
+  async sweepCache(): Promise<number> {
+    // -> No cache directory at all is the normal state of an instance that has never served a custom
+    //    block, not an error
+    const siteDirs = await readdir(this.cachePath, { withFileTypes: true }).catch(() => [])
+    let removed = 0
+    for (const siteDir of siteDirs) {
+      if (!siteDir.isDirectory() || !CACHE_SITE_DIR.test(siteDir.name)) {
+        continue
+      }
+      const sitePath = path.join(this.cachePath, siteDir.name)
+      const forSite = this.customIndex.get(siteDir.name)
+      if (!forSite || forSite.size < 1) {
+        await rm(sitePath, { recursive: true, force: true })
+        removed++
+        continue
+      }
+      for (const entry of await readdir(sitePath)) {
+        const key = CACHE_ENTRY.exec(entry)?.[1]
+        if (!key || forSite.has(key)) {
+          continue
+        }
+        this.materialized.delete(`${siteDir.name}:${key}`)
+        await rm(path.join(sitePath, entry), { recursive: true, force: true })
+        removed++
+      }
+    }
+    if (removed > 0) {
+      WIKI.logger.info(
+        `Swept ${removed} stale ${removed === 1 ? 'entry' : 'entries'} from the block cache.`
+      )
+    }
+    return removed
   }
 
   /**

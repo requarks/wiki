@@ -8,39 +8,24 @@
  * package, together with the `static definition` read off the component. The result lands in
  * `packages/block-xyz.wkblock` and is uploaded from the instance's Administration → Content Blocks.
  *
- * ## The container
+ * ## The format is specified in `dev/specs/wkblock.md`
  *
- * `backend/helpers/wkblock.ts` is the other half of this and the two have to agree. There is no
- * module to share between them: `blocks/` and `backend/` are separately installed workspaces and the
- * backend does not type-check JavaScript, so the format is written twice and stated in full in both
- * places.
+ * Read it before changing anything here. This file and `backend/helpers/wkblock.ts` are two
+ * independent implementations of that document — `blocks/` and `backend/` are separately installed
+ * workspaces with no module between them, and the backend does not type-check JavaScript, so there is
+ * nothing the two halves could share and nothing that checks one against the other. The spec is what
+ * holds them together, so a change to the format is a change to the spec first.
  *
- *     magic     8 bytes   "WKBLOCK\0"
- *     version   uint32be  format version, 1
- *     headerLen uint32be  byte length of the header that follows
- *     header    gzip'd JSON — see below
- *     payload   each file's gzip'd bytes, concatenated in the header's order
+ * Two decisions worth knowing while reading this file, both explained at length there:
  *
- * The header:
+ * **Per-file gzip rather than one stream over the lot.** A block's assets are often already-compressed
+ * images and fonts sitting beside a bundle that compresses four to one, and a file at a time means the
+ * reader can check a digest as it goes rather than after holding the whole package twice.
  *
- *     {
- *       "block": "xyz",                    // the key, i.e. the <block-xyz> element's suffix
- *       "definition": { ... },             // the component's `static definition`, verbatim
- *       "packagedAt": "2026-09-19T...Z",
- *       "packagedWith": "3.0.0",           // the wiki the packager came from, for diagnostics only
- *       "files": [
- *         { "path": "block-xyz.js", "size": 12345, "compressedSize": 4321, "sha256": "..." }
- *       ]
- *     }
- *
- * Per-file gzip rather than one stream over the lot: a block's assets are often already-compressed
- * images and fonts sitting beside a bundle that compresses four to one, and a file at a time means
- * the reader can check a digest as it goes rather than after holding the whole package twice.
- *
- * Every path is relative to where the block is served from, and the reader refuses anything outside
- * the block's own namespace — `block-<key>.js`, `block-<key>.worker.js` and `block-<key>/**`. That
+ * **Everything is namespaced under the block's own name.** Every path is relative to where the block
+ * is served from, and must be `block-<key>.js`, `block-<key>.worker.js` or `block-<key>/**`. That
  * namespace is the whole of what keeps an imported block from overwriting a built-in one, so it is
- * checked here as well, where the author can still do something about it.
+ * checked here as well as in the reader — here, where the author can still do something about it.
  */
 
 import crypto from 'node:crypto'

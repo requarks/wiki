@@ -179,9 +179,11 @@ and where its definition is read from. So a block being written is developed in 
 `npm run build` and the compiled tree — and packaged once it works. There is no second authoring API.
 
 `blocks/package.mjs` is the packager and `backend/helpers/wkblock.ts` reads what it writes. **The
-format is stated in full in both files and has to be kept in step by hand**: `blocks/` and `backend/`
-are separately installed workspaces and the backend does not type-check JavaScript, so there is no
-module the two halves could share.
+format itself is specified in `dev/specs/wkblock.md`, and that document is the contract**: `blocks/`
+and `backend/` are separately installed workspaces and the backend does not type-check JavaScript, so
+there is no module the two halves could share and nothing that checks one against the other. The two
+files are independent implementations of the spec and carry only the rationale for how each is
+written — so a change to the format is a change to the spec first, then both files, in one commit.
 
 - **One block per package, and the directory name is the identity.** `blocks/block-xyz/` declares
   `block: 'xyz'`, is packaged as `block-xyz.wkblock`, serves as `block-xyz.js` and renders as
