@@ -186,6 +186,19 @@
                     persistent-hint
                     )
 
+              v-card.mt-5.animated.fadeInUp.wait-p6s
+                v-toolbar(color='primary', dark, dense, flat)
+                  v-toolbar-title.subtitle-1 File Handling
+                v-card-text
+                  v-switch.mt-0(
+                    inset
+                    label='Append timestamp to filenames'
+                    color='indigo'
+                    v-model='config.uploadAppendTimestampToFilename'
+                    persistent-hint
+                    hint='A timestamp will be appended to the end of the original filename to ensure each uploaded file will not overwrite others.'
+                    )
+
               v-card.mt-5.animated.fadeInUp.wait-p7s
                 v-toolbar(color='primary', dark, dense, flat)
                   v-toolbar-title.subtitle-1 {{$t('admin:general.editShortcuts')}}
@@ -303,7 +316,8 @@ export default {
         editMenuExternalBtn: false,
         editMenuExternalName: '',
         editMenuExternalIcon: '',
-        editMenuExternalUrl: ''
+        editMenuExternalUrl: '',
+        uploadAppendTimestampToFilename: false
       },
       metaRobots: [
         { text: 'Index', value: 'index' },
@@ -370,6 +384,7 @@ export default {
               $editMenuExternalName: String
               $editMenuExternalIcon: String
               $editMenuExternalUrl: String
+              $uploadAppendTimestampToFilename: Boolean
             ) {
               site {
                 updateConfig(
@@ -394,6 +409,7 @@ export default {
                   editMenuExternalName: $editMenuExternalName
                   editMenuExternalIcon: $editMenuExternalIcon
                   editMenuExternalUrl: $editMenuExternalUrl
+                  uploadAppendTimestampToFilename: $uploadAppendTimestampToFilename
                 ) {
                   responseResult {
                     succeeded
@@ -426,7 +442,8 @@ export default {
             editMenuExternalBtn: _.get(this.config, 'editMenuExternalBtn', false),
             editMenuExternalName: _.get(this.config, 'editMenuExternalName', ''),
             editMenuExternalIcon: _.get(this.config, 'editMenuExternalIcon', ''),
-            editMenuExternalUrl: _.get(this.config, 'editMenuExternalUrl', '')
+            editMenuExternalUrl: _.get(this.config, 'editMenuExternalUrl', ''),
+            uploadAppendTimestampToFilename: _.get(this.config, 'uploadAppendTimestampToFilename', false)
           },
           watchLoading (isLoading) {
             this.$store.commit(`loading${isLoading ? 'Start' : 'Stop'}`, 'admin-site-update')
@@ -489,6 +506,7 @@ export default {
               editMenuExternalName
               editMenuExternalIcon
               editMenuExternalUrl
+              uploadAppendTimestampToFilename
             }
           }
         }

@@ -78,6 +78,13 @@ router.post('/u', (req, res, next) => {
   // Sanitize filename
   fileMeta.originalname = sanitize(fileMeta.originalname.toLowerCase().replace(/[\s,;#]+/g, '_'))
 
+  // Append timestamp after the filename
+  if (WIKI.config.uploads.appendTimestampToFilename) {
+    const parts = fileMeta.originalname.split('.')
+    const ext = parts.pop()
+    fileMeta.originalname = `${parts.join('.')}_${Date.now()}.${ext}`
+  }
+
   // Check if user can upload at path
   const assetPath = (folderId) ? hierarchy.map(h => h.slug).join('/') + `/${fileMeta.originalname}` : fileMeta.originalname
   if (!WIKI.auth.checkAccess(req.user, ['write:assets'], { path: assetPath })) {
