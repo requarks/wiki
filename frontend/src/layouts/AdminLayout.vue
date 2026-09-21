@@ -506,6 +506,10 @@ const overlays = {
     loader: () => import('../components/GroupEditOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  ImportWikijs2Overlay: defineAsyncComponent({
+    loader: () => import('../components/ImportWikijs2Overlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   UserEditOverlay: defineAsyncComponent({
     loader: () => import('../components/UserEditOverlay.vue'),
     loadingComponent: LoadingGeneric

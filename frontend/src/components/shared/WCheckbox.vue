@@ -19,7 +19,14 @@
       class="w-checkbox__box inline-flex size-5 shrink-0 items-center justify-center rounded-sm transition-colors"
       :class="isOn ? 'w-checkbox__box--on text-white' : ''"
       :style="isOn ? { backgroundColor: `var(--color-${color})` } : undefined">
-      <w-icon v-if="isOn" name="mdi:check" size="0.9em" />
+      <!--
+        Hidden rather than removed. With `v-if` the box was left empty when unchecked, and an empty
+        inline-flex has no baseline of its own -- the browser synthesises one from its bottom margin
+        edge, which sits lower against the label's baseline and made the line box 3.7px taller. So an
+        unchecked row stood taller than a checked one, and ticking a box nudged everything below it
+        up. `invisible` keeps the tick laid out, so both states measure the same.
+      -->
+      <w-icon :class="isOn ? '' : 'invisible'" name="mdi:check" size="0.9em" />
     </span>
     <!--
       Same treatment as the switch's label, down to the optical centring: `text-caption` rather than

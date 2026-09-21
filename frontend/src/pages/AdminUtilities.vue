@@ -28,25 +28,10 @@
       </div>
     </div>
     <w-separator inset />
-    <div class="p-4 gap-4">
+    <div class="p-4 flex flex-col gap-4">
       <w-card>
+        <w-card-header>{{ t(`admin.utilities.groupAuthentication`) }}</w-card-header>
         <w-list separator>
-          <w-item>
-            <blueprint-icon icon="opened-folder" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.purgeEmptyFolders`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.purgeEmptyFoldersHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                @click="purgeEmptyFolders"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
           <w-item>
             <blueprint-icon icon="disconnected" :hue-rotate="45" />
             <w-item-section>
@@ -60,71 +45,6 @@
                 icon="la:arrow-circle-right"
                 color="primary"
                 @click="disconnectWS"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="database-export" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.export`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.exportHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                disabled
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="datalake" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.flushCache`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.flushCacheHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                @click="flushCache"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="popcorn-maker" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.generateSample`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.generateSampleHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                :loading="state.sampleLoading"
-                @click="generateSampleContent"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="database-restore" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.import`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.importHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                disabled
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -161,6 +81,43 @@
                 icon="la:arrow-circle-right"
                 color="primary"
                 @click="invalidateSessionSecret"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+        </w-list>
+      </w-card>
+      <w-card>
+        <w-card-header>{{ t(`admin.utilities.groupMaintenance`) }}</w-card-header>
+        <w-list separator>
+          <w-item>
+            <blueprint-icon icon="opened-folder" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeEmptyFolders`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeEmptyFoldersHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="purgeEmptyFolders"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="datalake" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.flushCache`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.flushCacheHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="flushCache"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -209,23 +166,6 @@
             </w-item-section>
           </w-item>
           <w-item>
-            <blueprint-icon icon="eraser" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.purgeSample`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.purgeSampleHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                :loading="state.sampleLoading"
-                @click="purgeSampleContent"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
             <blueprint-icon icon="link" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.rebuildPageLinks`) }}</w-item-label>
@@ -248,12 +188,217 @@
               <w-item-label caption>{{ t(`admin.utilities.scanPageProblemsHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+        </w-list>
+      </w-card>
+      <w-card>
+        <w-card-header>{{ t(`admin.utilities.groupMigration`) }}</w-card-header>
+        <w-list separator>
+          <w-item>
+            <blueprint-icon icon="database-export" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.export`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.exportHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importBackup`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importBackupHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importWikijs2`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importWikijs2Hint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
               <w-btn
                 class="acrylic-btn"
                 flat
                 icon="la:arrow-circle-right"
                 color="primary"
-                disabled
+                @click="openWikijs2Import"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importConfluence`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importConfluenceHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importDokuwiki`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importDokuwikiHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importNotion`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importNotionHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importXwiki`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importXwikiHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <!--
+                The wrapper is what carries the tooltip: a disabled button is transparent to the
+                hit test, so a tooltip written inside it would never be shown. See WTooltip.
+              -->
+              <span data-tooltip-anchor class="inline-flex">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  icon="la:arrow-circle-right"
+                  color="primary"
+                  disabled
+                  :label="t(`common.actions.proceed`)" />
+                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
+              </span>
+            </w-item-section>
+          </w-item>
+        </w-list>
+      </w-card>
+      <w-card>
+        <w-card-header>{{ t(`admin.utilities.groupTesting`) }}</w-card-header>
+        <w-list separator>
+          <w-item>
+            <blueprint-icon icon="popcorn-maker" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.generateSample`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.generateSampleHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                :loading="state.sampleLoading"
+                @click="generateSampleContent"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="eraser" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeSample`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeSampleHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                :loading="state.sampleLoading"
+                @click="purgeSampleContent"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
@@ -318,6 +463,15 @@ const purgeHistoryTimeframes = computed(() => [
 ])
 
 // METHODS
+
+/**
+ * Hand the 2.x import its own screen. It is a form with several parts and a progress log beside
+ * them, which is more than a row here can carry -- unlike the actions around it, which are a
+ * confirmation and a result.
+ */
+function openWikijs2Import() {
+  adminStore.$patch({ overlay: 'ImportWikijs2Overlay' })
+}
 
 /**
  * Close every websocket the wiki holds — the editors of anyone collaborating on a page, and any open

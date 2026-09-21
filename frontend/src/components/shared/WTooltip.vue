@@ -103,9 +103,20 @@ onMounted(() => {
     itself first, so a tooltip written inside a badge resolves to that badge. Without it the climb
     ran on to the enclosing `.w-item`, and the tooltip for a 12px indicator dot was measured against
     the whole settings row -- appearing under the middle of the row rather than under the dot.
+
+    `[data-tooltip-anchor]` stops it in the same way, and is how a DISABLED control gets a tooltip
+    at all: a disabled WBtn is `pointer-events-none` on top of the `disabled` attribute, so it is
+    transparent to the hit test and never sees a mouseenter of its own. Wrapping it in an element
+    carrying this attribute puts a hoverable box the same size behind it, and tells the climb to
+    measure against that box rather than running on to the whole row:
+
+      <span data-tooltip-anchor class="inline-flex">
+        <w-btn disabled ... />
+        <w-tooltip>Coming soon</w-tooltip>
+      </span>
   */
   const host = placeholderEl.value?.parentElement ?? null
-  triggerEl = host?.closest('button, a, .w-btn, .w-item, .w-badge') ?? host
+  triggerEl = host?.closest('button, a, .w-btn, .w-item, .w-badge, [data-tooltip-anchor]') ?? host
   if (!triggerEl) {
     return
   }
