@@ -10,7 +10,6 @@ props:
   akismet:
     type: String
     title: Akismet API Key
-    default: ''
     hint: 'Prevent spam by using the Akismet service. Enter your API key here to enable. Leave empty to disable.'
     maxWidth: 650
     order: 1
@@ -21,3 +20,10 @@ props:
     hint: 'Minimum delay (in seconds) between comments per account. Note that all guests are considered as a single account.'
     maxWidth: 400
     order: 2
+  notificationEmailAddresses:
+    type: String
+    title: Email addresses to notify on new comment
+    hint: You can separate multiple addresses with a comma.
+    multiline: true
+    maxWidth: 650
+    order: 3
