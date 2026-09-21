@@ -361,6 +361,54 @@ module.exports = {
   },
 
   /**
+   * Check if user (requester) can manage an existing user (target)
+   *
+   * Prevents a delegated user manager from taking over / tampering with an
+   * account holding higher or equal administrative privileges.
+   *
+   * @param {User} requester The user attempting to manage the target user
+   * @param {Number} targetId The ID of the user being managed
+   * @returns {Boolean}
+   */
+  async checkManageUserTargetAccess(requester, targetId) {
+    const requesterPermissions = requester.permissions ? requester.permissions : requester.getGlobalPermissions()
+
+    // System Admin
+    if (requesterPermissions.includes('manage:system')) {
+      return true
+    }
+
+    const target = await WIKI.models.users.query().findById(targetId).withGraphJoined('groups').modifyGraph('groups', builder => {
+      builder.select('groups.id', 'permissions')
+    })
+    if (!target) {
+      return false
+    }
+
+    // Protect system accounts (root administrator + guest), even if their groups were tampered with
+    if (target.id <= 2 || target.isSystem) {
+      return false
+    }
+
+    const targetPermissions = target.getGlobalPermissions()
+
+    // Check target for manage:system permission
+    if (targetPermissions.includes('manage:system')) {
+      return false
+    }
+
+    // Check target for administrative permissions
+    if (targetPermissions.some(p => {
+      const permType = _.last(p.split(':'))
+      return ['users', 'groups', 'navigation', 'theme', 'api'].includes(permType)
+    }) && !requesterPermissions.includes('manage:groups')) {
+      return false
+    }
+
+    return true
+  },
+
+  /**
    * Check and apply Page Rule specificity
    *
    * @access private
