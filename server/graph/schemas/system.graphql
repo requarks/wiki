@@ -19,6 +19,7 @@ type SystemQuery {
   info: SystemInfo
   extensions: [SystemExtension] @auth(requires: ["manage:system"])
   exportStatus: SystemExportStatus @auth(requires: ["manage:system"])
+  backupStatus: SystemBackupStatus @auth(requires: ["manage:system"])
 }
 
 # -----------------------------------------------
@@ -52,6 +53,10 @@ type SystemMutation {
   export(
     entities: [String]!
     path: String!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
+  createBackup(
+    entities: [String]!
   ): DefaultResponse @auth(requires: ["manage:system"])
 }
 
@@ -133,4 +138,14 @@ type SystemExportStatus {
   progress: Int
   message: String
   startedAt: Date
+}
+
+type SystemBackupStatus {
+  status: String
+  progress: Int
+  message: String
+  startedAt: Date
+  filename: String
+  filePath: String
+  fileSize: Float
 }

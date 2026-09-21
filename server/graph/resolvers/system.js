@@ -50,6 +50,17 @@ module.exports = {
         message: WIKI.system.exportStatus.message,
         startedAt: WIKI.system.exportStatus.startedAt
       }
+    },
+    async backupStatus () {
+      return {
+        status: WIKI.backup.status.status,
+        progress: Math.ceil(WIKI.backup.status.progress),
+        message: WIKI.backup.status.message,
+        startedAt: WIKI.backup.status.startedAt,
+        filename: WIKI.backup.status.filename,
+        filePath: WIKI.backup.status.filePath,
+        fileSize: WIKI.backup.status.fileSize
+      }
     }
   },
   SystemMutation: {
@@ -301,6 +312,34 @@ module.exports = {
         })
         return {
           responseResult: graphHelper.generateSuccess('Export started successfully.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+
+    /**
+     * Create a .wkbackup package, for migrating to Wiki.js 3.x
+     */
+    async createBackup (obj, args, context) {
+      try {
+        // -> Only one export-type job at a time, as both stream the whole wiki
+        if (WIKI.backup.status.status === 'running') {
+          throw new Error('Another backup is already running.')
+        }
+        if (WIKI.system.exportStatus.status === 'running') {
+          throw new Error('An export is already running.')
+        }
+        // -> Validate entities
+        if (args.entities.length < 1) {
+          throw new Error('Must specify at least 1 entity to include.')
+        }
+        // -> Start backup
+        WIKI.backup.create({
+          entities: args.entities
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Backup started successfully.')
         }
       } catch (err) {
         return graphHelper.generateError(err)
