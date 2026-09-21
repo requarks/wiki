@@ -276,7 +276,9 @@ module.exports = {
       if (has('settings')) {
         WIKI.logger.info('Backup: writing settings...')
         const settings = {
-          ...WIKI.config,
+          // The database connection is this instance's own, credentials and
+          // all, and a 3.x import has no use for it.
+          ..._.omit(WIKI.config, ['db']),
           modules: {
             analytics: await WIKI.models.analytics.query(),
             authentication: (await WIKI.models.authentication.query()).map(a => ({
