@@ -66,6 +66,17 @@ module.exports = {
     return pathObj
   },
   /**
+   * Parse a request path and tell an editable page apart from an asset
+   */
+  parseRequestPath (rawPath) {
+    const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(rawPath, `.${ext}`))
+    const pageArgs = module.exports.parsePath(rawPath, { stripExt })
+    return {
+      pageArgs,
+      isPage: stripExt || pageArgs.path.indexOf('.') === -1
+    }
+  },
+  /**
    * Generate unique hash from page
    */
   generateHash(opts) {
