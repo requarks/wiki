@@ -211,10 +211,16 @@ export default {
       }
 
       this.parents = [this.currentParent, ...invertedAncestors.reverse()]
+
+      if (curPage.isFolder) {
+        // Show children for folder, instead of siblings
+        this.parents.push(curPage)
+      }
+
       this.currentParent = _.last(this.parents)
 
-      this.loadedCache = [curPage.parent]
-      this.currentItems = _.filter(items, ['parent', curPage.parent])
+      this.loadedCache = [this.currentParent.pageId || 0]
+      this.currentItems = _.filter(items, ['parent', this.currentParent.pageId || 0])
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome () {

@@ -252,14 +252,19 @@ module.exports = {
       if (!args.locale) { args.locale = WIKI.config.lang.code }
 
       if (args.path && !args.parent) {
-        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors').where({
+        curPage = await WIKI.models.knex('pageTree').first('parent', 'ancestors', 'pageId', 'isFolder').where({
           path: args.path,
           localeCode: args.locale
         })
-        if (curPage) {
-          args.parent = curPage.parent || 0
-        } else {
+        if (!curPage) {
           return []
+        }
+        if (curPage.isFolder) {
+          // Get children
+          args.parent = curPage.pageId || 0
+        } else {
+          // Get siblings
+          args.parent = curPage.parent || 0
         }
       }
 
@@ -277,6 +282,10 @@ module.exports = {
           builder.whereNull('parent')
         } else {
           builder.where('parent', args.parent)
+          if (curPage && curPage.isFolder) {
+            // When getting children, we also need to include curPage itself
+            builder.orWhere('id', curPage.pageId)
+          }
           if (args.includeAncestors && curPage && curPage.ancestors.length > 0) {
             builder.orWhereIn('id', _.isString(curPage.ancestors) ? JSON.parse(curPage.ancestors) : curPage.ancestors)
           }
