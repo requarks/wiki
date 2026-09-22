@@ -22,6 +22,7 @@ module.exports = {
         passReqToCallback: true,
         skipUserProfile: conf.skipUserProfile,
         acrValues: conf.acrValues
+        scope: conf.scope
       }, async (req, iss, uiProfile, idProfile, context, idToken, accessToken, refreshToken, params, cb) => {
         const profile = Object.assign({}, idProfile, uiProfile)
         const picture = _.get(profile, '_json.' + conf.pictureClaim, '')
