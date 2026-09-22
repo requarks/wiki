@@ -67,12 +67,15 @@ async function * batched (fetch, batchSize, onBatch) {
   let offset = 0
   while (true) {
     const rows = await fetch(offset, batchSize)
+    // Stop only on an empty batch, and advance by what was actually consumed.
+    // Treating a short batch as the end would silently truncate a stream the
+    // moment a query returned fewer rows than it was asked for.
+    if (rows.length < 1) { break }
     for (const row of rows) {
       yield row
     }
     if (onBatch) { onBatch(rows.length) }
-    if (rows.length < batchSize) { break }
-    offset += batchSize
+    offset += rows.length
   }
 }
 
@@ -209,12 +212,23 @@ module.exports = {
         status.progress = Math.min(100, ((doneSteps + Math.min(1, fraction)) / steps.length) * 100)
       }
       // Track a streamed step of `total` records, batch by batch.
-      const batchTracker = total => {
+      const batchTracker = (name, total) => {
         let done = 0
-        return rows => {
+        const track = rows => {
           done += rows
           stepPartial(total > 0 ? done / total : 1)
         }
+        // The manifest's count is written before the stream and is what the
+        // importer uses as its denominator, so a stream that does not hold
+        // exactly that many records is worth saying out loud rather than
+        // handing over a quietly wrong package. Rows added or removed while a
+        // long export runs can account for a small difference.
+        track.verify = () => {
+          if (done !== total) {
+            WIKI.logger.warn(`Backup: ${name} stream holds ${done} records, but the manifest counted ${total}.`)
+          }
+        }
+        return track
       }
 
       // -----------------------------------------
@@ -332,17 +346,18 @@ module.exports = {
       // password or re-enrol an authenticator after the migration.
       if (has('users')) {
         WIKI.logger.info(`Backup: writing ${counts.users} users...`)
-        const onBatch = batchTracker(counts.users)
+        const onBatch = batchTracker('users', counts.users)
         await zip.addStream('streams/users.ndjson', ndjson(batched(async (offset, limit) => {
           const users = await WIKI.models.users.query()
             .orderBy('id').offset(offset).limit(limit)
-            .withGraphJoined({ groups: true })
+            .withGraphFetched({ groups: true })
             .modifyGraph('groups', builder => builder.select('groups.id', 'groups.name'))
           return users.map(usr => ({
             ..._.omit(usr, ['groups']),
             groups: usr.groups.map(g => g.id)
           }))
         }, BATCH_SIZE.users, onBatch)))
+        onBatch.verify()
         stepDone()
       }
 
@@ -397,13 +412,14 @@ module.exports = {
       // -----------------------------------------
       if (has('pages')) {
         WIKI.logger.info(`Backup: writing ${counts.tree} folders...`)
-        const onBatch = batchTracker(counts.tree)
+        const onBatch = batchTracker('tree', counts.tree)
         await zip.addStream(`${sitePath}/tree.ndjson`, ndjson(batched(async (offset, limit) => {
           return WIKI.models.knex('pageTree')
             .select('id', 'path', 'depth', 'title', 'isPrivate', 'privateNS', 'parent', 'localeCode')
             .where('isFolder', true)
             .orderBy('id').offset(offset).limit(limit)
         }, BATCH_SIZE.tree, onBatch)))
+        onBatch.verify()
         stepDone()
 
         // -----------------------------------------
@@ -414,17 +430,18 @@ module.exports = {
         // stored render says nothing about which pipeline produced it. 3.x
         // produces the HTML itself.
         WIKI.logger.info(`Backup: writing ${counts.pages} pages...`)
-        const onPageBatch = batchTracker(counts.pages)
+        const onPageBatch = batchTracker('pages', counts.pages)
         await zip.addStream(`${sitePath}/pages.ndjson`, ndjson(batched(async (offset, limit) => {
           const pages = await WIKI.models.pages.query()
             .orderBy('id').offset(offset).limit(limit)
-            .withGraphJoined({ tags: true })
+            .withGraphFetched({ tags: true })
             .modifyGraph('tags', builder => builder.select('tags.tag', 'tags.title'))
           return Promise.all(pages.map(page => this.spillContent({
             ..._.omit(page, ['render', 'toc']),
             tags: page.tags.map(t => t.tag)
           }, tmpPath, blobs)))
         }, BATCH_SIZE.pages, onPageBatch)))
+        onPageBatch.verify()
         stepDone()
       }
 
@@ -433,17 +450,18 @@ module.exports = {
       // -----------------------------------------
       if (has('history')) {
         WIKI.logger.info(`Backup: writing ${counts.history} page history entries...`)
-        const onBatch = batchTracker(counts.history)
+        const onBatch = batchTracker('history', counts.history)
         await zip.addStream(`${sitePath}/page-history.ndjson`, ndjson(batched(async (offset, limit) => {
           const versions = await WIKI.models.pageHistory.query()
             .orderBy('id').offset(offset).limit(limit)
-            .withGraphJoined({ tags: true })
+            .withGraphFetched({ tags: true })
             .modifyGraph('tags', builder => builder.select('tags.tag', 'tags.title'))
           return Promise.all(versions.map(version => this.spillContent({
             ...version,
             tags: version.tags.map(t => t.tag)
           }, tmpPath, blobs)))
         }, BATCH_SIZE.history, onBatch)))
+        onBatch.verify()
         stepDone()
       }
 
@@ -452,10 +470,11 @@ module.exports = {
       // -----------------------------------------
       if (has('comments')) {
         WIKI.logger.info(`Backup: writing ${counts.comments} comments...`)
-        const onBatch = batchTracker(counts.comments)
+        const onBatch = batchTracker('comments', counts.comments)
         await zip.addStream(`${sitePath}/comments.ndjson`, ndjson(batched(async (offset, limit) => {
           return WIKI.models.comments.query().orderBy('id').offset(offset).limit(limit)
         }, BATCH_SIZE.comments, onBatch)))
+        onBatch.verify()
         stepDone()
       }
 
@@ -466,7 +485,7 @@ module.exports = {
       if (has('assets')) {
         WIKI.logger.info(`Backup: writing ${counts.assets} assets...`)
         const assetFolders = await WIKI.models.assetFolders.getAllPaths()
-        const onBatch = batchTracker(counts.assets)
+        const onBatch = batchTracker('assets', counts.assets)
         await zip.addStream(`${sitePath}/assets.ndjson`, ndjson(batched(async (offset, limit) => {
           const assets = await WIKI.models.knex
             .select('assets.*', 'assetData.data')
@@ -486,6 +505,7 @@ module.exports = {
             }
           })
         }, BATCH_SIZE.assets, onBatch)))
+        onBatch.verify()
         stepDone()
       }
 
