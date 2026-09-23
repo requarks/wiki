@@ -171,23 +171,22 @@
 
         v-divider.mt-3
         .overline.py-3 Rules Order
-        .body-2.pl-3 Rules are applied in order of path specificity. A more precise path will always override a less defined path.
-        .body-2.pl-5 For example, #[span.teal--text /geography/countries] will override #[span.teal--text /geography].
-        .body-2.pl-3.pt-2 When 2 rules have the same specificity, the priority is given from lowest to highest as follows:
+        .body-2.pl-3 Rules are applied in order of path specificity. A more precise rule will always override a less defined rule.
+        .body-2.pl-3 The specificity is evaluated as such, in order:
         .body-2.pl-3.pt-1
           ul
             li
-              strong Path Starts With...
-              em.caption.pl-1 (lowest)
-            li
-              strong Path Ends With...
-            li
-              strong Path Matches Regex...
+              strong Path is Exactly...
+              em.caption.pl-1 (highest)
             li
               strong Tag Matches...
             li
-              strong Path Is Exactly...
-              em.caption.pl-1 (highest)
+              strong Path Matches Regex...
+            li
+              span #[strong Path Starts With...] and #[strong Path Ends With...]
+              em.caption.pl-1 (lowest, variable based on path)
+            li
+              span For example, #[span.teal--text /geo/areas/north] will override #[span.teal--text /geography/countries] which will override #[span.teal--text /geography].
         .body-2.pl-3.pt-2 When 2 rules have the same path specificity AND the same match type, #[strong.red--text DENY] will always override an #[strong.green--text ALLOW] rule.
         v-divider.mt-3
         .overline.py-3 Regular Expressions
