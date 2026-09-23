@@ -41,6 +41,7 @@ module.exports = {
   SiteMutation: {
     async updateConfig(obj, args, context) {
       try {
+        const previousHost = WIKI.config.host
         if (args.hasOwnProperty('host')) {
           let siteHost = _.trim(args.host)
           if (siteHost.endsWith('/')) {
@@ -131,6 +132,11 @@ module.exports = {
           WIKI.app.enable('trust proxy')
         } else {
           WIKI.app.disable('trust proxy')
+        }
+
+        if (WIKI.config.host !== previousHost) {
+          await WIKI.auth.activateStrategies()
+          WIKI.events.outbound.emit('reloadAuthStrategies')
         }
 
         return {
