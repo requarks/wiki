@@ -1,6 +1,6 @@
 query {
   pages {
-    list {
+    list(orderBy: UPDATED, orderByDirection: DESC) {
       id
       locale
       path
