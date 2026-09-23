@@ -179,7 +179,7 @@ module.exports = class Storage extends Model {
 
   static async pageEvent({ event, page }) {
     try {
-      for (let target of this.targets) {
+      for (let target of (this.targets || [])) {
         await target.fn[event](page)
       }
     } catch (err) {
@@ -190,7 +190,7 @@ module.exports = class Storage extends Model {
 
   static async assetEvent({ event, asset }) {
     try {
-      for (let target of this.targets) {
+      for (let target of (this.targets || [])) {
         await target.fn[`asset${_.capitalize(event)}`](asset)
       }
     } catch (err) {
@@ -201,7 +201,7 @@ module.exports = class Storage extends Model {
 
   static async getLocalLocations({ asset }) {
     const locations = []
-    const promises = this.targets.map(async (target) => {
+    const promises = (this.targets || []).map(async (target) => {
       try {
         const path = await target.fn.getLocalLocation(asset)
         locations.push({
