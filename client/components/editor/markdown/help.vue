@@ -107,7 +107,7 @@
                 v-flex
                   v-card.editor-markdown-help-result(flat)
                     v-card-text
-                      img(src='https://via.placeholder.com/150x50.png')
+                      img(src='https://placeholder.photo/150x50')
         v-flex(xs12, lg6, xl4)
           v-card.radius-7.animated.fadeInUp.wait-p1s(light)
             v-card-text
