@@ -3,6 +3,25 @@ const chemParse = require('./mhchem')
 
 /* global WIKI */
 
+// Unicode Private Use Area characters to temporarily replace special
+// characters during markdown parsing:
+// - braces: prevent markdown-it-attrs from interpreting them as attribute
+//   delimiters.
+// - pipe: prevent markdown table parser from interpreting them as cell
+//   delimiters.
+const BRACE_OPEN_PLACEHOLDER = '\uE000'
+const BRACE_CLOSE_PLACEHOLDER = '\uE001'
+const PIPE_PLACEHOLDER = '\uE002'
+const AMPERSAND_PLACEHOLDER = '\uE003'
+
+function restoreBraces (str) {
+  return str
+    .replaceAll(BRACE_OPEN_PLACEHOLDER, '{')
+    .replaceAll(BRACE_CLOSE_PLACEHOLDER, '}')
+    .replaceAll(PIPE_PLACEHOLDER, '|')
+    .replaceAll(AMPERSAND_PLACEHOLDER, '&')
+}
+
 // ------------------------------------
 // Markdown - KaTeX Renderer
 // ------------------------------------
@@ -29,7 +48,7 @@ module.exports = {
       mdinst.inline.ruler.after('escape', 'katex_inline', katexInline)
       mdinst.renderer.rules.katex_inline = (tokens, idx) => {
         try {
-          return katex.renderToString(tokens[idx].content, {
+          return katex.renderToString(restoreBraces(tokens[idx].content), {
             displayMode: false, macros
           })
         } catch (err) {
@@ -44,7 +63,7 @@ module.exports = {
       })
       mdinst.renderer.rules.katex_block = (tokens, idx) => {
         try {
-          return `<p>` + katex.renderToString(tokens[idx].content, {
+          return `<p>` + katex.renderToString(restoreBraces(tokens[idx].content), {
             displayMode: true, macros
           }) + `</p>`
         } catch (err) {
@@ -135,11 +154,19 @@ function katexInline (state, silent) {
     return true
   }
 
-  if (!silent) {
-    token = state.push('katex_inline', 'math', 0)
-    token.markup = '$'
-    token.content = state.src.slice(start, match)
-  }
+    if (!silent) {
+      token = state.push('katex_inline', 'math', 0)
+      token.markup = '$'
+      token.content = state.src
+        .slice(start, match)
+        // Replace curly braces with temporary placeholders to prevent
+        // markdown-it-attrs from interpreting them as attribute delimiters.
+        .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+        .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+        // Replace pipe with temporary placeholder to prevent markdown
+        // table parser from interpreting it as a cell delimiter.
+        .replaceAll('|', PIPE_PLACEHOLDER)
+    }
 
   state.pos = match + 1
   return true
@@ -187,9 +214,16 @@ function katexBlock (state, start, end, silent) {
 
   token = state.push('katex_block', 'math', 0)
   token.block = true
-  token.content = (firstLine && firstLine.trim() ? firstLine + '\n' : '') +
+  token.content = ((firstLine && firstLine.trim() ? firstLine + '\n' : '') +
   state.getLines(start + 1, next, state.tShift[start], true) +
-  (lastLine && lastLine.trim() ? lastLine : '')
+  (lastLine && lastLine.trim() ? lastLine : ''))
+    // Replace curly braces with temporary placeholders to prevent
+    // markdown-it-attrs from interpreting them as attribute delimiters.
+    .replaceAll('{', BRACE_OPEN_PLACEHOLDER)
+    .replaceAll('}', BRACE_CLOSE_PLACEHOLDER)
+    // Replace pipe with temporary placeholder to prevent markdown
+    // table parser from interpreting it as a cell delimiter.
+    .replaceAll('|', PIPE_PLACEHOLDER)
   token.map = [ start, state.line ]
   token.markup = '$$'
   return true
