@@ -1,0 +1,57 @@
+key: opensearch
+title: OpenSearch
+description: OpenSearch is a community-driven, Apache 2.0-licensed open source search and analytics suite that makes it easy to ingest, search, visualize, and analyze data.
+author: Metaways Infosystems
+logo: https://opensearch.org/wp-content/uploads/2024/11/favicon.webp
+website: https://opensearch.org/
+isAvailable: true
+props:
+  apiVersion:
+    type: String
+    title: OpenSearch Version
+    hint: Should match the version of the OpenSearch nodes you are connecting to
+    order: 1
+    enum:
+      - '2.x'
+      - '2.x'
+      - '1.x'
+    default: '2.x'
+  hosts:
+    type: String
+    title: Host(s)
+    hint: Comma-separated list of OpenSearch hosts to connect to, including the port, username and password if necessary. (e.g. http://localhost:9200, https://user:pass@es1.example.com:9200)
+    order: 2
+  verifyTLSCertificate:
+    title: Verify TLS Certificate
+    type: Boolean
+    default: true
+    order: 3
+  tlsCertPath:
+    title: TLS Certificate Path
+    type: String
+    hint: Absolute path to the TLS certificate on the server.
+    order: 4
+  indexName:
+    type: String
+    title: Index Name
+    hint: The index name to use during creation
+    default: wiki
+    order: 5
+  analyzer:
+    type: String
+    title: Analyzer
+    hint: 'The token analyzer in OpenSearch'
+    default: simple
+    order: 6
+  sniffOnStart:
+    type: Boolean
+    title: Sniff on start
+    hint: 'Should Wiki.js attempt to detect the rest of the cluster on first connect? (Default: off)'
+    default: false
+    order: 7
+  sniffInterval:
+    type: Number
+    title: Sniff Interval
+    hint: '0 = disabled, Interval in seconds to check for updated list of nodes in cluster. (Default: 0)'
+    default: 0
+    order: 8
