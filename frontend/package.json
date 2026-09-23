@@ -24,6 +24,7 @@
     "@twemoji/api": "17.0.2",
     "@xterm/addon-fit": "0.11.0",
     "@xterm/xterm": "6.0.0",
+    "@zip.js/zip.js": "2.17.0",
     "browser-fs-access": "0.38.0",
     "clipboard": "2.0.11",
     "es-toolkit": "1.50.0",

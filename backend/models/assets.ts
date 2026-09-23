@@ -868,13 +868,21 @@ class Assets {
   }
 
   /**
-   * Take a file a storage target already holds into the wiki, without writing it anywhere.
+   * Take a file into the wiki that the wiki has no record of.
    *
-   * The other direction from an upload: the bytes are already in place — restored from a backup,
-   * dropped into the folder by another tool — and what is missing is the wiki's record of them. A file
-   * the wiki has no entry for is adopted where it lies rather than written out again, which is why
-   * nothing is dispatched to the storage layer for it. Any *other* target configured to hold that kind
-   * will not have a copy until its own export action runs.
+   * The other direction from an upload, and it serves two callers that differ in one thing: whether
+   * anybody is already holding the bytes.
+   *
+   * - **A storage target's import** walks a folder the bytes are already in — restored from a backup,
+   *   dropped there by another tool — and what is missing is only the wiki's record of them. Adopted
+   *   where they lie, with nothing dispatched to the storage layer, which is the default.
+   * - **A package import** (`.wkbackup`) reads them out of a file in the operator's browser. Nobody
+   *   holds them, so `dispatch` writes them to every target the site stores that kind on, exactly as
+   *   an upload would. Without it the asset gets a row and a thumbnail and no bytes anywhere — a file
+   *   the file manager lists, previews, and cannot open.
+   *
+   * Either way, any *other* target configured to hold that kind and not written to here will not have
+   * a copy until its own export action runs.
    *
    * `overwrite` turns the case the wiki DOES have an entry for from a skip into a replacement, for a
    * restore where the folder is meant to be the authority. That one is dispatched, and has to be: the
@@ -887,6 +895,8 @@ class Assets {
    * loose file in a folder may take over.
    *
    * @param overwrite Replace an asset already at this path instead of leaving it alone
+   * @param dispatch Write the bytes to the site's storage targets, for a caller holding bytes nobody
+   *   else has. The replacement path dispatches regardless, since it has to.
    * @returns The asset, or null for a file this passed over
    */
   async adoptStoredFile({
@@ -896,7 +906,8 @@ class Assets {
     fileName,
     data,
     authorId,
-    overwrite
+    overwrite,
+    dispatch
   }: {
     siteId: string
     locale: string
@@ -905,6 +916,7 @@ class Assets {
     data: Buffer
     authorId: string
     overwrite?: boolean
+    dispatch?: boolean
   }): Promise<Asset | null> {
     const safeName = sanitizeFileName(fileName)
     if (!safeName) {
@@ -973,8 +985,12 @@ class Assets {
       siteId,
       meta: { fileSize: data.length, fileExt, mimeType, ...dimensionMeta(dimensions) }
     })
+    // -> Read off the row rather than from the caller: the folder may have just been created, and a
+    //    name that was taken took the next free one
+    const importedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
 
     try {
+      // -> The metadata row goes in before the bytes, since the database target writes them into it
       await WIKI.db.insert(assetsTable).values({
         id: entry.id,
         fileName: entry.fileName,
@@ -987,12 +1003,28 @@ class Assets {
         authorId,
         siteId
       })
+      if (dispatch) {
+        await WIKI.models.storage.putAsset(
+          {
+            id: entry.id,
+            siteId,
+            actorId: authorId,
+            locale,
+            folderPath: importedFolderPath,
+            fileName: entry.fileName,
+            kind,
+            fileSize: data.length
+          },
+          data
+        )
+      }
     } catch (err) {
+      // -> Nothing points at these now, and leaving them would show a file the site cannot serve
+      await WIKI.db.delete(assetsTable).where(eq(assetsTable.id, entry.id))
       await WIKI.db.delete(treeTable).where(eq(treeTable.id, entry.id))
       throw err
     }
 
-    const importedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
     WIKI.models.hooks.emit('asset:upload', {
       id: entry.id,
       fileName: entry.fileName,

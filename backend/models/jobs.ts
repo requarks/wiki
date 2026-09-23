@@ -40,6 +40,8 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   // -> Daily, off the hour: the retention is expressed in days, so nothing is gained by looking
   //    more often than once a day
   { task: 'purgeAuditLog', cron: '20 0 * * *' },
+  // -> Same reasoning, and the cutoff is in hours but measured in days
+  { task: 'purgeImportSessions', cron: '25 0 * * *' },
   { task: 'purgeRateLimits', cron: '10 * * * *' },
   { task: 'updateLocales', cron: '0 0 * * *' },
   // -> Every minute, and the task decides which sites are actually due: the interval is a per-site

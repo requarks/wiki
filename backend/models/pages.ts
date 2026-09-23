@@ -2663,13 +2663,14 @@ class Pages {
     // -> A restore should not report every page as written today. Applied after the fact because the
     //    two dates are not something an API client may set, only something a file can carry back.
     if (createdAt || updatedAt) {
-      await WIKI.db
-        .update(pagesTable)
-        .set({
-          ...(createdAt ? { createdAt } : {}),
-          ...(updatedAt ? { updatedAt } : {})
-        })
-        .where(eq(pagesTable.id, page.id))
+      const dates = {
+        ...(createdAt ? { createdAt } : {}),
+        ...(updatedAt ? { updatedAt } : {})
+      }
+      await WIKI.db.update(pagesTable).set(dates).where(eq(pagesTable.id, page.id))
+      // -> The tree row keeps its own pair, and those are the ones a folder listing and the file
+      //    manager show. Left alone they said the whole of an imported wiki was created today.
+      await WIKI.db.update(treeTable).set(dates).where(eq(treeTable.id, page.id))
       // -> Writing the page already put a copy on every target holding pages, stamped with the dates
       //    it had for the moment it existed with the wrong ones
       const restored = this.toStoragePage(
@@ -2748,9 +2749,17 @@ class Pages {
       permissions
     )
 
+    /*
+      `updatedAt` is deliberately not touched. It says when the page last CHANGED, and a render does
+      not change it: the same source went through the pipeline again, because the markdown config
+      moved or because the page arrived without HTML. Bumping it here re-dated every page an import
+      brought in — the render lands seconds later and overwrites the date the package carried — and
+      told the sitemap a page had been modified when nothing about it had. For a save it made no
+      difference either way, since `updatePage` has already set it a moment earlier.
+    */
     const updated = await WIKI.db
       .update(pagesTable)
-      .set({ render, toc, searchContent: text, updatedAt: sql`now()` })
+      .set({ render, toc, searchContent: text })
       .where(and(eq(pagesTable.id, id), eq(pagesTable.siteId, siteId)))
       .returning({ locale: pagesTable.locale })
 

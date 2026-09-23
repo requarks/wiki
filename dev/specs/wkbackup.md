@@ -1,7 +1,12 @@
 # `.wkbackup` — backup and migration package format
 
-**Status:** proposed. Nothing in this document is implemented. The open questions it carried are
-answered — [§10](#10-decisions-taken).
+**Status:** the v3 importer is implemented for `source.kind: "wikijs2"`; the v2 exporter that writes
+the packages it reads is not, and neither is the 3.x export or a `wikijs3` restore. The open questions
+this document carried are answered — [§10](#10-decisions-taken) — and what implementing the importer
+changed is recorded in [§11](#11-amendments-made-while-implementing-the-v3-importer).
+**The record shapes are [§12](#12-the-wikijs2-stream-records)**, and that section is written FROM the
+2.x exporter (`server/core/backup.js` in the 2.x repository) rather than the other way round: it ships
+already, so it is the authority and this reader is held to it.
 **Covers:** Wiki.js 2.x → 3.x migration, and 3.x → 3.x backup/restore.
 
 A `.wkbackup` is one file holding the whole content of a wiki — pages, history, assets, users, groups,
@@ -494,3 +499,362 @@ the section that acts on it.
 6. **There is no retention question.** The package is a download that the browser reads from the
    operator's own disk; no server ever holds it for the import — [§6](#6-the-v2-exporter),
    [§7](#7-the-v3-importer).
+
+---
+
+## 11. Amendments made while implementing the v3 importer
+
+The importer described in [§7](#7-the-v3-importer) is implemented for `source.kind: "wikijs2"`
+(`backend/models/import.ts`, `backend/api/import.ts`, `frontend/src/helpers/wkbackup/`). Three things
+in this document did not survive contact with the code, and the reasons are here rather than in a
+commit message.
+
+### Blobs are uploaded before the metadata that references them
+
+[§7](#order-of-operations) ordered a site's streams `pages → page-history → assets → comments`, with
+assets as "metadata, then blobs". That order cannot be run. An asset is created by
+`assets.adoptStoredFile`, which takes the bytes — there is no half-created asset for a later upload
+to fill in — and the same section requires a blob to be uploaded **once** however many records
+reference it, which a blob-per-asset request cannot express either.
+
+So a blob is staged before the batch that references it is posted:
+
+```
+locales → groups → users
+        → per site:  tree → pages → page-history → assets → comments → navigation
+        → finish
+```
+
+and for each batch of any stream, the blobs its records name (`blob`, `contentBlob`) are uploaded
+first, once each across the whole import. Demand-driven rather than a phase of its own, because
+`blobs/` holds every file in the wiki and an import of pages alone has no business moving eight
+gigabytes of images nobody asked for. Content addressing is what makes that safe to decide a batch at
+a time — "have I already sent this?" is a question about the digest and nothing else.
+
+Staging is `<dataPath>/cache/import/<sessionId>/<sha256>`, which is a cache in the sense
+`<dataPath>/cache/blocks` is: derived, disposable, and removed by `finish` (and by a sweep of
+sessions older than `SESSION_MAX_AGE_HOURS`, for the import that never finished). Every blob's
+SHA-256 is verified on arrival — the name *is* the checksum, so a reader that did not check it would
+be trusting the uploader about the one thing the naming scheme exists to establish.
+
+### The reading is not in a Web Worker of the importer's own
+
+[§7](#frontend) called for one. `@zip.js/zip.js` already runs inflation in a pool of its own workers
+by default, which is the part that would jank the main thread; what is left on it is a line split and
+a `JSON.parse` per batch of 500 records, between `await`ed uploads that dominate the wall clock by
+orders of magnitude. A second worker layer would have to re-export the session's cookie-authenticated
+uploads across a message port to buy nothing measurable.
+
+### Identity is natural keys where 2.x has one, derived UUIDs where it does not
+
+[§4](#4-identity-derive-uuids-do-not-map-them) derives every id. That is right for a 3.x restore,
+where the package and the target speak the same schema; for a 2.x migration most records have a
+natural key in 3.x and using it is what makes the import *converge* with a wiki that is already
+running rather than shadowing it:
+
+| Record | Matched on |
+| --- | --- |
+| user | `email`, lowercased — see below |
+| group | `name` |
+| page | `siteId` + `locale` + `path` |
+| folder | `siteId` + `locale` + `path` |
+| asset | `siteId` + `locale` + folder path + file name |
+| navigation | `siteId` + `locale` — the site-wide menu |
+| comment, page history | derived: `uuidv5(session.namespace, "<site>:<entity>:<sourceId>")` |
+
+The last row is what [§4](#4-identity-derive-uuids-do-not-map-them) is for and keeps its property:
+those two are the records with nothing in them that identifies a row, so replaying a batch upserts
+rather than duplicates.
+
+**The namespace is derived, not issued.** §4 has the server mint one per session, which makes a batch
+safe to *retry* and nothing more. There is no resume button: an import that fell over is re-run from
+the top, and with a fresh namespace each run that means a second copy of every comment and every
+history entry — precisely the two kinds with no natural key to save them. So it is
+`uuidv5(source-kind | source-instance-id | each package-site > target-site, fixed root)`, which is
+the same value next week and on a rebuilt instance, and a different one for another wiki's package or
+another target site.
+
+**A user is matched on the email address and nothing else.** Not the display name, which is not
+unique and which people change; not the 2.x row id, which means nothing here. An address that already
+has an account IS that person, so the import fills in what the account is missing rather than making
+a second one beside it.
+
+**The account running the import is never written to**, whatever `overwrite` says. It is in practice
+the root administrator, it is the session the rest of the import is authenticated by, and the package
+was produced by a wiki whose copy of that address may carry a different password hash, a different
+2FA secret, or `isActive: false`. Overwriting it mid-import is how an operator locks themselves out
+of the instance they are migrating into, with thousands of records still to write. It is reported in
+the log rather than passed over quietly.
+
+**2.x system groups are mapped, not created.** `Administrators` (id 1) and `Guests` (id 2) exist in
+3.x already, with rules of their own that are not 2.x's to overwrite; their *memberships* are what
+carries, onto `systemIds.administratorsGroupId` and `systemIds.guestsGroupId`.
+
+**And the ids have to be joined up somewhere.** A record from 2.x references other records by 2.x's
+integers — a page's `authorId`, a comment's `pageId`, a user's `groups` — while this wiki matches on
+natural keys, so neither end can resolve the other alone. `importIdMap` is a row per user, page and
+group, written as the owning stream runs and read in bulk by the streams after it. A table rather
+than a blob on the session because users and pages are unbounded: a jsonb column rewritten once per
+batch is megabytes of write amplification by the end of a large import. Rows go with the session,
+which is what stops it becoming a permanent record of somebody's old instance.
+
+### Settings are not imported
+
+[§10](#10-decisions-taken) item 5 stands as the design, and `streams/settings.json` is read far
+enough to be reported in the log, but nothing is applied: which 2.x key means what in 3.x is a table
+of its own and is being settled separately. The overlay offers no Settings tick.
+
+---
+
+## 12. The `wikijs2` stream records
+
+**This section is written from the exporter, not the other way round.** It is
+`server/core/backup.js` in the 2.x repository, and the importer here is read against it. An earlier
+revision of this section guessed at the field names and every one of the guesses was wrong, which
+cost a migration that reported success and imported nothing — so the rule is that a change to this
+section follows a change to that file, never precedes it.
+
+### A record is a 2.x database row
+
+The exporter selects a table and writes it out. It renames nothing and resolves nothing, which is the
+right division of labour — it cannot know which version will read the package — and it means three
+things hold everywhere below:
+
+- **The field names are 2.x's own column names.** `localeCode`, not `locale`. `editorKey`, not
+  `editor`. `filename`, not `fileName`.
+- **The ids are 2.x's own integers**, and every cross-reference is one: a page's `authorId`, a
+  comment's `pageId`, a user's `groups`. They mean nothing in a 3.x database, so the importer keeps an
+  `importIdMap` row per user, page and group as the owning stream runs, and the streams after it
+  resolve through that — see [§11](#identity-is-natural-keys-where-2x-has-one-derived-uuids-where-it-does-not).
+- **Columns that mean nothing here come along anyway** — `hash`, `privateNS`, `isPrivate`,
+  `contentType`, `render` on a comment. They are ignored. Nothing is refused for carrying more than
+  this reader knows about, which is what lets a 2.x point release add a column without breaking
+  every import.
+
+Every stream is `schema: 1`. A record missing a field this reader actually needs is skipped with a
+warning that **names the missing field and lists the keys the record did carry** — the single most
+useful thing a log can say when a package and a reader disagree, and the thing whose absence made the
+first failure unreadable.
+
+### `streams/locales.ndjson`
+
+Rows of 2.x's `locales`, plus two flags the exporter adds:
+
+```json
+{ "code": "en", "name": "English", "nativeName": "English", "isRTL": false,
+  "availability": 100, "isPrimary": true, "isActive": true }
+```
+
+Only `code` is read. The importer checks each against the locales installed here and reports the ones
+that are not; it installs nothing, because that is a download from a third party in the middle of
+somebody's migration.
+
+### `streams/groups.ndjson`
+
+Rows of 2.x's `groups`:
+
+```json
+{ "id": 5, "name": "Editors", "isSystem": false,
+  "permissions": ["read:pages", "write:pages", "manage:api"],
+  "pageRules": [
+    { "id": "rul3", "path": "docs", "roles": ["read:pages"], "match": "START",
+      "deny": false, "locales": ["en"] }
+  ],
+  "redirectOnLogin": "/", "createdAt": "…", "updatedAt": "…" }
+```
+
+2.x keeps one permission list where 3.x keeps two, so `permissions` carries page permissions alongside
+global ones. A page permission is dropped from the group's global list **in silence** — it is not a
+meaningless name, it is a name that lives in `rules` here, and `pageRules` is where it arrives. A name
+in neither vocabulary is dropped **loudly**, which in practice means `manage:api`. The exporter warns
+about those in `manifest.warnings` too, having checked against the same list.
+
+`deny` becomes `mode: "DENY"`, otherwise `"ALLOW"`; 2.x has no `FORCEALLOW`. `match` carries across
+unchanged for the kinds both versions have (`START`, `EXACT`, `END`, `REGEX`, `TAG`) and a rule using
+anything else is dropped, named. Every imported rule is **scoped to the target site** — a rule from a
+wiki that had one site must not start speaking for the others here.
+
+`Administrators` (id 1) and `Guests` (id 2) are mapped onto 3.x's own rather than created; only their
+memberships carry.
+
+### `streams/users.ndjson`
+
+Rows of 2.x's `users`, with `groups` flattened to a list of group ids:
+
+```json
+{ "id": 3, "email": "ana@example.com", "name": "Ana",
+  "providerKey": "local",
+  "password": "$2a$12$…",
+  "tfaIsActive": true, "tfaSecret": "JBSWY3DPEHPK3PXP", "mustChangePwd": false,
+  "isSystem": false, "isActive": true, "isVerified": true,
+  "localeCode": "en", "jobTitle": "", "location": "", "timezone": "",
+  "groups": [5], "createdAt": "…", "updatedAt": "…" }
+```
+
+`password` and `tfaSecret` carry over verbatim into `users.auth[<localAuthId>]`
+([§10](#10-decisions-taken) item 2) — but only for `providerKey: "local"`. An account that
+authenticated somewhere else arrives with no credentials at all and the log says which strategy has
+to be configured before they can sign in.
+
+`localeCode` becomes `prefs.locale`; `jobTitle`, `location` and `timezone` become `meta`. A record with
+`isSystem` is skipped — 3.x seeds its own guest.
+
+Matching is on **`email`, lowercased**, and the account running the import is never written to. Both
+are [§11](#identity-is-natural-keys-where-2x-has-one-derived-uuids-where-it-does-not).
+
+### `sites/<site>/tree.ndjson`
+
+Rows of 2.x's `pageTree` where `isFolder`:
+
+```json
+{ "id": 10, "path": "docs/guides", "depth": 2, "title": "Guides",
+  "isPrivate": false, "privateNS": null, "parent": 10, "localeCode": "en" }
+```
+
+Pages and assets create the folders they need on the way in, so this stream is for the two things
+they cannot supply: the title somebody gave a folder, and a folder with nothing in it.
+
+### `sites/<site>/pages.ndjson`
+
+Rows of 2.x's `pages` minus `render` and `toc`, with `tags` flattened to a list of strings:
+
+```json
+{ "id": 42, "path": "docs/intro", "localeCode": "en",
+  "title": "Introduction", "description": "The first page",
+  "editorKey": "markdown", "contentType": "markdown",
+  "isPublished": true, "isPrivate": false,
+  "tags": ["onboarding"],
+  "content": "# Hello…", "contentBlob": null,
+  "authorId": 3, "creatorId": 3,
+  "createdAt": "…", "updatedAt": "…" }
+```
+
+**No render**, which is the exporter's own decision and the right one
+([§8](#8-the-bottleneck-that-shapes-the-schedule)). `contentBlob` is a `blobs/<sha256>` digest and
+replaces `content` (set to `null`) when the source is over 1 MiB.
+
+`editorKey` maps `markdown → markdown`, `asciidoc → asciidoc`, `redirect → redirect`, and 2.x's two
+HTML editors (`ckeditor`, `code`) onto **markdown** rather than 3.x's `visual`: markdown is configured
+with `allowHTML`, so a body of HTML renders as it stood, where `visual` is a WYSIWYG over markdown and
+would be handed a document it does not parse. Every page that takes that road is named in the log.
+
+A 2.x redirection's `content` is the target path; 3.x holds a redirection as JSON, so it is rewritten.
+
+### `sites/<site>/page-history.ndjson`
+
+Rows of 2.x's `pageHistory`, with `tags`:
+
+```json
+{ "id": 900, "pageId": 42, "path": "docs/intro", "localeCode": "en",
+  "action": "updated", "title": "Introduction", "description": "",
+  "editorKey": "markdown", "isPublished": true,
+  "content": "…", "contentBlob": null,
+  "authorId": 3, "versionDate": "…", "createdAt": "…" }
+```
+
+The page is resolved by **`pageId` through the id map**, not by the path on the record. A history row
+records the path the page had AT THE TIME — that is what the column is for, here as much as in 2.x —
+so every version written before a page was renamed carries its old path, and matching on that throws
+away the history of exactly the pages whose history is most worth having. `pageId` survives a rename.
+The path is still what gets **stored**, since "where was this page when this version was written" is
+what a history list shows and what finding a deleted page again depends on. Falling back to
+`localeCode` + `path` covers a package whose history is imported over pages that are already here.
+
+History must therefore be written after the pages, which the stream order already requires. A row with
+nothing to attach to is skipped and **said so**, with a count and examples rather than a line each:
+either the pages were not imported, or the page was deleted in the source wiki, which keeps its
+history deliberately so that a deleted page can be recovered.
+
+The row's own id is derived, since history has no natural key, so a re-run updates rather than
+duplicates.
+
+### `sites/<site>/assets.ndjson`
+
+Rows of 2.x's `assets` minus the bytes, plus two fields the exporter adds:
+
+```json
+{ "id": 77, "filename": "logo.png", "ext": ".png", "kind": "image",
+  "mime": "image/png", "fileSize": 4211, "metadata": {},
+  "folderId": 2, "folderPath": "docs/img", "blob": "e3b0c442…",
+  "authorId": 3, "createdAt": "…", "updatedAt": "…" }
+```
+
+**There is no locale on an asset.** 2.x files assets in a tree of their own that has no locales in it,
+so there is nothing to read and nothing to guess: they go in the target site's **primary locale**,
+which is where a one-language 3.x site keeps everything anyway.
+
+`folderPath` is resolved by the exporter from `folderId`, because 2.x's asset folders are a table the
+package does not otherwise carry. `blob` names an entry under `blobs/` that must be uploaded first
+([§11](#blobs-are-uploaded-before-the-metadata-that-references-them)). `mime` and `fileSize` are read
+for the log and nothing else — 3.x derives both from the name and the bytes it actually received.
+
+### `sites/<site>/comments.ndjson`
+
+Rows of 2.x's `comments`:
+
+```json
+{ "id": 5, "pageId": 42,
+  "content": "Looks good to me.", "render": "<p>…</p>",
+  "name": "Ana", "email": "ana@example.com", "ip": "10.0.0.1",
+  "authorId": 3, "createdAt": "…", "updatedAt": "…" }
+```
+
+**The page is named by 2.x page id and nothing else** — there is no path on the row — so the pages
+stream has to have run and recorded what each one became. A comment whose page was not imported is
+skipped and named.
+
+`name`, `email` and `ip` are the commenter's own, kept by 2.x for guests and signed-in authors alike.
+`authorId` resolves to an account here; when it does not, the comment stays a guest comment under that
+name and address, which is what it already was for anybody who commented without signing in. `render`
+is ignored — 3.x renders a comment in the browser at display time.
+
+2.x comments are flat, so nothing carries a `parentId`. The row's own id is derived, as page history's
+is and for the same reason.
+
+### `sites/<site>/navigation.json`
+
+2.x's `navigation` table, keyed by its `key` column:
+
+```json
+{ "mode": "MIXED",
+  "trees": {
+    "site": [
+      { "locale": "en",
+        "items": [
+          { "id": "n1", "kind": "link", "label": "Home", "icon": "mdi-home",
+            "targetType": "home", "target": "/",
+            "visibilityMode": "all", "visibilityGroups": [] }
+        ] },
+      { "locale": "fr", "items": [ … ] }
+    ]
+  } }
+```
+
+**Neither half of that key/value pair is what it looks like**, and reading either one wrong produces a
+sidebar that imports, reports success and then draws nothing.
+
+- **The key is not a locale.** 2.x keeps its one site-wide tree under the literal `site` — its
+  navigation model is `idColumn = 'key'` and fetches with `findOne('key', 'site')`. Nothing about the
+  key says anything about language.
+- **The value is not a list of items.** It is a list of **per-locale trees**, `[{ locale, items }]`,
+  which is what that same model iterates to fill its `nav:sidebar:<locale>` cache. The locale comes
+  from inside each entry, so the key carries no information the reader needs at all.
+
+One exception, and it is 2.x's own: a config whose **first entry has a `kind`** is the pre-2.3 flat
+format, a bare array of items, which 2.x reads as the `en` tree. The exporter writes the column raw,
+so a wiki that has not re-saved its navigation since 2.2 still exports that shape.
+
+Each tree becomes **the 3.x site-wide menu for its locale** ([§6](#mapping-notes)) — the sidebar every
+page in that locale inherits. The importer logs the item count per locale, because this is a mapping
+whose failure is silent.
+
+`kind` maps `link → link`, `header → header`, `divider → separator`, **with no default**: an item that
+cannot say what it is is dropped and named, rather than becoming a blank link. `targetType` maps
+`home` and `page` onto a path and `external`/`externalblank` onto the URL, the latter with
+`openInNewWindow`. A `mdi-home` or `las la-cog` icon is rewritten to its Iconify spelling rather than
+stored as a webfont name 3.x no longer ships. `visibilityMode: "restricted"` carries its groups
+through the id map.
+
+### `sites/<site>/site.json` and `streams/settings.json`
+
+Read far enough to be reported, not applied — [§11](#settings-are-not-imported).

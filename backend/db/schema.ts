@@ -411,6 +411,92 @@ export const icons = pgTable(
   (table) => [primaryKey({ columns: [table.prefix, table.name] })]
 )
 
+// IMPORT SESSIONS ---------------------
+/**
+ * One run of **Administration → Utilities → Import from Wiki.js 2.x**, from the moment the operator
+ * presses Start until the package has been walked.
+ *
+ * A row rather than memory, for two reasons that both come from the import living in a browser tab:
+ * in an HA set the next batch is answered by a different instance, and a tab that closed has to be
+ * able to say where it got to. See `dev/specs/wkbackup.md` §7.
+ *
+ * Everything the handlers need to agree about across thousands of requests is here — which target
+ * site each package site lands in, what the operator ticked, and the group mapping the user records
+ * resolve through — so a batch carries only its own records.
+ */
+export const importSessionStateEnum = pgEnum('importSessionState', ['open', 'finished', 'failed'])
+export const importSessions = pgTable(
+  'importSessions',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /**
+     * The UUIDv5 namespace the derived ids of this import are built in.
+     *
+     * **Derived, not random** — from the source wiki and the site being imported into, so that the
+     * same package run into the same site a second time derives the same ids and upserts, while two
+     * operators importing two different packages cannot collide. It has to survive the SESSION and
+     * not just outlive a batch: an import that fell over is re-run from the top, which would
+     * otherwise mean a second copy of every comment and every history entry — the two record kinds
+     * with no natural key to match on. See `dev/specs/wkbackup.md` §4.
+     */
+    namespace: uuid().notNull(),
+    /** `manifest.source.kind`. Only `wikijs2` is implemented. */
+    source: varchar({ length: 32 }).notNull(),
+    /** `[{ sourceId, siteId }]` — each package site paired with the target site it lands in. */
+    sites: jsonb().notNull().default([]),
+    /** Which content kinds the operator ticked. A stream for anything absent is refused. */
+    includes: jsonb().notNull().default([]),
+    overwrite: boolean().notNull().default(false),
+    state: importSessionStateEnum().notNull().default('open'),
+    /** `{ <stream>: <records written> }`, which is what a resumed tab reads to find its place. */
+    progress: jsonb().notNull().default({}),
+    /** Everything the import could not carry, in the order it was found. Shown in the log. */
+    warnings: jsonb().notNull().default([]),
+    /**
+     * Who is running it. Null once that account is gone, which costs nothing: a finished session is
+     * a receipt, and the audit log is where the act itself is recorded.
+     *
+     * Also what `usersStream` compares each record against — the account running the import is never
+     * written to, whatever `overwrite` says.
+     */
+    actorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [index('importSessions_createdAt_idx').on(table.createdAt)]
+)
+
+/**
+ * What a record from the source wiki became here — its 2.x integer id paired with the row it is now.
+ *
+ * A table rather than a blob on the session, because the things that have to be looked up this way
+ * are unbounded: a page's author is a 2.x user id, a comment names its page by 2.x page id, and a
+ * wiki has as many of those as it has users and pages. A jsonb column rewritten once per batch would
+ * be megabytes of write amplification by the end of a large import, where this is an insert per
+ * record and one indexed read per batch.
+ *
+ * It exists because the package speaks 2.x's ids and this wiki matches on natural keys — a user by
+ * email, a page by path. Those two answers have to be joined up somewhere, and only for the entities
+ * something actually references: users, pages and groups.
+ *
+ * Rows go with the session, which is what stops this becoming a permanent record of somebody's old
+ * instance.
+ */
+export const importIdMap = pgTable(
+  'importIdMap',
+  {
+    sessionId: uuid()
+      .notNull()
+      .references(() => importSessions.id, { onDelete: 'cascade' }),
+    /** `user`, `page` or `group`. */
+    entity: varchar({ length: 32 }).notNull(),
+    /** The id the source wiki knew it by, as text — 2.x numbers them, a 3.x package would not. */
+    sourceId: varchar({ length: 255 }).notNull(),
+    targetId: uuid().notNull()
+  },
+  (table) => [primaryKey({ columns: [table.sessionId, table.entity, table.sourceId] })]
+)
+
 // JOB HISTORY -------------------------
 export const jobHistoryStateEnum = pgEnum('jobHistoryState', [
   'active',

@@ -2,6 +2,7 @@ import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { PageActor, PageInput } from '../models/pages.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
+import { PAGE_PERMISSIONS } from '../models/groups.ts'
 import {
   SEARCH_ORDER_BY,
   SEARCH_TAGS_MATCH,
@@ -89,30 +90,6 @@ export function actorFrom(req: FastifyRequest): PageActor | null {
  * page-permissions route below.
  */
 const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
-
-/**
- * Every page permission a rule can grant, i.e. the whole set `manage:system` amounts to. Mirrors the
- * page rules offered in the group editor, and is what the interface asks about per path.
- */
-const PAGE_PERMISSIONS = [
-  'read:pages',
-  'write:pages',
-  'review:pages',
-  'manage:pages',
-  'delete:pages',
-  'write:tags',
-  'write:styles',
-  'write:scripts',
-  'read:source',
-  'read:history',
-  'read:assets',
-  'write:assets',
-  'manage:assets',
-  'read:comments',
-  'write:comments',
-  'manage:comments',
-  'manage:navigation'
-]
 
 export function mayBypassPassword(req: FastifyRequest): boolean {
   const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []

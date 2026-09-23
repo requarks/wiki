@@ -39,6 +39,61 @@ export const ELEVATED_PERMISSIONS = [
   SYSTEM_PERMISSION
 ] as const
 
+/**
+ * Every GLOBAL permission a group may hold — the site-wide list, bound to no path.
+ *
+ * Here rather than in the admin screen that offers them or the route hook that checks them, because
+ * it is a vocabulary rather than a UI concern: nothing validates a permission string on the way in,
+ * so a name that is not on this list simply never matches anything, and whoever needs to ask "is
+ * this a real permission" needs one list to ask. `helpers/pageRules.ts` documents the other kind.
+ *
+ * Adding a name is the maintainer's call — see CLAUDE.md.
+ */
+export const GLOBAL_PERMISSIONS = [
+  'access:admin',
+  'read:users',
+  'write:users',
+  'manage:users',
+  'read:groups',
+  'write:groups',
+  'manage:groups',
+  'read:audit',
+  'read:metrics',
+  'manage:theme',
+  'manage:storage',
+  'manage:sites',
+  'read:webhooks',
+  'manage:webhooks',
+  'manage:scim',
+  SYSTEM_PERMISSION
+] as const
+
+/**
+ * Every PAGE permission a rule may grant — bound to a path, a locale and a site.
+ *
+ * The other half of the vocabulary above, and deliberately disjoint from it: `config.permissions` on
+ * a route reads the global list only, so naming one of these there refuses everybody.
+ */
+export const PAGE_PERMISSIONS = [
+  'read:pages',
+  'write:pages',
+  'review:pages',
+  'manage:pages',
+  'delete:pages',
+  'write:tags',
+  'write:styles',
+  'write:scripts',
+  'read:source',
+  'read:history',
+  'read:assets',
+  'write:assets',
+  'manage:assets',
+  'read:comments',
+  'write:comments',
+  'manage:comments',
+  'manage:navigation'
+]
+
 /** Whether a permission list carries any of `ELEVATED_PERMISSIONS`. */
 export function isElevated(permissions: readonly string[]): boolean {
   return permissions.some((permission) =>
