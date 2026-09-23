@@ -598,11 +598,17 @@ than a blob on the session because users and pages are unbounded: a jsonb column
 batch is megabytes of write amplification by the end of a large import. Rows go with the session,
 which is what stops it becoming a permanent record of somebody's old instance.
 
-### Settings are not imported
+### Settings: the site's, yes; the instance's, not yet
 
-[§10](#10-decisions-taken) item 5 stands as the design, and `streams/settings.json` is read far
-enough to be reported in the log, but nothing is applied: which 2.x key means what in 3.x is a table
-of its own and is being settled separately. The overlay offers no Settings tick.
+[§10](#10-decisions-taken) item 5 stands — the exporter judges nothing and the importer owns the
+mapping — and the mapping is now drawn for the SITE's settings, from `sites/<site>/site.json`. The
+named keys are listed in [§12](#sitessitesitejson); everything else in that document is left as this
+site has it.
+
+The instance-wide `streams/settings.json` — mail, authentication strategies, storage, API keys — is
+still only reported. Those are not a site's settings and several of them carry credentials for
+services this instance may not be able to reach; each wants deciding on its own rather than as part
+of a content import.
 
 ---
 
@@ -740,6 +746,18 @@ would be handed a document it does not parse. Every page that takes that road is
 
 A 2.x redirection's `content` is the target path; 3.x holds a redirection as JSON, so it is rewritten.
 
+**A corner image becomes the page's icon.** 2.x had no icon field, so a per-page emblem was an image
+anywhere in the body carrying `.align-abstopright`, which its stylesheet lifted out of the article and
+pinned to the top right of the header. 3.x has `pages.icon` for exactly that, so the first such image
+per page is promoted to `img:<url>` and removed from the body — resolved to a `/_files/` URL the way
+the renderer resolves any image, including one written relative to the page's own folder.
+
+Not a nicety: 3.x parses `{.align-abstopright}` too and its sanitizer keeps the class, but nothing
+styles it, so the image would otherwise render as an ordinary full-size picture wherever it happened
+to sit in the source. Both spellings are recognised — the markdown attribute block and the `<img
+class="…">` a ckeditor page holds — and the same strip runs over page history, so restoring an old
+version does not put the image back in a body the page no longer keeps it in.
+
 ### `sites/<site>/page-history.ndjson`
 
 Rows of 2.x's `pageHistory`, with `tags`:
@@ -855,6 +873,61 @@ cannot say what it is is dropped and named, rather than becoming a blank link. `
 stored as a webfont name 3.x no longer ships. `visibilityMode: "restricted"` carries its groups
 through the id map.
 
-### `sites/<site>/site.json` and `streams/settings.json`
+### `sites/<site>/site.json`
 
-Read far enough to be reported, not applied — [§11](#settings-are-not-imported).
+The site's own settings, and the one document the manifest does not declare — the exporter writes it
+unconditionally at this path, so it is read by convention.
+
+```json
+{ "id": "default", "title": "Wiki.js", "company": "requarks.io",
+  "contentLicense": "alr", "footerOverride": "",
+  "pageExtensions": ["md", "html", "txt"],
+  "locales": { "primary": "en", "active": ["en", "ar", "fr"], "namespacing": false },
+  "theme": { "darkMode": false, "injectCSS": "", "injectHead": "", "injectBody": "" },
+  "features": { "featurePageComments": false },
+  "seo": { "description": "Documentation for Wiki.js", "robots": ["index", "follow"] } }
+```
+
+Only the keys below are read, named one by one rather than merged wholesale: 2.x's config is a bag of
+a hundred settings whose names mostly do not survive the move, and copying whatever happened to match
+would write nonsense into a site the first time 2.x reused a name for something else.
+
+| 2.x | 3.x |
+| --- | --- |
+| `title`, `company`, `contentLicense` | the same, unchanged — even the licence codes agree |
+| `footerOverride` | `footerExtra` — the same field under another name |
+| `pageExtensions` | the same; a comma string is accepted as well as a list |
+| `seo.description` | `description`, which is where the rest of what describes a site lives |
+| `seo.robots` | `robots.index` / `robots.follow` |
+| `theme.darkMode` | `theme.dark` |
+| `theme.injectCSS` / `injectHead` / `injectBody` | the same |
+| `features.featurePageComments` | `features.comments` |
+| `locales.primary` / `locales.active` | the same, after the matching below |
+
+`seo.robots` is 2.x's list of the directives it emits. A directive and its negation can both be
+absent — 2.x emitting nothing, which means the default rather than false — so each of the two is read
+as "not denied" rather than "present".
+
+**Deliberately not imported**: `hostname`, which is this instance's to decide; `logoUrl`, since 3.x
+keeps a site's logo as an uploaded asset; and 2.x's `security`, `uploads` and `editShortcuts`, which
+have no 3.x counterpart worth guessing at.
+
+#### Locale codes are not the same vocabulary
+
+2.x lowercases everything and carries a mixture of bare languages and language-region pairs (`en`,
+`fr`, `pt-br`); 3.x uses BCP-47 as it is published upstream, where the region is capitalised
+(`pt-BR`, `zh-CN`). So a code is matched **exactly first, ignoring case**, and failing that on its
+**language subtag alone** — which turns `pt-br` into `pt-BR` and a bare `zh` into whichever Chinese
+this wiki publishes. A language match prefers the shortest candidate, so a bare `pt` wins over
+`pt-BR` where both exist: picking a region for somebody who never chose one is a guess, where falling
+back to the language is what they already had.
+
+Every matched locale is then **installed**, which pulls its strings from upstream. That needs the
+network, is skipped entirely on an `offline` instance, and is never allowed to fail the import: a
+locale that cannot be fetched is reported and left out of the active list, because a site set to a
+language whose strings are not here reads as a half-translated wiki. A primary locale that did not
+survive falls back to one that did rather than leaving the site pointed at nothing.
+
+### `streams/settings.json`
+
+Read far enough to be reported, not applied — [§11](#settings-the-sites-yes-the-instances-not-yet).

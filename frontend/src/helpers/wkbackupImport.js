@@ -206,6 +206,34 @@ function buildPlan({ manifest, packageSite, includes, log }) {
     })
   }
 
+  /*
+    The site's own settings, and they go FIRST of everything site-scoped.
+
+    Not cosmetic ordering: `pageExtensions` is what decides whether an uploaded file is really a page,
+    so an asset imported before that setting lands is judged by the wrong list. The locales are the
+    same story one level up — content arrives in them, and they should exist first.
+
+    One document, and the only one the manifest does not declare: the exporter writes it
+    unconditionally at a path the format fixes (`dev/specs/wkbackup.md` §2), so it is read by
+    convention rather than looked up. Absent, the step contributes nothing.
+  */
+  if (includes.includes('settings')) {
+    add({
+      kind: 'json',
+      label: labelFor('site'),
+      count: null,
+      url: (session, siteId) => `import/sessions/${session.id}/sites/${siteId}/streams/site`,
+      read: async (pkg) => {
+        const entry = pkg.entry(`sites/${packageSite.id ?? 'default'}/site.json`)
+        if (!entry) {
+          log('warn', 'Settings: the package carries no site.json.')
+          return []
+        }
+        return [await readJson(entry)]
+      }
+    })
+  }
+
   for (const { name, requires } of SITE_STREAMS) {
     const declared = packageSite.streams?.[name]
     if (!declared?.path || (requires && !includes.includes(requires))) {
@@ -409,6 +437,7 @@ function describeGenerator(manifest) {
 }
 
 const LABELS = {
+  site: 'Settings',
   locales: 'Locales',
   groups: 'Groups',
   users: 'Users',

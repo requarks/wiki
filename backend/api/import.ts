@@ -284,7 +284,7 @@ async function routes(app: FastifyInstance) {
       bodyLimit: MAX_BATCH_BYTES,
       schema: {
         summary: 'Write a batch of records belonging to one site',
-        description: `The site is a target site on THIS instance, one the session was opened for — a package site the operator did not map is never read.\n\nAt most ${MAX_BATCH_RECORDS} records and ${MAX_BATCH_BYTES / 1024 / 1024} MB per request; a batch of pages or of page history is a batch of whole documents, so the byte ceiling is usually what a caller meets first.\n\nOrder matters between these streams and is the caller's to keep: folders, then blobs, then pages, then the history and comments that hang off them, then the assets those blobs belong to, then navigation. A record whose page was not imported is skipped rather than failing its batch.`,
+        description: `The site is a target site on THIS instance, one the session was opened for — a package site the operator did not map is never read.\n\nAt most ${MAX_BATCH_RECORDS} records and ${MAX_BATCH_BYTES / 1024 / 1024} MB per request; a batch of pages or of page history is a batch of whole documents, so the byte ceiling is usually what a caller meets first.\n\nOrder matters between these streams and is the caller's to keep: folders and the site's own settings, then blobs, then pages, then the history and comments that hang off them, then the assets those blobs belong to, then navigation. A record whose page was not imported is skipped rather than failing its batch.`,
         tags: ['Import'],
         params: {
           type: 'object',
@@ -293,7 +293,7 @@ async function routes(app: FastifyInstance) {
             siteId: { type: 'string', format: 'uuid' },
             stream: {
               type: 'string',
-              enum: ['tree', 'pages', 'page-history', 'assets', 'comments', 'navigation']
+              enum: ['tree', 'site', 'pages', 'page-history', 'assets', 'comments', 'navigation']
             }
           },
           required: ['sessionId', 'siteId', 'stream']

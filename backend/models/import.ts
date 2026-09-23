@@ -64,9 +64,12 @@ const SUPPORTED_SOURCE = 'wikijs2'
 /**
  * What the operator may tick, as the overlay names them.
  *
- * `settings` is deliberately absent — see `dev/specs/wkbackup.md` §11. A stream whose content kind is
- * not in the session's `includes` is refused rather than ignored, so a browser that batches something
- * nobody asked for is told, instead of quietly writing it.
+ * A stream whose content kind is not in the session's `includes` is refused rather than ignored, so a
+ * browser that batches something nobody asked for is told, instead of quietly writing it.
+ *
+ * `settings` is the site's own settings, from `site.json` — the handful of 2.x keys that have a 3.x
+ * equivalent, not the instance-wide `streams/settings.json`, which is still only reported. See
+ * `#siteStream`.
  */
 export const IMPORT_CONTENT_KINDS = [
   'assets',
@@ -75,7 +78,8 @@ export const IMPORT_CONTENT_KINDS = [
   'history',
   'groups',
   'users',
-  'navigation'
+  'navigation',
+  'settings'
 ] as const
 export type ImportContentKind = (typeof IMPORT_CONTENT_KINDS)[number]
 
@@ -85,6 +89,7 @@ const STREAM_REQUIRES: Record<string, ImportContentKind | null> = {
   groups: 'groups',
   users: 'users',
   tree: null,
+  site: 'settings',
   pages: 'pages',
   'page-history': 'history',
   assets: 'assets',
@@ -96,7 +101,15 @@ const STREAM_REQUIRES: Record<string, ImportContentKind | null> = {
 const INSTANCE_STREAMS = new Set(['locales', 'groups', 'users'])
 
 /** Streams that belong to a site, and are posted with the target site's id. */
-const SITE_STREAMS = new Set(['tree', 'pages', 'page-history', 'assets', 'comments', 'navigation'])
+const SITE_STREAMS = new Set([
+  'tree',
+  'site',
+  'pages',
+  'page-history',
+  'assets',
+  'comments',
+  'navigation'
+])
 
 /** Records per batch. The browser's figure too — `dev/specs/wkbackup.md` §7. */
 export const MAX_BATCH_RECORDS = 500
@@ -174,6 +187,31 @@ const SYSTEM_GROUP_SOURCE_IDS = { administrators: 1, guests: 2 }
  * would report a migration as half-finished for ever.
  */
 const BODYLESS_EDITORS = new Set(['redirect', 'blog'])
+
+/**
+ * 2.x's way of giving a page an emblem: an image anywhere in the body carrying this class.
+ *
+ * Its stylesheet pulled such an image out of the article and pinned it to the top right of the page
+ * header — `position: absolute; top: -90px; right: 1rem; height: 58px`. 3.x has a field for exactly
+ * that idea (`pages.icon`, drawn beside the title by `PageHeader.vue`), so the image becomes the
+ * icon and leaves the body.
+ *
+ * Left alone it would be worse than useless here: 3.x parses `{.align-abstopright}` too
+ * (`markdown-it-attrs`) and the sanitizer keeps `class`, but nothing styles it — so the image would
+ * render as an ordinary inline picture at full size, wherever in the page it happened to sit.
+ */
+const V2_ICON_CLASS = 'align-abstopright'
+
+/**
+ * A markdown image carrying an attribute block: `![alt](/logo.png =60x){.align-abstopright}`.
+ *
+ * The size suffix is `markdown-it-imsize`, which both versions use, so the URL is only the first
+ * token inside the parentheses.
+ */
+const MD_IMAGE_WITH_ATTRS = /!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)\{([^}]*)\}/
+
+/** The same thing written as HTML, which is what a 2.x ckeditor or code page holds. */
+const HTML_IMAGE = /<img\b[^>]*>/i
 
 /** What a page's `render` says until the render queue gets to it — `dev/specs/wkbackup.md` §8. */
 const PENDING_RENDER_HTML =
@@ -281,6 +319,121 @@ function missingOf(present: Record<string, unknown>): string[] {
   return Object.entries(present)
     .filter(([, value]) => !value)
     .map(([name]) => name)
+}
+
+/**
+ * A 2.x locale code matched onto one of this wiki's.
+ *
+ * Exact first, ignoring case, since that settles every code the two versions spell the same. Failing
+ * that, the language subtag alone — `pt-br` finds `pt-BR`, and `zh` finds `zh-CN` where that is the
+ * only Chinese published. The shortest candidate wins a language match, so a bare language is
+ * preferred over a regional variant nobody asked for.
+ */
+function matchLocale(code: string, available: string[]): string | null {
+  const wanted = code.trim().toLowerCase()
+  if (!wanted) {
+    return null
+  }
+  const exact = available.find((entry) => entry.toLowerCase() === wanted)
+  if (exact) {
+    return exact
+  }
+  const language = wanted.split(/[-_]/)[0]
+  const candidates = available.filter((entry) => entry.toLowerCase().split(/[-_]/)[0] === language)
+  if (candidates.length < 1) {
+    return null
+  }
+  return [...candidates].sort((a, b) => a.length - b.length || a.localeCompare(b))[0]
+}
+
+/** Whether an attribute block or a class list names the 2.x page-icon class. */
+function namesIconClass(value: string): boolean {
+  return new RegExp(`(^|[\\s.])${V2_ICON_CLASS}(\\s|$)`).test(value)
+}
+
+/**
+ * Where a page-icon image actually loads from.
+ *
+ * The same resolution the renderer does for any image in a page (`fileSrc` in
+ * `frontend/src/renderers/shared.js`): a path from the site root, or one relative to the page's own
+ * folder, both of which name an uploaded file served under `/_files/`. Done here rather than left to
+ * render time because `pages.icon` is not rendered — it is handed to `<w-icon>` as it stands.
+ *
+ * Anything carrying its own scheme is left as it is: an icon hosted elsewhere still loads, and a
+ * `data:` URI is refused outright rather than stored, since the column is 255 characters.
+ */
+function pageIconFor(src: string, pagePath: string): string | null {
+  const value = src.trim().replace(/^["']|["']$/g, '')
+  if (!value || value.startsWith('data:')) {
+    return null
+  }
+  let resolved = value
+  if (!/^[a-z][a-z\d+.-]*:/i.test(value) && !value.startsWith('//')) {
+    const folder = pagePath.split('/').slice(0, -1).join('/')
+    try {
+      const url = new URL(value, `http://page.invalid/${folder ? `${folder}/` : ''}`)
+      resolved = `/_files/${url.pathname.replace(/^\/+/, '')}`
+    } catch {
+      return null
+    }
+  }
+  const icon = `img:${resolved}`
+  // -> `pages.icon` is varchar(255). A path that will not fit is dropped rather than truncated into
+  //    an address that loads nothing
+  return icon.length <= 255 ? icon : null
+}
+
+/**
+ * Pull a 2.x page-icon image out of a page's source.
+ *
+ * One per page — 2.x's stylesheet pinned them all to the same spot, so a second was already
+ * invisible there — and the first one wins. The match is removed from the content along with the
+ * blank line it sat on, since an image promoted to the page's icon should not also appear in its
+ * body.
+ *
+ * @returns The icon, and the content with the image taken out.
+ */
+function extractPageIcon(
+  content: string,
+  pagePath: string
+): { icon: string | null; content: string } {
+  const markdown = MD_IMAGE_WITH_ATTRS.exec(content)
+  if (markdown && namesIconClass(markdown[2])) {
+    const icon = pageIconFor(markdown[1], pagePath)
+    if (icon) {
+      return { icon, content: removeAt(content, markdown.index, markdown[0].length) }
+    }
+  }
+
+  // -> Scanned rather than matched once: a page may hold several `<img>` and only one of them is this
+  for (const tag of content.match(new RegExp(HTML_IMAGE.source, 'gi')) ?? []) {
+    const classAttr = /\bclass\s*=\s*["']([^"']*)["']/i.exec(tag)
+    if (!classAttr || !namesIconClass(classAttr[1])) {
+      continue
+    }
+    const src = /\bsrc\s*=\s*["']([^"']*)["']/i.exec(tag)
+    const icon = src ? pageIconFor(src[1], pagePath) : null
+    if (icon) {
+      return { icon, content: removeAt(content, content.indexOf(tag), tag.length) }
+    }
+  }
+
+  return { icon: null, content }
+}
+
+/** Cut a span out of the source, and the now-blank line it leaves behind with it. */
+function removeAt(content: string, index: number, length: number): string {
+  const before = content.slice(0, index)
+  const after = content.slice(index + length)
+  // -> Only when the image was the whole of its line; one sitting inside a paragraph just goes
+  if (/(^|\n)[^\S\n]*$/.test(before) && /^[^\S\n]*(\n|$)/.test(after)) {
+    return (before.replace(/[^\S\n]*$/, '') + after.replace(/^[^\S\n]*\n?/, '')).replace(
+      /\n{3,}/g,
+      '\n\n'
+    )
+  }
+  // -> Taken out of the middle of a sentence, the spaces that flanked it would otherwise both remain
+  return before.replace(/[^\S\n]+$/, ' ') + after.replace(/^[^\S\n]+/, '')
 }
 
 /**
@@ -729,7 +882,7 @@ class Import {
   ): Promise<IngestResult> {
     switch (stream) {
       case 'locales':
-        return this.#localesStream(records)
+        return this.#localesStream(session, records)
       case 'groups':
         return this.#groupsStream(session, records)
       case 'users':
@@ -752,6 +905,8 @@ class Import {
     switch (stream) {
       case 'tree':
         return this.#treeStream(target, records)
+      case 'site':
+        return this.#siteStream(target, records)
       case 'pages':
         return this.#pagesStream(session, target, records)
       case 'page-history':
@@ -782,10 +937,20 @@ class Import {
    * migration is not this feature's business. What matters is that the operator learns their pages
    * are arriving in a locale this wiki has no strings for, while there is still time to add it.
    */
-  async #localesStream(records: any[]): Promise<IngestResult> {
+  async #localesStream(session: ImportSession, records: any[]): Promise<IngestResult> {
     const installed = new Set(
       (await WIKI.models.locales.getInstalledLocales()).map((locale: any) => locale.code)
     )
+    /*
+      Whether anything is worth saying about a locale that is missing.
+
+      The settings stream installs the ones the site actually uses, matching 2.x's codes onto this
+      wiki's as it goes — and it runs minutes before this log is read. Warning here as well said a
+      locale was missing and named a screen to go and fix it by hand, for locales the import then
+      installed by itself two steps later. So the warning belongs to the case where nothing is going
+      to install them: Settings left unticked.
+    */
+    const settingsWillInstall = session.includes.includes('settings')
     const warnings: string[] = []
     let imported = 0
     for (const record of records) {
@@ -795,9 +960,17 @@ class Import {
       }
       if (installed.has(code)) {
         imported++
-      } else {
+        continue
+      }
+      /*
+        And only for a locale the source wiki was actually SERVING. 2.x's table carries a row for
+        every locale it knows of, active or not, so most of what arrives here is a locale nobody ever
+        wrote a page in. `isActive` is the exporter's flag; a package written without it is treated as
+        active, which errs towards saying too much rather than too little.
+      */
+      if (!settingsWillInstall && record?.isActive !== false) {
         warnings.push(
-          `The package uses the locale "${code}", which is not installed here. Its content is imported; install the locale under Administration → Locale.`
+          `The package uses the locale "${code}", which is not installed here. Its content is imported either way; install it under Administration → Locale, or tick Settings to have the import do it.`
         )
       }
     }
@@ -1219,6 +1392,227 @@ class Import {
   }
 
   /**
+   * The locales a 2.x site was running, matched onto this wiki's codes and installed.
+   *
+   * **The codes are not the same vocabulary.** 2.x lowercases everything and carries a mixture of
+   * bare languages and language-region pairs (`en`, `fr`, `zh`, `pt-br`); 3.x uses BCP-47 as it is
+   * published upstream, where the region is capitalised (`pt-BR`, `zh-CN`). So an exact match is
+   * tried first, case-insensitively, and failing that the two are compared on their language alone —
+   * which is what turns 2.x's `pt-br` into `pt-BR`, and its bare `zh` into whichever Chinese this
+   * wiki publishes.
+   *
+   * A language match prefers the shortest candidate, so a bare `pt` wins over `pt-BR` when both
+   * exist: picking a region for somebody who never chose one is a guess, where falling back to the
+   * language is the same thing they had.
+   *
+   * Installing pulls the strings from upstream, so it needs the network and is skipped entirely on an
+   * `offline` instance. None of it is allowed to fail the import: a locale that cannot be fetched is
+   * reported and left out of the active list, because a site set to a language whose strings are not
+   * here reads as a half-translated wiki.
+   */
+  async #importLocales(
+    source: any,
+    warnings: string[]
+  ): Promise<{ primary: string; active: string[] } | null> {
+    const wanted = [
+      ...new Set(
+        [
+          ...(Array.isArray(source?.active) ? source.active : []),
+          ...(source?.primary ? [source.primary] : [])
+        ]
+          .map((code: unknown) => stringOf(code).trim())
+          .filter(Boolean)
+      )
+    ]
+    if (wanted.length < 1) {
+      return null
+    }
+
+    const installed = (await WIKI.models.locales.getLocales({ cache: false }))
+      .filter((locale: any) => locale.isInstalled)
+      .map((locale: any) => locale.code as string)
+
+    /*
+      What this wiki could have, which is what the codes are matched against: everything published
+      upstream plus whatever is already here. Fetched once for the whole batch rather than per locale,
+      and its failure is not fatal — an instance with no route to the internet can still match what it
+      already holds.
+    */
+    let available = [...installed]
+    if (WIKI.config.offline) {
+      warnings.push(
+        'This instance is offline, so no locale could be downloaded. Only the ones already installed were matched.'
+      )
+    } else {
+      try {
+        const remote = await WIKI.models.locales.fetchRemoteMetadata()
+        // -> A published locale is named by its FILE and carries no code of its own, which is how
+        //    `locales.install` reads it too — the two have to agree or nothing installs
+        available = [
+          ...new Set([
+            ...installed,
+            ...remote.map((entry) => path.basename(entry.file, '.json')).filter(Boolean)
+          ])
+        ]
+      } catch (err: any) {
+        warnings.push(`The list of available locales could not be fetched: ${err.message}`)
+      }
+    }
+
+    const resolved: string[] = []
+    for (const code of wanted) {
+      const match = matchLocale(code, available)
+      if (!match) {
+        warnings.push(`The locale "${code}" has no equivalent in Wiki.js 3.x and was left out.`)
+        continue
+      }
+      if (match.toLowerCase() !== code.toLowerCase()) {
+        warnings.push(`The 2.x locale "${code}" was matched to "${match}".`)
+      }
+      if (!installed.includes(match)) {
+        try {
+          await WIKI.models.locales.install(match)
+          installed.push(match)
+          warnings.push(`Installed the locale "${match}".`)
+        } catch (err: any) {
+          warnings.push(`The locale "${match}" could not be installed: ${err.message}`)
+          continue
+        }
+      }
+      resolved.push(match)
+    }
+
+    if (resolved.length < 1) {
+      return null
+    }
+    const primary = source?.primary ? matchLocale(stringOf(source.primary), resolved) : null
+    return {
+      // -> The site has to be readable in its primary locale, so one that did not survive the matching
+      //    falls back to whatever did rather than leaving the site pointed at nothing
+      primary: primary ?? resolved[0],
+      active: [...new Set(resolved)]
+    }
+  }
+
+  /**
+   * The site's own settings, from `site.json`.
+   *
+   * Only the keys that mean the same thing in both versions, listed out one by one rather than merged
+   * wholesale: 2.x's config is a flat bag of a hundred settings whose names mostly do not survive the
+   * move, and copying what happened to match would write nonsense into a site's configuration the
+   * first time 2.x reused a name for something else. Everything not named here is left as this site
+   * has it — which for a site created moments ago is 3.x's own defaults.
+   *
+   * Deliberately NOT imported: the hostname, which is this instance's to decide; `logoUrl`, since 3.x
+   * keeps a site's logo as an uploaded asset rather than a URL; and 2.x's `security`, `uploads` and
+   * `editShortcuts`, which have no 3.x counterpart worth guessing at. The instance-wide
+   * `streams/settings.json` — mail, authentication strategies, storage — is a separate job and is
+   * still only reported.
+   */
+  async #siteStream(target: ImportSessionSite, records: any[]): Promise<IngestResult> {
+    const warnings: string[] = []
+    const site = records[0]
+    if (!site || typeof site !== 'object') {
+      return { imported: 0, skipped: records.length, warnings }
+    }
+
+    const config: Record<string, any> = {}
+    const theme: Record<string, any> = {}
+    const features: Record<string, any> = {}
+
+    /** Copy a value across only when the package actually carries one. */
+    const carry = (target_: Record<string, any>, key: string, value: unknown) => {
+      if (value !== undefined && value !== null) {
+        target_[key] = value
+      }
+    }
+
+    carry(config, 'title', typeof site.title === 'string' ? site.title : undefined)
+    carry(config, 'company', typeof site.company === 'string' ? site.company : undefined)
+    carry(
+      config,
+      'contentLicense',
+      typeof site.contentLicense === 'string' ? site.contentLicense : undefined
+    )
+    // -> Renamed rather than remapped: the same field, called something else here
+    carry(
+      config,
+      'footerExtra',
+      typeof site.footerOverride === 'string' ? site.footerOverride : undefined
+    )
+    // -> 2.x writes an array; a comma string is accepted too, since the column is a text array either way
+    const extensions = Array.isArray(site.pageExtensions)
+      ? site.pageExtensions
+      : typeof site.pageExtensions === 'string'
+        ? site.pageExtensions.split(',')
+        : null
+    if (extensions) {
+      const cleaned = extensions
+        .map((ext: unknown) => stringOf(ext).trim().toLowerCase().replace(/^\./, ''))
+        .filter(Boolean)
+      if (cleaned.length > 0) {
+        config.pageExtensions = [...new Set(cleaned)]
+      }
+    }
+
+    // -> 2.x keeps the page description under `seo`; 3.x keeps it beside the title, where the rest of
+    //    what describes a site lives
+    carry(
+      config,
+      'description',
+      typeof site.seo?.description === 'string' ? site.seo.description : undefined
+    )
+    /*
+      2.x's meta robots is a list of the directives it emits — `['index', 'follow']` — where 3.x asks
+      the two questions separately. A directive and its negation can both be absent, which is 2.x
+      emitting nothing and means the default rather than false, so each is read as "not denied".
+    */
+    if (Array.isArray(site.seo?.robots)) {
+      const directives = site.seo.robots.map((d: unknown) => stringOf(d).trim().toLowerCase())
+      config.robots = {
+        index: !directives.includes('noindex'),
+        follow: !directives.includes('nofollow')
+      }
+    }
+
+    carry(
+      theme,
+      'dark',
+      typeof site.theme?.darkMode === 'boolean' ? site.theme.darkMode : undefined
+    )
+    for (const key of ['injectCSS', 'injectHead', 'injectBody']) {
+      carry(theme, key, typeof site.theme?.[key] === 'string' ? site.theme[key] : undefined)
+    }
+    if (Object.keys(theme).length > 0) {
+      config.theme = theme
+    }
+
+    carry(
+      features,
+      'comments',
+      typeof site.features?.featurePageComments === 'boolean'
+        ? site.features.featurePageComments
+        : undefined
+    )
+    if (Object.keys(features).length > 0) {
+      config.features = features
+    }
+
+    const locales = await this.#importLocales(site.locales, warnings)
+    if (locales) {
+      config.locales = locales
+    }
+
+    if (Object.keys(config).length < 1) {
+      warnings.push('The package carried no site settings this wiki could use.')
+      return { imported: 0, skipped: 1, warnings }
+    }
+    await WIKI.models.sites.updateSite(target.siteId, { config })
+    warnings.push(`Site settings applied: ${Object.keys(config).sort().join(', ')}.`)
+    return { imported: 1, skipped: 0, warnings }
+  }
+
+  /**
    * Pages.
    *
    * Straight onto `pages.adoptStoredPage`, which is the method the disk and git targets import
@@ -1239,6 +1633,7 @@ class Import {
     const warnings: string[] = []
     let imported = 0
     let skipped = 0
+    let icons = 0
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
@@ -1260,6 +1655,13 @@ class Import {
         continue
       }
 
+      /*
+        2.x's page emblem, promoted to the field 3.x has for it. Taken out before the page is written,
+        so that the body stored, mirrored to every storage target and rendered is the one without it —
+        rather than saving the image and editing it back out afterwards.
+      */
+      const { icon, content: body } = extractPageIcon(content, pagePath)
+
       const sourceEditor = stringOf(record?.editorKey, 'markdown')
       const editor = EDITOR_MAP[sourceEditor] ?? 'markdown'
       if (!EDITOR_MAP[sourceEditor]) {
@@ -1280,7 +1682,7 @@ class Import {
             stringOf(tag)
           ),
           isPublished: record?.isPublished !== false,
-          content: editor === 'redirect' ? this.#redirectContent(content) : content,
+          content: editor === 'redirect' ? this.#redirectContent(body) : body,
           createdAt: dateOf(record?.createdAt),
           updatedAt: dateOf(record?.updatedAt),
           authorId: await this.#authorFor(session, record?.authorId),
@@ -1303,6 +1705,10 @@ class Import {
           continue
         }
         await this.#markPendingRender(target.siteId, page.id, editor)
+        if (icon) {
+          await WIKI.db.update(pagesTable).set({ icon }).where(eq(pagesTable.id, page.id))
+          icons++
+        }
         // -> The comments stream names its page by the 2.x page id and has nothing else to go on
         await this.#remember(session.id, 'page', [{ sourceId: record?.id, targetId: page.id }])
         imported++
@@ -1310,6 +1716,11 @@ class Import {
         warnings.push(`"${pagePath}" could not be imported: ${err.message}`)
         skipped++
       }
+    }
+    if (icons > 0) {
+      warnings.push(
+        `${icons} pages had a corner image (.${V2_ICON_CLASS}); it became the page icon and was taken out of the body.`
+      )
     }
     return { imported, skipped, warnings }
   }
@@ -1484,6 +1895,9 @@ class Import {
         skipped++
         continue
       }
+      // -> Stripped here as well, with no icon taken from it: restoring one of these versions must not
+      //    put the corner image back into a body the page no longer keeps it in
+      const { content: body } = extractPageIcon(content, pagePath)
 
       const id = this.#derive(session, target.sourceId, 'pageHistory', record?.id)
       const values = {
@@ -1493,7 +1907,7 @@ class Import {
         locale,
         path: pagePath,
         title: stringOf(record?.title, pagePath),
-        content,
+        content: body,
         meta: {
           description: stringOf(record?.description),
           editor: EDITOR_MAP[stringOf(record?.editorKey, 'markdown')] ?? 'markdown',

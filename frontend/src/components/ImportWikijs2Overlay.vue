@@ -76,10 +76,7 @@
             </w-card>
 
             <w-card class="pb-2">
-              <w-card-header>
-                {{ t('admin.utilities.wikijs2Import.whatToImport') }}
-                <template #hint>{{ t('admin.utilities.wikijs2Import.whatToImportHint') }}</template>
-              </w-card-header>
+              <w-card-header>{{ t('admin.utilities.wikijs2Import.whatToImport') }}</w-card-header>
               <!--
                 A compact checklist rather than `w-item` rows: eight of those stand 450px tall and
                 push the Start Import button below the fold, which is the one control on this panel
@@ -99,13 +96,30 @@
                       entry.parent ? 'content-child' : '',
                       entry.isLastChild ? 'content-child--last' : ''
                     ]">
-                    <w-checkbox
-                      v-model="state.content[entry.key]"
-                      color="primary"
-                      :label="entry.label"
-                      :disabled="
-                        isRunning || (entry.parent ? !state.content[entry.parent] : false)
-                      " />
+                    <div class="flex items-center gap-1">
+                      <w-checkbox
+                        v-model="state.content[entry.key]"
+                        color="primary"
+                        :label="entry.label"
+                        :disabled="
+                          isRunning || (entry.parent ? !state.content[entry.parent] : false)
+                        " />
+                      <!--
+                        The wrapper is what carries the tooltip, and what makes it reachable without a
+                        mouse: `tabindex` puts it in the tab order so `focusin` shows the same text,
+                        and the label is on the element itself so a screen reader gets it whether or
+                        not the tooltip is drawn. See WTooltip.
+                      -->
+                      <span
+                        v-if="entry.hint"
+                        data-tooltip-anchor
+                        tabindex="0"
+                        class="inline-flex cursor-help text-grey-6 outline-offset-2"
+                        :aria-label="entry.hint">
+                        <w-icon name="mdi:information-outline" size="16px" />
+                        <w-tooltip>{{ entry.hint }}</w-tooltip>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -280,7 +294,8 @@ const state = reactive({
     history: true,
     groups: true,
     users: true,
-    navigation: true
+    navigation: true,
+    settings: true
   },
   overwrite: false,
   /** The `File` the picker handed back, kept whole so its name and size can be shown. */
@@ -329,7 +344,16 @@ const contentEntries = computed(() => [
   { key: 'history', col: 1, parent: 'pages', label: t('admin.utilities.wikijs2Import.history') },
   { key: 'groups', col: 2, label: t('admin.utilities.wikijs2Import.groups') },
   { key: 'users', col: 2, label: t('admin.utilities.wikijs2Import.users') },
-  { key: 'navigation', col: 2, label: t('admin.utilities.wikijs2Import.navigation') }
+  { key: 'navigation', col: 2, label: t('admin.utilities.wikijs2Import.navigation') },
+  {
+    key: 'settings',
+    col: 2,
+    label: t('admin.utilities.wikijs2Import.settings'),
+    // -> The one tick whose name promises more than it does: a handful of 2.x keys have a 3.x
+    //    equivalent and the rest are left alone, which is worth saying before somebody assumes their
+    //    whole configuration came across
+    hint: t('admin.utilities.wikijs2Import.settingsHint')
+  }
 ])
 
 /**
