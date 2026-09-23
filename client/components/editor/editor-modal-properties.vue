@@ -253,6 +253,7 @@ import CodeMirror from 'codemirror'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/mode/htmlmixed/htmlmixed.js'
 import 'codemirror/mode/css/css.js'
+import { getCodeMirrorInputStyle } from '../../helpers/codemirror'
 
 /* global siteLangs, siteConfig */
 const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
@@ -367,7 +368,7 @@ export default {
         line: true,
         styleActiveLine: true,
         viewportMargin: 50,
-        inputStyle: 'contenteditable',
+        inputStyle: getCodeMirrorInputStyle(),
         direction: 'ltr'
       })
       switch (mode) {
