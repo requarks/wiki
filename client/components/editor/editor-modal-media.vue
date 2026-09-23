@@ -309,7 +309,7 @@ export default {
       ])
     },
     isFolderNameValid() {
-      return this.newFolderName.length > 1 && !localeSegmentRegex.test(this.newFolderName) && !disallowedFolderChars.test(this.newFolderName)
+      return this.newFolderName.length > 1 && (this.currentFolderId > 0 || !localeSegmentRegex.test(this.newFolderName)) && !disallowedFolderChars.test(this.newFolderName)
     },
     currentAsset () {
       return _.find(this.assets, ['id', this.currentFileId]) || {}
