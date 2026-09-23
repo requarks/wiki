@@ -47,8 +47,8 @@ module.exports = {
           darkMode: args.darkMode,
           tocPosition: args.tocPosition || 'left',
           injectCSS: args.injectCSS || '',
-          injectHead: args.injectHead || '',
-          injectBody: args.injectBody || ''
+          injectHead: args.injectHead ? args.injectHead.replace(/<script/gi, '') : '',
+          injectBody: args.injectBody ? args.injectBody.replace(/<script/gi, '') : ''
         }
 
         await WIKI.configSvc.saveToDb(['theming'])
