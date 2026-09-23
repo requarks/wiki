@@ -26,7 +26,7 @@
             .text-subtitle-1 {{$t('auth:selectAuthProvider')}}
           .login-list
             v-list.elevation-1.radius-7(nav, light)
-              v-list-item-group(v-model='selectedStrategyKey')
+              v-list-item-group(v-model='selectedStrategyKey', mandatory)
                 v-list-item(
                   v-for='(stg, idx) of filteredStrategies'
                   :key='stg.key'
@@ -257,6 +257,15 @@ import Cookies from 'js-cookie'
 import gql from 'graphql-tag'
 import { sync } from 'vuex-pathify'
 
+const getEmptySelectedStrategy = () => ({
+  key: 'unselected',
+  selfRegistration: false,
+  strategy: {
+    useForm: false,
+    usernameType: 'email'
+  }
+})
+
 export default {
   i18nOptions: { namespaces: 'auth' },
   props: {
@@ -278,7 +287,7 @@ export default {
       error: false,
       strategies: [],
       selectedStrategyKey: 'unselected',
-      selectedStrategy: { key: 'unselected', strategy: { useForm: false, usernameType: 'email' } },
+      selectedStrategy: getEmptySelectedStrategy(),
       screen: 'login',
       username: '',
       password: '',
@@ -321,17 +330,37 @@ export default {
   },
   watch: {
     filteredStrategies (newValue, oldValue) {
-      if (_.head(newValue).strategy.useForm) {
-        this.selectedStrategyKey = _.head(newValue).key
+      const firstStrategy = _.head(newValue)
+      if (!firstStrategy) {
+        this.selectedStrategyKey = 'unselected'
+        this.selectedStrategy = getEmptySelectedStrategy()
+        return
+      }
+      if (_.some(newValue, ['key', this.selectedStrategyKey])) {
+        return
+      }
+      if (firstStrategy.strategy.useForm) {
+        this.selectedStrategyKey = firstStrategy.key
       }
     },
     selectedStrategyKey (newValue, oldValue) {
-      this.selectedStrategy = _.find(this.strategies, ['key', newValue])
+      const strategy = _.find(this.strategies, ['key', newValue])
+      if (!strategy) {
+        const fallbackStrategy = _.find(this.filteredStrategies, ['key', oldValue]) || _.head(this.filteredStrategies)
+        if (fallbackStrategy) {
+          this.selectedStrategyKey = fallbackStrategy.key
+          return
+        }
+        this.selectedStrategy = getEmptySelectedStrategy()
+        this.screen = 'login'
+        return
+      }
+      this.selectedStrategy = strategy
       if (this.screen === 'changePwd') {
         return
       }
       this.screen = 'login'
-      if (!this.selectedStrategy.strategy.useForm) {
+      if (!strategy.strategy.useForm) {
         this.isLoading = true
         window.location.assign('/login/' + newValue)
       } else {
@@ -354,7 +383,10 @@ export default {
      */
     async login () {
       this.errorShown = false
-      if (this.username.length < 2) {
+      if (!this.selectedStrategy || this.selectedStrategy.key === 'unselected') {
+        this.errorMessage = this.$t('auth:selectAuthProvider')
+        this.errorShown = true
+      } else if (this.username.length < 2) {
         this.errorMessage = this.$t('auth:invalidEmailUsername')
         this.errorShown = true
         this.$refs.iptEmail.focus()
