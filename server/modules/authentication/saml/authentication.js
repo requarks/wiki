@@ -6,7 +6,7 @@ const _ = require('lodash')
 // SAML Account
 // ------------------------------------
 
-const SAMLStrategy = require('passport-saml').Strategy
+const SAMLStrategy = require('@node-saml/passport-saml').Strategy
 
 module.exports = {
   init (passport, conf) {
