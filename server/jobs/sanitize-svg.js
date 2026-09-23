@@ -19,7 +19,7 @@ module.exports = async (svgPath) => {
     WIKI.logger.info(`Sanitized SVG file upload: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Failed to sanitize SVG file upload: [ FAILED ]`)
-    WIKI.logger.error(err.message)
+    WIKI.logger.error(err)
     throw err
   }
 }

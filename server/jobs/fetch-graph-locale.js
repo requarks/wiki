@@ -61,6 +61,6 @@ module.exports = async (localeCode) => {
     WIKI.logger.info(`Fetching locale ${localeCode} from Graph endpoint: [ COMPLETED ]`)
   } catch (err) {
     WIKI.logger.error(`Fetching locale ${localeCode} from Graph endpoint: [ FAILED ]`)
-    WIKI.logger.error(err.message)
+    WIKI.logger.error(err)
   }
 }
