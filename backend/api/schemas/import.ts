@@ -51,6 +51,7 @@ export function registerSchemas(app: FastifyInstance) {
       },
       includes: { type: 'array', items: { type: 'string' } },
       overwrite: { type: 'boolean' },
+      htmlConversion: { type: 'string', enum: ['markdown', 'html'] },
       state: { type: 'string', enum: ['open', 'finished', 'failed'] },
       progress: {
         type: 'object',

@@ -78,6 +78,7 @@ async function routes(app: FastifyInstance) {
       sites: ImportSessionSite[]
       includes: string[]
       overwrite?: boolean
+      htmlConversion?: string
     }
   }>(
     '/import/sessions',
@@ -117,7 +118,14 @@ async function routes(app: FastifyInstance) {
               description:
                 'Settings are not importable — which 2.x key means what in 3.x is being settled separately.'
             },
-            overwrite: { type: 'boolean', default: false }
+            overwrite: { type: 'boolean', default: false },
+            htmlConversion: {
+              type: 'string',
+              enum: ['markdown', 'html'],
+              default: 'markdown',
+              description:
+                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
+            }
           },
           required: ['source', 'sites', 'includes']
         },
@@ -133,6 +141,7 @@ async function routes(app: FastifyInstance) {
         sites: req.body.sites,
         includes: req.body.includes,
         overwrite: req.body.overwrite === true,
+        htmlConversion: req.body.htmlConversion,
         actorId: req.session?.user?.id ?? null
       })
       await audit(req, 'admin', 'startImport', {

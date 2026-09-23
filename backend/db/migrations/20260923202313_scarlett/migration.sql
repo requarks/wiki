@@ -1,0 +1,1 @@
+ALTER TABLE "importSessions" ADD COLUMN "htmlConversion" varchar(16) DEFAULT 'markdown' NOT NULL;

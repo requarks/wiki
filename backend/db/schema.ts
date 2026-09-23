@@ -447,6 +447,16 @@ export const importSessions = pgTable(
     /** Which content kinds the operator ticked. A stream for anything absent is refused. */
     includes: jsonb().notNull().default([]),
     overwrite: boolean().notNull().default(false),
+    /**
+     * What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors.
+     *
+     * `markdown` converts it and files it under 3.x's visual editor, so it stays editable the way it
+     * was written; `html` keeps the HTML exactly as it stands, which renders identically but is only
+     * editable as source. It is a per-import choice because it is a trade the operator has to make
+     * rather than one this code can make for them: a conversion is a rewrite of their content, and
+     * the alternative is a wiki nobody can edit visually again.
+     */
+    htmlConversion: varchar({ length: 16 }).notNull().default('markdown'),
     state: importSessionStateEnum().notNull().default('open'),
     /** `{ <stream>: <records written> }`, which is what a resumed tab reads to find its place. */
     progress: jsonb().notNull().default({}),

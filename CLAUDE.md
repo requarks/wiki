@@ -246,7 +246,7 @@ npm run dev              # nodemon, restarts on any backend file change
 npm run start            # plain node
 npm run typecheck        # tsc — type check only, never emits
 npm run typecheck:watch
-npm run db-generate      # drizzle-kit generate — after editing db/schema.ts
+npm run db-generate -- --name=foo-column   # drizzle-kit generate — after editing db/schema.ts
 npm run db-up            # drizzle-kit up
 
 # frontend
@@ -605,7 +605,11 @@ Consequences worth knowing:
   `reply.unauthorized()`, `reply.forbidden()`). The `setErrorHandler` in `index.ts` shapes `/_api/`
   failures into `{ ok, error, statusCode, message }` JSON.
 - **Schema changes**: edit `db/schema.ts`, then `npm run db-generate` and commit the generated
-  migration. Never hand-edit an existing migration.
+  migration. Never hand-edit an existing migration. **Always pass a name that says what the migration
+  does** — `npm run db-generate -- --name=comment-handles`, kebab-case, one or two terms. The script
+  carries `--name=scarlett` (the branch name) as its default and a later `--name` on the command line
+  overrides it, so leaving it off files the change as another `…_scarlett` directory that says nothing
+  about it.
 - **A module prop marked `sensitive` is write-only.** A route answering with a module's stored config
   runs it through `maskSensitiveProps` (`helpers/common.ts`) first, which replaces every non-empty
   sensitive value with `SENSITIVE_MASK`; the client posts the whole configuration back, and

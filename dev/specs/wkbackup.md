@@ -739,10 +739,38 @@ Rows of 2.x's `pages` minus `render` and `toc`, with `tags` flattened to a list 
 ([§8](#8-the-bottleneck-that-shapes-the-schedule)). `contentBlob` is a `blobs/<sha256>` digest and
 replaces `content` (set to `null`) when the source is over 1 MiB.
 
-`editorKey` maps `markdown → markdown`, `asciidoc → asciidoc`, `redirect → redirect`, and 2.x's two
-HTML editors (`ckeditor`, `code`) onto **markdown** rather than 3.x's `visual`: markdown is configured
-with `allowHTML`, so a body of HTML renders as it stood, where `visual` is a WYSIWYG over markdown and
-would be handed a document it does not parse. Every page that takes that road is named in the log.
+`editorKey` maps `markdown → markdown`, `asciidoc → asciidoc` and `redirect → redirect`. 2.x's two
+HTML editors both lose their counterpart, since 3.x has no editor over HTML at all — but only one of
+them raises a question.
+
+**`ckeditor`, 2.x's WYSIWYG editor**, is the operator's choice (`htmlConversion` on the session,
+**Options → Visual Editor Conversion** in the overlay). Those pages were WRITTEN as formatted text and
+merely stored as HTML, so converting gives their author back the editor they had:
+
+- **Convert to markdown**, the default. The HTML is converted with Turndown plus the GitHub-flavoured
+  rules — the Joplin fork, which is maintained where the original is not, and not optional: a WYSIWYG
+  page is mostly tables and plain Turndown has no rule for one, so it would flatten a table to loose
+  text. The page is filed under 3.x's `visual` editor, so it opens the way it was written in 2.x.
+- **Keep as raw HTML.** The body is stored untouched and filed under `markdown`, which is configured
+  with `allowHTML` and so renders it exactly as it stood — but the page is only editable as source.
+
+**`code`, 2.x's raw-HTML editor, is never converted**, whatever that option says. Its author chose to
+write HTML: the markup IS the document rather than a representation of one, and converting it would
+throw away the thing they were editing — the `<div>` wrappers, the classes, the inline styles. Such a
+page becomes a `markdown` page holding that HTML, which renders identically and is still edited as
+source, exactly as it was in 2.x.
+
+Either way the count is reported per editor kind. Two things follow from converting, and both are
+the price of markdown having no syntax for them: a `<figure>`/`<figcaption>` becomes an image
+followed by a paragraph, and inline styling markdown cannot express is dropped. What it does NOT lose
+is text that looks like markup — `5 * 3 * 2` and `my_file_name.txt` come back escaped, so they render
+as themselves.
+
+**The conversion runs after the page icon is extracted**, because 2.x marks a corner image with a CSS
+class and a class is precisely what does not survive the trip to markdown.
+
+Page history is converted the same way, so restoring an old version does not quietly convert a page
+back in the opposite direction.
 
 A 2.x redirection's `content` is the target path; 3.x holds a redirection as JSON, so it is rewritten.
 

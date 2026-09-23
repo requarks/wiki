@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import TurndownService from 'turndown'
+import { gfm } from '@joplin/turndown-plugin-gfm'
 import { v5 as uuidv5 } from 'uuid'
 import { and, eq, inArray, lt, sql } from 'drizzle-orm'
 import {
@@ -158,6 +160,70 @@ const EDITOR_MAP: Record<string, string> = {
   code: 'markdown'
 }
 
+/**
+ * The 2.x editor the conversion option governs, and the only one: its WYSIWYG editor.
+ *
+ * Both of 2.x's HTML editors lose their counterpart in 3.x, but only one of them raises a question.
+ * A `ckeditor` page was WRITTEN as formatted text and happens to be stored as HTML, so converting it
+ * gives its author back the editor they had — which is what `htmlConversion` decides.
+ *
+ * A `code` page is the opposite: its author chose to write HTML, and the HTML is the document rather
+ * than a representation of one. Converting it would throw away the thing they were editing, so it is
+ * never converted whatever the option says — it becomes a markdown page holding that HTML, which
+ * renders identically (markdown is configured with `allowHTML`) and is still edited as source, which
+ * is how it was edited in 2.x.
+ */
+const V2_VISUAL_EDITOR = 'ckeditor'
+
+/** Why a page changed editor, for the one line per kind the log gets about it. */
+const EDITOR_CHANGE_NOTES: Record<string, Record<string, string>> = {
+  ckeditor: {
+    visual:
+      'Their HTML was converted to markdown, so they open in the visual editor as they did in 2.x.',
+    markdown:
+      'Their HTML was kept as it was — it renders the same, since markdown is configured to allow it — but editing one shows HTML source rather than a formatting toolbar.'
+  },
+  code: {
+    markdown:
+      '3.x has no raw-HTML editor, so they became markdown pages holding that HTML — it renders the same and is still edited as source, as it was in 2.x.'
+  }
+}
+
+/**
+ * HTML → markdown, for a page 2.x wrote in an editor 3.x does not have.
+ *
+ * Turndown with the GitHub-flavoured rules (the Joplin fork, which is maintained where the original is not), and the plugin is not optional: a WYSIWYG page is mostly
+ * tables, and plain Turndown has no rule for one — it would flatten a table to a run of loose text
+ * and nobody would notice until they opened the page.
+ *
+ * Built once. The service holds only its rules, so the same instance converts every page of an
+ * import rather than being rebuilt per record.
+ */
+let turndown: TurndownService | null = null
+function htmlToMarkdown(html: string): string {
+  turndown ??= new TurndownService({
+    headingStyle: 'atx',
+    hr: '---',
+    codeBlockStyle: 'fenced',
+    bulletListMarker: '-',
+    emDelimiter: '*'
+  }).use(gfm)
+  return turndown.turndown(html)
+}
+
+/**
+ * Which 3.x editor a page ends up in.
+ *
+ * Every 2.x editor but one has a single right answer. `ckeditor` is the exception, and the answer is
+ * the operator's — which is the whole of what `htmlConversion` decides.
+ */
+function targetEditorFor(sourceEditor: string, convertHtml: boolean): string {
+  if (sourceEditor === V2_VISUAL_EDITOR) {
+    return convertHtml ? 'visual' : 'markdown'
+  }
+  return EDITOR_MAP[sourceEditor] ?? 'markdown'
+}
+
 /** 2.x page-rule match kinds that 3.x also has. `SUBTREE` and `TAGALL` are 3.x additions. */
 const RULE_MATCHES = new Set<GroupRuleMatch>(['START', 'END', 'REGEX', 'TAG', 'EXACT'])
 
@@ -231,6 +297,7 @@ export interface ImportSession {
   sites: ImportSessionSite[]
   includes: ImportContentKind[]
   overwrite: boolean
+  htmlConversion: 'markdown' | 'html'
   state: 'open' | 'finished' | 'failed'
   progress: Record<string, number>
   warnings: string[]
@@ -563,6 +630,7 @@ class Import {
     sites,
     includes,
     overwrite,
+    htmlConversion,
     actorId
   }: {
     source: string
@@ -570,6 +638,7 @@ class Import {
     sites: ImportSessionSite[]
     includes: string[]
     overwrite: boolean
+    htmlConversion?: string
     actorId: string | null
   }): Promise<ImportSession> {
     if (source !== SUPPORTED_SOURCE) {
@@ -621,7 +690,17 @@ class Import {
 
     const rows = await WIKI.db
       .insert(importSessionsTable)
-      .values({ source, namespace, sites, includes: kinds, overwrite, actorId })
+      .values({
+        source,
+        namespace,
+        sites,
+        includes: kinds,
+        overwrite,
+        // -> Anything but the explicit opt-out converts, which is the recommended answer and the one
+        //    that leaves a wiki its authors can still edit
+        htmlConversion: htmlConversion === 'html' ? 'html' : 'markdown',
+        actorId
+      })
       .returning()
     return rows[0] as unknown as ImportSession
   }
@@ -1634,6 +1713,9 @@ class Import {
     let imported = 0
     let skipped = 0
     let icons = 0
+    /** Source editor → how many pages of it changed editor on the way in. */
+    const converted = new Map<string, number>()
+    const convertHtml = session.htmlConversion !== 'html'
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
@@ -1663,12 +1745,22 @@ class Import {
       const { icon, content: body } = extractPageIcon(content, pagePath)
 
       const sourceEditor = stringOf(record?.editorKey, 'markdown')
-      const editor = EDITOR_MAP[sourceEditor] ?? 'markdown'
-      if (!EDITOR_MAP[sourceEditor]) {
-        warnings.push(
-          `"${pagePath}" was written with the 2.x "${sourceEditor}" editor, which 3.x does not have. It was imported as markdown.`
-        )
+      const editor = targetEditorFor(sourceEditor, convertHtml)
+      /*
+        Counted per kind rather than reported per page, and counted at all — a page that changed
+        editor used to say nothing whatsoever, because the only warning here fired for an editor
+        missing from the map entirely and `ckeditor` is in it. So the whole of a 2.x wiki written in
+        the WYSIWYG editor arrived as markdown pages without a word about it.
+      */
+      if (editor !== sourceEditor) {
+        converted.set(sourceEditor, (converted.get(sourceEditor) ?? 0) + 1)
       }
+      /*
+        Converted AFTER the page icon has been taken out, and the order is load-bearing: 2.x marks a
+        corner image with a CSS class, and a class is exactly what does not survive the trip to
+        markdown. Extracting first means the icon is found on the HTML that still carries it.
+      */
+      const source = editor === 'visual' ? htmlToMarkdown(body) : body
 
       try {
         const page = await WIKI.models.pages.adoptStoredPage({
@@ -1682,7 +1774,7 @@ class Import {
             stringOf(tag)
           ),
           isPublished: record?.isPublished !== false,
-          content: editor === 'redirect' ? this.#redirectContent(body) : body,
+          content: editor === 'redirect' ? this.#redirectContent(source) : source,
           createdAt: dateOf(record?.createdAt),
           updatedAt: dateOf(record?.updatedAt),
           authorId: await this.#authorFor(session, record?.authorId),
@@ -1716,6 +1808,12 @@ class Import {
         warnings.push(`"${pagePath}" could not be imported: ${err.message}`)
         skipped++
       }
+    }
+    for (const [sourceEditor, count] of converted) {
+      const note =
+        EDITOR_CHANGE_NOTES[sourceEditor]?.[targetEditorFor(sourceEditor, convertHtml)] ??
+        '3.x does not have that editor, so they were imported as markdown.'
+      warnings.push(`${count} pages were written with the 2.x "${sourceEditor}" editor. ${note}`)
     }
     if (icons > 0) {
       warnings.push(
@@ -1897,7 +1995,15 @@ class Import {
       }
       // -> Stripped here as well, with no icon taken from it: restoring one of these versions must not
       //    put the corner image back into a body the page no longer keeps it in
-      const { content: body } = extractPageIcon(content, pagePath)
+      const { content: stripped } = extractPageIcon(content, pagePath)
+      /*
+        And converted the same way the page itself was. A version is restored by writing it back over
+        the page, so a history holding HTML under a page that is now markdown would turn a rollback
+        into a second, silent conversion in the opposite direction.
+      */
+      const sourceEditor = stringOf(record?.editorKey, 'markdown')
+      const versionEditor = targetEditorFor(sourceEditor, session.htmlConversion !== 'html')
+      const body = versionEditor === 'visual' ? htmlToMarkdown(stripped) : stripped
 
       const id = this.#derive(session, target.sourceId, 'pageHistory', record?.id)
       const values = {
@@ -1910,7 +2016,7 @@ class Import {
         content: body,
         meta: {
           description: stringOf(record?.description),
-          editor: EDITOR_MAP[stringOf(record?.editorKey, 'markdown')] ?? 'markdown',
+          editor: versionEditor,
           publishState: record?.isPublished === false ? 'draft' : 'published',
           tags: Array.isArray(record?.tags) ? record.tags : []
         },
@@ -2228,7 +2334,7 @@ class Import {
           .groupBy(pagesTable.editor)
       : []
     // -> `RENDERABLE_EDITORS` in `models/rendering.ts`, which is what the queue itself accepts
-    const renderable = new Set(['markdown', 'asciidoc'])
+    const renderable = new Set(['markdown', 'asciidoc', 'visual'])
     let pendingRenders = 0
     let unrenderable = 0
     for (const row of pending) {

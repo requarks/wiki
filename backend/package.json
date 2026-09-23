@@ -53,6 +53,7 @@
     "@google-cloud/storage": "8.0.1",
     "@gquittet/graceful-server": "6.0.10",
     "@iconify/utils": "3.1.4",
+    "@joplin/turndown-plugin-gfm": "1.0.68",
     "@node-saml/node-saml": "5.1.0",
     "@prometheus-io/client": "0.16.1",
     "@simplewebauthn/server": "13.3.2",
@@ -84,6 +85,7 @@
     "semver": "7.8.5",
     "simple-git": "3.36.0",
     "ssh2-sftp-client": "12.1.1",
+    "turndown": "7.2.4",
     "uuid": "14.0.1",
     "y-protocols": "1.0.7",
     "yjs": "13.6.32"
@@ -101,6 +103,7 @@
     "@types/sanitize-html": "2.16.1",
     "@types/semver": "7.8.0",
     "@types/ssh2-sftp-client": "9.0.6",
+    "@types/turndown": "5.0.6",
     "@types/ws": "8.18.1",
     "drizzle-kit": "1.0.0-rc.4",
     "nodemon": "3.1.14",

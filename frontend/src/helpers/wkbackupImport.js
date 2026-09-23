@@ -57,19 +57,29 @@ const SITE_STREAMS = [
  * @param siteId     The site on this instance everything site-scoped lands in
  * @param includes   The content kinds ticked in the overlay
  * @param overwrite  Whether an existing record is replaced
+ * @param htmlConversion `markdown` to convert a 2.x HTML page and keep it visually editable, `html`
+ *                       to keep the HTML as it stands
  * @param log        `(level, message)` — `info` / `success` / `warn` / `error`
  * @param onProgress `(fraction)` from 0 to 1
  */
-export async function runImport({ file, siteId, includes, overwrite, log, onProgress }) {
+export async function runImport({
+  file,
+  siteId,
+  includes,
+  overwrite,
+  htmlConversion,
+  log,
+  onProgress
+}) {
   const pkg = await openPackage(file)
   try {
-    return await drive({ pkg, siteId, includes, overwrite, log, onProgress })
+    return await drive({ pkg, siteId, includes, overwrite, htmlConversion, log, onProgress })
   } finally {
     await pkg.close()
   }
 }
 
-async function drive({ pkg, siteId, includes, overwrite, log, onProgress }) {
+async function drive({ pkg, siteId, includes, overwrite, htmlConversion, log, onProgress }) {
   const { manifest } = pkg
   log(
     'info',
@@ -107,7 +117,8 @@ async function drive({ pkg, siteId, includes, overwrite, log, onProgress }) {
       sourceInstanceId: manifest.source.instanceId ?? '',
       sites: [{ sourceId, siteId }],
       includes,
-      overwrite
+      overwrite,
+      htmlConversion
     }
   }).json()
   log('info', `Import session opened.`)

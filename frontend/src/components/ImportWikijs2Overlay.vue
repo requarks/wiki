@@ -21,7 +21,7 @@
           color="white"
           :aria-label="t(`common.actions.viewDocs`)"
           icon="la:question-circle"
-          :href="siteStore.docsBase + `/admin/utilities`"
+          :href="siteStore.docsBase + `/setup/upgrade#upgrade-from-2x`"
           target="_blank"
           type="a" />
         <w-btn-group push>
@@ -150,6 +150,29 @@
                     checked-icon="la:check"
                     unchecked-icon="la:times"
                     :aria-label="t('admin.utilities.wikijs2Import.overwrite')" />
+                </w-item-section>
+              </w-item>
+              <w-item>
+                <blueprint-icon icon="markdown" />
+                <w-item-section>
+                  <w-item-label>{{
+                    t('admin.utilities.wikijs2Import.htmlConversion')
+                  }}</w-item-label>
+                  <w-item-label caption>{{
+                    t('admin.utilities.wikijs2Import.htmlConversionHint')
+                  }}</w-item-label>
+                </w-item-section>
+                <w-item-section side>
+                  <w-select
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    style="min-width: 220px"
+                    v-model="state.htmlConversion"
+                    :options="htmlConversionOptions"
+                    :disabled="isRunning"
+                    :aria-label="t('admin.utilities.wikijs2Import.htmlConversion')" />
                 </w-item-section>
               </w-item>
             </w-card>
@@ -298,6 +321,12 @@ const state = reactive({
     settings: true
   },
   overwrite: false,
+  /**
+   * What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no
+   * equivalent of. Converting is the default because it is the answer that leaves the wiki editable;
+   * see the option's own hint.
+   */
+  htmlConversion: 'markdown',
   /** The `File` the picker handed back, kept whole so its name and size can be shown. */
   archive: null,
   /** `{ ts, level, message }`, appended as the import reports its progress. */
@@ -331,6 +360,11 @@ const showProgress = computed(() => state.phase === 'running' || state.phase ===
 const siteOptions = computed(() =>
   adminStore.sites.map((site) => ({ value: site.id, label: site.title }))
 )
+
+const htmlConversionOptions = computed(() => [
+  { value: 'markdown', label: t('admin.utilities.wikijs2Import.htmlConversionMarkdown') },
+  { value: 'html', label: t('admin.utilities.wikijs2Import.htmlConversionHtml') }
+])
 
 /**
  * The rows under *What to import*, with the two that depend on `pages` marked as such. Built here
@@ -466,6 +500,7 @@ async function startImport() {
       siteId: state.siteId,
       includes: selectedContent.value,
       overwrite: state.overwrite,
+      htmlConversion: state.htmlConversion,
       log: addLog,
       onProgress: (value) => {
         state.progress = value

@@ -43,7 +43,17 @@ import type { IconifyIconCustomisations } from '@iconify/utils'
  * will accept, and the two have to agree. An editor missing from it is refused before anything is
  * queued rather than after a browser has been started for it.
  */
-const RENDERABLE_EDITORS = new Set(['markdown', 'asciidoc'])
+const RENDERABLE_EDITORS = new Set(['markdown', 'asciidoc', 'visual'])
+
+/**
+ * Editors whose pages are markdown under another name, and whose CONFIG therefore lives elsewhere.
+ *
+ * The visual editor writes markdown — `contentType: markdown` — and previews it through the very
+ * same renderer, with `editors.markdown`'s config rather than its own empty one (see
+ * `EditorVisual.vue`). A server-side render has to read the same config or it produces a page that
+ * differs from what the author was looking at, over settings like `allowHTML` and `linkify`.
+ */
+const EDITOR_CONFIG_ALIAS: Record<string, string> = { visual: 'markdown' }
 
 /** How long the renderer bundle gets to load itself in the headless browser, in milliseconds. */
 const RENDER_READY_TIMEOUT = 30000
@@ -1102,9 +1112,10 @@ class Rendering {
             )
             continue
           }
+          const configKey = EDITOR_CONFIG_ALIAS[page.editor] ?? page.editor
           const html = await renderer.render(
             page.content ?? '',
-            WIKI.sites[entry.siteId]?.config?.editors?.[page.editor]?.config ?? {},
+            WIKI.sites[entry.siteId]?.config?.editors?.[configKey]?.config ?? {},
             { pagePath: page.path, editor: page.editor }
           )
           await WIKI.models.pages.storeRender(entry.siteId, page.id, html, {
