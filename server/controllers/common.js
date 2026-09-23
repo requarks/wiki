@@ -103,7 +103,12 @@ router.get(['/d', '/d/*'], async (req, res, next) => {
  * Create/Edit document
  */
 router.get(['/e', '/e/*'], async (req, res, next) => {
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt: true })
+  const { pageArgs, isPage } = pageHelper.parseRequestPath(req.path)
+
+  // -> Asset paths are not editable pages, hand them to the asset handler
+  if (!isPage) {
+    return next('route')
+  }
 
   if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
     return res.redirect(`/e/${pageArgs.locale}/${pageArgs.path}`)
@@ -435,9 +440,7 @@ router.get('/_userav/:uid', async (req, res, next) => {
  * View document / asset
  */
 router.get('/*', async (req, res, next) => {
-  const stripExt = _.some(WIKI.config.pageExtensions, ext => _.endsWith(req.path, `.${ext}`))
-  const pageArgs = pageHelper.parsePath(req.path, { stripExt })
-  const isPage = (stripExt || pageArgs.path.indexOf('.') === -1)
+  const { pageArgs, isPage } = pageHelper.parseRequestPath(req.path)
 
   if (isPage) {
     if (WIKI.config.lang.namespacing && !pageArgs.explicitLocale) {
