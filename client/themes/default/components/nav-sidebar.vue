@@ -49,7 +49,7 @@
         v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
           v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
             v-icon(small) mdi-folder-open
-          v-list-item-title {{ item.title }}
+          v-list-item-title {{ idx === 0 ? $t('common:sidebar.root') : item.title }}
         v-divider.mt-2
         v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
           v-list-item-avatar(size='24')
@@ -222,7 +222,6 @@ export default {
     }
   },
   mounted () {
-    this.currentParent.title = `/ ${this.$t('common:sidebar.root')}`
     if (this.navMode === 'TREE') {
       this.currentMode = 'browse'
     } else if (this.navMode === 'STATIC') {
