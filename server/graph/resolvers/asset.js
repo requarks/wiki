@@ -55,6 +55,15 @@ module.exports = {
           parentId: parentFolderId,
           slug: folderSlug
         }).first()
+
+        const hierarchy = parentFolderId ? await WIKI.models.assetFolders.getHierarchy(parentFolderId) : []
+
+        // Check target folder permissions
+        const folderTargetPath = parentFolderId ? hierarchy.map(h => h.slug).join('/') + `/${folderSlug}` : folderSlug
+        if (!WIKI.auth.checkAccess(context.req.user, ['write:assets'], { path: folderTargetPath })) {
+          throw new WIKI.Error.AssetCreateFolderForbidden()
+        }
+
         if (!result) {
           await WIKI.models.assetFolders.query().insert({
             slug: folderSlug,
