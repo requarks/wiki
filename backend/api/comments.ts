@@ -399,6 +399,25 @@ async function routes(app: FastifyInstance) {
         isReply: Boolean(comment.parentId),
         isGuest: comment.isGuest
       })
+      // -> The email is a guest's alone: an account's
+      //    comment stores none, and `authorId` is what identifies it
+      await WIKI.models.hooks.emit('comment:new', {
+        id: comment.id,
+        parentId: comment.parentId,
+        pageId: page.id,
+        path: page.path,
+        locale: page.locale,
+        siteId: req.params.siteId,
+        authorId: comment.authorId,
+        metadata: {
+          authorName: comment.authorName,
+          authorEmail: user ? null : authorEmail,
+          authorIP: req.ip,
+          isGuest: comment.isGuest,
+          pageTitle: page.title
+        },
+        content: comment.content
+      })
 
       reply.code(201)
       return comment
@@ -452,6 +471,25 @@ async function routes(app: FastifyInstance) {
         path: comment.path,
         isOwn: comment.authorId === req.session?.user?.id
       })
+      // -> `actorId` beside `authorId`, since a moderator editing somebody else's comment is exactly
+      //    the case a subscriber is likely to be watching for
+      await WIKI.models.hooks.emit('comment:edit', {
+        id: comment.id,
+        parentId: comment.parentId,
+        pageId: comment.pageId,
+        path: comment.path,
+        locale: comment.locale,
+        siteId: req.params.siteId,
+        authorId: comment.authorId,
+        actorId: req.session?.user?.id ?? null,
+        metadata: {
+          authorName: updated.authorName,
+          authorEmail: comment.authorEmail || null,
+          authorIP: comment.authorIP || null,
+          isGuest: updated.isGuest
+        },
+        content: updated.content
+      })
       return updated
     }
   )
@@ -496,6 +534,24 @@ async function routes(app: FastifyInstance) {
         path: comment.path,
         deleted,
         isOwn: comment.authorId === req.session?.user?.id
+      })
+      // -> One event for the comment asked about, not one per reply the cascade took with it:
+      //    `deleted` says how many went
+      await WIKI.models.hooks.emit('comment:delete', {
+        id: comment.id,
+        parentId: comment.parentId,
+        pageId: comment.pageId,
+        path: comment.path,
+        locale: comment.locale,
+        siteId: req.params.siteId,
+        authorId: comment.authorId,
+        actorId: req.session?.user?.id ?? null,
+        deleted,
+        metadata: {
+          authorEmail: comment.authorEmail || null,
+          authorIP: comment.authorIP || null,
+          isGuest: comment.authorId === null
+        }
       })
       return { ok: true, deleted }
     }

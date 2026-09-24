@@ -4,10 +4,8 @@ import { hooks as hooksTable } from '../db/schema.ts'
 import { desc, eq, sql } from 'drizzle-orm'
 
 /**
- * The events a webhook can subscribe to, as offered by the admin area.
- *
- * Not all of them have emit points today — comments are not implemented yet, so subscribing to those
- * stores a subscription that nothing triggers.
+ * The events a webhook can subscribe to, as offered by the admin area. Every one of them has an
+ * `emit()` call somewhere in the server; add the call in the same change that adds a key here.
  */
 export const HOOK_EVENTS = [
   'page:create',
@@ -27,26 +25,6 @@ export const HOOK_EVENTS = [
 ] as const
 
 export type HookEvent = (typeof HOOK_EVENTS)[number]
-
-/**
- * The events something in the server actually emits today.
- *
- * Kept as an explicit list rather than inferred from the prefix, since the comment events have no
- * emit point yet. Add an event here when you add its `emit()` call.
- */
-export const EMITTED_EVENTS: HookEvent[] = [
-  'page:create',
-  'page:edit',
-  'page:rename',
-  'page:delete',
-  'asset:upload',
-  'asset:edit',
-  'asset:rename',
-  'asset:delete',
-  'user:join',
-  'user:login',
-  'user:logout'
-]
 
 /** A webhook as exposed by the API. */
 export interface Hook {

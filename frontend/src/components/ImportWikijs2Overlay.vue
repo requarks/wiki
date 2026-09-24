@@ -511,6 +511,29 @@ async function startImport() {
     addLog('error', err.message)
     state.phase = 'failed'
   }
+  await refreshSite()
+}
+
+/**
+ * Take in the site configuration the import may have just replaced.
+ *
+ * The settings step rewrites the site config on the server, but the app is still running on the one
+ * it booted with -- a package with comments off left the Talk tab drawn over an endpoint that now
+ * refuses it, until a full reload. Done after a failure too: settings go first, so an import that
+ * died halfway has usually already written them.
+ */
+async function refreshSite() {
+  if (!selectedContent.value.includes('settings')) {
+    return
+  }
+  try {
+    await adminStore.fetchSites()
+    if (state.siteId === siteStore.id) {
+      await siteStore.loadSite(window.location.hostname)
+    }
+  } catch (err) {
+    addLog('warn', err.message)
+  }
 }
 
 /**

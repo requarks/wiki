@@ -692,7 +692,12 @@ class Comments {
     return Number(row?.total ?? 0)
   }
 
-  /** One comment with the page it is on, which is what every permission check on it needs. */
+  /**
+   * One comment with the page it is on, which is what every permission check on it needs.
+   *
+   * Carries the email and address it was posted with, which are for the server's own use — the spam
+   * check and webhook payloads — and never for a reply to the client.
+   */
   async getWithPage(commentId: string, siteId: string) {
     const [row] = await WIKI.db
       .select({
@@ -700,6 +705,8 @@ class Comments {
         parentId: commentsTable.parentId,
         content: commentsTable.content,
         authorId: commentsTable.authorId,
+        authorEmail: commentsTable.authorEmail,
+        authorIP: commentsTable.authorIP,
         pageId: commentsTable.pageId,
         path: pagesTable.path,
         locale: pagesTable.locale,

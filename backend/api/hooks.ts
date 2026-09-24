@@ -1,7 +1,7 @@
 import { audit } from '../helpers/audit.ts'
 import { SENSITIVE_MASK } from '../helpers/common.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { EMITTED_EVENTS, HOOK_EVENTS } from '../models/hooks.ts'
+import { HOOK_EVENTS } from '../models/hooks.ts'
 
 /** Whether this caller may change webhooks, as opposed to only reading them. */
 function mayManage(req: FastifyRequest): boolean {
@@ -108,31 +108,18 @@ async function routes(app: FastifyInstance) {
       },
       schema: {
         summary: 'List the events a webhook can subscribe to',
-        description:
-          'Only the `user:*` events are emitted at the moment. Pages, assets and comments are not implemented yet, so a subscription to those is stored but never triggered.',
         tags: ['Webhooks'],
         response: {
           200: {
             description: 'List of event keys',
             type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                key: {
-                  type: 'string'
-                },
-                isEmitted: {
-                  type: 'boolean',
-                  description: 'Whether anything in the server currently emits this event.'
-                }
-              }
-            }
+            items: { type: 'string' }
           }
         }
       }
     },
     async () => {
-      return HOOK_EVENTS.map((key) => ({ key, isEmitted: EMITTED_EVENTS.includes(key) }))
+      return HOOK_EVENTS
     }
   )
 
@@ -147,8 +134,7 @@ async function routes(app: FastifyInstance) {
       },
       schema: {
         summary: 'Get a single webhook',
-        description:
-          'See the listing for how `authHeader` reads.',
+        description: 'See the listing for how `authHeader` reads.',
         tags: ['Webhooks'],
         params: {
           type: 'object',

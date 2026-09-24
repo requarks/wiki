@@ -59,7 +59,7 @@
               v-model="state.hook.events"
               :disable="!canManage"
               outlined
-              :options="events"
+              :options="EVENT_DEFINITIONS"
               multiple
               map-options
               emit-value
@@ -88,10 +88,6 @@
                   }}</w-chip>
                   <span class="min-w-0 flex-1">
                     <w-item-label>{{ opt.name }}</w-item-label>
-                    <!-- Subscribing is allowed, but say plainly that nothing fires it yet -->
-                    <w-item-label v-if="!opt.isEmitted" caption>{{
-                      t('admin.webhooks.eventNotEmitted')
-                    }}</w-item-label>
                   </span>
                 </span>
               </template>
@@ -265,8 +261,6 @@ const canManage = computed(() => userStore.can('manage:webhooks'))
 
 const state = reactive({
   isLoading: false,
-  /** Event keys the server actually emits. Null until fetched, i.e. assume all of them. */
-  emittedEvents: null,
   hook: {
     name: '',
     events: [],
@@ -346,13 +340,6 @@ const EVENT_DEFINITIONS = computed(() => [
     type: t('admin.webhooks.typeUser')
   }
 ])
-
-const events = computed(() =>
-  EVENT_DEFINITIONS.value.map((evt) => ({
-    ...evt,
-    isEmitted: state.emittedEvents === null || state.emittedEvents.includes(evt.key)
-  }))
-)
 
 // REFS
 
@@ -459,20 +446,9 @@ async function save() {
   state.isLoading = false
 }
 
-async function fetchEmittedEvents() {
-  try {
-    const resp = await API_CLIENT.get('hooks/events').json()
-    state.emittedEvents = (resp ?? []).filter((evt) => evt.isEmitted).map((evt) => evt.key)
-  } catch {
-    // -> Purely informational: on failure, flag nothing rather than flag everything
-    state.emittedEvents = null
-  }
-}
-
 // MOUNTED
 
 onMounted(() => {
-  fetchEmittedEvents()
   if (props.hookId) {
     fetchHook(props.hookId)
   }
