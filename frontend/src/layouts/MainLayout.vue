@@ -58,19 +58,21 @@
               class="flex-1 px-2"
               flat
               dense
+              square
               icon="la:globe"
               :label="siteStore.localeAlias(commonStore.locale)"
               :aria-label="siteStore.localeAlias(commonStore.locale)"
               size="sm">
               <locale-selector-menu :offset="[-5, 5]" />
             </w-btn>
-            <w-separator v-if="canBrowse" vertical />
+            <w-separator v-if="canBrowse" class="sidebar-actions-sep" vertical />
           </template>
           <w-btn
             v-if="canBrowse"
             class="flex-1 px-2"
             flat
             dense
+            square
             icon="la:sitemap"
             :label="t(`common.sidebar.browse`)"
             :aria-label="t(`common.sidebar.browse`)"
@@ -391,15 +393,57 @@ function openSidebar() {
 </script>
 
 <style lang="scss">
+/*
+  The bar's bottom edge is a dark line over a light one, drawn here as a hairline pair rather than as
+  this bar's border plus `.sidebar-nav`'s top border: a border stays a whole CSS pixel on a scaled
+  display, which put it at twice the weight of the separator between the buttons. The light half has
+  to be drawn from this side because the nav below is its own scroll container, and anything it
+  drew would scroll away with the list. 39px and the 2px of padding are the old 38px bar plus the
+  nav's 1px border, so neither the buttons nor the list move. The pair is thinned towards the TOP of
+  that padding, so on a scaled display the separator still runs down into it without a gap.
+*/
 .sidebar-actions {
+  position: relative;
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  height: 38px;
+  height: 39px;
+  padding-bottom: 2px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 50%, rgba(255, 255, 255, 0.15) 50%);
+    transform: scaleY(calc(1 / var(--w-dpr, 1)));
+    transform-origin: top left;
+    pointer-events: none;
+  }
+
+  // -> The nav keeps its own light top border for when there is no bar above it, under the header
+  + .sidebar-nav {
+    border-top: none;
+  }
 
   // -> Where the two buttons above get their colour, so neither carries a `color` prop: `WBtn` emits
   //    an inline `color`, which would outrank this rule
   .w-btn {
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  /*
+    The rule between the two buttons is the same dark-then-light hairline pair as the bar's bottom
+    edge, drawn as ONE separator two lines wide so the hairline transform thins both halves alike.
+    Colours are pinned rather than left to `--w-hairline-color`, which flips to white in dark mode,
+    and the sidebar is dark in both.
+  */
+  .sidebar-actions-sep {
+    width: 2px;
+
+    &::after {
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.2) 50%, rgba(255, 255, 255, 0.15) 50%);
+    }
   }
 }
 

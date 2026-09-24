@@ -28,6 +28,40 @@
 @use 'theme' as *;
 
 /*
+  One edge of a box drawn as a hairline -- one DEVICE pixel, like `.w-hairline` -- in the colour held
+  by the custom property `$color-var`. `$pseudo` is which of the box's two pseudo-elements draws it,
+  so a box can have a hairline on both edges.
+
+  The border is kept, transparent, so the box is exactly the size it was with a real one, and the line
+  is painted over that border area by a pseudo-element scaled by `1 / --w-dpr`. The scale runs towards
+  the box's OUTER edge, so two of these meeting at a seam -- a bar's underline and the top edge of the
+  bar below it -- sit against each other with nothing between them. What the scale leaves bare shows
+  the box's own background, which is why the gradients using this are `border-box`: under the default
+  `padding-box` origin a gradient repeats into the border area, and its first stop shows as a sliver.
+
+  Screen only: the print stylesheet redraws these edges as borders of its own.
+*/
+@mixin hairline-edge($side, $color-var, $pseudo: after) {
+  position: relative;
+  border-#{$side}: 1px solid transparent;
+
+  @media screen {
+    &::#{$pseudo} {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      #{$side}: -1px;
+      height: 1px;
+      background-color: var(#{$color-var});
+      transform: scaleY(calc(1 / var(--w-dpr, 1)));
+      transform-origin: #{$side} left;
+      pointer-events: none;
+    }
+  }
+}
+
+/*
   Where the contents column stops being able to afford 300px. A page view's own threshold, not one of the
   app's -- `_palette.scss` is for the breakpoints the whole app shares, and this one is a function of a
   page's two sidebars. Stated as a `max` value just under 1400px, the way the shared ones are.
@@ -80,10 +114,17 @@ $toc-overlay-max: 749.98px;
   opacity: 0.12;
 }
 
+/*
+  The pair of lines between this bar and the page header under it -- this bar's underline, then the
+  header's top edge -- are hairlines drawn by `hairline-edge` rather than borders: a 1px border is 1.5
+  or 2 device pixels on a scaled display, twice the weight of every `.w-hairline` rule around it.
+*/
 .page-breadcrumbs {
+  @include hairline-edge(bottom, --page-breadcrumbs-rule);
+
   @at-root .body--light & {
-    background: linear-gradient(to bottom, $grey-1 0%, $grey-3 100%);
-    border-bottom: 1px solid $grey-4;
+    background: linear-gradient(to bottom, $grey-1 0%, $grey-3 100%) border-box;
+    --page-breadcrumbs-rule: #{$grey-4};
   }
   /*
     The bar sets a background per theme, so it owes a foreground too: the LAST crumb -- the current
@@ -94,8 +135,8 @@ $toc-overlay-max: 749.98px;
     color: var(--color-black);
   }
   @at-root .body--dark & {
-    background: linear-gradient(to bottom, $dark-3 0%, $dark-4 100%);
-    border-bottom: 1px solid $dark-3;
+    background: linear-gradient(to bottom, $dark-3 0%, $dark-4 100%) border-box;
+    --page-breadcrumbs-rule: #{$dark-3};
     color: var(--color-white);
   }
 
@@ -134,15 +175,17 @@ $toc-overlay-max: 749.98px;
 */
 .page-breadcrumbs--version {
   @at-root .body--light & {
-    background: linear-gradient(to bottom, var(--color-indigo-6) 0%, var(--color-indigo-7) 100%);
-    border-bottom: 1px solid var(--color-indigo-9);
+    background: linear-gradient(to bottom, var(--color-indigo-6) 0%, var(--color-indigo-7) 100%)
+      border-box;
+    --page-breadcrumbs-rule: var(--color-indigo-9);
     color: #fff;
   }
   /* -> A step down the same ramp, so the band reads as deliberate against a dark page rather than as
         the light theme's bar left switched on */
   @at-root .body--dark & {
-    background: linear-gradient(to bottom, var(--color-indigo-7) 0%, var(--color-indigo-9) 100%);
-    border-bottom: 1px solid var(--color-indigo-9);
+    background: linear-gradient(to bottom, var(--color-indigo-7) 0%, var(--color-indigo-9) 100%)
+      border-box;
+    --page-breadcrumbs-rule: var(--color-indigo-9);
     color: #fff;
   }
 }
@@ -185,6 +228,8 @@ $toc-overlay-max: 749.98px;
 
 .page-header {
   height: 95px;
+  @include hairline-edge(top, --page-header-rule);
+  @include hairline-edge(bottom, --page-header-underline, before);
 
   /*
     Sized by its contents on a phone instead, which comes out around 70px: the 95px is pitched for a 64px
@@ -200,14 +245,15 @@ $toc-overlay-max: 749.98px;
   }
 
   @at-root .body--light & {
-    background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%);
-    border-bottom: 1px solid $grey-4;
-    border-top: 1px solid #fff;
+    background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%) border-box;
+    --page-header-rule: #fff;
+    --page-header-underline: #{$grey-4};
   }
   @at-root .body--dark & {
-    background: linear-gradient(to bottom, $dark-4 0%, $dark-3 100%);
-    // border-bottom: 1px solid $dark-5;
-    border-top: 1px solid $dark-6;
+    background: linear-gradient(to bottom, $dark-4 0%, $dark-3 100%) border-box;
+    // -> No underline in the dark theme, and no border holding a place for one either
+    border-bottom: 0;
+    --page-header-rule: #{$dark-6};
   }
 
   .no-height .q-field__control {
@@ -396,14 +442,26 @@ $toc-overlay-max: 749.98px;
     background-color: $dark-5;
   }
 
-  // A light rule on the light sidebar, near-black on the dark one -- it reads as the bevel between
-  // two panels rather than as a drawn line.
-  //
-  // The original set a background-colour here as well as a border. It never showed: the element is
-  // 1px tall with `box-sizing: border-box`, so the content box is 0px and the opaque border covers
-  // it completely. Only the border colour is carried across.
+  /*
+    A bevel between two panels rather than a drawn line: a grey hairline over a light one on the light
+    sidebar, over a near-black one on the dark. The grey is `--page-chrome-rule`, the article column's
+    right-hand edge beside it -- `$grey-4` light, the lighter dark grey dark -- and the second line is
+    this separator's own `--w-hairline-color`.
+
+    One separator drawn two lines tall rather than two separators, so the hairline transform -- which
+    scales from the top -- thins both halves alike and they stay touching.
+  */
   .w-separator {
     --w-hairline-color: #fff;
+    height: 2px;
+
+    &::after {
+      background: linear-gradient(
+        to bottom,
+        var(--page-chrome-rule) 50%,
+        var(--w-hairline-color) 50%
+      );
+    }
   }
   @at-root .body--dark & .w-separator {
     --w-hairline-color: #070a0d;

@@ -21,6 +21,7 @@
       <w-btn
         class="aspect-square"
         flat
+        square
         icon="la:pen-nib"
         :color="editorStore.isActive ? `white` : `deep-orange-9`"
         :disable="isRedirect"
@@ -32,6 +33,7 @@
         class="h-12"
         v-if="flagsStore.experimental"
         flat
+        square
         icon="la:project-diagram"
         :color="editorStore.isActive ? `white` : `deep-orange-9`"
         aria-label="Page Data"
@@ -44,6 +46,7 @@
         class="h-12"
         v-if="editorStore.isActive && !isRedirect"
         flat
+        square
         color="white"
         :text-color="hasPendingAssets ? `white` : `deep-orange-3`"
         aria-label="Pending Asset Uploads">
@@ -112,6 +115,7 @@
       class="h-12"
       v-if="showHistory"
       flat
+      square
       icon="la:history"
       :color="editorStore.isActive ? `white` : `grey`"
       aria-label="Page History"
@@ -126,6 +130,7 @@
       class="h-12"
       v-if="showSource"
       flat
+      square
       icon="la:code"
       :color="editorStore.isActive ? `white` : `grey`"
       aria-label="Page Source"
@@ -140,6 +145,7 @@
       <w-btn
         class="h-12"
         flat
+        square
         icon="la:ellipsis-h"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Page Actions">
@@ -201,6 +207,7 @@
         class="h-12"
         v-if="userStore.can(`write:pages`)"
         flat
+        square
         icon="la:copy"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Duplicate Page"
@@ -211,6 +218,7 @@
         class="h-12"
         v-if="userStore.can(`manage:pages`)"
         flat
+        square
         icon="la:share"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Rename / Move Page"
@@ -221,6 +229,7 @@
         class="h-12"
         v-if="userStore.can(`delete:pages`)"
         flat
+        square
         icon="la:trash"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Delete Page"

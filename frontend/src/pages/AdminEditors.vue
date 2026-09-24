@@ -57,7 +57,9 @@
                   <span>{{ t(`admin.editors.` + editor.id + `Description`) }}</span>
                 </w-item-label>
                 <w-item-label caption v-if="editor.useRendering">
-                  <em class="text-purple">{{ t('admin.editors.useRenderingPipeline') }}</em>
+                  <em class="text-purple dark:text-purple-3">{{
+                    t('admin.editors.useRenderingPipeline')
+                  }}</em>
                 </w-item-label>
               </w-item-section>
               <template v-if="editor.hasConfig">

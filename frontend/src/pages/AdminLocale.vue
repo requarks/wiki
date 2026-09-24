@@ -125,9 +125,10 @@
           </w-card-header>
           <template v-for="(lc, idx) of orderedLocales" :key="lc.code">
             <w-separator v-if="idx === dividerIndex" class="my-2" inset />
-            <!-- -> Only an installed row is a label: there is no toggle behind the Install button
-                    for the click to be forwarded to -->
-            <w-item :tag="lc.isInstalled ? `label` : null">
+            <!-- -> Not a label, unlike the toggles above: a label forwards a click to its FIRST
+                    labelable descendant, and a button is one, so the whole row opened the alias
+                    editor rather than flipping the toggle -->
+            <w-item>
               <blueprint-icon :text="lc.language" />
               <w-item-section>
                 <w-item-label>{{ lc.name }}</w-item-label>

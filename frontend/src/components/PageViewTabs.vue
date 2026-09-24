@@ -228,6 +228,22 @@ function onKeydown(ev) {
     border-bottom: 1px solid var(--page-chrome-rule);
   }
 
+  /*
+    The corner, through the 1px gap above. The article column's right-hand rule starts under that gap
+    and this line ends over it, so the one pixel where they turn the corner was left undrawn -- a
+    notch in what is meant to read as a single line. Only over the article column: the editor takes
+    its place under the strip too, and has no rule to join.
+  */
+  &:has(+ .page-article-col)::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    width: 1px;
+    height: 1px;
+    background-color: var(--page-chrome-rule);
+  }
+
   @at-root .body--light & {
     background-color: $grey-2;
   }

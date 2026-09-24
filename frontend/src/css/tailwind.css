@@ -767,11 +767,18 @@
     );
   }
 
-  /* The wider, fainter band trailing below the heading */
+  /*
+    The wider, fainter band trailing below the heading.
+
+    Under the heading's own box come three hairlines -- a gap, the line in `::after` below, a gap --
+    and then this band. All three are one DEVICE pixel, so the band starts three of them down rather
+    than 3px: a whole CSS pixel of gap either side of a one-device-pixel line reads as the line
+    floating in a white stripe on a scaled display.
+  */
   .w-section-header::before {
     content: '';
     position: absolute;
-    bottom: -13px;
+    top: calc(100% + 3px / var(--w-dpr, 1));
     left: 0;
     z-index: 0;
     width: 100%;
@@ -784,7 +791,7 @@
   }
 
   /*
-    The hairline immediately under it, fading out towards the right.
+    The hairline under it, one device pixel clear of it, fading out towards the right.
 
     Scaled by `1 / --w-dpr` like `.w-hairline`, so it paints exactly one DEVICE pixel: a 1px CSS
     rule is 1.5 device pixels at 150% display scaling, which reads visibly heavier than the same
@@ -793,7 +800,7 @@
   .w-section-header::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    top: calc(100% + 1px / var(--w-dpr, 1));
     left: 0;
     z-index: 0;
     width: 100%;
@@ -804,7 +811,7 @@
       color-mix(in srgb, var(--color-primary) 25%, transparent)
     );
     transform: scaleY(calc(1 / var(--w-dpr, 1)));
-    transform-origin: bottom;
+    transform-origin: top;
   }
 
   body.body--dark .w-section-header {

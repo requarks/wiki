@@ -83,6 +83,11 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /** No border radius, for a button that fills a bar edge to edge. */
+  square: {
+    type: Boolean,
+    default: false
+  },
   /** Solid background, no shadow. */
   unelevated: {
     type: Boolean,
@@ -211,7 +216,7 @@ const isSolid = computed(() => !props.flat && !props.outline)
   Geometry taken from Quasar's own button variables, so migrated screens keep their exact metrics:
     font-size 14px (text-sm) · line-height 1.715em · padding 4px 16px · dense padding .285em
     min-height 2.572em (2em dense) · round 3em (2.4em dense) with no padding
-    border-radius 3px, 28px when `rounded`, 50% when `round`
+    border-radius 3px, 28px when `rounded`, 50% when `round`, none when `square`
   Sizes are em-relative so they track the font size instead of being re-derived per variant.
   Padding and min-height live in `styles` below, since they are em values rather than scale steps.
 */
@@ -222,9 +227,13 @@ const classes = computed(() => [
     ? 'rounded-full'
     : props.rounded
       ? 'rounded-[28px]'
-      : props.push
-        ? 'w-push rounded-[7px]'
-        : 'rounded-[3px]',
+      : props.square
+        ? props.push
+          ? 'w-push rounded-none'
+          : 'rounded-none'
+        : props.push
+          ? 'w-push rounded-[7px]'
+          : 'rounded-[3px]',
   isSolid.value && !props.unelevated ? 'shadow-card' : '',
   props.outline ? 'border border-current' : '',
   isDisabled.value ? 'pointer-events-none opacity-60' : 'cursor-pointer',
