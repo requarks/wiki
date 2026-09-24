@@ -40,6 +40,7 @@ const DUPLICATED_PAGE_PROPS = [
   'scriptCss',
   'scriptJsLoad',
   'scriptJsUnload',
+  'showLastEditedBy',
   'showSidebar',
   'showTags',
   'showToc',
@@ -57,6 +58,7 @@ export const usePageStore = defineStore('page', {
     allowRatings: true,
     authorId: 0,
     authorName: '',
+    authorHasAvatar: false,
     /**
      * The blog this page is a post of, as `{ path, title }`, or null for a page that is not in one.
      *
@@ -144,6 +146,7 @@ export const usePageStore = defineStore('page', {
     scriptJsLoad: '',
     scriptJsUnload: '',
     scriptCss: '',
+    showLastEditedBy: true,
     showSidebar: true,
     showTags: true,
     showToc: true,
@@ -172,7 +175,17 @@ export const usePageStore = defineStore('page', {
      * Whether this reader has asked to be told about changes to this page. Always false for a guest:
      * a watch belongs to an account, which is what a notification would eventually be sent to.
      */
-    isWatching: false
+    isWatching: false,
+    /**
+     * How readers have rated this page, as `{ mode, count, average, up, down }` on the site's current
+     * scale, or null when ratings are off for the site or for the page.
+     */
+    rating: null,
+    /**
+     * This reader's own rating on that scale: 1 or -1 for thumbs, 1 to 5 for stars, 0 for none.
+     * Always 0 for a guest, who cannot rate.
+     */
+    viewerRating: 0
   }),
   getters: {
     breadcrumbs: (state) => {
@@ -373,6 +386,31 @@ export const usePageStore = defineStore('page', {
       }
     },
     /**
+     * PAGE - RATE
+     *
+     * Gives this page a rating, or withdraws it with 0. Moved first and put back on a refusal, the way
+     * `pageWatch` is; the summary is then taken from the server's answer, since other readers may have
+     * rated in the meantime.
+     *
+     * @throws Whatever the request failed with, for the caller to report.
+     */
+    async pageRate(value) {
+      const siteStore = useSiteStore()
+      const previous = this.viewerRating
+      this.viewerRating = value
+      try {
+        const url = `sites/${siteStore.id}/pages/${this.id}/rating`
+        const resp = await (
+          value ? API_CLIENT.put(url, { json: { value } }) : API_CLIENT.delete(url)
+        ).json()
+        this.$patch({ rating: resp.rating, viewerRating: resp.value })
+      } catch (err) {
+        this.viewerRating = previous
+        console.warn(err)
+        throw err
+      }
+    },
+    /**
      * PAGE - APPLY VIEWER STATE
      *
      * Takes in the `viewer` block the page came with: what this reader may do here, whether they may
@@ -397,7 +435,8 @@ export const usePageStore = defineStore('page', {
         hasOpenSuggestion: viewer.hasOpenSuggestion === true,
         canReview: viewer.canReview === true,
         pendingSubmissions: viewer.pendingSubmissions ?? [],
-        isWatching: viewer.isWatching === true
+        isWatching: viewer.isWatching === true,
+        viewerRating: viewer.rating ?? 0
       })
     },
     /**
@@ -445,6 +484,8 @@ export const usePageStore = defineStore('page', {
         canReview: false,
         pendingSubmissions: [],
         isWatching: false,
+        rating: null,
+        viewerRating: 0,
         blog: null,
         notFound: true
       })
@@ -604,6 +645,7 @@ export const usePageStore = defineStore('page', {
         allowComments: props.allowComments ?? false,
         allowContributions: props.allowContributions ?? true,
         allowRatings: props.allowRatings ?? true,
+        showLastEditedBy: props.showLastEditedBy ?? true,
         showSidebar: props.showSidebar ?? true,
         showTags: props.showTags ?? true,
         showToc: props.showToc ?? true,
@@ -952,6 +994,7 @@ export const usePageStore = defineStore('page', {
             'scriptJsLoad',
             'scriptJsUnload',
             'scriptCss',
+            'showLastEditedBy',
             'showSidebar',
             'showTags',
             'showToc',

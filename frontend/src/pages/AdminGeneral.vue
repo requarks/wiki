@@ -223,25 +223,36 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
-          <template v-if="flagsStore.experimental">
-            <w-item>
-              <blueprint-icon icon="star-half-empty" />
-              <w-item-section>
-                <w-item-label>{{ t(`admin.general.allowRatings`) }}</w-item-label>
-                <w-item-label caption>{{ t(`admin.general.allowRatingsHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section class="flex-none">
-                <w-btn-toggle
-                  v-model="state.config.features.ratingsMode"
-                  push
-                  glossy
-                  no-caps
-                  toggle-color="primary"
-                  :options="ratingsModes" />
-              </w-item-section>
-            </w-item>
-            <w-separator class="my-2" inset />
-          </template>
+          <w-item>
+            <blueprint-icon icon="star-half-empty" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowRatings`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowRatingsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section class="flex-none">
+              <w-btn-toggle
+                v-model="state.config.features.ratingsMode"
+                push
+                glossy
+                no-caps
+                toggle-color="primary"
+                :options="ratingsModes" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="person" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowLastEditedBy`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowLastEditedByHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.lastEditedBy"
+                :aria-label="t(`admin.general.allowLastEditedBy`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item tag="label">
             <blueprint-icon icon="search" />
             <w-item-section>
@@ -614,7 +625,6 @@ import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
 
 import { useAdminStore } from '@/stores/admin'
-import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
 import UtilCodeEditor from '@/components/UtilCodeEditor.vue'
@@ -631,7 +641,6 @@ import { toMerged } from 'es-toolkit/object'
 // STORES
 
 const adminStore = useAdminStore()
-const flagsStore = useFlagsStore()
 const siteStore = useSiteStore()
 
 // I18N
@@ -665,10 +674,6 @@ function defaultConfig() {
     },
     pageExtensions: '',
     logoText: false,
-    ratings: {
-      index: false,
-      follow: false
-    },
     features: {
       backlinks: true,
       /*
@@ -679,9 +684,9 @@ function defaultConfig() {
         reason read the other way -- both are `!== false` on the server.
       */
       collaborativeEditing: false,
-      ratings: false,
       ratingsMode: 'off',
       comments: true,
+      lastEditedBy: true,
       reasonForChange: 'required'
     },
     discoverable: false,
@@ -821,6 +826,7 @@ async function save() {
           //    silent: the toggle moved, the save succeeded, and the next load put it back.
           collaborativeEditing: state.config.features?.collaborativeEditing ?? false,
           comments: state.config.features?.comments ?? true,
+          lastEditedBy: state.config.features?.lastEditedBy ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',
           search: state.config.features?.search ?? false

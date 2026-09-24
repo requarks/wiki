@@ -487,11 +487,6 @@ async function routes(app: FastifyInstance) {
         }
       }
 
-      // -> Keep the legacy `features.ratings` flag in sync with the ratings mode
-      if (config.features?.ratingsMode !== undefined) {
-        config.features.ratings = config.features.ratingsMode !== 'off'
-      }
-
       /*
         The pasted-uploads destination is stored in one form, so that what the admin area reads back is
         what an upload will do with it -- `assets/`, `./assets` and `assets` are the same folder, and

@@ -132,12 +132,6 @@
                   </w-item-section>
                 </w-item>
               </w-list>
-              <!--
-                Offered against the offset rather than against how many rows are on screen, for the
-                same reason the offset is advanced the way it is: rows this reader may not see were
-                counted by the database and dropped afterwards, so "fewer rows than the total" stays
-                true of a list that has already reached the end of what there is.
-              -->
               <div v-if="lists[tab.name].offset < lists[tab.name].total" class="p-4 text-center">
                 <w-btn
                   outline
@@ -404,12 +398,8 @@ async function fetchPages() {
       ...(resp?.results ?? []).map((r) => ({ ...r, tags: [...(r.tags ?? [])].sort() }))
     )
     /*
-      Advanced by what was ASKED for, not by what came back.
-
-      The search filters its rows against this reader's page rules after the database has already
-      applied the limit, so a batch can arrive short -- or empty -- with more behind it. Counting the
-      rows that survived would ask for the same batch again on the next press, and a list whose whole
-      first batch was filtered away would do it for ever.
+      The search applies this reader's page rules before it pages, so every batch but the last is
+      full and `totalHits` counts only pages they may open -- never the ones they were refused.
     */
     list.offset += PAGE_SIZE
     list.total = resp?.totalHits ?? 0

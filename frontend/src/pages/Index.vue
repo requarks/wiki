@@ -327,7 +327,7 @@
                  thing and belongs where there is room for it -->
               <div class="text-caption text-grey-7">{{ t('common.page.contents') }}</div>
             </div>
-            <div class="px-4 pb-2">
+            <div class="px-4 pb-4">
               <page-toc
                 :nodes="pageStore.toc"
                 :min-depth="pageStore.tocDepth.min"
@@ -376,26 +376,75 @@
               <page-tags class="mt-2" :edit="state.tagEditMode" />
             </div>
           </template>
-          <template v-if="siteStore.features.ratingsMode !== `off` && pageStore.allowRatings">
+          <template v-if="showRatings">
             <w-separator v-if="showToc || showTags" />
             <!-- Rating -->
             <div class="p-4 flex items-center">
               <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
               <div class="text-caption text-grey-7">{{ t('common.page.ratePage') }}</div>
             </div>
-            <div class="px-4">
-              <w-rating
-                v-if="siteStore.features.ratingsMode === `stars`"
-                v-model="state.currentRating"
-                icon="la:star"
-                color="secondary"
-                size="sm" />
-              <div
-                class="flex items-center"
-                v-else-if="siteStore.features.ratingsMode === `thumbs`">
-                <w-btn class="acrylic-btn" flat icon="la:thumbs-down" color="secondary" />
-                <w-btn class="acrylic-btn ml-2" flat icon="la:thumbs-up" color="secondary" />
+            <div class="px-4 pb-4">
+              <template v-if="pageStore.rating.mode === `stars`">
+                <w-rating
+                  :model-value="pageStore.viewerRating"
+                  icon="la:star"
+                  active-icon="la:star-solid"
+                  color="secondary"
+                  size="sm"
+                  :readonly="!canRate || state.ratingBusy"
+                  @update:model-value="rate" />
+                <div class="text-caption text-grey-7 mt-1">{{ ratingStarsCaption }}</div>
+              </template>
+              <div v-else class="flex items-center gap-2">
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  no-caps
+                  size="12px"
+                  :icon="pageStore.viewerRating === 1 ? `mdi:thumb-up` : `la:thumbs-up`"
+                  :color="pageStore.viewerRating === 1 ? `positive` : `secondary`"
+                  :label="String(pageStore.rating.up)"
+                  :aria-label="t('common.page.ratingThumbsUp')"
+                  :aria-pressed="pageStore.viewerRating === 1"
+                  :disable="!canRate || state.ratingBusy"
+                  @click="rateThumb(1)">
+                  <w-tooltip>{{ t('common.page.ratingThumbsUp') }}</w-tooltip>
+                </w-btn>
+                <w-btn
+                  class="acrylic-btn"
+                  flat
+                  no-caps
+                  size="12px"
+                  :icon="pageStore.viewerRating === -1 ? `mdi:thumb-down` : `la:thumbs-down`"
+                  :color="pageStore.viewerRating === -1 ? `negative` : `secondary`"
+                  :label="String(pageStore.rating.down)"
+                  :aria-label="t('common.page.ratingThumbsDown')"
+                  :aria-pressed="pageStore.viewerRating === -1"
+                  :disable="!canRate || state.ratingBusy"
+                  @click="rateThumb(-1)">
+                  <w-tooltip>{{ t('common.page.ratingThumbsDown') }}</w-tooltip>
+                </w-btn>
               </div>
+            </div>
+          </template>
+          <!-- Last Edited By -->
+          <template v-if="showLastEditedBy">
+            <w-separator v-if="showToc || showTags || showRatings" />
+            <div class="p-4 flex items-center">
+              <w-icon class="mr-2" name="la:user-edit" color="grey" />
+              <div class="text-caption text-grey-7">{{ t('common.page.lastEditedBy') }}</div>
+            </div>
+            <div class="px-4 pb-4">
+              <router-link class="page-last-editor" :to="`/_user/${pageStore.authorId}`">
+                <w-avatar size="24px" color="primary" text-color="white">
+                  <img
+                    v-if="pageStore.authorHasAvatar"
+                    :src="`/_user/${pageStore.authorId}/avatar`"
+                    alt="" />
+                  <span v-else>{{ lastEditorInitial }}</span>
+                </w-avatar>
+                <span class="ml-2">{{ pageStore.authorName }}</span>
+              </router-link>
             </div>
           </template>
         </template>
@@ -564,7 +613,7 @@ const route = useRoute()
 
 // I18N
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // COMPOSABLES
 
@@ -603,7 +652,8 @@ const state = reactive({
    * panel over the article rather than a column beside it.
    */
   tocPanelOpen: false,
-  currentRating: 3,
+  /** A rating is on its way to the server, which holds the controls still until it answers. */
+  ratingBusy: false,
   /**
    * Which view the reader is on: `article`, `talk` or `links`.
    *
@@ -708,6 +758,46 @@ const showToc = computed(() => {
 */
 const showTags = computed(() => {
   return pageStore.showTags && (pageStore.tags?.length > 0 || state.tagEditMode)
+})
+/*
+  Both switches have to be on: the site's ratings mode under General -> Features, and the page's own
+  `allowRatings`. The server has already combined them -- `rating` comes back null otherwise -- and
+  it is also what says which scale is in force, so that is what is read here.
+*/
+const showRatings = computed(() => {
+  return Boolean(pageStore.rating) && pageStore.allowRatings
+})
+/*
+  A logged in reader who may read the page. Only an account can rate, since one opinion per person
+  needs a person to hang it on.
+*/
+const canRate = computed(() => {
+  return userStore.authenticated && userStore.pagePermissions.includes('read:pages')
+})
+const ratingStarsCaption = computed(() => {
+  const { count, average } = pageStore.rating
+  const total = t('common.page.ratingCount', count)
+  if (count < 1) {
+    return total
+  }
+  const formatted = new Intl.NumberFormat(locale.value, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(average)
+  return `${t('common.page.ratingAverage', { average: formatted })} · ${total}`
+})
+/*
+  Both switches have to be on: the site's under General -> Features, and the page's own in its
+  properties dialog. `authorId` is the account that saved the version that stands -- every save moves
+  it -- so it is the last editor rather than whoever created the page.
+*/
+const showLastEditedBy = computed(() => {
+  return (
+    siteStore.features.lastEditedBy && pageStore.showLastEditedBy && Boolean(pageStore.authorId)
+  )
+})
+const lastEditorInitial = computed(() => {
+  return (pageStore.authorName || '?').trim().charAt(0).toUpperCase()
 })
 /*
   Whether this user may save a change to the page. Editing the tags is a save -- they go up with the
@@ -1315,6 +1405,26 @@ async function createPage() {
 }
 
 /**
+ * Rate the page, or withdraw the rating with 0 -- which is what clicking the star already given does.
+ * The controls are held while the request is out, so a second click cannot race the first.
+ */
+async function rate(value) {
+  state.ratingBusy = true
+  try {
+    await pageStore.pageRate(value)
+  } catch (err) {
+    notify({ type: 'negative', message: t('common.page.ratingFailed'), caption: err.message })
+  } finally {
+    state.ratingBusy = false
+  }
+}
+
+/** A thumb pressed again takes it back, the way a star clicked again does. */
+function rateThumb(value) {
+  return rate(pageStore.viewerRating === value ? 0 : value)
+}
+
+/**
  * Back out of a path that has no page. `router.back()` alone lands on the wiki's own error screen for
  * a reader who arrived at this URL directly, having nothing to go back to, so that case goes home.
  */
@@ -1334,6 +1444,22 @@ function goBack() {
   BOTH ways: as a discrete property it flips at the end of the transition when going to hidden, and at
   the start when coming back, which is exactly the timing a fade wants.
 */
+.page-last-editor {
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+
+  /* -> The size of a top-level entry in the contents above it (`.page-toc-item--d0`) */
+  > span {
+    font-size: 0.8125rem;
+  }
+
+  &:hover > span {
+    text-decoration: underline;
+  }
+}
+
 .tags-edit-btn {
   transition:
     opacity 0.2s var(--ease-standard),

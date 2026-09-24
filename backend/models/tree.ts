@@ -1216,6 +1216,7 @@ class Tree {
               allowComments: page.allowComments,
               allowContributions: page.allowContributions,
               allowRatings: page.allowRatings,
+              showLastEditedBy: page.showLastEditedBy,
               showSidebar: page.showSidebar,
               showTags: page.showTags
             },

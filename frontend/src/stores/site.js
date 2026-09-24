@@ -113,6 +113,7 @@ export const useSiteStore = defineStore('site', {
       backlinks: true,
       browse: false,
       collaborativeEditing: false,
+      lastEditedBy: true,
       ratingsMode: 'off',
       reasonForChange: 'required',
       search: false

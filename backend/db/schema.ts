@@ -679,8 +679,12 @@ export const pages = pgTable(
       (): SQL => sql`${pages.publishState} != 'draft' AND ${pages.isSearchable}`
     ),
     password: varchar({ length: 255 }),
-    ratingScore: integer().notNull().default(0),
-    ratingCount: timestamp().notNull().defaultNow(),
+    /**
+     * How readers have rated the page, per scale: `{ thumbs?: { count, sum, up, down }, stars?: … }`.
+     * A cache of the `pageRatings` rows, rewritten by every rating and withdrawal (`models/pageRatings.ts`)
+     * so that a page view reads it off the row it already loads instead of aggregating per view.
+     */
+    ratings: jsonb().notNull().default({}),
     scripts: jsonb().notNull().default({}),
     historyData: jsonb().notNull().default({}),
     createdAt: timestamp().notNull().defaultNow(),
@@ -959,6 +963,39 @@ export const pageWatching = pgTable(
     index('pageWatching_user_site_idx').on(table.userId, table.siteId),
     // -> Watching a page twice is watching it once, so the second attempt is a no-op rather than a row
     uniqueIndex('pageWatching_page_user_idx').on(table.pageId, table.userId)
+  ]
+)
+
+// PAGE RATINGS ------------------------
+/**
+ * One reader's rating of one page.
+ *
+ * `kind` is the site's ratings mode the rating was given under — `thumbs` (`value` is 1 or -1) or
+ * `stars` (1 to 5) — because the two scales cannot be added together, and a site may switch between
+ * them. Only the rows of the mode in force are counted, so switching back finds the old ratings where
+ * they were. Rating again under the other mode replaces the row: a reader has one opinion of a page.
+ *
+ * The totals are cached on the page (`pages.ratings`), one entry per scale, and rewritten from these
+ * rows whenever one of the page's changes. A rating removed by a deleted account's cascade is not
+ * subtracted until the page is next rated.
+ */
+export const pageRatings = pgTable(
+  'pageRatings',
+  {
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: varchar({ length: 16 }).notNull(),
+    value: integer().notNull(),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    primaryKey({ columns: [table.pageId, table.userId] }),
+    index('pageRatings_userId_idx').on(table.userId)
   ]
 )
 

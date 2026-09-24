@@ -91,17 +91,21 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           collaborativeEditing: {
             type: 'boolean'
           },
-          ratings: {
-            type: 'boolean'
-          },
           ratingsMode: {
             type: 'string',
-            enum: ['off', 'stars', 'thumbs']
+            enum: ['off', 'stars', 'thumbs'],
+            description:
+              'Whether readers may rate pages, and on which scale. Off by default. A page can still opt out on its own with `allowRatings`; only a logged in reader who may read the page can rate it.'
           },
           comments: {
             type: 'boolean',
             description:
               'Whether this site has comments at all. Which provider handles them is `comments.provider`; this turns every one of them off without losing that choice, and a page can still opt out on its own with `allowComments`.'
+          },
+          lastEditedBy: {
+            type: 'boolean',
+            description:
+              'Whether a page may show who last edited it, in its sidebar. A page can still opt out on its own with `showLastEditedBy`.'
           },
           reasonForChange: {
             type: 'string',

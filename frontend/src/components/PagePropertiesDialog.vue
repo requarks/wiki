@@ -273,6 +273,16 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
+          <div>
+            <w-toggle
+              v-if="pageStore.showSidebar"
+              v-model="pageStore.showLastEditedBy"
+              dense
+              :label="t(`editor.props.showLastEditedBy`)"
+              color="primary"
+              checked-icon="la:check"
+              unchecked-icon="la:times" />
+          </div>
         </w-form>
       </w-card-section>
       <w-card-section class="alt-card pb-6" id="refCardSocial">
@@ -296,7 +306,8 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
-          <div v-if="flagsStore.experimental">
+          <!-- -> Nothing to allow while the site rates nothing: General -> Features is the other half -->
+          <div v-if="siteStore.features.ratingsMode !== `off`">
             <w-toggle
               v-model="pageStore.allowRatings"
               dense
@@ -399,7 +410,6 @@ import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useEditorStore } from '@/stores/editor'
-import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -413,7 +423,6 @@ import PageTags from './PageTags.vue'
 // STORES
 
 const editorStore = useEditorStore()
-const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()

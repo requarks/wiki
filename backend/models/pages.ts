@@ -13,6 +13,7 @@ import type { FastifyRequest } from 'fastify'
 import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
 import type { StoragePageContent, StoragePageRef } from './storage.ts'
+import type { PageRatingsCache } from './pageRatings.ts'
 
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
@@ -205,6 +206,7 @@ const CONFIG_FIELDS = [
   'allowComments',
   'allowContributions',
   'allowRatings',
+  'showLastEditedBy',
   'showSidebar',
   'showTags',
   'showToc',
@@ -294,6 +296,7 @@ export interface Page {
   allowComments: boolean
   allowContributions: boolean
   allowRatings: boolean
+  showLastEditedBy: boolean
   showSidebar: boolean
   showTags: boolean
   showToc: boolean
@@ -305,6 +308,13 @@ export interface Page {
   navigationMode: string
   authorId: string
   authorName: string
+  /** Whether the account that saved the version that stands has uploaded an avatar. */
+  authorHasAvatar: boolean
+  /**
+   * The cached rating totals, per scale. Internal: the API answers with `rating`, the summary on the
+   * site's current scale — see `pageRatings.summaryFromCache`.
+   */
+  ratings: PageRatingsCache
   createdAt: Date
   updatedAt: Date
 }
@@ -340,6 +350,7 @@ export interface PageInput {
   allowComments?: boolean
   allowContributions?: boolean
   allowRatings?: boolean
+  showLastEditedBy?: boolean
   showSidebar?: boolean
   showTags?: boolean
   showToc?: boolean
@@ -798,6 +809,7 @@ class Pages {
       allowComments: config.allowComments ?? true,
       allowContributions: config.allowContributions ?? true,
       allowRatings: config.allowRatings ?? true,
+      showLastEditedBy: config.showLastEditedBy ?? true,
       showSidebar: config.showSidebar ?? true,
       showTags: config.showTags ?? true,
       showToc: config.showToc ?? true,
@@ -809,6 +821,8 @@ class Pages {
       navigationMode: row.navigationMode ?? 'inherit',
       authorId: row.authorId,
       authorName: row.authorName ?? '',
+      authorHasAvatar: row.authorHasAvatar ?? false,
+      ratings: row.ratings ?? {},
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
     }
@@ -1556,6 +1570,7 @@ class Pages {
       .select({
         page: pagesTable,
         authorName: usersTable.name,
+        authorHasAvatar: usersTable.hasAvatar,
         navigationId: treeTable.navigationId,
         navigationMode: treeTable.navigationMode
       })
@@ -1583,6 +1598,7 @@ class Pages {
       {
         ...row.page,
         authorName: row.authorName,
+        authorHasAvatar: row.authorHasAvatar,
         navigationId: row.navigationId,
         navigationMode: row.navigationMode,
         // -> A second query only for a page that is part of a set, which is a column read away
@@ -2877,6 +2893,7 @@ class Pages {
       allowComments: input.allowComments ?? existing.allowComments ?? true,
       allowContributions: input.allowContributions ?? existing.allowContributions ?? true,
       allowRatings: input.allowRatings ?? existing.allowRatings ?? true,
+      showLastEditedBy: input.showLastEditedBy ?? existing.showLastEditedBy ?? true,
       showSidebar: input.showSidebar ?? existing.showSidebar ?? true,
       showTags: input.showTags ?? existing.showTags ?? true,
       showToc: input.showToc ?? existing.showToc ?? true,

@@ -370,6 +370,60 @@ class Search {
           ? sql`CASE WHEN p.password IS NULL THEN ${headline} ELSE NULL END`
           : headline
 
+    const where = sql.join(conditions, sql` AND `)
+    const relevancy = hasQuery ? sql`ts_rank(p.ts, ${tsQuery})` : sql`0`
+
+    /*
+      Which pages this searcher may read is decided BEFORE the results are paged, never after.
+
+      A page rule can be a regular expression or a set of tags, so the deciding rule is only knowable
+      per row and cannot go in the `WHERE`. Filtering the rows of one `LIMIT`ed batch instead used to
+      leave that batch short -- or empty, with a Load More under it -- and a total still counting every
+      page the searcher had been refused, which is itself a statement about pages they may not see. A
+      title and a count are content too.
+
+      So with rules to apply, the first query ranks every match but reads only what a rule looks at,
+      and the second fetches the full row -- excerpt included, the expensive part -- for the one batch
+      that is returned. An actor who is above the rules gets the database's own paging and count.
+    */
+    const checkRules = !!actor && !actor.permissions.includes('manage:system')
+
+    let pageIds: string[]
+    let totalHits: number
+    if (checkRules) {
+      const candidates = await WIKI.db.execute(sql`
+        SELECT p.id, p.path, p.locale, p.tags, ${relevancy} AS relevancy
+        FROM pages p
+        WHERE ${where}
+        ORDER BY ${ordering}
+      `)
+      const readable = ((candidates.rows ?? candidates) as any[]).filter((row) =>
+        WIKI.models.groups.checkAccess(actor, 'read:pages', {
+          siteId,
+          path: row.path as string,
+          locale: row.locale as string,
+          tags: (row.tags ?? []) as string[]
+        })
+      )
+      pageIds = readable.slice(offset, offset + limit).map((row) => row.id as string)
+      totalHits = readable.length
+    } else {
+      const candidates = await WIKI.db.execute(sql`
+        SELECT p.id, ${relevancy} AS relevancy, COUNT(*) OVER() AS "totalHits"
+        FROM pages p
+        WHERE ${where}
+        ORDER BY ${ordering}
+        LIMIT ${limit} OFFSET ${offset}
+      `)
+      const rows = (candidates.rows ?? candidates) as any[]
+      pageIds = rows.map((row) => row.id as string)
+      totalHits = Number(rows[0]?.totalHits ?? 0)
+    }
+
+    if (pageIds.length < 1) {
+      return { results: [], totalHits }
+    }
+
     const rows = await WIKI.db.execute(sql`
       SELECT
         p.id,
@@ -381,65 +435,37 @@ class Search {
         p.tags,
         to_char(p."createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
         to_char(p."updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",
-        ${hasQuery ? sql`ts_rank(p.ts, ${tsQuery})` : sql`0`} AS relevancy,
-        ${highlight} AS highlight,
-        COUNT(*) OVER() AS "totalHits"
+        ${relevancy} AS relevancy,
+        ${highlight} AS highlight
       FROM pages p
-      WHERE ${sql.join(conditions, sql` AND `)}
-      ORDER BY ${ordering}
-      LIMIT ${limit} OFFSET ${offset}
+      WHERE p.id = ANY(${sql.param(pageIds)}::uuid[])
     `)
+    // -> `ANY` answers in whatever order the planner likes; the order is the first query's
+    const byId = new Map(((rows.rows ?? rows) as any[]).map((row) => [row.id as string, row]))
 
-    /*
-      Filtered here rather than in SQL: a page rule can be a regular expression or a set of tags, so
-      the deciding rule is only knowable per row. Search must not be a way around page permissions —
-      a title and an excerpt are content too.
-    */
-    const visible = actor
-      ? ((rows.rows ?? rows) as any[]).filter((row) =>
-          WIKI.models.groups.checkAccess(actor, 'read:pages', {
-            siteId,
-            path: row.path as string,
-            locale: row.locale as string,
-            tags: (row.tags ?? []) as string[]
-          })
-        )
-      : ((rows.rows ?? rows) as any[])
+    const result = pageIds
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((row) => ({
+        id: row.id as string,
+        path: row.path as string,
+        locale: row.locale as string,
+        title: row.title as string,
+        description: row.description ?? null,
+        icon: row.icon ?? null,
+        tags: (row.tags ?? []) as string[],
+        createdAt: row.createdAt as string,
+        updatedAt: row.updatedAt as string,
+        relevancy: Number(row.relevancy ?? 0),
+        // -> Escaped first, so the only markup that survives is the emphasis postgres marked
+        highlight: row.highlight
+          ? escapeHtml(row.highlight as string)
+              .replaceAll(HL_START, '<b>')
+              .replaceAll(HL_STOP, '</b>')
+          : null
+      }))
 
-    const result = visible.map((row) => ({
-      id: row.id as string,
-      path: row.path as string,
-      locale: row.locale as string,
-      title: row.title as string,
-      description: row.description ?? null,
-      icon: row.icon ?? null,
-      tags: (row.tags ?? []) as string[],
-      createdAt: row.createdAt as string,
-      updatedAt: row.updatedAt as string,
-      relevancy: Number(row.relevancy ?? 0),
-      // -> Escaped first, so the only markup that survives is the emphasis postgres marked
-      highlight: row.highlight
-        ? escapeHtml(row.highlight as string)
-            .replaceAll(HL_START, '<b>')
-            .replaceAll(HL_STOP, '</b>')
-        : null
-    }))
-
-    return {
-      results: result,
-      /*
-        The count postgres reported, less whatever the rules just removed from this page of results.
-        Not exact when rows are dropped -- the window function counted every match, including ones on
-        later pages this reader may not see -- but a total that ignored the filtering entirely would
-        promise results that do not exist.
-      */
-      totalHits: Math.max(
-        0,
-        Number((rows.rows ?? rows)[0]?.totalHits ?? 0) -
-          ((rows.rows ?? rows) as any[]).length +
-          visible.length
-      )
-    }
+    return { results: result, totalHits }
   }
 
   /**

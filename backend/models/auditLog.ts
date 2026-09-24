@@ -35,6 +35,8 @@ export const AUDIT_ACTIONS = {
     'unlockPage',
     'watchPage',
     'unwatchPage',
+    'ratePage',
+    'unratePage',
     'submitPageEdit',
     'approvePageEdit',
     'rejectPageEdit',

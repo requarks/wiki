@@ -133,12 +133,12 @@ class Sites {
           backlinks: true,
           browse: true,
           collaborativeEditing: true,
-          ratings: false,
           ratingsMode: 'off',
           // -> On, because what decides whether a site has comments is whether a provider has
           //    been picked. This is the switch that turns them all off without losing that
           //    choice, which is only useful to somebody who has already made it.
           comments: true,
+          lastEditedBy: true,
           reasonForChange: 'optional',
           search: true
         },
@@ -457,9 +457,9 @@ class Sites {
           backlinks: true,
           browse: true,
           collaborativeEditing: true,
-          ratings: false,
           ratingsMode: 'off',
           comments: true,
+          lastEditedBy: true,
           reasonForChange: 'optional',
           search: true
         },

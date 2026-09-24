@@ -19,7 +19,7 @@
       @click="set(i)"
       @mouseover="editable && (hovered = i)"
       @keyup="onKeyup($event, i)">
-      <w-icon :name="icon" class="w-rating__icon" :class="iconClass(i)" />
+      <w-icon :name="iconFor(i)" class="w-rating__icon" :class="iconClass(i)" />
     </div>
   </div>
 </template>
@@ -32,9 +32,9 @@ import WIcon from './WIcon.vue'
  * Star rating.
  *
  * Simplification: the component this replaces accepted per-star arrays for the icon and colour, a
- * separate half-star icon, and a `no-reset` switch. The one caller passes a single icon and a
- * single colour, so this takes scalars; half ratings are not offered because nothing produced
- * them.
+ * separate half-star icon, and a `no-reset` switch. The one caller passes a single colour and at
+ * most two icons -- one for a lit star and one for the rest -- so this takes scalars; half ratings
+ * are not offered because nothing produced them.
  *
  * Behaviour is otherwise preserved, including the two details that are easy to lose: clicking the
  * star you are already on resets the rating to zero, and the arrow keys move FOCUS between stars
@@ -55,6 +55,11 @@ const props = defineProps({
   icon: {
     type: String,
     default: 'mdi:star'
+  },
+  /** Icon reference for a lit star, e.g. a solid one over an outlined `icon`. Defaults to `icon`. */
+  activeIcon: {
+    type: String,
+    default: null
   },
   /** Theme colour name. Defaults to the same yellow the original used. */
   color: {
@@ -101,12 +106,28 @@ const rootStyle = computed(() => ({
 }))
 
 /**
+ * Whether star `i` is lit: within the hover preview while there is one, within the rating otherwise.
+ */
+function isActive(i) {
+  return hovered.value === 0 ? props.modelValue >= i : hovered.value >= i
+}
+
+/**
+ * A lit star takes `activeIcon`. So does one the hover preview is about to give up, which is still
+ * part of the committed rating -- its lower opacity is what says it would go, not its shape.
+ */
+function iconFor(i) {
+  const lit = isActive(i) || (hovered.value > 0 && props.modelValue >= i)
+  return lit && props.activeIcon ? props.activeIcon : props.icon
+}
+
+/**
  * Three states, matching the original's opacities: a star is lit when it is within the rating (or
  * within the hover preview), half-lit when the hover preview is currently BELOW the committed
  * rating -- so you can see what you are about to give up -- and dim otherwise.
  */
 function iconClass(i) {
-  const active = hovered.value === 0 ? props.modelValue >= i : hovered.value >= i
+  const active = isActive(i)
   const exSelected = hovered.value > 0 && props.modelValue >= i && hovered.value < i
   return [
     active ? 'opacity-100' : exSelected ? 'opacity-70' : 'opacity-40',

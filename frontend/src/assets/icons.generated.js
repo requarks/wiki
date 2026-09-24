@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  278 icons.
+  281 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-down": {"body":"<path fill=\"currentColor\" d=\"M4.219 10.781L2.78 12.22l12.5 12.5l.719.687l.719-.687l12.5-12.5l-1.438-1.438L16 22.562z\"/>","width":32,"height":32},
@@ -138,6 +138,7 @@ export const BUNDLED_ICONS = {
   "la:square-full": {"body":"<path fill=\"currentColor\" d=\"M6 6v20h20V6z\"/>","width":32,"height":32},
   "la:star": {"body":"<path fill=\"currentColor\" d=\"m16 2.125l-.906 2.063l-3.25 7.28l-7.938.845l-2.25.25l1.688 1.5l5.906 5.343l-1.656 7.813l-.469 2.187l1.969-1.125l6.906-4l6.906 4l1.969 1.125l-.469-2.187l-1.656-7.813l5.906-5.343l1.688-1.5l-2.25-.25l-7.938-.844l-3.25-7.281zm0 4.906l2.563 5.782l.25.53l.562.063l6.281.656l-4.687 4.22l-.438.405l.125.563l1.313 6.156l-5.469-3.125l-.5-.312l-.5.312l-5.469 3.125l1.313-6.156l.125-.563l-.438-.406l-4.687-4.218l6.281-.657l.563-.062l.25-.531z\"/>","width":32,"height":32},
   "la:star-half-alt": {"body":"<path fill=\"currentColor\" d=\"m16 2.375l-.906 2.031l-3.25 7.313l-7.938.812l-2.25.25l1.688 1.5l5.906 5.344l-1.656 7.813l-.469 2.187h.031L9.094 28.5L16 24.531l6.906 3.969l1.969 1.125l-.469-2.188l-1.656-7.812l5.906-5.344l1.688-1.5l-2.25-.25l-7.938-.812l-3.25-7.313zm0 4.906l2.563 5.782l.25.5l.562.062l6.313.656l-4.72 4.25l-.437.375l.125.563l1.313 6.187L16.5 22.5l-.5-.281z\"/>","width":32,"height":32},
+  "la:star-solid": {"body":"<path fill=\"currentColor\" d=\"m30.336 12.547l-10.172-1.074L16 2.133l-4.164 9.34l-10.172 1.074l7.598 6.848L7.14 29.398L16 24.29l8.86 5.11l-2.122-10.004z\"/>","width":32,"height":32},
   "la:stop": {"body":"<path fill=\"currentColor\" d=\"M6 6v20h20V6zm2 2h16v16H8z\"/>","width":32,"height":32},
   "la:stream": {"body":"<path fill=\"currentColor\" d=\"M5 5v6h19V5zm2 2h15v2H7zm2 6v6h19v-6zm2 2h15v2H11zm-6 6v6h19v-6zm2 2h15v2H7z\"/>","width":32,"height":32},
   "la:sun": {"body":"<path fill=\"currentColor\" d=\"M15 3v5h2V3zM7.5 6.094L6.094 7.5l3.531 3.563l1.438-1.438zm17 0l-3.563 3.531l1.438 1.438L25.906 7.5zM16 9c-3.855 0-7 3.145-7 7s3.145 7 7 7s7-3.145 7-7s-3.145-7-7-7m0 2c2.773 0 5 2.227 5 5s-2.227 5-5 5s-5-2.227-5-5s2.227-5 5-5M3 15v2h5v-2zm21 0v2h5v-2zM9.625 20.938L6.094 24.5L7.5 25.906l3.563-3.531zm12.75 0l-1.438 1.437l3.563 3.531l1.406-1.406zM15 24v5h2v-5z\"/>","width":32,"height":32},
@@ -280,6 +281,8 @@ export const BUNDLED_ICONS = {
   "mdi:table-row-remove": {"body":"<path fill=\"currentColor\" d=\"M9.41 13L12 15.59L14.59 13L16 14.41L13.41 17L16 19.59L14.59 21L12 18.41L9.41 21L8 19.59L10.59 17L8 14.41zM22 9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2zM4 9h4V6H4zm6 0h4V6h-4zm6 0h4V6h-4z\"/>","width":24,"height":24},
   "mdi:table-split-cell": {"body":"<path fill=\"currentColor\" d=\"M19 14h2v6H3v-6h2v4h14zM3 4v6h2V6h14v4h2V4zm8 7v2H8v2l-3-3l3-3v2zm5 0V9l3 3l-3 3v-2h-3v-2z\"/>","width":24,"height":24},
   "mdi:text-box-outline": {"body":"<path fill=\"currentColor\" d=\"M5 3c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 2h14v14H5zm2 2v2h10V7zm0 4v2h10v-2zm0 4v2h7v-2z\"/>","width":24,"height":24},
+  "mdi:thumb-down": {"body":"<path fill=\"currentColor\" d=\"M19 15h4V3h-4m-4 0H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2a2 2 0 0 0 2 2h6.31l-.95 4.57c-.02.1-.03.2-.03.31c0 .42.17.79.44 1.06L9.83 23l6.58-6.59c.37-.36.59-.86.59-1.41V5a2 2 0 0 0-2-2\"/>","width":24,"height":24},
+  "mdi:thumb-up": {"body":"<path fill=\"currentColor\" d=\"M23 10a2 2 0 0 0-2-2h-6.32l.96-4.57c.02-.1.03-.21.03-.32c0-.41-.17-.79-.44-1.06L14.17 1L7.59 7.58C7.22 7.95 7 8.45 7 9v10a2 2 0 0 0 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73zM1 21h4V9H1z\"/>","width":24,"height":24},
   "mdi:tooltip-plus-outline": {"body":"<path fill=\"currentColor\" d=\"M4 2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4l-4 4l-4-4H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2m0 2v12h4.83L12 19.17L15.17 16H20V4zm7 2h2v3h3v2h-3v3h-2v-3H8V9h3z\"/>","width":24,"height":24},
   "mdi:toy-brick-plus": {"body":"<path fill=\"currentColor\" d=\"M19 6V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v1h-2V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1H3v14h10.09a5.5 5.5 0 0 1-.09-1a6 6 0 0 1 8-5.66V6m-1 9v3h3v2h-3v3h-2v-3h-3v-2h3v-3Z\"/>","width":24,"height":24},
   "mdi:transfer-down": {"body":"<path fill=\"currentColor\" d=\"M16 3v2H8V3zm0 4v2H8V7zm0 4v2H8v-2zM5 15h14l-7 7z\"/>","width":24,"height":24},

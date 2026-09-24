@@ -185,6 +185,7 @@ export function versionPageProps(version) {
       allowComments: config.allowComments,
       allowContributions: config.allowContributions,
       allowRatings: config.allowRatings,
+      showLastEditedBy: config.showLastEditedBy,
       showSidebar: config.showSidebar,
       showTags: config.showTags,
       showToc: config.showToc,

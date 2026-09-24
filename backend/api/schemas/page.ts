@@ -125,6 +125,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
       allowRatings: { type: 'boolean' },
+      showLastEditedBy: { type: 'boolean' },
       showSidebar: { type: 'boolean' },
       showTags: { type: 'boolean' },
       showToc: { type: 'boolean' },
@@ -229,6 +230,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'How many comments this page has, which is what the Talk tab’s badge counts. Always 0 unless the site uses the built-in comments provider. Present when a page is fetched on its own.'
       },
+      rating: {
+        anyOf: [{ type: 'null' }, { $ref: 'PageRatingSummary#' }],
+        description:
+          'How readers have rated the page, on the site’s current scale. Null when ratings are off for the site or for the page. Present when a page is fetched on its own.'
+      },
+      showLastEditedBy: { type: 'boolean' },
       showSidebar: { type: 'boolean' },
       showTags: { type: 'boolean' },
       showToc: { type: 'boolean' },
@@ -246,6 +253,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       navigationMode: { type: 'string' },
       authorId: { type: 'string', format: 'uuid' },
       authorName: { type: 'string' },
+      authorHasAvatar: { type: 'boolean' },
       createdAt: { type: 'string', format: 'date-time' },
       updatedAt: { type: 'string', format: 'date-time' },
       blog: {
@@ -287,6 +295,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'The requester has asked to be told about changes to this page. Always false without an account, since a watch belongs to one.'
           },
+          rating: {
+            type: 'integer',
+            description:
+              'The requester’s own rating of this page on the site’s current scale, or 0 for none. Always 0 without an account, since a rating belongs to one.'
+          },
           pendingSubmissions: {
             type: 'array',
             items: { $ref: 'PageEditSubmission#' },
@@ -294,6 +307,28 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       }
+    }
+  })
+
+  /**
+   * PAGE RATING SUMMARY - How readers have rated a page, on the site's current scale
+   */
+  app.addSchema({
+    $id: 'PageRatingSummary',
+    type: 'object',
+    properties: {
+      mode: {
+        type: 'string',
+        enum: ['thumbs', 'stars'],
+        description: 'The scale. Only ratings given on it are counted.'
+      },
+      count: { type: 'integer', description: 'How many readers have rated the page.' },
+      average: {
+        type: 'number',
+        description: 'Mean rating: 1 to 5 for stars, -1 to 1 for thumbs. 0 when nobody has rated.'
+      },
+      up: { type: 'integer', description: 'Thumbs up. Always 0 under stars.' },
+      down: { type: 'integer', description: 'Thumbs down. Always 0 under stars.' }
     }
   })
 

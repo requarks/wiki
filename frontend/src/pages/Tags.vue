@@ -383,11 +383,7 @@ const state = reactive({
   orderBy: 'title',
   orderByDirection: 'asc',
   results: [],
-  /**
-   * How many ROWS have been asked for, which is not `results.length`: the search API drops rows the
-   * page rules refuse after it has counted them, so its own offset is the only thing that can be
-   * paged with.
-   */
+  /** How many results have been asked for, which is the offset the next batch starts at. */
   fetched: 0,
   total: 0
 })

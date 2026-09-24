@@ -676,7 +676,11 @@ async function routes(app: FastifyInstance) {
         is what makes a page view one request instead of four.
       */
       const actorId = actor?.id ?? null
-      const [approvalState, isWatching, commentsCount, blog] = await Promise.all([
+      // -> Both switches: the site's ratings mode and the page's own `allowRatings`
+      const ratingMode = page.allowRatings
+        ? WIKI.models.pageRatings.modeFor(req.params.siteId)
+        : null
+      const [approvalState, isWatching, commentsCount, blog, ownRating] = await Promise.all([
         WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
           id: page.id,
           path: page.path,
@@ -699,11 +703,19 @@ async function routes(app: FastifyInstance) {
           which is one lookup on the unique `(siteId, locale, path)` index over the page's own
           ancestors, and no lookup at all for a page at the site root.
         */
-        WIKI.models.blogs.blogFor(req.params.siteId, page.locale, page.path)
+        WIKI.models.blogs.blogFor(req.params.siteId, page.locale, page.path),
+        /*
+          The reader's own rating, which is theirs and so cannot be cached on the page the way the
+          totals are: one lookup on the primary key, and none for a guest or where ratings are off.
+        */
+        ratingMode ? WIKI.models.pageRatings.valueFor(page.id, actorId, ratingMode) : 0
       ])
+      const { ratings, ...pageFields } = page
       return {
-        ...page,
+        ...pageFields,
         commentsCount,
+        // -> Off the totals cached on the row just loaded, so no aggregate per view
+        rating: ratingMode ? WIKI.models.pageRatings.summaryFromCache(ratings, ratingMode) : null,
         /*
           Only what the page view draws: a post shows the name of the blog it is in and links to it.
           The blog's own settings are not a fact about this page -- the front page carries them, and
@@ -713,7 +725,8 @@ async function routes(app: FastifyInstance) {
         viewer: {
           permissions: pagePermissionsFor(req, page),
           ...approvalState,
-          isWatching
+          isWatching,
+          rating: ownRating
         }
       }
     }
