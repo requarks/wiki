@@ -118,6 +118,31 @@ export function mayOnPage(req: FastifyRequest, permission: string, page: RulePag
 }
 
 /**
+ * The page permissions that open the recycle bin, either one sufficient.
+ *
+ * Whoever may delete a page at a path may see what was deleted there and put it back, which is the
+ * undo of the same act; `manage:pages` is the broader authority over the pages at a path. Nothing
+ * else in the bin asks for more: viewing, downloading and restoring are one grant, since the bin is
+ * where a page is recovered FROM and each of the three is a step of doing so.
+ */
+const RECYCLE_BIN_PERMISSIONS = ['delete:pages', 'manage:pages']
+
+/**
+ * Whether this requester may see and recover a deleted page, asked of where it was when it went.
+ *
+ * The deletion's path, locale and tags stand in for the page, since there is none left to ask about
+ * -- which is also why this is the only page check that takes a version rather than a page.
+ */
+function mayRecoverPage(
+  req: FastifyRequest,
+  siteId: string,
+  deleted: { path: string; locale: string; tags?: string[] }
+): boolean {
+  const ref = { siteId, path: deleted.path, locale: deleted.locale, tags: deleted.tags ?? [] }
+  return RECYCLE_BIN_PERMISSIONS.some((permission) => mayOnPage(req, permission, ref))
+}
+
+/**
  * Whether this requester may be handed a page's SOURCE.
  *
  * `read:source` is the permission that exists to say so, and a rule grants it to whoever it names —
@@ -1376,6 +1401,197 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * RECYCLE BIN
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
+    '/sites/:siteId/pages/deleted',
+    {
+      /*
+        No route-level `permissions`: the bin is gated by page rules, `delete:pages` or
+        `manage:pages`, and those are resolved per deleted page against where it was.
+      */
+      schema: {
+        summary: 'List deleted pages',
+        description:
+          "The site's recycle bin: every page whose newest version is its deletion, most recently deleted first, in one locale.\n\nOnly the pages the caller holds `delete:pages` or `manage:pages` on, where each page was when it was deleted. Each entry names the version recording the deletion, which is what `GET /sites/:siteId/versions/:versionId` reads and `POST /sites/:siteId/pages/:pageId/restore` restores from.",
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            locale: {
+              type: 'string',
+              description: 'The locale the page was in when it was deleted.'
+            }
+          },
+          required: ['locale']
+        },
+        response: {
+          200: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                versionId: {
+                  type: 'string',
+                  format: 'uuid',
+                  description: 'The version recording the deletion.'
+                },
+                pageId: { type: 'string', format: 'uuid' },
+                locale: { type: 'string' },
+                path: {
+                  type: 'string',
+                  description: 'Where the page was when it was deleted.'
+                },
+                title: { type: 'string' },
+                icon: {
+                  type: 'string',
+                  description: 'An Iconify reference. Empty when the page had none of its own.'
+                },
+                editor: { type: 'string' },
+                deletedAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'RFC 3339 Date Time'
+                },
+                deletedBy: {
+                  type: 'object',
+                  description:
+                    'Who deleted it. Null id and empty name once that account is deleted.',
+                  properties: {
+                    id: { type: ['string', 'null'], format: 'uuid' },
+                    name: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const entries = await WIKI.models.pageHistory.listDeleted(req.params.siteId, req.query.locale)
+      return entries.filter((entry) => mayRecoverPage(req, req.params.siteId, entry))
+    }
+  )
+
+  app.post<{
+    Params: { siteId: string; pageId: string }
+    Body: { versionId: string; render?: string; path?: string; locale?: string; title?: string }
+  }>(
+    '/sites/:siteId/pages/:pageId/restore',
+    {
+      // -> Checked per page below, for the same reason as the recycle bin listing above
+      schema: {
+        summary: 'Restore a deleted page',
+        description:
+          "Bring a page back out of the recycle bin under its own id, so its whole history comes back with it. The page is restored as the deletion's snapshot held it; only its render is the caller's, produced from that snapshot's source the way an editor produces one, and sanitized against what the caller may embed.\n\nBack where it was unless `path` / `locale` say otherwise. A path another page has taken since answers 409 `pageDuplicatePath`, and a `versionId` that is no longer the page's deletion (it was restored and deleted again meanwhile) answers 409 `pageRestoreStale`.\n\nNeeds `delete:pages` or `manage:pages` where the page was when it was deleted, and at the destination when that is somewhere else.",
+        tags: ['Pages'],
+        params: pageIdParam,
+        body: {
+          type: 'object',
+          properties: {
+            versionId: {
+              type: 'string',
+              format: 'uuid',
+              description: 'The deletion being undone, as the recycle bin listed it.'
+            },
+            render: {
+              type: 'string',
+              description: "The HTML produced from the snapshot's source."
+            },
+            path: {
+              type: 'string',
+              description: 'Where to restore it, when not back where it was.'
+            },
+            locale: {
+              type: 'string',
+              description: 'The locale to restore it into, when not the one it was in.'
+            },
+            title: {
+              type: 'string',
+              description: 'A new title, when not the one it had.'
+            }
+          },
+          required: ['versionId']
+        },
+        response: {
+          200: {
+            description: 'Page restored successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' },
+              page: { $ref: 'Page#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized('Restoring a page requires a logged in user.')
+      }
+      const deletion = await WIKI.models.pageHistory.deletionOf(
+        req.params.siteId,
+        req.params.pageId
+      )
+      if (
+        !deletion ||
+        !mayRecoverPage(req, req.params.siteId, {
+          path: deletion.path,
+          locale: deletion.locale,
+          tags: deletion.meta.tags
+        })
+      ) {
+        return reply.notFound('This page is not in the recycle bin.')
+      }
+      // -> Somewhere else is somewhere this caller has to be allowed to put it, on the same terms
+      const destination = {
+        path: req.body.path ? normalizePagePath(req.body.path) : deletion.path,
+        locale: req.body.locale || deletion.locale,
+        tags: deletion.meta.tags
+      }
+      if (
+        (destination.path !== deletion.path || destination.locale !== deletion.locale) &&
+        !mayRecoverPage(req, req.params.siteId, destination)
+      ) {
+        return reply.forbidden('You are not allowed to restore a page here.')
+      }
+      const { page, versionId } = await WIKI.models.pages.restorePage(
+        req.params.siteId,
+        {
+          pageId: req.params.pageId,
+          versionId: req.body.versionId,
+          render: req.body.render,
+          path: destination.path,
+          locale: destination.locale,
+          title: req.body.title
+        },
+        actor
+      )
+
+      await audit(req, 'page', 'restorePage', {
+        pageId: page.id,
+        siteId: req.params.siteId,
+        locale: page.locale,
+        path: page.path,
+        title: page.title,
+        // -> Both ends: the deletion undone, and the version the page came back as
+        deletedVersionId: deletion.id,
+        versionId
+      })
+
+      return {
+        ok: true,
+        message: 'Page restored successfully.',
+        page
+      }
+    }
+  )
+
+  /**
    * PAGE HISTORY
    */
   app.get<{ Params: { siteId: string; pageId: string } }>(
@@ -1483,7 +1699,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a page version by its ID alone',
         description:
-          'The same version as the history route, addressed WITHOUT naming the page — what a `/_version/<id>` link resolves. The page it came off is named in the reply, since that is what the reader is asking to be told.\n\nNeeds `read:history` and the ability to read that page, on the same terms as the history list. A version whose page has since been deleted answers 404: the permissions that would decide who may read it are page rules, and there is no longer a page to check them against.',
+          "The same version as the history route, addressed WITHOUT naming the page — what a `/_version/<id>` link resolves. The page it came off is named in the reply, since that is what the reader is asking to be told.\n\nNeeds `read:history` and the ability to read that page, on the same terms as the history list.\n\nA version of a page that is in the recycle bin is answered on the recycle bin's terms instead: `delete:pages` or `manage:pages` where the page was when it was deleted, since there is no page left for the rules to be matched against. `pageIsDeleted` is then true, and `pagePath` / `pageLocale` are where it was.",
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -1513,6 +1729,34 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This version does not exist.')
       }
       /*
+        A page in the recycle bin has no row for the rules to be matched against, so the deletion
+        stands in for it: where the page was when it went, which is where the bin decides who may see
+        it. Every version of it is readable on those terms -- the bin's View opens the deletion, and
+        the history walked from there is the same page's.
+      */
+      const deletion = await WIKI.models.pageHistory.deletionOf(req.params.siteId, version.pageId)
+      if (deletion) {
+        if (
+          !mayRecoverPage(req, req.params.siteId, {
+            path: deletion.path,
+            locale: deletion.locale,
+            tags: deletion.meta.tags
+          })
+        ) {
+          return reply.notFound('This version does not exist.')
+        }
+        // -> As for a live page: a password guarded the content, and the bin is not a way around it
+        if (deletion.meta.password && !mayBypassPassword(req)) {
+          return reply.forbidden('This page is password protected.')
+        }
+        return {
+          ...version,
+          pageIsDeleted: true,
+          pagePath: deletion.path,
+          pageLocale: deletion.locale
+        }
+      }
+      /*
         The page as it stands, which is what carries the access rules — a version has none of its own.
         Note the rules are matched against the page's CURRENT path, not the path the version was
         written at: a page that has moved is one page, and who may read its history is a question about
@@ -1536,7 +1780,7 @@ async function routes(app: FastifyInstance) {
         for a page that has since moved it points at nothing. Free to include — the page is already
         loaded, one line above, to decide whether this reader may be here at all.
       */
-      return { ...version, pagePath: page.path, pageLocale: page.locale }
+      return { ...version, pageIsDeleted: false, pagePath: page.path, pageLocale: page.locale }
     }
   )
 

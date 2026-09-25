@@ -373,6 +373,24 @@ export interface PageInput {
   reasonForChange?: string
 }
 
+/** What bringing a page back out of the recycle bin takes. */
+export interface PageRestoreInput {
+  pageId: string
+  /**
+   * The deletion being undone, as the caller read it. Asked for rather than looked up alone, because
+   * the render below was produced from THAT snapshot's source: a page restored and deleted again in
+   * the meantime has a newer one, and the two must not be mixed.
+   */
+  versionId: string
+  /** The HTML the browser rendered the snapshot's source into, for where the page is going. */
+  render?: string
+  /** Where to put it, when not back where it was. */
+  path?: string
+  locale?: string
+  /** A title of its own, asked for alongside a new path; the one it had otherwise. */
+  title?: string
+}
+
 /** Who is saving, and what they are allowed to put in a page. */
 /** One row of the admin dashboard's recently-edited panel. */
 export interface RecentPage {
@@ -2305,6 +2323,208 @@ class Pages {
     })
     invalidateAppShellCache()
     return { page, versionId }
+  }
+
+  /**
+   * Bring a deleted page back, under its own id, from the version that recorded its deletion.
+   *
+   * The same id rather than a new page, which is what makes this an undo: every version the page ever
+   * had is keyed by that id and comes back with it, and so do the `/_version/` links pointing into
+   * them. The page is restored as the snapshot held it — title, content, tags, config, scripts,
+   * publish state and password — and put back where it was unless another path is asked for.
+   *
+   * What does not come back, and why:
+   * - The RENDER is not part of a version, so it is the browser's, from the snapshot's source — and
+   *   is sanitized against what the RESTORER may embed, as any render is. Scripts the page carried in
+   *   its own `scripts` column come back regardless, since those are what their author wrote.
+   * - Its place in a set of TRANSLATIONS. Leaving the set dissolved it if it left one page behind, and
+   *   rejoining one is a statement about the other pages that is not this restore's to make.
+   * - An ALIAS another page has taken since.
+   * - Its sidebar MENU, if it overrode one: that was keyed by the page's tree entry and went with it.
+   * - Its ratings, which are the readers' rows and were dropped with the page.
+   *
+   * @throws 404 when the page is not in the bin, 409 when `versionId` is not its current deletion or
+   *         when the destination path is taken
+   */
+  async restorePage(
+    siteId: string,
+    input: PageRestoreInput,
+    actor: PageActor
+  ): Promise<PageChange> {
+    if (!WIKI.sites[siteId]) {
+      throw new CustomError('pageInvalidSite', 'This site does not exist.', 404)
+    }
+    const deletion = await WIKI.models.pageHistory.deletionOf(siteId, input.pageId)
+    if (!deletion) {
+      throw new CustomError('pageNotDeleted', 'This page is not in the recycle bin.', 404)
+    }
+    if (deletion.id !== input.versionId) {
+      throw new CustomError(
+        'pageRestoreStale',
+        'This page has changed in the recycle bin since it was loaded. Reload it and try again.',
+        409
+      )
+    }
+
+    const meta = deletion.meta
+    const title = input.title?.trim() || deletion.title
+    const path = normalizePath(input.path ?? deletion.path)
+    const locale = input.locale || deletion.locale
+    const editor = meta.editor || 'markdown'
+    const contentType = meta.contentType || EDITOR_CONTENT_TYPES[editor] || 'text'
+
+    const duplicate = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(
+        and(eq(pagesTable.siteId, siteId), eq(pagesTable.locale, locale), eq(pagesTable.path, path))
+      )
+      .limit(1)
+    if (duplicate.length > 0) {
+      throw new CustomError('pageDuplicatePath', 'A page already exists at this path.', 409)
+    }
+    const pathParts = path.split('/')
+    await this.guardAgainstAssetCollision({
+      siteId,
+      locale,
+      parentPath: pathParts.slice(0, -1).join('/'),
+      fileName: pathParts.at(-1)!,
+      contentType
+    })
+
+    // -> Kept only while it is still free: an alias is unique across the site, and one taken since is
+    //    somebody else's now
+    let alias: string | null = meta.alias || null
+    if (alias) {
+      const taken = await WIKI.db
+        .select({ id: pagesTable.id })
+        .from(pagesTable)
+        .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.alias, alias)))
+        .limit(1)
+      if (taken.length > 0) {
+        alias = null
+      }
+    }
+
+    /*
+      Who made it and who owns it, as they were -- but only while those accounts exist. Both columns
+      are foreign keys, and an account deleted since the page went would otherwise make the page
+      impossible to restore at all; the restorer stands in, as they would for a page they created.
+    */
+    const origin = await WIKI.models.pageHistory.originOf(siteId, input.pageId)
+    const wantedUsers = [meta.ownerId, origin?.authorId].filter((id): id is string => Boolean(id))
+    const existingUsers = new Set(
+      wantedUsers.length > 0
+        ? (
+            await WIKI.db
+              .select({ id: usersTable.id })
+              .from(usersTable)
+              .where(inArray(usersTable.id, wantedUsers))
+          ).map((row) => row.id)
+        : []
+    )
+    const creatorId =
+      origin?.authorId && existingUsers.has(origin.authorId) ? origin.authorId : actor.id
+    const ownerId = meta.ownerId && existingUsers.has(meta.ownerId) ? meta.ownerId : actor.id
+
+    const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
+      siteId,
+      input.render ?? '',
+      {
+        scripts: hasPermission(actor, 'write:scripts'),
+        styles: hasPermission(actor, 'write:styles')
+      }
+    )
+
+    const tags: string[] = Array.isArray(meta.tags) ? meta.tags : []
+    const inserted = await WIKI.db
+      .insert(pagesTable)
+      .values({
+        id: input.pageId,
+        alias,
+        authorId: actor.id,
+        creatorId,
+        ownerId,
+        config: meta.config ?? {},
+        content: deletion.content,
+        contentType,
+        description: meta.description ?? '',
+        editor,
+        hash: generatePathHash(path),
+        icon: meta.icon ?? '',
+        isBrowsable: meta.isBrowsable ?? true,
+        isSearchable: meta.isSearchable ?? true,
+        locale,
+        localeGroupId: null,
+        password: meta.password || null,
+        path,
+        publishState: meta.publishState ?? 'published',
+        publishStartDate: meta.publishStartDate ? new Date(meta.publishStartDate) : null,
+        publishEndDate: meta.publishEndDate ? new Date(meta.publishEndDate) : null,
+        relations: meta.relations ?? [],
+        render,
+        searchContent: text,
+        scripts: meta.scripts ?? {},
+        siteId,
+        tags,
+        title,
+        toc,
+        ...(origin ? { createdAt: origin.versionDate } : {})
+      })
+      .returning()
+
+    const page = inserted[0]
+
+    try {
+      await WIKI.models.tree.addPage({
+        id: page.id,
+        parentPath: pathParts.slice(0, -1).join('/'),
+        fileName: pathParts.at(-1)!,
+        title: page.title,
+        locale,
+        siteId,
+        tags,
+        meta: this.treeMeta(page)
+      })
+    } catch (err) {
+      // -> As on a create: a page with no tree entry is invisible to everything that lists the wiki,
+      //    and it is back in the bin rather than lost -- the deletion is still its newest version
+      await WIKI.db.delete(pagesTable).where(eq(pagesTable.id, page.id))
+      throw err
+    }
+
+    // -> Outside the rollback, as on a create: the folder is a convenience, see `createPage`
+    if (editor === BLOG_EDITOR) {
+      await WIKI.models.blogs.ensureFolder({ siteId, locale, path, title: page.title })
+    }
+
+    await WIKI.models.pageLinks.refreshForPage(page, links)
+
+    const versionId = await WIKI.models.pageHistory.record({
+      siteId,
+      pageId: page.id,
+      action: 'restored',
+      authorId: actor.id
+    })
+
+    const stored = this.toStoragePage(siteId, actor.id, page, page.content ?? '')
+    await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
+
+    await WIKI.models.search.indexPage(page.id, locale)
+    // -> A create, to anything listening: a page has appeared at a path, which is what a webhook
+    //    subscribed to new pages is there to hear
+    await WIKI.models.hooks.emit('page:create', {
+      id: page.id,
+      path: page.path,
+      locale,
+      siteId,
+      authorId: actor.id,
+      metadata: { title: page.title, description: page.description, editor }
+    })
+
+    invalidateAppShellCache()
+
+    return { page: (await this.getPage({ siteId, id: page.id })) as Page, versionId }
   }
 
   /**

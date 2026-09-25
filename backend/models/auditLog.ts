@@ -31,6 +31,7 @@ export const AUDIT_ACTIONS = {
     'convertPage',
     'movePage',
     'deletePage',
+    'restorePage',
     'renderPage',
     'unlockPage',
     'watchPage',

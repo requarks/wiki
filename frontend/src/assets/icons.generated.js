@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  282 icons.
+  283 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-down": {"body":"<path fill=\"currentColor\" d=\"M4.219 10.781L2.78 12.22l12.5 12.5l.719.687l.719-.687l12.5-12.5l-1.438-1.438L16 22.562z\"/>","width":32,"height":32},
@@ -121,6 +121,7 @@ export const BUNDLED_ICONS = {
   "la:print": {"body":"<path fill=\"currentColor\" d=\"M9 4v7H7c-1.645 0-3 1.355-3 3v10h5v4h14v-4h5V14c0-1.645-1.355-3-3-3h-2V4zm2 2h10v5H11zm-4 7h18c.566 0 1 .434 1 1v8h-3v-4H9v4H6v-8c0-.566.434-1 1-1m1 1c-.55 0-1 .45-1 1s.45 1 1 1s1-.45 1-1s-.45-1-1-1m3 6h10v6H11z\"/>","width":32,"height":32},
   "la:project-diagram": {"body":"<path fill=\"currentColor\" d=\"M3 6v8h5.635L12 19.908V27h8v-8h-6.217l-2.845-5H11v-3h10v3h8V6h-8v3H11V6zm2 2h4v4H5zm18 0h4v4h-4zm-8.582 13H18v4h-4v-3.762z\"/>","width":32,"height":32},
   "la:question-circle": {"body":"<path fill=\"currentColor\" d=\"M16 4C9.383 4 4 9.383 4 16s5.383 12 12 12s12-5.383 12-12S22.617 4 16 4m0 2c5.535 0 10 4.465 10 10s-4.465 10-10 10S6 21.535 6 16S10.465 6 16 6m0 4c-2.2 0-4 1.8-4 4h2c0-1.117.883-2 2-2s2 .883 2 2a1.78 1.78 0 0 1-1.219 1.688l-.406.124A2.02 2.02 0 0 0 15 17.72V19h2v-1.281l.406-.125A3.81 3.81 0 0 0 20 14c0-2.2-1.8-4-4-4m-1 10v2h2v-2z\"/>","width":32,"height":32},
+  "la:recycle": {"body":"<path fill=\"currentColor\" d=\"M16 3.969a3.27 3.27 0 0 0-2.75 1.5l-2.813 4.625l1.72 1.031l2.812-4.594c.539-.804 1.562-.824 2.094 0l3.125 5l-1.5.875L23.313 15V9.687l-1.438.844L18.75 5.47A3.27 3.27 0 0 0 16 3.97zm-5.594 8.125l-4.5 2.594l1.25.75l-2.562 4.218l-.032-.031c-.011.02.012.043 0 .063C3.09 21.918 4.79 25 7.5 25H13v-2H7.5c-1.266 0-1.945-1.25-1.281-2.219l.031-.031v-.031l2.625-4.25l1.531.937zm14.656 3.562l-1.718 1.063l2.5 4c.64 1.09-.086 2.281-1.25 2.281H19v-2l-4.906 3L19 27v-2h5.594c2.636 0 4.328-3 2.968-5.313v-.03z\"/>","width":32,"height":32},
   "la:redo": {"body":"<path fill=\"currentColor\" d=\"M19.219 5.281L17.78 6.72L24.063 13H11c-3.844 0-7 3.156-7 7v7h2v-7c0-2.754 2.246-5 5-5h13.063l-6.282 6.281l1.438 1.438l8-8l.687-.719l-.687-.719z\"/>","width":32,"height":32},
   "la:redo-alt": {"body":"<path fill=\"currentColor\" d=\"M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13h-2c0 6.086-4.914 11-11 11S5 22.086 5 16S9.914 5 16 5c3.875 0 7.262 1.984 9.219 5H20v2h8V4h-2v3.719C23.617 4.844 20.02 3 16 3\"/>","width":32,"height":32},
   "la:reply": {"body":"<path fill=\"currentColor\" d=\"m12.281 5.281l-8 8l-.687.719l.687.719l8 8l1.438-1.438L7.438 15H21c2.773 0 5 2.227 5 5s-2.227 5-5 5v2c3.855 0 7-3.145 7-7s-3.145-7-7-7H7.437l6.282-6.281z\"/>","width":32,"height":32},

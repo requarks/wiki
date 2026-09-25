@@ -23,6 +23,13 @@
         <!-- -> Monospaced and selectable: it is an identifier, and the reason to show one in full is
                 so it can be read off and quoted -->
         <span class="text-caption font-robotomono select-all truncate">{{ state.version.id }}</span>
+        <!-- -> Said outright, since everything else on this screen looks the same either way: the
+                page this is a version of is in the recycle bin, and there is no live page behind it -->
+        <span
+          v-if="state.version.pageIsDeleted"
+          class="text-caption shrink-0 ml-2 px-2 rounded bg-negative text-white">
+          {{ t('history.deletedPage') }}
+        </span>
       </div>
       <!--
         Off on a phone, as the page view's date is: on a 390px screen it takes a whole line of its own
@@ -40,6 +47,7 @@
       :title="state.version.title"
       :description="versionDescription"
       :live-path="livePath"
+      :can-restore="canRestore"
       @download="downloadVersion"
       @restore="restoreVersion"
       @branch="branchFrom" />
@@ -152,6 +160,7 @@ import { computed, defineAsyncComponent, nextTick, reactive, ref, watch } from '
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { useDeletedPages } from '@/composables/deletedPages'
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { confirm, dialog } from '@/composables/dialog'
@@ -183,6 +192,10 @@ const route = useRoute()
 // I18N
 
 const { t } = useI18n()
+
+// COMPOSABLES
+
+const { restoreDeletedPage } = useDeletedPages()
 
 // DATA
 
@@ -252,11 +265,22 @@ const tocDepth = computed(() => state.version?.meta?.config?.tocDepth ?? { min: 
  */
 const livePath = computed(() => {
   const path = state.version?.pagePath
-  if (!path) {
+  // -> A page in the recycle bin has no live page: `pagePath` is then where it WAS
+  if (!path || state.version.pageIsDeleted) {
     return ''
   }
   return `${siteStore.localeUrlPrefix(state.version.pageLocale)}/${path}`
 })
+
+/**
+ * Whether Restore is offered. Always for a live page, where it puts this version's source back on it.
+ * For a page in the recycle bin, only on the version recording its deletion: restoring brings the
+ * page back from that snapshot, so offering it on an older version would restore something other
+ * than what is on screen.
+ */
+const canRestore = computed(
+  () => !state.version?.pageIsDeleted || state.version.action === 'deleted'
+)
 
 /*
   Whether there is a contents section to draw, rather than whether the page asked for one: a version
@@ -396,9 +420,19 @@ async function downloadVersion() {
  * text. Nothing is lost either way -- this is an ordinary edit, so it becomes a version of its own
  * with the current state recorded in it.
  */
-function restoreVersion() {
+async function restoreVersion() {
   const version = state.version
   if (!version) {
+    return
+  }
+  // -> Out of the recycle bin rather than onto a live page: there is no page to PATCH
+  if (version.pageIsDeleted) {
+    const restored = await restoreDeletedPage(version)
+    if (restored === 'stale') {
+      await loadVersion(version.id)
+    } else if (restored) {
+      router.push(`${siteStore.localeUrlPrefix(restored.locale)}/${restored.path}`)
+    }
     return
   }
   confirm({

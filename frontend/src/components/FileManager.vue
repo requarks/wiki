@@ -101,29 +101,68 @@
       Narrower while it overlays, so there is a comfortable width of scrim left to tap on.
     -->
     <w-drawer class="fileman-left" v-model="treeDrawerOpen" :width="isTreeOverlay ? 300 : 350">
-      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
+      <div class="flex h-full flex-col">
+        <w-scroll-area
+          class="min-h-0 flex-1"
+          :thumb-style="thumbStyle"
+          :bar-style="barStyle"
+          style="height: 100%">
+          <!--
+            -> No side padding: the tree's rows run the full width of the drawer, so a hovered or
+               selected row reads as a band across it rather than a floating pill. `pt-2` is the gap
+               above the root entry that the padding used to imply.
+          -->
+          <!--
+            -> The tree is told the bin is selected by being handed an id no folder has, which leaves
+               every row -- the root included -- unhighlighted while the bin is open
+          -->
+          <div class="pt-2 pb-2">
+            <tree
+              ref="treeComp"
+              :nodes="state.treeNodes"
+              :roots="state.treeRoots"
+              :selected="state.isRecycleBin ? RECYCLE_BIN_SELECTION : state.currentFolderId"
+              @update:selected="openFolder"
+              @lazy-load="treeLazyLoad"
+              :use-lazy-load="true"
+              @context-action="treeContextAction"
+              :display-mode="state.displayMode" />
+          </div>
+        </w-scroll-area>
         <!--
-          -> No side padding: the tree's rows run the full width of the drawer, so a hovered or
-             selected row reads as a band across it rather than a floating pill. `pt-2` is the gap
-             above the root entry that the padding used to imply.
+          Pinned under the tree rather than a node in it: it is not a place in the wiki, and it has to
+          stay reachable however far the tree has been scrolled or expanded. Signed in only -- the
+          permissions that open it cannot be granted to the guests group, so a visitor would only
+          ever find it empty.
         -->
-        <div class="pt-2 pb-2">
-          <tree
-            ref="treeComp"
-            :nodes="state.treeNodes"
-            :roots="state.treeRoots"
-            v-model:selected="state.currentFolderId"
-            @lazy-load="treeLazyLoad"
-            :use-lazy-load="true"
-            @context-action="treeContextAction"
-            :display-mode="state.displayMode" />
-        </div>
-      </w-scroll-area>
+        <button
+          v-if="userStore.authenticated"
+          type="button"
+          class="fileman-bin w-unstyled"
+          :class="{ 'is-active': state.isRecycleBin }"
+          :aria-pressed="state.isRecycleBin"
+          @click="openRecycleBin">
+          <w-icon name="la:recycle" size="sm" />
+          <span class="fileman-bin-label">{{ t('fileman.recycleBin') }}</span>
+          <w-icon v-if="state.isRecycleBin" name="la:angle-right" />
+        </button>
+      </div>
     </w-drawer>
     <w-drawer class="fileman-right" :model-value="detailsPaneShown" :width="350" side="right">
       <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
         <div class="p-4">
-          <template v-if="currentFileDetails">
+          <template v-if="state.isRecycleBin">
+            <template v-if="selectedDeletedPage">
+              <img
+                class="mb-4 w-full rounded object-cover"
+                src="/_assets/illustrations/fileman-page.svg" />
+              <div class="fileman-details-row" v-for="item of deletedPageDetails" :key="item.label">
+                <label>{{ item.label }}</label>
+                <span>{{ item.value }}</span>
+              </div>
+            </template>
+          </template>
+          <template v-else-if="currentFileDetails">
             <!--
               A button around the thumbnail, and only for an image: it opens the full view, and the
               illustration standing in for a page has nothing behind it to open.
@@ -213,6 +252,10 @@
                 t(`common.sidebar.browse`)
               }}</w-tooltip>
             </w-btn>
+            <div v-if="state.isRecycleBin" class="fileman-toolbar-title">
+              <w-icon name="la:recycle" class="mr-2" size="sm" />
+              {{ t('fileman.recycleBin') }}
+            </div>
             <w-space />
             <w-btn
               class="mr-2"
@@ -240,7 +283,7 @@
                       <w-item-section side>
                         <w-icon name="la:list" color="grey" size="xs" />
                       </w-item-section>
-                      <w-item-section class="pr-2">Browse using...</w-item-section>
+                      <w-item-section class="pr-2">{{ t(`fileman.browseUsing`) }}</w-item-section>
                       <w-item-section side>
                         <w-icon name="la:angle-right" color="grey" size="xs" />
                       </w-item-section>
@@ -255,7 +298,9 @@
                                 :color="state.displayMode === `path` ? `positive` : `grey`"
                                 size="xs" />
                             </w-item-section>
-                            <w-item-section class="pr-2">Browse Using Paths</w-item-section>
+                            <w-item-section class="pr-2">{{
+                              t(`fileman.browseUsingPaths`)
+                            }}</w-item-section>
                           </w-item>
                           <w-item clickable @click="state.displayMode = `title`">
                             <w-item-section side>
@@ -266,7 +311,9 @@
                                 :color="state.displayMode === `title` ? `positive` : `grey`"
                                 size="xs" />
                             </w-item-section>
-                            <w-item-section class="pr-2">Browse Using Titles</w-item-section>
+                            <w-item-section class="pr-2">{{
+                              t(`fileman.browseUsingTitles`)
+                            }}</w-item-section>
                           </w-item>
                         </w-list>
                       </w-menu>
@@ -278,7 +325,7 @@
                           :color="state.isCompact ? `positive` : `grey`"
                           size="xs" />
                       </w-item-section>
-                      <w-item-section class="pr-2">Compact List</w-item-section>
+                      <w-item-section class="pr-2">{{ t(`fileman.compactList`) }}</w-item-section>
                     </w-item>
                     <w-item clickable @click="state.shouldShowFolders = !state.shouldShowFolders">
                       <w-item-section side>
@@ -287,7 +334,21 @@
                           :color="state.shouldShowFolders ? `positive` : `grey`"
                           size="xs" />
                       </w-item-section>
-                      <w-item-section class="pr-2">Show Folders</w-item-section>
+                      <w-item-section class="pr-2">{{ t(`fileman.showFolders`) }}</w-item-section>
+                    </w-item>
+                    <w-item
+                      clickable
+                      :disabled="!state.shouldShowFolders"
+                      @click="state.shouldListFoldersFirst = !state.shouldListFoldersFirst">
+                      <w-item-section side>
+                        <w-icon
+                          :name="state.shouldListFoldersFirst ? `la:check-square` : `la:stop`"
+                          :color="state.shouldListFoldersFirst ? `positive` : `grey`"
+                          size="xs" />
+                      </w-item-section>
+                      <w-item-section class="pr-2">{{
+                        t(`fileman.listFoldersFirst`)
+                      }}</w-item-section>
                     </w-item>
                   </w-list>
                 </w-card>
@@ -301,238 +362,328 @@
               color="grey"
               :aria-label="t(`common.actions.refresh`)"
               icon="la:redo-alt"
-              @click="reloadFolder(state.currentFolderId)">
+              @click="refreshListing">
               <w-tooltip anchor="bottom middle" self="top middle">{{
                 t(`common.actions.refresh`)
               }}</w-tooltip>
             </w-btn>
-            <w-separator class="mr-2" inset vertical />
-            <w-btn
-              class="mr-2"
-              flat
-              dense
-              no-caps
-              color="blue"
-              :label="t(`common.actions.new`)"
-              :aria-label="t(`common.actions.new`)"
-              icon="la:plus-circle">
-              <new-menu
-                :hide-asset-btn="true"
-                :show-new-folder="true"
-                @new-folder="() => newFolder(state.currentFolderId)"
-                @new-page="() => close()"
-                :base-path="folderPath"
-                :locale="state.locale" />
-            </w-btn>
-            <w-btn
-              flat
-              dense
-              no-caps
-              color="positive"
-              :label="t(`common.actions.upload`)"
-              :aria-label="t(`common.actions.upload`)"
-              icon="la:cloud-upload-alt"
-              @click="uploadFile" />
-            <!--
+            <!-- -> New, Upload and Insert all act on the folder being listed, and the bin is not one -->
+            <template v-if="!state.isRecycleBin">
+              <w-separator class="mr-2" inset vertical />
+              <w-btn
+                class="mr-2"
+                flat
+                dense
+                no-caps
+                color="blue"
+                :label="t(`common.actions.new`)"
+                :aria-label="t(`common.actions.new`)"
+                icon="la:plus-circle">
+                <new-menu
+                  :hide-asset-btn="true"
+                  :show-new-folder="true"
+                  @new-folder="() => newFolder(state.currentFolderId)"
+                  @new-page="() => close()"
+                  :base-path="folderPath"
+                  :locale="state.locale" />
+              </w-btn>
+              <w-btn
+                flat
+                dense
+                no-caps
+                color="positive"
+                :label="t(`common.actions.upload`)"
+                :aria-label="t(`common.actions.upload`)"
+                icon="la:cloud-upload-alt"
+                @click="uploadFile" />
+              <!--
               Insert lives in the details pane, which is a 350px column with no overlay form -- so below
               1440px the editor's insert flow could be opened and never completed: the file list offers it
               only through a right-click menu, which is not a gesture a touch screen has. Here it is the
               same call on the same selection, in the one place that is always on screen.
             -->
-            <w-btn
-              v-if="insertMode && !detailsPaneShown && state.currentFileId"
-              class="ml-2"
-              flat
-              dense
-              no-caps
-              color="primary"
-              :label="t(`common.actions.insert`)"
-              :aria-label="t(`common.actions.insert`)"
-              icon="la:plus-circle"
-              @click="insertItem()" />
+              <w-btn
+                v-if="insertMode && !detailsPaneShown && state.currentFileId"
+                class="ml-2"
+                flat
+                dense
+                no-caps
+                color="primary"
+                :label="t(`common.actions.insert`)"
+                :aria-label="t(`common.actions.insert`)"
+                icon="la:plus-circle"
+                @click="insertItem()" />
+            </template>
           </template>
         </w-toolbar>
         <div class="flex flex-wrap" style="flex: 1 1 100%">
           <div class="min-w-0 flex-1">
             <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
-              <div class="fileman-loadinglist" v-if="state.fileListLoading">
-                <w-spinner class="mr-2" color="primary" size="64px" />
-                <span class="text-primary">Fetching folder contents...</span>
-              </div>
-              <div class="fileman-emptylist" v-else-if="files.length < 1">
-                <img src="/_assets/icons/carbon-copy-empty-box.svg" />
-                <span>This folder is empty.</span>
-              </div>
-              <w-list class="fileman-filelist" v-else :class="state.isCompact && `is-compact`">
-                <w-item
-                  v-for="item of files"
-                  :key="item.id"
-                  clickable
-                  active-class="active"
-                  :active="item.id === state.currentFileId"
-                  @click="selectItem(item)"
-                  @dblclick="doubleClickItem(item)">
-                  <w-item-section class="fileman-filelist-icon" avatar>
-                    <w-icon
-                      :name="item.icon"
-                      :size="state.isCompact ? `md` : `xl`"
-                      :style="item.iconStyle" />
-                  </w-item-section>
-                  <w-item-section class="fileman-filelist-label">
-                    <w-item-label>{{ usePathTitle ? item.fileName : item.title }}</w-item-label>
-                    <w-item-label caption v-if="!state.isCompact">{{ item.caption }}</w-item-label>
-                  </w-item-section>
-                  <w-item-section class="fileman-filelist-side" side v-if="item.side">
-                    <div class="text-caption">{{ item.side }}</div>
-                  </w-item-section>
-                  <!-- RIGHT-CLICK MENU -->
-                  <w-menu
-                    class="translucent-menu"
-                    touch-position
-                    context-menu
-                    auto-close
-                    transition-show="jump-down"
-                    transition-hide="jump-up">
-                    <w-card class="p-2">
-                      <w-list dense style="min-width: 150px">
-                        <w-item
-                          clickable
-                          v-if="insertMode && item.type !== `folder`"
-                          @click="insertItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:plus-circle" color="primary" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.insert`) }}</w-item-section>
-                        </w-item>
-                        <w-item clickable v-if="item.type === `page`" @click="editItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:edit" color="orange" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
-                        </w-item>
-                        <!-- -> Nothing to render on a page whose content is not an article: a
-                                redirection has a target and a blog has the posts under it, and the
-                                endpoint behind this refuses any editor but markdown anyway -->
-                        <w-item
-                          clickable
-                          v-if="
-                            item.type === `page` && ![`redirect`, `blog`].includes(item.pageType)
-                          "
-                          @click="rerenderPage(item)">
-                          <w-item-section side>
-                            <w-icon name="la:magic" color="orange" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.rerender`) }}</w-item-section>
-                        </w-item>
-                        <w-item clickable v-if="item.type !== `folder`" @click="openItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:eye" color="primary" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
-                        </w-item>
-                        <!-- -> Behind the experimental flag: neither has a handler behind it yet,
-                                so on an ordinary instance they are two rows that do nothing -->
-                        <template
-                          v-if="flagsStore.experimental && item.type === `asset` && item.imageEdit">
-                          <w-item clickable>
+              <!-- RECYCLE BIN ---------------------------------------------- -->
+              <template v-if="state.isRecycleBin">
+                <div class="fileman-loadinglist" v-if="state.binLoading">
+                  <w-spinner class="mr-2" color="primary" size="64px" />
+                  <span class="text-primary">{{ t('fileman.recycleBinLoading') }}</span>
+                </div>
+                <div class="fileman-emptylist" v-else-if="deletedPages.length < 1">
+                  <img src="/_assets/icons/carbon-copy-empty-box.svg" />
+                  <span>{{ t('fileman.recycleBinEmpty') }}</span>
+                </div>
+                <w-list class="fileman-filelist" v-else :class="state.isCompact && `is-compact`">
+                  <w-item
+                    v-for="item of deletedPages"
+                    :key="item.versionId"
+                    clickable
+                    active-class="active"
+                    :active="item.versionId === state.binSelectedId"
+                    @click="state.binSelectedId = item.versionId"
+                    @dblclick="viewDeletedPage(item)">
+                    <w-item-section class="fileman-filelist-icon" avatar>
+                      <!-- -> The page's own icon where it chose one, and its kind's otherwise. No
+                              colour of its own: it inherits the row's ink, which is what keeps it
+                              visible on a selected row's primary fill -->
+                      <w-icon
+                        :name="item.icon || deletedPageTypeIcon(item)"
+                        :size="state.isCompact ? `md` : `xl`" />
+                    </w-item-section>
+                    <w-item-section class="fileman-filelist-label">
+                      <w-item-label>{{ item.title }}</w-item-label>
+                      <w-item-label caption v-if="!state.isCompact">/{{ item.path }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section class="fileman-filelist-side" side>
+                      <div class="text-caption">{{ formatDateTime(item.deletedAt) }}</div>
+                    </w-item-section>
+                    <!-- RIGHT-CLICK MENU -->
+                    <w-menu
+                      class="translucent-menu"
+                      touch-position
+                      context-menu
+                      auto-close
+                      transition-show="jump-down"
+                      transition-hide="jump-up">
+                      <w-card class="p-2">
+                        <w-list dense style="min-width: 150px">
+                          <w-item clickable @click="viewDeletedPage(item)">
+                            <w-item-section side>
+                              <w-icon name="la:eye" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
+                          </w-item>
+                          <w-item clickable @click="restoreDeletedItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:undo" color="deep-orange-9" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`history.restore`) }}...</w-item-section>
+                          </w-item>
+                          <w-item clickable @click="downloadDeletedPage(item)">
+                            <w-item-section side>
+                              <w-icon name="la:download" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
+                          </w-item>
+                        </w-list>
+                      </w-card>
+                    </w-menu>
+                  </w-item>
+                </w-list>
+              </template>
+              <!-- FOLDER LISTING ------------------------------------------- -->
+              <template v-else>
+                <div class="fileman-loadinglist" v-if="state.fileListLoading">
+                  <w-spinner class="mr-2" color="primary" size="64px" />
+                  <span class="text-primary">Fetching folder contents...</span>
+                </div>
+                <div class="fileman-emptylist" v-else-if="files.length < 1">
+                  <img src="/_assets/icons/carbon-copy-empty-box.svg" />
+                  <span>This folder is empty.</span>
+                </div>
+                <w-list class="fileman-filelist" v-else :class="state.isCompact && `is-compact`">
+                  <w-item
+                    v-for="item of files"
+                    :key="item.id"
+                    clickable
+                    active-class="active"
+                    :active="item.id === state.currentFileId"
+                    @click="selectItem(item)"
+                    @dblclick="doubleClickItem(item)">
+                    <w-item-section class="fileman-filelist-icon" avatar>
+                      <w-icon
+                        :name="item.icon"
+                        :size="state.isCompact ? `md` : `xl`"
+                        :style="item.iconStyle" />
+                    </w-item-section>
+                    <w-item-section class="fileman-filelist-label">
+                      <w-item-label>{{ usePathTitle ? item.fileName : item.title }}</w-item-label>
+                      <w-item-label caption v-if="!state.isCompact">{{
+                        item.caption
+                      }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section class="fileman-filelist-side" side v-if="item.side">
+                      <div class="text-caption">{{ item.side }}</div>
+                    </w-item-section>
+                    <!-- RIGHT-CLICK MENU -->
+                    <w-menu
+                      class="translucent-menu"
+                      touch-position
+                      context-menu
+                      auto-close
+                      transition-show="jump-down"
+                      transition-hide="jump-up">
+                      <w-card class="p-2">
+                        <w-list dense style="min-width: 150px">
+                          <w-item
+                            clickable
+                            v-if="insertMode && item.type !== `folder`"
+                            @click="insertItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:plus-circle" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.insert`) }}</w-item-section>
+                          </w-item>
+                          <w-item clickable v-if="item.type === `page`" @click="editItem(item)">
                             <w-item-section side>
                               <w-icon name="la:edit" color="orange" />
                             </w-item-section>
-                            <w-item-section>Edit Image...</w-item-section>
+                            <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
                           </w-item>
-                          <w-item clickable>
+                          <!-- -> Nothing to render on a page whose content is not an article: a
+                                redirection has a target and a blog has the posts under it, and the
+                                endpoint behind this refuses any editor but markdown anyway -->
+                          <w-item
+                            clickable
+                            v-if="
+                              item.type === `page` && ![`redirect`, `blog`].includes(item.pageType)
+                            "
+                            @click="rerenderPage(item)">
                             <w-item-section side>
-                              <w-icon name="la:crop" color="orange" />
+                              <w-icon name="la:magic" color="orange" />
                             </w-item-section>
-                            <w-item-section>Resize Image...</w-item-section>
+                            <w-item-section>{{ t(`common.actions.rerender`) }}</w-item-section>
                           </w-item>
-                        </template>
-                        <w-item clickable v-if="item.type !== `folder`" @click="copyItemURL(item)">
-                          <w-item-section side>
-                            <w-icon name="la:clipboard" color="primary" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.copyURL`) }}</w-item-section>
-                        </w-item>
-                        <w-item clickable v-if="item.type === `asset`" @click="downloadItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:download" color="primary" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
-                        </w-item>
-                        <w-item
-                          clickable
-                          v-if="item.type === `folder`"
-                          @click="setFolderColor(item.id)">
-                          <w-item-section side>
-                            <w-icon name="la:fill" color="orange" />
-                          </w-item-section>
-                          <w-item-section>{{ t(`common.actions.setColor`) }}...</w-item-section>
-                        </w-item>
-                        <!--
+                          <w-item clickable v-if="item.type !== `folder`" @click="openItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:eye" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
+                          </w-item>
+                          <!-- -> Behind the experimental flag: neither has a handler behind it yet,
+                                so on an ordinary instance they are two rows that do nothing -->
+                          <template
+                            v-if="
+                              flagsStore.experimental && item.type === `asset` && item.imageEdit
+                            ">
+                            <w-item clickable>
+                              <w-item-section side>
+                                <w-icon name="la:edit" color="orange" />
+                              </w-item-section>
+                              <w-item-section>Edit Image...</w-item-section>
+                            </w-item>
+                            <w-item clickable>
+                              <w-item-section side>
+                                <w-icon name="la:crop" color="orange" />
+                              </w-item-section>
+                              <w-item-section>Resize Image...</w-item-section>
+                            </w-item>
+                          </template>
+                          <w-item
+                            clickable
+                            v-if="item.type !== `folder`"
+                            @click="copyItemURL(item)">
+                            <w-item-section side>
+                              <w-icon name="la:clipboard" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.copyURL`) }}</w-item-section>
+                          </w-item>
+                          <w-item
+                            clickable
+                            v-if="item.type === `asset`"
+                            @click="downloadItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:download" color="primary" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.download`) }}</w-item-section>
+                          </w-item>
+                          <w-item
+                            clickable
+                            v-if="item.type === `folder`"
+                            @click="setFolderColor(item.id)">
+                            <w-item-section side>
+                              <w-icon name="la:fill" color="orange" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`common.actions.setColor`) }}...</w-item-section>
+                          </w-item>
+                          <!--
                           Not for a file: duplicating is copying content to a second path, and an
                           upload has none to copy -- a second name over the same bytes is all it could
                           mean, which is not what anyone is asking a wiki for.
                         -->
-                        <w-item clickable v-if="item.type !== `asset`" @click="duplicateItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:copy" color="teal" />
-                          </w-item-section>
-                          <w-item-section>Duplicate...</w-item-section>
-                        </w-item>
-                        <!--
+                          <w-item
+                            clickable
+                            v-if="item.type !== `asset`"
+                            @click="duplicateItem(item)">
+                            <w-item-section side>
+                              <w-icon name="la:copy" color="teal" />
+                            </w-item-section>
+                            <w-item-section>Duplicate...</w-item-section>
+                          </w-item>
+                          <!--
                           One entry for a page: its name and its place are picked in the same dialog
                           the page view's own action rail opens, so offering them as two actions
                           would be offering two ways into one form.
                         -->
-                        <w-item clickable v-if="item.type === `page`" @click="renameMovePage(item)">
-                          <w-item-section side>
-                            <w-icon name="la:share" color="teal" />
-                          </w-item-section>
-                          <w-item-section>Rename / Move Page...</w-item-section>
-                        </w-item>
-                        <!--
+                          <w-item
+                            clickable
+                            v-if="item.type === `page`"
+                            @click="renameMovePage(item)">
+                            <w-item-section side>
+                              <w-icon name="la:share" color="teal" />
+                            </w-item-section>
+                            <w-item-section>Rename / Move Page...</w-item-section>
+                          </w-item>
+                          <!--
                           One entry for a file too, and for a plainer reason than a page's: its name
                           and its folder are the two halves of where a storage target keeps it, so
                           changing either is the same move to everything downstream of the rename.
                         -->
-                        <w-item
-                          clickable
-                          v-else-if="item.type === `asset`"
-                          @click="renameMoveAsset(item)">
-                          <w-item-section side>
-                            <w-icon name="la:share" color="teal" />
-                          </w-item-section>
-                          <w-item-section>Rename / Move To...</w-item-section>
-                        </w-item>
-                        <!-- -> Folders, which are the only thing left with two entries: their name
+                          <w-item
+                            clickable
+                            v-else-if="item.type === `asset`"
+                            @click="renameMoveAsset(item)">
+                            <w-item-section side>
+                              <w-icon name="la:share" color="teal" />
+                            </w-item-section>
+                            <w-item-section>Rename / Move To...</w-item-section>
+                          </w-item>
+                          <!-- -> Folders, which are the only thing left with two entries: their name
                                 and their place are asked for in two different dialogs -->
-                        <template v-else>
-                          <w-item clickable @click="renameFolder(item.id)">
+                          <template v-else>
+                            <w-item clickable @click="renameFolder(item.id)">
+                              <w-item-section side>
+                                <w-icon name="la:redo" color="teal" />
+                              </w-item-section>
+                              <w-item-section>Rename...</w-item-section>
+                            </w-item>
+                            <w-item clickable @click="moveFolder(item.id)">
+                              <w-item-section side>
+                                <w-icon name="la:arrow-right" color="teal" />
+                              </w-item-section>
+                              <w-item-section>Move To...</w-item-section>
+                            </w-item>
+                          </template>
+                          <w-item clickable @click="delItem(item)">
                             <w-item-section side>
-                              <w-icon name="la:redo" color="teal" />
+                              <w-icon name="la:trash-alt" color="negative" />
                             </w-item-section>
-                            <w-item-section>Rename...</w-item-section>
+                            <w-item-section class="text-negative">{{
+                              t(`common.actions.delete`)
+                            }}</w-item-section>
                           </w-item>
-                          <w-item clickable @click="moveFolder(item.id)">
-                            <w-item-section side>
-                              <w-icon name="la:arrow-right" color="teal" />
-                            </w-item-section>
-                            <w-item-section>Move To...</w-item-section>
-                          </w-item>
-                        </template>
-                        <w-item clickable @click="delItem(item)">
-                          <w-item-section side>
-                            <w-icon name="la:trash-alt" color="negative" />
-                          </w-item-section>
-                          <w-item-section class="text-negative">{{
-                            t(`common.actions.delete`)
-                          }}</w-item-section>
-                        </w-item>
-                      </w-list>
-                    </w-card>
-                  </w-menu>
-                </w-item>
-              </w-list>
+                        </w-list>
+                      </w-card>
+                    </w-menu>
+                  </w-item>
+                </w-list>
+              </template>
             </w-scroll-area>
           </div>
         </div>
@@ -540,7 +691,9 @@
     </w-page-container>
     <w-footer>
       <w-bar class="fileman-path">
-        <small class="text-caption text-grey-7">{{ folderPath }}</small>
+        <small class="text-caption text-grey-7">{{
+          state.isRecycleBin ? t('fileman.recycleBin') : folderPath
+        }}</small>
       </w-bar>
     </w-footer>
     <input type="file" ref="fileIpt" multiple @change="uploadNewFiles" style="display: none" />
@@ -567,11 +720,13 @@ import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
+import { useDeletedPages } from '@/composables/deletedPages'
 
 import { useCommonStore } from '@/stores/common'
 import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import { filesize } from 'filesize'
 import Fuse from 'fuse.js/basic'
@@ -581,6 +736,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 import { assetUrl } from '@/helpers/assets'
 import fileTypes from '@/helpers/fileTypes'
 import { folderIconStyle } from '@/helpers/folderColors'
+import { saveVersionSource } from '@/helpers/pageVersions'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
@@ -590,6 +746,7 @@ import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
 const dark = useDark()
 const screen = useScreen()
+const { restoreDeletedPage } = useDeletedPages()
 
 // STORES
 
@@ -597,6 +754,7 @@ const commonStore = useCommonStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -614,6 +772,13 @@ const { t } = useI18n()
  * on a laptop and on a large monitor will not want the same answer.
  */
 const VIEW_OPTIONS_KEY = 'wiki.fileman.viewOptions'
+
+/**
+ * What the folder tree is told is selected while the Recycle Bin is open: an id no folder can have, so
+ * that no row in it -- the root included, which is what a null would highlight -- claims to be the
+ * place being listed.
+ */
+const RECYCLE_BIN_SELECTION = 'recycle-bin'
 
 /**
  * The remembered view options, each taken only if it is still a value this component understands.
@@ -637,6 +802,9 @@ function storedViewOptions() {
     ...(typeof stored.isCompact === 'boolean' ? { isCompact: stored.isCompact } : {}),
     ...(typeof stored.shouldShowFolders === 'boolean'
       ? { shouldShowFolders: stored.shouldShowFolders }
+      : {}),
+    ...(typeof stored.shouldListFoldersFirst === 'boolean'
+      ? { shouldListFoldersFirst: stored.shouldListFoldersFirst }
       : {})
   }
 }
@@ -666,11 +834,23 @@ const state = reactive({
   displayMode: 'title',
   isCompact: false,
   shouldShowFolders: true,
+  /** Only consulted while `shouldShowFolders` is on: with no folders, there is nothing to put first. */
+  shouldListFoldersFirst: false,
   isUploading: false,
   shouldCancelUpload: false,
   uploadPercentage: 0,
   fileList: [],
-  fileListLoading: false
+  fileListLoading: false,
+  /**
+   * Whether the Recycle Bin is what the centre pane lists, in place of the folder. The folder stays
+   * selected underneath, listing and all, so leaving the bin for it again costs no fetch.
+   */
+  isRecycleBin: false,
+  binLoading: false,
+  /** The deleted pages this reader may recover, as `GET …/pages/deleted` answered, newest first. */
+  binItems: [],
+  /** Keyed by the deletion's version id, which is what every action on a bin entry works from. */
+  binSelectedId: null
 })
 
 // -> Over the defaults just above, which is what the view falls back to on a first visit
@@ -681,12 +861,12 @@ Object.assign(state, storedViewOptions())
   the editor's insert flow, which can be dismissed in ways that never reach a teardown here.
 */
 watch(
-  () => [state.displayMode, state.isCompact, state.shouldShowFolders],
-  ([displayMode, isCompact, shouldShowFolders]) => {
+  () => [state.displayMode, state.isCompact, state.shouldShowFolders, state.shouldListFoldersFirst],
+  ([displayMode, isCompact, shouldShowFolders, shouldListFoldersFirst]) => {
     try {
       globalThis.localStorage?.setItem(
         VIEW_OPTIONS_KEY,
-        JSON.stringify({ displayMode, isCompact, shouldShowFolders })
+        JSON.stringify({ displayMode, isCompact, shouldShowFolders, shouldListFoldersFirst })
       )
     } catch {
       // -> Full, or storage denied. Not worth a word to the reader: the options still work, they
@@ -772,6 +952,18 @@ const filteredFiles = computed(() => {
   }
 })
 
+/**
+ * The order the listing is drawn in: folders ahead of everything else when List Folders First is on,
+ * and otherwise exactly as it came. The sort is stable, so the listing's own order -- or a search's
+ * ranking -- still holds within each of the two groups.
+ */
+function listingOrder(a, b) {
+  if (!state.shouldShowFolders || !state.shouldListFoldersFirst) {
+    return 0
+  }
+  return Number(b.type === 'folder') - Number(a.type === 'folder')
+}
+
 const files = computed(() => {
   return filteredFiles.value
     .filter((f) => {
@@ -781,6 +973,7 @@ const files = computed(() => {
       }
       return true
     })
+    .toSorted(listingOrder)
     .map((f) => {
       switch (f.type) {
         case 'folder': {
@@ -814,6 +1007,37 @@ const files = computed(() => {
       }
       return f
     })
+})
+
+/** The Recycle Bin, narrowed by the same search field the folder listing uses. */
+const deletedPages = computed(() => {
+  if (!state.search) {
+    return state.binItems
+  }
+  const fuse = new Fuse(state.binItems, { keys: ['title', 'path'] })
+  return fuse.search(state.search).map((n) => n.item)
+})
+
+const selectedDeletedPage = computed(
+  () => state.binItems.find((item) => item.versionId === state.binSelectedId) ?? null
+)
+
+/** The details pane for a bin entry, in the same rows a live page gets. */
+const deletedPageDetails = computed(() => {
+  const item = selectedDeletedPage.value
+  if (!item) {
+    return []
+  }
+  return [
+    { label: t('fileman.detailsTitle'), value: item.title },
+    { label: t('fileman.detailsPath'), value: `/${item.path}` },
+    { label: t('fileman.detailsPageType'), value: t(`fileman.${item.editor}PageType`) },
+    { label: t('fileman.detailsDeletedAt'), value: formatDateTime(item.deletedAt) },
+    // -> Left out once the account is gone, rather than shown as an empty row
+    ...(item.deletedBy?.name
+      ? [{ label: t('fileman.detailsDeletedBy'), value: item.deletedBy.name }]
+      : [])
+  ]
 })
 
 /**
@@ -929,6 +1153,58 @@ function dismissTreeOverlay(ev) {
 
 function close() {
   siteStore.overlay = null
+}
+
+/**
+ * List a folder picked in the tree -- which is also how the Recycle Bin is left.
+ *
+ * Picking the folder that was already selected under the bin changes nothing the watcher would see,
+ * and needs nothing fetched either: its listing was left as it was when the bin opened.
+ */
+function openFolder(folderId) {
+  state.isRecycleBin = false
+  state.currentFolderId = folderId
+}
+
+function openRecycleBin() {
+  // -> The same as picking a folder, while the tree is a panel: what was asked for is underneath it
+  state.treeOpen = false
+  if (state.isRecycleBin) {
+    return
+  }
+  state.isRecycleBin = true
+  state.binSelectedId = null
+  loadRecycleBin()
+}
+
+async function loadRecycleBin() {
+  state.binLoading = true
+  try {
+    state.binItems = await API_CLIENT.get(`sites/${siteStore.id}/pages/deleted`, {
+      searchParams: { locale: state.locale }
+    }).json()
+    if (!state.binItems.some((item) => item.versionId === state.binSelectedId)) {
+      state.binSelectedId = null
+    }
+  } catch (err) {
+    state.binItems = []
+    notify({
+      type: 'negative',
+      message: t('fileman.recycleBinLoadFailed'),
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
+    })
+  } finally {
+    state.binLoading = false
+  }
+}
+
+/** The toolbar's Refresh, which reloads whichever of the two the centre pane is showing. */
+function refreshListing() {
+  if (state.isRecycleBin) {
+    loadRecycleBin()
+  } else {
+    reloadFolder(state.currentFolderId)
+  }
 }
 
 function formatDateTime(value) {
@@ -1104,6 +1380,11 @@ async function switchLocale(locale) {
   // -> The tree marks which folders it has fetched children for, by id. None of them are in the tree
   //    being entered, so the marks would only ever be wrong about it
   treeComp.value?.resetLoaded()
+  // -> The bin is listed per locale too, so it follows the picker like the folder listing does
+  if (state.isRecycleBin) {
+    state.binSelectedId = null
+    loadRecycleBin()
+  }
   await loadTree({ initLoad: true })
 }
 
@@ -1283,6 +1564,8 @@ function findFolderIdByPath(path) {
  */
 async function goToFolder({ id, folderPath, fileName, locale }) {
   const path = folderPath ? `${folderPath}/${fileName}` : fileName
+  // -> Where the reader is being taken is a folder, so the bin, if it was open, is left for it
+  state.isRecycleBin = false
   // -> Set before anything is fetched: every request below asks for one locale's tree
   state.locale = locale
   state.treeNodes = {}
@@ -1459,6 +1742,72 @@ function delPage(pageId, pageName) {
     // -> Reload current view
     loadTree({ parentId: state.currentFolderId })
   })
+}
+
+// --------------------------------------
+// RECYCLE BIN METHODS
+// --------------------------------------
+
+/** The kind of page a bin entry was, for a page with no icon of its own. */
+function deletedPageTypeIcon(item) {
+  return fileTypes[item.editor]?.icon ?? fileTypes.page.icon
+}
+
+/**
+ * The deletion's version in full -- source included, and where the page was -- which the bin's list
+ * does not carry: a screenful of deleted pages has no business carrying a screenful of their content.
+ */
+function fetchDeletedVersion(item) {
+  return API_CLIENT.get(`sites/${siteStore.id}/versions/${item.versionId}`).json()
+}
+
+/**
+ * Read the page as it was when it went, in the version view -- the one screen that draws a page out
+ * of a version, and where it can also be restored or branched off from.
+ */
+function viewDeletedPage(item) {
+  router.push(`/_version/${item.versionId}`)
+  close()
+}
+
+async function downloadDeletedPage(item) {
+  try {
+    await saveVersionSource(await fetchDeletedVersion(item))
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('history.downloadFailed'),
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
+    })
+  }
+}
+
+async function restoreDeletedItem(item) {
+  let version
+  try {
+    version = await fetchDeletedVersion(item)
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('fileman.restoreFailed'),
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
+    })
+    return
+  }
+  const restored = await restoreDeletedPage(version)
+  if (!restored) {
+    return
+  }
+  await loadRecycleBin()
+  if (restored !== 'stale') {
+    /*
+      The page is back in the tree, possibly with folders that were not there a moment ago -- its own
+      folder was deleted with it, or the reader put it somewhere new. The folders loaded so far are
+      marked stale and the branch under the bin is fetched again, ancestors and roots included.
+    */
+    treeComp.value?.resetLoaded()
+    await loadTree({ parentId: state.currentFolderId, initLoad: true })
+  }
 }
 
 // --------------------------------------
@@ -2068,6 +2417,56 @@ $fileman-hdr-wrap-max: 899.98px;
     @at-root .body--dark & {
       background-color: $dark-5;
     }
+  }
+
+  /*
+    The Recycle Bin, pinned under the tree. Drawn as one of the tree's own rows -- the same padding,
+    the same full-width band on hover and while it is open -- with a rule above it, since it is not a
+    place IN the tree and should not read as its last folder.
+  */
+  &-bin {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.4s ease;
+
+    @at-root .body--light & {
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    @at-root .body--dark & {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    &:hover,
+    &:focus-visible,
+    &.is-active {
+      @at-root .body--light & {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      @at-root .body--dark & {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    &-label {
+      flex: 1 1 auto;
+    }
+  }
+
+  &-toolbar-title {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &-path {

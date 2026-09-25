@@ -293,6 +293,10 @@ const header = computed(() => {
     case 'renamePage': {
       return { icon: 'img:/_assets/icons/fluent-rename.svg', title: 'pageRenameDialog.title' }
     }
+    // -> Out of the recycle bin, to somewhere other than where it was: that path has been taken
+    case 'restorePage': {
+      return { icon: 'img:/_assets/icons/fluent-save-as.svg', title: 'fileman.restorePageTo' }
+    }
     case 'renameAsset': {
       return { icon: 'img:/_assets/icons/fluent-rename.svg', title: 'fileman.assetRenameMove' }
     }
@@ -691,7 +695,8 @@ onMounted(async () => {
       state.typesToFetch = ['folder', 'page']
       break
     }
-    case 'renamePage': {
+    case 'renamePage':
+    case 'restorePage': {
       state.typesToFetch = ['folder', 'page']
       state.pathDirty = true
       break

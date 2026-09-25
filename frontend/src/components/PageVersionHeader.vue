@@ -107,6 +107,7 @@
         @click="emit(`branch`)" />
       <!-- -> The same orange every page header gives the action that changes the page -->
       <w-btn
+        v-if="canRestore"
         class="acrylic-btn ml-2"
         flat
         icon="la:undo"
@@ -134,10 +135,8 @@
         primary as TEXT on a dark page, but as a FILL behind white it measures 2.4:1 where plain
         `primary` gives 4.6:1. A fill carries its own contrast, so one colour serves both themes.
 
-        Rendered only with a path to go to. In practice there is always one, since the endpoint behind
-        this view refuses a version whose page has been deleted (page rules need a page to be checked
-        against), but a button whose target is empty would navigate to the site root and quietly look
-        like it had worked.
+        Rendered only with a path to go to, which a page in the recycle bin does not have: a button
+        whose target is empty would navigate to the site root and quietly look like it had worked.
       -->
       <w-btn
         class="ml-2"
@@ -185,6 +184,11 @@ defineProps({
   livePath: {
     type: String,
     default: ''
+  },
+  /** Whether Restore is offered -- see `canRestore` in `PageVersion.vue`. */
+  canRestore: {
+    type: Boolean,
+    default: true
   }
 })
 

@@ -513,6 +513,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'The page this is a version of. Present because a version URL names only the version, so this is how the reader is told what they are looking at a snapshot OF.'
           },
+          pageIsDeleted: {
+            type: 'boolean',
+            description:
+              'The page is in the recycle bin. `pagePath` and `pageLocale` are then where it was when it was deleted, and there is no live page to link to.'
+          },
           pagePath: {
             type: 'string',
             description:

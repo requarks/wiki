@@ -345,7 +345,8 @@ const ACTION_STYLES = {
   created: { icon: 'la:plus', dot: 'bg-positive' },
   updated: { icon: 'la:pen', dot: 'bg-blue-7' },
   moved: { icon: 'la:share', dot: 'bg-warning' },
-  deleted: { icon: 'la:trash', dot: 'bg-negative' }
+  deleted: { icon: 'la:trash', dot: 'bg-negative' },
+  restored: { icon: 'la:undo', dot: 'bg-teal' }
 }
 const ACTION_FALLBACK = { icon: 'la:circle', dot: 'bg-grey-7' }
 

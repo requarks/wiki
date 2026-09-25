@@ -1,5 +1,5 @@
 import { isEqual } from 'es-toolkit/predicate'
-import { and, desc, eq, lt, sql } from 'drizzle-orm'
+import { and, desc, eq, lt, notExists, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import {
   pageHistory as pageHistoryTable,
@@ -10,11 +10,12 @@ import {
 /**
  * The kinds of change a history row records.
  *
- * `created` and `deleted` are the two ends of a page's life; `moved` is a change of path or title,
- * which is worth telling apart from an ordinary edit because it is what breaks links; `updated` is
- * everything else, content and metadata alike.
+ * `created` and `deleted` are the two ends of a page's life, and `restored` is a deleted page coming
+ * back out of the recycle bin under its own id; `moved` is a change of path or title, which is worth
+ * telling apart from an ordinary edit because it is what breaks links; `updated` is everything else,
+ * content and metadata alike.
  */
-export const pageHistoryActions = ['created', 'updated', 'moved', 'deleted'] as const
+export const pageHistoryActions = ['created', 'updated', 'moved', 'deleted', 'restored'] as const
 
 export type PageHistoryAction = (typeof pageHistoryActions)[number]
 
@@ -115,6 +116,36 @@ export type PageHistoryEntry = {
   author: PageHistoryAuthor
 }
 
+/**
+ * A page in the recycle bin, as the file manager lists it: the version recording its deletion, and
+ * enough of what it was to draw a row and to check the page rules it stood under.
+ */
+export type DeletedPageEntry = {
+  /** The deletion's own version, which is what viewing, downloading and restoring are built from. */
+  versionId: string
+  pageId: string
+  locale: string
+  path: string
+  title: string
+  icon: string
+  editor: string
+  tags: string[]
+  deletedAt: Date
+  deletedBy: PageHistoryAuthor
+}
+
+/** The version recording a page's deletion, with the snapshot it holds. */
+export type PageDeletion = {
+  id: string
+  pageId: string
+  locale: string
+  path: string
+  title: string
+  content: string
+  meta: Record<string, any>
+  versionDate: Date
+}
+
 /** A version in full, source included. */
 export type PageHistoryVersion = PageHistoryEntry & {
   content: string
@@ -177,8 +208,8 @@ function toVersion(row: any): PageHistoryVersion {
  * Page history model
  *
  * Records a version of a page every time one changes, and reads those versions back for the history
- * view — which lists them and diffs any two against each other. Restoring one, and recovering a page
- * that was deleted, are still to come.
+ * view — which lists them and diffs any two against each other — and for the recycle bin, which is
+ * nothing more than the pages whose last version is their deletion.
  */
 class PageHistory {
   /**
@@ -340,6 +371,172 @@ class PageHistory {
       and(eq(pageHistoryTable.siteId, siteId), eq(pageHistoryTable.id, versionId))
     )
     return row ? { ...toVersion(row), pageId: row.pageId } : null
+  }
+
+  /**
+   * The pages in a site's recycle bin, most recently deleted first.
+   *
+   * A page is in the bin when its newest version is a deletion and no page row carries its id. Both
+   * halves are asked: the newest row alone would be enough today, since nothing can record against a
+   * page that is gone, but a page restored and deleted again has two deletions, and only the later
+   * one describes it.
+   *
+   * Newest per page across EVERY locale, and filtered by locale only afterwards — a page that was
+   * deleted in one locale, restored into another and deleted again belongs to the second, and
+   * filtering first would list it in both.
+   *
+   * Every such page, unpaged: the page rules that decide which of these a caller may see are resolved
+   * per row by the caller, so a page taken here could be a page of rows nobody may see.
+   */
+  async listDeleted(siteId: string, locale: string): Promise<DeletedPageEntry[]> {
+    const latest = WIKI.db
+      .selectDistinctOn([pageHistoryTable.pageId], {
+        id: pageHistoryTable.id,
+        pageId: pageHistoryTable.pageId,
+        action: pageHistoryTable.action,
+        locale: pageHistoryTable.locale,
+        path: pageHistoryTable.path,
+        title: pageHistoryTable.title,
+        icon: sql<string | null>`${pageHistoryTable.meta}->>'icon'`.as('icon'),
+        editor: sql<string | null>`${pageHistoryTable.meta}->>'editor'`.as('editor'),
+        tags: sql<string[] | null>`${pageHistoryTable.meta}->'tags'`.as('tags'),
+        versionDate: pageHistoryTable.versionDate,
+        authorId: pageHistoryTable.authorId
+      })
+      .from(pageHistoryTable)
+      .where(
+        and(
+          eq(pageHistoryTable.siteId, siteId),
+          notExists(
+            WIKI.db
+              .select({ id: pagesTable.id })
+              .from(pagesTable)
+              .where(eq(pagesTable.id, pageHistoryTable.pageId))
+          )
+        )
+      )
+      .orderBy(
+        pageHistoryTable.pageId,
+        desc(pageHistoryTable.versionDate),
+        desc(pageHistoryTable.id)
+      )
+      .as('latest')
+
+    const rows = await WIKI.db
+      .select({
+        id: latest.id,
+        pageId: latest.pageId,
+        locale: latest.locale,
+        path: latest.path,
+        title: latest.title,
+        icon: latest.icon,
+        editor: latest.editor,
+        tags: latest.tags,
+        versionDate: latest.versionDate,
+        authorId: usersTable.id,
+        authorName: usersTable.name,
+        authorEmail: usersTable.email
+      })
+      .from(latest)
+      .leftJoin(usersTable, eq(usersTable.id, latest.authorId))
+      .where(and(eq(latest.action, 'deleted'), eq(latest.locale, locale)))
+      .orderBy(desc(latest.versionDate), desc(latest.id))
+
+    return rows.map((row: any) => ({
+      versionId: row.id,
+      pageId: row.pageId,
+      locale: row.locale,
+      path: row.path,
+      title: row.title,
+      icon: row.icon ?? '',
+      editor: row.editor || 'markdown',
+      tags: Array.isArray(row.tags) ? row.tags : [],
+      deletedAt: row.versionDate,
+      deletedBy: {
+        id: row.authorId ?? null,
+        name: row.authorName ?? '',
+        email: row.authorEmail ?? ''
+      }
+    }))
+  }
+
+  /**
+   * The deletion a page is in the recycle bin by, or null when it is not in the bin — because it was
+   * never deleted, because it has been restored since, or because it never existed on this site.
+   *
+   * The newest version of the page, and only when that version is a deletion and no page row carries
+   * the id. That row is where the page was when it went, which is what its page rules are resolved
+   * against, and the snapshot a restore puts back.
+   */
+  async deletionOf(siteId: string, pageId: string): Promise<PageDeletion | null> {
+    const live = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(eq(pagesTable.id, pageId))
+      .limit(1)
+    if (live.length > 0) {
+      return null
+    }
+    const rows = await WIKI.db
+      .select({
+        id: pageHistoryTable.id,
+        pageId: pageHistoryTable.pageId,
+        action: pageHistoryTable.action,
+        locale: pageHistoryTable.locale,
+        path: pageHistoryTable.path,
+        title: pageHistoryTable.title,
+        content: pageHistoryTable.content,
+        meta: pageHistoryTable.meta,
+        versionDate: pageHistoryTable.versionDate
+      })
+      .from(pageHistoryTable)
+      .where(and(eq(pageHistoryTable.siteId, siteId), eq(pageHistoryTable.pageId, pageId)))
+      .orderBy(desc(pageHistoryTable.versionDate), desc(pageHistoryTable.id))
+      .limit(1)
+    const row = rows[0]
+    if (!row || row.action !== 'deleted') {
+      return null
+    }
+    return {
+      id: row.id,
+      pageId: row.pageId,
+      locale: row.locale,
+      path: row.path,
+      title: row.title,
+      content: row.content ?? '',
+      meta: (row.meta ?? {}) as Record<string, any>,
+      versionDate: row.versionDate
+    }
+  }
+
+  /**
+   * When a page first appeared and who made it, off its oldest version.
+   *
+   * What a restored page takes its `createdAt` and `creatorId` back from: neither is part of a
+   * version's snapshot (both are fixed for the page's life, see `EXCLUDED_FROM_META`), so without
+   * this every page brought back would claim to have been written the day it was restored, by
+   * whoever restored it. Null when the history has been purged past the page's creation.
+   */
+  async originOf(
+    siteId: string,
+    pageId: string
+  ): Promise<{ versionDate: Date; authorId: string | null } | null> {
+    const rows = await WIKI.db
+      .select({
+        versionDate: pageHistoryTable.versionDate,
+        authorId: pageHistoryTable.authorId
+      })
+      .from(pageHistoryTable)
+      .where(
+        and(
+          eq(pageHistoryTable.siteId, siteId),
+          eq(pageHistoryTable.pageId, pageId),
+          eq(pageHistoryTable.action, 'created')
+        )
+      )
+      .orderBy(pageHistoryTable.versionDate)
+      .limit(1)
+    return rows[0] ?? null
   }
 
   /**
