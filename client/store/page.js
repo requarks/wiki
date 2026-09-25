@@ -37,6 +37,9 @@ const state = {
       script: false,
       style: false
     },
+    tags: {
+      write: false
+    },
     system: {
       manage: false
     }
