@@ -566,25 +566,34 @@
                             </w-item-section>
                             <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
                           </w-item>
-                          <!-- -> Behind the experimental flag: neither has a handler behind it yet,
-                                so on an ordinary instance they are two rows that do nothing -->
-                          <template
+                          <!-- -> Behind the experimental flag: it has no handler behind it yet, so on
+                                an ordinary instance it is a row that does nothing -->
+                          <w-item
+                            clickable
                             v-if="
                               flagsStore.experimental && item.type === `asset` && item.imageEdit
                             ">
-                            <w-item clickable>
-                              <w-item-section side>
-                                <w-icon name="la:edit" color="orange" />
-                              </w-item-section>
-                              <w-item-section>Edit Image...</w-item-section>
-                            </w-item>
-                            <w-item clickable>
-                              <w-item-section side>
-                                <w-icon name="la:crop" color="orange" />
-                              </w-item-section>
-                              <w-item-section>Resize Image...</w-item-section>
-                            </w-item>
-                          </template>
+                            <w-item-section side>
+                              <w-icon name="la:edit" color="orange" />
+                            </w-item-section>
+                            <w-item-section>Edit Image...</w-item-section>
+                          </w-item>
+                          <!-- -> `imageEdit` is on the raster formats only, so never an SVG. And
+                                `can` answers whether write:assets is held ANYWHERE: the rule over
+                                this file's folder is the server's to check, per path. -->
+                          <w-item
+                            clickable
+                            v-if="
+                              item.type === `asset` &&
+                              item.imageEdit &&
+                              userStore.can(`write:assets`)
+                            "
+                            @click="resizeImage(item)">
+                            <w-item-section side>
+                              <w-icon name="la:crop" color="orange" />
+                            </w-item-section>
+                            <w-item-section>{{ t(`fileman.resizeImage`) }}...</w-item-section>
+                          </w-item>
                           <w-item
                             clickable
                             v-if="item.type !== `folder`"
@@ -1857,6 +1866,24 @@ function renameMoveAsset(item) {
         caption: apiErrorMessage(err, 'An unexpected error occured.')
       })
     }
+  })
+}
+
+/**
+ * Resize an image, over itself or into a new file beside it. Either way the folder is listed again:
+ * a new file has to appear in it, and a replaced one has a new size and thumbnail to show.
+ */
+function resizeImage(item) {
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/AssetResizeDialog.vue')),
+    componentProps: {
+      assetId: item.id,
+      fileName: item.fileName,
+      width: item.width ?? null,
+      height: item.height ?? null
+    }
+  }).onOk(async () => {
+    await loadTree({ parentId: state.currentFolderId })
   })
 }
 

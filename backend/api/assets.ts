@@ -424,6 +424,139 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * RESIZE IMAGE
+   */
+  app.post<{
+    Params: { siteId: string; assetId: string }
+    Body: {
+      width: number
+      height: number
+      quality?: number
+      mode: 'replace' | 'saveAs'
+      fileName?: string
+    }
+  }>(
+    '/sites/:siteId/assets/:assetId/resize',
+    {
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
+      schema: {
+        summary: 'Resize an image',
+        description: `Resizes a PNG, JPEG, WebP or GIF image to exactly \`width\` × \`height\` — sending a pair that does not keep the original ratio stretches it. Neither may exceed the original: an image can be made smaller, not larger. An animated GIF or WebP keeps its frames when saved as GIF or WebP, and is reduced to its first frame otherwise. SVG is refused, having no pixel size to change.\n\n\`replace\` writes the result over the file, which keeps its ID and its name, so every page showing it shows the new one. \`saveAs\` stores it as a new file named \`fileName\` in the same folder and locale, settled by the site's upload conflict behavior like any other upload, and encoded as whatever format that name's extension says.\n\nNeeds \`write:assets\` where the result is written, and \`read:assets\` on the original. Needs the Sharp extension, and answers 503 without it.`,
+        tags: ['Assets'],
+        params: assetIdParam,
+        body: {
+          type: 'object',
+          required: ['width', 'height', 'mode'],
+          properties: {
+            width: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 65535
+            },
+            height: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 65535
+            },
+            quality: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 80,
+              description: 'Only applies to JPEG and WebP. PNG and GIF are lossless and ignore it.'
+            },
+            mode: {
+              type: 'string',
+              enum: ['replace', 'saveAs']
+            },
+            fileName: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              description:
+                'Required for `saveAs`, including the extension. Sanitized, so the stored name may differ from the one sent.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Image resized successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              asset: { $ref: 'Asset#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      // -> Whatever is written records who wrote it, and an API key is not a who
+      const authorId = req.session?.authenticated ? req.session.user?.id : null
+      if (!authorId) {
+        return reply.unauthorized('Resizing an image requires a logged in user.')
+      }
+      const isSaveAs = req.body.mode === 'saveAs'
+      if (isSaveAs && !req.body.fileName) {
+        return reply.badRequest('A file name is required to save the resized image as a new file.')
+      }
+      const source = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
+      if (!source || !mayOnAsset(req, 'read:assets', source)) {
+        return reply.notFound('This asset does not exist.')
+      }
+      // -> Where the result lands: the file itself, or a new name beside it
+      const destination = {
+        folderPath: source.folderPath,
+        fileName: isSaveAs ? req.body.fileName! : source.fileName,
+        locale: source.locale
+      }
+      if (!mayOnAsset(req, 'write:assets', destination)) {
+        return reply.forbidden('You are not allowed to write a file here.')
+      }
+      const asset = await WIKI.models.assets.resizeImage({
+        siteId: req.params.siteId,
+        id: req.params.assetId,
+        width: req.body.width,
+        height: req.body.height,
+        quality: req.body.quality ?? 80,
+        saveAs: isSaveAs ? req.body.fileName : null,
+        authorId
+      })
+      if (!asset) {
+        return reply.notFound('This asset does not exist.')
+      }
+
+      await audit(req, 'asset', 'resizeAsset', {
+        assetId: asset.id,
+        sourceAssetId: source.id,
+        siteId: req.params.siteId,
+        locale: source.locale,
+        folderPath: source.folderPath,
+        fileName: asset.fileName,
+        mode: req.body.mode,
+        width: req.body.width,
+        height: req.body.height,
+        previousWidth: source.width,
+        previousHeight: source.height
+      })
+
+      return {
+        ok: true,
+        message: 'Image resized successfully.',
+        asset
+      }
+    }
+  )
+
+  /**
    * DELETE ASSET
    */
   app.delete<{ Params: { siteId: string; assetId: string } }>(

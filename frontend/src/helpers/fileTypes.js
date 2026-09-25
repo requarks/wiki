@@ -56,7 +56,8 @@ export default {
     icon: 'img:/_assets/icons/fluent-folder.svg'
   },
   gif: {
-    icon: 'img:/_assets/icons/color-gif.svg'
+    icon: 'img:/_assets/icons/color-gif.svg',
+    imageEdit: true
   },
   gz: {
     icon: 'img:/_assets/icons/color-archive.svg'
@@ -155,6 +156,10 @@ export default {
   },
   wav: {
     icon: 'img:/_assets/icons/color-wav.svg'
+  },
+  webp: {
+    icon: 'img:/_assets/icons/color-image-file.svg',
+    imageEdit: true
   },
   wma: {
     icon: 'img:/_assets/icons/color-audio-file.svg'

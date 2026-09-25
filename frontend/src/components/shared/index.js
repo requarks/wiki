@@ -53,6 +53,7 @@ import WScrollArea from './WScrollArea.vue'
 import WSelect from './WSelect.vue'
 import WSeparator from './WSeparator.vue'
 import WSignal from './WSignal.vue'
+import WSlider from './WSlider.vue'
 import WSpace from './WSpace.vue'
 import WSpinner from './WSpinner.vue'
 import WTab from './WTab.vue'
@@ -113,6 +114,7 @@ export const sharedComponents = {
   WSelect,
   WSeparator,
   WSignal,
+  WSlider,
   WSpace,
   WSpinner,
   WTab,

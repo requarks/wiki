@@ -5,6 +5,8 @@
  * normalizing it when the Sharp extension is available.
  */
 
+import { CustomError } from './common.ts'
+
 /** The image formats an upload may use. */
 export const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const
 
@@ -239,5 +241,121 @@ export async function readImageDimensions(data: Buffer): Promise<ImageDimensions
   } catch (err: any) {
     WIKI.logger.debug(`Could not read the dimensions of an upload: ${err.message}`)
     return null
+  }
+}
+
+/**
+ * The raster formats an image can be resized INTO, keyed by the file extension that names each one.
+ *
+ * The extension decides rather than the source: a file is served as the type its name says, so a
+ * `photo.png` saved as `photo.jpg` has to actually be a JPEG afterwards.
+ */
+export const resizableFormats = {
+  png: 'png',
+  jpg: 'jpeg',
+  jpeg: 'jpeg',
+  webp: 'webp',
+  gif: 'gif'
+} as const
+
+export type ResizableFormat = (typeof resizableFormats)[keyof typeof resizableFormats]
+
+/** The formats that can hold an animation, and so keep every frame of one. */
+const animatedFormats = new Set<ResizableFormat>(['gif', 'webp'])
+
+/** The formats that honour a quality setting. PNG and GIF are lossless, and ignore one. */
+const lossyFormats = new Set<ResizableFormat>(['jpeg', 'webp'])
+
+/** What an image is resized to, and how it is encoded afterwards. */
+export type ImageResize = {
+  width: number
+  height: number
+  format: ResizableFormat
+  /** 1 to 100. Only consulted for a lossy format. */
+  quality: number
+}
+
+/**
+ * Resize an image to exactly the given size, using the Sharp extension.
+ *
+ * Unlike the helpers above, this is something a person asked for rather than something done on their
+ * behalf, so there is no quiet fallback to the original bytes: every way it can fail is thrown as an
+ * error the caller can show them. Sharp being absent is the one they can do something about, and is
+ * reported apart from an image Sharp could not read.
+ *
+ * Both dimensions are applied as given, so a pair that does not keep the ratio stretches the image —
+ * keeping it is the dialog's job, where the lock is. Neither may exceed the original, measured as a
+ * viewer sees it (after EXIF orientation, which is applied here too): enlarging costs bytes to look
+ * worse.
+ *
+ * An animated GIF or WebP keeps every frame, unless it is saved as a format that cannot animate.
+ *
+ * @throws `imageResizeSharpMissing` (503), `imageResizeUnreadable` (422) or `imageResizeEnlarge` (400)
+ */
+export async function resizeImage(
+  data: Buffer,
+  { width, height, format, quality }: ImageResize
+): Promise<Buffer> {
+  const definition = WIKI.models.extensions.getDefinition('sharp')
+  if (!definition || !(await WIKI.models.extensions.isInstalled(definition))) {
+    throw new CustomError(
+      'imageResizeSharpMissing',
+      'Resizing an image needs the Sharp extension, which is not installed on this server. An administrator can install it under Administration → Extensions.',
+      503
+    )
+  }
+  const specifier = 'sharp'
+  let sharp: any
+  try {
+    ;({ default: sharp } = await import(specifier))
+  } catch (err: any) {
+    WIKI.models.extensions.noteLoadFailure(specifier)
+    WIKI.logger.warn(`Could not load Sharp to resize an image: ${err.message}`)
+    throw new CustomError(
+      'imageResizeSharpMissing',
+      'Resizing an image needs the Sharp extension, which could not be loaded on this server. An administrator can reinstall it under Administration → Extensions, then restart the server.',
+      503
+    )
+  }
+
+  // -> Every frame where the result can hold them, so that resizing an animation does not quietly
+  //    turn it into a still. PNG and JPEG cannot, and read all frames they would come out as every
+  //    frame stacked into one tall picture, so they take the first. A still reads the same either way.
+  const input = { animated: animatedFormats.has(format), autoOrient: true }
+  let original: ImageDimensions | null
+  try {
+    const { width: w, height: h, pageHeight, orientation } = await sharp(data, input).metadata()
+    // -> An animation is stacked frame over frame, so its height as a whole is every frame's together
+    const frameHeight = pageHeight || h
+    original =
+      w && frameHeight
+        ? orientation && orientation >= 5
+          ? { width: frameHeight, height: w }
+          : { width: w, height: frameHeight }
+        : null
+  } catch (err: any) {
+    WIKI.logger.debug(`Could not read an image to resize: ${err.message}`)
+    original = null
+  }
+  if (!original) {
+    throw new CustomError('imageResizeUnreadable', 'This image could not be read.', 422)
+  }
+  if (width > original.width || height > original.height) {
+    throw new CustomError(
+      'imageResizeEnlarge',
+      `An image can only be made smaller: this one is ${original.width} × ${original.height}.`
+    )
+  }
+
+  try {
+    let pipeline = sharp(data, input).resize(width, height, { fit: 'fill' })
+    if (format === 'jpeg') {
+      // -> JPEG has no alpha channel, and dropping one leaves whatever was transparent black
+      pipeline = pipeline.flatten({ background: '#ffffff' })
+    }
+    return await pipeline.toFormat(format, lossyFormats.has(format) ? { quality } : {}).toBuffer()
+  } catch (err: any) {
+    WIKI.logger.warn(`Could not resize an image: ${err.message}`)
+    throw new CustomError('imageResizeUnreadable', 'This image could not be resized.', 422)
   }
 }

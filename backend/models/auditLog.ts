@@ -48,7 +48,7 @@ export const AUDIT_ACTIONS = {
     'setFolderColor',
     'deleteFolder'
   ],
-  asset: ['uploadAsset', 'updateAsset', 'deleteAsset'],
+  asset: ['uploadAsset', 'updateAsset', 'resizeAsset', 'deleteAsset'],
   comment: ['createComment', 'updateComment', 'deleteComment'],
   auth: [
     'login',

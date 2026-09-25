@@ -9,7 +9,12 @@ import {
   encodeTreePath,
   normalizeFolderPath
 } from '../helpers/common.ts'
-import { makeImageThumbnail, readImageDimensions } from '../helpers/images.ts'
+import {
+  makeImageThumbnail,
+  readImageDimensions,
+  resizableFormats,
+  resizeImage
+} from '../helpers/images.ts'
 import type { ImageDimensions } from '../helpers/images.ts'
 import type { Readable } from 'node:stream'
 import type { DeletedEntry } from './tree.ts'
@@ -611,6 +616,102 @@ class Assets {
         updatedAt: new Date()
       }
     )
+  }
+
+  /**
+   * Resize an image, either over itself or into a new file beside it.
+   *
+   * Over itself is `replace`, the same as an upload landing on the name under the `overwrite`
+   * behavior: the ID, the name and the place stay, so every page showing the image now shows the
+   * smaller one. A new file is an upload into the same folder and locale, and is settled by the site's
+   * conflict behavior exactly as a file dropped there would be — so naming it after the original
+   * replaces it too where the site overwrites, and is refused where it rejects.
+   *
+   * What the result is encoded as comes from the name it is stored under, which is how a PNG saved as
+   * `.webp` becomes one. SVG is refused outright: it is markup, and has no pixels to resize.
+   *
+   * @param saveAs What to call the new file. Absent to resize the image in place.
+   * @returns The resized asset — for a new file, the one the upload produced — or null if there is no
+   *          such asset on this site
+   * @throws `imageResizeUnsupported` for a file that is not a raster image, or a name that is not one
+   *         of the formats it can be written as, plus whatever `resizeImage` and `upload` throw
+   */
+  async resizeImage({
+    siteId,
+    id,
+    width,
+    height,
+    quality,
+    saveAs,
+    authorId
+  }: {
+    siteId: string
+    id: string
+    width: number
+    height: number
+    quality: number
+    saveAs?: string | null
+    authorId: string
+  }): Promise<Asset | null> {
+    const source = await this.getAsset(siteId, id)
+    if (!source) {
+      return null
+    }
+    if (!Object.hasOwn(resizableFormats, source.fileExt)) {
+      throw new CustomError(
+        'imageResizeUnsupported',
+        source.fileExt === 'svg'
+          ? 'An SVG is a vector image, so it has no pixel size to change.'
+          : 'Only PNG, JPEG, WebP and GIF images can be resized.'
+      )
+    }
+    const targetName = saveAs ? sanitizeFileName(saveAs) : source.fileName
+    if (!targetName) {
+      throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
+    }
+    const targetExt = extensionOf(targetName)
+    const format = resizableFormats[targetExt as keyof typeof resizableFormats]
+    if (!format) {
+      throw new CustomError(
+        'imageResizeUnsupported',
+        'A resized image has to be saved as .png, .jpg, .jpeg, .webp or .gif.'
+      )
+    }
+
+    const content = await this.getContent(id)
+    if (!content) {
+      throw new CustomError('assetNoContent', 'This file has no content to resize.', 404)
+    }
+    const data = await resizeImage(content.data, { width, height, format, quality })
+
+    if (saveAs) {
+      return this.upload({
+        siteId,
+        locale: source.locale,
+        folderPath: source.folderPath,
+        fileName: targetName,
+        data,
+        authorId
+      })
+    }
+
+    const mimeType = mime.getType(targetName) ?? content.mimeType
+    return this.replace({
+      id,
+      siteId,
+      locale: source.locale,
+      folderPath: source.folderPath,
+      fileName: source.fileName,
+      title: source.title,
+      fileExt: targetExt,
+      kind: 'image',
+      mimeType,
+      data,
+      preview: await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height),
+      // -> Known rather than measured: the resize wrote exactly this, the right way up
+      dimensions: { width, height },
+      authorId
+    })
   }
 
   /**
