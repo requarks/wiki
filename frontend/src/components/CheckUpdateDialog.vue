@@ -36,6 +36,15 @@
             <div class="text-body2">
               Release Date: <strong>{{ state.latestDate }}</strong>
             </div>
+            <div class="text-body2 mt-2">
+              <a
+                href="https://github.com/requarks/wiki/releases"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary"
+                >{{ t(`admin.system.releaseNotes`) }}</a
+              >
+            </div>
           </div>
         </template>
       </w-card-section>

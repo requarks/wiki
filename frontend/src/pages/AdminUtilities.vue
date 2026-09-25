@@ -182,26 +182,35 @@
             </w-item-section>
           </w-item>
           <w-item>
+            <blueprint-icon icon="star-half-empty" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.rebuildPageRatings`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.rebuildPageRatingsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="rebuildPageRatings"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
             <blueprint-icon icon="rescan-document" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.scanPageProblems`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.utilities.scanPageProblemsHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section side>
-              <!--
-                The wrapper is what carries the tooltip: a disabled button is transparent to the
-                hit test, so a tooltip written inside it would never be shown. See WTooltip.
-              -->
-              <span data-tooltip-anchor class="inline-flex">
-                <w-btn
-                  class="acrylic-btn"
-                  flat
-                  icon="la:arrow-circle-right"
-                  color="primary"
-                  disabled
-                  :label="t(`common.actions.proceed`)" />
-                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
-              </span>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="openPageProblems"
+                :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
         </w-list>
@@ -471,6 +480,14 @@ const purgeHistoryTimeframes = computed(() => [
  */
 function openWikijs2Import() {
   adminStore.$patch({ overlay: 'ImportWikijs2Overlay' })
+}
+
+/**
+ * The page problem scan gets a screen of its own for the same reason: it runs for a while and reports
+ * as it goes, which is a progress log rather than a confirmation and a result.
+ */
+function openPageProblems() {
+  adminStore.$patch({ overlay: 'PageProblemsOverlay' })
 }
 
 /**
@@ -946,6 +963,44 @@ function rebuildPageLinks() {
       notify({
         type: 'negative',
         message: t('admin.utilities.rebuildPageLinksFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    loading.hide()
+  })
+}
+
+/**
+ * Count every page's rating totals again from the ratings table, on every site.
+ *
+ * Done in the request, unlike the link rebuild above: it is one aggregate over the ratings, not a read
+ * of every page's content, so the answer can say how many pages were out of step. Confirmed because
+ * it locks every page while it runs, not because anything is lost.
+ */
+function rebuildPageRatings() {
+  confirm({
+    title: t('admin.utilities.rebuildPageRatings'),
+    message: t('admin.utilities.rebuildPageRatingsConfirm'),
+    caption: t('admin.utilities.rebuildPageRatingsConfirmWarn'),
+    cancel: true,
+    persistent: true,
+    okLabel: t('common.actions.proceed')
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.post('system/page-ratings/rebuild').json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      const count = resp.count ?? 0
+      notify({
+        type: 'positive',
+        message: t('admin.utilities.rebuildPageRatingsSuccess', count, { count })
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('admin.utilities.rebuildPageRatingsFailed'),
         caption: apiErrorMessage(err)
       })
     }

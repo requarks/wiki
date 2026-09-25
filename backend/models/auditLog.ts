@@ -122,6 +122,7 @@ export const AUDIT_ACTIONS = {
     'updateSearchConfig',
     'rebuildSearchIndex',
     'rebuildPageLinks',
+    'rebuildPageRatings',
     'installExtension',
     'startImport',
     'finishImport',

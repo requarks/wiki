@@ -280,7 +280,7 @@ const MD_IMAGE_WITH_ATTRS = /!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)\{([^}]*)\}/
 const HTML_IMAGE = /<img\b[^>]*>/i
 
 /** What a page's `render` says until the render queue gets to it — `dev/specs/wkbackup.md` §8. */
-const PENDING_RENDER_HTML =
+export const PENDING_RENDER_HTML =
   '<p class="is-pending-render">This page has been imported and is waiting to be rendered.</p>'
 
 export interface ImportSessionSite {

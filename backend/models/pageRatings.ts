@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, exists, inArray, ne, not, sql } from 'drizzle-orm'
 import { pageRatings as ratingsTable, pages as pagesTable } from '../db/schema.ts'
 
 /** The two scales a site can rate its pages on. `off` is the absence of one. */
@@ -136,6 +136,86 @@ class PageRatings {
         .delete(ratingsTable)
         .where(and(eq(ratingsTable.pageId, pageId), eq(ratingsTable.userId, userId)))
     )
+  }
+
+  /**
+   * Recount the totals cached on every page, on every site, from the ratings table.
+   *
+   * The cache is only rewritten when one of a page's ratings changes, so anything that alters the
+   * rows without going through `rate` / `unrate` leaves it behind until the page is next rated — a
+   * deleted account's cascade, an import, a hand edit of the table. This is the way to put it right
+   * without waiting for that.
+   *
+   * Every page row is locked first, for the same reason `#changeAndRecount` locks the one it
+   * rewrites: a rating committed between counting and writing would otherwise be left out of the
+   * total written. Locked in id order so that two rebuilds cannot deadlock on each other.
+   *
+   * @returns How many pages had a cache that did not match their ratings.
+   */
+  async rebuildAll(): Promise<number> {
+    return WIKI.db.transaction(async (tx) => {
+      await tx.select({ id: pagesTable.id }).from(pagesTable).orderBy(pagesTable.id).for('update')
+
+      const countedKinds = inArray(ratingsTable.kind, [...RATING_MODES])
+      const perKind = tx
+        .select({
+          pageId: ratingsTable.pageId,
+          kind: ratingsTable.kind,
+          count: sql<number>`count(*)::int`.as('count'),
+          sum: sql<number>`coalesce(sum(${ratingsTable.value}), 0)::int`.as('sum'),
+          up: sql<number>`(count(*) filter (where ${ratingsTable.value} > 0))::int`.as('up'),
+          down: sql<number>`(count(*) filter (where ${ratingsTable.value} < 0))::int`.as('down')
+        })
+        .from(ratingsTable)
+        .where(countedKinds)
+        .groupBy(ratingsTable.pageId, ratingsTable.kind)
+        .as('perKind')
+      const perPage = tx
+        .select({
+          pageId: perKind.pageId,
+          cache:
+            sql<PageRatingsCache>`jsonb_object_agg(${perKind.kind}, jsonb_build_object('count', ${perKind.count}, 'sum', ${perKind.sum}, 'up', ${perKind.up}, 'down', ${perKind.down}))`.as(
+              'cache'
+            )
+        })
+        .from(perKind)
+        .groupBy(perKind.pageId)
+        .as('perPage')
+
+      // -> Pages somebody has rated, where the cache says otherwise
+      const recounted = await tx
+        .update(pagesTable)
+        .set({ ratings: sql`${perPage.cache}` })
+        .from(perPage)
+        .where(
+          and(
+            eq(perPage.pageId, pagesTable.id),
+            sql`${pagesTable.ratings} is distinct from ${perPage.cache}`
+          )
+        )
+        .returning({ id: pagesTable.id })
+
+      // -> Pages nobody has rated, still carrying totals
+      const cleared = await tx
+        .update(pagesTable)
+        .set({ ratings: {} })
+        .where(
+          and(
+            ne(pagesTable.ratings, {}),
+            not(
+              exists(
+                tx
+                  .select({ one: sql`1` })
+                  .from(ratingsTable)
+                  .where(and(eq(ratingsTable.pageId, pagesTable.id), countedKinds))
+              )
+            )
+          )
+        )
+        .returning({ id: pagesTable.id })
+
+      return recounted.length + cleared.length
+    })
   }
 
   /**

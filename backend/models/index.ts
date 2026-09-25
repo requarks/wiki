@@ -20,6 +20,7 @@ import { metrics } from './metrics.ts'
 import { navigation } from './navigation.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pageLinks } from './pageLinks.ts'
+import { pageProblems } from './pageProblems.ts'
 import { pageRatings } from './pageRatings.ts'
 import { pages } from './pages.ts'
 import { pageWatching } from './pageWatching.ts'
@@ -60,6 +61,7 @@ export default {
   navigation,
   pageHistory,
   pageLinks,
+  pageProblems,
   pageRatings,
   pages,
   pageWatching,

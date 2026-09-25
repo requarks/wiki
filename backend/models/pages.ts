@@ -157,11 +157,19 @@ export function isBodylessEditor(editor: string): boolean {
   return BODYLESS_EDITORS.has(editor)
 }
 
+/** Whether `editor` is one this wiki has an editor for, which is what knowing its content type is. */
+export function isKnownEditor(editor: string): boolean {
+  return Object.hasOwn(EDITOR_CONTENT_TYPES, editor)
+}
+
 /**
  * Put a bodyless editor's content into the one spelling its column holds, refusing what it cannot
  * use. Returns the content unchanged for an editor that writes an actual body.
  */
-function normalizeBodylessContent(editor: string, content: string | undefined): string | undefined {
+export function normalizeBodylessContent(
+  editor: string,
+  content: string | undefined
+): string | undefined {
   switch (editor) {
     case REDIRECT_EDITOR:
       return normalizeRedirectContent(content)
@@ -2005,17 +2013,18 @@ class Pages {
       reason: patch.reasonForChange
     })
 
-    if (treeTitle !== null || patch.tags !== undefined) {
-      await WIKI.db
-        .update(treeTable)
-        .set({
-          ...(treeTitle !== null ? { title: treeTitle } : {}),
-          ...(patch.tags !== undefined ? { tags: patch.tags } : {}),
-          meta: this.treeMeta(updated),
-          updatedAt: sql`now()`
-        })
-        .where(eq(treeTable.id, id))
-    }
+    // -> Every save, not only one that renamed or retagged the page: `meta` copies the author, the
+    //    description, the editor and the publishing fields too, and a folder listing that read a
+    //    stale copy would show a page as a draft long after it went live
+    await WIKI.db
+      .update(treeTable)
+      .set({
+        ...(treeTitle !== null ? { title: treeTitle } : {}),
+        ...(patch.tags !== undefined ? { tags: patch.tags } : {}),
+        meta: this.treeMeta(updated),
+        updatedAt: sql`now()`
+      })
+      .where(eq(treeTable.id, id))
 
     // -> The source is whatever this save set it to, else whatever it already was: a save that only
     //    changed the title still rewrites the copy, since the title is in its front matter
@@ -2270,6 +2279,9 @@ class Pages {
       authorId: actor.id
     })
 
+    // -> Out of its set of translations first, which dissolves the set if this leaves one page in
+    //    it: a group of one is no group, and the survivor's locale picker would offer nothing
+    await this.detachFromLocaleGroup(siteId, id)
     await WIKI.db.delete(pagesTable).where(eq(pagesTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
     // -> A page that overrode the sidebar owns a menu keyed by its own id, which nothing could reach
@@ -2362,6 +2374,11 @@ class Pages {
             )
           )
       ).map((row) => [row.id, row.contentType])
+    )
+    // -> Out of their sets of translations first, for the same reason `deletePage` does it
+    await this.detachFromLocaleGroups(
+      siteId,
+      entries.map((entry) => entry.id)
     )
     await WIKI.db.delete(pagesTable).where(
       inArray(
@@ -2925,8 +2942,11 @@ class Pages {
 
   /**
    * What a page's tree entry carries about it, so a folder listing needs no join.
+   *
+   * Public so that the page problem scan can tell a stale copy from a current one by the same rule
+   * that writes it.
    */
-  private treeMeta(page: any): Record<string, any> {
+  treeMeta(page: any): Record<string, any> {
     return {
       authorId: page.authorId,
       contentType: page.contentType,

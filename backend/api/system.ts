@@ -12,6 +12,7 @@ import {
 } from '../db/schema.ts'
 import maintenance from '../core/maintenance.ts'
 import { audit } from '../helpers/audit.ts'
+import { PAGE_PROBLEM_CHECKS } from '../models/pageProblems.ts'
 import { purgeTimeframes } from '../models/pageHistory.ts'
 import type { PurgeTimeframe } from '../models/pageHistory.ts'
 import type { FastifyInstance } from 'fastify'
@@ -1552,6 +1553,183 @@ async function routes(app: FastifyInstance) {
         count
       }
     }
+  )
+
+  /**
+   * REBUILD PAGE RATINGS
+   *
+   * The totals cached on every page, counted again from the ratings themselves.
+   *
+   * A page's cache is rewritten whenever one of its ratings is, so this is for the rows that changed
+   * without that happening — a deleted account's ratings going with it by cascade, most often. One
+   * statement per direction rather than a job: it is an aggregate over one table, not a read of every
+   * page's content.
+   */
+  app.post(
+    '/page-ratings/rebuild',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Recount the ratings cached on every page',
+        description:
+          'On every site. Rewrites the rating totals each page carries from the individual ratings recorded for it, and clears them on a page nobody has rated. Every page is locked for the length of the recount, so a rating given meanwhile waits for it rather than being left out.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'Page ratings rebuilt successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              count: {
+                type: 'number',
+                description: 'Pages whose cached totals were wrong and have been corrected.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const count = await WIKI.models.pageRatings.rebuildAll()
+      await audit(req, 'admin', 'rebuildPageRatings', { count })
+
+      return {
+        ok: true,
+        message: `Corrected the ratings of ${count} page(s).`,
+        count
+      }
+    }
+  )
+
+  /**
+   * SCAN FOR PAGE PROBLEMS
+   *
+   * One batch of a read-only scan of every page on every site — see `models/pageProblems.ts` for the
+   * checks. The admin screen calls this until `cursor` comes back null, which is what gives it a
+   * progress bar and a way to stop without a job to cancel. A GET, and not audited: nothing is written.
+   */
+  app.get<{ Querystring: { cursor?: string } }>(
+    '/page-problems',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Scan pages for problems, one batch at a time',
+        description:
+          'Checks every page on every site for broken or out-of-step data: empty content or render, unreadable settings documents, unknown or disabled editors, broken redirections, tree entries that are missing, misplaced, stale or orphaned, path hashes and aliases, inactive locales, orphaned translation groups, publishing dates, the search index and sidebar menus. Nothing is changed.\n\nCall without a cursor to start; the first reply also says how many pages there are and how many rows the whole scan will read. Call again with the `cursor` each reply returns until it is null. `GET /system/page-problems/checks` lists what is checked.',
+        tags: ['System'],
+        querystring: {
+          type: 'object',
+          properties: {
+            cursor: {
+              type: 'string',
+              pattern: '^[pt]:([0-9a-f-]{36})?$',
+              description: 'Where the previous batch stopped. Omit to start a scan.'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'One batch of the scan',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              pages: {
+                type: 'number',
+                description: 'Pages the scan checks, on every site. First batch only.'
+              },
+              total: {
+                type: 'number',
+                description:
+                  'Rows the whole scan reads — the pages, then every page entry in the file tree — which is what progress is measured against. First batch only.'
+              },
+              scanned: { type: 'number', description: 'Rows this batch read.' },
+              cursor: {
+                type: ['string', 'null'],
+                description: 'What to send for the next batch; null once the scan is complete.'
+              },
+              problems: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    check: { type: 'string' },
+                    severity: { type: 'string', enum: ['error', 'warning'] },
+                    pageId: { type: ['string', 'null'], format: 'uuid' },
+                    siteId: { type: 'string', format: 'uuid' },
+                    locale: { type: 'string' },
+                    path: { type: 'string' },
+                    title: { type: 'string' },
+                    url: {
+                      type: ['string', 'null'],
+                      description: 'Where to open the page; null for a tree entry with no page.'
+                    },
+                    params: {
+                      type: 'object',
+                      additionalProperties: { type: ['string', 'number'] },
+                      description: 'Details filled into the problem’s message.'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const batch = await WIKI.models.pageProblems.scan(req.query.cursor)
+      return {
+        ok: true,
+        ...(req.query.cursor ? {} : await WIKI.models.pageProblems.size()),
+        ...batch
+      }
+    }
+  )
+
+  /**
+   * What the page problem scan checks, so the admin screen can list them before a scan has run —
+   * and so that the list, the severities and the grouping are the server's alone.
+   */
+  app.get(
+    '/page-problems/checks',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'List the checks the page problem scan runs',
+        tags: ['System'],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              checks: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    key: { type: 'string' },
+                    group: { type: 'string' },
+                    severity: { type: 'string', enum: ['error', 'warning'] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async () => ({ ok: true, checks: PAGE_PROBLEM_CHECKS })
   )
 
   /**
