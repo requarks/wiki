@@ -186,6 +186,22 @@
                 :aria-label="t(`admin.editors.markdown.underline`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="tree-structure" />
+            <w-item-section>
+              <w-item-label>{{t(`admin.editors.markdown.wikiLinks`)}}</w-item-label>
+              <w-item-label caption>{{t(`admin.editors.markdown.wikiLinksHint`)}}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.wikiLinks"
+                color="primary"
+                checked-icon="la:check"
+                unchecked-icon="la:times"
+                :aria-label="t(`admin.editors.markdown.wikiLinks`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <w-inner-loading :showing="state.loading > 0">
           <w-spinner color="accent" size="lg" />
@@ -233,7 +249,8 @@ function defaultConfig() {
     quotes: 'english',
     underline: true,
     tabWidth: 2,
-    multimdTable: true
+    multimdTable: true,
+    wikiLinks: true
   }
 }
 

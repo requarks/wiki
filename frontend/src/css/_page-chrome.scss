@@ -391,6 +391,16 @@ $toc-overlay-max: 749.98px;
   flex: 0 0 300px;
 
   /*
+    Where the contents rail comes in from the article column's edge (`joined` on `PageToc`), as a
+    distance above the list: level with the rule along the bottom of the Article / Talk strip, so that
+    the strip's line carries straight on into the rail rather than turning down the article's edge and
+    back out a pixel lower. That rule is the bottom pixel of the 44px strip (`PageViewTabs.vue`), and
+    the list starts under the Contents heading's row -- 1rem of padding either side of a 1.25rem
+    caption line (`pages/Index.vue`).
+  */
+  --page-toc-lead: calc(1rem + 1.25rem + 1rem - 43px);
+
+  /*
     Narrower once the window is: 300px is pitched for a wide desktop, where it is a tenth of the width, and
     by 1200px it is a quarter of what is left after the nav sidebar. 200px still holds a heading of a few
     words per line -- the contents list wraps rather than truncating (see `PageToc`) -- and hands the

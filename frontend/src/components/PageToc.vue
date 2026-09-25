@@ -1,5 +1,5 @@
 <template>
-  <nav class="page-toc" aria-label="Table of contents">
+  <nav class="page-toc" :class="{ 'page-toc--joined': joined }" aria-label="Table of contents">
     <ul
       class="page-toc-list"
       :class="{ 'page-toc-list--animated': markerAnimated }"
@@ -69,6 +69,15 @@ const props = defineProps({
   selected: {
     type: String,
     default: null
+  },
+  /**
+   * Whether the rail turns out to the left at each end to meet a border drawn down the column's left
+   * edge, rather than stopping level with the first and last label. Only the caller knows whether
+   * there is such a border to meet, and how far off it is: see `--page-toc-reach` in the stylesheet.
+   */
+  joined: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -333,6 +342,23 @@ onBeforeUnmount(() => {
   --page-toc-ink-soft: #{$grey-6};
   --page-toc-ink-hover: #{$grey-10};
   --page-toc-hover-surface: rgba(0, 0, 0, 0.04);
+  /*
+    The space between the rail and a top-level label. The list is pulled left by the same amount, so
+    the labels start on this component's own left edge -- level with whatever else the caller lines up
+    there -- and the rail hangs out into the caller's padding.
+  */
+  --page-toc-gutter: 9px;
+  /* How far left of the rail the border a joined rail meets is: what is left of the caller's `px-4` */
+  --page-toc-reach: calc(1rem - var(--page-toc-gutter));
+  /* The radius of a joined rail's two turns, a little inside the reach so each keeps a short straight */
+  --page-toc-turn: 6px;
+  /* The active marker's thickness, measured left from the rail's right-hand edge */
+  --page-toc-marker-w: 4px;
+  /*
+    What a joined rail encloses between itself and the border: half the article's own white, so the
+    strip reads as the edge of the page reaching into the column rather than as a gap in it.
+  */
+  --page-toc-reach-fill: rgba(255, 255, 255, 0.5);
 
   line-height: 1.4;
 
@@ -343,11 +369,13 @@ onBeforeUnmount(() => {
     --page-toc-ink-soft: rgba(255, 255, 255, 0.45);
     --page-toc-ink-hover: #fff;
     --page-toc-hover-surface: rgba(255, 255, 255, 0.06);
+    /* -> Half the article's dark ground, `$dark-6`, for the same reason: white would glare here */
+    --page-toc-reach-fill: #{rgba($dark-6, 0.5)};
   }
 
   &-list {
     position: relative;
-    margin: 0;
+    margin: 0 0 0 calc(-1 * var(--page-toc-gutter));
     padding: 0;
     list-style: none;
 
@@ -363,6 +391,38 @@ onBeforeUnmount(() => {
     }
   }
 
+  /*
+    The joined rail: in from the column's left border above the list, a quarter turn down, the rail,
+    and a quarter turn back out to the border below it -- the same line round the contents that the
+    history timeline draws round its entries.
+
+    As there, all three stretches are ONE border of ONE box -- the top, right and bottom edges of an
+    invisible rectangle whose left edge is the column's -- so that the straights and the turns cannot
+    come out at different thicknesses under fractional display scaling.
+
+    The turns sit outside the list, above and below it, so the whole height of the list is the
+    straight stretch and the marker never rides onto a curve. The caller's padding is what they sit
+    in. And it is drawn in the border's own colour rather than the rail's, since a line that changed
+    shade where it met the border would read as two lines touching.
+  */
+  &--joined &-list::before {
+    /*
+      How far above the list the line comes in is the caller's to say, as `--page-toc-lead`: it is
+      wherever the line it continues is drawn, which nothing here can know. At least the turn, or the
+      curve would run into the first label.
+    */
+    top: calc(-1 * max(var(--page-toc-lead, 0px), var(--page-toc-turn)));
+    bottom: calc(-1 * var(--page-toc-turn));
+    left: calc(-1 * var(--page-toc-reach));
+    box-sizing: border-box;
+    /* -> Its right-hand border lands where the plain rail is, on the list's own left edge */
+    width: calc(var(--page-toc-reach) + 1px);
+    border: 1px solid var(--page-chrome-rule, var(--page-toc-rail));
+    border-left: 0;
+    border-radius: 0 var(--page-toc-turn) var(--page-toc-turn) 0;
+    background-color: var(--page-toc-reach-fill);
+  }
+
   &-item {
     position: relative;
     /* Depth is carried as a custom property by the template, so one rule indents every level */
@@ -370,8 +430,10 @@ onBeforeUnmount(() => {
   }
 
   /*
-    The active marker, drawn ON the rail rather than beside it: `left: 0` is the list's own border
-    box, which is where the rail is, so every depth marks the same line whatever its indentation.
+    The active marker, drawn ON the rail rather than beside it: the rail is the list's first pixel,
+    so every depth marks the same line whatever its indentation. Its right edge is the rail's right
+    edge, and the extra width grows out to the left -- toward the border a joined rail meets, and away
+    from the labels, which then sit the same distance from it as from the rail.
 
     One element for the whole list rather than a pseudo on the active row, so that moving to the next
     heading is a slide down the rail instead of the marker being switched off one row and on another.
@@ -382,10 +444,12 @@ onBeforeUnmount(() => {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    width: 2px;
+    /* -> The rail is 1px wide from `left: 0` */
+    left: calc(1px - var(--page-toc-marker-w));
+    width: var(--page-toc-marker-w);
     height: var(--page-toc-marker-h, 0);
-    border-radius: 1px;
+    /* -> Square on the rail's side, so it sits flush along the line it marks */
+    border-radius: calc(var(--page-toc-marker-w) / 2) 0 0 calc(var(--page-toc-marker-w) / 2);
     background-color: var(--color-primary);
     opacity: var(--page-toc-marker-opacity, 0);
     transform: translateY(var(--page-toc-marker-y, 0));
@@ -401,8 +465,8 @@ onBeforeUnmount(() => {
 
   &-link {
     display: block;
-    /* 9px of gutter, not a caret column: the rail is the only thing to the left of a label */
-    padding: 3px 8px 3px 9px;
+    /* A gutter, not a caret column: the rail is the only thing to the left of a label */
+    padding: 3px 8px 3px var(--page-toc-gutter);
     border-radius: 4px;
     color: inherit;
     font-size: inherit;

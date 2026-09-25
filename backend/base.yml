@@ -224,6 +224,7 @@ editors:
       lineBreaks: true
       typographer: false
       underline: false
+      wikiLinks: true
       tabWidth: 2
       latexEngine: katex
       kroki: true

@@ -231,7 +231,8 @@ class Sites {
               quotes: 'english',
               tabWidth: 2,
               typographer: false,
-              underline: true
+              underline: true,
+              wikiLinks: true
             }
           },
           /*
@@ -526,7 +527,8 @@ class Sites {
               quotes: 'english',
               tabWidth: 2,
               typographer: false,
-              underline: true
+              underline: true,
+              wikiLinks: true
             }
           },
           /*

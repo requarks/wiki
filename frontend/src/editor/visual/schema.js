@@ -543,9 +543,12 @@ export const schema = new Schema({
      * `target="_blank"` is the one that matters and the reason this carries attributes at all: it is
      * how both editors write "open in a new tab", and a link mark that could not hold it would drop it
      * from every page that had one, the first time the page was opened here and saved.
+     *
+     * `wikilink` is the target of a `[[Page Name]]` link as it was written, and null for every other
+     * kind. It is what the serialiser writes the link back out as; the href is derived from it.
      */
     link: {
-      attrs: { href: {}, title: { default: null }, ...mdAttrs },
+      attrs: { href: {}, title: { default: null }, wikilink: { default: null }, ...mdAttrs },
       inclusive: false,
       parseDOM: [
         {

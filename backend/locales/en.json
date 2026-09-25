@@ -437,6 +437,8 @@
   "admin.editors.markdown.typographerHint": "Enable some language-neutral replacement + quotes beautification.",
   "admin.editors.markdown.underline": "Underline Emphasis",
   "admin.editors.markdown.underlineHint": "Enable text underlining by using _underline_ syntax.",
+  "admin.editors.markdown.wikiLinks": "Wikilinks",
+  "admin.editors.markdown.wikiLinksHint": "Link to pages by name with the [[Page Name]] and [[Page Name{'|'}text]] syntax. Spaces become dashes and letters are lowercased.",
   "admin.editors.markdownDescription": "Use the Markdown syntax to write content. Includes real-time preview and code completion features.",
   "admin.editors.markdownName": "Markdown Editor",
   "admin.editors.redirectDescription": "Create redirections to other pages / external links.",

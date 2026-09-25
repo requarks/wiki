@@ -202,11 +202,23 @@ function normalizeInline(children, config) {
       its text, and the item itself carries whether it is ticked, so there is nothing here for it to
       contribute.
 
-      The plugin slices the `[x] ` off the text itself, marker and space together, so nothing is left
-      to trim after it — see the guard in `renderers/markdown.js` that keeps MDC's inline span off
-      that marker, without which it silently sliced nothing and left the marker in the page.
+      The plugin slices three characters off the text after it -- the `[x]` and NOT the space that
+      follows, which it leaves in so the page draws a gap between the box and the words. That space
+      is the serialiser's to write, since it goes out with the marker, so it is taken off the text
+      here: left on, every save wrote `- [ ] ` and then the text's own leading space after it, and
+      the item gained another space each time the page was saved. See also the guard in
+      `renderers/markdown.js` that keeps MDC's inline span off that marker, without which it silently
+      sliced nothing and left the marker in the page.
     */
     if (tok.type === 'html_inline' && tok.content.includes('task-list-item-checkbox')) {
+      const next = children[i + 1]
+      if (next?.type === 'text') {
+        next.content = next.content.trimStart()
+        // -> An item that starts with a link or an emoji has nothing else in that token
+        if (!next.content) {
+          i++
+        }
+      }
       continue
     }
 
@@ -521,6 +533,7 @@ const tokenSpecs = {
     getAttrs: (tok) => ({
       href: tok.attrGet('href'),
       title: tok.attrGet('title') || null,
+      wikilink: tok.meta?.wikilink ?? null,
       mdAttrs: readMdAttrs({ attrs: tok.meta?.props })
     })
   },

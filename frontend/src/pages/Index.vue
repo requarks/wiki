@@ -332,6 +332,7 @@
                 :nodes="pageStore.toc"
                 :min-depth="pageStore.tocDepth.min"
                 :max-depth="pageStore.tocDepth.max"
+                :joined="tocJoinsArticleEdge"
                 v-model:selected="state.tocSelected" />
             </div>
           </template>
@@ -688,6 +689,15 @@ const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && s
   already open -- the scrim is what closes it then, and the button would be behind the panel in any case.
 */
 const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && !state.tocPanelOpen)
+
+/*
+  Whether the contents rail runs out to meet the article column's right-hand edge (`.page-article-col`),
+  which is only beside it while the contents are a column to the RIGHT of the article. On the left the
+  edge is on the article's far side, and the panel has a shadow rather than an edge to meet.
+*/
+const tocJoinsArticleEdge = computed(
+  () => !tocIsPanel.value && siteStore.theme.tocPosition !== 'left'
+)
 
 /**
  * Whether the page on screen is a blog's front page, which is drawn as its posts rather than as an
@@ -1440,17 +1450,20 @@ function goBack() {
 
 <style lang="scss">
 /*
-  The Tags heading's edit toggle. `visibility` is transitioned alongside the opacity so it still fades
-  BOTH ways: as a discrete property it flips at the end of the transition when going to hidden, and at
-  the start when coming back, which is exactly the timing a fade wants.
+  The Last Edited By link, set as a top-level entry in the contents above it (`.page-toc-item--d0`):
+  its size and its ink. The ink is stated rather than inherited, since the column declares no text
+  colour of its own and on the dark sidebar an inherited one came out black.
 */
 .page-last-editor {
   display: inline-flex;
   align-items: center;
-  color: inherit;
+  color: $grey-9;
   text-decoration: none;
 
-  /* -> The size of a top-level entry in the contents above it (`.page-toc-item--d0`) */
+  @at-root .body--dark & {
+    color: rgba(255, 255, 255, 0.87);
+  }
+
   > span {
     font-size: 0.8125rem;
   }
@@ -1460,6 +1473,11 @@ function goBack() {
   }
 }
 
+/*
+  The Tags heading's edit toggle. `visibility` is transitioned alongside the opacity so it still fades
+  BOTH ways: as a discrete property it flips at the end of the transition when going to hidden, and at
+  the start when coming back, which is exactly the timing a fade wants.
+*/
 .tags-edit-btn {
   transition:
     opacity 0.2s var(--ease-standard),

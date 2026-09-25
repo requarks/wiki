@@ -79,13 +79,20 @@ const VERBOSE = process.argv.includes('--verbose')
  * an editor that normalised it to `*x*` would be changing the page rather than reformatting it.
  */
 const CONFIGS = {
-  default: { allowHTML: true, linkify: true, lineBreaks: true, multimdTable: true },
+  default: {
+    allowHTML: true,
+    linkify: true,
+    lineBreaks: true,
+    multimdTable: true,
+    wikiLinks: true
+  },
   underline: {
     allowHTML: true,
     linkify: true,
     lineBreaks: true,
     multimdTable: true,
-    underline: true
+    underline: true,
+    wikiLinks: true
   },
   plain: {
     allowHTML: true,
@@ -111,6 +118,10 @@ const CONSTRUCTS = {
   */
   'link opening a new tab': 'A [new tab](https://example.com){target="_blank"} here.',
   'link with id and class': 'A [classed](https://example.com){#x .cls} here.',
+  // -> A citation written as a link, which crashed the renderer before MDC's span stopped claiming
+  //    the brackets inside it
+  'link whose text is bracketed': 'See [[1]](https://example.com) here.',
+  'link with a span in its text': 'A [text with [a span]{.x} in it](https://example.com) here.',
   'link with a title and a target': 'A [both](https://example.com "Tip"){target="_blank"} here.',
   'image with size': '![alt](pic.png =100x200)',
   // -> Both halves of the suffix are optional, and a height on its own went missing on the way back
@@ -123,6 +134,7 @@ const CONSTRUCTS = {
   'ordered list with parens': '1) one\n2) two',
   'loose list': '- one\n\n- two',
   'task list': '- [x] done\n- [ ] todo',
+  'task starting with a link': '- [ ] [a link](/somewhere) to do',
   blockquote: '> quoted\n>\n> second',
   alert: '> [!WARNING] Mind the gap\n> Body of the alert.',
   'alert without a title': '> [!NOTE]\n> Body of the note.',
@@ -155,6 +167,18 @@ const CONSTRUCTS = {
 }
 
 /**
+ * Only under a config that turns `wikiLinks` on. With it off, `[[x]]` is two of MDC's inline spans one
+ * inside the other, which is a different construct and not what these are here to check.
+ */
+const WIKILINK_CONSTRUCTS = {
+  wikilink: 'See [[Getting Started]] and [[Guides/Setup Guide|the setup guide]].',
+  'wikilink to a section': 'See [[Page Name#Some Heading]] and [[#Local Section]].',
+  'wikilink with formatted text': 'See [[Some Page|**bold** and *italic*]] here.',
+  'wikilink with escapes': 'See [[Star\\* Page]] here.',
+  'wikilink opening a new tab': 'See [[Some Page]]{target="_blank"} here.'
+}
+
+/**
  * A render reduced to what it says.
  *
  * The preview's line markers go — they are scaffolding the server strips before storing anything — and
@@ -182,6 +206,27 @@ function check(name, source, config) {
   } catch (err) {
     return { ok: false, why: `threw while round-tripping: ${err.message}` }
   }
+  /*
+    And a second save must change nothing at all. The render comparison above cannot see a source that
+    only drifts in its whitespace -- it collapses whitespace on purpose -- and that is exactly the
+    failure that grows: a task item gained one more space after its checkbox on every save.
+  */
+  let again
+  try {
+    again = serialize(parser.parse(rewritten, 'demo/page'))
+  } catch (err) {
+    return { ok: false, why: `threw on a second round trip: ${err.message}`, rewritten }
+  }
+  if (again !== rewritten) {
+    return {
+      ok: false,
+      why: 'changes again on a second round trip',
+      rewritten,
+      before: rewritten,
+      after: again
+    }
+  }
+
   const before = meaningOf(render(source))
   const after = meaningOf(render(rewritten))
   if (before === after) {
@@ -206,6 +251,9 @@ let checked = 0
 
 for (const [configName, config] of Object.entries(CONFIGS)) {
   const cases = Object.entries(CONSTRUCTS)
+  if (config.wikiLinks) {
+    cases.push(...Object.entries(WIKILINK_CONSTRUCTS))
+  }
   for (const page of SAMPLE_PAGES) {
     if (page.content?.trim()) {
       cases.push([`sample page: ${page.title ?? page.path}`, page.content])

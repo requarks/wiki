@@ -76,6 +76,7 @@ export function findLink(state) {
     text: state.doc.textBetween(from, to, '', ''),
     href: mark.attrs.href,
     title: mark.attrs.title ?? '',
+    wikilink: mark.attrs.wikilink,
     // -> Whatever `{…}` the link carries, so editing it does not drop a `target="_blank"`
     mdAttrs: mark.attrs.mdAttrs,
     // -> Everything the run carries besides the link, so replacing the text does not drop its emphasis
@@ -105,6 +106,9 @@ export function applyLink(view, range, { text, href, title, newTab }) {
   const mark = type.create({
     href,
     title: title || null,
+    // -> Still a wikilink while it still goes where its target says; a new address makes it an
+    //    ordinary link, since the target is what the href would be derived from
+    wikilink: href === range.href ? (range.wikilink ?? null) : null,
     mdAttrs: Object.keys(mdAttrs).length > 0 ? mdAttrs : null
   })
   const tr = view.state.tr

@@ -355,12 +355,27 @@ const marks = {
    */
   abbr: { open: '', close: '', mixable: true },
 
+  /**
+   * A link, written back in whichever syntax it arrived in.
+   *
+   * A wikilink whose text is still exactly its target is `[[Target]]`; one whose text differs, or
+   * carries any other formatting, is `[[Target|text]]`. The piped form is also what a run that is
+   * partly bold needs, since the bare form's text is a name and is not parsed as markdown. A title has
+   * nowhere to go in either, so a wikilink that gained one is written as an ordinary link.
+   */
   link: {
-    open: '[',
+    open: (_state, mark, parent, index) => {
+      if (!mark.attrs.wikilink || mark.attrs.title) {
+        return '['
+      }
+      return isBareWikiLink(mark, parent, index) ? '[[' : `[[${mark.attrs.wikilink}|`
+    },
     close: (_state, mark) =>
-      `](${mark.attrs.href.replace(/[()"]/g, '\\$&')}${
-        mark.attrs.title ? ` "${mark.attrs.title.replace(/"/g, '\\"')}"` : ''
-      })${writeMdAttrs(mark.attrs.mdAttrs)}`,
+      mark.attrs.wikilink && !mark.attrs.title
+        ? `]]${writeMdAttrs(mark.attrs.mdAttrs)}`
+        : `](${mark.attrs.href.replace(/[()"]/g, '\\$&')}${
+            mark.attrs.title ? ` "${mark.attrs.title.replace(/"/g, '\\"')}"` : ''
+          })${writeMdAttrs(mark.attrs.mdAttrs)}`,
     mixable: true
   },
 
@@ -369,6 +384,25 @@ const marks = {
     close: (_state, _mark, parent, index) => backticksFor(parent.child(index - 1), 1),
     escape: false
   }
+}
+
+/**
+ * Whether a wikilink can be written as `[[Target]]`: its run of the paragraph is nothing but text
+ * that says exactly what the target says, with no mark on it besides the link itself.
+ */
+function isBareWikiLink(mark, parent, index) {
+  let text = ''
+  for (let i = index; i < parent.childCount; i++) {
+    const child = parent.child(i)
+    if (!mark.isInSet(child.marks)) {
+      break
+    }
+    if (!child.isText || child.marks.length > 1) {
+      return false
+    }
+    text += child.text
+  }
+  return text === mark.attrs.wikilink
 }
 
 /** A run of backticks long enough to delimit a code span containing backticks of its own. */

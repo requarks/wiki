@@ -15,6 +15,7 @@ import mdMdc from 'markdown-it-mdc'
 import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
 import mdGithubAlerts from './modules/github-alerts'
+import mdWikiLinks from './modules/markdown-it-wikilinks'
 import twemoji from '@twemoji/api'
 
 // -> Relative, like this file's other in-repo imports: it is also reachable from the headless
@@ -213,6 +214,17 @@ export class MarkdownRenderer {
       plugin looks for one. The trailing space is what keeps `[x]{.cls}` a span, since a marker cannot
       be followed by a brace.
 
+      And it never answers a probe. Silent mode is only ever `skipToken`, which is how markdown-it
+      measures a link's label -- stepping over everything in it -- and MDC's rule answered yes there
+      while leaving `state.pos` where it was. A rule that claims a token has to move past it, and
+      markdown-it throws when one does not, so any link whose text held brackets (`[[1]](https://…)`,
+      the way citations are written) took the whole render down with `inline rule didn't increment
+      state.pos`, freezing the editor's preview on the last good render. Moving past the span would
+      not be the fix either: `parseLinkLabel` reads anything longer than one character that opens with
+      `[` as a link inside the link, and refuses the outer one. A span is not a link, so the honest
+      answer is no -- the bracket is then counted as plain text, as it is without MDC, and the label is
+      tokenized for real afterwards, span and all.
+
       Reaching into `__rules__` is the only way to get hold of the original: markdown-it can replace a
       rule by name but has no way to read one back out.
     */
@@ -225,7 +237,10 @@ export class MarkdownRenderer {
       if (state.pos === 0 && TASK_LIST_MARKER.test(state.src)) {
         return false
       }
-      return inlineSpan(state, silent)
+      if (silent) {
+        return false
+      }
+      return inlineSpan(state, false)
     })
 
     /*
@@ -272,6 +287,11 @@ export class MarkdownRenderer {
 
     if (config.underline) {
       this.md.use(mdUnderline)
+    }
+
+    // -> MediaWiki's `[[Page Name]]` / `[[Page Name|text]]` -- see the module for where they point
+    if (config.wikiLinks) {
+      this.md.use(mdWikiLinks)
     }
 
     /*
