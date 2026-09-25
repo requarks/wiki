@@ -1,0 +1,14 @@
+key: wireviz
+title: WireViz Diagrams
+description: Render WireViz cable/wire diagrams from inline syntax
+author: Custom
+icon: mdi-format-superscript
+enabledDefault: false
+dependsOn: markdownCore
+props:
+  wirevizWebUrl:
+    type: String
+    title: WireViz Web URL
+    hint: URL of the WireViz Web service
+    default: http://localhost:3005
+    order: 1
