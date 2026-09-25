@@ -75,7 +75,7 @@ module.exports = {
             state: {
               status: 'pending',
               message: 'Initializing...',
-              lastAttempt: null
+              lastAttempt: new Date().toISOString()
             }
           }).where('key', tgt.key)
         }
