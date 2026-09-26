@@ -338,7 +338,19 @@ function bodyForPage(page: PageDescription): string {
   if (!page.render) {
     return ''
   }
-  return `<div id="${PRERENDER_ID}">${stripActiveMarkup(page.render)}</div>`
+  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${stripActiveMarkup(page.render)}</div>`
+}
+
+/**
+ * The `lang` and `dir` of the copy a page is served with, as the app puts them on the article.
+ *
+ * The shell's own `<html lang>` is the interface's and says nothing about the page, which may be
+ * written in any of the site's locales — and a right-to-left page drawn left to right is punctuated at
+ * the wrong end of every line.
+ */
+function languageAttrs(locale: string): string {
+  const dir = WIKI.models.locales.isRTL(locale) ? 'rtl' : 'ltr'
+  return ` lang="${htmlEscape(locale)}" dir="${dir}"`
 }
 
 /**
@@ -385,7 +397,7 @@ async function bodyForBlog(siteId: string, page: PageDescription): Promise<strin
   if (!intro && items.length < 1) {
     return ''
   }
-  return `<div id="${PRERENDER_ID}">${intro}<ul>${items}</ul></div>`
+  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${intro}<ul>${items}</ul></div>`
 }
 
 /**

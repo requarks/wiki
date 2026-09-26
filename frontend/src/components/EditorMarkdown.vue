@@ -317,6 +317,8 @@
           -->
           <div
             class="editor-markdown-preview-content page-contents"
+            :lang="pageStore.locale"
+            :dir="siteStore.localeDir(pageStore.locale)"
             ref="editorPreviewContainerRef"
             v-html="pageStore.render" />
         </div>

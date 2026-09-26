@@ -342,7 +342,12 @@
           @paste="onEditorPaste"
           @dragover="onEditorDragOver"
           @drop="onEditorDrop">
-          <div ref="mountRef" class="editor-visual-surface" />
+          <!-- -> The page's language and direction, inherited by the editable ProseMirror mounts in it -->
+          <div
+            ref="mountRef"
+            class="editor-visual-surface"
+            :lang="pageStore.locale"
+            :dir="siteStore.localeDir(pageStore.locale)" />
         </div>
       </div>
     </div>

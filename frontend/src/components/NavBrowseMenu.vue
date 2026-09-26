@@ -8,10 +8,12 @@
     @show="onShow">
     <!-- -> A fixed width: the levels slide sideways past each other, so a panel that resized to its
             contents would jump mid-slide. Long titles truncate instead. -->
-    <div class="browse-menu-panel">
+    <!-- -> Set here rather than inherited: the menu is teleported to the body, out from under the
+            drawer that carries the interface's direction -->
+    <div class="browse-menu-panel" :lang="commonStore.locale" :dir="dir">
       <div class="browse-menu-header flex flex-nowrap items-center">
         <!-- -> There is nowhere to go up to from the root, so the button is absent there rather than
-                sitting disabled. It slides in from the left as its own space opens up, and back out
+                sitting disabled. It slides in from the start as its own space opens up, and back out
                 the same way, so the title beside it moves with it instead of jumping. -->
         <transition name="browse-menu-up">
           <div v-if="!isRoot" class="browse-menu-up-slot">
@@ -33,7 +35,11 @@
           <!-- -> The root has no title of its own, and the site is already named in the sidebar
                   header directly above this, so there the path stands alone -->
           <div v-if="level.title" class="truncate text-sm font-medium">{{ level.title }}</div>
-          <div class="text-caption truncate opacity-60 font-robotomono">/{{ state.path }}</div>
+          <!-- -> A path reads left to right whatever the language around it, or the slashes would be
+                  reordered to the far end of a right-to-left segment -->
+          <div class="text-caption truncate opacity-60 font-robotomono">
+            <span dir="ltr">/{{ state.path }}</span>
+          </div>
         </div>
       </div>
       <w-separator />
@@ -70,7 +76,7 @@
                 <w-icon name="img:/_assets/icons/fluent-folder.svg" size="xs" class="shrink-0" />
                 <span class="truncate">{{ item.title }}</span>
                 <w-space />
-                <w-icon name="la:angle-right" size="xs" class="shrink-0 opacity-40" />
+                <w-icon :name="forwardIcon" size="xs" class="shrink-0 opacity-40" />
               </button>
               <button
                 v-if="item.isPage && item.isFolder"
@@ -79,7 +85,7 @@
                 :aria-label="t(`common.browse.openFolder`, { title: item.title })"
                 @click="descend(item)">
                 <w-tooltip>{{ t('common.browse.openFolder', { title: item.title }) }}</w-tooltip>
-                <w-icon name="la:angle-right" size="xs" class="opacity-70" />
+                <w-icon :name="forwardIcon" size="xs" class="opacity-70" />
               </button>
             </div>
             <div v-if="level.items.length < 1" class="browse-menu-note">
@@ -101,6 +107,7 @@ import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
 
+import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
@@ -134,6 +141,7 @@ const props = defineProps({
 
 // STORES
 
+const commonStore = useCommonStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 
@@ -165,6 +173,12 @@ const state = reactive({
 })
 
 // COMPUTED
+
+/** The interface's direction, which the panel has to state itself -- see the template. */
+const dir = computed(() => siteStore.localeDir(commonStore.locale))
+
+/** The chevron into a folder points the way the line runs, which right to left is to the left. */
+const forwardIcon = computed(() => (dir.value === 'rtl' ? 'la:angle-left' : 'la:angle-right'))
 
 const level = computed(() => state.levels[state.path] ?? EMPTY_LEVEL)
 
@@ -259,8 +273,19 @@ function goUp() {
 </script>
 
 <style scoped lang="scss">
+/*
+  `--browse-menu-x` is which way "forward" is along the line: 1 when it runs to the right, -1 when it
+  runs to the left. Every sideways slide below is multiplied by it, so a level entered on a
+  right-to-left interface arrives from the left -- the side its chevron pointed to.
+*/
 .browse-menu-panel {
+  --browse-menu-x: 1;
+
   width: 270px;
+
+  &[dir='rtl'] {
+    --browse-menu-x: -1;
+  }
 }
 
 /*
@@ -270,12 +295,13 @@ function goUp() {
   20px path -- plus the space around them.
 
   That leaves 12px above and below the 28px button, which is where the 12px beside it comes from: the
-  gap around it reads as even only if all four sides match. The left one is this padding, the right
-  one is the slot's own margin below.
+  gap around it reads as even only if all four sides match. The one before it is this padding, the one
+  after it is the slot's own margin below.
 */
 .browse-menu-header {
   height: 52px;
-  padding: 0 8px 0 12px;
+  padding-block: 0;
+  padding-inline: 12px 8px;
 }
 
 /*
@@ -305,7 +331,7 @@ function goUp() {
 .browse-menu-up-slot {
   flex: none;
   width: 28px;
-  margin-right: 12px;
+  margin-inline-end: 12px;
 }
 
 /*
@@ -317,7 +343,7 @@ function goUp() {
   overflow: hidden;
   transition:
     width 0.18s var(--ease-standard),
-    margin-right 0.18s var(--ease-standard),
+    margin-inline-end 0.18s var(--ease-standard),
     opacity 0.18s var(--ease-standard);
 }
 
@@ -331,13 +357,13 @@ function goUp() {
 .browse-menu-up-enter-from,
 .browse-menu-up-leave-to {
   width: 0;
-  margin-right: 0;
+  margin-inline-end: 0;
   opacity: 0;
 }
 
 .browse-menu-up-enter-from .browse-menu-up,
 .browse-menu-up-leave-to .browse-menu-up {
-  transform: translateX(-100%);
+  transform: translateX(calc(-100% * var(--browse-menu-x)));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -357,7 +383,7 @@ function goUp() {
   gap: 8px;
   padding: 6px 12px;
   font-size: 13px;
-  text-align: left;
+  text-align: start;
   color: inherit;
   text-decoration: none;
   cursor: pointer;
@@ -383,10 +409,10 @@ function goUp() {
   padding: 0 10px;
   cursor: pointer;
   /* -> The seam that says the row has two hit targets rather than one */
-  border-left: 1px solid rgb(0 0 0 / 0.08);
+  border-inline-start: 1px solid rgb(0 0 0 / 0.08);
 
   @at-root .body--dark & {
-    border-left-color: rgb(255 255 255 / 0.12);
+    border-inline-start-color: rgb(255 255 255 / 0.12);
   }
 }
 
@@ -439,18 +465,18 @@ function goUp() {
 .browse-menu-back-leave-active {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
 }
 
 .browse-menu-forward-enter-from,
 .browse-menu-back-leave-to {
-  transform: translateX(100%);
+  transform: translateX(calc(100% * var(--browse-menu-x)));
   opacity: 0;
 }
 
 .browse-menu-forward-leave-to,
 .browse-menu-back-enter-from {
-  transform: translateX(-100%);
+  transform: translateX(calc(-100% * var(--browse-menu-x)));
   opacity: 0;
 }
 

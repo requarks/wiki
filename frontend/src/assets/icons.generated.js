@@ -5,10 +5,11 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  283 icons.
+  284 icons.
 */
 export const BUNDLED_ICONS = {
   "la:angle-down": {"body":"<path fill=\"currentColor\" d=\"M4.219 10.781L2.78 12.22l12.5 12.5l.719.687l.719-.687l12.5-12.5l-1.438-1.438L16 22.562z\"/>","width":32,"height":32},
+  "la:angle-left": {"body":"<path fill=\"currentColor\" d=\"m19.031 4.281l-11 11l-.687.719l.687.719l11 11l1.438-1.438L10.187 16L20.47 5.719z\"/>","width":32,"height":32},
   "la:angle-right": {"body":"<path fill=\"currentColor\" d=\"M12.969 4.281L11.53 5.72L21.812 16l-10.28 10.281l1.437 1.438l11-11l.687-.719l-.687-.719z\"/>","width":32,"height":32},
   "la:arrow-circle-left": {"body":"<path fill=\"currentColor\" d=\"M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13S23.168 3 16 3m0 2c6.086 0 11 4.914 11 11s-4.914 11-11 11S5 22.086 5 16S9.914 5 16 5m-.719 4.594L8.875 16l6.406 6.406L16.72 21l-4-4H23v-2H12.719l4-4z\"/>","width":32,"height":32},
   "la:arrow-circle-right": {"body":"<path fill=\"currentColor\" d=\"M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13S23.168 3 16 3m0 2c6.086 0 11 4.914 11 11s-4.914 11-11 11S5 22.086 5 16S9.914 5 16 5m.719 4.594L15.28 11l4 4H9v2h10.281l-4 4l1.438 1.406L23.125 16z\"/>","width":32,"height":32},

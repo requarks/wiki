@@ -48,8 +48,7 @@ defineProps({
 
 /* -> After the two size rules, so it overrides whichever of them is in play */
 .w-bar--flush {
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline: 0;
 }
 
 /*
@@ -65,6 +64,6 @@ defineProps({
 }
 
 .w-bar :deep(> * + *) {
-  margin-left: 2px;
+  margin-inline-start: 2px;
 }
 </style>

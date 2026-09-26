@@ -370,7 +370,7 @@ $toc-overlay-max: 749.98px;
 }
 
 /*
-  The article column's own right-hand edge, which is the strip's rule turned the corner: the strip
+  The article column's own edge, which is the strip's rule turned the corner: the strip
   closes the top of the column, this closes its side, and the two meet at the strip's bottom corner so
   that what is drawn reads as one line round the content rather than as two borders that happen to
   touch.
@@ -382,9 +382,20 @@ $toc-overlay-max: 749.98px;
   Worn whether or not there is a strip above it. What is on the other side is the contents column or
   the actions rail, both of them chrome, and a column edge that appeared only on pages that take
   comments would be a difference a reader cannot account for.
+
+  On the right, against the contents column or the rail -- or on the left when the contents are a
+  column there (`page-container--toc-left`, from `pages/Index.vue`), since the edge is drawn against
+  the contents wherever they are. Physical sides both, because which side the column is on is the
+  theme's setting and not the language's. `PageViewTabs.vue` turns the corner to meet it on the same
+  class.
 */
 .page-article-col {
   border-right: 1px solid var(--page-chrome-rule);
+
+  .page-container--toc-left & {
+    border-right: 0;
+    border-left: 1px solid var(--page-chrome-rule);
+  }
 }
 
 .page-sidebar {

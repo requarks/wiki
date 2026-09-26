@@ -1,5 +1,9 @@
 <template>
-  <w-card style="min-width: 350px">
+  <!-- -> Teleported with the menu it opens in, so it states the interface's direction itself -->
+  <w-card
+    style="min-width: 350px"
+    :lang="commonStore.locale"
+    :dir="siteStore.localeDir(commonStore.locale)">
     <w-card-section class="card-header">
       <w-icon name="img:/_assets/icons/fluent-sidebar-menu.svg" left size="sm" />
       <span>{{ t(`navEdit.title`) }}</span>
@@ -97,6 +101,7 @@ import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
 
+import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
@@ -116,6 +121,7 @@ const props = defineProps({
 
 // STORES
 
+const commonStore = useCommonStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 

@@ -3,7 +3,7 @@
     <!-- Tags -->
     <template v-if="showTags">
       <div class="p-4 flex items-center">
-        <w-icon class="mr-2" name="la:tags" color="grey" />
+        <w-icon class="me-2" name="la:tags" color="grey" />
         <div class="text-caption text-grey-7">{{ t('common.blog.tags') }}</div>
       </div>
       <div class="px-4 pb-4">
@@ -27,7 +27,7 @@
     <template v-if="showArchive">
       <w-separator v-if="showTags" />
       <div class="p-4 flex items-center">
-        <w-icon class="mr-2" name="la:calendar-alt" color="grey" />
+        <w-icon class="me-2" name="la:calendar-alt" color="grey" />
         <div class="text-caption text-grey-7">{{ t('common.blog.archive') }}</div>
       </div>
       <div class="px-4 pb-4">
@@ -47,7 +47,7 @@
               dense
               size="sm"
               color="grey"
-              :icon="isOpen(year.year) ? `la:angle-down` : `la:angle-right`"
+              :icon="isOpen(year.year) ? `la:angle-down` : collapsedIcon"
               :aria-label="t(`common.blog.toggleYear`, { year: year.year })"
               :aria-expanded="isOpen(year.year)"
               @click="toggleYear(year.year)" />
@@ -94,6 +94,7 @@ import { blogFilterFromQuery, blogFilterQuery } from '@/helpers/blogFilter'
 import { parseBlog } from '@/helpers/pageBlog'
 
 import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 /**
  * The column beside a blog's listing: what the blog is about, and when it was written.
@@ -111,6 +112,7 @@ import { usePageStore } from '@/stores/page'
 // STORES
 
 const pageStore = usePageStore()
+const siteStore = useSiteStore()
 
 // ROUTER
 
@@ -131,6 +133,11 @@ const { t } = useI18n()
 const openYears = reactive(new Set())
 
 // COMPUTED
+
+/** A closed year's chevron points along the line, which on a right-to-left page is to the left. */
+const collapsedIcon = computed(() =>
+  siteStore.localeDir(pageStore.locale) === 'rtl' ? 'la:angle-left' : 'la:angle-right'
+)
 
 const settings = computed(() => parseBlog(pageStore.content))
 
@@ -251,7 +258,7 @@ function monthName(month) {
     }
 
     &-count {
-      padding-left: 5px;
+      padding-inline-start: 5px;
       font-size: 0.65rem;
       opacity: 0.6;
     }
@@ -267,13 +274,13 @@ function monthName(month) {
     &-toggle {
       flex: 0 0 auto;
       min-width: 0;
-      margin-right: 2px;
+      margin-inline-end: 2px;
       padding: 0 2px;
     }
   }
 
   .page-blog-months {
-    padding-left: 26px;
+    padding-inline-start: 26px;
   }
 
   .page-blog-month {
@@ -309,7 +316,7 @@ function monthName(month) {
     }
 
     &-count {
-      padding-left: 8px;
+      padding-inline-start: 8px;
       font-size: 0.68rem;
       opacity: 0.55;
     }

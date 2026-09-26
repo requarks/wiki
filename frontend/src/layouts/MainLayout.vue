@@ -3,8 +3,15 @@
     <w-header class="site-header-wrap">
       <header-nav />
     </w-header>
+    <!--
+      In the interface's language and direction. Which edge of the window the drawer sits on is the
+      theme's `sidebarPosition` and is placed in physical terms, so it does not move with them -- what
+      runs the other way on a right-to-left interface is what is inside it.
+    -->
     <w-drawer
       class="bg-sidebar"
+      :lang="commonStore.locale"
+      :dir="siteStore.localeDir(commonStore.locale)"
       v-model="isSidebarOpen"
       :width="sidebarWidth"
       :overlay-below="SIDEBAR_OVERLAY_BELOW"

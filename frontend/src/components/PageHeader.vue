@@ -1,7 +1,16 @@
 <template>
-  <div class="page-header flex flex-wrap">
+  <!--
+    In the interface's language and direction: the row is chrome -- an icon, then what it is called,
+    then what can be done with it -- and on a right-to-left interface it runs from the right. The title
+    and description keep the PAGE's direction on their own text, below, which in the editor need not be
+    the same one: an editor is not a page path, so the interface there stays in the reader's language.
+  -->
+  <div
+    class="page-header flex flex-wrap"
+    :lang="commonStore.locale"
+    :dir="siteStore.localeDir(commonStore.locale)">
     <!-- PAGE ICON -->
-    <div class="flex-none pl-4 flex items-center">
+    <div class="flex-none ps-4 flex items-center">
       <w-btn
         class="rounded"
         v-if="isEditing"
@@ -37,12 +46,18 @@
       and left at the top it sat above the middle of the icon beside it. A page that has one is taller
       than everything else in the row, so there is nothing to centre and this changes nothing.
     -->
-    <div class="min-w-0 flex-1 flex flex-col justify-center p-2 sm:p-4">
+    <!--
+      The title and description are the page's own words, so they take its language and direction --
+      on the text alone rather than on the column, which would push them to the far side of the icon
+      they belong to.
+    -->
+    <div class="min-w-0 flex-1 flex flex-col justify-center p-2 sm:p-4" :lang="pageStore.locale">
       <div class="text-h4 page-header-title">
         <span
           v-if="isEditing"
           ref="titleEl"
           class="page-header-editable"
+          :dir="contentDir"
           :class="{ 'is-empty': !pageStore.title }"
           contenteditable="plaintext-only"
           role="textbox"
@@ -52,13 +67,14 @@
           @input="onEditableInput(`title`, $event)"
           @blur="onEditableBlur(`title`, $event)"
           @keydown.enter.prevent="$event.target.blur()" />
-        <span v-else>{{ pageStore.title }}</span>
+        <span v-else :dir="contentDir">{{ pageStore.title }}</span>
       </div>
       <div class="text-subtitle2 page-header-subtitle">
         <span
           v-if="isEditing"
           ref="descriptionEl"
           class="page-header-editable"
+          :dir="contentDir"
           :class="{ 'is-empty': !pageStore.description }"
           contenteditable="plaintext-only"
           role="textbox"
@@ -68,7 +84,7 @@
           @input="onEditableInput(`description`, $event)"
           @blur="onEditableBlur(`description`, $event)"
           @keydown.enter.prevent="$event.target.blur()" />
-        <span v-else>{{ pageStore.description }}</span>
+        <span v-else :dir="contentDir">{{ pageStore.description }}</span>
       </div>
     </div>
     <!-- PAGE ACTIONS -->
@@ -81,16 +97,6 @@
       class="page-header-actions flex-none p-4 flex items-center justify-end"
       :class="{ 'has-editor-actions': hasEditorActions }">
       <template v-if="!editorStore.isActive">
-        <!--
-          Whoever is looking at a draft can already see it, so the badge is not gated on being logged
-          in the way the actions beside it are: it is telling a reader what they are reading, not
-          offering them something to do.
-        -->
-        <w-badge
-          v-if="pageStore.publishState === `draft`"
-          class="uppercase"
-          color="negative"
-          :label="t(`editor.props.draft`)" />
         <!--
           Watching a page is a state of it, so the button IS the state: filled and orange while the
           page is watched, an outline in grey while it is not. Same orange as Edit, because both are
@@ -105,7 +111,7 @@
           and nobody is reading this one — they are passing through it.
         -->
         <w-btn
-          class="ml-4"
+          class="ms-4"
           :class="{ 'is-ringing': state.bellRinging }"
           v-if="userStore.authenticated && !isRedirect"
           flat
@@ -120,7 +126,7 @@
           </w-tooltip>
         </w-btn>
         <w-btn
-          class="ml-4"
+          class="ms-4"
           v-if="siteStore.theme.showPrintBtn"
           flat
           dense
@@ -143,7 +149,7 @@
           one to review.
         -->
         <w-btn
-          class="ml-4"
+          class="ms-4"
           v-if="pageStore.canReview && !isRedirect"
           flat
           dense
@@ -165,11 +171,16 @@
           </w-badge>
           <w-tooltip>{{ t('inbox.pendingReview') }}</w-tooltip>
           <!--
-            Down from the button's right edge, like every other menu hanging off this row: the panel is
-            wider than the button and the button is near the right of the window, so aligning their
-            RIGHT edges is what keeps it on screen.
+            Down from the button's far edge, like every other menu hanging off this row: the panel is
+            wider than the button and the button is near the end of the row, so aligning the edges on
+            that side is what keeps it on screen -- the right ones, or the left ones on a right-to-left
+            interface, where the actions are at the left of the window.
           -->
-          <w-menu class="translucent-menu" anchor="bottom right" self="top right" auto-close>
+          <w-menu
+            class="translucent-menu"
+            :anchor="`bottom ${endSide}`"
+            :self="`top ${endSide}`"
+            auto-close>
             <w-list padding style="min-width: 320px">
               <w-item v-if="pendingCount < 1">
                 <w-item-section>
@@ -203,9 +214,9 @@
           Whoever else has this page open in an editor. Renders nothing when that is nobody, which is
           also what it renders whenever there is no collaboration session at all.
         -->
-        <collab-presence class="mr-2" />
+        <collab-presence class="me-2" />
         <w-btn
-          class="ml-4 acrylic-btn"
+          class="ms-4 acrylic-btn"
           icon="la:question-circle"
           flat
           color="grey"
@@ -222,7 +233,7 @@
       -->
       <template v-if="!editorStore.isActive && userStore.can(`write:pages`)">
         <w-btn
-          class="acrylic-btn ml-4"
+          class="acrylic-btn ms-4"
           flat
           icon="la:edit"
           color="deep-orange-9"
@@ -244,7 +255,7 @@
       -->
       <template v-else-if="!editorStore.isActive && pageStore.canSuggestEdits && !isRedirect">
         <w-btn
-          class="acrylic-btn ml-4"
+          class="acrylic-btn ms-4"
           flat
           icon="la:edit"
           color="deep-orange-9"
@@ -263,7 +274,7 @@
       </template>
       <template v-if="editorStore.isActive || editorStore.hasPendingChanges">
         <w-btn
-          class="acrylic-btn ml-2"
+          class="acrylic-btn ms-2"
           flat
           icon="la:times"
           color="negative"
@@ -276,7 +287,7 @@
           no-caps
           @click="discardChanges" />
         <w-btn
-          class="acrylic-btn ml-2"
+          class="acrylic-btn ms-2"
           v-if="isSuggesting"
           flat
           icon="la:paper-plane"
@@ -287,7 +298,7 @@
           no-caps
           @click="submitSuggestion" />
         <w-btn
-          class="acrylic-btn ml-2"
+          class="acrylic-btn ms-2"
           v-else-if="editorStore.mode === `create`"
           flat
           icon="la:check"
@@ -296,7 +307,7 @@
           :aria-label="t(`editor.createPage`)"
           no-caps
           @click="createPage" />
-        <w-btn-group class="ml-2" v-else flat>
+        <w-btn-group class="ms-2" v-else flat>
           <w-btn
             class="acrylic-btn"
             flat
@@ -346,6 +357,7 @@ import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 
+import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
@@ -364,6 +376,7 @@ const BELL_RING_MS = 700
 
 // STORES
 
+const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
@@ -396,6 +409,18 @@ const isPhoneViewport = computed(() => !isAtLeastSm.value)
  * stylesheet can outrank without `!important`.
  */
 const iconSize = computed(() => (isPhoneViewport.value ? '32px' : '64px'))
+
+/** The direction the page's own locale is written in, for its title and description. */
+const contentDir = computed(() => siteStore.localeDir(pageStore.locale))
+
+/**
+ * The physical side the row ends on, which is the side the action buttons are near and so the side a
+ * menu hanging off one of them aligns to. `WMenu` places in physical terms, being positioned against
+ * the window rather than laid out in the row.
+ */
+const endSide = computed(() =>
+  siteStore.localeDir(commonStore.locale) === 'rtl' ? 'left' : 'right'
+)
 
 /**
  * Whether this row holds an editor's own controls — Save, Discard, Submit — rather than only the

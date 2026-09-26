@@ -88,6 +88,8 @@
             <div
               class="page-contents"
               :class="{ 'is-asciidoc': state.version?.meta?.editor === `asciidoc` }"
+              :lang="state.version?.pageLocale"
+              :dir="siteStore.localeDir(state.version?.pageLocale)"
               ref="pageContents"
               v-html="state.render"
               @click="onContentClick" />

@@ -9,11 +9,8 @@
         <w-btn push color="primary" :label="t(`welcome.createHome`)" icon="la:plus" no-caps>
           <w-menu class="translucent-menu" auto-close anchor="top left" self="bottom left">
             <!--
-              The editors that author an ARTICLE, which is what a home page is -- so a blog and a
-              redirection are not offered, and nor is anything the site has switched off.
-              `siteStore.articleEditors` is the same answer the New Page menu draws its top group
-              from and the same one a blog's New Post button uses, which is what keeps the three
-              screens showing one set rather than three lists that drift.
+              The text editors a site has switched on -- see `HOME_EDITORS` for why this is not all
+              of `siteStore.articleEditors`.
 
               The wording is this screen's own (`welcome.createHome<Editor>`, "Using the Markdown
               Editor" rather than "New Markdown Page"), because here the choice is how to write the
@@ -21,7 +18,7 @@
             -->
             <w-list padding>
               <w-item
-                v-for="editor of siteStore.articleEditors"
+                v-for="editor of homeEditors"
                 :key="editor"
                 clickable
                 @click="createHomePage(editor)">
@@ -51,6 +48,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -80,6 +78,24 @@ const router = useRouter()
 
 const { t } = useI18n()
 
+// CONSTANTS
+
+/**
+ * The editors a wiki's first page may be written with.
+ *
+ * A home page is an article, but not every article editor is a sensible first page: a drawing is
+ * a canvas with no text for the home page to open on. So this is the text editors only, kept in
+ * the order `siteStore.articleEditors` gives them and still minus whatever the site has switched
+ * off, which is why it filters that list rather than replacing it.
+ */
+const HOME_EDITORS = ['markdown', 'visual', 'asciidoc']
+
+// COMPUTED
+
+const homeEditors = computed(() =>
+  siteStore.articleEditors.filter((editor) => HOME_EDITORS.includes(editor))
+)
+
 // META
 
 useMeta(() => ({
@@ -92,10 +108,9 @@ useMeta(() => ({
  * The locale key naming an editor on this screen.
  *
  * Composed rather than tabulated, the same way the admin area names an editor
- * (`admin.editors.<id>Name`) and the search filter reads it back. The three that exist —
- * `createHomeMarkdown`, `createHomeVisual`, `createHomeAsciidoc` — are keyed by the editor id with
- * its first letter raised, so an article editor added later needs a string of its own here or the
- * menu shows the key.
+ * (`admin.editors.<id>Name`) and the search filter reads it back. One string per entry in
+ * `HOME_EDITORS` — `createHomeMarkdown`, `createHomeVisual`, `createHomeAsciidoc` — keyed by the
+ * editor id with its first letter raised, so adding an editor there needs a string of its own too.
  */
 function labelFor(editor) {
   return `welcome.createHome${capitalize(editor)}`

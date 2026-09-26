@@ -116,7 +116,7 @@
         }
         #wiki-prerender ul,
         #wiki-prerender ol {
-          padding-left: 2em;
+          padding-inline-start: 2em;
           list-style: revert;
         }
         #wiki-prerender pre,
@@ -125,12 +125,13 @@
         }
         #wiki-prerender pre {
           overflow-x: auto;
+          direction: ltr;
           padding: .75em 1em;
           background: #f4f4f4;
         }
         #wiki-prerender blockquote {
-          padding-left: 1em;
-          border-left: 4px solid #ccc;
+          padding-inline-start: 1em;
+          border-inline-start: 4px solid #ccc;
           color: #555;
         }
         #wiki-prerender img {

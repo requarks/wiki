@@ -569,6 +569,15 @@ class Locales {
   }
 
   /**
+   * Whether a locale's script runs right to left. Sync for the same reason as `shortCodeFor`: the
+   * document a page is served in is assembled without awaiting anything per locale. A code the cache
+   * does not hold reads as left to right.
+   */
+  isRTL(code: string): boolean {
+    return Boolean((WIKI.cache?.get(`locale:${code}`) as any)?.isRTL)
+  }
+
+  /**
    * The locale a short code names, whichever of its codes was used.
    *
    * All three are accepted because all three can be in play at once: an alias set after content was

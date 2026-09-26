@@ -61,19 +61,19 @@ const classes = computed(() => [
 */
 .w-item-section--side {
   align-items: flex-start;
-  padding-right: 16px;
+  padding-inline-end: 16px;
 }
 
 /* A side section that FOLLOWS the main one is trailing: padding and alignment flip. */
 .w-item-section--main ~ .w-item-section--side {
   align-items: flex-end;
-  padding-left: 16px;
-  padding-right: 0;
+  padding-inline-start: 16px;
+  padding-inline-end: 0;
 }
 
 /* Two adjacent main sections get a small gutter, as they did before. */
 .w-item-section--main + .w-item-section--main {
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .w-item-section--avatar {

@@ -276,6 +276,8 @@
           -->
           <div
             class="editor-asciidoc-preview-content page-contents is-asciidoc"
+            :lang="pageStore.locale"
+            :dir="siteStore.localeDir(pageStore.locale)"
             ref="editorPreviewContainerRef"
             v-html="pageStore.render" />
         </div>

@@ -209,6 +209,15 @@ export const useSiteStore = defineStore('site', {
     localeAlias: (state) => (code) =>
       state.installedLocales.find((lc) => lc.code === code)?.displayCode ?? code,
     /**
+     * The `dir` a locale's text is written in, for the elements that hold a page's own content.
+     *
+     * Asked of the PAGE's locale, not of the interface's: an Arabic page on a wiki read in English is
+     * still read right to left, while the chrome around it stays the way the interface language runs.
+     * A locale the wiki does not have installed reads as `ltr`, since nothing says otherwise.
+     */
+    localeDir: (state) => (code) =>
+      state.installedLocales.find((lc) => lc.code === code)?.isRTL ? 'rtl' : 'ltr',
+    /**
      * The segments a locale-prefixed URL may start with, mapped to the locale each names.
      *
      * Every code a locale answers to, not only the short one it is addressed by now: an alias an

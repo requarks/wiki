@@ -16,7 +16,7 @@
         @remove="removeTag(tag)"
         v-for="tag of pageStore.tags"
         :key="`tag-` + tag">
-        <w-icon class="mr-1" name="la:hashtag" size="14px" />
+        <w-icon class="me-1" name="la:hashtag" size="14px" />
         <span class="text-caption">{{ tag }}</span>
       </w-chip>
     </div>

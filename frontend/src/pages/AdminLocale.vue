@@ -131,7 +131,12 @@
             <w-item>
               <blueprint-icon :text="lc.language" />
               <w-item-section>
-                <w-item-label>{{ lc.name }}</w-item-label>
+                <w-item-label>
+                  {{ lc.name }}
+                  <w-badge v-if="lc.isRTL" class="ml-1 align-middle" color="grey-7" rounded>
+                    {{ t('admin.locale.rtl') }}
+                  </w-badge>
+                </w-item-label>
                 <w-item-label caption>{{ lc.nativeName }} ({{ lc.displayCode }})</w-item-label>
               </w-item-section>
               <!--

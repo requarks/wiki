@@ -143,8 +143,9 @@ const bundled = computed(() => {
 */
 const colorClass = computed(() => [
   props.color ? `text-${props.color}` : '',
-  props.left ? 'mr-2' : '',
-  props.right ? 'ml-2' : ''
+  // -> Logical, so "before the text" and "after it" stay true on a right-to-left interface
+  props.left ? 'me-2' : '',
+  props.right ? 'ms-2' : ''
 ])
 
 /**

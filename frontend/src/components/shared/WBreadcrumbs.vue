@@ -13,7 +13,7 @@
               v-if="item.icon"
               :name="item.icon"
               class="w-breadcrumbs__el-icon"
-              :class="item.label ? 'mr-2' : ''" />
+              :class="item.label ? 'me-2' : ''" />
             <span v-if="item.label">{{ item.label }}</span>
             <w-tooltip v-if="item.tooltip">{{ item.tooltip }}</w-tooltip>
           </component>

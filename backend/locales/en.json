@@ -2012,6 +2012,7 @@
   "common.page.global": "Global",
   "common.page.id": "ID {id}",
   "common.page.lastEditedBy": "Last edited by",
+  "common.page.lastModified": "Last modified on {date}",
   "common.page.loading": "Loading Page...",
   "common.page.locked": "This page is password protected.",
   "common.page.lockedHint": "Enter the password to read it.",

@@ -11,7 +11,7 @@
       :key="i"
       :ref="(el) => setContainer(el, i)"
       class="w-rating__icon-container flex h-[1em] items-center justify-center outline-0"
-      :class="[editable ? 'cursor-pointer' : '', i > 1 ? 'ml-0.5' : '']"
+      :class="[editable ? 'cursor-pointer' : '', i > 1 ? 'ms-0.5' : '']"
       role="radio"
       :tabindex="editable ? 0 : -1"
       :aria-checked="modelValue === i ? 'true' : 'false'"
@@ -148,15 +148,19 @@ function set(value) {
 }
 
 function onKeyup(e, i) {
+  // -> The stars run the way the text does, so on a right-to-left page the next one is to the LEFT
+  const isRtl = getComputedStyle(e.currentTarget).direction === 'rtl'
+  const back = isRtl ? 'ArrowRight' : 'ArrowLeft'
+  const forward = isRtl ? 'ArrowLeft' : 'ArrowRight'
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault()
     e.stopPropagation()
     set(i)
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+  } else if (e.key === back || e.key === 'ArrowDown') {
     e.preventDefault()
     e.stopPropagation()
     containers.value?.[i - 2]?.focus()
-  } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+  } else if (e.key === forward || e.key === 'ArrowUp') {
     e.preventDefault()
     e.stopPropagation()
     containers.value?.[i]?.focus()

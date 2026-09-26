@@ -5,7 +5,16 @@
     :anchor="props.anchor"
     :self="props.self"
     :offset="props.offset">
-    <w-list padding style="min-width: 200px">
+    <!--
+      The list runs the way the interface does -- it is teleported, so it says so itself -- while each
+      name is written in, and marked as, its own language: a menu of languages is the one place every row
+      may be in a different one.
+    -->
+    <w-list
+      padding
+      style="min-width: 200px"
+      :lang="commonStore.locale"
+      :dir="siteStore.localeDir(commonStore.locale)">
       <w-item
         v-for="lang of siteStore.locales.active"
         :key="lang.code"
@@ -23,7 +32,11 @@
           </w-avatar>
         </w-item-section>
         <w-item-section>
-          <w-item-label>{{ lang.displayName }}</w-item-label>
+          <w-item-label>
+            <span :lang="lang.code" :dir="siteStore.localeDir(lang.code)">{{
+              lang.displayName
+            }}</span>
+          </w-item-label>
         </w-item-section>
       </w-item>
     </w-list>

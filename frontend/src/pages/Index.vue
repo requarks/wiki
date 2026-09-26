@@ -12,35 +12,55 @@
     -->
     <!-- -> `py-1` on a phone: with the date gone the bar holds one line of small type, and 8px above and
             below it made a strip nearly as tall as the crumbs themselves -->
+    <!-- -> Chrome, so in the interface's language and direction, as the header below it is -->
     <div
       class="page-breadcrumbs py-1 px-4 sm:py-2 flex flex-wrap"
+      :lang="commonStore.locale"
+      :dir="siteStore.localeDir(commonStore.locale)"
       v-if="!editorStore.isActive && !pageStore.notFound">
       <div class="min-w-0 flex-1">
         <w-breadcrumbs
           :items="breadcrumbs"
           :active-color="dark.isActive ? `grey-5` : `grey-7`"
           separator-color="grey">
-          <template #separator><w-icon name="la:angle-right" /></template>
+          <template #separator><w-icon :name="crumbSeparator" /></template>
         </w-breadcrumbs>
       </div>
-      <!--
-        Off on a phone: on a 390px screen the date takes a whole line of its own under the trail, which
-        is a lot of room for something a reader is not here for -- and the trail itself is how they get
-        back out, so that is what the bar keeps.
-      -->
-      <div class="flex-none items-center justify-end hidden sm:flex">
-        <template v-if="!pageStore.publishState === `draft`">
-          <div class="text-caption text-accent"><strong>Unpublished</strong></div>
-          <w-separator class="mx-2" vertical />
-        </template>
-        <div class="text-caption text-grey-6">
-          Last modified on <strong>{{ lastModified }}</strong>
+      <div class="flex-none flex items-center justify-end gap-3">
+        <!--
+          Beside the date because both say what state the page is in, where the header's row is what
+          can be done with it. Whoever is looking at a draft can already see it, so the badge is not
+          gated on being logged in the way those actions are: it is telling a reader what they are
+          reading, not offering them something to do.
+
+          Kept on a phone, unlike the date: it is one short word, and it changes how everything under it
+          should be read.
+        -->
+        <w-badge
+          v-if="pageStore.publishState === `draft`"
+          class="uppercase"
+          color="negative"
+          :label="t(`editor.props.draft`)" />
+        <!--
+          Off on a phone: on a 390px screen the date takes a whole line of its own under the trail, which
+          is a lot of room for something a reader is not here for -- and the trail itself is how they get
+          back out, so that is what the bar keeps.
+        -->
+        <div class="text-caption text-grey-6 hidden sm:block">
+          <i18n-t keypath="common.page.lastModified">
+            <template #date>
+              <strong>{{ lastModified }}</strong>
+            </template>
+          </i18n-t>
         </div>
       </div>
     </div>
     <page-header v-if="!pageStore.notFound" />
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
-    <div class="page-container flex min-h-0 flex-nowrap items-stretch" style="flex: 1 1 100%">
+    <div
+      class="page-container flex min-h-0 flex-nowrap items-stretch"
+      :class="{ 'page-container--toc-left': tocColumnIsLeft }"
+      style="flex: 1 1 100%">
       <!--
         `flex flex-col min-h-0`: the strip below is fixed to the top of this column and the scrolling
         article takes what is left, which is what keeps a tab bar at the top of the view rather than
@@ -193,9 +213,12 @@
               Delegated rather than bound per link: the anchors are written by `v-html`, so there is
               nothing here to put a handler on, and they are replaced wholesale on every render.
             -->
+            <!-- -> Written in the page's own language and direction, which need not be the interface's -->
             <div
               class="page-contents"
               :class="{ 'is-asciidoc': pageStore.editor === `asciidoc` }"
+              :lang="pageStore.locale"
+              :dir="siteStore.localeDir(pageStore.locale)"
               ref="pageContents"
               v-show="activeView === `article` && !isBlog"
               v-html="pageStore.render"
@@ -302,10 +325,17 @@
         somewhere (a heading, a tag), and a panel left over the place they were going would have to be
         dismissed by hand. A `<button>` in here -- the tag editor's, the rating -- is not that, which is
         why the test is `closest('a')` rather than any click at all.
+
+        In the page's own language and direction, labels included: on a page the interface speaks the
+        page's locale (see `App.vue`), so the headings, the tags and the captions beside them are all
+        written in it. Which side of the article the column sits on, and where the panel slides in from,
+        is the layout's business and is set in physical terms, so neither moves with it.
       -->
       <div
         class="page-sidebar"
         v-if="showSidebar"
+        :lang="pageStore.locale"
+        :dir="siteStore.localeDir(pageStore.locale)"
         :class="{ 'is-open': tocPanelIsOpen }"
         :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`"
         @click="onSidebarClick">
@@ -321,7 +351,7 @@
           <template v-if="showToc">
             <!-- TOC -->
             <div class="p-4 flex items-center">
-              <w-icon class="mr-2" name="la:stream" color="grey" />
+              <w-icon class="me-2" name="la:stream" color="grey" />
               <!-- -> Its own string, not `common.page.toc`: this heading labels a column beside the
                  article and reads better short, where "Table of Contents" is the full name of the
                  thing and belongs where there is room for it -->
@@ -344,7 +374,7 @@
               @mouseover="state.showTagsEditBtn = true"
               @mouseleave="state.showTagsEditBtn = false">
               <div class="flex items-center">
-                <w-icon class="mr-2" name="la:tags" color="grey" />
+                <w-icon class="me-2" name="la:tags" color="grey" />
                 <div class="text-caption text-grey-7">{{ t('common.page.tags') }}</div>
                 <w-space />
                 <!--
@@ -381,7 +411,7 @@
             <w-separator v-if="showToc || showTags" />
             <!-- Rating -->
             <div class="p-4 flex items-center">
-              <w-icon class="mr-2" name="la:star-half-alt" color="grey" />
+              <w-icon class="me-2" name="la:star-half-alt" color="grey" />
               <div class="text-caption text-grey-7">{{ t('common.page.ratePage') }}</div>
             </div>
             <div class="px-4 pb-4">
@@ -432,7 +462,7 @@
           <template v-if="showLastEditedBy">
             <w-separator v-if="showToc || showTags || showRatings" />
             <div class="p-4 flex items-center">
-              <w-icon class="mr-2" name="la:user-edit" color="grey" />
+              <w-icon class="me-2" name="la:user-edit" color="grey" />
               <div class="text-caption text-grey-7">{{ t('common.page.lastEditedBy') }}</div>
             </div>
             <div class="px-4 pb-4">
@@ -444,7 +474,7 @@
                     alt="" />
                   <span v-else>{{ lastEditorInitial }}</span>
                 </w-avatar>
-                <span class="ml-2">{{ pageStore.authorName }}</span>
+                <span class="ms-2">{{ pageStore.authorName }}</span>
               </router-link>
             </div>
           </template>
@@ -691,13 +721,33 @@ const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && s
 const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && !state.tocPanelOpen)
 
 /*
-  Whether the contents rail runs out to meet the article column's right-hand edge (`.page-article-col`),
-  which is only beside it while the contents are a column to the RIGHT of the article. On the left the
-  edge is on the article's far side, and the panel has a shadow rather than an edge to meet.
+  Whether the contents are a column to the LEFT of the article, which is what moves the article
+  column's edge (`.page-article-col`) over to that side: the edge is drawn against the contents, and
+  with the contents on the left the right-hand side of the article is the actions rail.
+
+  Only while there is such a column. With nothing to show in it, or below 750px where it is a panel
+  over the article instead, what is on the left is the nav sidebar or the window, and the edge stays on
+  the right against the rail.
 */
-const tocJoinsArticleEdge = computed(
-  () => !tocIsPanel.value && siteStore.theme.tocPosition !== 'left'
+const tocColumnIsLeft = computed(
+  () => showSidebar.value && !tocIsPanel.value && siteStore.theme.tocPosition === 'left'
 )
+
+/*
+  Whether the contents rail runs out to meet the article column's edge -- which is only beside it while
+  the contents are a column, and the panel has a shadow rather than an edge to meet.
+
+  The rail is on the side the labels start from, so it meets the edge only where that is the side facing
+  the article: a column on the right read left to right, or one on the left read right to left. In the
+  other two the rail is on the column's far side and there is nothing for it to turn out and meet.
+*/
+const tocJoinsArticleEdge = computed(() => {
+  if (tocIsPanel.value) {
+    return false
+  }
+  const isRtl = siteStore.localeDir(pageStore.locale) === 'rtl'
+  return siteStore.theme.tocPosition === 'left' ? isRtl : !isRtl
+})
 
 /**
  * Whether the page on screen is a blog's front page, which is drawn as its posts rather than as an
@@ -953,8 +1003,9 @@ const relationsRight = computed(() => {
 })
 const lastModified = computed(() => {
   return pageStore.updatedAt
-    ? // -> The fields luxon's DATETIME_MED expanded to, so the bar reads exactly as before
-      Temporal.Instant.from(pageStore.updatedAt).toLocaleString(undefined, {
+    ? // -> The fields luxon's DATETIME_MED expanded to, so the bar reads exactly as before -- and in
+      //    the interface's language, since it is set inside a sentence written in it
+      Temporal.Instant.from(pageStore.updatedAt).toLocaleString(locale.value, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -964,15 +1015,20 @@ const lastModified = computed(() => {
     : 'N/A'
 })
 
-/**
- * The trail the breadcrumb bar draws, root first. The Home crumb is prepended here rather than
- * written into the markup, so the bar takes a single flat list.
- */
 /** The blog this page is a post of, as a route on this site. Null-safe: the line is `v-if`'d on it. */
 const blogHref = computed(
   () => `${siteStore.localeUrlPrefix(pageStore.locale)}/${pageStore.blog?.path ?? ''}`
 )
 
+/** The chevron between two crumbs points down the trail, which right to left is to the left. */
+const crumbSeparator = computed(() =>
+  siteStore.localeDir(commonStore.locale) === 'rtl' ? 'la:angle-left' : 'la:angle-right'
+)
+
+/**
+ * The trail the breadcrumb bar draws, root first. The Home crumb is prepended here rather than
+ * written into the markup, so the bar takes a single flat list.
+ */
 const breadcrumbs = computed(() => [
   { key: 'home', icon: 'la:home', to: '/', ariaLabel: 'Home', tooltip: 'Home' },
   ...pageStore.breadcrumbs.map((brd) => ({

@@ -264,7 +264,7 @@ $sidebar-overlay-max: 1199.98px;
     */
     .w-expansion-item__content {
       position: relative;
-      border-left: 10px solid rgba(255, 255, 255, 0.25);
+      border-inline-start: 10px solid rgba(255, 255, 255, 0.25);
       /*
         And a step DOWN from the sidebar rather than up, which is the one place this parts company with
         `NavEditOverlay`: there the nested rows lift off a near-black panel, here they sit in a coloured
@@ -285,32 +285,41 @@ $sidebar-overlay-max: 1199.98px;
       /*
         Each elbow is one 10px box showing two of its borders: the mitre between them is the angle. Set
         10px outside the content on the appropriate side, so the vertical stroke lines up with the rule
-        and continues it. `left: -10px` is the rule's own left edge -- an absolute offset here is
-        measured from the padding box, which starts where the border ends.
+        and continues it. `-10px` from the starting edge is the rule's own outer edge -- an absolute
+        offset here is measured from the padding box, which starts where the border ends.
+
+        Every side is logical, so on a right-to-left interface the rule, the elbows and the turns all
+        mirror together.
       */
       &::before,
       &::after {
         content: '';
         display: block;
         position: absolute;
-        left: -10px;
+        inset-inline-start: -10px;
         width: 10px;
         height: 10px;
         border-style: solid;
+        border-color: transparent;
       }
 
-      /* -> Out of the parent row: the rule's top end, turning right into the row above it */
+      /* -> Out of the parent row: the rule's top end, turning inwards into the row above it */
       &::before {
         top: -10px;
-        border-width: 0 10px 10px 0;
-        border-color: transparent transparent rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25);
+        border-width: 0;
+        border-block-end-width: 10px;
+        border-inline-end-width: 10px;
+        border-block-end-color: rgba(255, 255, 255, 0.25);
+        border-inline-start-color: rgba(255, 255, 255, 0.25);
       }
 
-      /* -> And closed under the last child, turning right again */
+      /* -> And closed under the last child, turning inwards again */
       &::after {
         top: 100%;
-        border-width: 10px 10px 10px 0;
-        border-color: rgba(255, 255, 255, 0.25) transparent transparent rgba(255, 255, 255, 0.25);
+        border-width: 10px;
+        border-inline-start-width: 0;
+        border-block-start-color: rgba(255, 255, 255, 0.25);
+        border-inline-start-color: rgba(255, 255, 255, 0.25);
       }
     }
   }
@@ -334,13 +343,30 @@ $sidebar-overlay-max: 1199.98px;
   }
 
   /*
-    A child row starts 10px in, past the rule that marks the group -- and on this side that is the edge
-    the notch is cut from, so it would be bitten out of the middle of the sidebar with a strip of colour
-    still outside it. Pushed back out to where the sidebar itself ends.
+    A child row starts 10px in, past the rule that marks the group -- and where that is the edge the
+    notch is cut from, it would be bitten out of the middle of the sidebar with a strip of colour still
+    outside it. Pushed back out to where the sidebar itself ends.
 
-    The other way round this does not arise: with the sidebar on the left the notch is on the right edge,
-    and only the left of a child row is indented.
+    The notch is on the side facing the page, which is the theme's to say; the indent is on the side the
+    text starts from, which is the interface language's. So the two meet in two of the four cases: a
+    sidebar on the right read left to right, and one on the left read right to left. `dir` is always set,
+    by `MainLayout`, on the drawer this sits in.
   */
+  [dir='ltr']
+    &--flipped
+    .w-list
+    .w-expansion-item__content
+    .w-item.router-link-exact-active::after {
+    left: -10px;
+  }
+  [dir='rtl']
+    &:not(&--flipped)
+    .w-list
+    .w-expansion-item__content
+    .w-item.router-link-exact-active::after {
+    right: -10px;
+  }
+
   /*
     No notch at all once the drawer overlays the page instead of taking a column beside it.
 

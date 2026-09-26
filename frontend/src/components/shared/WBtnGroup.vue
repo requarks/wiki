@@ -28,23 +28,24 @@ defineProps({
   `:deep` because the buttons come from the consumer's slot content and carry that component's
   scope attribute rather than this one's.
 */
+/* -> Logical sides throughout, so a group read right to left joins its buttons the same way */
 .w-btn-group :deep(> .w-btn:not(:first-child)) {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
 }
 
 .w-btn-group :deep(> .w-btn:not(:last-child)) {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
   /*
     The seam is a border rather than an inset shadow so that `unelevated` -- which is about the
     drop shadow -- can switch the one off without also erasing the other.
   */
-  border-right: 1px solid rgb(0 0 0 / 0.12);
+  border-inline-end: 1px solid rgb(0 0 0 / 0.12);
 }
 
 :global(body.body--dark .w-btn-group > .w-btn:not(:last-child)) {
-  border-right-color: rgb(255 255 255 / 0.15);
+  border-inline-end-color: rgb(255 255 255 / 0.15);
 }
 
 .w-btn-group--unelevated :deep(> .w-btn) {

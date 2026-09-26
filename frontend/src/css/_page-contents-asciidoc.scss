@@ -130,7 +130,7 @@
   */
   caption.title {
     padding: 0.5em 0.8em;
-    text-align: left;
+    text-align: start;
   }
 
   /* -- Boxed blocks ------------------------------------------------------------ */
@@ -153,7 +153,7 @@
   }
 
   .sidebarblock {
-    border-left: 4px solid var(--content-rule-strong);
+    border-inline-start: 4px solid var(--content-rule-strong);
   }
 
   /* -> The panel's padding is the margin of what it holds, as it is at the top level */
@@ -213,11 +213,14 @@
     Asciidoctor emits it as a `pre`, so the only thing it needs is to stop looking like code.
   */
   .verseblock pre {
+    /* -> Prose, so it takes the page's direction back from the one every code `pre` is pinned to */
+    direction: inherit;
     margin: 1.5em 0;
-    padding: 0 0 0 var(--code-pad-x);
-    /* -> `border` before `border-left`, so the box `_page-contents.scss` gives every `pre` goes */
+    padding: 0;
+    padding-inline-start: var(--code-pad-x);
+    /* -> `border` before `border-inline-start`, so the box `_page-contents.scss` gives every `pre` goes */
     border: 0;
-    border-left: 3px solid var(--content-rule);
+    border-inline-start: 3px solid var(--content-rule);
     background: none;
     color: var(--content-ink-muted);
     font-family: inherit;
@@ -241,20 +244,20 @@
     font-size: 0.9375em;
 
     ol {
-      padding-left: 0;
+      padding-inline-start: 0;
       list-style: none;
       counter-reset: wiki-callout;
     }
 
     li {
       position: relative;
-      padding-left: 2em;
+      padding-inline-start: 2em;
       counter-increment: wiki-callout;
 
       &::before {
         content: counter(wiki-callout);
         position: absolute;
-        left: 0;
+        inset-inline-start: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -401,7 +404,7 @@
 
   /* -> `[grid=none]` and `[frame=none]`, which are a request to draw the data without the ruling */
   table.grid-none > * > tr > * {
-    border-right: 0;
+    border-inline-end: 0;
     border-bottom: 0;
   }
   table.frame-none {

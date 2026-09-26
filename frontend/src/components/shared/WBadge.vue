@@ -43,7 +43,8 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  /** Pins the badge to the top-right of the nearest positioned ancestor. */
+  /** Pins the badge to the top end corner of the nearest positioned ancestor -- the top right, or the
+   *  top left on a right-to-left interface. */
   floating: {
     type: Boolean,
     default: false
@@ -53,7 +54,7 @@ const props = defineProps({
 const classes = computed(() => [
   props.rounded ? 'rounded-full' : 'rounded-sm',
   props.outline ? 'border border-current bg-transparent' : '',
-  props.floating ? 'absolute top-0 right-0 translate-x-1/2 -translate-y-1/3' : ''
+  props.floating ? 'w-badge--floating absolute top-0 end-0' : ''
 ])
 
 const styles = computed(() =>
@@ -65,3 +66,20 @@ const styles = computed(() =>
       }
 )
 </script>
+
+<style scoped>
+/*
+  Half out past the corner it is pinned to, which is outwards to the right, or to the left on a
+  right-to-left interface.
+
+  An attribute test and not Tailwind's `rtl:` variant: that is written as `:dir(rtl)`, which the build
+  lowers to a list of `:lang()` selectors -- a guess from the language, where what decides is the
+  direction the element was given.
+*/
+.w-badge--floating {
+  translate: 50% -33.333%;
+}
+[dir='rtl'] .w-badge--floating {
+  translate: -50% -33.333%;
+}
+</style>

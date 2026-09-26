@@ -163,7 +163,7 @@ function onKeydown(ev) {
   around it -- it is the lid of the column rather than something placed in it.
 
   Flat, in the contents column's own grey (`.page-sidebar` in `_page-chrome.scss`: `$grey-2` light,
-  `$dark-5` dark). The two meet along the article's right-hand edge, so one value across both reads as
+  `$dark-5` dark). The two meet along the article's edge beside that column, so one value across both reads as
   a single piece of chrome bent round the top and the side of the column -- which is what a gradient
   could not do, matching the column beside it at one height and missing it everywhere else.
 
@@ -222,14 +222,14 @@ function onKeydown(ev) {
     left: 0;
     /*
       `--page-chrome-rule` is the edge this line belongs to, declared per theme on `.page-container`
-      (`_page-chrome.scss`): the same value continues down the right-hand side of the article as
+      (`_page-chrome.scss`): the same value continues down the side of the article as
       `.page-article-col`, so the two are stated once and turn the corner together.
     */
     border-bottom: 1px solid var(--page-chrome-rule);
   }
 
   /*
-    The corner, through the 1px gap above. The article column's right-hand rule starts under that gap
+    The corner, through the 1px gap above. The article column's side rule starts under that gap
     and this line ends over it, so the one pixel where they turn the corner was left undrawn -- a
     notch in what is meant to read as a single line. Only over the article column: the editor takes
     its place under the strip too, and has no rule to join.
@@ -242,6 +242,12 @@ function onKeydown(ev) {
     width: 1px;
     height: 1px;
     background-color: var(--page-chrome-rule);
+
+    /* -> The edge is down the left when the contents column is (`.page-article-col`), so the corner is too */
+    .page-container--toc-left & {
+      right: auto;
+      left: 0;
+    }
   }
 
   @at-root .body--light & {

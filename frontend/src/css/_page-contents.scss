@@ -418,12 +418,29 @@
     &::after {
       content: '';
       position: absolute;
-      right: 0;
+      inset-inline-end: 0;
       bottom: 0;
       /* -> Only a top-level title reaches past the text column; see the override below */
-      left: 0;
+      inset-inline-start: 0;
       height: var(--content-heading-rule-weight);
       background-image: linear-gradient(to right, var(--content-heading-rule-color), transparent);
+    }
+  }
+
+  /*
+    Fading out towards the end of the line, which on a right-to-left page is the left -- a gradient has
+    no logical direction to say that with.
+
+    An attribute test rather than `:dir(rtl)`, which the build lowers to a list of `:lang()` selectors:
+    a guess from the language, where what decides is the direction the element was given. Both shapes,
+    because the attribute is on this element in the page view and on the one around it in the visual
+    editor, where ProseMirror owns the element carrying the class.
+  */
+  &[dir='rtl'],
+  [dir='rtl'] & {
+    h1::after,
+    h2::after {
+      background-image: linear-gradient(to left, var(--content-heading-rule-color), transparent);
     }
   }
 
@@ -479,7 +496,7 @@
     in a quote or a list item.
   */
   > h1::after {
-    left: calc(-1 * var(--content-bleed));
+    inset-inline-start: calc(-1 * var(--content-bleed));
   }
 
   h3 {
@@ -509,7 +526,7 @@
   h6[data-heading-anchor] {
     position: relative;
     /* -> In `rem` to match the button it reserves room for, which no longer scales with the heading */
-    padding-right: 2.25rem;
+    padding-inline-end: 2.25rem;
   }
 
   .heading-anchor {
@@ -521,7 +538,7 @@
       they follow the glyph's size rather than the heading's.
     */
     top: 50%;
-    right: 0;
+    inset-inline-end: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -567,7 +584,7 @@
       content: attr(data-tooltip);
       position: absolute;
       top: 50%;
-      right: calc(100% + 4px);
+      inset-inline-end: calc(100% + 4px);
       padding: 0.125rem 0.5rem;
       border-radius: 4px;
       background-color: rgb(0 0 0 / 0.85);
@@ -708,7 +725,7 @@
       /* -> Sized in `em`, so it keeps its proportion to the words wherever the link sits */
       width: 0.8em;
       height: 0.8em;
-      margin-left: 0.25em;
+      margin-inline-start: 0.25em;
       background-color: currentColor;
       /* -> Subordinate to the words: a marker, not a second link */
       opacity: 0.7;
@@ -731,7 +748,7 @@
   ul,
   ol {
     margin: 0 0 1.15em;
-    padding-left: 1.6em;
+    padding-inline-start: 1.6em;
   }
 
   ul {
@@ -787,11 +804,11 @@
     icon font, which is what the treatment this replaces depended on.
   */
   .contains-task-list {
-    padding-left: 0;
+    padding-inline-start: 0;
     list-style: none;
 
     .contains-task-list {
-      padding-left: 1.6em;
+      padding-inline-start: 1.6em;
     }
   }
 
@@ -873,17 +890,17 @@
   */
   ul.links-list {
     margin: 1.5em 0;
-    padding-left: 0;
+    padding-inline-start: 0;
     list-style: none;
 
     > li {
       margin-top: 4px;
       border-radius: 4px;
       /*
-        The bar down the left, grey at rest and the link's colour under the pointer -- so what hovering
+        The bar down the start edge, grey at rest and the link's colour under the pointer -- so what hovering
         does is colour something already there rather than add a bar and shunt the words sideways.
       */
-      border-left: 3px solid var(--content-rule);
+      border-inline-start: 3px solid var(--content-rule);
       background-color: var(--content-links-row);
       /* -> The light down the top of the row; see `--content-links-sheen` */
       background-image: linear-gradient(to bottom, var(--content-links-sheen), transparent 65%);
@@ -894,7 +911,7 @@
 
       &:hover,
       &:focus-within {
-        border-left-color: var(--content-link);
+        border-inline-start-color: var(--content-link);
         background-color: var(--content-links-row-hover);
       }
     }
@@ -928,9 +945,9 @@
       a line of small print.
     */
     em {
-      margin-left: 0.5em;
-      padding-left: 0.75em;
-      border-left: 1px solid var(--content-rule);
+      margin-inline-start: 0.5em;
+      padding-inline-start: 0.75em;
+      border-inline-start: 1px solid var(--content-rule);
       color: var(--content-ink-muted);
       font-style: normal;
       font-weight: 400;
@@ -942,9 +959,9 @@
     */
     @media (max-width: $breakpoint-xs-max) {
       em {
-        margin-left: 0;
-        padding-left: 0;
-        border-left: 0;
+        margin-inline-start: 0;
+        padding-inline-start: 0;
+        border-inline-start: 0;
         font-size: 0.9375em;
       }
 
@@ -998,12 +1015,12 @@
     > ol,
     > ul {
       /*
-        Half a disc of indent, so the discs hang off the left edge of the text column the way a
+        Half a disc of indent, so the discs hang off the start edge of the text column the way a
         marker does, and the step's own content lines up close to where a list's would (1.7rem
         against a list's 1.6em). The markers themselves go: the number is on the disc.
       */
-      margin-left: calc(var(--content-step-size) / 2);
-      padding-left: 0;
+      margin-inline-start: calc(var(--content-step-size) / 2);
+      padding-inline-start: 0;
       list-style: none;
       counter-reset: wiki-step;
     }
@@ -1019,7 +1036,7 @@
       */
       margin-top: 0;
       padding-bottom: 1.4em;
-      padding-left: calc(var(--content-step-size) / 2 + 0.9rem);
+      padding-inline-start: calc(var(--content-step-size) / 2 + 0.9rem);
       counter-increment: wiki-step;
     }
 
@@ -1034,7 +1051,7 @@
       content: counter(wiki-step);
       position: absolute;
       top: 0;
-      left: calc(var(--content-step-size) / -2);
+      inset-inline-start: calc(var(--content-step-size) / -2);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1076,7 +1093,7 @@
       to be seen.
 
       A border rather than a background, so that it prints -- see the note on `h1::after` further
-      down: a print dialog leaves background graphics off by default. Half a hairline to the left,
+      down: a print dialog leaves background graphics off by default. Half a hairline outwards,
       which is what centres it under the discs above and below it.
     */
     > ol > li::after,
@@ -1085,8 +1102,8 @@
       position: absolute;
       top: var(--content-step-size);
       bottom: 0;
-      left: -0.5px;
-      border-left: 1px solid var(--content-step-line);
+      inset-inline-start: -0.5px;
+      border-inline-start: 1px solid var(--content-step-line);
     }
 
     /* -> Nothing below the last step for a line to reach */
@@ -1154,8 +1171,9 @@
   */
   blockquote {
     margin: 1.5em 0;
-    padding: 0.15em 0 0.15em 1.15em;
-    border-left: 3px solid var(--content-rule-strong);
+    padding-block: 0.15em;
+    padding-inline: 1.15em 0;
+    border-inline-start: 3px solid var(--content-rule-strong);
     color: var(--content-ink-muted);
 
     > :last-child {
@@ -1188,9 +1206,13 @@
     &.is-danger,
     &:has(> .is-danger) {
       position: relative;
-      padding: 0.9em 1.1em 0.9em 3.1em;
-      border-left-width: 4px;
-      border-radius: 0 6px 6px 0;
+      padding-block: 0.9em;
+      padding-inline: 3.1em 1.1em;
+      border-inline-start-width: 4px;
+      /* -> Square where the bar is, round on the far side */
+      border-radius: 6px;
+      border-start-start-radius: 0;
+      border-end-start-radius: 0;
       color: var(--content-ink);
 
       &::before {
@@ -1210,7 +1232,7 @@
           and `0.625em` half the icon.
         */
         top: calc(0.9em + 0.79em - 0.625em);
-        left: 1.1em;
+        inset-inline-start: 1.1em;
         width: 1.25em;
         height: 1.25em;
         background-color: currentColor;
@@ -1243,7 +1265,7 @@
     &:has(> .is-info) {
       --alert-hue: var(--content-info);
 
-      border-left-color: var(--content-info);
+      border-inline-start-color: var(--content-info);
       background-color: var(--content-info-wash);
 
       &::before {
@@ -1256,7 +1278,7 @@
     &:has(> .is-success) {
       --alert-hue: var(--content-success);
 
-      border-left-color: var(--content-success);
+      border-inline-start-color: var(--content-success);
       background-color: var(--content-success-wash);
 
       &::before {
@@ -1270,7 +1292,7 @@
     &:has(> .is-important) {
       --alert-hue: var(--content-important);
 
-      border-left-color: var(--content-important);
+      border-inline-start-color: var(--content-important);
       background-color: var(--content-important-wash);
 
       &::before {
@@ -1283,7 +1305,7 @@
     &:has(> .is-warning) {
       --alert-hue: var(--content-warning);
 
-      border-left-color: var(--content-warning);
+      border-inline-start-color: var(--content-warning);
       background-color: var(--content-warning-wash);
 
       &::before {
@@ -1296,7 +1318,7 @@
     &:has(> .is-danger) {
       --alert-hue: var(--content-danger);
 
-      border-left-color: var(--content-danger);
+      border-inline-start-color: var(--content-danger);
       background-color: var(--content-danger-wash);
 
       &::before {
@@ -1360,6 +1382,13 @@
     /* -> Code does not wrap: a wrapped line is a different line, and indentation stops meaning anything */
     overflow-x: auto;
     tab-size: 2;
+    /*
+      Left to right on a right-to-left page too: code is written that way in every language, and
+      mirrored, the indentation lands on the wrong side and the punctuation at the end of a line is
+      reordered to the start of it. Everything inside -- the gutter, the copy button, a highlighted
+      line's bleed -- is placed in physical terms on the strength of this.
+    */
+    direction: ltr;
 
     /* -> The panel is the block's own; the code inside it drops the inline span's wash and padding */
     > code {
@@ -1573,6 +1602,8 @@
     the bar's own wash is mixed from the ink it ends up with.
   */
   .codeblock-titled {
+    /* -> The title is a file name, and reads with the code under it -- see `pre` */
+    direction: ltr;
     margin: 1.5em 0;
     border: 1px solid var(--content-rule);
     border-radius: 8px;
@@ -1736,14 +1767,14 @@
   th,
   td {
     padding: 0.5em 0.8em;
-    border-right: 1px solid var(--content-rule);
+    border-inline-end: 1px solid var(--content-rule);
     border-bottom: 1px solid var(--content-rule);
-    text-align: left;
+    text-align: start;
     vertical-align: top;
   }
 
   tr > :last-child {
-    border-right: 0;
+    border-inline-end: 0;
   }
 
   /* -> `tbody:last-child`, because a MultiMarkdown table can have several: only the bottom of the last
@@ -1790,7 +1821,7 @@
   }
 
   thead th {
-    border-right-color: var(--content-table-head-rule);
+    border-inline-end-color: var(--content-table-head-rule);
     border-bottom-color: var(--content-table-head-rule);
     background-color: transparent;
     color: var(--content-table-head-ink);
@@ -1854,7 +1885,7 @@
     padding-bottom: 0.5em;
     color: var(--content-ink-muted);
     font-size: 0.875em;
-    text-align: left;
+    text-align: start;
   }
 
   // ---------------------------------------------------------------------------
@@ -2056,7 +2087,7 @@
     font-size: 0.875em;
 
     .footnotes-list {
-      padding-left: 1.4em;
+      padding-inline-start: 1.4em;
     }
 
     .footnote-item > p {
@@ -2083,7 +2114,7 @@
   }
 
   .footnote-backref {
-    margin-left: 0.3em;
+    margin-inline-start: 0.3em;
     text-decoration: none;
   }
 
@@ -2127,8 +2158,8 @@
     */
     /*
       `0px` and not `0`: the title's rule positions itself with `calc(-1 * var(--content-bleed))`, and
-      a unitless zero makes that a NUMBER rather than a length. The declaration is then invalid, `left`
-      falls back to `auto` against a `right: 0`, and a rule with no width to shrink to disappears --
+      a unitless zero makes that a NUMBER rather than a length. The declaration is then invalid, the
+      start inset falls back to `auto` against an end one of `0`, and a rule with no width to shrink to disappears --
       which is exactly how the page title lost the rule under it on paper.
     */
     --content-bleed: 0px;
@@ -2271,7 +2302,7 @@
       Dark grey rather than the near-black the table's head uses on screen: it is enough for white to
       read on (about 9:1) and costs a third less ink over a bar that repeats once per panel.
 
-      The bar's negative left margin is what takes it back over the padding so that it meets the spine
+      The bar's negative start margin is what takes it back over the padding so that it meets the spine
       rather than starting inboard of it.
 
       `print-color-adjust` is what makes any of it appear, for the reason a done task item carries the
@@ -2290,15 +2321,16 @@
       */
       --content-tab-pad: 0.75rem;
 
-      border-left: 4px solid var(--content-tab-bar);
-      padding-left: var(--content-tab-pad);
+      border-inline-start: 4px solid var(--content-tab-bar);
+      padding-inline-start: var(--content-tab-pad);
       print-color-adjust: exact;
       -webkit-print-color-adjust: exact;
     }
     block-tab[label]::before {
       content: attr(label);
       display: block;
-      margin: 0 0 0.9em calc(-1 * var(--content-tab-pad));
+      margin-block: 0 0.9em;
+      margin-inline: calc(-1 * var(--content-tab-pad)) 0;
       padding: 0.35em var(--content-tab-pad);
       background-color: var(--content-tab-bar);
       color: #fff;
@@ -2331,7 +2363,7 @@
       display: inline;
       width: auto;
       height: auto;
-      margin-left: 0;
+      margin-inline-start: 0;
       background-color: transparent;
       mask-image: none;
       opacity: 1;
