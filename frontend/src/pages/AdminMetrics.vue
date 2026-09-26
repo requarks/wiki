@@ -66,28 +66,10 @@
     <w-separator inset />
     <div class="grid grid-cols-12 p-4 gap-4">
       <div class="col-span-12 lg:col-span-6">
-        <w-card
-          class="rounded"
-          flat
-          :class="dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`">
-          <w-card-section class="items-center" horizontal>
-            <w-card-section class="flex-none pr-0">
-              <w-icon name="la:info-circle" size="sm" />
-            </w-card-section>
-            <w-card-section>
-              <i18n-t tag="span" keypath="admin.metrics.endpoint" scope="global">
-                <template #endpoint>
-                  <strong class="font-robotomono">{{ state.config.path }}</strong>
-                </template>
-              </i18n-t>
-              <div class="text-caption">{{ t('admin.metrics.endpointWarning') }}</div>
-            </w-card-section>
-          </w-card-section>
-        </w-card>
         <!-- ----------------------- -->
         <!-- Configuration -->
         <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
+        <w-card class="pb-2">
           <w-card-header>{{ t('admin.metrics.configuration') }}</w-card-header>
           <w-item>
             <blueprint-icon icon="link" top />
@@ -113,7 +95,7 @@
               <!-- -> An address only means what it looks like when the proxy headers are trusted -->
               <w-item-label
                 v-if="!state.trustProxy"
-                class="mb-2 text-caption text-orange flex items-center">
+                class="mb-2 text-caption text-deep-orange flex items-center">
                 <w-icon class="mr-1" name="la:exclamation-triangle" size="xs" />
                 {{ t('admin.metrics.proxyWarning') }}
               </w-item-label>
@@ -158,7 +140,7 @@
                     :label="t(`admin.metrics.includeWiki`)" />
                   <!-- -> Under the box rather than in the hint above, because it is the cost of
                        this option specifically: every one of these gauges is a count read fresh -->
-                  <div class="pl-7 text-caption text-orange flex items-start">
+                  <div class="pl-7 text-caption text-deep-orange flex items-start">
                     <w-icon class="mr-1 mt-px" name="la:exclamation-triangle" size="xs" />
                     <span>{{ t('admin.metrics.includeWikiWarning') }}</span>
                   </div>
@@ -169,20 +151,49 @@
         </w-card>
       </div>
       <div class="col-span-12 lg:col-span-6">
-        <w-card
-          class="rounded"
-          flat
-          :class="dark.isActive ? `bg-dark-5 text-white` : `bg-grey-3 text-dark`">
-          <w-card-section class="items-center" horizontal>
-            <w-card-section class="flex-none pr-0">
-              <w-icon name="la:key" size="sm" />
-            </w-card-section>
-            <w-card-section>
-              <i18n-t tag="span" keypath="admin.metrics.auth" scope="global">
-                <template #permission>
-                  <strong class="font-robotomono">read:metrics</strong>
-                </template>
-              </i18n-t>
+        <!-- ----------------------- -->
+        <!-- Reference -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2">
+          <w-card-header>{{ t('admin.metrics.reference') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="link" top />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.metrics.endpointUrl`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.metrics.endpointUrlHint`) }}</w-item-label>
+              <!-- -> A read-only field with its copy button beside it, drawn as the tenant URL in
+                   `AdminScim` is and for the same reason: a value to be pasted into a scraper's
+                   configuration rather than prose to be read -->
+              <div class="mt-2 flex items-center gap-2">
+                <div
+                  class="text-caption font-robotomono min-w-0 flex-1 break-all rounded border border-black/12 bg-black/4 px-3 py-2 dark:border-white/15 dark:bg-white/6">
+                  {{ endpointUrl }}
+                </div>
+                <w-btn
+                  class="acrylic-btn shrink-0"
+                  icon="la:copy"
+                  flat
+                  dense
+                  color="secondary"
+                  :aria-label="t(`common.actions.copy`)"
+                  @click="copyEndpointUrl">
+                  <w-tooltip>{{ t(`common.actions.copy`) }}</w-tooltip>
+                </w-btn>
+              </div>
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="key" top />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.metrics.auth`) }}</w-item-label>
+              <w-item-label caption>
+                <i18n-t keypath="admin.metrics.authHint" scope="global">
+                  <template #permission>
+                    <strong class="font-robotomono">read:metrics</strong>
+                  </template>
+                </i18n-t>
+              </w-item-label>
               <div class="text-caption mt-2">
                 <i18n-t keypath="admin.metrics.authApiKey" scope="global">
                   <template #headerName>
@@ -191,9 +202,12 @@
                   <template #tokenType><strong class="font-robotomono">Bearer</strong></template>
                 </i18n-t>
               </div>
-              <div class="text-caption font-robotomono">Authorization: Bearer API-KEY-VALUE</div>
-            </w-card-section>
-          </w-card-section>
+              <div
+                class="text-caption font-robotomono mt-2 break-all rounded border border-black/12 bg-black/4 px-3 py-2 dark:border-white/15 dark:bg-white/6">
+                Authorization: Bearer API-KEY-VALUE
+              </div>
+            </w-item-section>
+          </w-item>
         </w-card>
         <!-- ----------------------- -->
         <!-- Preview -->
@@ -227,8 +241,7 @@
               {{ t('admin.metrics.previewEmpty') }}
             </div>
             <template v-else>
-              <pre
-                class="max-h-96 overflow-auto rounded bg-black/5 p-3 text-caption dark:bg-white/5"><code>{{ state.preview.body }}</code></pre>
+              <pre class="admin-metrics-preview"><code>{{ state.preview.body }}</code></pre>
               <div class="text-caption text-grey mt-2">
                 {{ t('admin.metrics.previewSize', { lines: previewLines, bytes: previewBytes }) }}
               </div>
@@ -244,7 +257,6 @@
 import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, watch } from 'vue'
 
-import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -252,10 +264,7 @@ import { loading } from '@/composables/loading'
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
-
-// COMPOSABLES
-
-const dark = useDark()
+import { copyToClipboard } from '@/helpers/clipboard'
 
 // STORES
 
@@ -315,6 +324,17 @@ const state = reactive({
 })
 
 // COMPUTED
+
+/*
+  The path as it is being typed, reduced the way `models/metrics.ts` normalizes it on save, so that
+  `metrics/` reads as the `/metrics` it will become. Built on the browser's own origin rather than on
+  anything stored, as the SCIM tenant URL is: the URL a scraper needs is the one that reaches this
+  wiki, which is the one being looked at.
+*/
+const endpointUrl = computed(() => {
+  const segments = `${state.config.path ?? ''}`.trim().split('/').filter(Boolean)
+  return `${window.location.origin}/${segments.join('/')}`
+})
 
 const previewLines = computed(() =>
   state.preview.body ? state.preview.body.trimEnd().split('\n').length : 0
@@ -381,6 +401,14 @@ async function refresh() {
   notify({
     type: 'positive',
     message: t('admin.metrics.refreshSuccess')
+  })
+}
+
+async function copyEndpointUrl() {
+  await copyToClipboard(endpointUrl.value)
+  notify({
+    type: 'positive',
+    message: t('admin.metrics.endpointUrlCopied')
   })
 }
 
@@ -464,4 +492,24 @@ watch(
 onMounted(load)
 </script>
 
-<style lang="scss"></style>
+<style scoped lang="scss">
+/*
+  Machine output, so it is drawn as the `ProgressLog` panel of the 2.x import and the page problem
+  scan is: monospaced and dark in both themes, on the app's own dark surfaces. Unlike that panel it
+  keeps a capped height rather than a fixed one, since an exposition is as long as it is and a short
+  one should not sit in a mostly empty box.
+*/
+.admin-metrics-preview {
+  max-height: 24rem;
+  overflow: auto;
+  margin: 0;
+  border-radius: 4px;
+  padding: 12px;
+  background-color: $dark-6;
+  border: 1px solid $dark-3;
+  color: $grey-4;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  line-height: 1.6;
+}
+</style>

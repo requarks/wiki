@@ -1067,7 +1067,7 @@ const rules = [
   {
     permission: 'delete:pages',
     title: 'Delete Pages',
-    hint: 'Can delete existing pages.',
+    hint: 'Can delete existing pages and restore them from the recycle bin.',
     warning: false,
     restrictedForSystem: true,
     disabled: false

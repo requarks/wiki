@@ -118,17 +118,13 @@ export function mayOnPage(req: FastifyRequest, permission: string, page: RulePag
 }
 
 /**
- * The page permissions that open the recycle bin, either one sufficient.
- *
- * Whoever may delete a page at a path may see what was deleted there and put it back, which is the
- * undo of the same act; `manage:pages` is the broader authority over the pages at a path. Nothing
- * else in the bin asks for more: viewing, downloading and restoring are one grant, since the bin is
- * where a page is recovered FROM and each of the three is a step of doing so.
- */
-const RECYCLE_BIN_PERMISSIONS = ['delete:pages', 'manage:pages']
-
-/**
  * Whether this requester may see and recover a deleted page, asked of where it was when it went.
+ *
+ * `delete:pages` is what opens the recycle bin, and nothing else does: whoever may delete a page at
+ * a path may see what was deleted there and put it back, which is the undo of the same act.
+ * `manage:pages` does not imply it, as no page permission implies another. Nothing in the bin asks
+ * for more either: viewing, downloading and restoring are one grant, since the bin is where a page
+ * is recovered FROM and each of the three is a step of doing so.
  *
  * The deletion's path, locale and tags stand in for the page, since there is none left to ask about
  * -- which is also why this is the only page check that takes a version rather than a page.
@@ -139,7 +135,7 @@ function mayRecoverPage(
   deleted: { path: string; locale: string; tags?: string[] }
 ): boolean {
   const ref = { siteId, path: deleted.path, locale: deleted.locale, tags: deleted.tags ?? [] }
-  return RECYCLE_BIN_PERMISSIONS.some((permission) => mayOnPage(req, permission, ref))
+  return mayOnPage(req, 'delete:pages', ref)
 }
 
 /**
@@ -1407,13 +1403,13 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/pages/deleted',
     {
       /*
-        No route-level `permissions`: the bin is gated by page rules, `delete:pages` or
-        `manage:pages`, and those are resolved per deleted page against where it was.
+        No route-level `permissions`: the bin is gated by the page rule `delete:pages`, resolved
+        per deleted page against where it was.
       */
       schema: {
         summary: 'List deleted pages',
         description:
-          "The site's recycle bin: every page whose newest version is its deletion, most recently deleted first, in one locale.\n\nOnly the pages the caller holds `delete:pages` or `manage:pages` on, where each page was when it was deleted. Each entry names the version recording the deletion, which is what `GET /sites/:siteId/versions/:versionId` reads and `POST /sites/:siteId/pages/:pageId/restore` restores from.",
+          "The site's recycle bin: every page whose newest version is its deletion, most recently deleted first, in one locale.\n\nOnly the pages the caller holds `delete:pages` on, where each page was when it was deleted. Each entry names the version recording the deletion, which is what `GET /sites/:siteId/versions/:versionId` reads and `POST /sites/:siteId/pages/:pageId/restore` restores from.",
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -1485,7 +1481,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Restore a deleted page',
         description:
-          "Bring a page back out of the recycle bin under its own id, so its whole history comes back with it. The page is restored as the deletion's snapshot held it; only its render is the caller's, produced from that snapshot's source the way an editor produces one, and sanitized against what the caller may embed.\n\nBack where it was unless `path` / `locale` say otherwise. A path another page has taken since answers 409 `pageDuplicatePath`, and a `versionId` that is no longer the page's deletion (it was restored and deleted again meanwhile) answers 409 `pageRestoreStale`.\n\nNeeds `delete:pages` or `manage:pages` where the page was when it was deleted, and at the destination when that is somewhere else.",
+          "Bring a page back out of the recycle bin under its own id, so its whole history comes back with it. The page is restored as the deletion's snapshot held it; only its render is the caller's, produced from that snapshot's source the way an editor produces one, and sanitized against what the caller may embed.\n\nBack where it was unless `path` / `locale` say otherwise. A path another page has taken since answers 409 `pageDuplicatePath`, and a `versionId` that is no longer the page's deletion (it was restored and deleted again meanwhile) answers 409 `pageRestoreStale`.\n\nNeeds `delete:pages` where the page was when it was deleted, and at the destination when that is somewhere else.",
         tags: ['Pages'],
         params: pageIdParam,
         body: {
@@ -1699,7 +1695,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a page version by its ID alone',
         description:
-          "The same version as the history route, addressed WITHOUT naming the page — what a `/_version/<id>` link resolves. The page it came off is named in the reply, since that is what the reader is asking to be told.\n\nNeeds `read:history` and the ability to read that page, on the same terms as the history list.\n\nA version of a page that is in the recycle bin is answered on the recycle bin's terms instead: `delete:pages` or `manage:pages` where the page was when it was deleted, since there is no page left for the rules to be matched against. `pageIsDeleted` is then true, and `pagePath` / `pageLocale` are where it was.",
+          "The same version as the history route, addressed WITHOUT naming the page — what a `/_version/<id>` link resolves. The page it came off is named in the reply, since that is what the reader is asking to be told.\n\nNeeds `read:history` and the ability to read that page, on the same terms as the history list.\n\nA version of a page that is in the recycle bin is answered on the recycle bin's terms instead: `delete:pages` where the page was when it was deleted, since there is no page left for the rules to be matched against. `pageIsDeleted` is then true, and `pagePath` / `pageLocale` are where it was.",
         tags: ['Pages'],
         params: {
           type: 'object',
