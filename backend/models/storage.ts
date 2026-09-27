@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { load } from 'js-yaml'
 import { and, eq, inArray } from 'drizzle-orm'
 import {
@@ -535,6 +536,28 @@ export function parseInterval(value: string): number {
  * target claiming the content (`writeTargetsFor`) and a read picks one of them (`deliveryTargetsFor`),
  * both derived from the configuration as it stands rather than from anything stored per file.
  */
+/**
+ * The target an import is currently reading from, for as long as it runs.
+ *
+ * A target that serializes its own work deadlocks if a write made while importing goes back to it:
+ * the git module runs every operation through one promise chain per repository (`withRepo`), so the
+ * write waits for the sync holding the chain and the sync waits for the write. Nothing times out and
+ * nothing is logged — the job simply never finishes, every later sync for that target queues behind
+ * it, and the worker it holds is gone until the process restarts.
+ *
+ * Writing the file back is pointless anyway: it is the file being read. So for the span of an import,
+ * the target it came from is off limits for writes and every other target still gets its copy.
+ *
+ * Async context rather than a parameter because the write that closes the loop is four frames below
+ * the import — `importTree` → `adoptStoredPage` → `createPage` → `mirrorPage` — and threading it
+ * would put a storage concern in the signature of every page write. `run()` restores the previous
+ * value when it returns, so nesting cannot leak.
+ *
+ * ⚠ It follows the awaits of an in-process task. `syncStorageTargets` is one; a task moved to the
+ * worker pool would not inherit this, and the exclusion would silently stop applying.
+ */
+const importingFrom = new AsyncLocalStorage<string>()
+
 class Storage {
   /** Definitions read from disk, refreshed by `refreshFromDisk()`. */
   definitions: StorageDefinition[] = []
@@ -547,6 +570,26 @@ class Storage {
 
   /** Resolved authors, keyed by user id. See `actorFor`. */
   actorCache = new Map<string, StorageActor>()
+
+  /**
+   * Run an import with the target it is reading from closed to writes. See `importingFrom`.
+   *
+   * Every storage module that takes content in — the git target's sync and its *Import Everything*
+   * action today — wraps the part that adopts files into the wiki, because adopting a page or an
+   * asset writes it back out to every target holding that kind.
+   *
+   * @param targetId The target the content is being read from
+   */
+  async whileImportingFrom<T>(targetId: string, run: () => Promise<T>): Promise<T> {
+    return importingFrom.run(targetId, run)
+  }
+
+  /**
+   * Whether this target is the one an import is reading from, and so must not be written to now.
+   */
+  private isImportSource(target: StorageTarget): boolean {
+    return target.id === importingFrom.getStore()
+  }
 
   /**
    * Load the storage module definitions from disk.
@@ -1359,6 +1402,12 @@ class Storage {
     const accepting: { target: StorageTarget; mod: StorageModule }[] = []
     const declining: StorageTarget[] = []
     for (const target of targets) {
+      // -> An asset adopted from a target is not written back to it while the import runs. It is not
+      //    `declining`: nothing about the file or the layout stopped it, so it is not a reason to
+      //    tell anybody the asset has nowhere to go. See `importingFrom`.
+      if (this.isImportSource(target)) {
+        continue
+      }
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         throw new Error(`The ${target.title} storage module has no implementation installed.`)
@@ -1596,6 +1645,10 @@ class Storage {
     run: (mod: StorageModule, target: StorageTarget) => Promise<void>
   ): Promise<void> {
     for (const target of await this.writeTargetsFor(ref.siteId, ref.kind, ref.fileSize)) {
+      // -> The target an import is reading from is not written to while it reads. See `importingFrom`.
+      if (this.isImportSource(target)) {
+        continue
+      }
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         continue
@@ -1654,6 +1707,10 @@ class Storage {
     run: (mod: StorageModule, target: StorageTarget) => Promise<void>
   ): Promise<void> {
     for (const target of await this.pageTargets(siteId)) {
+      // -> The target an import is reading from is not written to while it reads. See `importingFrom`.
+      if (this.isImportSource(target)) {
+        continue
+      }
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         continue

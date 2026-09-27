@@ -262,9 +262,13 @@ const diskStorage: StorageModule = {
    * the case where there is nothing to reconcile because the folder is simply right.
    */
   async importAll(target: StorageTarget, actorId: string): Promise<string> {
-    return describeImport(
-      await importTree({ target, root: baseDir(target), actorId, overwrite: false }),
-      false
+    // -> Taking a file in writes it back out to every target holding that kind, this one included,
+    //    which is a write of the file being read. See `storage.whileImportingFrom`.
+    return WIKI.models.storage.whileImportingFrom(target.id, async () =>
+      describeImport(
+        await importTree({ target, root: baseDir(target), actorId, overwrite: false }),
+        false
+      )
     )
   },
 
@@ -281,9 +285,11 @@ const diskStorage: StorageModule = {
    * are gone.
    */
   async importAllOverwrite(target: StorageTarget, actorId: string): Promise<string> {
-    return describeImport(
-      await importTree({ target, root: baseDir(target), actorId, overwrite: true }),
-      true
+    return WIKI.models.storage.whileImportingFrom(target.id, async () =>
+      describeImport(
+        await importTree({ target, root: baseDir(target), actorId, overwrite: true }),
+        true
+      )
     )
   }
 }

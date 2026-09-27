@@ -498,18 +498,22 @@ async function runImport(
   overwrite: boolean
 ): Promise<ImportSummary | null> {
   const root = baseDir(target)
-  return withClient(target, async (client) => {
-    const files = await walkRemote(client, root, root)
-    return importTree({
-      target,
-      root,
-      actorId,
-      overwrite,
-      files,
-      // -> `filePath` here is already an absolute remote path, put there by the walk above
-      readFile: async (filePath) => (await client.get(filePath)) as Buffer
+  // -> Taking a file in writes it back out to every target holding that kind, this one included,
+  //    which is a write of the file being read. See `storage.whileImportingFrom`.
+  return WIKI.models.storage.whileImportingFrom(target.id, async () =>
+    withClient(target, async (client) => {
+      const files = await walkRemote(client, root, root)
+      return importTree({
+        target,
+        root,
+        actorId,
+        overwrite,
+        files,
+        // -> `filePath` here is already an absolute remote path, put there by the walk above
+        readFile: async (filePath) => (await client.get(filePath)) as Buffer
+      })
     })
-  })
+  )
 }
 
 export default sftpStorage

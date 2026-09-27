@@ -1025,7 +1025,11 @@ const gitStorage: StorageModule = {
    */
   async importAll(target: StorageTarget, actorId: string): Promise<string> {
     return withRepo(target, async (repo) =>
-      describeImport(await importTree({ target, root: repo.root, actorId, overwrite: true }))
+      // -> Adopting a page writes it back out to every target holding pages, and this one is holding
+      //    the queue that write would have to wait in. See `storage.whileImportingFrom`.
+      WIKI.models.storage.whileImportingFrom(target.id, async () =>
+        describeImport(await importTree({ target, root: repo.root, actorId, overwrite: true }))
+      )
     )
   },
 
@@ -1098,30 +1102,45 @@ async function applyIncoming(
     }
   }
 
-  const summary = await importTree({
-    target,
-    root: repo.root,
-    actorId,
-    overwrite: true,
-    files
-  })
+  /*
+    Everything that puts the commit into the wiki runs with this target closed to writes.
 
-  let deletedPages = 0
-  let deletedAssets = 0
-  for (const segments of removals) {
-    try {
-      const removed = await removeFromWiki(target, segments, actorId)
-      if (removed === 'page') {
-        deletedPages++
-      } else if (removed === 'asset') {
-        deletedAssets++
+    Taking a page in writes it back out to every target holding pages, and deleting one deletes it
+    from them - including this one, whose queue the sync it is part of is holding. The write would
+    wait for the sync, the sync waits for the write, and the job never ends. See
+    `storage.whileImportingFrom`.
+  */
+  const { summary, deletedPages, deletedAssets } = await WIKI.models.storage.whileImportingFrom(
+    target.id,
+    async () => {
+      const imported = await importTree({
+        target,
+        root: repo.root,
+        actorId,
+        overwrite: true,
+        files
+      })
+
+      let pages = 0
+      let assets = 0
+      for (const segments of removals) {
+        try {
+          const removed = await removeFromWiki(target, segments, actorId)
+          if (removed === 'page') {
+            pages++
+          } else if (removed === 'asset') {
+            assets++
+          }
+        } catch (err: any) {
+          // -> One entry the wiki could not let go of must not stop the rest of the commit being applied
+          WIKI.logger.warn(`(STORAGE/GIT) Could not delete ${segments.join('/')} [ SKIPPED ]`)
+          WIKI.logger.warn(`(STORAGE/GIT) ${err.message}`)
+        }
       }
-    } catch (err: any) {
-      // -> One entry the wiki could not let go of must not stop the rest of the commit being applied
-      WIKI.logger.warn(`(STORAGE/GIT) Could not delete ${segments.join('/')} [ SKIPPED ]`)
-      WIKI.logger.warn(`(STORAGE/GIT) ${err.message}`)
+      return { summary: imported, deletedPages: pages, deletedAssets: assets }
     }
-  }
+  )
+
 
   const parts = ['Synced.']
   if (summary && (summary.pages > 0 || summary.assets > 0)) {
