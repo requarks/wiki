@@ -1,3 +1,5 @@
+import type { TaskContext } from '../../core/scheduler.ts'
+
 /**
  * Sync every storage target that has a remote to keep in step with, and whose site is due.
  *
@@ -23,7 +25,7 @@
  * working copy is synced. Every instance in a high-availability set keeps its own, so they each fall
  * in step at their own turn rather than fighting over one repository.
  */
-export async function task(): Promise<void> {
+export async function task(_payload: unknown, { signal }: TaskContext): Promise<void> {
   const syncable = await WIKI.models.storage.syncableTargets()
   if (syncable.length < 1) {
     return
@@ -53,7 +55,14 @@ export async function task(): Promise<void> {
 
   WIKI.logger.info(`Syncing ${targets.length} storage target(s)...`)
   let failed = 0
-  for (const target of targets) {
+  for (const [index, target] of targets.entries()) {
+    // -> A sync cannot be interrupted halfway, but the next one need not be started. The targets left
+    //    over sync on their next due tick.
+    if (signal.aborted) {
+      throw new Error(
+        `Stopped after ${index} of ${targets.length} storage target(s): ${signal.reason?.message}`
+      )
+    }
     try {
       const message = await WIKI.models.storage.executeAction(target, 'sync', actorId)
       WIKI.logger.info(`Synced ${target.title} for site ${target.siteId}: ${message ?? 'done'}`)

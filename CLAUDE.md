@@ -84,8 +84,13 @@ path in silence.
   `modules/authentication/local/`. `modules/storage/*` ships `db` and `disk` — see
   [Storage targets](#storage-targets). `modules/analytics/*` is the odd one out: a pair of YAML files
   and no implementation at all — see [Analytics](#analytics).
-- `tasks/simple/` — jobs run in-process by the scheduler; each exports `task()`. File name is
-  kebab-case, the task key is its camelCase form.
+- `tasks/simple/` — jobs run in-process by the scheduler; each exports `task(payload, { signal })`.
+  File name is kebab-case, the task key is its camelCase form. `scheduler.taskTimeout` applies here
+  as it does to workers, but a promise cannot be killed: at the timeout `signal` is aborted, and a
+  task that works in steps checks it between them and stops (`renderPages` hands the rest of its
+  queue to a fresh job, so a long re-render runs in slices). One that has not settled a minute later
+  is abandoned — failed, left running, and no second copy of that task starts on the instance until
+  it ends (`executeInProcess` in `core/scheduler.ts`).
 - `tasks/workers/` — CPU-bound jobs run in a worker thread via `worker.ts`, which boots a minimal
   `WIKI` global (config + logger + lazy `ensureDb()`) and dynamically imports the task.
 - `base.yml` — system defaults for every config key. Do not edit as a user-facing config; it defines
@@ -270,8 +275,8 @@ Match the check to the size of the change. `npm run build`, `npx oxlint` and `np
 seconds each and are the right check for nearly everything.
 
 **Do not stand up a throwaway instance and drive a headless browser to look at a small change.** That
-means booting a backend against a scratch database, seeding it, and screenshotting through
-`/usr/bin/chromium` — a good ten minutes of setup that a moved border, a colour, a spacing tweak or a
+means booting a backend against a scratch database, seeding it, and screenshotting through a
+headless browser — a good ten minutes of setup that a moved border, a colour, a spacing tweak or a
 renamed label does not earn. Read the rule you wrote, trust the build, and say what you changed.
 
 It is worth the setup for a **new** piece of UI whose markup has to meet a stylesheet written
@@ -296,9 +301,12 @@ Then `CONFIG_FILE=config.test.yml node --no-experimental-webstorage backend` **f
 `CONFIG_FILE` is resolved against `WIKI.ROOTPATH` (`core/config.ts`), so it is a path relative to the
 root and not to `backend/`. It seeds itself and takes ~25s to reach listening.
 
-**Puppeteer is not installed in any workspace, and must not be added to one for a screenshot.** Install
-`puppeteer-core` into a scratch directory instead and drive the browser already on the box:
-`executablePath: '/usr/bin/chromium'`, `args: ['--no-sandbox']`. It pulls ~25 packages and downloads no
+**Puppeteer must not be added to a workspace's `package.json` for a screenshot.** Install
+`puppeteer-core` into a scratch directory instead and drive the browser already on the box: the
+headless shell the dev container's Puppeteer extension installed, whose path
+`npx puppeteer browsers install chrome-headless-shell --format '{{path}}'` prints from `backend/`
+(it downloads nothing when the browser is there). Launch with that as `executablePath`,
+`headless: 'shell'` and `args: ['--no-sandbox']`; `puppeteer-core` pulls ~25 packages and downloads no
 browser of its own.
 
 **Scripting the API rather than the browser**, which is the quicker way to get a page and a history in
@@ -880,6 +888,13 @@ Everything else follows from that:
   dispatches the new bytes to every write target, since the copy a reader is served is usually the
   database's. Imported content is rendered with **no script or style permission** whoever ran the
   import, since the file need not have been written by them.
+- **An import is never written back to the target it reads from.** What it adopts is saved like any
+  edit and so copied to every target holding it, and `git` and `sftp` serialize every operation per
+  target — with the import itself being one, a copy back to the source waits on the import that is
+  waiting on it. `importTree` runs under `storage.importingFrom(target)`, an `AsyncLocalStorage`
+  scope that `putAsset`, `eachPageTarget` and `eachAssetTarget` skip that target in (counting it,
+  for `putAsset`, as somewhere the file is held). Anything else a module does to the wiki while
+  holding its own queue — git's removals in `applyIncoming` — needs the same scope.
 - **On import a file is a page if its extension is reserved, or if it declares an `editor`** in its
   front matter. A text page is front matter plus the source; a **JSON** page — a redirection today —
   is one JSON document with the metadata at its top level and the source under `content`.

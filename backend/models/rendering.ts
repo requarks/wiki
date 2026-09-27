@@ -1018,8 +1018,13 @@ class Rendering {
    * browser. It asks the one already going to look again before it stops, which is what stops a page
    * queued in the moment between the last claim and the end of the drain from waiting for the next
    * request to come along.
+   *
+   * **A drain runs in slices of the scheduler's task timeout.** Re-rendering a whole wiki can take far
+   * longer than that, which is not the drain being stuck, so `signal` is answered by stopping after
+   * the page in hand and handing what is still queued to a fresh job — queued once this drain has let
+   * go of the flag, or the new one would join it just as it was finishing.
    */
-  async drainQueue(): Promise<void> {
+  async drainQueue(signal?: AbortSignal): Promise<void> {
     if (this.draining) {
       this.drainRequested = true
       return
@@ -1028,10 +1033,14 @@ class Rendering {
     try {
       do {
         this.drainRequested = false
-        await this.renderQueuedPages()
-      } while (this.drainRequested)
+        await this.renderQueuedPages(signal)
+      } while (this.drainRequested && !signal?.aborted)
     } finally {
       this.draining = false
+    }
+    if (signal?.aborted) {
+      // -> Whether or not anything is left: a job that finds the queue empty costs one query
+      await WIKI.scheduler.addJob({ task: DRAIN_TASK, maxRetries: 0 })
     }
   }
 
@@ -1053,7 +1062,7 @@ class Rendering {
    * out of time, which leaves a page wedged in whatever loop it was in, and the pages behind it in the
    * queue have done nothing to deserve that.
    */
-  private async renderQueuedPages(): Promise<void> {
+  private async renderQueuedPages(signal?: AbortSignal): Promise<void> {
     // -> Asked before anything else so that the common drain — a spare job for a batch already swept —
     //    costs one query and says nothing
     const waiting = await WIKI.db
@@ -1072,7 +1081,7 @@ class Rendering {
 
     let renderer: PageRenderer | null = null
     try {
-      while (true) {
+      while (!signal?.aborted) {
         /*
           Deliberately outside the per-page catch below, and ahead of the claim: a browser that will
           not open is not this page's fault and will not be the next one's either. Letting that throw
@@ -1176,9 +1185,14 @@ class Rendering {
     }
 
     const browser = await puppeteer.launch({
-      headless: true,
+      // -> The headless shell: all a renderer needs, and the build the Docker image installs
+      headless: 'shell',
       args: ['--no-sandbox', '--disable-dev-shm-usage']
     })
+    const mismatch = await describeVersionMismatch(browser)
+    if (mismatch) {
+      WIKI.logger.warn(mismatch)
+    }
     try {
       const page = await browser.newPage()
       // -> A shell page whose only job is to load the frontend's renderer bundle. It is served by this
@@ -1242,8 +1256,43 @@ class Rendering {
       try {
         await browser.close()
       } catch {}
+      // -> A protocol mismatch fails as whichever step trips over it first, in words that name
+      //    neither version — `Requesting main frame too early!` from the navigation, typically
+      if (mismatch) {
+        err.message = `${err.message} - ${mismatch}`
+      }
       throw err
     }
+  }
+}
+
+/**
+ * Why the browser Puppeteer launched may not be one it can drive, or null when nothing says so.
+ *
+ * Puppeteer speaks the DevTools protocol of the one Chrome release it was built against, and a browser
+ * some way from it fails without saying why. Puppeteer never picks a mismatched browser by itself: the
+ * way to get one is `PUPPETEER_EXECUTABLE_PATH` pointing at a system Chromium that has since moved on.
+ *
+ * Major versions only, since a patch release either side is routine. The expected version is read from
+ * Puppeteer's internal revisions module, as its own `browsers install` command reads it, because there
+ * is no public API for it — so if that has moved, the check is skipped rather than failing a render.
+ */
+async function describeVersionMismatch(browser: any): Promise<string | null> {
+  try {
+    const specifier = 'puppeteer-core/internal/revisions.js'
+    const { PUPPETEER_REVISIONS } = await import(specifier)
+    const expected: string = PUPPETEER_REVISIONS['chrome-headless-shell']
+    // -> `HeadlessChrome/154.0.8037.57`, or `Chrome/…` for a full browser
+    const actual: string = (await browser.version()).split('/').pop()
+    if (!expected || !actual || expected.split('.')[0] === actual.split('.')[0]) {
+      return null
+    }
+    const source = process.env.PUPPETEER_EXECUTABLE_PATH
+      ? ` It was launched from PUPPETEER_EXECUTABLE_PATH (${process.env.PUPPETEER_EXECUTABLE_PATH}): unset that to use the browser Puppeteer installs for itself, or install the Puppeteer release built for this Chrome.`
+      : ''
+    return `Puppeteer is built for Chrome ${expected}, but the browser it launched is ${actual}, and may not be one it can drive.${source}`
+  } catch {
+    return null
   }
 }
 

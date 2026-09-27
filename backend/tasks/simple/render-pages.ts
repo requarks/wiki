@@ -1,3 +1,5 @@
+import type { TaskContext } from '../../core/scheduler.ts'
+
 /**
  * Render every page waiting in the render queue.
  *
@@ -7,6 +9,6 @@
  * there is one browser and it renders one page at a time. A run that finds the queue empty (a second
  * job for a batch this one already swept) returns without launching anything.
  */
-export async function task(): Promise<void> {
-  await WIKI.models.rendering.drainQueue()
+export async function task(_payload: unknown, { signal }: TaskContext): Promise<void> {
+  await WIKI.models.rendering.drainQueue(signal)
 }

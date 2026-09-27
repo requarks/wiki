@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
@@ -24,6 +25,9 @@ export type ContentType = (typeof CONTENT_TYPES)[number]
  * and pages live in the wiki database. It cannot be disabled, as that would leave content nowhere.
  */
 const DB_MODULE = 'db'
+
+/** The target an import in progress is reading from. See `Storage.importingFrom`. */
+const importSource = new AsyncLocalStorage<string>()
 
 /** Which content type an asset falls into when it is not large enough to count as a large file. */
 const CONTENT_TYPE_BY_KIND: Record<AssetKind, ContentType> = {
@@ -1331,6 +1335,28 @@ class Storage {
   }
 
   /**
+   * Run an import from this target without writing what it takes in back to it.
+   *
+   * Everything an import adopts is saved the way an editor saves it, and a save is copied to every
+   * target holding that kind of content — the one it was read from included. That copy is worse than
+   * redundant: the git and SFTP modules serialize every operation on a target, and an import runs as
+   * one of those operations, so a write back to the same target waits for the import to finish while
+   * the import waits for the write. The file is already there, which is where it was read from.
+   *
+   * Carried by `AsyncLocalStorage` rather than a parameter because the save that dispatches is several
+   * models away from the import that caused it, through `createPage`, `updatePage`, `deletePage` and
+   * the asset model, none of which should have to know an import is happening.
+   */
+  importingFrom<T>(target: StorageTarget, work: () => Promise<T>): Promise<T> {
+    return importSource.run(target.id, work)
+  }
+
+  /** Whether this target is the one an import in progress is reading from. */
+  private isImportSource(target: StorageTarget): boolean {
+    return importSource.getStore() === target.id
+  }
+
+  /**
    * Write an asset's bytes to every target that holds its kind, and that has somewhere to put them.
    *
    * Two different things can go wrong here and they are not the same failure. A target that
@@ -1372,6 +1398,9 @@ class Storage {
     if (accepting.length < 1) {
       throw this.unstorableAssetError(ref, contentType, declining)
     }
+    // -> Counted above as somewhere the file can be held, which it is: it was read from there. It
+    //    is only not written to again — see `importingFrom`.
+    const writing = accepting.filter(({ target }) => !this.isImportSource(target))
     if (declining.length > 0) {
       // -> Not a warning on the target: it did what the site configured it to do
       WIKI.logger.debug(
@@ -1379,7 +1408,7 @@ class Storage {
       )
     }
 
-    for (const { target, mod } of accepting) {
+    for (const { target, mod } of writing) {
       try {
         await mod.putAsset(target, ref, data)
       } catch (err: any) {
@@ -1596,6 +1625,9 @@ class Storage {
     run: (mod: StorageModule, target: StorageTarget) => Promise<void>
   ): Promise<void> {
     for (const target of await this.writeTargetsFor(ref.siteId, ref.kind, ref.fileSize)) {
+      if (this.isImportSource(target)) {
+        continue
+      }
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         continue
@@ -1654,6 +1686,9 @@ class Storage {
     run: (mod: StorageModule, target: StorageTarget) => Promise<void>
   ): Promise<void> {
     for (const target of await this.pageTargets(siteId)) {
+      if (this.isImportSource(target)) {
+        continue
+      }
       const mod = await this.ensureModule(target.module)
       if (!mod) {
         continue

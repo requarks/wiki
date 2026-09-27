@@ -20,10 +20,19 @@ npm install
 # and a plain source checkout should not have to fetch it to install the backend.
 #
 # `--no-save` leaves package.json alone, which also means a later reinstall can prune it and turn
-# server-side rendering back off -- run this line again if the admin area says it is missing. The
-# browser itself is in the image, so this fetches no Chromium (see PUPPETEER_* in the Dockerfile).
+# server-side rendering back off -- run this block again if the admin area says it is missing. The
+# version is the extension definition's, as in the production image.
+#
+# Then the browser, which `browsers install` fetches if the postinstall did not, and the system
+# libraries it lists for itself in `deb.deps` -- the `apt-get satisfy` that `--install-deps` runs, but
+# under sudo alone rather than with Puppeteer running as root.
 echo "Installing the Puppeteer extension..."
-npm install --no-save puppeteer@25.4.0
+PUPPETEER_VERSION="$(sed -n 's/^installVersion: *//p' modules/extensions/puppeteer/definition.yml)"
+npm install --no-save "puppeteer@${PUPPETEER_VERSION}"
+PUPPETEER_BROWSER="$(npx puppeteer browsers install chrome-headless-shell --format '{{path}}')"
+sudo apt-get update -qq
+sudo DEBIAN_FRONTEND=noninteractive apt-get satisfy -qy --no-install-recommends \
+  "$(paste -sd, "$(dirname "$PUPPETEER_BROWSER")/deb.deps")"
 
 cd ../frontend
 npm install

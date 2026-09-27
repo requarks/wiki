@@ -34,11 +34,12 @@ interface Repo {
   fingerprint: string
   /** Whether the remote has been contacted since this entry was made. See `ensureRemote`. */
   remoteReady: boolean
-  /** Serializes work on this repository. See `withRepo`. */
-  queue: Promise<unknown>
 }
 
 const repos = new Map<string, Repo>()
+
+/** The last operation queued against each target. See `withRepo`. */
+const queues = new Map<string, Promise<unknown>>()
 
 /** The working copy for this target, as an absolute path. */
 function repoDir(target: StorageTarget): string {
@@ -207,8 +208,7 @@ async function prepareRepo(target: StorageTarget): Promise<Repo> {
     git,
     root,
     fingerprint: configFingerprint(target),
-    remoteReady: false,
-    queue: Promise.resolve()
+    remoteReady: false
   }
 }
 
@@ -220,19 +220,25 @@ async function prepareRepo(target: StorageTarget): Promise<Repo> {
  * safe, and the queue is per target because two targets are two working copies.
  */
 async function withRepo<T>(target: StorageTarget, run: (repo: Repo) => Promise<T>): Promise<T> {
-  let repo = repos.get(target.id)
-  if (!repo || repo.fingerprint !== configFingerprint(target)) {
-    repo = await prepareRepo(target)
-    repos.set(target.id, repo)
+  const turn = async () => {
+    let repo = repos.get(target.id)
+    if (!repo || repo.fingerprint !== configFingerprint(target)) {
+      repo = await prepareRepo(target)
+      repos.set(target.id, repo)
+    }
+    return run(repo)
   }
-  const entry = repo
-  const result = entry.queue.then(
-    () => run(entry),
-    () => run(entry)
-  )
+  // -> The repository is prepared inside the turn, and the queue is kept apart from it. A queue that
+  //    lived on the prepared entry would give two operations arriving before there was one an entry
+  //    each, and a changed setting a new entry beside whatever was still running on the old one — two
+  //    queues over one working copy, and the index lock this exists to avoid.
+  const result = (queues.get(target.id) ?? Promise.resolve()).then(turn, turn)
   // -> The queue holds the settled outcome rather than the result, so one failed operation does not
   //    reject every operation queued behind it
-  entry.queue = result.catch(() => {})
+  queues.set(
+    target.id,
+    result.catch(() => {})
+  )
   return result
 }
 
@@ -1110,7 +1116,11 @@ async function applyIncoming(
   let deletedAssets = 0
   for (const segments of removals) {
     try {
-      const removed = await removeFromWiki(target, segments, actorId)
+      // -> The file is already gone from this working copy, and deleting it again would queue behind
+      //    the sync that is running this — see `storage.importingFrom`
+      const removed = await WIKI.models.storage.importingFrom(target, () =>
+        removeFromWiki(target, segments, actorId)
+      )
       if (removed === 'page') {
         deletedPages++
       } else if (removed === 'asset') {

@@ -4,7 +4,6 @@ LABEL maintainer="requarks.io"
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -qy --no-install-recommends \
     bash \
     build-essential \
-    chromium \
     curl \
     fonts-liberation \
     git \
@@ -30,11 +29,16 @@ USER node
 
 ENV NODE_ENV=production
 
-# The browser the Puppeteer extension drives, installed above rather than downloaded by Puppeteer: the
-# distro keeps it patched, it exists for arm64 as well as amd64, and the image does not carry two copies
-# of Chromium. `PUPPETEER_SKIP_DOWNLOAD` has to be set before the install below for that to hold.
-ENV PUPPETEER_SKIP_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# The browser the Puppeteer extension drives is the one Puppeteer installs for itself, not the distro's:
+# Puppeteer speaks the protocol of the single Chrome release it was built against, and a distro package
+# moves on with every security update while Puppeteer stays pinned, so each rebuild widened the gap until
+# every render failed. Installed by Puppeteer, the pin below decides both halves of the pair.
+#
+# Only the headless shell, which is all a renderer needs; the full browser is skipped.
+# The cache is a fixed path rather than under $HOME so that it is found whatever user the container is
+# run as -- an arbitrary UID on OpenShift has no home directory of its own.
+ENV PUPPETEER_CACHE_DIR=/wiki/.cache/puppeteer
+ENV PUPPETEER_CHROME_SKIP_DOWNLOAD=true
 
 WORKDIR /wiki/backend
 RUN npm ci --omit=dev
@@ -48,9 +52,37 @@ RUN npm ci --omit=dev
 # operator adds Puppeteer to an instance by hand: one place to bump, and an image that cannot drift from
 # what a hand-installed instance gets. An empty read fails the build rather than quietly installing
 # whatever is newest.
+#
+# Puppeteer's postinstall downloads the browser, and `browsers install` makes sure of it: npm may be
+# configured not to run install scripts, and when the browser is already there it only prints its path.
 RUN PUPPETEER_VERSION="$(sed -n 's/^installVersion: *//p' modules/extensions/puppeteer/definition.yml)" && \
     test -n "$PUPPETEER_VERSION" && \
-    npm install --no-save "puppeteer@${PUPPETEER_VERSION}"
+    npm install --no-save "puppeteer@${PUPPETEER_VERSION}" && \
+    npx puppeteer browsers install chrome-headless-shell
+
+# The system libraries that browser needs, which are no longer arriving as the dependencies of a distro
+# package. Each Chrome for Testing build lists its own in `deb.deps`, per architecture, and this is the
+# `apt-get satisfy` that `browsers install --install-deps` would run -- done here as root, rather than
+# running Puppeteer as root, so that nothing in the cache ends up owned by root.
+USER root
+RUN DEPS="$(find "$PUPPETEER_CACHE_DIR" -name deb.deps)" && \
+    test "$(printf '%s\n' "$DEPS" | grep -c .)" -eq 1 && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get satisfy -qy --no-install-recommends "$(paste -sd, "$DEPS")" && \
+    rm -rf /var/lib/apt/lists/*
+USER node
+
+# Launch the browser the way the renderer does and navigate once, which is the step a mismatched or
+# half-installed browser fails at. A pair that cannot render fails the image build, not every render
+# on every instance running the image.
+RUN node --input-type=module -e " \
+    import puppeteer from 'puppeteer'; \
+    const browser = await puppeteer.launch({ headless: 'shell', args: ['--no-sandbox', '--disable-dev-shm-usage'] }); \
+    const page = await browser.newPage(); \
+    await page.goto('data:text/html,<p>ok</p>'); \
+    if ((await page.\$eval('p', (e) => e.textContent)) !== 'ok') throw new Error('The browser did not render.'); \
+    console.log('Puppeteer drives ' + (await browser.version())); \
+    await browser.close();"
 
 WORKDIR /wiki
 

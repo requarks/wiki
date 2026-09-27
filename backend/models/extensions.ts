@@ -226,11 +226,12 @@ class Extensions {
    *
    * Puppeteer is not declared anywhere, so this is a genuine first install, and the bulk of it is the
    * browser. Nothing has to be arranged for that: Puppeteer's own postinstall fetches one into its
-   * cache, which is the ordinary case and the one an install straight onto Linux takes. A server that
-   * already has a browser opts out with `PUPPETEER_SKIP_DOWNLOAD` and points at it with
-   * `PUPPETEER_EXECUTABLE_PATH` — what the Docker image does with the Chromium it takes from the
-   * distro. Neither is required, and neither is set here: npm inherits this process's environment, so
-   * an install from the admin area sees exactly what the operator set for the server and nothing else.
+   * cache, which is the ordinary case, and the Docker image does the same at build time into a fixed
+   * `PUPPETEER_CACHE_DIR`. A server that already has a browser can opt out with
+   * `PUPPETEER_SKIP_DOWNLOAD` and point at it with `PUPPETEER_EXECUTABLE_PATH`, but it has to be the
+   * Chrome release this Puppeteer was built for, which a distro package does not stay. None of these
+   * is set here: npm inherits this process's environment, so an install from the admin area sees
+   * exactly what the operator set for the server and nothing else.
    *
    * Hence the flags:
    *

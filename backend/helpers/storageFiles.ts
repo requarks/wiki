@@ -400,21 +400,30 @@ export interface ImportSummary {
  * @param readFile How to read one, for a tree that is not on this machine — the SFTP target hands in
  *   its own and everything else about the walk is the same
  */
-export async function importTree({
-  target,
-  root,
-  actorId,
-  overwrite,
-  files,
-  readFile = (filePath) => fs.readFile(filePath)
-}: {
+export function importTree(options: ImportTreeOptions): Promise<ImportSummary | null> {
+  // -> What is adopted here is saved like any edit, and so copied to every target holding it. Not to
+  //    this one: the file is already there, and a module that serializes its operations would have
+  //    the copy wait for this import to finish while the import waits for the copy.
+  return WIKI.models.storage.importingFrom(options.target, () => adoptTree(options))
+}
+
+interface ImportTreeOptions {
   target: StorageTarget
   root: string
   actorId: string
   overwrite: boolean
   files?: StoredFile[] | null
   readFile?: (filePath: string) => Promise<Buffer>
-}): Promise<ImportSummary | null> {
+}
+
+async function adoptTree({
+  target,
+  root,
+  actorId,
+  overwrite,
+  files,
+  readFile = (filePath) => fs.readFile(filePath)
+}: ImportTreeOptions): Promise<ImportSummary | null> {
   const found = files === undefined ? await walkStored(root) : files
   if (!found) {
     return null
