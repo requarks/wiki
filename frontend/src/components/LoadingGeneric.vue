@@ -83,4 +83,8 @@
     animation-duration: 2s;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .loader-generic > div:before {
+  animation-duration: 2s;
+}
 </style>

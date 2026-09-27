@@ -81,7 +81,10 @@ const PERSONAL_PROFILE_FIELDS = [
   'dateFormat',
   'timeFormat',
   'appearance',
-  'cvd'
+  'cvd',
+  'reduceMotion',
+  'underlineLinks',
+  'contentTextSize'
 ] as const
 
 /**
@@ -268,7 +271,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Update the logged in user's own profile",
         description:
-          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the language, time zone, date and time formats, appearance and colour-vision settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
+          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the language, time zone, date and time formats, appearance and accessibility settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
         tags: ['Users'],
         body: {
           $ref: 'UserProfileUpdate#'
@@ -311,7 +314,7 @@ async function routes(app: FastifyInstance) {
       const patch: UserProfilePatch = {}
       for (const key of [...IDENTITY_PROFILE_FIELDS, ...PERSONAL_PROFILE_FIELDS] as const) {
         if (req.body[key] !== undefined) {
-          patch[key] = req.body[key]
+          ;(patch as Record<string, any>)[key] = req.body[key]
         }
       }
       if (!WIKI.models.authentication.isProfileEditingAllowed()) {
@@ -344,7 +347,10 @@ async function routes(app: FastifyInstance) {
         dateFormat: profile.dateFormat,
         timeFormat: profile.timeFormat,
         appearance: profile.appearance,
-        cvd: profile.cvd
+        cvd: profile.cvd,
+        reduceMotion: profile.reduceMotion,
+        underlineLinks: profile.underlineLinks,
+        contentTextSize: profile.contentTextSize
       }
 
       // -> The fields that were touched, not the values: `patch` carries whatever the profile form

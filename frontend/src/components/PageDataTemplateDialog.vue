@@ -195,6 +195,8 @@ import { sortBy } from 'es-toolkit/array'
 import { cloneDeep } from 'es-toolkit/object'
 import draggable from 'vuedraggable'
 
+import { scrollBehavior } from '@/helpers/motion'
+
 // PROPS
 
 const props = defineProps({
@@ -280,7 +282,7 @@ watch(
     if (newValue) {
       nextTick(() => {
         scrollAreaEnd.value.scrollIntoView({
-          behavior: 'smooth'
+          behavior: scrollBehavior()
         })
       })
     }

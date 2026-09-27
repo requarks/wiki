@@ -174,6 +174,19 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       cvd: {
         type: 'string',
         description: 'Color vision deficiency to adjust the palette for.'
+      },
+      reduceMotion: {
+        type: 'boolean',
+        description:
+          'Reduce motion whether or not the operating system asks for it. False follows the system setting.'
+      },
+      underlineLinks: {
+        type: 'boolean',
+        description: 'Underline every link in page content, rather than only on hover.'
+      },
+      contentTextSize: {
+        type: 'string',
+        description: 'How large page content is set. The interface around it is unaffected.'
       }
     }
   })
@@ -287,6 +300,16 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       cvd: {
         type: 'string',
         enum: ['none', 'protanopia', 'deuteranopia', 'tritanopia']
+      },
+      reduceMotion: {
+        type: 'boolean'
+      },
+      underlineLinks: {
+        type: 'boolean'
+      },
+      contentTextSize: {
+        type: 'string',
+        enum: ['default', 'large', 'larger']
       }
     }
   })

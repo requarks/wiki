@@ -104,6 +104,11 @@
               </w-item-section>
             </w-item>
           </template>
+          <w-card-section>
+            <w-banner :class="dark.isActive ? `bg-teal-9 text-white` : `bg-teal-1 text-teal-9`">{{
+              t('admin.theme.colorsHint')
+            }}</w-banner>
+          </w-card-section>
         </w-card>
         <!-- ----------------------- -->
         <!-- Code Blocks -->
@@ -328,6 +333,7 @@
 import { useI18n } from 'vue-i18n'
 import { onMounted, reactive, watch } from 'vue'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -339,6 +345,10 @@ import { useSiteStore } from '@/stores/site'
 import { toMerged } from 'es-toolkit/object'
 import { startCase } from 'es-toolkit/string'
 import UtilCodeEditor from '../components/UtilCodeEditor.vue'
+
+// DARK MODE
+
+const dark = useDark()
 
 // STORES
 

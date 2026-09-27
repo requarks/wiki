@@ -14,6 +14,8 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { scrollBehavior } from '@/helpers/motion'
+
 /**
  * "Back to top" affordance that appears once the page has been scrolled past `scrollOffset`, and
  * smooth-scrolls to the top when clicked.
@@ -21,7 +23,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
  * Always flush against the bottom of the viewport, in one of two places: the bottom-right corner, or
  * with its right edge at `anchorX` — which is how it tucks into the bottom of the nav sidebar's
  * column. Scrolling uses the platform's own smooth behaviour rather than the hand-rolled easing the
- * previous component shipped, and honours `prefers-reduced-motion` for free.
+ * previous component shipped, and jumps instead when motion is to be reduced (`helpers/motion.js`).
  */
 const props = defineProps({
   /** Show once the window has scrolled this many pixels. */
@@ -64,8 +66,7 @@ function onScroll() {
 }
 
 function scrollToTop() {
-  // -> `smooth` is ignored when the user has asked for reduced motion, which is the behaviour we want
-  ;(scroller() ?? window).scrollTo({ top: 0, behavior: 'smooth' })
+  ;(scroller() ?? window).scrollTo({ top: 0, behavior: scrollBehavior() })
 }
 
 onMounted(() => {

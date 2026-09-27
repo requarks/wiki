@@ -102,6 +102,9 @@ export const useUserStore = defineStore('user', {
     timeFormat: '12h',
     appearance: 'site',
     cvd: 'none',
+    reduceMotion: false,
+    underlineLinks: false,
+    contentTextSize: 'default',
     permissions: [],
     pagePermissions: [],
     authenticated: false,
@@ -149,6 +152,9 @@ export const useUserStore = defineStore('user', {
         timeFormat: resp.timeFormat || '12h',
         appearance: resp.appearance || 'site',
         cvd: resp.cvd || 'none',
+        reduceMotion: resp.reduceMotion ?? false,
+        underlineLinks: resp.underlineLinks ?? false,
+        contentTextSize: resp.contentTextSize || 'default',
         permissions: resp.permissions || [],
         authenticated: true,
         profileLoaded: true
@@ -180,6 +186,9 @@ export const useUserStore = defineStore('user', {
         timeFormat: '12h',
         appearance: 'site',
         cvd: 'none',
+        reduceMotion: false,
+        underlineLinks: false,
+        contentTextSize: 'default',
         permissions: [],
         // -> Page permissions arrive with the page, so leaving them would keep edit buttons on screen
         //    for a user who is no longer logged in until they navigate

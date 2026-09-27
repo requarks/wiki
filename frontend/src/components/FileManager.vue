@@ -149,56 +149,85 @@
       </div>
     </w-drawer>
     <w-drawer class="fileman-right" :model-value="detailsPaneShown" :width="350" side="right">
-      <w-scroll-area :thumb-style="thumbStyle" :bar-style="barStyle" style="height: 100%">
-        <div class="p-4">
-          <template v-if="state.isRecycleBin">
-            <template v-if="selectedDeletedPage">
-              <img
-                class="mb-4 w-full rounded object-cover"
-                src="/_assets/illustrations/fileman-page.svg" />
-              <div class="fileman-details-row" v-for="item of deletedPageDetails" :key="item.label">
-                <label>{{ item.label }}</label>
-                <span>{{ item.value }}</span>
-              </div>
+      <div class="flex h-full flex-col">
+        <w-scroll-area
+          class="min-h-0 flex-1"
+          :thumb-style="thumbStyle"
+          :bar-style="barStyle"
+          style="height: 100%">
+          <div class="p-4">
+            <template v-if="state.isRecycleBin">
+              <template v-if="selectedDeletedPage">
+                <img
+                  class="mb-4 w-full rounded object-cover"
+                  src="/_assets/illustrations/fileman-page.svg" />
+                <div
+                  class="fileman-details-row"
+                  v-for="item of deletedPageDetails"
+                  :key="item.label">
+                  <label>{{ item.label }}</label>
+                  <span>{{ item.value }}</span>
+                </div>
+              </template>
             </template>
-          </template>
-          <template v-else-if="currentFileDetails">
-            <!--
+            <template v-else-if="currentFileDetails">
+              <!--
               A button around the thumbnail, and only for an image: it opens the full view, and the
               illustration standing in for a page has nothing behind it to open.
             -->
-            <button
-              class="fileman-details-thumb w-unstyled mb-4 block w-full"
-              v-if="currentFileDetails.thumbnail && currentFileDetails.viewable"
-              :aria-label="t(`common.actions.view`)"
-              @click="viewCurrentFile">
-              <img class="w-full rounded object-cover" :src="currentFileDetails.thumbnail" />
-            </button>
-            <img
-              class="mb-4 w-full rounded object-cover"
-              v-else-if="currentFileDetails.thumbnail"
-              :src="currentFileDetails.thumbnail" />
-            <div
-              class="fileman-details-row"
-              v-for="item of currentFileDetails.items"
-              :key="item.id">
-              <label>{{ item.label }}</label>
-              <span>{{ item.value }}</span>
-            </div>
-            <template v-if="insertMode">
-              <w-separator class="my-4" />
-              <w-btn
-                class="w-full"
-                @click="insertItem()"
-                :label="t(`common.actions.insert`)"
-                color="primary"
-                icon="la:plus-circle"
-                push
-                padding="sm" />
+              <button
+                class="fileman-details-thumb w-unstyled mb-4 block w-full"
+                v-if="currentFileDetails.thumbnail && currentFileDetails.viewable"
+                :aria-label="t(`common.actions.view`)"
+                @click="viewCurrentFile">
+                <img class="w-full rounded object-cover" :src="currentFileDetails.thumbnail" />
+              </button>
+              <img
+                class="mb-4 w-full rounded object-cover"
+                v-else-if="currentFileDetails.thumbnail"
+                :src="currentFileDetails.thumbnail" />
+              <div
+                class="fileman-details-row"
+                v-for="item of currentFileDetails.items"
+                :key="item.id">
+                <label>{{ item.label }}</label>
+                <div v-if="item.tags" class="mt-1 flex flex-wrap gap-1">
+                  <w-chip
+                    v-for="tag of item.tags"
+                    :key="tag"
+                    square
+                    dense
+                    color="secondary"
+                    text-color="white">
+                    <w-icon class="me-1" name="la:hashtag" size="14px" />
+                    <span class="text-caption">{{ tag }}</span>
+                  </w-chip>
+                </div>
+                <span v-else>{{ item.value }}</span>
+              </div>
+              <template v-if="insertMode">
+                <w-separator class="my-4" />
+                <w-btn
+                  class="w-full"
+                  @click="insertItem()"
+                  :label="t(`common.actions.insert`)"
+                  color="primary"
+                  icon="la:plus-circle"
+                  push
+                  padding="sm" />
+              </template>
             </template>
-          </template>
+          </div>
+        </w-scroll-area>
+        <!--
+        Pinned under the details, the way the Recycle Bin is pinned under the tree: every action on a
+        file, a folder or a deleted page is in its right-click menu, and nothing on screen says so.
+      -->
+        <div class="fileman-hint">
+          <w-icon name="la:mouse-pointer" size="sm" />
+          <span>{{ t('fileman.rightClickHint') }}</span>
         </div>
-      </w-scroll-area>
+      </div>
     </w-drawer>
     <w-page-container>
       <!--
@@ -700,8 +729,20 @@
     </w-page-container>
     <w-footer>
       <w-bar class="fileman-path">
-        <small class="text-caption text-grey-7">{{
+        <!--
+          -> `flex-1` on the path is what puts the counts at the far end: `ms-auto` cannot, because
+             `WBar` gives every child after the first a start margin from outside Tailwind's layers,
+             which beats any utility
+        -->
+        <small class="text-caption text-grey-7 min-w-0 flex-1 truncate">{{
           state.isRecycleBin ? t('fileman.recycleBin') : folderPath
+        }}</small>
+        <!--
+          -> What the folder holds, not what the list is showing: the search box and the "show folders"
+             option are ways of looking at the folder, and the bar beside them describes the folder
+        -->
+        <small v-if="listCounts" class="text-caption text-grey-7 shrink-0 ps-4">{{
+          listCounts
         }}</small>
       </w-bar>
     </w-footer>
@@ -973,6 +1014,25 @@ function listingOrder(a, b) {
   return Number(b.type === 'folder') - Number(a.type === 'folder')
 }
 
+/**
+ * The counts in the bar under the list, or null while there is nothing settled to count -- or
+ * nothing to count at all. A kind the folder holds none of is left out rather than reported as zero,
+ * and the Recycle Bin, holding deleted pages and nothing else, never has folders to report.
+ */
+const listCounts = computed(() => {
+  if (state.isRecycleBin ? state.binLoading : state.fileListLoading) {
+    return null
+  }
+  const items = state.isRecycleBin ? state.binItems : state.fileList
+  const folders = state.isRecycleBin ? 0 : items.filter((f) => f.type === 'folder').length
+  const files = items.length - folders
+  const parts = [
+    ...(folders > 0 ? [t('fileman.folderCount', { count: folders }, folders)] : []),
+    ...(files > 0 ? [t('fileman.fileCount', { count: files }, files)] : [])
+  ]
+  return parts.length > 0 ? parts.join(' · ') : null
+})
+
 const files = computed(() => {
   return filteredFiles.value
     .filter((f) => {
@@ -1076,6 +1136,19 @@ const currentFileDetails = computed(() => {
   switch (item.type) {
     case 'page': {
       thumbnail = '/_assets/illustrations/fileman-page.svg'
+      // -> Both optional on a page, and left out rather than shown as an empty row when not set
+      if (item.description) {
+        items.push({
+          label: t('fileman.detailsPageDescription'),
+          value: item.description
+        })
+      }
+      if (item.tags.length > 0) {
+        items.push({
+          label: t('fileman.detailsPageTags'),
+          tags: item.tags
+        })
+      }
       items.push({
         label: t('fileman.detailsPageType'),
         value: t(`fileman.${item.pageType}PageType`)
@@ -1337,6 +1410,8 @@ async function loadTree({ parentId = null, parentPath = null, types, initLoad = 
                 type: 'page',
                 title: item.title,
                 pageType: item.editor || 'markdown',
+                description: item.description,
+                tags: item.tags ?? [],
                 folderPath: item.folderPath,
                 fileName: item.fileName,
                 createdAt: item.createdAt,
@@ -2279,6 +2354,15 @@ onBeforeUnmount(() => {
 */
 $fileman-hdr-wrap-max: 899.98px;
 
+/*
+  The one height shared by the three rows along the bottom -- the Recycle Bin under the tree, the path
+  bar under the list, and the hint under the details -- so they read as a single band across the view.
+  45px is what the two side rows come to on their own: a 1px rule, 10px of padding each way, a 24px
+  icon. A minimum, not a height, so a translation long enough to wrap grows its row instead of being
+  clipped; it also wins over the `height` `WBar` sets without a specificity fight.
+*/
+$fileman-bottom-row-height: 45px;
+
 .fileman {
   /*
     THE HEADER ON A NARROW SCREEN
@@ -2437,6 +2521,25 @@ $fileman-hdr-wrap-max: 899.98px;
     }
   }
 
+  &-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: $fileman-bottom-row-height;
+    padding: 10px 16px;
+    font-size: 12px;
+    line-height: 1.4;
+
+    @at-root .body--light & {
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      color: $grey-7;
+    }
+    @at-root .body--dark & {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: $grey-5;
+    }
+  }
+
   &-toolbar {
     @at-root .body--light & {
       background-color: $grey-1;
@@ -2455,6 +2558,7 @@ $fileman-hdr-wrap-max: 899.98px;
     display: flex;
     align-items: center;
     gap: 8px;
+    min-height: $fileman-bottom-row-height;
     width: 100%;
     padding: 10px 12px;
     font: inherit;
@@ -2463,18 +2567,24 @@ $fileman-hdr-wrap-max: 899.98px;
     cursor: pointer;
     transition: background-color 0.4s ease;
 
+    /*
+      -> A shade under the drawer at rest, because the path bar beside it is the drawer's own fill and
+         the two would otherwise run together as one strip along the bottom
+    */
     @at-root .body--light & {
       border-top: 1px solid rgba(0, 0, 0, 0.08);
+      background-color: rgba(0, 0, 0, 0.04);
     }
     @at-root .body--dark & {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background-color: rgba(0, 0, 0, 0.2);
     }
 
     &:hover,
     &:focus-visible,
     &.is-active {
       @at-root .body--light & {
-        background-color: rgba(0, 0, 0, 0.05);
+        background-color: rgba(0, 0, 0, 0.09);
       }
       @at-root .body--dark & {
         background-color: rgba(255, 255, 255, 0.1);
@@ -2497,11 +2607,16 @@ $fileman-hdr-wrap-max: 899.98px;
   }
 
   &-path {
+    min-height: $fileman-bottom-row-height;
+
+    // -> The same rule the Recycle Bin draws along its top, so the bottom band has one edge across it
     @at-root .body--light & {
       background-color: $blue-grey-1 !important;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
     @at-root .body--dark & {
       background-color: $dark-4 !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
   }
 
@@ -2614,7 +2729,8 @@ $fileman-hdr-wrap-max: 899.98px;
         color: $blue-grey-4;
       }
     }
-    span {
+    // -> The row's own value only: a tag chip draws its label in a span too, white on its own fill
+    > span {
       font-size: 0.85rem;
 
       @at-root .body--light & {

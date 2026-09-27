@@ -993,6 +993,10 @@ function notImplemented() {
     animation: none;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .is-ringing :deep(svg) {
+  animation: none;
+}
 
 /*
   The two headings, while they are also the fields.

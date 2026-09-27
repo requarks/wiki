@@ -209,4 +209,12 @@ const barStyle = computed(() => ({
     animation: none;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .w-linear-progress-indeterminate {
+  animation-duration: 3s;
+}
+.body--reduce-motion .w-linear-progress-striped,
+.body--reduce-motion .w-linear-progress-bar:not(.w-linear-progress-indeterminate) {
+  animation: none;
+}
 </style>

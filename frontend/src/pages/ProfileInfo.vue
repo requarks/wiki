@@ -239,6 +239,46 @@
           :aria-label="t(`profile.cvd`)" />
       </w-item-section>
     </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item tag="label">
+      <blueprint-icon icon="swipe-right" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.reduceMotion`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.reduceMotionHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section avatar>
+        <w-toggle v-model="state.config.reduceMotion" :aria-label="t(`profile.reduceMotion`)" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item tag="label">
+      <blueprint-icon icon="underline" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.underlineLinks`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.underlineLinksHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section avatar>
+        <w-toggle v-model="state.config.underlineLinks" :aria-label="t(`profile.underlineLinks`)" />
+      </w-item-section>
+    </w-item>
+    <w-separator inset spaced="sm" />
+    <w-item>
+      <blueprint-icon icon="typography" />
+      <w-item-section>
+        <w-item-label>{{ t(`profile.contentTextSize`) }}</w-item-label>
+        <w-item-label caption>{{ t(`profile.contentTextSizeHint`) }}</w-item-label>
+      </w-item-section>
+      <w-item-section side>
+        <w-btn-toggle
+          v-model="state.config.contentTextSize"
+          push
+          glossy
+          no-caps
+          toggle-color="primary"
+          :options="contentTextSizes"
+          :aria-label="t(`profile.contentTextSize`)" />
+      </w-item-section>
+    </w-item>
     <!-- -> Always: the preferences and accessibility settings below are savable whether or not the
          information above is editable -->
     <div class="actions-bar mt-6">
@@ -298,7 +338,10 @@ const state = reactive({
     dateFormat: '',
     timeFormat: '12h',
     appearance: 'site',
-    cvd: 'none'
+    cvd: 'none',
+    reduceMotion: false,
+    underlineLinks: false,
+    contentTextSize: 'default'
   },
   loading: 0
 })
@@ -344,6 +387,11 @@ const cvdChoices = computed(() => [
   { value: 'deuteranopia', label: t('profile.cvdDeuteranopia') },
   { value: 'tritanopia', label: t('profile.cvdTritanopia') }
 ])
+const contentTextSizes = computed(() => [
+  { value: 'default', label: t('profile.contentTextSizeDefault') },
+  { value: 'large', label: t('profile.contentTextSizeLarge') },
+  { value: 'larger', label: t('profile.contentTextSizeLarger') }
+])
 const timezones = Intl.supportedValuesOf('timeZone')
 
 const canEdit = computed(() => authConfigStore.allowProfileEditing)
@@ -384,6 +432,9 @@ function applyProfile(profile) {
   state.config.timeFormat = profile.timeFormat || '12h'
   state.config.appearance = profile.appearance || 'site'
   state.config.cvd = profile.cvd || 'none'
+  state.config.reduceMotion = profile.reduceMotion ?? false
+  state.config.underlineLinks = profile.underlineLinks ?? false
+  state.config.contentTextSize = profile.contentTextSize || 'default'
 }
 
 async function save() {
@@ -413,7 +464,10 @@ async function save() {
         dateFormat: state.config.dateFormat,
         timeFormat: state.config.timeFormat,
         appearance: state.config.appearance,
-        cvd: state.config.cvd
+        cvd: state.config.cvd,
+        reduceMotion: state.config.reduceMotion,
+        underlineLinks: state.config.underlineLinks,
+        contentTextSize: state.config.contentTextSize
       }
     }).json()
     if (!resp?.ok) {
@@ -422,8 +476,8 @@ async function save() {
     if (resp.profile) {
       applyProfile(resp.profile)
     }
-    // -> Only the fields the store actually holds: the appearance and CVD choices are watched by the
-    //    app shell, so saving them takes effect right away
+    // -> Only the fields the store actually holds: the appearance and accessibility choices are
+    //    watched by the app shell, so saving them takes effect right away
     userStore.$patch({
       name: state.config.name,
       locale: state.config.locale,
@@ -431,7 +485,10 @@ async function save() {
       dateFormat: state.config.dateFormat,
       timeFormat: state.config.timeFormat,
       appearance: state.config.appearance,
-      cvd: state.config.cvd
+      cvd: state.config.cvd,
+      reduceMotion: state.config.reduceMotion,
+      underlineLinks: state.config.underlineLinks,
+      contentTextSize: state.config.contentTextSize
     })
     notify({
       type: 'positive',

@@ -213,4 +213,10 @@ function initials(name) {
     opacity: 0.45;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .collab-presence-person.is-typing .collab-presence-wave {
+  animation: none;
+  transform: scale(1.35);
+  opacity: 0.45;
+}
 </style>

@@ -151,4 +151,9 @@ const { t } = useI18n()
     animation: none;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .w-notification-progress,
+.body--reduce-motion .w-notification-count {
+  animation: none;
+}
 </style>

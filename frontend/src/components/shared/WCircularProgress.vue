@@ -94,4 +94,8 @@ const circumference = computed(() => 2 * Math.PI * radius.value)
     animation-duration: 4s;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .w-circular-progress__arc {
+  animation-duration: 4s;
+}
 </style>

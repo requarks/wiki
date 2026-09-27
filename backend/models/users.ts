@@ -130,6 +130,12 @@ export interface UserProfile {
   timeFormat: string
   appearance: string
   cvd: string
+  /** Reduce motion whether or not the operating system asks for it. False follows the system. */
+  reduceMotion: boolean
+  /** Underline every link in page content, rather than only on hover. */
+  underlineLinks: boolean
+  /** How large page content is set: `default`, `large` or `larger`. The interface around it is not. */
+  contentTextSize: string
 }
 
 /**
@@ -166,6 +172,9 @@ export interface UserProfilePatch {
   timeFormat?: string
   appearance?: string
   cvd?: string
+  reduceMotion?: boolean
+  underlineLinks?: boolean
+  contentTextSize?: string
 }
 
 /** The `meta` keys the profile owns, and the `prefs` keys it owns. */
@@ -176,7 +185,10 @@ const profilePrefsKeys = [
   'dateFormat',
   'timeFormat',
   'appearance',
-  'cvd'
+  'cvd',
+  'reduceMotion',
+  'underlineLinks',
+  'contentTextSize'
 ] as const
 
 /**
@@ -578,7 +590,10 @@ class Users {
           dateFormat: WIKI.config.userDefaults?.dateFormat ?? 'YYYY-MM-DD',
           timeFormat: WIKI.config.userDefaults?.timeFormat ?? '12h',
           appearance: 'site',
-          cvd: 'none'
+          cvd: 'none',
+          reduceMotion: false,
+          underlineLinks: false,
+          contentTextSize: 'default'
         }
       })
       .returning({ id: usersTable.id })
@@ -653,7 +668,10 @@ class Users {
       dateFormat: prefs.dateFormat ?? '',
       timeFormat: prefs.timeFormat ?? '12h',
       appearance: prefs.appearance ?? 'site',
-      cvd: prefs.cvd ?? 'none'
+      cvd: prefs.cvd ?? 'none',
+      reduceMotion: prefs.reduceMotion ?? false,
+      underlineLinks: prefs.underlineLinks ?? false,
+      contentTextSize: prefs.contentTextSize ?? 'default'
     }
   }
 
@@ -1412,7 +1430,10 @@ class Users {
           dateFormat: 'YYYY-MM-DD',
           timeFormat: '12h',
           appearance: 'site',
-          cvd: 'none'
+          cvd: 'none',
+          reduceMotion: false,
+          underlineLinks: false,
+          contentTextSize: 'default'
         }
       },
       {
@@ -1429,7 +1450,10 @@ class Users {
           dateFormat: 'YYYY-MM-DD',
           timeFormat: '12h',
           appearance: 'site',
-          cvd: 'none'
+          cvd: 'none',
+          reduceMotion: false,
+          underlineLinks: false,
+          contentTextSize: 'default'
         }
       }
     ])
@@ -2485,7 +2509,10 @@ class Users {
       dateFormat: user.prefs?.dateFormat,
       timeFormat: user.prefs?.timeFormat,
       appearance: user.prefs?.appearance,
-      cvd: user.prefs?.cvd
+      cvd: user.prefs?.cvd,
+      reduceMotion: user.prefs?.reduceMotion,
+      underlineLinks: user.prefs?.underlineLinks,
+      contentTextSize: user.prefs?.contentTextSize
     }
     req.session.permissions = uniq(flatten(user.groups?.map((g: any) => g.permissions)))
     // -> Group ids as well as their permissions, since navigation items are limited per group

@@ -172,4 +172,9 @@ const style = computed(() => ({
     animation: none;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .w-signal__ring,
+.body--reduce-motion .w-signal__core {
+  animation: none;
+}
 </style>

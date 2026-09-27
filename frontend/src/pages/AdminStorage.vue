@@ -1368,4 +1368,8 @@ onMounted(() => {
     animation: none;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .status-dot--alert {
+  animation: none;
+}
 </style>

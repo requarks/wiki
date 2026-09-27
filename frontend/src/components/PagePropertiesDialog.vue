@@ -409,6 +409,8 @@
 import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
+import { scrollBehavior } from '@/helpers/motion'
+
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -539,7 +541,7 @@ function removeRelation(rel) {
 }
 function jumpToSection(id) {
   document.querySelector(`#${id}`).scrollIntoView({
-    behavior: 'smooth'
+    behavior: scrollBehavior()
   })
 }
 function toggleRequirePassword(newValue) {
@@ -547,7 +549,7 @@ function toggleRequirePassword(newValue) {
     nextTick(() => {
       iptPagePassword.value.focus()
       iptPagePassword.value.$el.scrollIntoView({
-        behavior: 'smooth'
+        behavior: scrollBehavior()
       })
     })
   } else {

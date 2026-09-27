@@ -306,6 +306,56 @@
                       ]" />
                   </w-item-section>
                 </w-item>
+                <w-separator class="my-2" inset />
+                <w-item tag="label">
+                  <blueprint-icon icon="swipe-right" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`profile.reduceMotion`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`profile.reduceMotionHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section avatar>
+                    <w-toggle
+                      v-model="state.user.prefs.reduceMotion"
+                      :disable="!canManage"
+                      :aria-label="t(`profile.reduceMotion`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item tag="label">
+                  <blueprint-icon icon="underline" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`profile.underlineLinks`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`profile.underlineLinksHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section avatar>
+                    <w-toggle
+                      v-model="state.user.prefs.underlineLinks"
+                      :disable="!canManage"
+                      :aria-label="t(`profile.underlineLinks`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="typography" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`profile.contentTextSize`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`profile.contentTextSizeHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section class="flex-none">
+                    <w-btn-toggle
+                      v-model="state.user.prefs.contentTextSize"
+                      :disable="!canManage"
+                      push
+                      glossy
+                      no-caps
+                      toggle-color="primary"
+                      :options="[
+                        { value: 'default', label: t('profile.contentTextSizeDefault') },
+                        { value: 'large', label: t('profile.contentTextSizeLarge') },
+                        { value: 'larger', label: t('profile.contentTextSizeLarger') }
+                      ]" />
+                  </w-item-section>
+                </w-item>
               </w-card>
             </div>
             <div class="col-span-12 lg:col-span-4">

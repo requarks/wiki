@@ -8,6 +8,8 @@
  * each block fetches its component and settles into its real size.
  */
 
+import { scrollBehavior } from './motion'
+
 /**
  * Asked of a block that might be hiding the element the event was dispatched on.
  *
@@ -103,8 +105,7 @@ function driftOf(el, scroller) {
 }
 
 function scrollTo(el, smooth) {
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  el.scrollIntoView({ behavior: smooth && !reduceMotion ? 'smooth' : 'auto', block: 'start' })
+  el.scrollIntoView({ behavior: smooth ? scrollBehavior() : 'auto', block: 'start' })
 }
 
 /**

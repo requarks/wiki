@@ -327,6 +327,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
+import { scrollBehavior } from '@/helpers/motion'
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
 
 import { debounce } from 'es-toolkit/function'
@@ -1123,7 +1124,7 @@ function scrollPreviewTo(container, el) {
   const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top
   container.scrollTo({
     top: container.scrollTop + offset - container.clientHeight * PREVIEW_CONTEXT_ABOVE,
-    behavior: 'smooth'
+    behavior: scrollBehavior()
   })
 }
 
@@ -1528,7 +1529,7 @@ onMounted(async () => {
         return
       }
       if (currentLine < 3) {
-        container.scrollTo({ top: 0, behavior: 'smooth' })
+        container.scrollTo({ top: 0, behavior: scrollBehavior() })
         return
       }
       const anchor = previewAnchorFor(container, currentLine)

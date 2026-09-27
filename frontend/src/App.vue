@@ -62,6 +62,7 @@ const i18n = useI18n({ useScope: 'global' })
 // ROUTER
 
 const router = useRouter()
+const route = useRoute()
 
 // STATE
 
@@ -91,6 +92,16 @@ watch(
 
 watch(() => commonStore.locale, applyLocale)
 
+watch(isAdminArea, () => {
+  applyTheme()
+})
+
+watch(
+  () => [userStore.reduceMotion, userStore.underlineLinks, userStore.contentTextSize],
+  applyAccessibility,
+  { immediate: true }
+)
+
 // LOCALE
 
 async function applyLocale(locale) {
@@ -115,7 +126,40 @@ async function applyLocale(locale) {
   document.documentElement.lang = locale
 }
 
+// ACCESSIBILITY
+
+/*
+  The reader's own accessibility settings (Profile -> Info), as classes on <body> -- the same element
+  `body--dark` is on, and for the same reason: it is above everything, teleported dialogs and menus
+  included. What each class does is next to the styles it changes: `css/_animation.scss` for motion,
+  `css/_page-contents.scss` for links and text size.
+*/
+function applyAccessibility() {
+  const classes = document.body.classList
+  classes.toggle('body--reduce-motion', userStore.reduceMotion)
+  classes.toggle('body--underline-links', userStore.underlineLinks)
+  classes.toggle('body--text-large', userStore.contentTextSize === 'large')
+  classes.toggle('body--text-larger', userStore.contentTextSize === 'larger')
+}
+
 // THEME
+
+/*
+  The admin area is drawn in the wiki's own colours, not the site's. Its header and sidebar already
+  are, and a site theme was only ever chosen for reading that site -- a pale or clashing primary made
+  the admin controls hard to read, including on the very Theme screen that set it. These are the
+  defaults a new site starts with (`backend/models/sites.ts`). The colour vision setting still applies
+  on top, since that is the reader's need rather than the site's.
+*/
+const ADMIN_COLORS = {
+  primary: '#1976D2',
+  secondary: '#02C39A',
+  accent: '#FF9800'
+}
+
+function isAdminArea() {
+  return route.path === '/_admin' || route.path.startsWith('/_admin/')
+}
 
 async function applyTheme() {
   // -> Dark Mode
@@ -126,9 +170,16 @@ async function applyTheme() {
   }
 
   // -> CSS Vars
-  setCssVar('primary', userStore.getAccessibleColor('primary', siteStore.theme.colorPrimary))
-  setCssVar('secondary', userStore.getAccessibleColor('secondary', siteStore.theme.colorSecondary))
-  setCssVar('accent', userStore.getAccessibleColor('accent', siteStore.theme.colorAccent))
+  const brand = isAdminArea()
+    ? ADMIN_COLORS
+    : {
+        primary: siteStore.theme.colorPrimary,
+        secondary: siteStore.theme.colorSecondary,
+        accent: siteStore.theme.colorAccent
+      }
+  setCssVar('primary', userStore.getAccessibleColor('primary', brand.primary))
+  setCssVar('secondary', userStore.getAccessibleColor('secondary', brand.secondary))
+  setCssVar('accent', userStore.getAccessibleColor('accent', brand.accent))
   setCssVar('header', userStore.getAccessibleColor('header', siteStore.theme.colorHeader))
   setCssVar('sidebar', userStore.getAccessibleColor('sidebar', siteStore.theme.colorSidebar))
   setCssVar('positive', userStore.getAccessibleColor('positive', '#02C39A'))

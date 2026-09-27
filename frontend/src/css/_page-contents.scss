@@ -238,7 +238,23 @@
   --content-code-deletion-wash: rgba(207, 34, 46, 0.12);
 
   color: var(--content-ink);
-  font-size: 1rem;
+  /*
+    Scaled by the reader's own Content Text Size setting (Profile -> Info), which `App.vue` sets as a
+    class on <body>. Only the article: the interface around it keeps its size, which is what makes
+    this different from zooming the browser. Headings and most of what is inside the article are set
+    in `em` and follow on their own; the few in `rem` that are TEXT (code, a code block's title) take
+    the same factor, while those that are furniture -- the heading anchor, the step discs, the copy
+    tooltip -- stay the size of the interface they belong to.
+  */
+  --content-scale: 1;
+  font-size: calc(1rem * var(--content-scale));
+
+  @at-root .body--text-large & {
+    --content-scale: 1.125;
+  }
+  @at-root .body--text-larger & {
+    --content-scale: 1.25;
+  }
   /*
     1.6, not the 1.7 the documentation platforms tend to set: at this measure the looser leading read
     as gappy rather than airy, with the lines of a paragraph no longer holding together as a block.
@@ -707,6 +723,18 @@
 
     &:hover,
     &:focus-visible {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    /*
+      The reader's Underline Links setting (Profile -> Info): a link marked by colour alone is the one
+      thing a colour vision deficiency cannot be adjusted around. Under `:where()` so the class adds no
+      specificity -- the links that are deliberately not underlined because their shape already says
+      what they are (a footnote number, a row of a links list) keep saying so.
+    */
+    :where(.body--underline-links) & {
       text-decoration: underline;
       text-decoration-thickness: 1px;
       text-underline-offset: 2px;
@@ -1376,7 +1404,7 @@
     background-color: var(--content-surface-code);
     color: var(--content-ink);
     font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: calc(0.8125rem * var(--content-scale));
     /* -> Tracks the body's leading; code at 13px needs a little more of it, not much */
     line-height: 1.55;
     /* -> Code does not wrap: a wrapped line is a different line, and indentation stops meaning anything */
@@ -1617,7 +1645,7 @@
       border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
       background-color: color-mix(in srgb, currentColor 7%, transparent);
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: calc(0.75rem * var(--content-scale));
       font-weight: 600;
       line-height: 1.5;
       /* -> A file path with no spaces in it is the commonest title there is */

@@ -155,3 +155,34 @@
     opacity: 0;
   }
 }
+
+/*
+  The reader's own Reduce Motion setting (Profile -> Info), for when the operating system does not
+  say so -- a shared or managed machine, or a system setting that is not the reader's to change.
+  `App.vue` puts the class on <body>; the operating system's answer still applies with it off.
+
+  CSS cannot write one rule for "this media query OR this class", so every rule that reacts to
+  `prefers-reduced-motion` needs a twin under `body.body--reduce-motion`. For TRANSITIONS this one
+  rule is that twin: every component's own reduced-motion rule sets them to 0.01ms, so doing it to all
+  of them at once is the same thing, and a colour fade that had no rule of its own simply becomes
+  instant. ANIMATIONS are not uniform -- a spinner is slowed rather than stopped, since a frozen one
+  reads as a hung page -- so each component that has one carries its own twin beside its media query.
+
+  A block's shadow root is out of reach of both halves, as it is of every other global rule.
+*/
+body.body--reduce-motion {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+
+  .animated {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .animated[class*='Out'] {
+    opacity: 0;
+  }
+}

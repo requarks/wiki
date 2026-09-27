@@ -76,4 +76,8 @@ const style = computed(() => {
     animation-duration: 2s;
   }
 }
+/* -> Twinned under the Reduce Motion profile setting; see `css/_animation.scss` */
+.body--reduce-motion .w-spinner {
+  animation-duration: 2s;
+}
 </style>
