@@ -38,7 +38,16 @@ interface Repo {
   queue: Promise<unknown>
 }
 
-const repos = new Map<string, Repo>()
+/**
+ * The prepared repositories, keyed by target.
+ *
+ * The *promise* rather than what it resolves to, so that callers arriving together on a cold entry
+ * share one preparation. `prepareRepo` rewrites the remote — it removes every one it finds and adds
+ * `origin` back — so two of them over a single working copy end with one reporting
+ * `No such remote: 'origin'` and the other `remote origin already exists`, which is what a queue of
+ * syncs released at once does to a target.
+ */
+const repos = new Map<string, Promise<Repo>>()
 
 /** The working copy for this target, as an absolute path. */
 function repoDir(target: StorageTarget): string {
@@ -220,10 +229,22 @@ async function prepareRepo(target: StorageTarget): Promise<Repo> {
  * safe, and the queue is per target because two targets are two working copies.
  */
 async function withRepo<T>(target: StorageTarget, run: (repo: Repo) => Promise<T>): Promise<T> {
-  let repo = repos.get(target.id)
+  const cached = repos.get(target.id)
+  let repo = cached ? await cached : null
   if (!repo || repo.fingerprint !== configFingerprint(target)) {
-    repo = await prepareRepo(target)
-    repos.set(target.id, repo)
+    // -> Stored before it is awaited, so a second caller in the meantime waits for this preparation
+    //    instead of starting its own over the same working copy. See `repos`.
+    const preparing = prepareRepo(target)
+    repos.set(target.id, preparing)
+    try {
+      repo = await preparing
+    } catch (err) {
+      // -> A preparation that failed is not left in the map for everything after it to inherit
+      if (repos.get(target.id) === preparing) {
+        repos.delete(target.id)
+      }
+      throw err
+    }
   }
   const entry = repo
   const result = entry.queue.then(
@@ -1051,8 +1072,9 @@ const gitStorage: StorageModule = {
       if (!target.config.repoUrl) {
         return 'The local repository has been emptied. It will be initialized again on the next change.'
       }
-      const repo = await prepareRepo(target)
-      repos.set(target.id, repo)
+      const preparing = prepareRepo(target)
+      repos.set(target.id, preparing)
+      const repo = await preparing
       await ensureRemote(repo, target)
       return 'The local repository has been emptied and taken again from the remote. Run Import Everything if the wiki should now say what it holds.'
     })
@@ -1140,7 +1162,6 @@ async function applyIncoming(
       return { summary: imported, deletedPages: pages, deletedAssets: assets }
     }
   )
-
 
   const parts = ['Synced.']
   if (summary && (summary.pages > 0 || summary.assets > 0)) {
