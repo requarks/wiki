@@ -100,9 +100,8 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
 
-    # After the image push, so that no published chart ever names an image that is not there
     - name: Set up Helm
-      uses: azure/setup-helm@v4
+      uses: azure/setup-helm@v5
 
     - name: Package and push Helm chart
       env:
