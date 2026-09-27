@@ -75,14 +75,35 @@ USER node
 # Launch the browser the way the renderer does and navigate once, which is the step a mismatched or
 # half-installed browser fails at. A pair that cannot render fails the image build, not every render
 # on every instance running the image.
-RUN node --input-type=module -e " \
-    import puppeteer from 'puppeteer'; \
-    const browser = await puppeteer.launch({ headless: 'shell', args: ['--no-sandbox', '--disable-dev-shm-usage'] }); \
-    const page = await browser.newPage(); \
-    await page.goto('data:text/html,<p>ok</p>'); \
-    if ((await page.\$eval('p', (e) => e.textContent)) !== 'ok') throw new Error('The browser did not render.'); \
-    console.log('Puppeteer drives ' + (await browser.version())); \
-    await browser.close();"
+#
+# Only on a native build. A multi-platform build runs the other architecture under QEMU user-mode
+# emulation, where Chrome starts, accepts the DevTools connection and then dies on the first protocol
+# call ("Target closed") however sound the install is -- so there the check is that the binary is an
+# ELF for the architecture being built, which is the mistake an older pin makes silently (the x64 build
+# installed on arm64). e_machine, at offset 18, is 0x3e for x86-64 and 0xb7 for aarch64.
+ARG BUILDARCH
+ARG TARGETARCH
+RUN if [ -z "$TARGETARCH" ] || [ "$TARGETARCH" = "$BUILDARCH" ]; then \
+      node --input-type=module -e " \
+        import puppeteer from 'puppeteer'; \
+        const browser = await puppeteer.launch({ headless: 'shell', args: ['--no-sandbox', '--disable-dev-shm-usage'] }); \
+        const page = await browser.newPage(); \
+        await page.goto('data:text/html,<p>ok</p>'); \
+        if ((await page.\$eval('p', (e) => e.textContent)) !== 'ok') throw new Error('The browser did not render.'); \
+        console.log('Puppeteer drives ' + (await browser.version())); \
+        await browser.close();"; \
+    else \
+      node --input-type=module -e " \
+        import { openSync, readSync } from 'node:fs'; \
+        import puppeteer from 'puppeteer'; \
+        const file = await puppeteer.executablePath({ headless: 'shell' }); \
+        const header = Buffer.alloc(20); \
+        readSync(openSync(file), header, 0, 20, 0); \
+        const machine = header.readUInt16LE(18); \
+        const expected = { x64: 0x3e, arm64: 0xb7 }[process.arch]; \
+        if (machine !== expected) throw new Error(file + ' is not a ' + process.arch + ' binary (e_machine 0x' + machine.toString(16) + ').'); \
+        console.log('Emulated build, not launched: ' + file + ' is ' + process.arch);"; \
+    fi
 
 WORKDIR /wiki
 
