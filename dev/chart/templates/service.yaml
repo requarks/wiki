@@ -1,0 +1,39 @@
+{{- $svc := .Values.service }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wiki.fullname" . }}
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+    {{- with $svc.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $svc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $svc.type }}
+  {{- if and (eq $svc.type "LoadBalancer") $svc.loadBalancerClass }}
+  loadBalancerClass: {{ $svc.loadBalancerClass }}
+  {{- end }}
+  {{- if and (eq $svc.type "LoadBalancer") $svc.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml $svc.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if and (has $svc.type (list "NodePort" "LoadBalancer")) $svc.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ $svc.externalTrafficPolicy }}
+  {{- end }}
+  {{- with $svc.sessionAffinity }}
+  sessionAffinity: {{ . }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ $svc.port }}
+      targetPort: http
+      protocol: TCP
+      {{- if and (has $svc.type (list "NodePort" "LoadBalancer")) $svc.nodePort }}
+      nodePort: {{ $svc.nodePort }}
+      {{- end }}
+  selector:
+    {{- include "wiki.selectorLabels" . | nindent 4 }}

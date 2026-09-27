@@ -78,9 +78,12 @@ export default {
   tasks: null as Record<string, SimpleTask> | null,
   completionPromises: [] as CompletionPromise[],
   async init() {
+    // -> `availableParallelism` rather than `cpus().length`, which counts every core of the host: in a
+    //    container that is the whole node, while this is capped by the cgroup CPU quota (a pod's
+    //    `limits.cpu`, rounded down) and the CPU affinity mask
     this.maxWorkers =
       WIKI.config.scheduler.workers === 'auto'
-        ? os.cpus().length - 1
+        ? os.availableParallelism() - 1
         : WIKI.config.scheduler.workers
     if (this.maxWorkers < 1) {
       this.maxWorkers = 1

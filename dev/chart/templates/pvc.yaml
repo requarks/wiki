@@ -1,0 +1,25 @@
+{{- $p := .Values.persistence }}
+{{- if and $p.enabled (not $p.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "wiki.fullname" . }}-data
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+  annotations:
+    # Uninstalling the release leaves the claim behind, since it may be the only copy of a Local Disk
+    # or Git storage target.
+    helm.sh/resource-policy: keep
+    {{- with $p.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    {{- toYaml $p.accessModes | nindent 4 }}
+  {{- if $p.storageClass }}
+  storageClassName: {{ ternary "" $p.storageClass (eq $p.storageClass "-") | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $p.size }}
+{{- end }}

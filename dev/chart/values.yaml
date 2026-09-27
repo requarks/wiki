@@ -1,0 +1,462 @@
+# Wiki.js 3.x
+#
+# Every key below is optional. With none of them set, the chart runs one wiki replica against a
+# bundled PostgreSQL 18, reachable inside the cluster only — turn on `ingress` or `httpRoute` to
+# expose it.
+
+nameOverride: ''
+fullnameOverride: ''
+
+image:
+  repository: ghcr.io/requarks/wiki
+  # Defaults to the chart's appVersion.
+  tag: ''
+  # Pins the image by digest (`sha256:…`), taking precedence over the tag.
+  digest: ''
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Replicas share the database and find each other through it (LISTEN/NOTIFY), collaborative editing
+# included, so no sticky sessions are needed. Anything kept on the data volume is per replica unless
+# `persistence` points them all at one ReadWriteMany claim.
+replicaCount: 1
+
+revisionHistoryLimit: 10
+
+# Deployment strategy. Leave empty for the default RollingUpdate; use `{ type: Recreate }` with a
+# single replica on a ReadWriteOnce `persistence` claim, which a second pod on another node could
+# not attach while the old one still holds it.
+strategy: {}
+
+# ---------------------------------------------------------------------------------------------------
+# Wiki.js configuration
+# ---------------------------------------------------------------------------------------------------
+
+# Rendered as the instance's config.yml. Any key the file accepts can be added here (see
+# config.sample.yml), except the ones the chart owns: `port`, `bindIP` and `dataPath` follow the
+# container, and `db` is built from `postgresql` / `externalDatabase` below.
+#
+# Everything else about the wiki is configured in its administration area and kept in the database.
+config:
+  # error, warn, info or debug
+  logLevel: info
+  # default or json
+  logFormat: default
+  # Stops every outbound request the wiki would otherwise make (Iconify, update checks, …).
+  offline: false
+  # Largest API request body accepted, in bytes. File uploads are not bound by it.
+  bodyParserLimit: 5242880
+  icons:
+    apiUrl: https://api.iconify.design
+  scheduler:
+    # Most worker threads for CPU-heavy background jobs. `auto` is one fewer than the CPUs the pod
+    # may use: its `limits.cpu`, rounded down, or every core of the node when no limit is set.
+    workers: auto
+
+# The administrator account created the first time the wiki starts against an empty database. Never
+# read again afterwards. Left empty, the account is admin@example.com / 12345678 and must change its
+# password on first login.
+admin:
+  email: ''
+  password: ''
+  # A Secret holding the password, in place of `password`.
+  existingSecret: ''
+  existingSecretPasswordKey: password
+
+# Waits for the database port to open before the wiki starts. The wiki itself gives up after ~30s of
+# failed connections, which a bundled PostgreSQL initialising its data directory can outlast.
+waitForDatabase:
+  enabled: true
+  resources: {}
+
+extraEnv: []
+#  - name: FOO
+#    value: bar
+
+extraEnvFrom: []
+#  - secretRef:
+#      name: wiki-extra-env
+
+# ---------------------------------------------------------------------------------------------------
+# Pod
+# ---------------------------------------------------------------------------------------------------
+
+serviceAccount:
+  create: true
+  # Generated from the release name when empty.
+  name: ''
+  annotations: {}
+  # The wiki never talks to the Kubernetes API, so the pod gets no token unless asked for.
+  automount: false
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+# `readOnlyRootFilesystem` holds everything except installing an extension from Admin → Extensions,
+# which runs `npm install` inside the image. The image already carries Puppeteer, the extension that
+# needs it most; anything else would be added by building an image FROM this one.
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  privileged: false
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+resources: {}
+#  requests:
+#    cpu: 250m
+#    memory: 512Mi
+#  limits:
+#    memory: 2Gi
+
+# The probes are merged with what is given here, so a single field can be overridden. To swap the
+# handler, null the default one out: `livenessProbe: { httpGet: null, exec: { … } }`.
+#
+# `/_live` answers only once the HTTP server is listening, which is after migrations have run — the
+# startup probe is what covers that, and allows 5 minutes by default.
+startupProbe:
+  httpGet:
+    path: /_live
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 60
+
+livenessProbe:
+  httpGet:
+    path: /_live
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# `/_ready` turns 503 as soon as a replica starts shutting down, while it goes on serving the requests
+# still reaching it until the endpoint removal has propagated.
+readinessProbe:
+  httpGet:
+    path: /_ready
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# The pause before SIGTERM, so a replica being replaced is out of every load balancer before it stops
+# accepting connections.
+lifecycle:
+  preStop:
+    sleep:
+      seconds: 5
+
+terminationGracePeriodSeconds: 30
+
+priorityClassName: ''
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+
+# Added to the pod, next to the chart's own (config, data, tmp, home).
+volumes: []
+#  - name: git-known-hosts
+#    configMap:
+#      name: git-known-hosts
+
+# Added to the wiki container.
+volumeMounts: []
+#  - name: git-known-hosts
+#    mountPath: /home/node/.ssh/known_hosts
+#    subPath: known_hosts
+#    readOnly: true
+
+# The wiki's data directory, /wiki/data. Holds the caches (icons, served files, blocks), which rebuild
+# themselves from the database, plus the default locations of the Local Disk (`data/content`) and Git
+# (`data/repo`) storage targets. An emptyDir is enough unless one of those two is in use.
+persistence:
+  enabled: false
+  # Use an existing claim instead of creating one.
+  existingClaim: ''
+  # `-` for the cluster's default class, empty to leave it unset.
+  storageClass: ''
+  # ReadWriteMany is what lets several replicas share one Local Disk or Git storage target.
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+  # Caps the emptyDir used while persistence is off.
+  sizeLimit: ''
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # Used instead of `minAvailable` when set.
+  maxUnavailable: ''
+
+# ---------------------------------------------------------------------------------------------------
+# Networking
+# ---------------------------------------------------------------------------------------------------
+
+service:
+  type: ClusterIP
+  port: 80
+  # For NodePort / LoadBalancer.
+  nodePort: ''
+  annotations: {}
+  labels: {}
+  loadBalancerClass: ''
+  loadBalancerSourceRanges: []
+  # Cluster or Local, for NodePort / LoadBalancer.
+  externalTrafficPolicy: ''
+  sessionAffinity: ''
+
+# Behind either of these, turn on Admin → Security → Trust Proxy so the wiki sees the visitor's
+# address rather than the proxy's.
+
+# Gateway API. The recommended way in; it needs a Gateway to attach to.
+httpRoute:
+  enabled: false
+  annotations: {}
+  labels: {}
+  parentRefs:
+    - name: gateway
+      # namespace: gateway-system
+      # sectionName: https
+  hostnames:
+    - wiki.example.com
+  # HTTPRoute rules, passed through as given (matches, filters, timeouts, …) except for `backendRefs`,
+  # which the chart fills in with the wiki's Service.
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      # filters: []
+      # timeouts:
+      #   request: 300s
+
+# networking.k8s.io/v1 Ingress. Most controllers cap request bodies (ingress-nginx at 1m by default),
+# which is also the ceiling for uploads — raise it with the controller's own annotation.
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  labels: {}
+  hosts:
+    - host: wiki.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: wiki-tls
+  #    hosts:
+  #      - wiki.example.com
+
+# ---------------------------------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------------------------------
+
+# A PostgreSQL server of the chart's own: one StatefulSet replica, the official image. Turn it off to
+# use `externalDatabase` instead.
+postgresql:
+  enabled: true
+
+  image:
+    repository: docker.io/library/postgres
+    # Pin a minor release (e.g. `18.4`) for reproducible upgrades. Moving to a new MAJOR needs a
+    # dump and restore, as it would anywhere — the data directory is per major.
+    tag: '18'
+    digest: ''
+    pullPolicy: IfNotPresent
+
+  # The wiki connects as `username`, an ordinary role owning `database`; the `postgres` superuser is
+  # kept for administration and never handed to the wiki. Both passwords are generated and kept across
+  # upgrades when left empty — except under a tool that renders without cluster access (Argo CD), which
+  # would generate new ones on every sync: set them, or use `existingSecret`, there.
+  #
+  # All of this is applied when the data directory is first initialised. Changing it afterwards
+  # changes what the wiki is told, not the database: alter the role by hand to match.
+  auth:
+    username: wiki
+    database: wiki
+    password: ''
+    postgresPassword: ''
+    existingSecret: ''
+    secretKeys:
+      userPasswordKey: password
+      adminPasswordKey: postgres-password
+
+  # The schema the wiki creates its tables in.
+  schema: wiki
+
+  # Server settings, passed as `-c key=value`.
+  parameters: {}
+  #  max_connections: 200
+  #  shared_buffers: 256MB
+
+  extraArgs: []
+
+  # Extra arguments for `initdb`, used on first start only.
+  initdbArgs: ''
+
+  # Scripts run once, after the data directory is initialised and the wiki's role and database exist,
+  # in file name order. `.sh`, `.sql` and `.sql.gz` are understood.
+  initdbScripts: {}
+  #  10-extensions.sql: |
+  #    \connect wiki
+  #    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+  extraEnv: []
+
+  podAnnotations: {}
+  podLabels: {}
+
+  # 999 is the `postgres` user of the official Debian image (70 on -alpine tags).
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 999
+    fsGroup: 999
+    # Anything else lets the kubelet re-own the data directory on every start, with group write,
+    # which PostgreSQL refuses to start on.
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    runAsGroup: 999
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    privileged: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+
+  resources: {}
+  #  requests:
+  #    cpu: 250m
+  #    memory: 256Mi
+  #  limits:
+  #    memory: 1Gi
+
+  startupProbe:
+    exec:
+      command: ['pg_isready', '-h', '127.0.0.1', '-p', '5432']
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 60
+  livenessProbe:
+    exec:
+      command: ['pg_isready', '-h', '127.0.0.1', '-p', '5432']
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  readinessProbe:
+    exec:
+      command: ['pg_isready', '-h', '127.0.0.1', '-p', '5432']
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # A shutdown checkpoint on a busy server takes a while; SIGKILL before it finishes means crash
+  # recovery on the next start.
+  terminationGracePeriodSeconds: 60
+
+  updateStrategy:
+    type: RollingUpdate
+
+  priorityClassName: ''
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  volumes: []
+  volumeMounts: []
+
+  persistence:
+    enabled: true
+    existingClaim: ''
+    # `-` for the cluster's default class, empty to leave it unset.
+    storageClass: ''
+    accessModes:
+      - ReadWriteOnce
+    size: 8Gi
+    annotations: {}
+    # What happens to the claim when the StatefulSet is deleted or scaled down.
+    retentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+
+  # /dev/shm, which parallel queries use for shared memory; a container's default is 64 MiB. Counted
+  # against the pod's memory.
+  shm:
+    enabled: true
+    sizeLimit: 256Mi
+
+  service:
+    type: ClusterIP
+    port: 5432
+    annotations: {}
+    labels: {}
+
+# An existing PostgreSQL 16+ server, used when `postgresql.enabled` is false. The user needs to own the
+# database, or at least be able to create a schema in it.
+#
+# Say where it is in ONE of two ways — `connectionString` or `parameters` — and leave the other empty.
+# `schema` and `ssl` apply to both.
+externalDatabase:
+  # ── Option 1: a connection string ───────────────────────────────────────────────────────────────
+  # `postgresql://user:password@host:5432/database`, with special characters in the password
+  # percent-encoded as in any URL. Give it inline or, better, as a Secret: CloudNativePG's
+  # `<cluster>-app` Secret carries one under `uri`.
+  #
+  # TLS parameters in the string (`sslmode`, `sslrootcert`, …) replace everything under `ssl` below.
+  # CloudNativePG's has none, so pair it with `ssl` and the `<cluster>-ca` Secret to verify the server.
+  connectionString:
+    value: ''
+    existingSecret: ''
+    existingSecretKey: uri
+
+  # ── Option 2: individual parameters ─────────────────────────────────────────────────────────────
+  parameters:
+    host: ''
+    port: 5432
+    database: wiki
+    user: wiki
+    password: ''
+    # A Secret holding the password, in place of `password`.
+    existingSecret: ''
+    existingSecretPasswordKey: password
+
+  # ── Either way ──────────────────────────────────────────────────────────────────────────────────
+  # The schema the wiki creates its tables in.
+  schema: wiki
+  ssl:
+    enabled: false
+    # Verify the server's certificate. Only for testing when off.
+    rejectUnauthorized: true
+    # A Secret with the CA to verify against and, for client certificate authentication, a
+    # certificate and key. Without one, the system CAs are used.
+    existingSecret: ''
+    caKey: ca.crt
+    # Both empty unless the server asks for a client certificate.
+    certKey: ''
+    keyKey: ''

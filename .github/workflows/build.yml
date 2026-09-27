@@ -29,6 +29,7 @@ jobs:
       run: |
         yq -iP '.version = strenv(REL_VERSION)' backend/package.json -o json
         yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
+        yq -i '.version = strenv(REL_VERSION) | .appVersion = strenv(REL_VERSION)' dev/chart/Chart.yaml
 
     - name: Upload translations source file
       uses: crowdin/github-action@v3
@@ -98,6 +99,19 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
+
+    # After the image push, so that no published chart ever names an image that is not there
+    - name: Set up Helm
+      uses: azure/setup-helm@v4
+
+    - name: Package and push Helm chart
+      env:
+        REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        helm lint --strict dev/chart
+        helm package dev/chart --destination _chart
+        echo "$REGISTRY_TOKEN" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+        helm push "_chart/wiki-${REL_VERSION}.tgz" oci://ghcr.io/requarks/charts
 
     - name: Prepare build archive
       run: |

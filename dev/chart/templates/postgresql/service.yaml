@@ -1,0 +1,44 @@
+{{- if .Values.postgresql.enabled }}
+{{- $svc := .Values.postgresql.service }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wiki.postgresql.fullname" . }}
+  labels:
+    {{- include "wiki.postgresql.labels" . | nindent 4 }}
+    {{- with $svc.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $svc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ $svc.type }}
+  ports:
+    - name: postgresql
+      port: {{ $svc.port }}
+      targetPort: postgresql
+      protocol: TCP
+  selector:
+    {{- include "wiki.postgresql.selectorLabels" . | nindent 4 }}
+---
+# The StatefulSet's governing service, which gives the pod its stable DNS name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "wiki.postgresql.fullname" . }}-hl
+  labels:
+    {{- include "wiki.postgresql.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: postgresql
+      port: {{ $svc.port }}
+      targetPort: postgresql
+      protocol: TCP
+  selector:
+    {{- include "wiki.postgresql.selectorLabels" . | nindent 4 }}
+{{- end }}

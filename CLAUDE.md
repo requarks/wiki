@@ -33,8 +33,9 @@ The backend is **TypeScript 7**; `frontend/` and `blocks/` are JavaScript. See
   `frontend/vite.config.js` in dev mode to learn the proxy target port.
 - `assets/` — **build output** of the frontend (`vite build` writes here), plus static assets under
   `assets/_assets/`. Served by the backend. Don't hand-edit.
-- `dev/` — deployment/packaging artifacts: `dev/build/Dockerfile` (production image), `dev/helm/`,
-  `dev/packer/`.
+- `dev/` — deployment/packaging artifacts: `dev/build/Dockerfile` (production image), `dev/chart/`
+  (the 3.x Helm chart, published as an OCI artifact — its `README.md` is the reference), `dev/packer/`.
+  `dev/helm/` is the 2.x chart and nothing for 3.x should be built on it.
 - `.devcontainer/` — VS Code dev container (app + postgres + pgAdmin + mailpit via docker-compose).
   Mailpit is the mail server for development: it accepts everything and delivers nothing, so a
   confirmation link or a password reset lands in a web inbox at `http://localhost:8025` rather than a

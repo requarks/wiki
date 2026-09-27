@@ -1,0 +1,228 @@
+{{- $ssl := .Values.externalDatabase.ssl }}
+{{- $adminSecret := .Values.admin.existingSecret | default (printf "%s-admin" (include "wiki.fullname" .)) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "wiki.fullname" . }}
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- with .Values.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "wiki.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Rolls the pods when config.yml changes, since nothing in the pod spec would otherwise.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "wiki.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wiki.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      # Load-bearing, not tidiness: service links put `<SERVICE>_PORT=tcp://…` in the environment of
+      # every pod for every service in the namespace, and the wiki reads `WIKI_PORT` as the port to
+      # listen on — so a Service named `wiki` would take the whole pod down.
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if .Values.waitForDatabase.enabled }}
+      initContainers:
+        # The wiki image is used rather than a second one, and asked only whether the port accepts a
+        # connection: a bundled server opens it only once initialisation is over.
+        - name: wait-for-db
+          image: {{ include "wiki.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - node
+            - -e
+            - |
+              const net = require('node:net')
+              // Only the host and port of a connection string are ever read or printed; it carries the password.
+              const url = process.env.DATABASE_URL ? new URL(process.env.DATABASE_URL) : null
+              const host = url ? url.hostname.replace(/^\[|\]$/g, '') : process.env.DB_HOST
+              const port = Number(url ? url.port || 5432 : process.env.DB_PORT)
+              const attempt = () => {
+                const socket = net.connect({ host, port, timeout: 3000 })
+                socket.once('connect', () => { console.info(`${host}:${port} is accepting connections`); socket.destroy(); process.exit(0) })
+                const retry = (err) => { console.info(`Waiting for ${host}:${port}... (${err?.code ?? 'timeout'})`); socket.destroy(); setTimeout(attempt, 2000) }
+                socket.once('error', retry)
+                socket.once('timeout', retry)
+              }
+              attempt()
+          env:
+            {{- if include "wiki.db.useUrl" . }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.db.urlSecretName" . }}
+                  key: {{ include "wiki.db.urlSecretKey" . }}
+            {{- else }}
+            - name: DB_HOST
+              value: {{ include "wiki.db.host" . | quote }}
+            - name: DB_PORT
+              value: {{ include "wiki.db.port" . | quote }}
+            {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with .Values.waitForDatabase.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- end }}
+      containers:
+        - name: wiki
+          image: {{ include "wiki.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: CONFIG_FILE
+              value: /etc/wiki/config.yml
+            # Switches the health endpoints to Kubernetes semantics: a replica shutting down reports
+            # not ready but keeps serving what is still routed to it. The kubelet normally provides this
+            # variable already; it is set here so the behaviour does not rest on that, and to a name
+            # that still reaches the API server should anything in the pod ever use it.
+            - name: KUBERNETES_SERVICE_HOST
+              value: kubernetes.default.svc
+            {{- if include "wiki.db.useUrl" . }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.db.urlSecretName" . }}
+                  key: {{ include "wiki.db.urlSecretKey" . }}
+            {{- else }}
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "wiki.db.secretName" . }}
+                  key: {{ include "wiki.db.secretKey" . }}
+            {{- end }}
+            {{- with .Values.admin.email }}
+            - name: ADMIN_EMAIL
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if or .Values.admin.password .Values.admin.existingSecret }}
+            - name: ADMIN_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $adminSecret }}
+                  key: {{ ternary .Values.admin.existingSecretPasswordKey "password" (not (empty .Values.admin.existingSecret)) }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/wiki
+              readOnly: true
+            - name: data
+              mountPath: /wiki/data
+            # The root filesystem is read-only; these are what the wiki, git, ssh and Chromium write to
+            # besides the data directory.
+            - name: tmp
+              mountPath: /tmp
+            - name: home
+              mountPath: /home/node
+            {{- if and (include "wiki.db.tlsEnabled" .) $ssl.existingSecret }}
+            - name: db-tls
+              mountPath: /etc/wiki/db-tls
+              readOnly: true
+            {{- end }}
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "wiki.fullname" . }}
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "wiki.fullname" .)) }}
+          {{- else }}
+          {{- with .Values.persistence.sizeLimit }}
+          emptyDir:
+            sizeLimit: {{ . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+          {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: home
+          emptyDir: {}
+        {{- if and (include "wiki.db.tlsEnabled" .) $ssl.existingSecret }}
+        - name: db-tls
+          secret:
+            secretName: {{ $ssl.existingSecret }}
+            # Owned by root and readable through fsGroup, which 0400 would shut out.
+            defaultMode: 0440
+        {{- end }}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

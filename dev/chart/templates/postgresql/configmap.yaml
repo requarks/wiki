@@ -1,0 +1,26 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "wiki.postgresql.fullname" . }}-initdb
+  labels:
+    {{- include "wiki.postgresql.labels" . | nindent 4 }}
+data:
+  # The wiki's own role and database, owned by it so that it can create its schema — and nothing more.
+  # Values reach psql as variables, quoted by psql itself, so none of them is ever spliced into SQL.
+  00-wiki.sh: |
+    #!/bin/bash
+    set -Eeo pipefail
+    psql -v ON_ERROR_STOP=1 --no-psqlrc --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+      --set app_user="$WIKI_DB_USER" \
+      --set app_password="$WIKI_DB_PASSWORD" \
+      --set app_db="$WIKI_DB_NAME" <<'EOSQL'
+    CREATE ROLE :"app_user" LOGIN PASSWORD :'app_password';
+    CREATE DATABASE :"app_db" OWNER :"app_user";
+    REVOKE ALL ON DATABASE :"app_db" FROM PUBLIC;
+    EOSQL
+  {{- range $file, $content := .Values.postgresql.initdbScripts }}
+  {{ $file }}: |
+    {{- $content | nindent 4 }}
+  {{- end }}
+{{- end }}

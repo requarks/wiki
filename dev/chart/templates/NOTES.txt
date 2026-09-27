@@ -1,0 +1,54 @@
+Wiki.js {{ .Values.image.tag | default .Chart.AppVersion }} is being deployed as {{ include "wiki.fullname" . }}.
+
+{{- if .Values.httpRoute.enabled }}
+
+It is routed through {{ range $i, $p := .Values.httpRoute.parentRefs }}{{ if $i }}, {{ end }}Gateway {{ $p.name }}{{ end }} for:
+{{- range .Values.httpRoute.hostnames }}
+  {{ . }}
+{{- end }}
+{{- end }}
+{{- if .Values.ingress.enabled }}
+
+It is served through the Ingress at:
+{{- range $host := .Values.ingress.hosts }}
+{{- range .paths }}
+  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if not (or .Values.httpRoute.enabled .Values.ingress.enabled) }}
+
+It is reachable inside the cluster only. To open it from this machine:
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "wiki.fullname" . }} 8080:{{ .Values.service.port }}
+
+and browse to http://localhost:8080.
+{{- end }}
+
+The first start runs the database migrations, which takes a little while:
+
+  kubectl --namespace {{ .Release.Namespace }} rollout status deployment/{{ include "wiki.fullname" . }}
+
+{{- if not (or .Values.admin.password .Values.admin.existingSecret) }}
+
+Sign in as {{ .Values.admin.email | default "admin@example.com" }} with the password 12345678; you will be asked to change it.
+{{- end }}
+{{- if or .Values.httpRoute.enabled .Values.ingress.enabled }}
+
+Behind a Gateway or an Ingress, turn on Admin → Security → Trust Proxy, so that the wiki sees the
+visitor's address rather than the proxy's.
+{{- end }}
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.auth.existingSecret) (not .Values.postgresql.auth.password) }}
+
+The database passwords were generated and are kept in Secret {{ include "wiki.postgresql.fullname" . }}.
+{{- end }}
+{{- if and (gt (int .Values.replicaCount) 1) .Values.persistence.enabled (not (has "ReadWriteMany" .Values.persistence.accessModes)) }}
+
+WARNING: {{ .Values.replicaCount }} replicas share a data claim that is not ReadWriteMany. Replicas scheduled
+on different nodes will not be able to mount it.
+{{- end }}
+{{- if and (gt (int .Values.replicaCount) 1) (not .Values.persistence.enabled) }}
+
+Note: each of the {{ .Values.replicaCount }} replicas has a data directory of its own. That is fine for the caches it
+holds, but a Local Disk or Git storage target would be a separate copy on each replica.
+{{- end }}

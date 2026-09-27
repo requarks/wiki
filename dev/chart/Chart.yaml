@@ -1,0 +1,25 @@
+apiVersion: v2
+name: wiki
+description: Wiki.js 3.x, the next-generation open source wiki
+type: application
+# Both overwritten by the build workflow with the release version (`3.0.0-beta.<run>`) before the
+# chart is published, so that every chart version pins exactly the image built alongside it and
+# upgrading the wiki is `helm upgrade --version <newer>`. Placeholders here, never bumped by hand.
+version: 3.0.0-beta
+# The image tag deployed when `image.tag` is left empty.
+appVersion: 3.0.0-beta
+# `lifecycle.preStop.sleep` (the default drain delay) is a native action from 1.30 on.
+kubeVersion: '>=1.30.0-0'
+home: https://js.wiki
+icon: https://cdn.js.wiki/images/wikijs-butterfly.svg
+sources:
+  - https://github.com/requarks/wiki
+keywords:
+  - wiki
+  - documentation
+  - knowledge base
+maintainers:
+  - name: Nicolas Giard
+    url: https://github.com/NGPixel
+annotations:
+  licenses: AGPL-3.0-only

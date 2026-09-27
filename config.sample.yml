@@ -97,7 +97,8 @@ bodyParserLimit: 5242880
 
 scheduler:
   # Maximum number of workers to run background cpu-intensive jobs.
-  # Leave 'auto' to use number of CPU cores as maximum.
+  # Leave 'auto' for one fewer than the CPUs available to the process (at
+  # least 1), which respects a container's CPU limit.
   workers: auto
 
 # ---------------------------------------------------------------------

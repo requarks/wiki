@@ -1,0 +1,195 @@
+{{- if .Values.postgresql.enabled }}
+{{- $pg := .Values.postgresql }}
+{{- $secret := include "wiki.postgresql.secretName" . }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "wiki.postgresql.fullname" . }}
+  labels:
+    {{- include "wiki.postgresql.labels" . | nindent 4 }}
+spec:
+  # One server. A replicated PostgreSQL is a job for an operator (CloudNativePG and the like), used
+  # through `externalDatabase`.
+  replicas: 1
+  serviceName: {{ include "wiki.postgresql.fullname" . }}-hl
+  {{- with $pg.updateStrategy }}
+  updateStrategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and $pg.persistence.enabled (not $pg.persistence.existingClaim) }}
+  persistentVolumeClaimRetentionPolicy:
+    {{- toYaml $pg.persistence.retentionPolicy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "wiki.postgresql.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/initdb: {{ include (print $.Template.BasePath "/postgresql/configmap.yaml") . | sha256sum }}
+        {{- with $pg.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "wiki.postgresql.labels" . | nindent 8 }}
+        {{- with $pg.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $pg.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml $pg.podSecurityContext | nindent 8 }}
+      # The official image declares SIGINT as its stop signal, which the container runtime sends in
+      # place of SIGTERM: a fast shutdown, where SIGTERM would wait for every client to disconnect.
+      terminationGracePeriodSeconds: {{ $pg.terminationGracePeriodSeconds }}
+      containers:
+        - name: postgresql
+          image: {{ include "wiki.postgresql.image" . }}
+          imagePullPolicy: {{ $pg.image.pullPolicy }}
+          args:
+            - postgres
+            {{- range $key, $value := $pg.parameters }}
+            - -c
+            - {{ printf "%s=%v" $key $value | quote }}
+            {{- end }}
+            {{- range $pg.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ $pg.auth.secretKeys.adminPasswordKey }}
+            {{- with $pg.initdbArgs }}
+            - name: POSTGRES_INITDB_ARGS
+              value: {{ . | quote }}
+            {{- end }}
+            # Read by the first-run script that creates the wiki's role and database.
+            - name: WIKI_DB_USER
+              value: {{ $pg.auth.username | quote }}
+            - name: WIKI_DB_NAME
+              value: {{ $pg.auth.database | quote }}
+            - name: WIKI_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secret }}
+                  key: {{ $pg.auth.secretKeys.userPasswordKey }}
+            {{- with $pg.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with $pg.startupProbe }}
+          startupProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $pg.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $pg.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml $pg.securityContext | nindent 12 }}
+          {{- with $pg.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            # The parent of PGDATA rather than PGDATA itself, as the image expects from 18 on
+            # (/var/lib/postgresql/18/docker): the version is part of the path, and the data directory
+            # is never the root of the volume, where a lost+found would make initdb refuse it.
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            {{- if $pg.shm.enabled }}
+            - name: shm
+              mountPath: /dev/shm
+            {{- end }}
+            {{- with $pg.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: initdb
+          configMap:
+            name: {{ include "wiki.postgresql.fullname" . }}-initdb
+            defaultMode: 0555
+        {{- if $pg.shm.enabled }}
+        - name: shm
+          emptyDir:
+            medium: Memory
+            {{- with $pg.shm.sizeLimit }}
+            sizeLimit: {{ . }}
+            {{- end }}
+        {{- end }}
+        {{- if not $pg.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if $pg.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $pg.persistence.existingClaim }}
+        {{- end }}
+        {{- with $pg.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with $pg.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $pg.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $pg.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and $pg.persistence.enabled (not $pg.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "wiki.postgresql.selectorLabels" . | nindent 10 }}
+        {{- with $pg.persistence.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- toYaml $pg.persistence.accessModes | nindent 10 }}
+        {{- if $pg.persistence.storageClass }}
+        storageClassName: {{ ternary "" $pg.persistence.storageClass (eq $pg.persistence.storageClass "-") | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $pg.persistence.size }}
+  {{- end }}
+{{- end }}

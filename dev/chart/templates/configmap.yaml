@@ -1,0 +1,48 @@
+{{- include "wiki.validate" . }}
+{{- $config := deepCopy .Values.config }}
+{{- $_ := set $config "port" 3000 }}
+{{- $_ := set $config "bindIP" "0.0.0.0" }}
+{{- $_ := set $config "dataPath" "/wiki/data" }}
+{{- $ssl := .Values.externalDatabase.ssl }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "wiki.fullname" . }}
+  labels:
+    {{- include "wiki.labels" . | nindent 4 }}
+data:
+  config.yml: |
+    {{- toYaml $config | nindent 4 }}
+    db:
+      {{- if include "wiki.db.useUrl" . }}
+      # Connecting through DATABASE_URL, which takes the place of host, port, user, pass and db.
+      {{- else }}
+      host: {{ include "wiki.db.host" . | toJson }}
+      port: {{ include "wiki.db.port" . }}
+      user: {{ include "wiki.db.user" . | toJson }}
+      # Substituted from the environment when the file is read. A block scalar rather than a quoted
+      # string, so that no character a password may contain can end it early.
+      pass: |2-
+        $(DB_PASS)
+      db: {{ include "wiki.db.name" . | toJson }}
+      {{- end }}
+      schema: {{ include "wiki.db.schema" . | toJson }}
+      {{- if include "wiki.db.tlsEnabled" . }}
+      ssl: true
+      sslOptions:
+        {{- if or $ssl.existingSecret (not $ssl.rejectUnauthorized) }}
+        auto: false
+        rejectUnauthorized: {{ $ssl.rejectUnauthorized }}
+        {{- if $ssl.existingSecret }}
+        ca: /etc/wiki/db-tls/{{ $ssl.caKey }}
+        {{- if $ssl.certKey }}
+        cert: /etc/wiki/db-tls/{{ $ssl.certKey }}
+        key: /etc/wiki/db-tls/{{ $ssl.keyKey }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        auto: true
+        {{- end }}
+      {{- else }}
+      ssl: false
+      {{- end }}
