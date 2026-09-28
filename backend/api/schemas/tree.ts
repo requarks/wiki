@@ -218,4 +218,77 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       }
     }
   })
+
+  /**
+   * TREE GRAPH - Every page of a locale, the folders above them and the links between them
+   */
+  app.addSchema({
+    $id: 'TreeGraph',
+    type: 'object',
+    properties: {
+      locale: {
+        type: 'string'
+      },
+      pages: {
+        type: 'array',
+        description:
+          'Every page of the locale the requester may see, then the pages in OTHER locales that one of those links to. Links address pages by their index in this array.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            locale: { type: 'string' },
+            path: {
+              type: 'string',
+              description: 'Slash-separated, without a leading or trailing slash.'
+            },
+            title: { type: 'string' },
+            isPublished: {
+              type: 'boolean',
+              description:
+                'False for a page only its editors may see, which is only ever sent to somebody who may edit it.'
+            },
+            isRedirect: { type: 'boolean' }
+          }
+        }
+      },
+      folders: {
+        type: 'array',
+        description:
+          'The folders holding at least one of the pages, in the locale asked for. A path segment with no folder of its own is absent, and is named after the segment.',
+        items: {
+          type: 'object',
+          properties: {
+            path: { type: 'string' },
+            title: { type: 'string' },
+            hue: {
+              type: 'integer',
+              description: 'The folder colour, in degrees. Absent on a folder nobody has coloured.'
+            }
+          }
+        }
+      },
+      links: {
+        type: 'array',
+        description:
+          'One entry per pair of pages, however many ways the source reaches the target.',
+        items: {
+          type: 'object',
+          properties: {
+            source: { type: 'integer', description: 'Index into `pages`.' },
+            target: { type: 'integer', description: 'Index into `pages`.' },
+            kind: { type: 'string', enum: ['link', 'relation', 'redirect'] },
+            weight: {
+              type: 'integer',
+              description: 'How many distinct hrefs on the source resolve to the target.'
+            }
+          }
+        }
+      },
+      truncated: {
+        type: 'boolean',
+        description: 'True when the locale holds more pages or links than one graph carries.'
+      }
+    }
+  })
 }

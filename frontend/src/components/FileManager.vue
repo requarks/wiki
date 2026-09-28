@@ -42,8 +42,8 @@
             v-model="state.search"
             type="text"
             class="fileman-search-input"
-            :placeholder="t(`fileman.searchFolder`)"
-            :aria-label="t(`fileman.searchFolder`)"
+            :placeholder="searchPlaceholder"
+            :aria-label="searchPlaceholder"
             autocomplete="off"
             @focus="state.searchIsFocused = true"
             @blur="state.searchIsFocused = false" />
@@ -100,7 +100,11 @@
 
       Narrower while it overlays, so there is a comfortable width of scrim left to tap on.
     -->
-    <w-drawer class="fileman-left" v-model="treeDrawerOpen" :width="isTreeOverlay ? 300 : 350">
+    <w-drawer
+      class="fileman-left"
+      v-model="treeDrawerOpen"
+      :width="isTreeOverlay ? 300 : 350"
+      :inert="state.isGraph">
       <div class="flex h-full flex-col">
         <w-scroll-area
           class="min-h-0 flex-1"
@@ -130,6 +134,21 @@
           </div>
         </w-scroll-area>
         <!--
+          The graph view, pinned with the Recycle Bin for the same reason: it is a way of looking at the
+          whole locale rather than a place in it. Not while inserting -- the editor sent the reader here
+          to pick a file, and the graph has no file to pick.
+        -->
+        <button
+          v-if="!insertMode"
+          type="button"
+          class="fileman-bin w-unstyled"
+          :class="{ 'is-active': state.isGraph }"
+          :aria-pressed="state.isGraph"
+          @click="openGraph">
+          <w-icon name="la:project-diagram" size="sm" />
+          <span class="fileman-bin-label">{{ t('fileman.graph.title') }}</span>
+        </button>
+        <!--
           Pinned under the tree rather than a node in it: it is not a place in the wiki, and it has to
           stay reachable however far the tree has been scrolled or expanded. Signed in only -- the
           permissions that open it cannot be granted to the guests group, so a visitor would only
@@ -148,7 +167,12 @@
         </button>
       </div>
     </w-drawer>
-    <w-drawer class="fileman-right" :model-value="detailsPaneShown" :width="350" side="right">
+    <w-drawer
+      class="fileman-right"
+      :model-value="detailsPaneShown"
+      :width="350"
+      side="right"
+      :inert="state.isGraph">
       <div class="flex h-full flex-col">
         <w-scroll-area
           class="min-h-0 flex-1"
@@ -229,7 +253,7 @@
         </div>
       </div>
     </w-drawer>
-    <w-page-container>
+    <w-page-container :inert="state.isGraph">
       <!--
         Tapping this pane puts the tree panel away, which is the "tap outside to dismiss" the drawer's own
         scrim would normally provide. It cannot here: `WDrawer` teleports that scrim to <body> at z-30, and
@@ -727,7 +751,7 @@
         </div>
       </w-page>
     </w-page-container>
-    <w-footer>
+    <w-footer :inert="state.isGraph">
       <w-bar class="fileman-path">
         <!--
           -> `flex-1` on the path is what puts the counts at the far end: `ms-auto` cannot, because
@@ -746,6 +770,18 @@
         }}</small>
       </w-bar>
     </w-footer>
+    <!--
+      Over everything below the header, rather than in place of the list: the tree, the listing and the
+      details stay mounted underneath, so going back to them is instant and finds them as they were.
+      What it covers is `inert` meanwhile, so the keyboard cannot wander into it.
+    -->
+    <page-graph
+      v-if="state.isGraph"
+      class="fileman-graph"
+      :locale="state.locale"
+      :search="state.search"
+      @close="closeGraph"
+      @open="openGraphPage" />
     <input type="file" ref="fileIpt" multiple @change="uploadNewFiles" style="display: none" />
   </w-layout>
 </template>
@@ -791,6 +827,10 @@ import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
+
+// -> d3 and everything else the graph draws with is fetched the first time it is opened, not with the
+//    file manager
+const PageGraph = defineAsyncComponent(() => import('@/components/PageGraph.vue'))
 
 // COMPOSABLES
 
@@ -900,7 +940,12 @@ const state = reactive({
   /** The deleted pages this reader may recover, as `GET …/pages/deleted` answered, newest first. */
   binItems: [],
   /** Keyed by the deletion's version id, which is what every action on a bin entry works from. */
-  binSelectedId: null
+  binSelectedId: null,
+  /**
+   * Whether the graph view covers the manager. Independent of `isRecycleBin`: it goes over whichever
+   * of the two was showing, and closing it comes back to that.
+   */
+  isGraph: false
 })
 
 // -> Over the defaults just above, which is what the view falls back to on a first visit
@@ -990,6 +1035,11 @@ const folderPath = computed(() => {
 })
 
 const usePathTitle = computed(() => state.displayMode === 'path')
+
+/** The search field finds nodes in the graph while it is open, and filters the folder otherwise. */
+const searchPlaceholder = computed(() =>
+  state.isGraph ? t('fileman.graph.search') : t('fileman.searchFolder')
+)
 
 const filteredFiles = computed(() => {
   if (state.search) {
@@ -1257,6 +1307,27 @@ function openRecycleBin() {
   state.isRecycleBin = true
   state.binSelectedId = null
   loadRecycleBin()
+}
+
+/*
+  The search is cleared going either way: what was typed to filter a folder means nothing to the
+  graph, and a graph search left behind would silently filter the folder it returns to.
+*/
+function openGraph() {
+  state.treeOpen = false
+  state.search = ''
+  state.isGraph = true
+}
+
+function closeGraph() {
+  state.search = ''
+  state.isGraph = false
+}
+
+/** A page picked in the graph: the same departure as opening one from the list. */
+function openGraphPage({ locale, path }) {
+  router.push(`${siteStore.localeUrlPrefix(locale)}/${path}`)
+  close()
 }
 
 async function loadRecycleBin() {
@@ -2594,6 +2665,17 @@ $fileman-bottom-row-height: 45px;
     &-label {
       flex: 1 1 auto;
     }
+  }
+
+  /*
+    Placed by grid LINE rather than by area, so it spans the drawers, the page and the footer at once;
+    see `WLayout` for the grid. Above the tree drawer, which is its own stacking context.
+  */
+  &-graph {
+    grid-row: 2 / 4;
+    grid-column: 1 / 4;
+    z-index: 5;
+    min-width: 0;
   }
 
   &-toolbar-title {

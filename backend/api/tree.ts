@@ -268,6 +268,62 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * PAGE GRAPH
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { locale?: string } }>(
+    '/sites/:siteId/tree/graph',
+    {
+      /*
+        No route-level permissions: `read:pages` is a page rule, asked of every page below, and a
+        caller allowed nowhere gets an empty graph -- the same answer as the tree listing above.
+      */
+      schema: {
+        summary: 'Get the page graph',
+        description:
+          "Every page of one locale the caller may read, the folders they sit in, and the links between them — what the file manager's graph view draws.\n\nA page that is not published is included only for a caller who may also edit it (`write:pages`), and is marked with `isPublished: false`. A link is included only when the caller may see both of its ends. Links reaching a page in another locale bring that page along, so the far end can be named.",
+        tags: ['Tree'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            }
+          }
+        },
+        response: {
+          200: { $ref: 'TreeGraph#' }
+        }
+      }
+    },
+    async (req) => {
+      const siteId = req.params.siteId
+      const actor = WIKI.models.groups.actorForRequest(req)
+      // -> A draft belongs to the people working on it, and an API key is answered as the public is
+      //    -- the same line the page route draws, via `actorFrom`
+      const isSession = actorFrom(req) !== null
+      return WIKI.models.pageGraph.graphFor({
+        siteId,
+        locale: req.query.locale || defaultLocale(siteId),
+        visibility: (page) => {
+          const ref = { siteId, path: page.path, locale: page.locale, tags: page.tags }
+          if (!WIKI.models.groups.checkAccess(actor, 'read:pages', ref)) {
+            return null
+          }
+          if (page.publishState === 'published') {
+            return 'published'
+          }
+          return isSession && WIKI.models.groups.checkAccess(actor, 'write:pages', ref)
+            ? 'draft'
+            : null
+        }
+      })
+    }
+  )
+
+  /**
    * BROWSE THE TREE AS A READER
    */
   app.get<{ Params: { siteId: string }; Querystring: { path?: string; locale?: string } }>(

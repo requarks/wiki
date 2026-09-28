@@ -242,7 +242,7 @@ const state = reactive({
   search: '',
   currentPage: 1,
   pageSize: 20,
-  totalPages: 15
+  totalPages: 1
 })
 
 /*
