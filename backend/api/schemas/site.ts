@@ -58,6 +58,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           type: 'string'
         }
       },
+      colorizeBrokenLinks: {
+        type: 'boolean',
+        description:
+          'Whether links to pages that do not exist are drawn in red. Display only: every saved render marks those links with the `is-broken-link` class either way, and this decides whether the page view colours them.'
+      },
       discoverable: {
         type: 'boolean'
       },

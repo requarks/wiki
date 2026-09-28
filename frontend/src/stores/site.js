@@ -94,6 +94,12 @@ export const useSiteStore = defineStore('site', {
      * router acts on for links inside pages and the server acts on for requests that reach it.
      */
     pageExtensions: [],
+    /**
+     * Whether a link to a page that does not exist is drawn red. The render marks those links whatever
+     * this says (`is-broken-link`, set on the server); this only decides whether the page view adds
+     * the class to its contents that colours them.
+     */
+    colorizeBrokenLinks: true,
     search: '',
     searchLastQuery: '',
     searchIsLoading: false,
@@ -431,6 +437,7 @@ export const useSiteStore = defineStore('site', {
         description: siteInfo.description,
         logoText: siteInfo.logoText,
         pageExtensions: siteInfo.pageExtensions ?? [],
+        colorizeBrokenLinks: siteInfo.colorizeBrokenLinks ?? true,
         company: siteInfo.company,
         contentLicense: siteInfo.contentLicense,
         footerExtra: siteInfo.footerExtra,

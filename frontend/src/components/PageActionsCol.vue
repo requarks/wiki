@@ -253,6 +253,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
+import { notifyRelinked } from '@/helpers/pageRelink'
 
 import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
@@ -457,16 +458,18 @@ function renamePage() {
           message: 'Page renamed successfully.'
         })
       } else {
-        await pageStore.pageMove({
+        const relinked = await pageStore.pageMove({
           id: pageStore.id,
           path: renamedPageOpts.path,
           title: renamedPageOpts.title,
-          locale: renamedPageOpts.locale
+          locale: renamedPageOpts.locale,
+          updateLinks: renamedPageOpts.updateLinks
         })
         notify({
           type: 'positive',
           message: 'Page moved successfully.'
         })
+        notifyRelinked(relinked, t)
       }
     } catch (err) {
       notify({

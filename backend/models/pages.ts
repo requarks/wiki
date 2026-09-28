@@ -1,5 +1,10 @@
 import { and, desc, eq, inArray, isNull, ne, notInArray, sql } from 'drizzle-orm'
-import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
+import {
+  pageLinks as pageLinksTable,
+  pages as pagesTable,
+  tree as treeTable,
+  users as usersTable
+} from '../db/schema.ts'
 import {
   CustomError,
   generatePathHash,
@@ -7,6 +12,9 @@ import {
   timingSafeCompare
 } from '../helpers/common.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
+import { rewriteSourceLinks } from '../helpers/linkRewrite.ts'
+import type { SourceSyntax } from '../helpers/linkRewrite.ts'
+import { relinkHref, rewriteRenderLinks } from '../helpers/pageLinks.ts'
 import type { AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { FastifyRequest } from 'fastify'
@@ -471,6 +479,37 @@ export interface PageDescription {
 export interface PageActor {
   id: string
   permissions: string[]
+}
+
+/** A page that links to a moved page's old address and was left alone, and why. */
+export interface RelinkSkip {
+  id: string
+  siteId: string
+  locale: string
+  path: string
+  title: string
+  /** What a page rule may address it by, so the caller can ask whether this page may be named. */
+  tags: string[]
+  /**
+   * `forbidden` — the mover may not edit it. `notInSource` — the link is in its render but could not
+   * be found in its source in a form that can be rewritten, so rewriting the render alone would only
+   * last until the next render from that source. `failed` — the save was refused, and the page left
+   * as it was.
+   */
+  reason: 'forbidden' | 'notInSource' | 'failed'
+}
+
+export interface RelinkResult {
+  /** Each page whose links were rewritten, with the version recording it. */
+  updated: { id: string; versionId: string | null }[]
+  skipped: RelinkSkip[]
+}
+
+/** Which source syntax a link is looked for in, per editor. The rest keep links in JSON, or none. */
+const SOURCE_SYNTAX: Record<string, SourceSyntax> = {
+  markdown: 'markdown',
+  visual: 'markdown',
+  asciidoc: 'adoc'
 }
 
 /**
@@ -1847,6 +1886,12 @@ class Pages {
     // -> What this page points at, which is only knowable once it has an id and an address of its
     //    own: a relative link resolves against the page holding it
     await WIKI.models.pageLinks.refreshForPage(page, links)
+    // -> And every link somebody had already written to this path or alias stops being a red one
+    await WIKI.models.pageLinks.refreshLinksTo(
+      siteId,
+      { paths: [{ locale, path }], aliases: [alias] },
+      page.id
+    )
 
     const versionId = await WIKI.models.pageHistory.record({
       siteId,
@@ -2020,7 +2065,19 @@ class Pages {
       those changes what the page links to without the render moving at all. Read back rather than
       assembled from the patch, for the same reason `changedFields` is worked out against the row.
     */
-    await WIKI.models.pageLinks.refreshById(siteId, id, renderHrefs)
+    const markedRender = await WIKI.models.pageLinks.refreshById(siteId, id, renderHrefs)
+    // -> Read back before its red links were marked, and it is what the editor is handed to draw
+    if (markedRender !== null) {
+      updated.render = markedRender
+    }
+    // -> `/a/<alias>` links follow the alias: the old one now points at nothing, the new one at this
+    if (values.alias !== undefined && values.alias !== existing.alias) {
+      await WIKI.models.pageLinks.refreshLinksTo(
+        siteId,
+        { aliases: [existing.alias, values.alias] },
+        id
+      )
+    }
 
     const versionId = await WIKI.models.pageHistory.record({
       siteId,
@@ -2257,7 +2314,27 @@ class Pages {
       moved page itself carries resolved against the folder it used to sit in, and now resolves
       against a different one. Nothing about its content changed and every one of its links may have.
     */
-    await WIKI.models.pageLinks.refreshById(siteId, id)
+    const markedRender = await WIKI.models.pageLinks.refreshById(siteId, id)
+    if (markedRender !== null) {
+      moved.render = markedRender
+    }
+    /*
+      And the pages pointing at it, whose rows still say where it was -- which is exactly what turns
+      their links red. The path it arrived at is handed over too, since a link somebody wrote to where
+      the page now is has just started resolving.
+    */
+    if (isRelocated) {
+      await WIKI.models.pageLinks.refreshLinksTo(
+        siteId,
+        {
+          paths: [
+            { locale: page.locale, path: page.path },
+            { locale: newLocale, path: newPath }
+          ]
+        },
+        id
+      )
+    }
 
     // -> Moved and then rewritten, rather than deleted and written afresh: the move is what keeps a
     //    versioned target's history of the file attached to it, and the rewrite is because a move may
@@ -2276,6 +2353,231 @@ class Pages {
     })
     invalidateAppShellCache()
     return { page: moved, versionId }
+  }
+
+  /**
+   * Point every page linking to where a page USED to be at where it is now.
+   *
+   * The optional half of a move, asked for from the rename dialog. A move on its own leaves those links
+   * saying the old address on purpose — that is what makes them findable as the ones it broke (see
+   * `movePage`) — and this is the repair. Only links written as a PATH: `/a/<alias>` and `/i/<id>`
+   * survive a move by design, and have nothing to repair.
+   *
+   * Each page is edited the way an author would edit it, through `updatePage`: its source is
+   * rewritten (and the stored render with it, so readers see the fix without waiting on a re-render),
+   * which gives it a version in its history naming the move as the reason, a fresh copy on every
+   * storage target, re-derived links and red links, and a webhook. The source is rewritten in place,
+   * href by href, and nothing else in it is touched — see `helpers/linkRewrite.ts`.
+   *
+   * The render is never rewritten on its own. A link that is in the render but cannot be found in the
+   * source in a form that can be rewritten is left as it is and reported, because a fixed render over
+   * an unfixed source would break again the next time the page is rendered.
+   *
+   * @param previous Where the page was before the move.
+   * @param mayEdit Whether the mover may edit a given page. Every page here is somebody else's, so this
+   *                is asked of each one, and a page they may not edit is reported rather than changed —
+   *                moving a page is not a way to write to pages the mover could not have saved.
+   */
+  async relinkMovedPage(
+    siteId: string,
+    id: string,
+    previous: { locale: string; path: string },
+    actor: PageActor,
+    mayEdit: (page: RulePageRef) => boolean
+  ): Promise<RelinkResult> {
+    const result: RelinkResult = { updated: [], skipped: [] }
+    const [moved] = await WIKI.db
+      .select({ locale: pagesTable.locale, path: pagesTable.path })
+      .from(pagesTable)
+      .where(and(eq(pagesTable.id, id), eq(pagesTable.siteId, siteId)))
+      .limit(1)
+    if (!moved || (moved.locale === previous.locale && moved.path === previous.path)) {
+      return result
+    }
+    const target = { siteId, locale: moved.locale, path: moved.path }
+
+    const rows = await WIKI.db
+      .select({ pageId: pageLinksTable.pageId, href: pageLinksTable.href })
+      .from(pageLinksTable)
+      .where(
+        and(
+          eq(pageLinksTable.targetSiteId, siteId),
+          eq(pageLinksTable.kind, 'page'),
+          eq(pageLinksTable.targetLocale, previous.locale),
+          eq(pageLinksTable.targetPath, previous.path)
+        )
+      )
+    const hrefsByPage = new Map<string, string[]>()
+    for (const row of rows) {
+      hrefsByPage.set(row.pageId, [...(hrefsByPage.get(row.pageId) ?? []), row.href])
+    }
+    if (hrefsByPage.size < 1) {
+      return result
+    }
+
+    // -> In the wiki's own language, since it is read in every linking page's history -- which may be
+    //    on several sites, and is not the mover's to choose
+    const { t } = await WIKI.models.locales.translator(WIKI.sites[siteId]?.config?.locales?.primary)
+    const reasonForChange = t('pageRenameDialog.updateLinksReason', {
+      from: this.urlFor(siteId, previous.locale, previous.path),
+      to: this.urlFor(siteId, moved.locale, moved.path)
+    })
+
+    for (const [pageId, hrefs] of hrefsByPage) {
+      const [page] = await WIKI.db
+        .select({
+          id: pagesTable.id,
+          siteId: pagesTable.siteId,
+          locale: pagesTable.locale,
+          path: pagesTable.path,
+          title: pagesTable.title,
+          tags: pagesTable.tags,
+          editor: pagesTable.editor,
+          content: pagesTable.content,
+          render: pagesTable.render,
+          relations: pagesTable.relations
+        })
+        .from(pagesTable)
+        .where(eq(pagesTable.id, pageId))
+        .limit(1)
+      if (!page) {
+        continue
+      }
+      const skip = (reason: RelinkSkip['reason']) =>
+        result.skipped.push({
+          id: page.id,
+          siteId: page.siteId,
+          locale: page.locale,
+          path: page.path,
+          title: page.title,
+          tags: page.tags ?? [],
+          reason
+        })
+      if (
+        !mayEdit({
+          siteId: page.siteId,
+          locale: page.locale,
+          path: page.path,
+          tags: page.tags ?? []
+        })
+      ) {
+        skip('forbidden')
+        continue
+      }
+
+      // -> Resolved from where the linking page sits NOW, which for the moved page itself is its new
+      //    address: a relative link is rewritten relative to it
+      const replacements = new Map<string, string>()
+      for (const href of hrefs) {
+        const next = relinkHref(href, page, target)
+        if (next !== null && next !== href) {
+          replacements.set(href, next)
+        }
+      }
+      if (replacements.size < 1) {
+        continue
+      }
+
+      const patch: Partial<PageInput> = { reasonForChange }
+      const found = new Set<string>()
+      const content = page.content ?? ''
+      const syntax = SOURCE_SYNTAX[page.editor]
+      if (syntax) {
+        const rewrite = rewriteSourceLinks(content, syntax, replacements)
+        if (rewrite.replaced.size > 0) {
+          patch.content = rewrite.content
+          rewrite.replaced.forEach((href) => found.add(href))
+        }
+      } else if (page.editor === REDIRECT_EDITOR || page.editor === 'excalidraw') {
+        try {
+          const parsed = JSON.parse(content)
+          if (page.editor === REDIRECT_EDITOR) {
+            const next = replacements.get(String(parsed?.target ?? '').trim())
+            if (next !== undefined) {
+              found.add(parsed.target.trim())
+              parsed.target = next
+              patch.content = JSON.stringify(parsed)
+            }
+          } else {
+            // -> An element's own link, which the export wraps the element in an anchor for. Written
+            //    back the way `serializeAsJSON` writes a scene
+            for (const element of Array.isArray(parsed?.elements) ? parsed.elements : []) {
+              const next =
+                typeof element?.link === 'string'
+                  ? replacements.get(element.link.trim())
+                  : undefined
+              if (next !== undefined) {
+                found.add(element.link.trim())
+                element.link = next
+              }
+            }
+            if (found.size > 0) {
+              patch.content = JSON.stringify(parsed, null, 2)
+            }
+          }
+        } catch {
+          // -> Content that will not parse holds no link this can find
+        }
+      }
+
+      // -> The sidebar relations, which are links too and are stored as a column of their own
+      if (Array.isArray(page.relations)) {
+        let relationsChanged = false
+        const relations = (page.relations as any[]).map((relation) => {
+          const next =
+            typeof relation?.target === 'string'
+              ? replacements.get(relation.target.trim())
+              : undefined
+          if (next === undefined) {
+            return relation
+          }
+          found.add(relation.target.trim())
+          relationsChanged = true
+          return { ...relation, target: next }
+        })
+        if (relationsChanged) {
+          patch.relations = relations
+        }
+      }
+
+      if (found.size < 1) {
+        skip('notInSource')
+        continue
+      }
+
+      // -> Only the hrefs that were fixed in the source, so the render never says something the source
+      //    does not. Written ahead of the save, which re-derives the page's links from it
+      const render = rewriteRenderLinks(
+        page.render ?? '',
+        new Map([...replacements].filter(([href]) => found.has(href)))
+      )
+      if (render !== null) {
+        await WIKI.db.update(pagesTable).set({ render }).where(eq(pagesTable.id, page.id))
+      }
+
+      /*
+        One page at a time, and one failing does not stop the rest: the move itself has already
+        happened, and the other pages are no less worth fixing. The render goes back to what it was, so
+        a page whose save was refused is left exactly as it stood.
+      */
+      try {
+        const change = await this.updatePage(page.siteId, page.id, patch, actor)
+        if (change) {
+          result.updated.push({ id: page.id, versionId: change.versionId })
+        }
+      } catch (err: any) {
+        WIKI.logger.warn(`Could not update the links of page ${page.id}: ${err.message}`)
+        if (render !== null) {
+          await WIKI.db
+            .update(pagesTable)
+            .set({ render: page.render })
+            .where(and(eq(pagesTable.id, page.id), eq(pagesTable.render, render)))
+        }
+        skip('failed')
+      }
+    }
+
+    return result
   }
 
   /**
@@ -2302,6 +2604,12 @@ class Pages {
     await this.detachFromLocaleGroup(siteId, id)
     await WIKI.db.delete(pagesTable).where(eq(pagesTable.id, id))
     await WIKI.models.tree.deleteEntry(id)
+    // -> Every link to it, by any of the three ways a link can name it, now points at nothing
+    await WIKI.models.pageLinks.refreshLinksTo(siteId, {
+      paths: [{ locale: page.locale, path: page.path }],
+      pageIds: [id],
+      aliases: [page.alias]
+    })
     // -> A page that overrode the sidebar owns a menu keyed by its own id, which nothing could reach
     //    once the page is gone
     await WIKI.models.navigation.deleteNavForEntries([id])
@@ -2499,6 +2807,12 @@ class Pages {
     }
 
     await WIKI.models.pageLinks.refreshForPage(page, links)
+    // -> Under its own id, so a `/i/<id>` link written before it was deleted resolves again as well
+    await WIKI.models.pageLinks.refreshLinksTo(
+      siteId,
+      { paths: [{ locale, path }], pageIds: [page.id], aliases: [page.alias] },
+      page.id
+    )
 
     const versionId = await WIKI.models.pageHistory.record({
       siteId,
@@ -2581,20 +2895,18 @@ class Pages {
       })
     }
     // -> Read before the rows go: what a target filed each page under is decided by its content type,
-    //    and guessing would mean reaching for names that may belong to the assets beside them
-    const contentTypes = new Map(
-      (
-        await WIKI.db
-          .select({ id: pagesTable.id, contentType: pagesTable.contentType })
-          .from(pagesTable)
-          .where(
-            inArray(
-              pagesTable.id,
-              entries.map((entry) => entry.id)
-            )
-          )
-      ).map((row) => [row.id, row.contentType])
-    )
+    //    and guessing would mean reaching for names that may belong to the assets beside them. The
+    //    aliases are for the links that name a page by one
+    const doomed = await WIKI.db
+      .select({ id: pagesTable.id, contentType: pagesTable.contentType, alias: pagesTable.alias })
+      .from(pagesTable)
+      .where(
+        inArray(
+          pagesTable.id,
+          entries.map((entry) => entry.id)
+        )
+      )
+    const contentTypes = new Map(doomed.map((row) => [row.id, row.contentType]))
     // -> Out of their sets of translations first, for the same reason `deletePage` does it
     await this.detachFromLocaleGroups(
       siteId,
@@ -2606,6 +2918,15 @@ class Pages {
         entries.map((entry) => entry.id)
       )
     )
+    // -> As for a single page: whatever linked to any of them is now a red link
+    await WIKI.models.pageLinks.refreshLinksTo(siteId, {
+      paths: entries.map((entry) => ({
+        locale: entry.locale,
+        path: entry.folderPath ? `${entry.folderPath}/${entry.fileName}` : entry.fileName
+      })),
+      pageIds: entries.map((entry) => entry.id),
+      aliases: doomed.map((row) => row.alias)
+    })
 
     // -> One per page, as deleting them one at a time would have sent: a subscriber mirroring the
     //    wiki has to hear about each page, not about the folder it happened to sit in

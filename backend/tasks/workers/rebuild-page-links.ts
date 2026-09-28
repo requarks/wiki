@@ -8,12 +8,17 @@ import { settings } from '../../models/settings.ts'
 import { sites } from '../../models/sites.ts'
 
 /**
- * Work out what every page on the wiki links to, from scratch.
+ * Work out what every page on the wiki links to, from scratch — and mark its red links while at it.
  *
  * The links of a page are derived from its stored render and rewritten whenever that render is, so
  * ordinary editing keeps them current on its own. This is for the cases where there was nothing to
  * derive them from at the time: pages that predate the table, and a wiki whose locale prefixes or
  * page extensions changed, which silently changes what a link that was already written ADDRESSES.
+ *
+ * The marking is `refreshForPage`'s own (see `pageLinks.syncBrokenLinks`): each render has the
+ * broken-link class put on the links that point at nothing and taken off the rest. Saving keeps that
+ * current too, and so does creating or deleting a page that others link to — so this is what brings
+ * the renders of a wiki that predates the class into line, in one pass rather than a save per page.
  *
  * Offered under Admin → Utilities and never run on its own. It is not a migration and not a boot step:
  * a wiki with no links recorded works, it simply has no backlinks to show yet, and a rebuild that ran
@@ -64,8 +69,10 @@ export async function task(): Promise<void> {
   for (;;) {
     /*
       Walked by id rather than by offset: this reads every page in the wiki one batch at a time, and a
-      paged read that re-counts its way to each batch gets slower as it goes. Nothing is being written
-      to `pages` here, so the set is stable underneath it.
+      paged read that re-counts its way to each batch gets slower as it goes. The only thing written
+      to `pages` here is a render's link classes, which moves no id, so the set is stable underneath it
+      -- and whether a link resolves is read off `pages` rather than off the rows this is rewriting,
+      so the order the pages are visited in does not change the answer.
     */
     const rows = await WIKI.db
       .select({

@@ -1009,6 +1009,14 @@ class Tree {
       */
       await WIKI.models.pageLinks.refreshById(folder.siteId, page.id)
     }
+    // -> Those links are left pointing where the pages were, so they turn red -- and anything already
+    //    linking to where the pages are now turns good
+    await WIKI.models.pageLinks.refreshLinksTo(folder.siteId, {
+      paths: movedPages.flatMap((page) => [
+        { locale: page.locale, path: page.previousPath },
+        { locale: page.locale, path: page.path }
+      ])
+    })
 
     // -> A storage target that lays its content out by path has every one of those files to move.
     //    Asked for after the rows are correct, so that where each file belongs is read off the tree
@@ -1483,6 +1491,13 @@ class Tree {
       //    were. This move can cross locales as well, which changes what a link's prefix means too
       await WIKI.models.pageLinks.refreshById(siteId, page.id)
     }
+    // -> As in `renameFolder`, for both ends of the move
+    await WIKI.models.pageLinks.refreshLinksTo(siteId, {
+      paths: movedPages.flatMap((page) => [
+        { locale: folder.locale, path: page.previousPath },
+        { locale: destinationLocale, path: page.path }
+      ])
+    })
 
     // -> A storage target that lays its content out by path has every one of those files to move.
     //    Asked for after the rows are correct, so that where each file belongs is read off the tree

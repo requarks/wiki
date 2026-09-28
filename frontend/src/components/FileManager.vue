@@ -822,6 +822,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 import { assetUrl } from '@/helpers/assets'
 import fileTypes from '@/helpers/fileTypes'
 import { folderIconStyle } from '@/helpers/folderColors'
+import { notifyRelinked } from '@/helpers/pageRelink'
 import { saveVersionSource } from '@/helpers/pageVersions'
 import FolderCreateDialog from '@/components/FolderCreateDialog.vue'
 import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
@@ -1863,16 +1864,18 @@ function renameMovePage(item) {
           message: 'Page renamed successfully.'
         })
       } else {
-        await pageStore.pageMove({
+        const relinked = await pageStore.pageMove({
           id: item.id,
           path: opts.path,
           title: opts.title,
-          locale: opts.locale
+          locale: opts.locale,
+          updateLinks: opts.updateLinks
         })
         notify({
           type: 'positive',
           message: 'Page moved successfully.'
         })
+        notifyRelinked(relinked, t)
       }
       // -> Reload current view
       await loadTree({ parentId: state.currentFolderId })

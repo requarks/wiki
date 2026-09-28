@@ -568,6 +568,19 @@
                 :aria-label="t(`admin.general.pageExtensions`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="broken-link" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.colorizeBrokenLinks`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.colorizeBrokenLinksHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.colorizeBrokenLinks"
+                :aria-label="t(`admin.general.colorizeBrokenLinks`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <!-- ----------------------- -->
         <!-- SEO -->
@@ -673,6 +686,7 @@ function defaultConfig() {
       content: ''
     },
     pageExtensions: '',
+    colorizeBrokenLinks: true,
     logoText: false,
     features: {
       backlinks: true,
@@ -808,6 +822,7 @@ async function save() {
           content: state.config.banner?.content ?? ''
         },
         pageExtensions: parsePageExtensions(state.config.pageExtensions),
+        colorizeBrokenLinks: state.config.colorizeBrokenLinks ?? true,
         logoText: state.config.logoText ?? false,
         sitemap: state.config.sitemap ?? false,
         uploads: {

@@ -1,7 +1,7 @@
-import { and, eq, ne, or, sql } from 'drizzle-orm'
+import { and, eq, inArray, ne, or, sql } from 'drizzle-orm'
 import { pageLinks as pageLinksTable, pages as pagesTable } from '../db/schema.ts'
-import { linksFromRender, resolveLink } from '../helpers/pageLinks.ts'
-import type { LinkSource, PageLinkKind, ResolvedLink } from '../helpers/pageLinks.ts'
+import { linksFromRender, markBrokenLinks, resolveLink } from '../helpers/pageLinks.ts'
+import type { LinkSource, LinkTarget, PageLinkKind, ResolvedLink } from '../helpers/pageLinks.ts'
 
 /**
  * Page links model
@@ -93,12 +93,25 @@ export interface OutboundLink extends PageLinkRow {
   targetPageTags: string[] | null
 }
 
-/** Where a page sits, which is how a link addresses it. */
-export interface LinkTarget {
-  siteId: string
-  locale: string
-  path: string
+/**
+ * Every way a link can address the pages that just appeared or went, on one site.
+ *
+ * All three, because a page is reachable by all three: a link written as `/i/<id>` to a page that was
+ * deleted is exactly as broken as one written as its path.
+ */
+export interface ChangedTargets {
+  paths?: { locale: string; path: string }[]
+  pageIds?: string[]
+  aliases?: (string | null | undefined)[]
 }
+
+/**
+ * How many targets one referrer lookup asks about at once.
+ *
+ * A folder rename hands over every page beneath it, and each path target is two bind parameters —
+ * postgres stops at 65535 of them per statement, well short of a large folder.
+ */
+const TARGETS_PER_QUERY = 1000
 
 class PageLinks {
   /**
@@ -129,12 +142,19 @@ class PageLinks {
    *  - **The page's relations**, the sidebar links its properties dialog collects. Stored as their own
    *    column, written by the same link picker that writes one into content, and just as breakable.
    *
+   * And then brings the render's red links into line with what was just stored — see
+   * `syncBrokenLinks`. Here rather than beside each caller, because every caller is somewhere a link
+   * could have started or stopped resolving: a save changed the links, a move changed what the
+   * relative ones address, and the rebuild utility is asked to put all of it right at once.
+   *
    * @param renderHrefs What `postProcess` already read out of the render it just produced, for a save
    *                    that is storing one. Absent, the stored render is parsed instead — which is the
    *                    case for a page that MOVED: nothing about it changed, but every relative link
    *                    on it now resolves somewhere else.
+   * @returns The render as it now stands when marking changed it, or null when the stored one was
+   *          already right — so a caller holding a copy of the page can keep it current.
    */
-  async refreshForPage(page: PageLinkSource, renderHrefs?: string[]): Promise<void> {
+  async refreshForPage(page: PageLinkSource, renderHrefs?: string[]): Promise<string | null> {
     const hrefs = renderHrefs ?? linksFromRender(page.render)
 
     if (page.editor === REDIRECT_EDITOR && page.content) {
@@ -163,6 +183,8 @@ class PageLinks {
       { pageId: page.id, siteId: page.siteId, locale: page.locale, path: page.path },
       hrefs
     )
+
+    return this.syncBrokenLinks(page.id, page.render)
   }
 
   /**
@@ -171,8 +193,14 @@ class PageLinks {
    * What everything but a create reaches for: a save, a move, a folder rename and the rebuild utility
    * all need the page as it stands AFTER their write, so reading it back is the point rather than an
    * overhead.
+   *
+   * @returns As `refreshForPage`: the corrected render, or null when it did not change.
    */
-  async refreshById(siteId: string, pageId: string, renderHrefs?: string[]): Promise<void> {
+  async refreshById(
+    siteId: string,
+    pageId: string,
+    renderHrefs?: string[]
+  ): Promise<string | null> {
     const rows = await WIKI.db
       .select({
         id: pagesTable.id,
@@ -189,8 +217,138 @@ class PageLinks {
       .limit(1)
 
     // -> Gone while the save that asked for this was in flight. Its rows went with it
-    if (rows[0]) {
-      await this.refreshForPage(rows[0] as PageLinkSource, renderHrefs)
+    return rows[0] ? this.refreshForPage(rows[0] as PageLinkSource, renderHrefs) : null
+  }
+
+  /**
+   * Put the broken-link class on the links of a page's render that point at nothing, and take it off
+   * the ones that do.
+   *
+   * **Always done, whatever the site's `colorizeBrokenLinks` says.** That setting only decides whether
+   * the class is drawn red; the class itself is kept true regardless, so that switching it on shows
+   * every red link at once instead of only those on pages saved since.
+   *
+   * "Points at nothing" is `outboundFor`'s answer — the join against `pages` that the Links tab draws
+   * its red links from — so the two cannot disagree about a link. Only the three page kinds count: a
+   * file link is recorded but never resolved (see `outboundFor`), and an href with no row at all is
+   * not a link into the wiki.
+   *
+   * Written without touching `updatedAt`, for the reason `storeRender` gives: nothing about the page
+   * changed, a page it points at did. And written only over the render that was read, so a save
+   * landing in between wins rather than being overwritten with a marked copy of what it replaced —
+   * that save checks its own links anyway.
+   *
+   * @param render The render as stored, for a caller that already has it in hand. Absent, it is read.
+   * @returns The corrected render, or null when nothing on it had to change.
+   */
+  async syncBrokenLinks(pageId: string, render?: string | null): Promise<string | null> {
+    if (render === undefined) {
+      const rows = await WIKI.db
+        .select({ render: pagesTable.render })
+        .from(pagesTable)
+        .where(eq(pagesTable.id, pageId))
+        .limit(1)
+      render = rows[0]?.render
+    }
+    if (!render) {
+      return null
+    }
+
+    const broken = new Set(
+      (await this.outboundFor(pageId))
+        .filter((link) => link.kind !== 'asset' && !link.targetPageId)
+        .map((link) => link.href)
+    )
+    const marked = markBrokenLinks(render, broken)
+    if (marked === null) {
+      return null
+    }
+
+    const updated = await WIKI.db
+      .update(pagesTable)
+      .set({ render: marked })
+      .where(and(eq(pagesTable.id, pageId), eq(pagesTable.render, render)))
+      .returning({ id: pagesTable.id })
+    return updated.length > 0 ? marked : null
+  }
+
+  /**
+   * Re-check the red links of every page pointing at pages that just appeared or went.
+   *
+   * The other direction from `syncBrokenLinks` on the page being saved: a page created at a path
+   * somebody had already linked to turns their link good, and a page deleted turns every link to it
+   * red, without either of those pages being touched by anybody. Only the renders are rewritten — the
+   * `pageLinks` rows of those pages say where they point, and that has not changed.
+   *
+   * Nothing here asks whether a page exists; the callers pass what changed and `syncBrokenLinks`
+   * works the answer out from the table as it now stands, so a move can simply hand over both the
+   * path it left and the one it arrived at.
+   *
+   * @param siteId The site the changed pages are on. Referrers may be on any site of the instance.
+   * @param exceptPageId A page to leave out — the one being saved, which has just checked itself.
+   */
+  async refreshLinksTo(
+    siteId: string,
+    targets: ChangedTargets,
+    exceptPageId?: string
+  ): Promise<void> {
+    const paths = targets.paths ?? []
+    const pageIds = targets.pageIds ?? []
+    const aliases = (targets.aliases ?? []).filter((alias): alias is string => Boolean(alias))
+
+    const conditions: any[] = []
+    for (let offset = 0; offset < paths.length; offset += TARGETS_PER_QUERY) {
+      const batch = paths.slice(offset, offset + TARGETS_PER_QUERY)
+      conditions.push(
+        and(
+          eq(pageLinksTable.kind, 'page'),
+          or(
+            ...batch.map((target) =>
+              and(
+                eq(pageLinksTable.targetLocale, target.locale),
+                eq(pageLinksTable.targetPath, target.path)
+              )
+            )
+          )
+        )
+      )
+    }
+    for (const [kind, refs] of [
+      ['pageId', pageIds],
+      ['alias', aliases]
+    ] as const) {
+      for (let offset = 0; offset < refs.length; offset += TARGETS_PER_QUERY) {
+        conditions.push(
+          and(
+            eq(pageLinksTable.kind, kind),
+            inArray(pageLinksTable.targetRef, refs.slice(offset, offset + TARGETS_PER_QUERY))
+          )
+        )
+      }
+    }
+
+    const referrers = new Set<string>()
+    for (const condition of conditions) {
+      const rows = await WIKI.db
+        .selectDistinct({ pageId: pageLinksTable.pageId })
+        .from(pageLinksTable)
+        .where(and(eq(pageLinksTable.targetSiteId, siteId), condition))
+      for (const row of rows) {
+        referrers.add(row.pageId)
+      }
+    }
+    if (exceptPageId) {
+      referrers.delete(exceptPageId)
+    }
+
+    for (const pageId of referrers) {
+      // -> One page's render failing to parse is not a reason for the save that caused this to fail,
+      //    nor for the rest of them to keep a stale colour
+      try {
+        await this.syncBrokenLinks(pageId)
+      } catch (err: any) {
+        WIKI.logger.warn(`Could not update the broken links of page ${pageId}: ${err.message}`)
+      }
     }
   }
 

@@ -912,15 +912,20 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - MOVE
      */
-    async pageMove({ id, title, path, locale } = {}) {
+    /**
+     * @returns What became of the pages linking to the old address when `updateLinks` was asked for
+     *          -- `{ updated, skippedCount, skipped }` -- and null otherwise.
+     */
+    async pageMove({ id, title, path, locale, updateLinks = false } = {}) {
       const siteStore = useSiteStore()
-      unwrap(
+      const resp = unwrap(
         await API_CLIENT.put(`sites/${siteStore.id}/pages/${id}/path`, {
           json: {
             path,
             ...(title ? { title } : {}),
             // -> A move may cross locales, which is the same page translated rather than a new one
-            ...(locale ? { locale } : {})
+            ...(locale ? { locale } : {}),
+            updateLinks
           }
         }).json()
       )
@@ -930,6 +935,7 @@ export const usePageStore = defineStore('page', {
         this.$patch({ path, ...(locale ? { locale } : {}) })
         this.router.replace(this.editorExitPath)
       }
+      return resp?.relinked ?? null
     },
     /**
      * PAGE - Rename

@@ -1,3 +1,4 @@
+import path from 'node:path'
 import * as cheerio from 'cheerio'
 import { isPageUrl, normalizePagePath, splitLocalePath, stripPageExtension } from './common.ts'
 
@@ -60,6 +61,13 @@ export interface ResolvedLink {
   targetPath: string | null
   /** The alias or the page id, for the two kinds that carry one. */
   targetRef: string | null
+}
+
+/** Where a page sits, which is what a link to it has to say. */
+export interface LinkTarget {
+  siteId: string
+  locale: string
+  path: string
 }
 
 /** The page a link is written on, which is what a relative href resolves against. */
@@ -269,4 +277,170 @@ function resolveFile(href: string, urlPath: string, targetSiteId: string): Resol
     targetPath: rest,
     targetRef: null
   }
+}
+
+/**
+ * The class a stored render puts on a link to a page that is not there — a red link.
+ *
+ * Owned by the server, not the author: it is set and cleared on every anchor each time a render is
+ * checked, so one written by hand is taken off again wherever the page it points at exists. Whether it
+ * is DRAWN red is a separate, per-site question the page view answers with a class on the contents
+ * container (`colorizeBrokenLinks`), which is what lets the setting change without a single page
+ * being rewritten. `frontend/src/css/_page-contents.scss` is the other half of this name.
+ */
+export const BROKEN_LINK_CLASS = 'is-broken-link'
+
+/**
+ * Put the broken-link class on exactly the anchors whose href is in `broken`, and take it off every
+ * other one.
+ *
+ * Matched on the href as written (trimmed, as `resolveLink` keys it), which is what the `pageLinks`
+ * rows hold — so the same href written twice on a page is marked twice, and two spellings of one
+ * missing page are both marked.
+ *
+ * @returns The render with the classes corrected, or null when not one anchor had to change — the
+ *          common case, and one that must not cost a write.
+ */
+export function markBrokenLinks(html: string, broken: ReadonlySet<string>): string | null {
+  // -> Nothing to add, and nothing there to take off: skip the parse. The substring test can only
+  //    give a false positive (an author's own text mentioning the name), never a false negative
+  if (broken.size < 1 && !html.includes(BROKEN_LINK_CLASS)) {
+    return null
+  }
+
+  const $ = cheerio.load(html, null, false)
+  let changed = false
+  for (const el of $('a')) {
+    const anchor = $(el)
+    const isBroken = broken.has((anchor.attr('href') ?? '').trim())
+    if (isBroken === anchor.hasClass(BROKEN_LINK_CLASS)) {
+      continue
+    }
+    changed = true
+    if (isBroken) {
+      anchor.addClass(BROKEN_LINK_CLASS)
+    } else {
+      anchor.removeClass(BROKEN_LINK_CLASS)
+      // -> A link that only ever had this class goes back to having none, rather than `class=""`
+      if (!(anchor.attr('class') ?? '').trim()) {
+        anchor.removeAttr('class')
+      }
+    }
+  }
+  return changed ? $.html() : null
+}
+
+/**
+ * The same link, rewritten to point at where its target now is — for a page that moved.
+ *
+ * Written the way the author wrote it rather than normalized, because the href is going back into
+ * their source: a relative link stays relative (from where the page holding it now sits), an absolute
+ * path stays absolute, a full URL keeps its host, and whatever the old one carried beyond the page —
+ * a locale prefix it did not strictly need, a page extension, a query, a fragment — is carried over.
+ * The one thing deliberately not kept is a trailing slash, which the resolver ignores anyway.
+ *
+ * Checked against `resolveLink` before it is handed back, so a spelling that would land somewhere
+ * else — a relative climb that no longer fits, a prefix the site stopped using — falls back to the
+ * plain absolute path, which always lands.
+ *
+ * @param source Where the page holding the link sits NOW, which is what a relative href resolves
+ *               against — for a page linking to itself, that is its new address.
+ * @returns The new href, or null when `href` does not address a page at all.
+ */
+export function relinkHref(href: string, source: LinkSource, target: LinkTarget): string | null {
+  const raw = (href ?? '').trim()
+  const resolved = resolveLink(raw, source)
+  if (resolved?.kind !== 'page') {
+    return null
+  }
+  const url = new URL(
+    raw,
+    `${LOCAL_ORIGIN}${WIKI.models.pages.urlFor(source.siteId, source.locale, source.path)}`
+  )
+
+  // -> The query and fragment exactly as written, which is not always how `URL` re-serializes them
+  const suffixAt = raw.search(/[?#]/)
+  const suffix = suffixAt < 0 ? '' : raw.slice(suffixAt)
+
+  const site = WIKI.sites?.[target.siteId]
+  const trimmed =
+    url.pathname.length > 1 && url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname
+  const withoutExtension = stripPageExtension(trimmed, site?.config?.pageExtensions)
+  const extension = withoutExtension === null ? '' : trimmed.slice(withoutExtension.length)
+  const hadPrefix = Boolean(
+    splitLocalePath(
+      withoutExtension ?? trimmed,
+      WIKI.models.locales.urlPrefixesFor(site?.config?.locales?.active)
+    )
+  )
+
+  const plainPath = WIKI.models.pages.urlFor(target.siteId, target.locale, target.path)
+  let urlPath = hadPrefix
+    ? `/${WIKI.models.locales.shortCodeFor(target.locale)}/${target.path}`
+    : plainPath
+  // -> `/.md` addresses nothing, so the site root never takes an extension
+  if (extension && target.path) {
+    urlPath += extension
+  }
+  // -> A prefixed root is `/fr/`, which reads as `/fr` either way; written without the slash
+  if (urlPath.length > 1 && urlPath.endsWith('/')) {
+    urlPath = urlPath.slice(0, -1)
+  }
+
+  const hasScheme = /^[a-z][a-z\d+.-]*:/i.test(raw)
+  let rewritten: string
+  if (hasScheme) {
+    rewritten = `${url.origin}${urlPath}${suffix}`
+  } else if (raw.startsWith('//')) {
+    rewritten = `//${url.host}${urlPath}${suffix}`
+  } else if (raw.startsWith('/')) {
+    rewritten = `${urlPath}${suffix}`
+  } else {
+    const from = path.posix.dirname(
+      WIKI.models.pages.urlFor(source.siteId, source.locale, source.path)
+    )
+    const relative = path.posix.relative(from, urlPath)
+    rewritten = relative ? `${relative}${suffix}` : `${urlPath}${suffix}`
+  }
+
+  const check = resolveLink(rewritten, source)
+  const lands =
+    check?.kind === 'page' &&
+    check.targetSiteId === target.siteId &&
+    check.targetLocale === target.locale &&
+    check.targetPath === target.path
+  if (lands) {
+    return rewritten
+  }
+  return hasScheme ? `${url.origin}${plainPath}${suffix}` : `${plainPath}${suffix}`
+}
+
+/**
+ * Replace hrefs in a render, anchor by anchor.
+ *
+ * The render half of relinking a moved page: the source is rewritten by `helpers/linkRewrite.ts`, and
+ * the stored HTML has to say the same thing without waiting for somebody to re-render it — the
+ * render is what a reader is served.
+ *
+ * @param replacements Old href (trimmed, as the `pageLinks` rows hold it) to new href.
+ * @returns The rewritten render, or null when no anchor carried any of them.
+ */
+export function rewriteRenderLinks(
+  html: string,
+  replacements: ReadonlyMap<string, string>
+): string | null {
+  if (replacements.size < 1 || !html) {
+    return null
+  }
+  const $ = cheerio.load(html, null, false)
+  let changed = false
+  for (const el of $('a[href]')) {
+    const anchor = $(el)
+    const replacement = replacements.get((anchor.attr('href') ?? '').trim())
+    if (replacement !== undefined) {
+      anchor.attr('href', replacement)
+      changed = true
+    }
+  }
+  return changed ? $.html() : null
 }

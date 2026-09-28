@@ -118,6 +118,7 @@ class Sites {
           content: ''
         },
         pageExtensions: ['md', 'html', 'txt'],
+        colorizeBrokenLinks: true,
         discoverable: false,
         defaults: {
           tocDepth: {
@@ -447,6 +448,7 @@ class Sites {
           content: ''
         },
         pageExtensions: ['md', 'html', 'txt'],
+        colorizeBrokenLinks: true,
         discoverable: false,
         defaults: {
           tocDepth: {

@@ -51,6 +51,8 @@
   --content-ink-faint: #8a9099;
 
   --content-link: var(--color-primary);
+  /* A link to a page that does not exist yet -- see `.is-broken-link` under LINKS */
+  --content-link-broken: var(--color-red-8);
   /* The page's own title, in the site's colour -- see the gradient rule under `h1` */
   --content-h1: var(--color-primary);
   /*
@@ -295,6 +297,7 @@
 
       /* -> The mid-tone brand blue is too dim on a dark surface; see `--color-primary-light` */
       --content-link: var(--color-primary-light);
+      --content-link-broken: var(--color-red-3);
       --content-h1: var(--color-primary-light);
 
       --content-rule: rgba(255, 255, 255, 0.16);
@@ -761,6 +764,19 @@
       mask-repeat: no-repeat;
       mask-size: contain;
       vertical-align: baseline;
+    }
+
+    /*
+      A link to a page that does not exist -- a red link, which is how a wiki shows what still needs
+      writing.
+
+      The class is on the anchor in every stored render, put there by the server whenever the page is
+      saved or the page it points at comes or goes (`pageLinks.syncBrokenLinks`). Whether it is drawn
+      is the site's Colorize Broken Links setting, which is `has-red-links` on the container: kept
+      apart so the setting can change without a single render being rewritten.
+    */
+    @at-root .page-contents.has-red-links a.is-broken-link {
+      color: var(--content-link-broken);
     }
 
     /* -> A link wrapping code keeps the link's colour, not the code span's */

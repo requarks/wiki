@@ -132,6 +132,21 @@
               @keyup:enter="save" />
           </w-item-section>
         </w-item>
+        <!--
+          Only when moving a page: the links pointing at it say its old address, and this is whether
+          they are rewritten to say the new one. Asked of a rename that keeps the path too, where it
+          simply has nothing to do.
+        -->
+        <w-item v-if="props.mode === `renamePage`" tag="label">
+          <blueprint-icon icon="link" />
+          <w-item-section>
+            <w-item-label>{{ t(`pageRenameDialog.updateLinks`) }}</w-item-label>
+            <w-item-label caption>{{ t(`pageRenameDialog.updateLinksHint`) }}</w-item-label>
+          </w-item-section>
+          <w-item-section avatar>
+            <w-toggle v-model="state.updateLinks" :aria-label="t(`pageRenameDialog.updateLinks`)" />
+          </w-item-section>
+        </w-item>
       </w-list>
       <w-card-actions class="card-actions px-4">
         <w-btn class="acrylic-btn" icon="la:ellipsis-h" color="blue-grey" padding="xs sm" flat>
@@ -276,7 +291,8 @@ const state = reactive({
   title: '',
   path: '',
   typesToFetch: [],
-  pathDirty: false
+  pathDirty: false,
+  updateLinks: true
 })
 
 // REFS
@@ -477,7 +493,9 @@ async function save() {
     path:
       currentFolderPath.value.length > 1
         ? `${currentFolderPath.value.substring(1)}${state.path}`
-        : state.path
+        : state.path,
+    // -> Only meaningful to a move, and only offered by the rename mode
+    ...(props.mode === 'renamePage' ? { updateLinks: state.updateLinks } : {})
   })
 }
 

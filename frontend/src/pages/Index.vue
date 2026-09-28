@@ -216,7 +216,10 @@
             <!-- -> Written in the page's own language and direction, which need not be the interface's -->
             <div
               class="page-contents"
-              :class="{ 'is-asciidoc': pageStore.editor === `asciidoc` }"
+              :class="{
+                'is-asciidoc': pageStore.editor === `asciidoc`,
+                'has-red-links': siteStore.colorizeBrokenLinks
+              }"
               :lang="pageStore.locale"
               :dir="siteStore.localeDir(pageStore.locale)"
               ref="pageContents"

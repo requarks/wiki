@@ -1155,7 +1155,7 @@ async function routes(app: FastifyInstance) {
    */
   app.put<{
     Params: { siteId: string; pageId: string }
-    Body: { path: string; locale?: string; title?: string }
+    Body: { path: string; locale?: string; title?: string; updateLinks?: boolean }
   }>(
     '/sites/:siteId/pages/:pageId/path',
     {
@@ -1167,7 +1167,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Move a page to another path',
         description:
-          'Also renames it when a title is given, and moves it to another locale when one is given. The tree entry moves with it, any folder the new path needs is created, and the copy on every storage target follows.\n\nMoving between locales needs `manage:pages` at the destination as well as at the source, since page rules are granted per locale.',
+          'Also renames it when a title is given, and moves it to another locale when one is given. The tree entry moves with it, any folder the new path needs is created, and the copy on every storage target follows.\n\nMoving between locales needs `manage:pages` at the destination as well as at the source, since page rules are granted per locale.\n\nWith `updateLinks`, every page linking to the old address by path is edited to point at the new one — its source and its stored render, as a new version with the move as its reason. Each needs `write:pages` of its own; a page the caller may not edit, or whose link could not be found in its source, is left alone and reported under `relinked.skipped`.',
         tags: ['Pages'],
         params: pageIdParam,
         body: {
@@ -1188,6 +1188,12 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               minLength: 1,
               maxLength: 255
+            },
+            updateLinks: {
+              type: 'boolean',
+              default: false,
+              description:
+                'Rewrite the links of every page pointing at the old address so they point at the new one.'
             }
           }
         },
@@ -1198,7 +1204,38 @@ async function routes(app: FastifyInstance) {
             properties: {
               ok: { type: 'boolean' },
               message: { type: 'string' },
-              page: { $ref: 'Page#' }
+              page: { $ref: 'Page#' },
+              relinked: {
+                type: 'object',
+                description:
+                  'Present when `updateLinks` was asked for and the page changed address.',
+                properties: {
+                  updated: {
+                    type: 'integer',
+                    description: 'How many linking pages were edited.'
+                  },
+                  skippedCount: {
+                    type: 'integer',
+                    description:
+                      'How many linking pages were left as they were, including any the caller may not read.'
+                  },
+                  skipped: {
+                    type: 'array',
+                    description:
+                      'The skipped pages the caller may read. `forbidden`: the caller may not edit it. `notInSource`: the link could not be found in its source. `failed`: the save was refused.',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        locale: { type: 'string' },
+                        path: { type: 'string' },
+                        title: { type: 'string' },
+                        reason: { type: 'string', enum: ['forbidden', 'notInSource', 'failed'] }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1247,6 +1284,22 @@ async function routes(app: FastifyInstance) {
       }
       const { page, versionId } = change
 
+      /*
+        After the move rather than inside it: the move is complete on its own, and what follows is a
+        set of ordinary edits to other people's pages, each asked about separately -- `write:pages` on
+        that page, which is what saving it from the editor would have taken.
+      */
+      const relink =
+        req.body.updateLinks && (page.path !== target.path || page.locale !== target.locale)
+          ? await WIKI.models.pages.relinkMovedPage(
+              req.params.siteId,
+              page.id,
+              { locale: target.locale, path: target.path },
+              actor,
+              (linking) => mayOnPage(req, 'write:pages', linking)
+            )
+          : null
+
       await audit(req, 'page', 'movePage', {
         pageId: page.id,
         siteId: req.params.siteId,
@@ -1254,13 +1307,26 @@ async function routes(app: FastifyInstance) {
         path: page.path,
         previousLocale: target.locale,
         previousPath: target.path,
-        versionId
+        versionId,
+        // -> Each edited page by id and the version its edit produced, which is the record of it
+        ...(relink ? { relinked: relink.updated } : {})
       })
 
       return {
         ok: true,
         message: 'Page moved successfully.',
-        page
+        page,
+        ...(relink
+          ? {
+              relinked: {
+                updated: relink.updated.length,
+                skippedCount: relink.skipped.length,
+                // -> Named only where the caller may read the page: a page they may not edit may well
+                //    be one whose title they are not allowed to know either
+                skipped: relink.skipped.filter((skip) => mayOnPage(req, 'read:pages', skip))
+              }
+            }
+          : {})
       }
     }
   )

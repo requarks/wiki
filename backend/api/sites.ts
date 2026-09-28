@@ -21,6 +21,7 @@ const SITE_CONFIG_KEYS = [
   'footerExtra',
   'banner',
   'pageExtensions',
+  'colorizeBrokenLinks',
   'logoText',
   'sitemap',
   'discoverable',
@@ -283,6 +284,7 @@ async function routes(app: FastifyInstance) {
       footerExtra?: string
       banner?: { isEnabled?: boolean; title?: string; content?: string }
       pageExtensions?: string[]
+      colorizeBrokenLinks?: boolean
       logoText?: boolean
       sitemap?: boolean
       discoverable?: boolean
@@ -359,6 +361,9 @@ async function routes(app: FastifyInstance) {
                 type: 'string',
                 pattern: '^[a-z0-9]+$'
               }
+            },
+            colorizeBrokenLinks: {
+              $ref: 'Site#/properties/colorizeBrokenLinks'
             },
             logoText: {
               type: 'boolean'
