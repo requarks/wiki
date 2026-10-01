@@ -198,6 +198,22 @@
             </w-item-section>
           </w-item>
           <w-item>
+            <blueprint-icon icon="html" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.rerenderPages`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.rerenderPagesHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="openRerenderPages"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
             <blueprint-icon icon="rescan-document" :hue-rotate="45" />
             <w-item-section>
               <w-item-label>{{ t(`admin.utilities.scanPageProblems`) }}</w-item-label>
@@ -488,6 +504,14 @@ function openWikijs2Import() {
  */
 function openPageProblems() {
   adminStore.$patch({ overlay: 'PageProblemsOverlay' })
+}
+
+/**
+ * Rerendering every page as well: it renders in this browser, a page at a time, and its screen is the
+ * list of pages and how each one went.
+ */
+function openRerenderPages() {
+  adminStore.$patch({ overlay: 'RerenderPagesOverlay' })
 }
 
 /**

@@ -3201,13 +3201,15 @@ class Pages {
       ? await this.updatePage(
           siteId,
           existing[0].id,
+          // -> No `render`: the page keeps the HTML it has until the queued render replaces it. Stale
+          //    for a moment is better than blank — and blank for good if that render never lands,
+          //    which is every pull on an instance without the Puppeteer extension.
           {
             title,
             description,
             content,
             tags,
-            publishState: isPublished === false ? 'draft' : 'published',
-            render: ''
+            publishState: isPublished === false ? 'draft' : 'published'
           } as Partial<PageInput>,
           actor
         )
@@ -3256,9 +3258,9 @@ class Pages {
       await WIKI.models.storage.mirrorPage(restored.ref, restored.content)
     }
 
-    // -> An imported page has no HTML until something renders it, which takes a headless browser this
-    //    instance may not have. Best effort: the page is in the wiki either way, and a re-render can
-    //    be asked for from the admin area once one is available.
+    // -> A new page has no HTML until something renders it, and an overwritten one still has the HTML
+    //    of its previous content. Rendering takes a headless browser this instance may not have. Best
+    //    effort: the page is in the wiki either way, and a re-render can be asked for once one is.
     try {
       await this.queueRerender(siteId, page.id, actor)
     } catch (err: any) {

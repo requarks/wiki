@@ -514,6 +514,10 @@ const overlays = {
     loader: () => import('../components/PageProblemsOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  RerenderPagesOverlay: defineAsyncComponent({
+    loader: () => import('../components/RerenderPagesOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   UserEditOverlay: defineAsyncComponent({
     loader: () => import('../components/UserEditOverlay.vue'),
     loadingComponent: LoadingGeneric

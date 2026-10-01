@@ -1733,6 +1733,174 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * RERENDER ALL PAGES
+   *
+   * Every page rendered again from its source, by the admin's own browser rather than by Puppeteer —
+   * so it works on every instance, and it is the way to put right a wiki whose renders went blank or
+   * stale with no headless browser to fix them. The browser drives it: this starts a run and lists the
+   * pages, `sources` hands out their content a batch at a time, and each render comes back through the
+   * PUT below. Stopping is not asking again, as for the page problem scan.
+   *
+   * A POST, though it changes nothing, because it is where a run starts and so where the audit log
+   * records one. The renders themselves are not recorded one by one: a run is thousands of them, and
+   * a row each would bury everything else in the log under one button press.
+   */
+  app.post(
+    '/page-renders',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Start re-rendering every page from its source',
+        description:
+          'Lists every page on every site whose editor the frontend can render — markdown, visual and AsciiDoc — for the admin area to render one by one in the browser, which is what lets this work without the Puppeteer extension. Fetch the sources with `POST /system/page-renders/sources` and store each render with `PUT /system/page-renders/{pageId}`. Pages of other editors have no source to render and are only counted.',
+        tags: ['System'],
+        response: {
+          200: {
+            description: 'The pages to render',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              skipped: {
+                type: 'number',
+                description: 'Pages left out because their editor cannot be rendered.'
+              },
+              pages: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    siteId: { type: 'string', format: 'uuid' },
+                    locale: { type: 'string' },
+                    path: { type: 'string' },
+                    title: { type: 'string' },
+                    editor: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const { pages, skipped } = await WIKI.models.rendering.listForRerender()
+      await audit(req, 'admin', 'rerenderPages', { pages: pages.length })
+      return { ok: true, pages, skipped }
+    }
+  )
+
+  app.post<{ Body: { ids: string[] } }>(
+    '/page-renders/sources',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Fetch the sources of a batch of pages to re-render',
+        description:
+          'Each page comes with the site’s config for its editor, which is what to render it with, and a hash of its content to send back with the render. A page that has gone, or whose editor cannot be rendered, is left out of the reply.',
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['ids'],
+          properties: {
+            ids: {
+              type: 'array',
+              items: { type: 'string', format: 'uuid' },
+              maxItems: 50
+            }
+          }
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              pages: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    siteId: { type: 'string', format: 'uuid' },
+                    path: { type: 'string' },
+                    editor: { type: 'string' },
+                    content: { type: 'string' },
+                    contentHash: { type: 'string' },
+                    config: { type: 'object', additionalProperties: true }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => ({
+      ok: true,
+      pages: await WIKI.models.rendering.sourcesForRerender(req.body.ids)
+    })
+  )
+
+  app.put<{ Params: { pageId: string }; Body: { render: string; contentHash: string } }>(
+    '/page-renders/:pageId',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Store a page render produced by the browser',
+        description:
+          'Sanitized like any render, against what the page’s current render shows it was allowed to carry — not against the caller’s permissions, so a re-render never brings back a script or a style that was stripped from the page when it was saved. Answers 409 when the page’s content has changed since its source was fetched, since the render would describe the content before that change.',
+        tags: ['System'],
+        params: {
+          type: 'object',
+          required: ['pageId'],
+          properties: {
+            pageId: { type: 'string', format: 'uuid' }
+          }
+        },
+        body: {
+          type: 'object',
+          required: ['render', 'contentHash'],
+          properties: {
+            render: { type: 'string' },
+            contentHash: { type: 'string' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Render stored',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const outcome = await WIKI.models.rendering.storeRerender(
+        req.params.pageId,
+        req.body.render,
+        req.body.contentHash
+      )
+      switch (outcome) {
+        case 'missing':
+          return reply.notFound('This page no longer exists.')
+        case 'changed':
+          return reply.conflict('The page was changed while it was being rendered.')
+        case 'unsupported':
+          return reply.badRequest('Pages of this editor cannot be rendered.')
+      }
+      return { ok: true }
+    }
+  )
+
+  /**
    * REBUILD PAGE LINKS
    *
    * What every page points at, worked out again from the render each one already stores.

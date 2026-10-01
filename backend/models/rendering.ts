@@ -1,8 +1,13 @@
+import { createHash } from 'node:crypto'
 import * as cheerio from 'cheerio'
 import sanitizeHtml from 'sanitize-html'
-import { eq, inArray, sql } from 'drizzle-orm'
+import { asc, eq, inArray, sql } from 'drizzle-orm'
 import { flipFromString, rotateFromString } from '@iconify/utils'
-import { jobs as jobsTable, pageRenderQueue as renderQueueTable } from '../db/schema.ts'
+import {
+  jobs as jobsTable,
+  pageRenderQueue as renderQueueTable,
+  pages as pagesTable
+} from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
 import { hrefsFrom } from '../helpers/pageLinks.ts'
 import type { IconifyIcon } from '@iconify/types'
@@ -128,6 +133,32 @@ export interface RenderPermissions {
   /** `write:styles` — may embed `<style>` and inline `style` attributes. */
   styles: boolean
 }
+
+/** A page the admin area's Rerender All Pages works through, as it lists them. */
+export interface RerenderablePage {
+  id: string
+  siteId: string
+  locale: string
+  path: string
+  title: string
+  editor: string
+}
+
+/** What a browser needs to render one page the way its editor would have. */
+export interface RerenderSource {
+  id: string
+  siteId: string
+  path: string
+  editor: string
+  content: string
+  /** Sent back with the render, so that one made from content that has since changed is refused. */
+  contentHash: string
+  /** The site's config for that editor — see `editorConfigFor`. */
+  config: Record<string, any>
+}
+
+/** Why a render posted back by Rerender All Pages was or was not stored. */
+export type RerenderOutcome = 'stored' | 'missing' | 'changed' | 'unsupported'
 
 /**
  * Tags and attributes a page may use whoever wrote it.
@@ -1056,7 +1087,8 @@ class Rendering {
    * Claiming is a delete, so an instance can never pick up a page another one is already rendering,
    * and a render that fails is a render that was asked for and did not happen — logged, with the page
    * keeping the HTML it had. Re-queueing it here would be a loop, since whatever made it fail is still
-   * true.
+   * true. The log is all that reports it, since the job itself completes either way, so a failure is
+   * an error and the batch ends with a count of what did not render.
    *
    * A failure also drops the browser rather than trusting it: the likeliest one is a render that ran
    * out of time, which leaves a page wedged in whatever loop it was in, and the pages behind it in the
@@ -1080,6 +1112,8 @@ class Rendering {
     }
 
     let renderer: PageRenderer | null = null
+    let rendered = 0
+    let failed = 0
     try {
       while (!signal?.aborted) {
         /*
@@ -1104,6 +1138,7 @@ class Rendering {
           return
         }
 
+        let label = entry.pageId
         try {
           const page = await WIKI.models.pages.getPage({
             siteId: entry.siteId,
@@ -1115,32 +1150,181 @@ class Rendering {
             //    for a page that went between the claim and here.
             continue
           }
+          label = `${page.id} (${page.path})`
           if (!RENDERABLE_EDITORS.has(page.editor)) {
-            WIKI.logger.warn(
-              `Cannot render page ${page.id}: server-side rendering is not implemented for the ${page.editor} editor.`
+            WIKI.logger.error(
+              `Cannot render page ${label}: server-side rendering is not implemented for the ${page.editor} editor.`
             )
+            failed++
             continue
           }
-          const configKey = EDITOR_CONFIG_ALIAS[page.editor] ?? page.editor
           const html = await renderer.render(
             page.content ?? '',
-            WIKI.sites[entry.siteId]?.config?.editors?.[configKey]?.config ?? {},
+            this.editorConfigFor(entry.siteId, page.editor),
             { pagePath: page.path, editor: page.editor }
           )
           await WIKI.models.pages.storeRender(entry.siteId, page.id, html, {
             scripts: entry.allowScripts,
             styles: entry.allowStyles
           })
-          WIKI.logger.debug(`Rendered page ${page.id} (${page.path}) from its source.`)
+          WIKI.logger.debug(`Rendered page ${label} from its source.`)
+          rendered++
         } catch (err: any) {
-          WIKI.logger.warn(`Failed to render page ${entry.pageId}: ${err.message}`)
+          WIKI.logger.error(`Failed to render page ${label}: ${err.message}`)
+          failed++
           await this.discardRenderer(renderer)
           renderer = null
         }
       }
     } finally {
       await this.discardRenderer(renderer)
+      if (failed > 0) {
+        WIKI.logger.error(
+          `Render queue: ${failed} of ${rendered + failed} queued pages failed to render and were left as they were. Re-render them once the cause is fixed.`
+        )
+      } else if (rendered > 0) {
+        WIKI.logger.info(`Render queue: rendered ${rendered} pages.`)
+      }
     }
+  }
+
+  /**
+   * The site's config for an editor, which is what a render of one of its pages is made with.
+   *
+   * Through `EDITOR_CONFIG_ALIAS`, so a visual page is rendered with the markdown settings its editor
+   * previews with.
+   */
+  editorConfigFor(siteId: string, editor: string): Record<string, any> {
+    const configKey = EDITOR_CONFIG_ALIAS[editor] ?? editor
+    return WIKI.sites[siteId]?.config?.editors?.[configKey]?.config ?? {}
+  }
+
+  /**
+   * Every page on every site that a browser can render, for the admin area's Rerender All Pages.
+   *
+   * That utility is the other way to re-render, and the one that needs no Puppeteer: the admin's own
+   * browser runs the pipeline the editor runs, a page at a time, and posts each render back through
+   * `storeRerender`. So this is only the list to work through — no content, which for a large wiki
+   * would be the whole of it in one reply — and `sourcesForRerender` hands the sources out a batch at
+   * a time.
+   *
+   * @returns The pages, and how many were left out for an editor whose pages have no source to render
+   */
+  async listForRerender(): Promise<{ pages: RerenderablePage[]; skipped: number }> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        siteId: pagesTable.siteId,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        editor: pagesTable.editor
+      })
+      .from(pagesTable)
+      .orderBy(asc(pagesTable.siteId), asc(pagesTable.locale), asc(pagesTable.path))
+    const pages = rows.filter((row) => RENDERABLE_EDITORS.has(row.editor))
+    return { pages, skipped: rows.length - pages.length }
+  }
+
+  /**
+   * The sources of a batch of pages, with what rendering each one needs. A page that has gone, or
+   * whose editor cannot be rendered, is simply not in the answer.
+   */
+  async sourcesForRerender(ids: string[]): Promise<RerenderSource[]> {
+    if (ids.length < 1) {
+      return []
+    }
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        siteId: pagesTable.siteId,
+        path: pagesTable.path,
+        editor: pagesTable.editor,
+        content: pagesTable.content
+      })
+      .from(pagesTable)
+      .where(inArray(pagesTable.id, ids))
+    return rows
+      .filter((row) => RENDERABLE_EDITORS.has(row.editor))
+      .map((row) => ({
+        id: row.id,
+        siteId: row.siteId,
+        path: row.path,
+        editor: row.editor,
+        content: row.content ?? '',
+        contentHash: hashContent(row.content),
+        config: this.editorConfigFor(row.siteId, row.editor)
+      }))
+  }
+
+  /**
+   * Store a render a browser produced for Rerender All Pages.
+   *
+   * Refused as `changed` when the page's content is no longer what the browser was handed: somebody
+   * saved it in between, and that save stored a render of its own that this one would replace with
+   * HTML describing the content before it.
+   *
+   * What the render may carry is the page's own say, read off the render it has now — see
+   * `inheritedPermissions`. Not the permissions of whoever pressed the button, which on this route is
+   * always `manage:system`: that would bring back, on every page at once, each `<script>` the
+   * sanitizer stripped from an author who was not allowed one, and everything an import brought in.
+   */
+  async storeRerender(id: string, html: string, contentHash: string): Promise<RerenderOutcome> {
+    const rows = await WIKI.db
+      .select({
+        siteId: pagesTable.siteId,
+        editor: pagesTable.editor,
+        content: pagesTable.content,
+        render: pagesTable.render
+      })
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1)
+    const page = rows[0]
+    if (!page) {
+      return 'missing'
+    }
+    if (!RENDERABLE_EDITORS.has(page.editor)) {
+      return 'unsupported'
+    }
+    if (hashContent(page.content) !== contentHash) {
+      return 'changed'
+    }
+    await WIKI.models.pages.storeRender(
+      page.siteId,
+      id,
+      html,
+      this.inheritedPermissions(page.render)
+    )
+    return 'stored'
+  }
+
+  /**
+   * What a stored render shows its page was allowed to carry, which nothing else records.
+   *
+   * A save sanitizes against what its author may embed, so whatever the sanitizer only lets through
+   * with a permission being IN the render means that permission was held: a `<script>`, an `<iframe>`
+   * or an inline handler for `scripts`, a `<style>` for `styles`. Absent, it was either refused or never
+   * written, and refusing it again is right either way. A blank render — an import, or one whose
+   * render failed — therefore grants nothing, which is what an import is rendered with.
+   *
+   * A `<style>` inside an `<svg>` is not counted: `inlineIcons` runs after the sanitizer, and an
+   * animated icon carries one of its own.
+   */
+  inheritedPermissions(render: string | null): RenderPermissions {
+    if (!render) {
+      return { scripts: false, styles: false }
+    }
+    const $ = cheerio.load(render, null, false)
+    const scripts =
+      $('script, iframe').length > 0 ||
+      $('*')
+        .toArray()
+        .some((el) => 'attribs' in el && Object.keys(el.attribs).some((name) => /^on/i.test(name)))
+    const styles = $('style')
+      .toArray()
+      .some((el) => $(el).closest('svg').length < 1)
+    return { scripts, styles }
   }
 
   /**
@@ -1264,6 +1448,13 @@ class Rendering {
       throw err
     }
   }
+}
+
+/** How a re-render recognises the content it was made from, without carrying the content back. */
+function hashContent(content: string | null): string {
+  return createHash('sha256')
+    .update(content ?? '')
+    .digest('hex')
 }
 
 /**

@@ -1826,11 +1826,11 @@ class Import {
   /**
    * Say that a page is waiting to be rendered, in the column a reader is served from.
    *
-   * `adoptStoredPage` stores an empty render and queues a real one, which is right for a folder
-   * import of a handful of files and wrong for twelve thousand pages at once: the queue is one
-   * headless browser doing one page at a time, so for most of a day most of the wiki would be blank
-   * with nothing saying why. Written only over an empty render, so the first real one replaces it and
-   * nothing here can overwrite a page that already has HTML.
+   * `adoptStoredPage` creates a page with an empty render and queues a real one, which is right for
+   * a folder import of a handful of files and wrong for twelve thousand pages at once: the queue is
+   * one headless browser doing one page at a time, so for most of a day most of the wiki would be
+   * blank with nothing saying why. Written only over an empty render, so the first real one replaces
+   * it and nothing here can overwrite a page that already has HTML.
    */
   async #markPendingRender(siteId: string, pageId: string, editor: string): Promise<void> {
     if (BODYLESS_EDITORS.has(editor)) {
