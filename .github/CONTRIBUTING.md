@@ -17,7 +17,7 @@ Working on your first Pull Request? You can learn how from this *free* course, [
 
 ## Submitting code
 
-Any code change should be submitted as a pull request. The description should explain what the code does and give steps to execute it. The pull request should also contain tests.
+Any code change should be submitted as a pull request. The description should explain what the code does and give steps to execute it.
 
 ## Code review process
 
@@ -28,7 +28,7 @@ It is also always helpful to have some context for your pull request. What was t
 
 Use the feature request board to submit new ideas and vote on which ideas should be integrated first.
 
-:triangular_flag_on_post: [https://wiki.js.org/feedback/](https://wiki.js.org/feedback/)
+:triangular_flag_on_post: [https://feedback.js.wiki/](https://feedback.js.wiki/)
 
 *Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
 
@@ -39,8 +39,7 @@ Anyone can file an expense. If the expense makes sense for the development of th
 
 ## Questions
 
-If you have any questions, create an [issue](https://github.com/Requarks/wiki/issues/new/choose) (protip: do a quick search first to see if someone else didn't ask the same question before!).
-You can also reach us at <hello@wikijs.opencollective.com>.
+If you have any questions, create a [discussion](https://github.com/requarks/wiki/discussions) (protip: do a quick search first to see if someone else didn't ask the same question before!).
 
 ## Credits
 
@@ -48,28 +47,3 @@ You can also reach us at <hello@wikijs.opencollective.com>.
 
 Thank you to all the people who have already contributed to Wiki.js!
 <a href="https://github.com/Requarks/wiki/graphs/contributors"><img src="https://opencollective.com/wikijs/contributors.svg?width=890" /></a>
-
-
-### Backers
-
-Thank you to all our backers! [[Become a backer](https://opencollective.com/wikijs#backer)]
-
-<a href="https://opencollective.com/wikijs#backers" target="_blank"><img src="https://opencollective.com/wikijs/backers.svg?width=890"></a>
-
-
-### Sponsors
-
-Thank you to all our sponsors! (please ask your company to also support this open source project by [becoming a sponsor](https://opencollective.com/wikijs#sponsor))
-
-<a href="https://opencollective.com/wikijs/sponsor/0/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/1/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/2/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/3/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/4/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/5/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/6/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/7/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/8/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/wikijs/sponsor/9/website" target="_blank"><img src="https://opencollective.com/wikijs/sponsor/9/avatar.svg"></a>
-
-<!-- This `CONTRIBUTING.md` is based on @nayafia's template https://github.com/nayafia/contributing-template -->
