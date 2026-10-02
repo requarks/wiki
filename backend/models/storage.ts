@@ -1351,6 +1351,15 @@ class Storage {
     return importSource.run(target.id, work)
   }
 
+  /**
+   * Whether anything at all is being imported in the current call chain — which is how a page saved by
+   * an import is told apart from one somebody saved, for the notifications that should not fire for
+   * the former. See `notifications.originNow`.
+   */
+  isImporting(): boolean {
+    return importSource.getStore() !== undefined
+  }
+
   /** Whether this target is the one an import in progress is reading from. */
   private isImportSource(target: StorageTarget): boolean {
     return importSource.getStore() === target.id

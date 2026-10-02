@@ -177,6 +177,12 @@ export const usePageStore = defineStore('page', {
      */
     isWatching: false,
     /**
+     * The notification categories this reader has unread entries in about this page. Opening the page
+     * marks the ones about its content read, and opening its Talk tab the ones about its discussion —
+     * see `markSeen` in the notifications store.
+     */
+    unreadNotifications: [],
+    /**
      * How readers have rated this page, as `{ mode, count, average, up, down }` on the site's current
      * scale, or null when ratings are off for the site or for the page.
      */
@@ -436,6 +442,7 @@ export const usePageStore = defineStore('page', {
         canReview: viewer.canReview === true,
         pendingSubmissions: viewer.pendingSubmissions ?? [],
         isWatching: viewer.isWatching === true,
+        unreadNotifications: viewer.unreadNotifications ?? [],
         viewerRating: viewer.rating ?? 0
       })
     },
@@ -484,6 +491,7 @@ export const usePageStore = defineStore('page', {
         canReview: false,
         pendingSubmissions: [],
         isWatching: false,
+        unreadNotifications: [],
         rating: null,
         viewerRating: 0,
         blog: null,

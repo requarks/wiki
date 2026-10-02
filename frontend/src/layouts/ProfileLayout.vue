@@ -147,8 +147,7 @@ const sidenav = computed(() => [
   {
     key: 'notifications',
     label: t('profile.notifications'),
-    icon: 'la:bell',
-    disabled: true
+    icon: 'la:bell'
   },
   // {
   //   key: 'pages',

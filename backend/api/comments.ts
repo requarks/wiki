@@ -418,6 +418,23 @@ async function routes(app: FastifyInstance) {
         },
         content: comment.content
       })
+      await WIKI.models.notifications.emit('comment:new', {
+        siteId: req.params.siteId,
+        actorId: comment.authorId,
+        data: {
+          variant: 'new',
+          page: WIKI.models.notifications.pageSnapshot(page),
+          commentId: comment.id,
+          parentId: comment.parentId,
+          parentAuthorId: comment.parentId
+            ? await WIKI.models.comments.authorOf(comment.parentId)
+            : null,
+          excerpt: WIKI.models.comments.excerptOf(comment.content),
+          mentionHandles: WIKI.models.comments.mentionedHandles(comment.content),
+          // -> A guest's name is what they typed; an account's is looked up when the event is sent
+          ...(comment.authorId ? {} : { actorName: comment.authorName })
+        }
+      })
 
       reply.code(201)
       return comment
@@ -490,6 +507,30 @@ async function routes(app: FastifyInstance) {
         },
         content: updated.content
       })
+      // -> Only the handles this edit added: re-saving a comment does not mention everybody in it again
+      const before = new Set(WIKI.models.comments.mentionedHandles(comment.content))
+      const added = WIKI.models.comments
+        .mentionedHandles(updated.content)
+        .filter((handle) => !before.has(handle))
+      if (added.length > 0) {
+        await WIKI.models.notifications.emit('comment:edit', {
+          siteId: req.params.siteId,
+          actorId: req.session?.user?.id ?? null,
+          data: {
+            variant: 'edited',
+            page: WIKI.models.notifications.pageSnapshot({
+              id: comment.pageId,
+              title: comment.title,
+              path: comment.path,
+              locale: comment.locale,
+              tags: comment.tags
+            }),
+            commentId: comment.id,
+            excerpt: WIKI.models.comments.excerptOf(updated.content),
+            mentionHandles: added
+          }
+        })
+      }
       return updated
     }
   )

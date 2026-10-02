@@ -43,6 +43,15 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   // -> Same reasoning, and the cutoff is in hours but measured in days
   { task: 'purgeImportSessions', cron: '25 0 * * *' },
   { task: 'purgeRateLimits', cron: '10 * * * *' },
+  // -> Daily, for the same reason as the audit log: retention is counted in days
+  { task: 'purgeNotifications', cron: '30 0 * * *' },
+  /*
+    Safety nets, not the schedule. Both are queued the moment there is work — an event written, an
+    email coming due — and each asks for its own next run; these only catch what an instance that
+    went down still owed, and a claim somebody abandoned.
+  */
+  { task: 'dispatchNotifications', cron: '*/5 * * * *' },
+  { task: 'sendNotificationMail', cron: '*/5 * * * *' },
   { task: 'updateLocales', cron: '0 0 * * *' },
   // -> Every minute, and the task decides which sites are actually due: the interval is a per-site
   //    setting, so the tick has to be as fine as the shortest one anybody can ask for

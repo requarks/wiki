@@ -19,6 +19,9 @@
               <w-item-section>
                 <w-item-label>{{ navItem.label }}</w-item-label>
               </w-item-section>
+              <w-item-section v-if="navItem.badge" side>
+                <w-badge color="negative" rounded :label="navItem.badge" />
+              </w-item-section>
             </w-item>
           </w-list>
         </div>
@@ -36,6 +39,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
 
+import { useNotificationsStore } from '@/stores/notifications'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -52,6 +56,7 @@ import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 
 // STORES
 
+const notificationsStore = useNotificationsStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -88,7 +93,8 @@ const sidenav = computed(() => [
   {
     key: 'messages',
     label: t('inbox.inbox'),
-    icon: 'mdi:inbox-full'
+    icon: 'mdi:inbox-full',
+    badge: notificationsStore.badge
   },
   {
     key: 'watching',

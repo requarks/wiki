@@ -701,6 +701,13 @@ async function routes(app: FastifyInstance) {
       const ratingMode = page.allowRatings
         ? WIKI.models.pageRatings.modeFor(req.params.siteId)
         : null
+      /*
+        Which of the reader's notifications are about this page and still unread, so that opening it
+        — or its Talk tab — can mark them read without asking first. One indexed lookup, none for a
+        guest, and the browser only writes anything when this is not empty. Started here so that it
+        runs alongside the rest.
+      */
+      const unreadNotifications = WIKI.models.notifications.unreadCategoriesOnPage(page.id, actorId)
       const [approvalState, isWatching, commentsCount, blog, ownRating] = await Promise.all([
         WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
           id: page.id,
@@ -747,7 +754,8 @@ async function routes(app: FastifyInstance) {
           permissions: pagePermissionsFor(req, page),
           ...approvalState,
           isWatching,
-          rating: ownRating
+          rating: ownRating,
+          unreadNotifications: await unreadNotifications
         }
       }
     }

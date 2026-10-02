@@ -85,8 +85,15 @@
             icon="mdi:inbox-full"
             color="amber"
             to="/_inbox"
-            :aria-label="t(`inbox.title`)">
-            <w-tooltip>{{ t('inbox.title') }}</w-tooltip>
+            :aria-label="inboxLabel">
+            <!-- -> The unread count, which `boot/notifications.js` keeps current -->
+            <w-badge
+              v-if="notificationsStore.badge"
+              color="negative"
+              rounded
+              floating
+              :label="notificationsStore.badge" />
+            <w-tooltip>{{ inboxLabel }}</w-tooltip>
           </w-btn>
           <w-btn
             v-if="userStore.can(`access:admin`)"
@@ -144,6 +151,7 @@ import { splitLocalePath } from '@/helpers/pagePaths'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
+import { useNotificationsStore } from '@/stores/notifications'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -167,6 +175,7 @@ const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+const notificationsStore = useNotificationsStore()
 
 // ROUTER
 
@@ -205,6 +214,13 @@ const homePath = computed(() => {
 })
 
 const isSearchCollapsed = computed(() => !isAtLeastSm.value)
+
+/** The inbox button's name, which says how many are unread so that a screen reader hears the badge. */
+const inboxLabel = computed(() =>
+  notificationsStore.badge
+    ? t('notifications.unreadLabel', { title: t('inbox.title'), count: notificationsStore.badge })
+    : t('inbox.title')
+)
 
 /**
  * Below 900px, where the five action buttons become the one overflow menu.

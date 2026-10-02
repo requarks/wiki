@@ -1,8 +1,8 @@
 # Notifications
 
-**Status:** a proposal. Nothing here is implemented yet. What already exists and is built on (page
-watching, the inbox shell, the disabled Profile entry) is listed in [§2](#2-what-exists-today). Table,
-column, route and file names are proposals until the first phase lands.
+**Status:** implemented — phases 1 to 4 of [§16](#16-suggested-order); push, digests and the admin
+categories are still to come. [§2](#2-what-exists-today) describes what the system was built on, as it
+stood before. Where building it changed the design, this document was changed with it.
 **Covers:** what a user is notified about, how they choose which notifications they get and how,
 how an event becomes an inbox entry and an email without slowing the request that caused it, and
 how new kinds of notification are added later.
@@ -238,7 +238,7 @@ holds the two opt-in categories, with a note that they can be busy.
 - A **Stop all email** action at the foot of the screen turns off email for every category in one
   go. It is the same thing the unsubscribe page offers.
 
-`GET /_api/users/me/notifications` answers with every visible category, its effective
+`GET /_api/users/profile/notifications` answers with every visible category, its effective
 `{ inApp, email }`, its defaults, and `emailAvailable`. `PUT` takes the full map back, stores only
 the rows that differ from the defaults, and audits `updateNotificationPrefs` (kind `profile`) with
 the categories that changed.
@@ -433,7 +433,7 @@ data        jsonb      -- snapshot: title, path, locale, actor name, excerpt, va
 count       integer default 1
 lastEventId uuid
 inApp       boolean
-emailState  varchar(16) default 'none'   -- none | pending | sent | failed | skipped
+emailState  varchar(16) default 'none'   -- none | pending | sending | sent | failed | skipped
 emailAfter  timestamp null
 emailedAt   timestamp null
 readAt      timestamp null
@@ -442,7 +442,7 @@ updatedAt   timestamp                    -- bumped on coalescing, the inbox's so
 
 INDEX (userId, updatedAt DESC)                                -- the inbox
 INDEX (userId) WHERE readAt IS NULL AND inApp                 -- the badge
-INDEX (emailAfter) WHERE emailState = 'pending'               -- the mail drain
+INDEX (emailAfter) WHERE emailState IN ('pending', 'sending') -- the mail drain
 UNIQUE (userId, groupKey) WHERE readAt IS NULL                -- §8.3
 ```
 
@@ -506,7 +506,7 @@ No route declares `config.permissions`. Each comments `No route-level permission
 | `GET /_api/sites/:siteId/notifications?cursor=&unread=` | Keyset-paginated on `(updatedAt, id)`, 30 per page. Includes the site's rows plus instance-scoped ones (`siteId IS NULL`) |
 | `GET /_api/sites/:siteId/notifications/summary` | `{ unread, latestAt }`. `unread` is counted from `SELECT 1 … LIMIT 100` on the badge index and shown as "99+" above 99. Answers with an `ETag` built from the two values, so a poll that finds nothing new is a 304 |
 | `PUT /_api/sites/:siteId/notifications/:id/read` | Marks one entry read |
-| `PUT /_api/sites/:siteId/notifications/read` | Marks everything read, or `{ pageId }` for one page's entries (mark-read-on-view, [§10.2](#102-cadence)) |
+| `PUT /_api/sites/:siteId/notifications/read` | Marks everything read, or what matches every filter given: `ids`, `pageId`, `categories` (mark-read-on-view, [§10.2](#102-cadence)). An entry read before its email has gone cancels the email |
 | `DELETE /_api/sites/:siteId/notifications/:id` | Dismisses an entry |
 
 Marking read and dismissing are **not audited**. They are bookkeeping on one's own inbox, and a
@@ -567,12 +567,18 @@ for a comment the excerpt, one action button linking to the target, and a footer
 notifications** (linking to `/_profile/notifications`) and **Unsubscribe**. No page content is ever
 included.
 
-**The mail model has to run in a worker.** `mail.ts` currently reads `WIKI.sites[siteId]` (hostname,
-title, primary locale) and goes through `WIKI.models.locales`, and a worker has neither. `send()` is
-changed to take a `MailSiteContext` (`{ baseUrl, title, primaryLocale }`) from its caller. The
-existing callers build it from `WIKI.sites`; the drain builds it from the `sites` rows it loads
-once per run. The translator is checked to work with the worker's lazily opened database, and
-imported directly the way `dispatch-webhook.ts` imports `hooks`.
+**The mail model runs in a worker.** It used to read `WIKI.sites[siteId]` (title, primary locale)
+and go through `WIKI.models.locales`, and a worker has neither. `send()` now takes a `MailSite`
+(`{ name, primaryLocale }`) from its caller instead of a site id — the existing callers build one
+with `mail.siteFor(siteId)`, the drain from the `sites` rows it reads once per run — and
+`baseUrl()` accepts a `hostname` for a caller with nothing to look one up in. The translator is the
+locales model imported directly. It caches through `WIKI.cache`, which a worker does not have, so the
+drain gives each run a fresh one: a worker thread outlives many runs and never hears `reloadLocales`.
+
+**A worker's settings go stale.** A worker thread reads the settings table once, when it first opens
+the database, and does not hear `reloadConfig`. Both notification tasks therefore re-read it at the
+start of every run (`refreshWorkerConfig`), or mail configured after the thread started would never
+be seen and a changed email delay would be ignored until a restart.
 
 ### 10.2 Cadence
 
@@ -596,17 +602,19 @@ entry reads "edited 12 times". Sending an email per event would have meant thirt
 window alone about ten, since Bob's pace keeps opening new windows.
 
 **This only works if entries get read in the ordinary course of things**, or it becomes "one email,
-ever". So **opening a page marks that page's `watchedPage` entries read**, and opening its Talk tab
-marks its `watchedPageComment` entries read. The page payload already answers `isWatching`, so it
-also answers `hasUnreadNotifications`, and the browser calls `PUT …/notifications/read { pageId }`
-only when that is true. A page view therefore writes nothing unless there was something to clear.
+ever". So **opening a page marks its `watchedPage` and `pageCreated` entries read**, and opening its
+Talk tab marks its `watchedPageComment`, `commentReply` and `mention` entries read. The page payload
+answers `viewer.unreadNotifications`, the categories the reader has unread entries in about that
+page, and the browser calls `PUT …/notifications/read { pageId, categories }` only for the ones it has
+just shown (`markSeen` in `stores/notifications.js`). A page view therefore writes nothing unless
+there was something to clear.
 
 **An email-only row closes when it is emailed** ([§8.2](#82-notifications-the-inbox-and-the-email-queue)),
 because it has no inbox to be read in. Its recipient therefore gets one email per window rather than
 one ever.
 
-**`emailAfter` is computed in exactly one place**, `emailAfterFor(user, now)` in the notifications
-model, and both the fan-out insert and the coalesce go through it. Today it answers
+**`emailAfter` is computed in exactly one place**, `emailAfterFor` in `notifications/fanout.ts`, and
+both the fan-out insert and the coalesce go through it. Today it answers
 `now + emailDelay`. It is the seam where hourly and daily digests attach later
 ([§10.5](#105-leaving-room-for-hourly-and-daily-digests)).
 
@@ -614,19 +622,23 @@ model, and both the fan-out insert and the coalesce go through it. Today it answ
 
 `tasks/workers/send-notification-mail.ts`:
 
-1. Claims up to `notifications.mailBatchSize` (default 100) **(user, site) pairs** with rows due,
-   using `SELECT DISTINCT "userId", "siteId" … WHERE "emailState" = 'pending' AND "emailAfter" <=
-   now() … FOR UPDATE SKIP LOCKED`.
-2. For each pair, loads the due rows (capped at 50; above that, the digest says "and N more" and
+1. Picks up to `notifications.mailBatchSize` (default 100) **(user, site) pairs** with rows due.
+2. For each pair, **claims** the due rows with one `UPDATE … WHERE id IN (SELECT … FOR UPDATE SKIP
+   LOCKED)` that marks them `sending` and makes `emailAfter` a ten-minute lease. No transaction is held
+   across the send: a worker thread has a single database connection, and a transaction kept open
+   while the mail is rendered leaves none for the queries rendering makes — the run waits on itself.
+   A run that dies mid-send leaves rows `sending` with a lease that lapses, and the next run takes
+   them again; at least once, rather than at most once.
+3. Renders the claimed rows (capped at 50; above that, the digest says "and N more" and
    links to the inbox), drops them as `skipped` if the site has notifications switched off, renders
    one mail and sends it. **One mail per site, not one per user**, because a mail names the wiki it
    comes from and its links use that site's hostname. A user active on two sites gets two digests,
    each of which reads as coming from its own wiki. Instance-scoped entries (`siteId` null) go out
-   with the site the recipient last signed in on ([§11](#11-the-site-switch)).
-3. Marks the rows `sent` with `emailedAt`, or `failed` after the scheduler's retries are used up. A
-   failure on one user does not stop the batch.
-4. Runs itself again while due rows remain. The safety net is the same minute-by-minute schedule as
-   fan-out.
+   as coming from the first site ([§11](#11-the-site-switch)).
+4. Marks the rows `sent` with `emailedAt`. A send that fails puts them back to `pending` ten minutes
+   on, and after three attempts marks them `failed`. A failure on one user does not stop the batch.
+5. Makes one pass and stops, then asks for the next run at the moment the next email comes due. A
+   five-minute schedule is the safety net, for fan-out as well.
 
 Every send goes through the one cached transporter. Turning on nodemailer's `pool` option for this
 task is worth measuring once it exists.
@@ -645,8 +657,9 @@ List-Unsubscribe-Post: List-Unsubscribe=One-Click
 
 **The token.** `base64url(payload) . base64url(HMAC-SHA256(payload))`, where the payload is
 `{ v: 1, u: userId, c: [categories in this mail] }`. It is signed with
-**`notifications.unsubscribeSecret`**, a 32-byte value seeded at install beside the other secrets in
-`models/settings.ts`. It is deliberately not `auth.secret`: that one is rotated whenever an
+**`notifications.unsubscribeSecret`**, a 32-byte value generated on boot wherever it is missing, by
+the startup checks in `core/startupChecks.ts` — so an installation from before notifications gets
+one as well as a new one. It is deliberately not `auth.secret`: that one is rotated whenever an
 administrator invalidates every session, which would break every unsubscribe link already sitting
 in somebody's mailbox (the reason `apiKeys.ts` gives for keeping the certificate passphrase apart).
 The token **does not expire**. A link in an email from last year still has to work, and the only
@@ -666,15 +679,17 @@ thing it can do is turn email off for one person.
 
 **`GET`** on the same URL **does nothing** but redirect to the frontend page `/_unsubscribe?t=`.
 Mail scanners fetch every link in a message, so a GET that acted would unsubscribe people who never
-asked. This is the same principle as the welcome mail's verify link. That page names the categories,
-offers **Unsubscribe from these** and **Stop all notification email** (the same POST with
+asked. This is the same principle as the welcome mail's verify link. That page names the categories
+(from `GET /_api/notifications/unsubscribe/info`, which says what a token would do and nothing about
+whose it is), offers **Unsubscribe from these** and **Stop all notification email** (the same POST with
 `scope=all`), and links to the Profile screen. The footer link in the mail body points to this page.
 
-**Deliverability checks, in the implementing PR:**
+**Deliverability:**
 
-- Gmail and Yahoo require the `List-Unsubscribe` headers to be covered by the DKIM signature.
-  Check which headers nodemailer's DKIM signing covers, and add these two if they are not among
-  them.
+- Gmail and Yahoo require both `List-Unsubscribe` headers to be covered by the DKIM signature.
+  Nodemailer's default list covers `List-Unsubscribe` and not `List-Unsubscribe-Post`, so the
+  transport signs its own list (`DKIM_SIGNED_HEADERS` in `models/mail.ts`), which is the default plus
+  the second header.
 - Gmail honours one-click only for an `https` URL. A site served over plain `http` still gets the
   header, which works as an ordinary link elsewhere. Admin → Notifications warns about it
   ([§12.2](#122-admin--notifications)).
@@ -747,7 +762,8 @@ Turned off for a site:
 **Instance-scoped categories ignore it.** None ships at launch, but the admin categories planned
 ([§13](#13-adding-a-category)) include some that belong to no site (a registration, since users are
 per instance). Their entries have `siteId = null`, appear in every site's inbox, and their email
-links use the site the recipient last signed in on, falling back to the first site.
+links use the first site for now. Nothing records which site a person last used; the first
+instance-scoped category is the one to decide whether that is worth recording.
 
 ---
 
@@ -760,10 +776,10 @@ the per-site switch ([§11](#11-the-site-switch)).
 
 | Key | Default | What | Where |
 | --- | ------- | ---- | ----- |
-| `notifications.retentionDays` | 90 | Entries older than this are purged, read or not | Settings blob, edited on Admin → Notifications |
+| `notifications.retentionDays` | 60 | Entries older than this are purged, read or not | Settings blob, edited on Admin → Notifications |
 | `notifications.emailDelay` | `3m` | The window of [§10.2](#102-cadence) | Same |
 | `notifications.mailBatchSize` | 100 | Users per mail run. Raise it for a mail server that can take more, lower it for one that throttles. The API refuses anything outside 1–1000 | Same |
-| `notifications.unsubscribeSecret` | generated at install | Signs unsubscribe tokens ([§10.4](#104-one-click-unsubscribe-rfc-8058)) | Settings blob, never returned by the API |
+| `notifications.unsubscribeSecret` | generated on boot when missing | Signs unsubscribe tokens ([§10.4](#104-one-click-unsubscribe-rfc-8058)) | Settings blob, never returned by the API |
 
 ### 12.2 Admin → Notifications
 
@@ -866,12 +882,12 @@ single entry, which the quiet-until-read cadence ([§10.2](#102-cadence)) then h
 1. **Foundation**: the three tables and their migration (`npm run db-generate --
    --name=notifications`), the registry with the seven categories, `userNotificationPrefs` with its
    API, `ProfileNotifications.vue`, `features.notifications` in General → Features, and the
-   `notifications` settings blob with `unsubscribeSecret` seeded.
+   `notifications` settings blob, with `unsubscribeSecret` generated by a startup check.
 2. **In-app**: `emit()` with origins, the debounce and the emit sites, the deletion snapshot,
    `dispatch-notifications.ts`, the inbox API, `stores/notifications.js` with polling, the
    `HeaderNav` badge, and `InboxMessages.vue`. Usable on its own: an instance with no mail
    configured is complete at this point.
-3. **Email**: the `MailSiteContext` refactor, both templates and their strings,
+3. **Email**: the `MailSite` refactor, both templates and their strings,
    `send-notification-mail.ts` with the quiet-until-read cadence and mark-read-on-view, the
    unsubscribe token, routes and `/_unsubscribe` page, the DKIM check, and Admin → Notifications
    ([§12.2](#122-admin--notifications)).

@@ -894,6 +894,8 @@ async function routes(app: FastifyInstance) {
         }
       }
 
+      // -> Whether this replaces one already waiting, which its reviewers are told as an update
+      const previous = await WIKI.models.approvals.getOwnSubmission(page.id, actor?.id ?? null)
       const submission = await WIKI.models.approvals.saveSubmission({
         siteId: req.params.siteId,
         page: pageRef,
@@ -916,6 +918,17 @@ async function routes(app: FastifyInstance) {
         locale: page.locale,
         path: page.path,
         ...(actor ? {} : { guestName, guestEmail })
+      })
+      await WIKI.models.notifications.emit('submission:new', {
+        siteId: req.params.siteId,
+        actorId: actor?.id ?? null,
+        data: {
+          variant: previous ? 'updated' : 'new',
+          submissionId: submission.id,
+          page: WIKI.models.notifications.pageSnapshot(page),
+          // -> A guest has no account to look a name up from, only what they typed
+          ...(actor ? {} : { actorName: guestName })
+        }
       })
 
       return {

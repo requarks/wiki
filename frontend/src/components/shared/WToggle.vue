@@ -6,7 +6,10 @@
     :aria-label="label ? undefined : ariaLabel"
     :disabled="isDisabled"
     class="w-toggle w-unstyled inline-flex flex-nowrap items-center gap-2 rounded outline-offset-2 focus-visible:outline-2"
-    :class="isDisabled ? 'w-toggle--disabled pointer-events-none' : 'cursor-pointer'"
+    :class="[
+      isDisabled ? 'w-toggle--disabled pointer-events-none' : 'cursor-pointer',
+      { 'w-toggle--dark': dark }
+    ]"
     @click="toggle">
     <span
       class="w-toggle__track relative inline-flex shrink-0 items-center rounded-full"
@@ -80,6 +83,14 @@ const props = defineProps({
     default: null
   },
   dense: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Draws the switch for a dark surface whatever the app theme -- for one sitting on a dark panel
+   * in light mode, which the `body--dark` rule below cannot know about.
+   */
+  dark: {
     type: Boolean,
     default: false
   },
@@ -183,7 +194,8 @@ function toggle() {
   --w-toggle-status: var(--color-positive);
 }
 
-:global(body.body--dark .w-toggle) {
+:global(body.body--dark .w-toggle),
+.w-toggle--dark {
   --w-toggle-track: #262c38;
   --w-toggle-rim: #39414f;
   --w-toggle-knob-rim: rgb(255 255 255 / 0.1);

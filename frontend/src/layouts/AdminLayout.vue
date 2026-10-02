@@ -363,6 +363,12 @@
                     :color="adminStore.info.isMetricsEnabled ? `positive` : `negative`" />
                 </w-item-section>
               </w-item>
+              <w-item to="/_admin/notifications" active-class="bg-primary text-white">
+                <w-item-section avatar>
+                  <w-icon name="img:/_assets/icons/fluent-topic-push-notification.svg" />
+                </w-item-section>
+                <w-item-section>{{ t('admin.notifications.title') }}</w-item-section>
+              </w-item>
               <w-item
                 to="/_admin/rendering"
                 active-class="bg-primary text-white"

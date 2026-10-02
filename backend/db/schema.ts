@@ -630,6 +630,130 @@ export const navigation = pgTable(
   ]
 )
 
+// NOTIFICATION EVENTS -----------------
+/**
+ * The outbox: one row per thing that happened that somebody may need to be told about.
+ *
+ * Written by `notifications.emit()` from the request that caused it, and nothing more — working out
+ * who to tell happens later, in a worker, which claims these in batches (`FOR UPDATE SKIP LOCKED`).
+ * One row per EVENT rather than one scheduler job per event, because a job costs a `jobs` row and a
+ * `jobHistory` row each, and a busy wiki saves pages faster than that is worth paying for.
+ *
+ * No foreign keys: an event is a record of a moment, and the page, the comment or the actor it names
+ * may well be gone by the time it is processed — a deletion is the event that guarantees it.
+ */
+export const notificationEvents = pgTable(
+  'notificationEvents',
+  {
+    // -> Also the idempotency key: a fan-out replayed after a crash writes this id onto every entry
+    //    it touches, and an entry that already carries it is left alone
+    id: uuid().primaryKey().defaultRandom(),
+    kind: varchar({ length: 64 }).notNull(),
+    // -> 'user', 'import' or 'bulk', which a category may decline to fire for
+    origin: varchar({ length: 16 }).notNull().default('user'),
+    // -> Null for an event that belongs to no site
+    siteId: uuid(),
+    actorId: uuid(),
+    data: jsonb().notNull().default({}),
+    /**
+     * Candidates resolved when the event was written rather than when it is processed. Only a
+     * deletion needs it: the page's watchers are removed with the page by the foreign key's cascade,
+     * so they have to be read before the page goes or there is nobody left to tell.
+     */
+    recipients: uuid().array(),
+    // -> How far an interrupted fan-out got, so that the next run carries on from there
+    cursor: jsonb(),
+    claimedAt: timestamp(),
+    claimedBy: varchar({ length: 255 }),
+    processedAt: timestamp(),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    // -> The fan-out's own query: what is still to do, oldest first
+    index('notificationEvents_pending_idx')
+      .on(table.createdAt)
+      .where(sql`"processedAt" IS NULL`),
+    index('notificationEvents_processed_idx')
+      .on(table.processedAt)
+      .where(sql`"processedAt" IS NOT NULL`)
+  ]
+)
+
+// NOTIFICATIONS -----------------------
+/**
+ * What one person has been told about: the inbox, and the email queue, in one row.
+ *
+ * **A row covers both channels.** `inApp` says whether the inbox shows it and `emailState` where its
+ * email stands, so a person who only wants email still has a row — hidden from the inbox, and closed
+ * (`readAt` set) once the email has gone, since there is nowhere for them to read it. One row is what
+ * gives coalescing and the email cadence a single thing to work on.
+ *
+ * **A row coalesces.** Every entry has a `groupKey` (`watchedPage:<pageId>`, `mention:<commentId>`,
+ * …) and a person has at most one UNREAD entry per key, by the partial unique index below. Forty saves
+ * to a watched page are one entry with a `count` of forty; reading it frees the key, and the next save
+ * starts a new one.
+ *
+ * **A row carries a snapshot** (`data`) of what it is about — the title, the path, who did it — since
+ * the page may be renamed or deleted before anybody looks. The ids beside it are `set null` rather
+ * than cascaded for the same reason: a notification that a page was deleted has to outlive the page.
+ * A comment's excerpt is shown only while `commentId` is still set, so deleting a comment takes its
+ * text out of every inbox it reached.
+ */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // -> Null for an entry that belongs to no site, which every site's inbox shows. Cascaded: an
+    //    inbox is not content, and a site's entries mean nothing once the site has gone
+    siteId: uuid().references(() => sites.id, { onDelete: 'cascade' }),
+    category: varchar({ length: 64 }).notNull(),
+    // -> The latest one: an entry absorbing an edit and then a move says it was moved
+    variant: varchar({ length: 32 }).notNull(),
+    groupKey: varchar({ length: 255 }).notNull(),
+    pageId: uuid().references(() => pages.id, { onDelete: 'set null' }),
+    commentId: uuid().references(() => comments.id, { onDelete: 'set null' }),
+    actorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    data: jsonb().notNull().default({}),
+    count: integer().notNull().default(1),
+    lastEventId: uuid().notNull(),
+    inApp: boolean().notNull().default(true),
+    // -> 'none', 'pending', 'sending', 'sent', 'failed' or 'skipped'. A varchar rather than an enum
+    //    so that a state added later does not need a migration. `sending` is a claim, and its
+    //    `emailAfter` the lease — see `claim` in `notifications/mailer.ts`
+    emailState: varchar({ length: 16 }).notNull().default('none'),
+    emailAfter: timestamp(),
+    emailedAt: timestamp(),
+    readAt: timestamp(),
+    createdAt: timestamp().notNull().defaultNow(),
+    // -> Moved forward whenever the entry absorbs another event, and the inbox's sort key: an entry
+    //    that is still collecting news belongs at the top
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    // -> The inbox
+    index('notifications_user_updated_idx').on(table.userId, table.updatedAt),
+    // -> The badge, which every page view of a signed-in reader polls for
+    index('notifications_unread_idx')
+      .on(table.userId, table.siteId)
+      .where(sql`"readAt" IS NULL AND "inApp"`),
+    // -> The mail drain: what is due, and what a run that died while sending left behind
+    index('notifications_email_idx')
+      .on(table.emailAfter)
+      .where(sql`"emailState" IN ('pending', 'sending')`),
+    // -> Coalescing, and idempotency with it: see the note above
+    uniqueIndex('notifications_user_group_unread_idx')
+      .on(table.userId, table.groupKey)
+      .where(sql`"readAt" IS NULL`),
+    index('notifications_pageId_idx').on(table.pageId),
+    index('notifications_commentId_idx').on(table.commentId),
+    // -> The purge, which goes by age alone
+    index('notifications_createdAt_idx').on(table.createdAt)
+  ]
+)
+
 // PAGES ------------------------------
 export const pagePublishStateEnum = pgEnum('pagePublishState', ['draft', 'published', 'scheduled'])
 export const pages = pgTable(
@@ -1307,5 +1431,44 @@ export const userGroups = pgTable(
     index('userGroups_userId_idx').on(table.userId),
     index('userGroups_groupId_idx').on(table.groupId),
     index('userGroups_composite_idx').on(table.userId, table.groupId)
+  ]
+)
+
+// USER NOTIFICATION PREFS -------------
+/**
+ * Which notifications one person has chosen to receive, and how.
+ *
+ * **Only a choice that differs from the category's default is stored.** No row means the default,
+ * which lives in the category's definition (`notifications/categories/`) and nowhere else, and setting
+ * a choice back to its default deletes the row rather than writing one that says the same thing.
+ *
+ * A table rather than a key in `users.prefs` because of the categories that are off by default: to
+ * tell everybody who asked about every page created, the question is "who has turned this on?" asked
+ * of every account on the instance, which is the partial index below rather than a scan of a JSONB
+ * column. The categories that are on by default ask the other way round — of these few watchers,
+ * who has turned it off — and that is the primary key.
+ *
+ * One row per channel rather than a column each, so that a third channel is a new value and not a
+ * migration. Global, not per site: a person has one set of preferences for every site they use.
+ */
+export const userNotificationPrefs = pgTable(
+  'userNotificationPrefs',
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    category: varchar({ length: 64 }).notNull(),
+    // -> 'inApp' or 'email'
+    channel: varchar({ length: 16 }).notNull(),
+    enabled: boolean().notNull(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.category, table.channel] }),
+    // -> Who has turned a category on, read in userId order: the fan-out pages through it a thousand
+    //    accounts at a time, and an opted-in audience can be every account on the instance
+    index('userNotificationPrefs_optin_idx')
+      .on(table.category, table.userId)
+      .where(sql`"enabled"`)
   ]
 )

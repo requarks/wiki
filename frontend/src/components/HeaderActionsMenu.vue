@@ -6,6 +6,8 @@
     dense
     icon="la:ellipsis-v"
     aria-label="More Actions">
+    <!-- -> A dot for the unread notifications behind this menu, whose own row carries the count -->
+    <w-badge v-if="notificationsStore.badge" color="negative" rounded floating />
     <w-menu ref="menu" class="translucent-menu" anchor="bottom right" self="top right">
       <!--
         Every row's icon takes its colour as a literal `text-*` class rather than through `WIcon`'s
@@ -71,6 +73,9 @@
             <w-icon name="mdi:inbox-full" class="text-amber" />
           </w-item-section>
           <w-item-section>{{ t('inbox.title') }}</w-item-section>
+          <w-item-section v-if="notificationsStore.badge" side>
+            <w-badge color="negative" rounded :label="notificationsStore.badge" />
+          </w-item-section>
         </w-item>
         <w-item v-if="userStore.can(`access:admin`)" clickable to="/_admin" @click="close">
           <w-item-section avatar>
@@ -118,6 +123,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useNotificationsStore } from '@/stores/notifications'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -135,6 +141,7 @@ import PageNewMenu from '@/components/PageNewMenu.vue'
 
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+const notificationsStore = useNotificationsStore()
 
 // I18N
 

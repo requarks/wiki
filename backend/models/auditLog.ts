@@ -69,7 +69,9 @@ export const AUDIT_ACTIONS = {
     'enableTfa',
     'disableTfa',
     'registerPasskey',
-    'deletePasskey'
+    'deletePasskey',
+    'updateNotificationPrefs',
+    'unsubscribeNotifications'
   ],
   admin: [
     'createApiKey',
@@ -130,6 +132,7 @@ export const AUDIT_ACTIONS = {
     'finishImport',
     'updateApiState',
     'updateMetricsState',
+    'updateNotificationSettings',
     'updateScimState',
     'disconnectWebsockets',
     'flushCache',

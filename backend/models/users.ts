@@ -2223,7 +2223,7 @@ class Users {
       })
       try {
         await WIKI.models.mail.send({
-          siteId,
+          site: WIKI.models.mail.siteFor(siteId),
           to: address,
           template: 'welcome',
           locale,
@@ -2262,7 +2262,7 @@ class Users {
     if (WIKI.models.mail.isConfigured) {
       try {
         await WIKI.models.mail.send({
-          siteId,
+          site: WIKI.models.mail.siteFor(siteId),
           to: address,
           template: 'welcome',
           locale,
@@ -2310,7 +2310,7 @@ class Users {
       (await WIKI.models.sites.getSiteByHostname({ hostname: req?.hostname ?? '*' }))?.id ??
       ''
     await WIKI.models.mail.send({
-      siteId: targetSiteId,
+      site: WIKI.models.mail.siteFor(targetSiteId),
       to: user.email,
       template: 'welcome',
       // -> Theirs, never the administrator's: the request that triggers this is somebody else's
@@ -2411,7 +2411,7 @@ class Users {
       meta: { strategyId: strategy.id, siteId }
     })
     await WIKI.models.mail.send({
-      siteId,
+      site: WIKI.models.mail.siteFor(siteId),
       to: user.email,
       template: 'resetPwd',
       // -> Their own preference where they have one, and otherwise the language the wiki was being

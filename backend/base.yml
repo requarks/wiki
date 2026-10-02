@@ -102,6 +102,16 @@ defaults:
       # about a dozen database queries.
       includeRuntime: true
       includeWiki: false
+    notifications:
+      # How many days a notification is kept, read or not. Entries older than this are deleted by the
+      # `purgeNotifications` task, which runs daily.
+      retentionDays: 60
+      # How long a notification waits before it is emailed, so that a burst of activity on one page
+      # becomes one email rather than one per save. Once emailed, an entry is not emailed about again
+      # until it has been read.
+      emailDelay: '3m'
+      # How many people one run of the mail task sends to. Lower it for a relay that throttles.
+      mailBatchSize: 100
     scim:
       # SCIM 2.0 provisioning, served at /_scim/v2. Off by default: it is a directory's write access
       # to the wiki's user and group lists, and nothing about it is useful until an administrator has

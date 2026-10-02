@@ -8,6 +8,7 @@ import { initializeExternals } from './boot/externals'
 import { initializeI18n } from './boot/i18n'
 import { initializeIconify } from './boot/iconify'
 import { initializeMonaco } from './boot/monaco'
+import { initializeNotifications } from './boot/notifications'
 import { initializeTemporal } from './boot/temporal'
 import { initializeHairlines } from './helpers/hairline'
 
@@ -43,6 +44,7 @@ initializeIconify()
 initializeMonaco()
 initializeExternals(router, store)
 initializeI18n(app, store)
+initializeNotifications(router)
 // The server's copy of the page, for clients that never get this far -- see
 // `backend/helpers/appShell.ts`. It has done its job by now, and Vue is about to draw the real thing.
 document.getElementById('wiki-prerender')?.remove()

@@ -300,6 +300,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'The requester’s own rating of this page on the site’s current scale, or 0 for none. Always 0 without an account, since a rating belongs to one.'
           },
+          unreadNotifications: {
+            type: 'array',
+            items: { type: 'string' },
+            description:
+              'The notification categories the requester has unread entries in about this page, so that opening it can mark them read. Empty without an account.'
+          },
           pendingSubmissions: {
             type: 'array',
             items: { $ref: 'PageEditSubmission#' },

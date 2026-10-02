@@ -208,7 +208,7 @@ async function routes(app: FastifyInstance) {
         (await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname }))?.id ?? ''
       try {
         await WIKI.models.mail.send({
-          siteId,
+          site: WIKI.models.mail.siteFor(siteId),
           to: req.body.recipient,
           template: 'test',
           locale: req.body.locale,

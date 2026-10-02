@@ -20,7 +20,7 @@ const routes = [
     beforeEnter: async (to) => {
       const pageStore = usePageStore()
       try {
-        return await pageStore.pageAlias(to.params.alias)
+        return { path: await pageStore.pageAlias(to.params.alias), hash: to.hash }
       } catch {
         return '/_error/notfound'
       }
@@ -32,7 +32,9 @@ const routes = [
     beforeEnter: async (to) => {
       const pageStore = usePageStore()
       try {
-        return await pageStore.pageById(to.params.pageId)
+        // -> The fragment survives the redirect: `#talk` is how a notification about a comment
+        //    opens the page on its discussion
+        return { path: await pageStore.pageById(to.params.pageId), hash: to.hash }
       } catch {
         return '/_error/notfound'
       }
@@ -46,8 +48,18 @@ const routes = [
       { path: 'info', component: () => import('@/pages/ProfileInfo.vue') },
       { path: 'avatar', component: () => import('@/pages/ProfileAvatar.vue') },
       { path: 'auth', component: () => import('@/pages/ProfileAuth.vue') },
-      { path: 'groups', component: () => import('@/pages/ProfileGroups.vue') }
+      { path: 'groups', component: () => import('@/pages/ProfileGroups.vue') },
+      { path: 'notifications', component: () => import('@/pages/ProfileNotifications.vue') }
     ]
+  },
+  /*
+    Where an unsubscribe link in a notification email lands. Outside the profile because it needs no
+    session -- the token in the link is what says whose email it is.
+  */
+  {
+    path: '/_unsubscribe',
+    component: () => import('@/layouts/AuthLayout.vue'),
+    children: [{ path: '', component: () => import('@/pages/Unsubscribe.vue') }]
   },
   {
     path: '/_inbox',
@@ -117,6 +129,7 @@ const routes = [
       { path: 'mail', component: () => import('@/pages/AdminMail.vue') },
       { path: 'mcp', component: () => import('@/pages/AdminMcp.vue') },
       { path: 'metrics', component: () => import('@/pages/AdminMetrics.vue') },
+      { path: 'notifications', component: () => import('@/pages/AdminNotifications.vue') },
       { path: 'rendering', component: () => import('@/pages/AdminRendering.vue') },
       { path: 'scheduler', component: () => import('@/pages/AdminScheduler.vue') },
       { path: 'search', component: () => import('@/pages/AdminSearch.vue') },

@@ -34,6 +34,7 @@ import configSvc from './core/config.ts'
 import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
+import { runStartupChecks } from './core/startupChecks.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
   isPageUrl,
@@ -164,6 +165,11 @@ async function preBoot() {
       if (!(await WIKI.configSvc.loadFromDb())) {
         throw new Error('Settings table is empty! Could not initialize [ ERROR ]')
       }
+    }
+    // -> On a fresh install as much as an upgraded one: the seed leaves to these what has to be
+    //    generated, so there is one place each such value is made
+    if (await runStartupChecks()) {
+      await WIKI.configSvc.loadFromDb()
     }
   } catch (err: any) {
     WIKI.logger.error('Database Initialization Error: ' + err.message)

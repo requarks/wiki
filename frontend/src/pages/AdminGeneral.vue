@@ -223,6 +223,32 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="person" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowLastEditedBy`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowLastEditedByHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.lastEditedBy"
+                :aria-label="t(`admin.general.allowLastEditedBy`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="inbox" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowNotifications`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowNotificationsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.notifications"
+                :aria-label="t(`admin.general.allowNotifications`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon icon="star-half-empty" />
             <w-item-section>
@@ -237,19 +263,6 @@
                 no-caps
                 toggle-color="primary"
                 :options="ratingsModes" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon icon="person" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.general.allowLastEditedBy`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.general.allowLastEditedByHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.features.lastEditedBy"
-                :aria-label="t(`admin.general.allowLastEditedBy`)" />
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
@@ -701,6 +714,7 @@ function defaultConfig() {
       ratingsMode: 'off',
       comments: true,
       lastEditedBy: true,
+      notifications: true,
       reasonForChange: 'required'
     },
     discoverable: false,
@@ -842,6 +856,7 @@ async function save() {
           collaborativeEditing: state.config.features?.collaborativeEditing ?? false,
           comments: state.config.features?.comments ?? true,
           lastEditedBy: state.config.features?.lastEditedBy ?? true,
+          notifications: state.config.features?.notifications ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',
           search: state.config.features?.search ?? false

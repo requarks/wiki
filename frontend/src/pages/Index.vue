@@ -547,6 +547,7 @@ import { parseBlog } from '@/helpers/pageBlog'
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
+import { useNotificationsStore } from '@/stores/notifications'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -636,6 +637,7 @@ const editorComponents = {
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
+const notificationsStore = useNotificationsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -1069,6 +1071,20 @@ watch(
   () => {
     state.view = viewFromHash()
   }
+)
+
+/*
+  Reading the page is reading what the reader was told about it: its content as soon as it is on
+  screen, its discussion once the Talk tab is open. This is what lets an email go out once and then
+  stay quiet until it is read, without anybody having to visit the inbox. It writes nothing unless the
+  page came with unread entries of that kind.
+*/
+watch(
+  () => [pageStore.id, pageStore.unreadNotifications, activeView.value],
+  () => {
+    notificationsStore.markSeen({ inDiscussion: activeView.value === 'talk' })
+  },
+  { immediate: true }
 )
 
 /*

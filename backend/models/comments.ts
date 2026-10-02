@@ -711,6 +711,7 @@ class Comments {
         path: pagesTable.path,
         locale: pagesTable.locale,
         tags: pagesTable.tags,
+        title: pagesTable.title,
         allowComments: sql<boolean>`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`
       })
       .from(commentsTable)
@@ -779,6 +780,35 @@ class Comments {
       .where(eq(commentsTable.parentId, commentId))
     const result = await WIKI.db.delete(commentsTable).where(eq(commentsTable.id, commentId))
     return (result.rowCount ?? 0) > 0 ? 1 + Number(replies[0]?.total ?? 0) : 0
+  }
+
+  /**
+   * The handles written in a comment, folded to the case the unique index compares them in.
+   *
+   * Only what is written — whether each one names anybody is for whoever looks them up.
+   */
+  mentionedHandles(content: string): string[] {
+    return [
+      ...new Set([...content.matchAll(MENTION_PATTERN)].map((match) => match[1]!.toLowerCase()))
+    ]
+  }
+
+  /**
+   * The first few lines of a comment, for a notification to quote. Markdown as typed, never HTML, with
+   * its whitespace run together so that a quote is one line.
+   */
+  excerptOf(content: string, length = 240): string {
+    const flat = content.replace(/\s+/g, ' ').trim()
+    return flat.length > length ? `${flat.slice(0, length - 1).trimEnd()}…` : flat
+  }
+
+  /** Who wrote a comment, or null for a guest or a comment that has gone. */
+  async authorOf(commentId: string): Promise<string | null> {
+    const [row] = await WIKI.db
+      .select({ authorId: commentsTable.authorId })
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+    return row?.authorId ?? null
   }
 
   /**

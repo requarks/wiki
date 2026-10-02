@@ -11,6 +11,13 @@ read, tested and reasoned about. This applies to db columns, API payloads, store
 config keys alike; only real migrations under `backend/db/migrations/` are exempt, because Drizzle
 needs the history to get a live dev database to the current schema.
 
+The one sanctioned exception is a value an existing installation **cannot** have and no static
+default can stand in for — a secret generated per installation, say. That goes in a **startup check**
+(`core/startupChecks.ts`), which every boot runs once to fill in what is missing; it is the only place
+such a value is made, and nothing that reads it falls back on its own. A new setting with a fixed
+default needs no check: put the default in `base.yml`, which is merged under the stored settings on
+every boot.
+
 Three independently-installed workspaces (each has its own `package.json` / `node_modules`, there is
 no root package or monorepo tooling):
 
@@ -74,7 +81,10 @@ path in silence.
   and nothing else.
 - `core/` — long-lived singletons: `config.ts` (yml + db-backed settings), `db.ts` (pg pool, Drizzle
   instance, migrations, LISTEN/NOTIFY pubsub), `logger.ts`, `scheduler.ts` (poolifier thread pool +
-  postgres-backed job queue).
+  postgres-backed job queue), and `startupChecks.ts` — what `preBoot()` makes sure of right after the
+  settings are loaded, on a fresh install and an upgraded one alike: idempotent, add-only, run in one
+  transaction under an advisory lock so that the instances of an HA set booting together cannot each
+  generate a different value.
 - `db/` — `schema.ts` (all Drizzle table definitions), `relations.ts`, `migrations/` (generated).
 - `models/` — data-access classes over Drizzle, aggregated by `models/index.ts` and exposed as
   `WIKI.models.*`. Business logic belongs here, not in route handlers. `types.ts` holds the shared
@@ -84,6 +94,9 @@ path in silence.
   `modules/authentication/local/`. `modules/storage/*` ships `db` and `disk` — see
   [Storage targets](#storage-targets). `modules/analytics/*` is the odd one out: a pair of YAML files
   and no implementation at all — see [Analytics](#analytics).
+- `notifications/` — the notification categories (`categories/*.ts`, registered in `index.ts`) and
+  the worker-side halves of delivery: the fan-out and the mail drain. Not under `modules/`, which
+  expects a `definition.yml` per directory. See [Notifications](#notifications).
 - `tasks/simple/` — jobs run in-process by the scheduler; each exports `task(payload, { signal })`.
   File name is kebab-case, the task key is its camelCase form. `scheduler.taskTimeout` applies here
   as it does to workers, but a promise cannot be killed: at the timeout `signal` is aborted, and a
@@ -92,7 +105,11 @@ path in silence.
   is abandoned — failed, left running, and no second copy of that task starts on the instance until
   it ends (`executeInProcess` in `core/scheduler.ts`).
 - `tasks/workers/` — CPU-bound jobs run in a worker thread via `worker.ts`, which boots a minimal
-  `WIKI` global (config + logger + lazy `ensureDb()`) and dynamically imports the task.
+  `WIKI` global (config + logger + lazy `ensureDb()`) and dynamically imports the task. **A worker's
+  database pool has ONE connection** (`core/db.ts`), so a transaction held open in a worker while
+  anything else queries deadlocks the task against itself until the pool aborts it. And a worker reads
+  the settings once, when its thread first opens the database, and never hears `reloadConfig` — a task
+  that depends on settings an admin can change re-reads them per run (`refreshWorkerConfig`).
 - `base.yml` — system defaults for every config key. Do not edit as a user-facing config; it defines
   the shape merged with `config.yml` and the db `settings` table.
 - `helpers/` — small pure utilities (`common.ts`, `config.ts`), plus two that are not: `storageFiles.ts`,
@@ -1269,8 +1286,11 @@ produce and has to describe.
 
 ### Emails
 
-The wiki sends three — a registration confirmation, a forgotten password, and the admin area's test
-button — and `models/mail.ts` is the only place nodemailer is used. `MailTemplateData` is the
+The wiki sends a registration confirmation, a forgotten password, the admin area's test, and
+notifications (one at a time or as a digest — see [Notifications](#notifications)), and
+`models/mail.ts` is the only place nodemailer is used. `send()` takes a `MailSite` from its caller
+(`mail.siteFor(siteId)`) rather than a site id, because the notification mails are sent from a worker
+thread, which has no `WIKI.sites`. `MailTemplateData` is the
 closed list, held as typed literals rather than rows in a table: nothing sends a mail this wiki did
 not ask it to, so a template is part of the flow that uses it and a flow that gained one would gain
 code there anyway. A wiki with no SMTP settings is the normal case, which is why `isConfigured` is
@@ -1332,6 +1352,43 @@ importing a package the frontend does not have — is gone. Customization is a s
 has not been built; if it is, the shape to keep is sparse overrides on top of the locale strings
 rather than a replacement for them, so that a wiki that rewords one sentence keeps getting
 translations and improvements for everything else.
+
+### Notifications
+
+Telling a person about something that happened: a change to a page they watch, a comment or a reply,
+a mention, a suggestion to review, and — opt-in — every page created or deleted. In-app (the inbox
+and the header badge) and by email, chosen per person and per category under **Profile →
+Notifications**. **`dev/specs/notifications.md` is the design**, and says why each part is the shape
+it is; what follows is what is easy to get wrong.
+
+- **`notifications.emit()` is one INSERT and never throws**, called from the models (so imports and
+  git pulls emit too) after the action succeeded, like `hooks.emit`. Nothing is resolved on the request
+  path. Events go into an outbox (`notificationEvents`) that a worker fans out in batches — not one
+  scheduler job per event, nor per recipient.
+- **A category is a file** under `notifications/categories/` plus a key in `NOTIFICATION_CATEGORIES`
+  and its strings (`notifications.categories.<key>.*`, `notifications.messages.<key>.<variant>`,
+  `mail.notification.actions.<key>`). Leaving the actor out, the access check, preferences,
+  deduplication and coalescing are the fan-out's, done once for every category.
+- **Access is checked per group set**, against the rows the worker reads — `rulesAllow` on the pooled
+  rules of a set of groups, memoized — which is what makes an audience of every account affordable.
+- **Origins.** `notifications.withOrigin('bulk' | 'import', work)` marks the events emitted inside it,
+  and `storage.importingFrom` counts as `import` on its own. A category's `origins` decides whether it
+  fires: `watchedPage` fires for all of them, `pageCreated` / `pageDeleted` only for `user`.
+- **A deletion captures its watchers in the event**, before the page row goes and the watch rows with
+  it (`watchersOf` on `emit`). Any new path that deletes page rows has to emit the same way first.
+- **One unread entry per person per `groupKey`** (a partial unique index), so forty saves are one entry
+  counting to forty, and a replayed event changes nothing (`lastEventId`).
+- **Email is a window, then quiet until read.** `emailAfter` is the only thing the drain looks at, and
+  `emailAfterFor` in the fan-out the only place it is set — the seam a digest schedule would use.
+  Opening a page or its Talk tab marks its entries read (`viewer.unreadNotifications`, `markSeen`),
+  which is what lets the next change email again.
+- **The drain claims rows with a lease** (`emailState = 'sending'`, `emailAfter` as the expiry) rather
+  than a transaction held across the send — see the note on worker connections under `tasks/workers/`.
+- **Every mail carries RFC 8058 one-click unsubscribe.** The token is an HMAC with
+  `notifications.unsubscribeSecret`, generated by a startup check wherever it is missing, and
+  deliberately not `auth.secret` (which rotating the sessions replaces). A GET of the link only redirects to `/_unsubscribe`, which asks.
+- **The site switch is `features.notifications`**; the instance settings (retention, email delay, mail
+  batch size) are **Admin → Notifications**, `GET`/`PUT /system/notifications`, behind `manage:system`.
 
 ### Audit log
 

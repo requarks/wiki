@@ -1763,23 +1763,27 @@ class Import {
       const source = editor === 'visual' ? htmlToMarkdown(body) : body
 
       try {
-        const page = await WIKI.models.pages.adoptStoredPage({
-          siteId: target.siteId,
-          locale,
-          path: pagePath,
-          title: stringOf(record?.title, pagePath),
-          description: stringOf(record?.description),
-          editor,
-          tags: (Array.isArray(record?.tags) ? record.tags : []).map((tag: unknown) =>
-            stringOf(tag)
-          ),
-          isPublished: record?.isPublished !== false,
-          content: editor === 'redirect' ? this.#redirectContent(source) : source,
-          createdAt: dateOf(record?.createdAt),
-          updatedAt: dateOf(record?.updatedAt),
-          authorId: await this.#authorFor(session, record?.authorId),
-          overwrite: session.overwrite
-        })
+        const authorId = await this.#authorFor(session, record?.authorId)
+        // -> A restore, not a person writing pages: nobody who asked about new pages hears of these
+        const page = await WIKI.models.notifications.withOrigin('import', () =>
+          WIKI.models.pages.adoptStoredPage({
+            siteId: target.siteId,
+            locale,
+            path: pagePath,
+            title: stringOf(record?.title, pagePath),
+            description: stringOf(record?.description),
+            editor,
+            tags: (Array.isArray(record?.tags) ? record.tags : []).map((tag: unknown) =>
+              stringOf(tag)
+            ),
+            isPublished: record?.isPublished !== false,
+            content: editor === 'redirect' ? this.#redirectContent(source) : source,
+            createdAt: dateOf(record?.createdAt),
+            updatedAt: dateOf(record?.updatedAt),
+            authorId,
+            overwrite: session.overwrite
+          })
+        )
         if (!page) {
           /*
             Already here and `overwrite` is off, so nothing was written — but the page IS what that

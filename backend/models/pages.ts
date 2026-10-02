@@ -1913,6 +1913,11 @@ class Pages {
       authorId: actor.id,
       metadata: { title: page.title, description: page.description, editor }
     })
+    await WIKI.models.notifications.emit('page:create', {
+      siteId,
+      actorId: actor.id,
+      data: { variant: 'created', page: WIKI.models.notifications.pageSnapshot(page) }
+    })
 
     /*
       Everything a document served to a client that will not run the app says about a page comes out
@@ -2120,9 +2125,50 @@ class Pages {
       authorId: actor.id,
       metadata: { title: updated.title, description: updated.description }
     })
+    // -> Only a save that changed something: re-publishing a page as it stood is not news
+    const variants = this.notificationVariants(changedFields, values)
+    if (variants.length > 0) {
+      await WIKI.models.notifications.emit('page:edit', {
+        siteId,
+        actorId: actor.id,
+        data: {
+          variant: variants[0]!,
+          variants,
+          page: WIKI.models.notifications.pageSnapshot(updated)
+        }
+      })
+    }
     invalidateAppShellCache()
 
     return { page: updated, versionId }
+  }
+
+  /**
+   * What a save did, as a page's watchers are told it — the publishing change first, since being
+   * published or taken down says more about a page than an edit to it does, and an edit after it when
+   * anything else changed too.
+   *
+   * @param changedFields What `pageHistory.changedFields` made of the save
+   */
+  notificationVariants(changedFields: string[], values: Record<string, any>): string[] {
+    const variants: string[] = []
+    const publishing = new Set(['publishState', 'publishStartDate', 'publishEndDate'])
+    if (changedFields.includes('publishState')) {
+      // -> Back to a draft from either other state is the page being taken down
+      variants.push(
+        values.publishState === 'published'
+          ? 'published'
+          : values.publishState === 'scheduled'
+            ? 'scheduled'
+            : 'unpublished'
+      )
+    } else if (changedFields.some((field) => publishing.has(field))) {
+      variants.push('scheduled')
+    }
+    if (changedFields.some((field) => !publishing.has(field))) {
+      variants.push('edited')
+    }
+    return variants
   }
 
   /**
@@ -2350,6 +2396,16 @@ class Pages {
       locale: moved.locale,
       siteId,
       authorId: actor.id
+    })
+    await WIKI.models.notifications.emit('page:rename', {
+      siteId,
+      actorId: actor.id,
+      data: {
+        variant: 'moved',
+        page: WIKI.models.notifications.pageSnapshot(moved),
+        previousPath: page.path,
+        previousLocale: page.locale
+      }
     })
     invalidateAppShellCache()
     return { page: moved, versionId }
@@ -2599,6 +2655,18 @@ class Pages {
       authorId: actor.id
     })
 
+    /*
+      Before the row goes, because its watchers go with it: the event captures them as it is written.
+      The fan-out checks the page really has gone before it tells anybody, so a delete that fails from
+      here on announces nothing.
+    */
+    await WIKI.models.notifications.emit('page:delete', {
+      siteId,
+      actorId: actor.id,
+      data: { variant: 'deleted', page: WIKI.models.notifications.pageSnapshot(page) },
+      watchersOf: id
+    })
+
     // -> Out of its set of translations first, which dissolves the set if this leaves one page in
     //    it: a group of one is no group, and the survivor's locale picker would offer nothing
     await this.detachFromLocaleGroup(siteId, id)
@@ -2835,6 +2903,11 @@ class Pages {
       authorId: actor.id,
       metadata: { title: page.title, description: page.description, editor }
     })
+    await WIKI.models.notifications.emit('page:create', {
+      siteId,
+      actorId: actor.id,
+      data: { variant: 'restored', page: WIKI.models.notifications.pageSnapshot(page) }
+    })
 
     invalidateAppShellCache()
 
@@ -2862,11 +2935,14 @@ class Pages {
       .where(and(eq(pagesTable.siteId, siteId), sql`${pagesTable.tags} @> ${sql.param([tag])}`))
 
     let deleted = 0
-    for (const row of rows) {
-      if (await this.deletePage(siteId, row.id, actor)) {
-        deleted++
+    // -> One action, however many pages: watchers hear about theirs, nobody else about every one
+    await WIKI.models.notifications.withOrigin('bulk', async () => {
+      for (const row of rows) {
+        if (await this.deletePage(siteId, row.id, actor)) {
+          deleted++
+        }
       }
-    }
+    })
     return deleted
   }
 
@@ -2898,7 +2974,16 @@ class Pages {
     //    and guessing would mean reaching for names that may belong to the assets beside them. The
     //    aliases are for the links that name a page by one
     const doomed = await WIKI.db
-      .select({ id: pagesTable.id, contentType: pagesTable.contentType, alias: pagesTable.alias })
+      .select({
+        id: pagesTable.id,
+        contentType: pagesTable.contentType,
+        alias: pagesTable.alias,
+        title: pagesTable.title,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags,
+        publishState: pagesTable.publishState
+      })
       .from(pagesTable)
       .where(
         inArray(
@@ -2907,6 +2992,18 @@ class Pages {
         )
       )
     const contentTypes = new Map(doomed.map((row) => [row.id, row.contentType]))
+    // -> Before the rows go, as `deletePage` does, and as one bulk action: a folder's watchers hear
+    //    about their pages, and nobody who asked about every deletion hears about each of them
+    await WIKI.models.notifications.withOrigin('bulk', async () => {
+      for (const row of doomed) {
+        await WIKI.models.notifications.emit('page:delete', {
+          siteId,
+          actorId: actor.id,
+          data: { variant: 'deleted', page: WIKI.models.notifications.pageSnapshot(row) },
+          watchersOf: row.id
+        })
+      }
+    })
     // -> Out of their sets of translations first, for the same reason `deletePage` does it
     await this.detachFromLocaleGroups(
       siteId,

@@ -112,6 +112,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Whether a page may show who last edited it, in its sidebar. A page can still opt out on its own with `showLastEditedBy`.'
           },
+          notifications: {
+            type: 'boolean',
+            description:
+              'Whether this site sends notifications at all — in-app or by email. Off, nothing that happens on the site is recorded for anybody, emails already waiting are dropped, and the inbox is hidden; entries already there are kept for when it is turned back on. What each person receives is theirs to choose, under Profile → Notifications.'
+          },
           reasonForChange: {
             type: 'string',
             enum: ['off', 'optional', 'required']

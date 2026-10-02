@@ -1,12 +1,14 @@
 import { createTransport } from 'nodemailer'
 import type { Transporter } from 'nodemailer'
+import { locales } from './locales.ts'
 import type { Translator } from './locales.ts'
 
 /**
  * The templates this wiki sends, and what each one needs.
  *
  * Two of them belong to a flow — registration and a forgotten password; `test` is the admin area's
- * button. Held as literals rather than rows in a table because nothing sends a mail this wiki did
+ * button; `notification` and `notificationDigest` are what the notification system sends (see
+ * `notifications/mailer.ts`). Held as literals rather than rows in a table because nothing sends a mail this wiki did
  * not ask it to — a template is part of the flow that uses it, and a flow that gained one would
  * have to gain code here anyway.
  *
@@ -39,6 +41,38 @@ export interface MailTemplateData {
   test: {
     baseUrl: string
   }
+  /** One notification, on its own. */
+  notification: MailNotificationData
+  /** Several, gathered into one mail — whatever came due for one person on one site at once. */
+  notificationDigest: MailNotificationData
+}
+
+/** One notification as a mail describes it. Everything here is already resolved to text and URLs. */
+export interface MailNotificationEntry {
+  /** A category key, which is what picks the strings. */
+  category: string
+  variant: string
+  /** How many events the entry absorbed. */
+  count: number
+  actorName: string | null
+  pageTitle: string
+  /** A comment's first lines, as typed. */
+  excerpt?: string
+  /** Set when nobody did it by hand: `import` or `bulk`. */
+  origin?: string
+  /** Where the entry leads. */
+  url: string
+}
+
+export interface MailNotificationData {
+  baseUrl: string
+  entries: MailNotificationEntry[]
+  /** How many more there were than a digest lists. */
+  more: number
+  /** Profile → Notifications. */
+  manageUrl: string
+  /** The page that asks before it unsubscribes, which is what a link in the body may point at. */
+  unsubscribeUrl: string
 }
 
 /** A template key, i.e. one of the keys of `MailTemplateData`. */
@@ -59,8 +93,15 @@ interface MailContent {
   title: string
   /** Paragraphs, as plain text: escaping is the business of whichever body they end up in. */
   body: string[]
+  /**
+   * A list of things, each leading somewhere — what a digest is made of. Drawn after the paragraphs
+   * and before the action.
+   */
+  items?: { text: string; detail?: string; url: string }[]
   action?: { label: string; url: string }
   footer: string
+  /** Small links under the footer: where a notification mail says how to stop receiving it. */
+  links?: { label: string; url: string }[]
 }
 
 /**
@@ -86,10 +127,23 @@ interface MailConfig {
   dkimPrivateKey?: string
 }
 
+/**
+ * The site a mail is about, as far as the mail needs to know it.
+ *
+ * Passed in rather than looked up, because the notification mails are sent from a worker thread,
+ * which has no `WIKI.sites`. Everything else builds it with `siteFor`.
+ */
+export interface MailSite {
+  /** What the mail calls the wiki. */
+  name: string
+  /** The language to write in when nothing is known about the recipient's. */
+  primaryLocale: string | null
+}
+
 /** One outgoing mail, as the models ask for it. */
 export interface MailRequest<K extends MailTemplate = MailTemplate> {
   /** The site the mail is about, which is what names the wiki in it. */
-  siteId: string
+  site: MailSite
   to: string
   template: K
   data: MailTemplateData[K]
@@ -104,7 +158,49 @@ export interface MailRequest<K extends MailTemplate = MailTemplate> {
    * Left empty, the mail is written in the site's primary locale — see `localeFor`.
    */
   locale?: string | null
+  /** Extra headers, e.g. `List-Unsubscribe`. */
+  headers?: Record<string, string>
 }
+
+/**
+ * The headers a DKIM signature covers: nodemailer's own default list, which is RFC 4871's, plus
+ * `List-Unsubscribe-Post`.
+ *
+ * RFC 8058 requires both unsubscribe headers to be signed, and Gmail and Yahoo will not honour
+ * one-click unsubscribe without that — nodemailer's default covers `List-Unsubscribe` and not the
+ * second one. Setting the option replaces the default rather than adding to it, hence the full list.
+ */
+const DKIM_SIGNED_HEADERS = [
+  'From',
+  'Sender',
+  'Reply-To',
+  'Subject',
+  'Date',
+  'Message-ID',
+  'To',
+  'Cc',
+  'MIME-Version',
+  'Content-Type',
+  'Content-Transfer-Encoding',
+  'Content-ID',
+  'Content-Description',
+  'Resent-Date',
+  'Resent-From',
+  'Resent-Sender',
+  'Resent-To',
+  'Resent-Cc',
+  'Resent-Message-ID',
+  'In-Reply-To',
+  'References',
+  'List-Id',
+  'List-Help',
+  'List-Unsubscribe',
+  'List-Unsubscribe-Post',
+  'List-Subscribe',
+  'List-Post',
+  'List-Owner',
+  'List-Archive'
+].join(':')
 
 /**
  * Take a value out of the template language it is being put into.
@@ -132,7 +228,10 @@ function escapeHtml(str: string): string {
  * them with it — so a right-to-left mail read there would come out left-aligned, with its
  * punctuation at the wrong end, unless the cell that survives carries the direction itself.
  */
-function htmlShell({ title, body, action, footer }: MailContent, isRTL: boolean): string {
+function htmlShell(
+  { title, body, items, action, footer, links }: MailContent,
+  isRTL: boolean
+): string {
   const dir = isRTL ? 'rtl' : 'ltr'
   const align = isRTL ? 'right' : 'left'
   const paragraphs = body
@@ -141,6 +240,21 @@ function htmlShell({ title, body, action, footer }: MailContent, isRTL: boolean)
         `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#37474f;">${escapeHtml(p)}</p>`
     )
     .join('')
+  const list = items?.length
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 16px;">` +
+      items
+        .map(
+          (item) =>
+            `<tr><td dir="${dir}" style="padding:10px 0;border-bottom:1px solid #eceff1;text-align:${align};">` +
+            `<a href="${escapeHtml(item.url)}" style="font-size:15px;line-height:1.5;color:#1976d2;text-decoration:none;">${escapeHtml(item.text)}</a>` +
+            (item.detail
+              ? `<div style="margin-top:4px;font-size:13px;line-height:1.5;color:#78909c;">${escapeHtml(item.detail)}</div>`
+              : '') +
+            '</td></tr>'
+        )
+        .join('') +
+      '</table>'
+    : ''
   const button = action
     ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(action.url)}" style="display:inline-block;padding:12px 24px;border-radius:4px;background:#1976d2;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;">${escapeHtml(action.label)}</a></p>` +
       // -> The same link in full, for the client that will not render the button and for the reader
@@ -155,8 +269,17 @@ function htmlShell({ title, body, action, footer }: MailContent, isRTL: boolean)
     `<tr><td dir="${dir}" style="padding:32px;text-align:${align};">`,
     `<h1 style="margin:0 0 24px;font-size:20px;line-height:1.4;color:#263238;">${escapeHtml(title)}</h1>`,
     paragraphs,
+    list,
     button,
     `<p style="margin:24px 0 0;padding-top:16px;border-top:1px solid #eceff1;font-size:12px;line-height:1.6;color:#90a4ae;">${escapeHtml(footer)}</p>`,
+    links?.length
+      ? `<p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:#90a4ae;">${links
+          .map(
+            (link) =>
+              `<a href="${escapeHtml(link.url)}" style="color:#78909c;">${escapeHtml(link.label)}</a>`
+          )
+          .join(' &middot; ')}</p>`
+      : '',
     '</td></tr></table></body></html>'
   ].join('')
 }
@@ -174,8 +297,17 @@ function htmlShell({ title, body, action, footer }: MailContent, isRTL: boolean)
  * so that the two bodies say things in the same order — the button sits after the paragraphs in
  * the HTML one for the same reason.
  */
-function textBody({ title, body, action, footer }: MailContent): string {
-  return [title, ...body, ...(action ? [action.url] : []), footer].join('\n\n')
+function textBody({ title, body, items, action, footer, links }: MailContent): string {
+  return [
+    title,
+    ...body,
+    ...(items ?? []).map((item) =>
+      [`- ${item.text}`, ...(item.detail ? [`  ${item.detail}`] : []), `  ${item.url}`].join('\n')
+    ),
+    ...(action ? [action.url] : []),
+    footer,
+    ...(links ?? []).map((link) => `${link.label}: ${link.url}`)
+  ].join('\n\n')
 }
 
 /**
@@ -270,7 +402,8 @@ class Mail {
           dkim: {
             domainName: conf.dkimDomainName ?? '',
             keySelector: conf.dkimKeySelector ?? '',
-            privateKey: conf.dkimPrivateKey
+            privateKey: conf.dkimPrivateKey,
+            headerFieldNames: DKIM_SIGNED_HEADERS
           }
         })
     })
@@ -294,16 +427,22 @@ class Mail {
    *
    * @param req The request that triggered the mail, when there is one
    * @param siteId The site the mail is about, when it is about one
+   * @param hostname That site's hostname, for a caller with no `WIKI.sites` to look it up in
    */
   baseUrl({
     req,
-    siteId
-  }: { req?: { protocol: string; host: string }; siteId?: string } = {}): string {
+    siteId,
+    hostname: knownHostname
+  }: {
+    req?: { protocol: string; host: string }
+    siteId?: string
+    hostname?: string
+  } = {}): string {
     const configured = this.config.defaultBaseURL?.trim()
     if (configured) {
       return configured.replace(/\/+$/, '')
     }
-    const hostname = siteId ? WIKI.sites[siteId]?.hostname : null
+    const hostname = knownHostname ?? (siteId ? WIKI.sites[siteId]?.hostname : null)
     if (hostname && hostname !== '*') {
       // -> The scheme the caller was reached by, since the hostname alone does not carry one
       return `${req?.protocol ?? 'https'}://${hostname}`
@@ -315,10 +454,13 @@ class Mail {
   }
 
   /**
-   * What to call this wiki in a mail. Per site, since that is what the reader was looking at.
+   * What a mail needs to know about a site, from the site configurations this process holds.
+   *
+   * The name is per site, since that is what the reader was looking at.
    */
-  private siteName(siteId: string): string {
-    return WIKI.sites[siteId]?.config?.title || 'Wiki.js'
+  siteFor(siteId: string): MailSite {
+    const config = WIKI.sites[siteId]?.config
+    return { name: config?.title || 'Wiki.js', primaryLocale: config?.locales?.primary || null }
   }
 
   /**
@@ -329,8 +471,8 @@ class Mail {
    * one addressed to a reader with a preference. `translator` takes it from there: a code naming a
    * locale that is not installed falls back to English rather than sending a mail full of keys.
    */
-  private localeFor(locale: string | null | undefined, siteId: string): string | null {
-    return locale || WIKI.sites[siteId]?.config?.locales?.primary || null
+  private localeFor(locale: string | null | undefined, site: MailSite): string | null {
+    return locale || site.primaryLocale || null
   }
 
   /**
@@ -384,6 +526,9 @@ class Mail {
           footer: t('mail.resetPwd.footer', { siteName })
         }
       }
+      case 'notification':
+      case 'notificationDigest':
+        return this.renderNotification(t, siteName, data as MailTemplateData['notification'])
       default: {
         const d = data as MailTemplateData['test']
         return {
@@ -398,6 +543,74 @@ class Mail {
   }
 
   /**
+   * A notification mail: one entry told in full, or several as a list.
+   *
+   * The sentence describing an entry is the same one the inbox draws —
+   * `notifications.messages.<category>.<variant>` — so a person reads the same words in both places,
+   * and a translator translates them once.
+   */
+  private renderNotification(
+    t: Translator['t'],
+    siteName: string,
+    d: MailNotificationData
+  ): MailContent {
+    const describe = (entry: MailNotificationEntry) =>
+      t(`notifications.messages.${entry.category}.${entry.variant}`, {
+        actor: entry.actorName || t('notifications.someone'),
+        page: entry.pageTitle
+      })
+    const detailOf = (entry: MailNotificationEntry) =>
+      [
+        ...(entry.count > 1 ? [t('notifications.count', { count: entry.count })] : []),
+        ...(entry.origin ? [t(`notifications.origin.${entry.origin}`)] : [])
+      ].join(' · ')
+    const footer = t('mail.notification.footer', { siteName })
+    const links = [
+      { label: t('mail.notification.manage'), url: d.manageUrl },
+      { label: t('mail.notification.unsubscribe'), url: d.unsubscribeUrl }
+    ]
+
+    if (d.entries.length === 1 && d.more < 1) {
+      const entry = d.entries[0]!
+      const message = describe(entry)
+      const detail = detailOf(entry)
+      return {
+        subject: t('mail.notification.subject', { siteName, message }),
+        title: message,
+        body: [...(entry.excerpt ? [`“${entry.excerpt}”`] : []), ...(detail ? [detail] : [])],
+        action: {
+          label: t(`mail.notification.actions.${entry.category}`),
+          url: entry.url
+        },
+        footer,
+        links
+      }
+    }
+
+    const total = d.entries.length + d.more
+    return {
+      subject: t('mail.notificationDigest.subject', { siteName, count: total }),
+      title: t('mail.notificationDigest.title', { siteName }),
+      body: [t('mail.notificationDigest.body', { count: total })],
+      items: d.entries.map((entry) => {
+        const detail = [entry.excerpt ? `“${entry.excerpt}”` : '', detailOf(entry)]
+          .filter(Boolean)
+          .join(' — ')
+        return { text: describe(entry), url: entry.url, ...(detail && { detail }) }
+      }),
+      action: {
+        label:
+          d.more > 0
+            ? t('mail.notificationDigest.more', { count: d.more })
+            : t('mail.notificationDigest.action'),
+        url: `${d.baseUrl}/_inbox`
+      },
+      footer,
+      links
+    }
+  }
+
+  /**
    * Send one mail, and wait for the relay to have taken it.
    *
    * Waiting is deliberate: every caller has something to tell the user about the result — a
@@ -408,18 +621,20 @@ class Mail {
    *         nodemailer raises for a send that was attempted and failed
    */
   async send<K extends MailTemplate>({
-    siteId,
+    site,
     to,
     template,
     data,
-    locale
+    locale,
+    headers
   }: MailRequest<K>): Promise<void> {
     if (!this.isConfigured) {
       throw new Error('ERR_MAIL_NOT_CONFIGURED')
     }
     const conf = this.config
-    const siteName = this.siteName(siteId)
-    const translator = await WIKI.models.locales.translator(this.localeFor(locale, siteId))
+    const siteName = site.name
+    // -> The model itself rather than `WIKI.models.locales`, which a worker thread does not have
+    const translator = await locales.translator(this.localeFor(locale, site))
     const content = this.render(translator, siteName, template, data)
     const { subject } = content
     const text = textBody(content)
@@ -433,7 +648,8 @@ class Mail {
       to,
       subject,
       text,
-      html
+      html,
+      ...(headers && { headers })
     })
     WIKI.logger.info(`Sent ${template} email to <${to}>.`)
   }

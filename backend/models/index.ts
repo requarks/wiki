@@ -18,6 +18,7 @@ import { locales } from './locales.ts'
 import { mail } from './mail.ts'
 import { metrics } from './metrics.ts'
 import { navigation } from './navigation.ts'
+import { notifications } from './notifications.ts'
 import { pageGraph } from './pageGraph.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pageLinks } from './pageLinks.ts'
@@ -60,6 +61,7 @@ export default {
   mail,
   metrics,
   navigation,
+  notifications,
   pageGraph,
   pageHistory,
   pageLinks,
