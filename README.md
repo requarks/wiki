@@ -18,17 +18,18 @@
 
 </div>
 
+> [!CAUTION]
+> This is a **BETA** version of the upcoming 3.0 release. **NOT FOR PRODUCTION USE**  
+> The current stable release (2.x) is available at https://js.wiki and the GitHub repository at [requarks/wiki-v2](https://github.com/requarks/wiki-v2)
+
 - **[Official Website](https://beta.js.wiki)**
 - **[Documentation](https://docs.js.wiki)**
-
-> [!CAUTION]
-> This is a beta version of the upcoming 3.0 release. **DO NOT USE IN PRODUCTION!**
-> The current stable release (2.x) is available at https://js.wiki
-
-Important Notes:
-- There's no upgrade path to or from this version.
-- Do not open discussions about buttons or features not working. This is expected.
-- There's no support provided. Use at your own risk.
+- [Requirements](https://docs.js.wiki/setup/requirements)
+- [Installation](https://docs.js.wiki/setup/installation)
+- [Changelog](https://github.com/requarks/wiki/releases)
+- [Feature Requests](https://feedback.js.wiki/)
+- Chat with us on [Discord](https://discord.gg/rcxt9QS2jd)
+- [Translations](https://docs.js.wiki/dev/translations) *(We need your help!)*
 
 <h2 align="center">Donate</h2>
 
