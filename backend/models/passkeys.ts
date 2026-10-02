@@ -10,7 +10,6 @@ import { validate as uuidValidate } from 'uuid'
 import { users as usersTable } from '../db/schema.ts'
 import type {
   AuthenticationResponseJSON,
-  AuthenticatorTransportFuture,
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
   RegistrationResponseJSON
@@ -29,7 +28,7 @@ interface StoredPasskey {
   publicKey: string
   /** Signature counter last reported by the authenticator, for replay detection. */
   counter: number
-  transports?: AuthenticatorTransportFuture[]
+  transports?: string[]
   createdAt: string
   siteId: string
   /** The hostname the credential is bound to. A passkey only works on the site it was created on. */
