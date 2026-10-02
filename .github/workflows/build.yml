@@ -4,145 +4,206 @@ on:
   push:
     branches:
       - scarlett
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
-    - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v7
-      with:
-        node-version: 26.x
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26.x
 
-    - name: Set Build Variables
-      run: |
-        echo "REL_VERSION=3.0.0-beta.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+      # ---------------------------------------------------
+      # COMPUTE VERSION
+      # ---------------------------------------------------
 
-    - name: Set Version
-      run: |
-        yq -iP '.version = strenv(REL_VERSION)' backend/package.json -o json
-        yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
-        yq -i '.version = strenv(REL_VERSION) | .appVersion = strenv(REL_VERSION)' dev/chart/Chart.yaml
+      # - name: Get Next Version
+      #   id: semver
+      #   uses: ietf-tools/semver-action@v1
+      #   with:
+      #     token: ${{ github.token }}
+      #     branch: ${{ github.ref_name }}
+      #     skipInvalidTags: true
+      #     patchAll: true
 
-    - name: Upload translations source file
-      uses: crowdin/github-action@v3
-      env:
-        CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        CROWDIN_BASE_PATH: ${{ github.workspace }}
-      with:
-        command: 'upload'
-        command_args: '--config dev/crowdin.yml'
+      # - name: Set Build Variables
+      #   run: |
+      #     LATEST_TAG=$(git describe --tags --abbrev=0 --match '3.*')
+      #     echo "REL_VERSION=${LATEST_TAG}-dev.g${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-    - name: Build Assets
-      working-directory: frontend
-      run: |
-        npm ci
-        npm run build
+      - name: Set Build Variables
+        run: |
+          echo "REL_VERSION=3.0.0-beta.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
 
-    - name: Build Blocks
-      working-directory: blocks
-      run: |
-        npm ci
-        npm run build
+      - name: Set Version
+        run: |
+          yq -iP '.version = strenv(REL_VERSION)' backend/package.json -o json
+          yq -iP '.version = strenv(REL_VERSION)' frontend/package.json -o json
+          yq -i '.version = strenv(REL_VERSION) | .appVersion = strenv(REL_VERSION)' dev/chart/Chart.yaml
 
-    - name: Generate Docker Meta
-      id: meta
-      uses: docker/metadata-action@v6
-      with:
-        flavor: |
-          latest=false
-        images: |
-          requarks/wiki
-          ghcr.io/requarks/wiki
-        tags: |
-          type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
-          type=raw,value=3.0.0-beta
-        labels: |
-          org.opencontainers.image.title=Wiki.js
-          org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
-          org.opencontainers.image.documentation=https://docs.js.wiki
-        annotations: |
-          org.opencontainers.image.title=Wiki.js
-          org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
-          org.opencontainers.image.documentation=https://docs.js.wiki
+      - name: Create Draft Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          prerelease: true
+          draft: false
+          commit: ${{ github.sha }}
+          tag: ${{ env.REL_VERSION }}
+          name: ${{ env.REL_VERSION }}
+          body: '*pending*'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate CHANGELOG
+        if: github.event_name == 'workflow_dispatch'
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ env.REL_VERSION }}
+          writeToFile: false
 
-    - name: Login to DockerHub
-      uses: docker/login-action@v4
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # ---------------------------------------------------
+      # UPLOAD SOURCE TRANSLATIONS
+      # ---------------------------------------------------
+      - name: Upload translations source file
+        if: github.event_name == 'workflow_dispatch'
+        uses: crowdin/github-action@v3
+        env:
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          CROWDIN_BASE_PATH: ${{ github.workspace }}
+        with:
+          command: 'upload'
+          command_args: '--config dev/crowdin.yml'
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
+      # ---------------------------------------------------
+      # BUILD FRONTEND
+      # ---------------------------------------------------
+      - name: Build Assets
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
 
-    - name: Build and push Docker images
-      uses: docker/build-push-action@v7
-      with:
-        context: .
-        file: dev/build/Dockerfile
-        push: true
-        platforms: linux/amd64,linux/arm64
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        annotations: ${{ steps.meta.outputs.annotations }}
+      - name: Build Blocks
+        working-directory: blocks
+        run: |
+          npm ci
+          npm run build
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v5
+      # ---------------------------------------------------
+      # BUILD CONTAINER IMAGES
+      # ---------------------------------------------------
+      - name: Generate Docker Meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          flavor: |
+            latest=false
+          images: |
+            requarks/wiki
+            ghcr.io/requarks/wiki
+          tags: |
+            type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
+            type=raw,value=3.0.0-beta
+          labels: |
+            org.opencontainers.image.title=Wiki.js
+            org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
+            org.opencontainers.image.documentation=https://docs.js.wiki
+          annotations: |
+            org.opencontainers.image.title=Wiki.js
+            org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
+            org.opencontainers.image.documentation=https://docs.js.wiki
 
-    - name: Package and push Helm chart
-      env:
-        REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        helm lint --strict dev/chart
-        helm package dev/chart --destination _chart
-        echo "$REGISTRY_TOKEN" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
-        helm push "_chart/wiki-${REL_VERSION}.tgz" oci://ghcr.io/requarks/charts
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Prepare build archive
-      run: |
-        mkdir -p _dist/blocks
-        cp -R assets _dist/assets
-        cp -R blocks/compiled _dist/blocks/compiled
-        cp -R backend _dist/backend
-        cp LICENSE _dist/LICENSE
-        cp config.sample.yml _dist/config.sample.yml
-        cd _dist/backend
-        npm ci --omit=dev
-        cd -
-        find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
+      - name: Login to DockerHub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: build
-        path: wiki-js.tar.gz
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-    # - name: Create Prerelease
-    #   uses: ncipollo/release-action@v1.21.0
-    #   with:
-    #     prerelease: true
-    #     draft: false
-    #     owner: requarks
-    #     repo: wiki
-    #     commit: ${{ github.sha }}
-    #     tag: ${{ env.REL_VERSION }}
-    #     name: ${{ env.REL_VERSION }}
-    #     omitBody: true
-    #     token: ${{ github.token }}
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: dev/build/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+
+      # ---------------------------------------------------
+      # BUILD HELM/OCI CHARTS
+      # ---------------------------------------------------
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+
+      - name: Package and push Helm chart
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          helm lint --strict dev/chart
+          helm package dev/chart --destination _chart
+          echo "$REGISTRY_TOKEN" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+          helm push "_chart/wiki-${REL_VERSION}.tgz" oci://ghcr.io/requarks/charts
+
+      # ---------------------------------------------------
+      # PACKAGE BUILD TARBALL
+      # ---------------------------------------------------
+      - name: Prepare build archive
+        run: |
+          mkdir -p _dist/blocks
+          cp -R assets _dist/assets
+          cp -R blocks/compiled _dist/blocks/compiled
+          cp -R backend _dist/backend
+          cp LICENSE _dist/LICENSE
+          cp config.sample.yml _dist/config.sample.yml
+          cd _dist/backend
+          npm ci --omit=dev
+          cd -
+          find ./_dist/ -printf "%P\n" | tar -czf wiki-js.tar.gz --no-recursion -C ./_dist/ -T -
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: wiki-js.tar.gz
+
+      # ---------------------------------------------------
+      # FINALIZE RELEASE
+      # ---------------------------------------------------
+      - name: Finalize Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          allowUpdates: true
+          makeLatest: true
+          draft: false
+          tag: ${{ env.REL_VERSION }}
+          name: ${{ env.REL_VERSION }}
+          body: ${{ steps.changelog.outputs.changes }}
+          artifacts: "wiki-js.tar.gz"
+          token: ${{ secrets.GITHUB_TOKEN }}
 
 
 

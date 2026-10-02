@@ -106,6 +106,9 @@
     "vite-plugin-vue-devtools": "8.2.1"
   },
   "overrides": {
+    "@excalidraw/excalidraw": {
+      "@radix-ui/react-tabs": "1.1.21"
+    },
     "markdown-it-mdc": {
       "markdown-it": "$markdown-it"
     },
@@ -116,5 +119,8 @@
   "engines": {
     "node": ">= 26.0"
   },
-  "productName": "Wiki.js"
+  "productName": "Wiki.js",
+  "allowScripts": {
+    "@parcel/watcher": false
+  }
 }

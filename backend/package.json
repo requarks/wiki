@@ -124,6 +124,8 @@
   "releaseDate": "2026-01-01T01:01:01.000Z",
   "allowScripts": {
     "esbuild": false,
-    "puppeteer": true
+    "puppeteer": true,
+    "ssh2": false,
+    "cpu-features": false
   }
 }

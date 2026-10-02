@@ -5,7 +5,7 @@
   <img alt="Wiki.js" src="https://static.requarks.io/logo/wikijs-full.svg" width="600">
 </picture>
 
-![GitHub Release](https://img.shields.io/github/v/release/requarks/wiki?include_prereleases&filter=3.0.0-beta.*&style=flat&logo=wiki.js&cacheSeconds=300)
+![GitHub Release](https://img.shields.io/github/v/release/requarks/wiki?style=flat&logo=wiki.js&cacheSeconds=300)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/ngpixel?logo=github&color=ea4aaa)](https://github.com/users/NGPixel/sponsorship)
 [![Open Collective backers and sponsors](https://img.shields.io/opencollective/all/wikijs?label=backers&color=218bff&logo=opencollective&logoColor=white)](https://opencollective.com/wikijs)  
