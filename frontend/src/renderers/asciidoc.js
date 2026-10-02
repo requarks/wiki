@@ -110,10 +110,18 @@ const LOCKED_ATTRIBUTES = {
  * Attributes a page MAY set, with what it gets when it does not.
  *
  * Trailing `@`, so a document that sets one wins. These only change how a page reads.
+ *
+ * To default one to UNSET without locking it, the value is `false` and never `null`: Asciidoctor
+ * reads `null` as a hard unset that no attribute entry in the document can undo, which is
+ * `LOCKED_ATTRIBUTES`' notation and not this table's.
  */
 const DEFAULT_ATTRIBUTES = {
-  // -> Off, as markdown has no section numbering either
-  sectnums: null,
+  /*
+    Off, as markdown has no section numbering either -- but a page that writes `:sectnums:` gets it.
+    The number is part of the heading's text, so the sidebar's contents (`anchorHeadings`) carries it
+    too, while the heading's id is derived from the title alone and stays the same either way.
+  */
+  sectnums: false,
   idprefix: '@',
   idseparator: '-@',
   tabsize: '2@'
