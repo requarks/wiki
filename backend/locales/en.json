@@ -127,6 +127,7 @@
   "admin.approval.title": "Approvals",
   "admin.approval.updateSuccess": "Rule updated successfully.",
   "admin.audit.accountGone": "This account has since been deleted",
+  "admin.audit.actions.abandonImport": "Abandoned a failed import",
   "admin.audit.actions.addIconSet": "Added an icon set",
   "admin.audit.actions.approvePageEdit": "Approved an edit suggestion",
   "admin.audit.actions.assignUserToGroup": "Added a user to a group",

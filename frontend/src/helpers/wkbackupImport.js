@@ -131,6 +131,33 @@ async function drive({ pkg, siteId, includes, overwrite, htmlConversion, log, on
   }
   onProgress(0)
 
+  /*
+    A step that throws stops the import, and the session is closed as failed on the way out rather
+    than left open with its staged blobs on disk until the daily sweep. Nothing that landed is undone:
+    running the package again upserts over it. Closing is best-effort — the error the operator needs
+    to see is the one that stopped the import, not a second one about tidying up after it.
+  */
+  try {
+    await writeSteps({ pkg, plan, session, siteId, log, advance })
+  } catch (err) {
+    try {
+      await API_CLIENT.post(`import/sessions/${session.id}/abandon`)
+    } catch {
+      // -> Swept with the other stale sessions after two days
+    }
+    throw err
+  }
+
+  const summary = await API_CLIENT.post(`import/sessions/${session.id}/finish`).json()
+  reportSummary(summary, log)
+  onProgress(1)
+  return summary
+}
+
+/**
+ * Read every step of the plan and post it, a batch at a time.
+ */
+async function writeSteps({ pkg, plan, session, siteId, log, advance }) {
   /** Blobs already staged this session, so one shared by forty records is uploaded once. */
   const staged = new Set()
 
@@ -180,11 +207,6 @@ async function drive({ pkg, siteId, includes, overwrite, htmlConversion, log, on
     }
     log('info', `${label}: ${totals.imported} imported, ${totals.skipped} skipped.`)
   }
-
-  const summary = await API_CLIENT.post(`import/sessions/${session.id}/finish`).json()
-  reportSummary(summary, log)
-  onProgress(1)
-  return summary
 }
 
 /**

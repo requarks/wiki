@@ -362,6 +362,44 @@ async function routes(app: FastifyInstance) {
       return summary
     }
   )
+
+  /**
+   * ABANDON AN IMPORT SESSION
+   */
+  app.post<{ Params: { sessionId: string } }>(
+    '/import/sessions/:sessionId/abandon',
+    {
+      config: { permissions: ['manage:system'] },
+      schema: {
+        summary: 'Close an import session that failed',
+        description:
+          'What the browser sends when an import stops partway — a request that failed, a package that could not be read. The session is marked `failed` and its staged blobs are removed rather than left on disk until the daily sweep.\n\nNothing already written is undone. Records are keyed so that replaying one is an upsert, and the keys belong to the package and the target site rather than to the session, so running the import again in a new session carries on over what landed. A session that already finished cannot be abandoned.',
+        tags: ['Import'],
+        params: {
+          type: 'object',
+          properties: { sessionId: { type: 'string', format: 'uuid' } },
+          required: ['sessionId']
+        },
+        response: {
+          200: {
+            description: 'Session closed as failed',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const { progress } = await WIKI.models.importer.abandonSession(req.params.sessionId)
+      await audit(req, 'admin', 'abandonImport', {
+        sessionId: req.params.sessionId,
+        progress
+      })
+      return { ok: true }
+    }
+  )
 }
 
 export default routes

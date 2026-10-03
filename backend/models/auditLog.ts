@@ -130,6 +130,7 @@ export const AUDIT_ACTIONS = {
     'installExtension',
     'startImport',
     'finishImport',
+    'abandonImport',
     'updateApiState',
     'updateMetricsState',
     'updateNotificationSettings',

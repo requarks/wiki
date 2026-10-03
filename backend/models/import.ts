@@ -13,6 +13,7 @@ import {
   navigation as navigationTable,
   pageHistory as pageHistoryTable,
   pages as pagesTable,
+  sites as sitesTable,
   tree as treeTable,
   userGroups as userGroupsTable,
   users as usersTable
@@ -853,6 +854,38 @@ class Import {
     return WIKI.sites?.[siteId]?.config?.locales?.primary ?? 'en'
   }
 
+  /**
+   * What a record's 2.x locale code is filed under on this site.
+   *
+   * The settings step matches 2.x's codes onto 3.x's and sets the site's active locales to the result
+   * — 2.x's `it` becomes `it-IT` — but every record still carries the 2.x code, and content written
+   * under a code the site does not serve is in the database and nowhere in the interface. So each
+   * code is matched again, the same way, against the locales the site is active in. Matching against
+   * the outcome gives the same answer the settings step gave (it picks the shortest candidate among a
+   * superset of these), which is what keeps this from having to be stored on the session.
+   *
+   * Read from the database rather than `WIKI.sites`, once per batch: in an HA set the batch after the
+   * settings step can land on an instance that has not heard the site changed. A code with no match
+   * among the active locales — Settings left unticked, a language the site does not serve — is kept
+   * as it is, which `#localesStream` has already warned about.
+   */
+  async #localeMapperFor(siteId: string): Promise<(code: string) => string> {
+    const rows = await WIKI.db
+      .select({ config: sitesTable.config })
+      .from(sitesTable)
+      .where(eq(sitesTable.id, siteId))
+      .limit(1)
+    const active = (rows[0]?.config as any)?.locales?.active
+    const available: string[] = Array.isArray(active) ? active : []
+    const cache = new Map<string, string>()
+    return (code) => {
+      if (!cache.has(code)) {
+        cache.set(code, matchLocale(code, available) ?? code)
+      }
+      return cache.get(code) as string
+    }
+  }
+
   /** Merge a patch into the session row. Read back, so the caller sees what it wrote. */
   async #patch(id: string, patch: Record<string, any>): Promise<void> {
     await WIKI.db
@@ -1432,6 +1465,7 @@ class Import {
    */
   async #treeStream(target: ImportSessionSite, records: any[]): Promise<IngestResult> {
     const warnings: string[] = []
+    const localeOf = await this.#localeMapperFor(target.siteId)
     let imported = 0
     let skipped = 0
 
@@ -1439,7 +1473,7 @@ class Import {
       const folderPath = stringOf(record?.path)
         .trim()
         .replace(/^\/+|\/+$/g, '')
-      const locale = stringOf(record?.localeCode).trim()
+      const locale = localeOf(stringOf(record?.localeCode).trim())
       if (!folderPath || !locale) {
         warnings.push(
           describeSkip('folder', missingOf({ path: folderPath, localeCode: locale }), record)
@@ -1716,12 +1750,13 @@ class Import {
     /** Source editor → how many pages of it changed editor on the way in. */
     const converted = new Map<string, number>()
     const convertHtml = session.htmlConversion !== 'html'
+    const localeOf = await this.#localeMapperFor(target.siteId)
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
         .trim()
         .replace(/^\/+|\/+$/g, '')
-      const locale = stringOf(record?.localeCode).trim()
+      const locale = localeOf(stringOf(record?.localeCode).trim())
       if (!pagePath || !locale) {
         warnings.push(
           describeSkip('page', missingOf({ path: pagePath, localeCode: locale }), record)
@@ -1959,12 +1994,13 @@ class Import {
       'page',
       records.map((record) => record?.pageId)
     )
+    const localeOf = await this.#localeMapperFor(target.siteId)
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
         .trim()
         .replace(/^\/+|\/+$/g, '')
-      const locale = stringOf(record?.localeCode).trim()
+      const locale = localeOf(stringOf(record?.localeCode).trim())
       if (!pagePath || !locale) {
         warnings.push(
           describeSkip('page history', missingOf({ path: pagePath, localeCode: locale }), record)
@@ -2214,9 +2250,10 @@ class Import {
     const warnings: string[] = []
     let imported = 0
     let skipped = 0
+    const localeOf = await this.#localeMapperFor(target.siteId)
 
     for (const record of records) {
-      const locale = stringOf(record?.localeCode).trim()
+      const locale = localeOf(stringOf(record?.localeCode).trim())
       if (!locale || !Array.isArray(record?.items)) {
         warnings.push(
           describeSkip(
@@ -2358,6 +2395,22 @@ class Import {
       pendingRenders,
       unrenderable
     }
+  }
+
+  /**
+   * Close a session the browser gave up on.
+   *
+   * What already landed stays — every record was written as it arrived, and a re-run upserts over it
+   * under the same derived ids, which hang off the namespace rather than off this session. What goes
+   * is the staged blobs, which for a media wiki is gigabytes that would otherwise sit on disk until
+   * `sweepSessions` came round two days later. Only an open session can fail: one that finished is
+   * not made a failure by a browser that errored after it.
+   */
+  async abandonSession(id: string): Promise<{ progress: Record<string, number> }> {
+    const session = await this.requireOpenSession(id)
+    await this.#clearStaging(id)
+    await this.#patch(id, { state: 'failed' })
+    return { progress: session.progress }
   }
 
   async #clearStaging(sessionId: string): Promise<void> {

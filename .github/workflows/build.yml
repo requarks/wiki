@@ -77,7 +77,6 @@ jobs:
       # UPLOAD SOURCE TRANSLATIONS
       # ---------------------------------------------------
       - name: Upload translations source file
-        if: github.event_name == 'workflow_dispatch'
         uses: crowdin/github-action@v3
         env:
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
@@ -205,5 +204,26 @@ jobs:
           artifacts: "wiki-js.tar.gz"
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # ---------------------------------------------------
+      # NOTIFY
+      # ---------------------------------------------------
+      - name: Notify Telegram Channel
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        run: node dev/ci/notify-telegram.js
 
+      - name: Notify Discord Channel
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: node dev/ci/notify-discord.js
+
+      - name: Notify Bluesky
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          BSKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BSKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: node dev/ci/notify-bluesky.js
 

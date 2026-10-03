@@ -341,6 +341,7 @@ POST /import/sessions/:id/:stream                   → { records: [...] }   ins
 POST /import/sessions/:id/sites/:siteId/:stream     → { records: [...] }   site-scoped streams
 POST /import/sessions/:id/blobs/:sha256             → the bytes
 POST /import/sessions/:id/finish                    → rebuild tree, links, queue renders, drop caches
+POST /import/sessions/:id/abandon                   → mark failed, drop staged blobs
 GET  /import/sessions/:id                           → progress, for resume
 ```
 
@@ -532,8 +533,9 @@ gigabytes of images nobody asked for. Content addressing is what makes that safe
 a time — "have I already sent this?" is a question about the digest and nothing else.
 
 Staging is `<dataPath>/cache/import/<sessionId>/<sha256>`, which is a cache in the sense
-`<dataPath>/cache/blocks` is: derived, disposable, and removed by `finish` (and by a sweep of
-sessions older than `SESSION_MAX_AGE_HOURS`, for the import that never finished). Every blob's
+`<dataPath>/cache/blocks` is: derived, disposable, and removed by `finish`, by `abandon` when the
+browser stops on an error, and by a sweep of sessions older than `SESSION_MAX_AGE_HOURS` for the
+import whose tab simply closed. Every blob's
 SHA-256 is verified on arrival — the name *is* the checksum, so a reader that did not check it would
 be trusting the uploader about the one thing the naming scheme exists to establish.
 
@@ -955,6 +957,11 @@ network, is skipped entirely on an `offline` instance, and is never allowed to f
 locale that cannot be fetched is reported and left out of the active list, because a site set to a
 language whose strings are not here reads as a half-translated wiki. A primary locale that did not
 survive falls back to one that did rather than leaving the site pointed at nothing.
+
+**Content follows the same matching.** Every folder, page, history and navigation record carries
+2.x's code in `localeCode`, and is filed under that code matched — the same way — against the
+locales the target site is active in. Content stored under `it` on a site serving `it-IT` is in the
+database and nowhere in the interface. A code with no match there is kept as it is.
 
 ### `streams/settings.json`
 
