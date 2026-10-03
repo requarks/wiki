@@ -150,7 +150,7 @@
           <w-separator class="mx-1" vertical inset dark />
 
           <w-btn dense icon="mdi:format-header-pound" padding="xs sm" flat>
-            <w-menu anchor="bottom left" self="top left">
+            <w-menu auto-close anchor="bottom left" self="top left">
               <w-list dense padding>
                 <w-item clickable @click="setParagraph">
                   <w-item-section side><w-icon name="mdi:format-paragraph" /></w-item-section>
@@ -226,7 +226,7 @@
               Each kind under the icon and in the colour its admonition is drawn with, so picking one
               from this list is picking the thing that will appear on the page.
             -->
-            <w-menu anchor="bottom left" self="top left">
+            <w-menu auto-close anchor="bottom left" self="top left">
               <w-list dense padding>
                 <w-item
                   v-for="kind of alertKinds"
@@ -256,8 +256,8 @@
             icon="mdi:format-list-bulleted"
             padding="xs sm"
             flat
-            :class="{ 'is-active': active.bulletList }"
-            @click="runBulletList">
+            :class="{ 'is-active': active.list === 'bullet' }"
+            @click="runToggleList('bullet')">
             <w-tooltip anchor="top middle" self="bottom middle">{{
               t('editor.markup.unorderedList')
             }}</w-tooltip>
@@ -267,13 +267,19 @@
             icon="mdi:format-list-numbered"
             padding="xs sm"
             flat
-            :class="{ 'is-active': active.orderedList }"
-            @click="runOrderedList">
+            :class="{ 'is-active': active.list === 'ordered' }"
+            @click="runToggleList('ordered')">
             <w-tooltip anchor="top middle" self="bottom middle">{{
               t('editor.markup.orderedList')
             }}</w-tooltip>
           </w-btn>
-          <w-btn dense icon="mdi:format-list-checks" padding="xs sm" flat @click="runTaskList">
+          <w-btn
+            dense
+            icon="mdi:format-list-checks"
+            padding="xs sm"
+            flat
+            :class="{ 'is-active': active.list === 'task' }"
+            @click="runToggleList('task')">
             <w-tooltip anchor="top middle" self="bottom middle">{{
               t('editor.markup.taskList')
             }}</w-tooltip>
@@ -302,7 +308,7 @@
           <w-separator class="mx-1" vertical inset dark />
 
           <w-btn dense icon="mdi:table-cog" padding="xs sm" flat :disabled="!active.table">
-            <w-menu anchor="bottom left" self="top left">
+            <w-menu auto-close anchor="bottom left" self="top left">
               <w-list dense padding>
                 <template v-for="item of tableActions" :key="item.key">
                   <w-separator v-if="item.divider" class="my-2" />
@@ -347,7 +353,53 @@
             ref="mountRef"
             class="editor-visual-surface"
             :lang="pageStore.locale"
-            :dir="siteStore.localeDir(pageStore.locale)" />
+            :dir="siteStore.localeDir(pageStore.locale)">
+            <!--
+              The table bar: the common table actions against the table the caret is in, so deleting
+              one is not a trip to the toolbar's Table menu. Drawn here rather than as a plugin like the
+              link and image bars, because it wants icons, tooltips and a menu, which are all
+              components. Inside the surface so that it scrolls with the table it belongs to, and
+              `v-show` so that Vue renders it once, before ProseMirror mounts its editable beside it,
+              and never inserts it again.
+            -->
+            <div
+              v-show="tableBar.shown"
+              ref="tableBarRef"
+              class="visual-table-bar"
+              :style="{ top: `${tableBar.top}px`, left: `${tableBar.left}px` }"
+              @mousedown.prevent>
+              <w-btn
+                v-for="item of tableBarActions"
+                :key="item.key"
+                dense
+                flat
+                padding="xs"
+                :icon="item.icon"
+                :class="{ 'visual-table-bar-danger': item.key === 'delete' }"
+                @click="item.run">
+                <w-tooltip anchor="top middle" self="bottom middle">{{ t(item.label) }}</w-tooltip>
+              </w-btn>
+              <w-separator vertical inset />
+              <w-btn dense flat padding="xs" icon="mdi:dots-horizontal">
+                <w-menu auto-close anchor="bottom left" self="top left">
+                  <w-list dense padding>
+                    <template v-for="item of tableMoreActions" :key="item.key">
+                      <w-separator v-if="item.divider" class="my-2" />
+                      <w-item v-else clickable @click="item.run">
+                        <w-item-section side><w-icon :name="item.icon" /></w-item-section>
+                        <w-item-section>
+                          <w-item-label>{{ t(item.label) }}</w-item-label>
+                        </w-item-section>
+                      </w-item>
+                    </template>
+                  </w-list>
+                </w-menu>
+                <w-tooltip anchor="top middle" self="bottom middle">{{
+                  t('editor.visual.table.more')
+                }}</w-tooltip>
+              </w-btn>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -391,7 +443,7 @@ import { useUserStore } from '@/stores/user'
 
 /*
   ProseMirror's own base styles, which are behaviour rather than decoration — the editing surface's
-  whitespace handling, the table wrapper's overflow, the resize cursor. Imported here rather than in
+  whitespace handling, the selected-cell overlay. Imported here rather than in
   the stylesheet so that they travel with this lazily-loaded component instead of with the app.
 */
 import 'prosemirror-view/style/prosemirror.css'
@@ -403,19 +455,21 @@ import { readFencedBody, writeFencedBody } from '@/editor/visual/blockBody'
 import {
   insertDefinitionList as insertDefinitionListCommand,
   insertNode,
+  findTable,
   insertTable as insertTableCommand,
+  listKind,
   markActive,
   nodeActive,
   toggleAlert,
   toggleHeading,
-  toggleTaskList
+  toggleList
 } from '@/editor/visual/commands'
 import { applyImageEdit, applyImageSrc, findImage, imageClasses } from '@/editor/visual/images'
 import { applyLink, removeLink } from '@/editor/visual/links'
 import { ALERT_KINDS, schema } from '@/editor/visual/schema'
 
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands'
-import { liftListItem, sinkListItem, wrapInList } from 'prosemirror-schema-list'
+import { liftListItem, sinkListItem } from 'prosemirror-schema-list'
 import {
   addColumnAfter,
   addColumnBefore,
@@ -426,7 +480,6 @@ import {
   deleteTable,
   mergeCells,
   splitCell,
-  toggleHeaderColumn,
   toggleHeaderRow
 } from 'prosemirror-tables'
 
@@ -446,6 +499,7 @@ const { t } = useI18n()
 // DATA
 
 const mountRef = ref(null)
+const tableBarRef = ref(null)
 
 /**
  * Whether this edit is shared with whoever else has the page open.
@@ -481,8 +535,7 @@ const active = reactive({
   heading: 0,
   blockquote: false,
   alert: '',
-  bulletList: false,
-  orderedList: false,
+  list: '',
   table: false
 })
 
@@ -541,9 +594,7 @@ const runToggleMark = () => run(toggleMark(schema.marks.mark))
 const runToggleCode = () => run(toggleMark(schema.marks.code))
 const runToggleSub = () => run(toggleMark(schema.marks.sub))
 const runToggleSup = () => run(toggleMark(schema.marks.sup))
-const runBulletList = () => run(wrapInList(schema.nodes.bullet_list))
-const runOrderedList = () => run(wrapInList(schema.nodes.ordered_list))
-const runTaskList = () => run(toggleTaskList)
+const runToggleList = (kind) => run(toggleList(kind))
 const runSinkListItem = () => run(sinkListItem(schema.nodes.list_item))
 const runLiftListItem = () => run(liftListItem(schema.nodes.list_item))
 const runUndo = () => editor?.undo()
@@ -614,12 +665,6 @@ const tableActions = [
     label: 'editor.visual.table.toggleHeaderRow',
     run: () => run(toggleHeaderRow)
   },
-  {
-    key: 'headerCol',
-    icon: 'mdi:table-column',
-    label: 'editor.visual.table.toggleHeaderColumn',
-    run: () => run(toggleHeaderColumn)
-  },
   { key: 'd4', divider: true },
   {
     key: 'delete',
@@ -628,6 +673,47 @@ const tableActions = [
     run: () => run(deleteTable)
   }
 ]
+
+/*
+  The table bar's own buttons, and its "more" menu with everything else from the list above. Dividers
+  that would end up first, last or doubled once the bar's actions are taken out are dropped with them.
+*/
+const TABLE_BAR_KEYS = ['rowAfter', 'rowDelete', 'colAfter', 'colDelete', 'delete']
+const tableBarActions = TABLE_BAR_KEYS.map((key) => tableActions.find((item) => item.key === key))
+const tableMoreActions = tableActions
+  .filter((item) => !TABLE_BAR_KEYS.includes(item.key))
+  .filter((item, idx, list) => !item.divider || (idx > 0 && !list[idx - 1].divider))
+  .filter((item, idx, list) => !item.divider || idx < list.length - 1)
+
+const tableBar = reactive({ shown: false, top: 0, left: 0 })
+
+/**
+ * Put the table bar over the top-left corner of the table the caret is in, or take it away.
+ *
+ * Above the table, and below it when there is no room above -- a table at the very top of the
+ * document has only the editable's padding over it, which is less than the bar is tall. Measured
+ * after it is shown, since a hidden element has no height. The image bar in `images.js` places itself
+ * the same way.
+ */
+async function placeTableBar() {
+  const view = editor?.view
+  const pos = view?.editable ? findTable(view.state) : null
+  const el = pos === null ? null : view.nodeDOM(pos)
+  if (!el?.getBoundingClientRect) {
+    tableBar.shown = false
+    return
+  }
+  tableBar.shown = true
+  await nextTick()
+  if (!tableBarRef.value || !mountRef.value) {
+    return
+  }
+  const rect = el.getBoundingClientRect()
+  const box = mountRef.value.getBoundingClientRect()
+  const above = rect.top - box.top - tableBarRef.value.offsetHeight - 6
+  tableBar.top = above >= 0 ? above : rect.bottom - box.top + 6
+  tableBar.left = Math.max(0, rect.left - box.left)
+}
 
 /** Read the toolbar's state off the selection. */
 function refreshActive() {
@@ -644,9 +730,9 @@ function refreshActive() {
   active.sub = markActive(state, schema.marks.sub)
   active.sup = markActive(state, schema.marks.sup)
   active.blockquote = nodeActive(state, schema.nodes.blockquote)
-  active.bulletList = nodeActive(state, schema.nodes.bullet_list)
-  active.orderedList = nodeActive(state, schema.nodes.ordered_list)
+  active.list = listKind(state)
   active.table = nodeActive(state, schema.nodes.table)
+  placeTableBar()
 
   const { $from } = state.selection
   active.heading = $from.parent.type === schema.nodes.heading ? $from.parent.attrs.level : 0

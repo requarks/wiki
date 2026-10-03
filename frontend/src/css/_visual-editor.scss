@@ -179,16 +179,57 @@
   }
 
   /*
-    The narrowest a column may be dragged, which `prosemirror-tables` reads as a custom property and
-    leaves undefined — without it a column with no explicit width has no minimum and collapses.
+    The narrowest a column may be, which `prosemirror-tables`' stylesheet reads as a custom property
+    and leaves undefined -- without it an empty column has no minimum and collapses to its padding.
   */
   --default-cell-min-width: 3rem;
 
-  /* The colours only; the geometry of both is in `prosemirror-tables`' own stylesheet. */
-  .column-resize-handle {
-    background-color: $primary;
+  /*
+    A table as wide as its columns, the way the article draws it. `prosemirror-tables` sets
+    `width: 100%`, and on top of the `display: block` from `_page-contents.scss` that stretches the box
+    -- border, shadow and all -- across the pane while the cells inside keep their natural width, so a
+    new table shows its columns and then an empty band to the right edge. Qualified with `.ProseMirror`
+    to outrank that stylesheet whichever order the two load in.
+  */
+  &.ProseMirror table {
+    width: max-content;
   }
 
+  /*
+    The head row, drawn as the article draws it. `_page-contents.scss` styles the head through `thead`,
+    and `prosemirror-tables` has no row groups -- every row sits straight in one `tbody` -- so here the
+    head is the first row with no data cell in it, which is what the parser makes of markdown's
+    delimiter row. The values are the article's own custom properties, so the two cannot drift.
+  */
+  tr:first-child:not(:has(> td)) {
+    background-color: var(--content-table-head);
+    background-image: radial-gradient(
+      at bottom right,
+      var(--content-table-head),
+      var(--content-table-head-grade)
+    );
+
+    > th {
+      border-inline-end-color: var(--content-table-head-rule);
+      border-bottom-color: var(--content-table-head-rule);
+      background-color: transparent;
+      color: var(--content-table-head-ink);
+    }
+  }
+
+  /*
+    The banding, counted from the first row UNDER the head as the article counts it within `tbody`.
+    Here the head is row one of the same group, which would put every band one row out.
+  */
+  tr:first-child:not(:has(> td)) ~ tr:nth-child(even) > td {
+    background-color: var(--content-table-row);
+  }
+
+  tr:first-child:not(:has(> td)) ~ tr:nth-child(odd) > td {
+    background-color: var(--content-table-row-alt);
+  }
+
+  /* The colour only; the geometry is in `prosemirror-tables`' own stylesheet. */
   .selectedCell:after {
     background: rgba(25, 118, 210, 0.2);
   }
@@ -303,6 +344,41 @@
     background: $grey-10;
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
   }
+}
+
+/*
+  The table bar, which is the image bar's shape with icon buttons in it -- drawn by `EditorVisual.vue`
+  rather than a plugin, since those are components. Transparent to the mouse for the same reason: it
+  hovers over the line before the table.
+*/
+.visual-table-bar {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  color: $grey-8;
+
+  .body--dark & {
+    border-color: $grey-8;
+    background: $grey-10;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.4);
+    color: $grey-3;
+  }
+
+  > .w-btn {
+    pointer-events: auto;
+  }
+}
+
+.visual-table-bar-danger {
+  color: $negative;
 }
 
 .visual-link-bar button,
@@ -891,17 +967,19 @@
     height: 0.9em;
     border: 1px solid $grey-6;
     border-radius: 2px;
+    // -> Clickable: `taskCheckboxes` in `commands.js` ticks it
+    cursor: pointer;
   }
 
+  /*
+    The tick is a background rather than a `content` glyph: sizing a glyph down means a smaller
+    `font-size` on this same pseudo-element, and every measurement above is in `em` -- so the box shrank
+    and shifted with it the moment it was ticked.
+  */
   &[data-checked='true']:before {
-    content: '✓';
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.75em;
-    line-height: 1;
-    color: #fff;
-    background-color: $primary;
+    background: $primary
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 100% no-repeat;
     border-color: $primary;
   }
 }

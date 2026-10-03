@@ -2,13 +2,13 @@ import { gapCursor } from 'prosemirror-gapcursor'
 import { history, redo, undo } from 'prosemirror-history'
 import { keymap } from 'prosemirror-keymap'
 import { EditorState } from 'prosemirror-state'
-import { columnResizing, tableEditing } from 'prosemirror-tables'
+import { tableEditing } from 'prosemirror-tables'
 import { EditorView } from 'prosemirror-view'
 
 import { MarkdownRenderer } from '@/renderers/markdown'
 
 import { collabPlugins, collabRedo, collabUndo, seedIfEmpty } from './collab'
-import { buildInputRules, buildKeymap } from './commands'
+import { buildInputRules, buildKeymap, taskCheckboxes } from './commands'
 import { imageBar } from './images'
 import { linkBar } from './links'
 import { createNodeViews } from './nodeviews'
@@ -83,8 +83,13 @@ export function createVisualEditor({
     buildInputRules(),
     keymap(buildKeymap({ collab: isCollab })),
     gapCursor(),
-    // -> Before `tableEditing`, which is what its own documentation asks for
-    columnResizing(),
+    taskCheckboxes(),
+    /*
+      No `columnResizing`: a dragged width is a `colwidth` on each cell that markdown has no way to
+      write down, so it was lost on save, and its handle -- a widget inside the hovered cell -- became
+      the cell's last child, which gave the paragraph back the bottom margin `_page-contents.scss` takes
+      off it and doubled the height of every row the pointer crossed.
+    */
     tableEditing(),
     /*
       The bar that appears under the link the caret is in. A plugin because a link is a mark and has no

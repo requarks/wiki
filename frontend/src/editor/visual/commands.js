@@ -17,8 +17,8 @@ import {
 } from 'prosemirror-inputrules'
 import { undoInputRule } from 'prosemirror-inputrules'
 import { liftListItem, sinkListItem, splitListItem, wrapInList } from 'prosemirror-schema-list'
-import { TextSelection } from 'prosemirror-state'
-import { goToNextCell } from 'prosemirror-tables'
+import { Plugin, Selection, TextSelection } from 'prosemirror-state'
+import { CellSelection, deleteTable, goToNextCell } from 'prosemirror-tables'
 
 import { collabRedo, collabUndo } from './collab'
 import { schema } from './schema'
@@ -146,33 +146,241 @@ export function toggleHeading(level) {
   }
 }
 
+/** The node type behind each list button. A task list keeps whichever of the two it already is. */
+const LIST_TYPES = {
+  bullet: schema.nodes.bullet_list,
+  ordered: schema.nodes.ordered_list
+}
+
 /**
- * Turn the list the caret is in into a task list, or back.
+ * What each of the toolbar's three list buttons does: `bullet`, `ordered` or `task`.
+ *
+ * - Outside a list, the selected blocks become one.
+ * - In a list of that kind, the selected items leave it -- the button that is lit is the way out.
+ * - In a list of another kind, that list becomes this kind, all of it: a list is one kind throughout
+ *   in the source, so there is no switching half of one.
  *
  * A task is an attribute of each item rather than a kind of list, because that is what it is in the
- * source — so this walks the items of the list rather than changing the list's type.
+ * source, so a task list is a bullet or an ordered list whose items carry `checked`. Either kind takes
+ * it, since `- [ ] ` and `1. [ ] ` are both task items to `markdown-it-task-lists`. Made from nothing,
+ * it is a bullet list, built and ticked in one transaction so that a single undo takes it back.
  */
-export function toggleTaskList(state, dispatch) {
-  const { $from } = state.selection
-  for (let depth = $from.depth; depth > 0; depth--) {
-    const node = $from.node(depth)
-    if (node.type !== schema.nodes.bullet_list) {
-      continue
+export function toggleList(kind) {
+  return (state, dispatch) => {
+    const list = enclosingList(state.selection.$from)
+    if (list) {
+      if (kindOf(list.node) === kind) {
+        return liftListItem(schema.nodes.list_item)(state, dispatch)
+      }
+      if (dispatch) {
+        dispatch(retypeList(state.tr, list, kind))
+      }
+      return true
+    }
+    if (kind !== 'task') {
+      return wrapInList(LIST_TYPES[kind])(state, dispatch)
+    }
+    let wrapped = null
+    if (!wrapInList(schema.nodes.bullet_list)(state, (tr) => (wrapped = tr))) {
+      return false
     }
     if (dispatch) {
-      const start = $from.before(depth)
-      const tr = state.tr
-      const makeTasks = node.firstChild?.attrs.checked === null
-      let offset = start + 1
-      node.forEach((item) => {
-        tr.setNodeMarkup(offset, undefined, { ...item.attrs, checked: makeTasks ? false : null })
-        offset += item.nodeSize
-      })
-      dispatch(tr)
+      const created = enclosingList(wrapped.selection.$from)
+      dispatch(created ? retypeList(wrapped, created, 'task') : wrapped)
     }
     return true
   }
-  return false
+}
+
+/**
+ * Which of the toolbar's list buttons the caret is in: `bullet`, `ordered`, `task`, or empty.
+ *
+ * The innermost list decides, by the same test `toggleList` uses -- so the button that lights up is
+ * the one that would take the caret's item back out of it.
+ */
+export function listKind(state) {
+  const list = enclosingList(state.selection.$from)
+  return list ? kindOf(list.node) : ''
+}
+
+/** A list whose first item is a task is a task list, which is the test `markdown-it-task-lists` makes. */
+function kindOf(list) {
+  if (list.firstChild?.attrs.checked !== null) {
+    return 'task'
+  }
+  return list.type === schema.nodes.ordered_list ? 'ordered' : 'bullet'
+}
+
+/** The innermost list around a position, and where it starts. */
+function enclosingList($pos) {
+  for (let depth = $pos.depth; depth > 0; depth--) {
+    const node = $pos.node(depth)
+    if (node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list) {
+      return { node, pos: $pos.before(depth) }
+    }
+  }
+  return null
+}
+
+/**
+ * Make a whole list the given kind, in place.
+ *
+ * The attributes the two list types share -- `tight`, `mdAttrs` -- carry across; `markup` does not,
+ * since a bullet's `-` is not an ordered list's `.`, and the new type's default stands in. A task
+ * item that was ticked stays ticked when the list underneath it changes.
+ */
+function retypeList(tr, { node, pos }, kind) {
+  const type = LIST_TYPES[kind] ?? node.type
+  if (type !== node.type) {
+    const attrs = {}
+    for (const name of Object.keys(type.spec.attrs ?? {})) {
+      if (name !== 'markup' && name in node.attrs) {
+        attrs[name] = node.attrs[name]
+      }
+    }
+    tr.setNodeMarkup(pos, type, attrs)
+  }
+  let offset = pos + 1
+  node.forEach((item) => {
+    const checked = kind === 'task' ? (item.attrs.checked ?? false) : null
+    tr.setNodeMarkup(offset, undefined, { ...item.attrs, checked })
+    offset += item.nodeSize
+  })
+  return tr
+}
+
+/**
+ * Backspace at the very start of a list item takes it out of the list -- or up a level, if it is
+ * nested -- rather than merging it into the item above, which is what every word processor does and
+ * so what an author reaching for Backspace expects. A second Backspace then joins the line that is
+ * left to the one above it, as it would anywhere else.
+ *
+ * Only from the item's first block: further down, the start of a paragraph inside an item is just a
+ * paragraph to join to the one before it.
+ */
+function liftListItemAtStart(state, dispatch) {
+  const { $cursor } = state.selection
+  if (!$cursor || $cursor.parentOffset > 0 || $cursor.depth < 2) {
+    return false
+  }
+  const depth = $cursor.depth - 1
+  if ($cursor.node(depth).type !== schema.nodes.list_item || $cursor.index(depth) !== 0) {
+    return false
+  }
+  return liftListItem(schema.nodes.list_item)(state, dispatch)
+}
+
+/**
+ * Backspace at the start of a line that follows a list moves the line onto the end of the list's last
+ * item, as a word processor does -- which is the second Backspace of taking an item out of a list.
+ *
+ * ProseMirror's own `joinBackward` instead wraps the line back into the list as a new item, so after
+ * `liftListItemAtStart` the next Backspace undid it, and an emptied item went back and forth between
+ * the two for as long as the key was pressed and could never be deleted. When the line was the one
+ * thing keeping two halves of a list apart, the halves become one list again.
+ */
+function joinIntoListAbove(state, dispatch) {
+  const { $cursor } = state.selection
+  if (!$cursor || $cursor.parentOffset > 0) {
+    return false
+  }
+  const start = $cursor.before()
+  const before = state.doc.resolve(start).nodeBefore
+  if (before?.type !== schema.nodes.bullet_list && before?.type !== schema.nodes.ordered_list) {
+    return false
+  }
+  const target = Selection.findFrom(state.doc.resolve(start), -1, true)
+  const line = $cursor.parent
+  const host = target?.$from.parent
+  if (!host?.canReplace(host.childCount, host.childCount, line.content)) {
+    return false
+  }
+  if (dispatch) {
+    const tr = state.tr.delete(start, start + line.nodeSize)
+    const $gap = tr.doc.resolve(start)
+    if ($gap.nodeBefore && $gap.nodeBefore.type === $gap.nodeAfter?.type) {
+      tr.join(start)
+    }
+    // -> Everything above happened after `target`, so its position still stands
+    tr.insert(target.from, line.content)
+    tr.setSelection(TextSelection.create(tr.doc, target.from))
+    dispatch(tr.scrollIntoView())
+  }
+  return true
+}
+
+/**
+ * Backspace or Delete with every cell of a table selected deletes the table.
+ *
+ * Otherwise clearing a whole table is all that a cell selection can do: `CellSelection` replaces the
+ * CONTENT of each cell and leaves the grid standing, which is right for a few cells and leaves an
+ * author who selected the whole thing looking at an empty table that will not go away.
+ */
+function deleteSelectedTable(state, dispatch) {
+  const { selection } = state
+  if (
+    !(selection instanceof CellSelection) ||
+    !selection.isRowSelection() ||
+    !selection.isColSelection()
+  ) {
+    return false
+  }
+  return deleteTable(state, dispatch)
+}
+
+/** The table the caret is in, and where it starts -- what the table bar is drawn against. */
+export function findTable(state) {
+  const { $from } = state.selection
+  for (let depth = $from.depth; depth > 0; depth--) {
+    if ($from.node(depth).type === schema.nodes.table) {
+      return $from.before(depth)
+    }
+  }
+  return null
+}
+
+/**
+ * Ticking a task item by clicking its checkbox.
+ *
+ * There is no checkbox element to listen on: the box is the item's `::before` (`.visual-task-item` in
+ * `_visual-editor.scss`), drawn out in the list's gutter. A click on a pseudo-element is a click on the
+ * element it belongs to, so it arrives here as a mousedown on the `<li>` itself, to the left of its
+ * box -- which is the one place a click on the item can land that its content does not cover.
+ *
+ * On mousedown rather than click, and the default prevented, so the caret stays where it was.
+ */
+export function taskCheckboxes() {
+  return new Plugin({
+    props: {
+      handleDOMEvents: {
+        mousedown(view, event) {
+          const item = event.target
+          if (
+            event.button !== 0 ||
+            !view.editable ||
+            !(item instanceof HTMLElement) ||
+            !item.matches('li.visual-task-item') ||
+            event.clientX >= item.getBoundingClientRect().left
+          ) {
+            return false
+          }
+          const pos = view.posAtDOM(item, 0) - 1
+          const node = view.state.doc.nodeAt(pos)
+          if (node?.type !== schema.nodes.list_item || node.attrs.checked === null) {
+            return false
+          }
+          event.preventDefault()
+          view.dispatch(
+            view.state.tr.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              checked: !node.attrs.checked
+            })
+          )
+          return true
+        }
+      }
+    }
+  })
 }
 
 /** Tick or untick the task item the caret is in. */
@@ -434,7 +642,20 @@ export function buildKeymap({ collab = false } = {}) {
     'Mod-z': stepBack,
     'Shift-Mod-z': stepForward,
     'Mod-y': stepForward,
-    Backspace: undoInputRule,
+    /*
+      ProseMirror's own Backspace after ours, and not left out: a key with no command
+      bound goes to the browser, whose contenteditable knows nothing about the document's structure --
+      at the start of a list item it does nothing at all, and over a selection of everything it empties
+      the cells of a table and leaves the grid behind.
+    */
+    Backspace: chainCommands(
+      undoInputRule,
+      deleteSelectedTable,
+      liftListItemAtStart,
+      joinIntoListAbove,
+      baseKeymap.Backspace
+    ),
+    Delete: chainCommands(deleteSelectedTable, baseKeymap.Delete),
 
     'Mod-b': toggleMark(schema.marks.strong),
     'Mod-i': toggleMark(schema.marks.em),
@@ -443,8 +664,8 @@ export function buildKeymap({ collab = false } = {}) {
     'Mod-Shift-h': toggleMark(schema.marks.mark),
     'Mod-e': toggleMark(schema.marks.code),
 
-    'Mod-Shift-8': wrapInList(schema.nodes.bullet_list),
-    'Mod-Shift-9': wrapInList(schema.nodes.ordered_list),
+    'Mod-Shift-8': toggleList('bullet'),
+    'Mod-Shift-9': toggleList('ordered'),
     'Mod-Shift-.': wrapIn(schema.nodes.blockquote),
     'Mod-Shift-Enter': toggleTaskChecked,
 
