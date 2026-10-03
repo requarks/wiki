@@ -124,7 +124,12 @@
             <template #hint>{{ t('admin.locale.activeHint') }}</template>
           </w-card-header>
           <template v-for="(lc, idx) of orderedLocales" :key="lc.code">
-            <w-separator v-if="idx === dividerIndex" class="my-2" inset />
+            <div v-if="idx === dividerIndex" class="w-section-header mt-6">
+              {{ t('admin.locale.available') }}
+            </div>
+            <!-- -> Dimmed, since it is there to carry the eye across a wide row to its button rather
+                    than to divide anything; none above the first row of either half -->
+            <w-separator v-else-if="idx > 0" class="opacity-50" inset />
             <!-- -> Not a label, unlike the toggles above: a label forwards a click to its FIRST
                     labelable descendant, and a button is one, so the whole row opened the alias
                     editor rather than flipping the toggle -->
@@ -139,6 +144,26 @@
                 </w-item-label>
                 <w-item-label caption>{{ lc.nativeName }} ({{ lc.displayCode }})</w-item-label>
               </w-item-section>
+              <!-- -> Upstream's figure, so it is there before a locale is installed, which is when it
+                      matters most. Null — nothing shown — for strings that did not come from upstream -->
+              <template v-if="lc.completeness !== null">
+                <w-item-section side>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs tabular-nums">
+                      {{
+                        t('admin.locale.completeness', { percent: formatPercent(lc.completeness) })
+                      }}
+                    </span>
+                    <w-circular-progress
+                      :value="lc.completeness"
+                      size="20px"
+                      :thickness="0.25"
+                      :color="lc.completeness === 100 ? `positive` : `primary`"
+                      :track-color="dark.isActive ? `grey-8` : `grey-3`" />
+                  </div>
+                </w-item-section>
+                <w-separator vertical inset class="ms-4" />
+              </template>
               <!--
                 Installing a locale is a site administrator's to do, but renaming one is not: the name
                 and the short code are how every site on the instance addresses it, so the endpoint
@@ -181,6 +206,17 @@
           <!-- -> `mx-auto`, not the `text-center` that was here: preflight makes an img a block, so
                   centring it is a margin question rather than a text-align one -->
           <img src="/_assets/illustrations/undraw_world.svg" class="mx-auto" style="width: 80%" />
+          <div class="mt-6 text-center">
+            <div class="text-grey-8 dark:text-grey-4">{{ t('admin.locale.contributeHint') }}</div>
+            <w-btn
+              class="mt-3 acrylic-btn"
+              flat
+              color="primary"
+              icon="la:language"
+              :label="t('admin.locale.contribute')"
+              :href="siteStore.docsBase + `/dev/translations`"
+              target="_blank" />
+          </div>
         </div>
       </div>
     </div>
@@ -225,7 +261,7 @@ const userStore = useUserStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // META
 
@@ -266,8 +302,8 @@ const orderedLocales = computed(() => [
   ...state.locales.filter((lc) => !lc.isInstalled)
 ])
 
-// -> The row the divider sits above; -1 when one of the two halves is empty and there is nothing to
-//    divide
+// -> The row the "Available Locales" header sits above; -1 when one of the two halves is empty and
+//    there is nothing to head
 const dividerIndex = computed(() => {
   const idx = orderedLocales.value.findIndex((lc) => !lc.isInstalled)
   return idx > 0 ? idx : -1
@@ -292,6 +328,12 @@ watch(
 )
 
 // METHODS
+
+// -> Through Intl rather than a literal `%`, which goes after a space in French and before the
+//    number in Turkish
+function formatPercent(value) {
+  return new Intl.NumberFormat(locale.value, { style: 'percent' }).format(value / 100)
+}
 
 async function load() {
   state.loading++

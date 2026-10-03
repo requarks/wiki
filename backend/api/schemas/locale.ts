@@ -62,8 +62,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           'Whether the strings have been downloaded. A locale that is merely published upstream has a row so it can be offered, but nothing to serve until it is installed.'
       },
       completeness: {
-        type: 'integer',
-        description: 'How much of the string set is translated, as a percentage.'
+        type: ['integer', 'null'],
+        description:
+          'How much of the published translation is done, as a whole percentage from 0 to 100. Null when unknown — a locale installed from an uploaded file, before the next fetch reaches upstream.'
       },
       createdAt: {
         type: 'string',

@@ -600,7 +600,14 @@ export const locales = pgTable(
      */
     customName: varchar({ length: 255 }),
     strings: jsonb().notNull().default([]),
-    completeness: integer().notNull().default(0),
+    /**
+     * How much of the published translation is done, as a whole percentage — Crowdin's count, carried
+     * in the remote metadata, since the strings files themselves cannot say: untranslated strings
+     * are exported as the English source. A property of upstream, so it is kept for a locale that
+     * is merely available as well as an installed one. Null where nobody knows, which is any locale
+     * whose strings did not come from the published metadata.
+     */
+    completeness: integer(),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow()
   },

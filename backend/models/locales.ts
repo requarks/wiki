@@ -39,10 +39,29 @@ export interface Translator {
   t(key: string, params?: Record<string, string | number>): string
 }
 
-/** One entry of the remote `metadata.json`: a strings file and the hash of its contents. */
+/**
+ * One entry of the remote `metadata.json`: a strings file, the hash of its contents, and how much of
+ * it is translated — see `completenessOf`.
+ */
 interface RemoteLocale {
   file: string
   hash: string
+  completeness?: number | null
+}
+
+/**
+ * The translated share of a published locale, as the whole percentage the column holds.
+ *
+ * The figure is Crowdin's, written into the metadata by the workflow that downloads the files; the
+ * files cannot answer it themselves, because an untranslated string is exported as its English
+ * source. Anything that is not a number from 0 to 100 is read as unknown rather than clamped — it is
+ * one file on github that every wiki reads, and a wrong figure in an admin list is worse than none.
+ */
+function completenessOf(entry: RemoteLocale): number | null {
+  const value = entry.completeness
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100
+    ? Math.floor(value)
+    : null
 }
 
 /** What an update run did, for the admin area to report. */
@@ -231,22 +250,32 @@ class Locales {
         // -> Load strings
         WIKI.logger.info(`Loading locale ${code} into DB...`)
         const flStrings = JSON.parse(await readFile(flPath, 'utf8'))
+        // -> The source locale is complete by definition: it is what everything else translates
+        const completeness = code === SOURCE_LOCALE ? 100 : null
         await WIKI.db
           .insert(localesTable)
           .values({
             code,
             ...localeInfo,
             isInstalled: true,
-            strings: flStrings
+            strings: flStrings,
+            completeness
           })
           .onConflictDoUpdate({
             target: localesTable.code,
             /*
               The hash is cleared, not kept: these strings did not come from the remote file it was
               recorded for, so leaving it would tell the next update run that a locale it has never
-              actually delivered is already up to date.
+              actually delivered is already up to date. The completeness goes with it, for the same
+              reason.
             */
-            set: { strings: flStrings, isInstalled: true, hash: '', updatedAt: sql`now()` }
+            set: {
+              strings: flStrings,
+              isInstalled: true,
+              hash: '',
+              completeness,
+              updatedAt: sql`now()`
+            }
           })
         WIKI.logger.info(`Locale ${code} loaded successfully. [ OK ]`)
       }
@@ -288,11 +317,18 @@ class Locales {
         ...localeInfoFor(code),
         isInstalled: true,
         hash: entry.hash,
+        completeness: completenessOf(entry),
         strings
       })
       .onConflictDoUpdate({
         target: localesTable.code,
-        set: { strings, isInstalled: true, hash: entry.hash, updatedAt: sql`now()` }
+        set: {
+          strings,
+          isInstalled: true,
+          hash: entry.hash,
+          completeness: completenessOf(entry),
+          updatedAt: sql`now()`
+        }
       })
   }
 
@@ -322,10 +358,13 @@ class Locales {
       .select({
         code: localesTable.code,
         hash: localesTable.hash,
-        isInstalled: localesTable.isInstalled
+        isInstalled: localesTable.isInstalled,
+        completeness: localesTable.completeness
       })
       .from(localesTable)
 
+    // -> Not a count of its own: the figure moving says nothing about the strings this wiki holds
+    let progressChanged = false
     const result: LocaleUpdateResult = { added: 0, updated: 0, unchanged: 0, failed: 0 }
     for (const entry of metadata) {
       const code = path.basename(entry.file, '.json')
@@ -336,12 +375,27 @@ class Locales {
       try {
         const localeInfo = localeInfoFor(code)
         const dbLang = dbLocales.find((l) => l.code === code)
+        const completeness = completenessOf(entry)
 
         // -> Not seen before: record it as available, without paying for strings nobody asked for
         if (!dbLang) {
-          await WIKI.db.insert(localesTable).values({ code, ...localeInfo })
+          await WIKI.db.insert(localesTable).values({ code, ...localeInfo, completeness })
           result.added++
           continue
+        }
+
+        /*
+          Kept current for every locale, installed or not, and whether or not its strings are about to
+          be downloaded: the figure is most useful on a locale nobody has installed yet, which is where
+          an administrator is deciding whether it is worth offering. `updatedAt` is left alone, since
+          it says when the STRINGS last changed and `refreshFromDisk` compares against it.
+        */
+        if (dbLang.completeness !== completeness) {
+          await WIKI.db
+            .update(localesTable)
+            .set({ completeness })
+            .where(eq(localesTable.code, code))
+          progressChanged = true
         }
 
         // -> Available but not installed, or installed and already holding this exact file
@@ -359,7 +413,7 @@ class Locales {
       }
     }
 
-    if (result.added > 0 || result.updated > 0) {
+    if (result.added > 0 || result.updated > 0 || progressChanged) {
       await this.reloadCache()
       WIKI.events.outbound.emit('reloadLocales')
     }
@@ -414,7 +468,8 @@ class Locales {
    * **The hash is left empty**, as it is for a locale that came off disk: no upstream file was
    * downloaded, so there is nothing a later update run could compare against. That makes the first
    * run that does reach upstream re-download it, which is the right answer for strings of unknown
-   * provenance — and costs an air-gapped wiki nothing, since it never has such a run.
+   * provenance — and costs an air-gapped wiki nothing, since it never has such a run. The completeness
+   * is cleared for the same reason: the file says nothing about how much of it is translated.
    *
    * @returns The code the file was installed as.
    */
@@ -466,11 +521,12 @@ class Locales {
         ...localeInfo,
         isInstalled: true,
         hash: '',
+        completeness: null,
         strings
       })
       .onConflictDoUpdate({
         target: localesTable.code,
-        set: { strings, isInstalled: true, hash: '', updatedAt: sql`now()` }
+        set: { strings, isInstalled: true, hash: '', completeness: null, updatedAt: sql`now()` }
       })
     await this.reloadCache()
     WIKI.events.outbound.emit('reloadLocales')

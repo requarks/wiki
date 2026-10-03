@@ -30,7 +30,7 @@
             <div class="text-body2 mt-4">
               Current: <strong>{{ state.current }}</strong>
             </div>
-            <div class="text-body2">
+            <div class="text-body2 mt-3">
               Latest: <strong>{{ state.latest }}</strong>
             </div>
             <div class="text-body2">
@@ -76,6 +76,7 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive } from 'vue'
+import semverGte from 'semver/functions/gte'
 
 import { useUserStore } from '@/stores/user'
 
@@ -105,9 +106,8 @@ const state = reactive({
   latestDate: ''
 })
 
-const isLatest = computed(() => {
-  return true
-})
+// -> The same comparison as the admin dashboard's version card (`versionStatus` in the admin store)
+const isLatest = computed(() => semverGte(state.current, state.latest))
 
 // METHODS
 
