@@ -371,9 +371,11 @@ import { debounce } from 'es-toolkit/function'
 
 import { collabHandles, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
+import { useImagePropertiesDialog } from '@/composables/imagePropertiesDialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
+import { classValues } from '@/helpers/markdownImages'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
@@ -408,7 +410,7 @@ import {
   toggleHeading,
   toggleTaskList
 } from '@/editor/visual/commands'
-import { applyImageEdit, applyImageSrc, findImage } from '@/editor/visual/images'
+import { applyImageEdit, applyImageSrc, findImage, imageClasses } from '@/editor/visual/images'
 import { applyLink, removeLink } from '@/editor/visual/links'
 import { ALERT_KINDS, schema } from '@/editor/visual/schema'
 
@@ -732,6 +734,10 @@ watch(
 
 /** What the file manager handed back, written the way the Markdown editor writes it. */
 function insertAssetClb(opts) {
+  // -> A pick the Image Properties dialog asked for is the dialog's, not the caret's
+  if (imageDialog.takePick(opts)) {
+    return
+  }
   const replacing = replacingImage && findImage(editor.view.state)
   replacingImage = false
   if (replacing) {
@@ -796,28 +802,43 @@ function unlink(range) {
 }
 
 /**
- * The selected image's alt text and how big it is drawn — the latter stored as
- * `markdown-it-imsize`'s `=WxH`.
+ * Everything about the selected image, in the same dialog the Markdown and AsciiDoc editors open from
+ * their Image Properties lens: where it loads from, its alt text, its size, its alignment and its
+ * framing.
  *
- * The picture's own size comes off the element that is drawing it rather than out of the document,
- * since nothing in the source says what it is — it is offered as a hint, so that "half of it" is a
- * sum an author can do.
+ * Alignment and framing are classes, held on the node as `mdAttrs.class` exactly as the `{.class}`
+ * suffix holds them in the source, so `classValues` / `applyClassValues` from the markdown side are
+ * what read and write them -- one answer to which classes the dialog owns, whichever editor asked.
  */
 function editImage(target) {
-  const el = editor.view.nodeDOM(target.pos)
-  dialog({
-    component: defineAsyncComponent(() => import('./ImageEditDialog.vue')),
-    componentProps: {
-      alt: target.node.attrs.alt ?? '',
-      width: target.node.attrs.width ?? '',
-      height: target.node.attrs.height ?? '',
-      naturalWidth: el?.naturalWidth ?? 0,
-      naturalHeight: el?.naturalHeight ?? 0
-    }
-  }).onOk(({ alt, width, height }) => {
-    applyImageEdit(editor.view, target.pos, { alt, width, height })
+  const { attrs } = target.node
+  imageDialog.open(target, {
+    src: attrs.src ?? '',
+    alt: attrs.alt ?? '',
+    width: attrs.width ?? '',
+    height: attrs.height ?? '',
+    ...classValues(imageClasses(target.node))
   })
 }
+
+/**
+ * The dialog's answer, onto the image it was opened over.
+ *
+ * Found again from the selection rather than from the position the bar handed over: the selection is
+ * mapped through every transaction while the dialog is up -- a trip to the file manager included, and
+ * a collaborator's typing -- and a stored position is not. Where the selection is no longer on an
+ * image, there is nothing to write to.
+ */
+const imageDialog = useImagePropertiesDialog({
+  apply(_target, values) {
+    const current = findImage(editor.view.state)
+    if (!current) {
+      notify({ type: 'warning', message: t('editor.markup.image.gone') })
+      return
+    }
+    applyImageEdit(editor.view, current.pos, values)
+  }
+})
 
 /**
  * A new link, from the page-or-URL picker.

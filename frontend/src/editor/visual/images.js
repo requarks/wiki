@@ -1,5 +1,7 @@
 import { NodeSelection, Plugin } from 'prosemirror-state'
 
+import { applyClassValues } from '@/helpers/markdownImages'
+
 import { barButton } from './bar'
 import { schema } from './schema'
 
@@ -55,20 +57,43 @@ function setImageAttrs(view, pos, attrs) {
   return true
 }
 
+/** The classes on an image node, which are what its alignment and framing are written as. */
+export function imageClasses(node) {
+  return String(node.attrs.mdAttrs?.class ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+}
+
 /**
- * What the image dialog edits: the text that stands in for the picture, and how big it is drawn.
+ * What the Image Properties dialog edits: where the picture loads from, the text that stands in for
+ * it, how big it is drawn, and its alignment and framing.
  *
  * The dimensions are strings rather than numbers because `markdown-it-imsize` accepts a percentage as
  * well as a pixel count, and an empty one becomes null rather than `''` so that the serialiser can
  * tell "no width" from a width of nothing. The alt text does the same: empty is a deliberate value —
  * a picture that carries no meaning of its own, which a screen reader should skip rather than read
  * a file name out of — and null is how the node says it has none.
+ *
+ * Alignment and framing are classes in `mdAttrs`, which is the `{.class}` suffix the serialiser
+ * writes -- so `applyClassValues` decides them exactly as it does for the Markdown editor's lens,
+ * keeping any class the dialog does not own. An id or a target in the same braces is untouched.
  */
-export function applyImageEdit(view, pos, { alt, width, height }) {
+export function applyImageEdit(view, pos, { src, alt, width, height, alignment, styles }) {
+  const node = view.state.doc.nodeAt(pos)
+  if (!node || node.type !== schema.nodes.image) {
+    return false
+  }
+  const classes = applyClassValues(imageClasses(node), { alignment, styles }).join(' ')
+  const mdAttrs = { ...node.attrs.mdAttrs, class: classes }
+  if (!classes) {
+    delete mdAttrs.class
+  }
   return setImageAttrs(view, pos, {
+    src,
     alt: alt || null,
     width: width || null,
-    height: height || null
+    height: height || null,
+    mdAttrs: Object.keys(mdAttrs).length > 0 ? mdAttrs : null
   })
 }
 
@@ -92,7 +117,7 @@ export function removeImage(view, pos) {
  * The bar itself.
  *
  * @param {object} handlers
- * @param {(target: object) => void} handlers.onEdit Open whatever sets the alt text and the size.
+ * @param {(target: object) => void} handlers.onEdit Open the Image Properties dialog.
  * @param {(target: object) => void} handlers.onReplace Pick a different file.
  * @param {(target: object) => void} handlers.onRemove Delete the image.
  * @param {(key: string) => string} handlers.t

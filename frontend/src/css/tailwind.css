@@ -461,6 +461,11 @@
     --w-input-ring: rgb(0 0 0 / 0.24);
     /* Pointer-over: a full-strength edge, so the field reads as reachable before it is focused */
     --w-input-ring-hover: var(--color-black);
+    /*
+      The band a filled field draws just inside its frame (see `controlStyle` in WInput), in the
+      card's own surface colour so that it reads as a gap between the frame and the grey fill.
+    */
+    --w-input-inset: var(--color-white);
     /* .36s cubic-bezier(.4,0,.2,1) is Quasar's own field transition, kept so the timing matches */
     transition:
       box-shadow 0.36s cubic-bezier(0.4, 0, 0.2, 1),
@@ -470,6 +475,7 @@
   body.body--dark .w-input-control {
     --w-input-ring: rgb(255 255 255 / 0.3);
     --w-input-ring-hover: var(--color-white);
+    --w-input-inset: var(--color-dark-3);
   }
 
   /*

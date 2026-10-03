@@ -2385,27 +2385,33 @@ function handleKeyPress(ev) {
 onMounted(async () => {
   window.addEventListener('keydown', handleKeyPress)
 
-  const pathParts = pageStore.path.split('/')
-  const parentPath = pathParts.slice(0, -1).join('/')
+  /*
+    The folder whoever opened the manager asked for -- the Image Properties dialog asks for the one the
+    image is in -- and otherwise the folder of the page being viewed. Empty is the site root, which is
+    an answer of its own and not the same as not asking.
+  */
+  const startPath =
+    siteStore.overlayOpts?.folderPath ?? pageStore.path.split('/').slice(0, -1).join('/')
+  const startParts = startPath ? startPath.split('/') : []
 
   await loadTree({
-    parentPath,
+    parentPath: startPath,
     initLoad: true
   })
 
-  // -> Open tree up to current folder
-  const folderFolderPath = pathParts.slice(0, -2).join('/')
-  const folderFileName = pathParts.at(-2)
+  // -> Open tree up to that folder
+  const folderFolderPath = startParts.slice(0, -1).join('/')
+  const folderFileName = startParts.at(-1)
 
   for (const [id, node] of Object.entries(state.treeNodes)) {
-    if (
-      parentPath.startsWith(node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName)
-    ) {
+    const nodePath = node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName
+    // -> Whole segments: `guides` is an ancestor of `guides/setup`, not of `guidesextra`
+    if (`${startPath}/`.startsWith(`${nodePath}/`)) {
       treeComp.value.setOpened(id)
     }
   }
 
-  // -> Switch to current folder (from page path)
+  // -> Switch to that folder
   const currentNode = Object.entries(state.treeNodes).find(
     ([, n]) => n.folderPath === folderFolderPath && n.fileName === folderFileName
   )

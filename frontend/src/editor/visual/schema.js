@@ -74,7 +74,12 @@ export function readMdAttrs(token, skipClasses = []) {
         continue
       }
     }
-    out[name] = value
+    /*
+      MDC hands `{.a .b}` over as one `class` entry PER class, where markdown-it-attrs merges them into
+      one -- so a repeated class is added to what is there rather than replacing it, which left only the
+      last class of an image or a link standing.
+    */
+    out[name] = name === 'class' && out.class ? `${out.class} ${value}` : value
   }
   return Object.keys(out).length > 0 ? out : null
 }

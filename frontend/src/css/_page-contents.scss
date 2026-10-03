@@ -160,6 +160,8 @@
     half of a table's shadow repeated that often reads as a smudge behind the whole list.
   */
   --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  /* Under an image framed with `decor-shadow`: deeper than a table's, since a photograph is not a tint */
+  --content-image-shadow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 6px 18px rgba(0, 0, 0, 0.14);
 
   /* The box behind the tick of a done task-list item; the tick itself is white in both themes */
   --content-tick: #5b616b;
@@ -333,6 +335,7 @@
       --content-links-sheen: rgba(255, 255, 255, 0.045);
       /* -> Deepened, and no wider, for the reason the table's is: a 7% black drop is invisible here */
       --content-links-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      --content-image-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.45);
 
       /*
         Lighter than the light theme's, because the box has to be seen against a dark page -- but held
@@ -2000,6 +2003,24 @@
       display: block;
       float: none;
       margin-inline: auto;
+    }
+  }
+
+  /*
+    How an image is framed, which the Image Properties dialog offers alongside the alignment classes
+    above (`IMAGE_STYLES` in `helpers/markdownImages.js`). Built on the content tokens, so a framed
+    screenshot follows the page into dark mode with the rest of the article. An AsciiDoc image carries
+    the same classes as roles on its wrapper instead -- see `_page-contents-asciidoc.scss`.
+  */
+  img {
+    &.decor-shadow {
+      box-shadow: var(--content-image-shadow);
+    }
+    &.decor-border {
+      border: 1px solid var(--content-rule-strong);
+    }
+    &.decor-rounded {
+      border-radius: 12px;
     }
   }
 

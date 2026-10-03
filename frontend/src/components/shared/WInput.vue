@@ -205,7 +205,11 @@ const props = defineProps({
     type: String,
     default: null
   },
-  /** Bordered style. Retained as a prop because the markup sets it explicitly nearly everywhere. */
+  /**
+   * The field on a white surface, with its label riding the border. Without it the field is FILLED: a
+   * light grey surface, for contrast against the white card it usually sits on, with the label above.
+   * Both are framed all the way round.
+   */
   outlined: {
     type: Boolean,
     default: false
@@ -402,8 +406,8 @@ const describedBy = computed(() => (showsBottom.value ? `${inputId}-desc` : unde
 /*
   A label on an outlined field rides the outline, Material-style, instead of sitting above it: at rest
   it stands in the middle of the field, and on focus or once there is a value it rises into the top
-  border. The non-outlined (filled) variant keeps its label above, since there is no outline to rise
-  into -- only three call sites in the app are labelled and not outlined.
+  border. The filled variant keeps its label above, where it reads against the grey surface rather
+  than interrupting the frame -- only a handful of call sites in the app are labelled and filled.
 */
 const hasFloatingLabel = computed(() => Boolean(props.label) && props.outlined)
 
@@ -460,12 +464,10 @@ const controlClasses = computed(() => [
     `transparent` opts out, for the surfaces where that reasoning inverts -- see the prop.
   */
   props.transparent
-    ? props.outlined
-      ? ''
-      : 'rounded-b-none'
+    ? ''
     : props.outlined
       ? 'bg-white dark:bg-black/20'
-      : 'rounded-b-none bg-black/4 dark:bg-white/6',
+      : 'bg-black/4 dark:bg-white/6',
   props.disable || props.disabled ? 'pointer-events-none opacity-60' : '',
   // -> Says the field is not the reader's to change; see the stripe rule in `tailwind.css`
   props.readonly || props.disable || props.disabled ? 'w-input-control--locked' : '',
@@ -511,10 +513,22 @@ const controlStyle = computed(() => {
   if (hasFloatingLabel.value) {
     return undefined
   }
+  /*
+    All the way round for both variants. The filled one used to draw only its bottom edge, Material's
+    underline, which on a grey surface inside a white dialog read as a smudge with a line under it
+    rather than as a box to type in.
+
+    A filled field also gets a 2px band of the card's surface just inside the frame, so the grey sits
+    inset from its border rather than running up against it. A second inset shadow, listed after the
+    frame so the frame paints over it, and widened with the frame on focus so the band stays 2px.
+    Not on a `transparent` field, which has no fill to set apart.
+  */
+  const frame = `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
+  const hasInset = !props.outlined && !props.transparent
   return {
-    boxShadow: props.outlined
-      ? `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
-      : `inset 0 -${frameWidth.value}px 0 0 ${frameColor.value}`
+    boxShadow: hasInset
+      ? `${frame}, inset 0 0 0 ${frameWidth.value + 2}px var(--w-input-inset)`
+      : frame
   }
 })
 

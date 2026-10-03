@@ -301,6 +301,7 @@ import { useI18n } from 'vue-i18n'
 
 import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
+import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { isVisible } from '@/helpers/anchors'
@@ -314,6 +315,7 @@ import {
   findTabsets,
   writeBlockContent
 } from '@/helpers/asciidocBlocks'
+import { findImages, imageValues, writeImage } from '@/helpers/asciidocImages'
 import { ASCIIDOC_LANGUAGE_ID, registerAsciidocLanguage } from '@/helpers/monacoAsciidoc'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -433,6 +435,15 @@ const PREVIEW_CONTEXT_ABOVE = 0.2
  */
 const isAtLeastMd = useMinWidth(1024)
 
+/** The "Image Properties" lens, over every image in the source. See `useImagePropertiesLens`. */
+const imageLens = useImagePropertiesLens({
+  getEditor: () => editor,
+  languageId: ASCIIDOC_LANGUAGE_ID,
+  findImages,
+  imageValues,
+  writeImage
+})
+
 const state = reactive({
   // -> Read once, as a DEFAULT rather than a binding: past this the pane is the author's to open and
   //    close, and a bound one would slam it shut the moment a window was dragged narrower mid-edit
@@ -466,6 +477,10 @@ function insertAssets() {
  * is a link to a PDF, not a broken picture.
  */
 function insertAssetClb(opts) {
+  // -> A pick the Image Properties dialog asked for is the dialog's, not the cursor's
+  if (imageLens.takePick(opts)) {
+    return
+  }
   let content = ''
   switch (opts.type) {
     case 'asset': {
@@ -1443,6 +1458,9 @@ onMounted(async () => {
     }
   })
 
+  // -> "Image Properties" over every image in the page -- see `useImagePropertiesLens`
+  imageLens.register()
+
   // -> Define Formatting Actions
   editor.addAction({
     contextMenuGroupId: 'asciidoc.editing',
@@ -1634,6 +1652,7 @@ onBeforeUnmount(() => {
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
   // -> Registered against the language, not this editor, so nothing else takes it down
   blockLensProvider?.dispose()
+  imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header
   stopCollabSession()

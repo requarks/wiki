@@ -3,6 +3,7 @@ import { TextSelection } from 'prosemirror-state'
 import { twemojiHtml } from '@/renderers/markdown'
 import { fileSrc } from '@/renderers/shared'
 
+import { imageClasses } from './images'
 import { schema } from './schema'
 
 /**
@@ -651,16 +652,24 @@ class CodeBlockView {
  * A page's source points at a picture the way a file beside it would — `photo.png` — and the renderer
  * resolves that to `/_files/…` at render time. The same resolution is used here, so the editor shows
  * the picture rather than a broken icon, while the source keeps the path that was written.
+ *
+ * Its classes are drawn too -- the alignment and framing the Image Properties dialog sets -- so that
+ * the content stylesheet floats, centres and frames it here as it will on the page. Written as the
+ * whole `className` on every update, which is why the selection is remembered rather than read back.
  */
 class ImageView {
   constructor(node, view, getPos, context) {
     this.node = node
     this.context = context
+    this.selected = false
     this.dom = document.createElement('img')
     this.apply(node)
   }
 
   apply(node) {
+    this.dom.className = [...imageClasses(node), this.selected ? 'is-selected' : '']
+      .filter(Boolean)
+      .join(' ')
     this.dom.src = fileSrc(node.attrs.src, this.context.pagePath())
     this.dom.alt = node.attrs.alt ?? ''
     this.dom.title = node.attrs.title ?? ''
@@ -686,10 +695,12 @@ class ImageView {
   }
 
   selectNode() {
+    this.selected = true
     this.dom.classList.add('is-selected')
   }
 
   deselectNode() {
+    this.selected = false
     this.dom.classList.remove('is-selected')
   }
 }

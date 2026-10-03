@@ -397,11 +397,18 @@ export const useSiteStore = defineStore('site', {
     }
   },
   actions: {
+    /**
+     * @param {object} [opts]
+     * @param {boolean} [opts.insertMode] Pick something for the editor rather than browse.
+     * @param {?string} [opts.folderPath] The folder to open on, slash-separated and empty for the
+     *        site root. Absent, the manager opens on the folder of the page being viewed.
+     */
     openFileManager(opts) {
       this.$patch({
         overlay: 'FileManager',
         overlayOpts: {
-          insertMode: opts?.insertMode ?? false
+          insertMode: opts?.insertMode ?? false,
+          folderPath: opts?.folderPath ?? null
         }
       })
     },

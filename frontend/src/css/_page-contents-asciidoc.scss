@@ -133,6 +133,55 @@
     text-align: start;
   }
 
+  /* -- Images ------------------------------------------------------------------ */
+
+  /*
+    Alignment and framing, which Asciidoctor puts on an image's WRAPPER rather than on the picture --
+    `div.imageblock` for a block image, `span.image` for an inline one: `align=center` as
+    `text-center`, `float=right` as `right`, and each role as itself. The same choices the markdown
+    classes in `_page-contents.scss` make (`align-*` and `decor-*` on the `img`), reached through the
+    wrapper; the Image Properties lens writes either form (`helpers/asciidocImages.js`).
+
+    Centred by margins as well as by `text-align`, since whether an `img` here is a block or inline is
+    the reset's business and not this rule's.
+  */
+  .imageblock {
+    &.text-center {
+      text-align: center;
+
+      img {
+        margin-inline: auto;
+      }
+    }
+    &.text-right {
+      text-align: right;
+
+      img {
+        margin-inline-start: auto;
+      }
+    }
+  }
+  .imageblock,
+  span.image {
+    &.left {
+      float: left;
+      margin: 0.3em 1.2em 0.8em 0;
+    }
+    &.right {
+      float: right;
+      margin: 0.3em 0 0.8em 1.2em;
+    }
+    &.decor-shadow img {
+      box-shadow: var(--content-image-shadow);
+    }
+    &.decor-border img {
+      border: 1px solid var(--content-rule-strong);
+    }
+    &.decor-rounded img {
+      border-radius: 12px;
+    }
+  }
+
   /* -- Boxed blocks ------------------------------------------------------------ */
 
   /*

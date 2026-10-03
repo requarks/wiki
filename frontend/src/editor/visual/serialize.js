@@ -278,19 +278,25 @@ const nodes = {
   },
 
   image(state, node) {
-    const src = node.attrs.src.replace(/[()]/g, '\\$&')
+    // -> A space would end the destination, so such an address goes in angle brackets
+    const src = /\s/.test(node.attrs.src)
+      ? `<${node.attrs.src.replace(/[<>]/g, '\\$&')}>`
+      : node.attrs.src.replace(/[()]/g, '\\$&')
     const title = node.attrs.title ? ` "${node.attrs.title.replace(/"/g, '\\"')}"` : ''
     /*
       `markdown-it-imsize`'s own syntax, which is a suffix on the destination. Either half may be
       missing -- `=300x`, `=x200` -- and both are written, because a height on its own is a size the
       plugin reads and dropping it would resize the picture on a save nobody asked to resize it in.
+
+      It goes AFTER the title. The plugin reads the title first and the size second, so the other order
+      is not an image at all: `![a](x.png =300x "t")` renders as the literal text.
     */
     const size =
       node.attrs.width || node.attrs.height
         ? ` =${node.attrs.width ?? ''}x${node.attrs.height ?? ''}`
         : ''
     state.write(
-      `![${state.esc(node.attrs.alt || '')}](${src}${size}${title})${writeMdAttrs(node.attrs.mdAttrs)}`
+      `![${state.esc(node.attrs.alt || '')}](${src}${title}${size})${writeMdAttrs(node.attrs.mdAttrs)}`
     )
   },
 
