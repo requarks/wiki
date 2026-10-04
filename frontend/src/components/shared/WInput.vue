@@ -612,7 +612,7 @@ registerWithForm?.({ validate })
 
 defineExpose({
   validate,
-  focus: () => inputEl.value?.focus(),
+  focus: (options) => inputEl.value?.focus(options),
   /**
    * The underlying `<input>` or `<textarea>`.
    *

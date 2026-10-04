@@ -1,12 +1,5 @@
 <template>
   <div class="page-talk">
-    <div class="flex items-center pb-2">
-      <w-icon class="mr-2" name="la:comments" color="grey" />
-      <div class="text-caption text-grey-7">{{ t('common.comments.title') }}</div>
-      <w-space />
-      <w-spinner v-if="state.loading" color="primary" size="sm" />
-    </div>
-    <w-separator />
     <div class="py-6 text-center text-body2 text-grey-6" v-if="state.loading && !state.loaded">
       {{ t('common.comments.loading') }}
     </div>
@@ -74,14 +67,13 @@
               @cancel="cancelReply" />
           </div>
         </div>
-        <w-separator />
       </template>
       <!--
         The four states the bottom of a talk page can be in, in the order they rule each other out:
         the page is closed to comments, the reader may not write here, they are not signed in on a
         wiki that does not take anonymous ones, or there is a box.
       -->
-      <div class="py-4">
+      <div class="py-4" ref="composeEl">
         <w-banner v-if="!isOpen" :class="bannerClass">
           {{ t('common.comments.closed') }}
         </w-banner>
@@ -101,6 +93,7 @@
         </div>
         <page-comment-editor
           v-else
+          ref="newEditor"
           v-model="state.draft"
           v-model:author-name="state.authorName"
           v-model:author-email="state.authorEmail"
@@ -127,6 +120,7 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { apiErrorMessage } from '@/helpers/apiError'
+import { scrollBehavior } from '@/helpers/motion'
 
 import PageComment from '@/components/PageComment.vue'
 import PageCommentEditor from '@/components/PageCommentEditor.vue'
@@ -162,6 +156,9 @@ const { t } = useI18n()
 // DATA
 
 const replyEditor = ref(null)
+/** The bottom of the view -- the box, or whatever stands in for it. See `startNewComment`. */
+const composeEl = ref(null)
+const newEditor = ref(null)
 
 const state = reactive({
   loading: false,
@@ -196,6 +193,13 @@ const canModerate = computed(() => userStore.pagePermissions.includes('manage:co
 
 /** Whether this page takes comments at all — the switch in its own properties dialog. */
 const isOpen = computed(() => pageStore.allowComments)
+
+/**
+ * Whether there is anything for the New Comment button beside the view to take the reader to: a box,
+ * or for a guest on a wiki that wants an account, the invitation to sign in that stands in for one. Not
+ * a page closed to comments, nor a reader the page refuses -- the button would lead to a banner saying no.
+ */
+const canStartComment = computed(() => isOpen.value && (canWrite.value || isGuest.value))
 
 const bannerClass = computed(() =>
   dark.isActive ? 'bg-grey-9 text-grey-4' : 'bg-grey-2 text-grey-8'
@@ -379,10 +383,30 @@ function confirmDelete(comment) {
   })
 }
 
+/**
+ * Brings the box at the bottom into view and puts the caret in it.
+ *
+ * Scrolled to the middle of the screen rather than left to focus, which would scroll only as far as
+ * the textarea's bottom edge -- leaving the Post button and the hint under it below the fold. Focus
+ * then holds still so as not to cut the scroll short.
+ */
+function startNewComment() {
+  composeEl.value?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
+  newEditor.value?.focus({ preventScroll: true })
+}
+
 // MOUNTED
 
 onMounted(() => {
   load()
+})
+
+// EXPOSED
+
+/* -> For the column beside the view (`pages/Index.vue`), which offers New Comment from there */
+defineExpose({
+  canStartComment,
+  startNewComment
 })
 </script>
 
@@ -398,6 +422,7 @@ onMounted(() => {
 */
 .page-talk {
   max-width: 900px;
+  margin-inline: auto;
   color: #26292e;
 
   @at-root .body--dark & {
@@ -405,11 +430,17 @@ onMounted(() => {
   }
 }
 
-.page-talk-thread {
-  padding: 4px 0;
+/* -> Cards now, so threads are told apart by the space between them rather than by a rule */
+.page-talk-thread + .page-talk-thread {
+  margin-top: 20px;
 }
 
+/* -> Stepped in as far as the replies are (`.page-comment.is-reply`), since it is where one will land */
 .page-talk-reply {
-  padding: 8px 0 12px 42px;
+  padding: 12px 0 4px 48px;
+
+  @media (max-width: $breakpoint-xs-max) {
+    padding-left: 24px;
+  }
 }
 </style>

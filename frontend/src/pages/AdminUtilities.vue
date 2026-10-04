@@ -444,6 +444,7 @@ import { confirm } from '@/composables/dialog'
 import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
+import { pagePathHash } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import { MarkdownRenderer } from '@/renderers/markdown'
@@ -759,6 +760,8 @@ function purgeRevokedKeys() {
  *
  * Three kinds of page come out of it: the markdown set under `/sample`, a blog at `/my-blog`, and
  * the posts filed under that blog. See `SAMPLE_PAGES` and `SAMPLE_BLOG` in `helpers/sampleContent`.
+ * One of the markdown set, `SAMPLE_DISCUSSION`, then has a discussion written onto its Talk tab. And
+ * where the site has no home page yet, one is written linking to all of them (`buildSampleHome`).
  *
  * The pages are written one at a time through the ordinary create endpoint — the same one the editor
  * saves through — rather than by a bulk call on the server. That is what makes the content
@@ -772,11 +775,37 @@ function purgeRevokedKeys() {
  * them.
  */
 async function generateSampleContent() {
-  const { SAMPLE_CONTENT_TAG, SAMPLE_PAGES, SAMPLE_BLOG, SAMPLE_BLOG_POSTS } =
-    await import('@/helpers/sampleContent')
+  const {
+    SAMPLE_CONTENT_TAG,
+    SAMPLE_PAGES,
+    SAMPLE_DISCUSSION,
+    SAMPLE_BLOG,
+    SAMPLE_BLOG_POSTS,
+    buildSampleHome
+  } = await import('@/helpers/sampleContent')
   const { serializeBlog } = await import('@/helpers/pageBlog')
+  /*
+    Asked before the confirmation rather than left to the create call to refuse, so that the count it
+    shows is what will be written, and so that a home page somebody wrote is not reported as a failure.
+  */
+  let hasHome
+  try {
+    hasHome = await pageExists(adminStore.currentSiteId, 'home')
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('admin.utilities.generateSampleFailed'),
+      caption: apiErrorMessage(err)
+    })
+    return
+  }
+  const markdownPages = [
+    ...(hasHome ? [] : [buildSampleHome()]),
+    ...SAMPLE_PAGES,
+    SAMPLE_DISCUSSION.page
+  ]
   // -> The blog's own front page as well as its posts: it is a page that gets written like any other
-  const total = SAMPLE_PAGES.length + 1 + SAMPLE_BLOG_POSTS.length
+  const total = markdownPages.length + 1 + SAMPLE_BLOG_POSTS.length
   confirm({
     title: t('admin.utilities.generateSample'),
     message: t('admin.utilities.generateSampleConfirm', {
@@ -812,9 +841,9 @@ async function generateSampleContent() {
         not be fetched costs a missing picture rather than a page.
       */
       const icons = new Set(
-        [SAMPLE_BLOG, ...SAMPLE_PAGES, ...SAMPLE_BLOG_POSTS].map((page) => page.icon)
+        [SAMPLE_BLOG, ...markdownPages, ...SAMPLE_BLOG_POSTS].map((page) => page.icon)
       )
-      for (const page of SAMPLE_PAGES) {
+      for (const page of markdownPages) {
         for (const [, name] of page.content.matchAll(/\bicon="([a-z0-9-]+:[a-z0-9-]+)"/g)) {
           icons.add(name)
         }
@@ -839,7 +868,7 @@ async function generateSampleContent() {
         `publishStartDate` is what the listing orders and dates them by.
       */
       const documents = [
-        ...SAMPLE_PAGES.map((page) => ({
+        ...markdownPages.map((page) => ({
           ...page,
           editor: 'markdown',
           render: md.render(page.content, { pagePath: page.path })
@@ -858,6 +887,7 @@ async function generateSampleContent() {
       ]
 
       let created = 0
+      let discussionPageId = null
       const failures = []
       for (const page of documents) {
         try {
@@ -879,11 +909,48 @@ async function generateSampleContent() {
           if (!resp?.ok) {
             throw new Error(resp?.message || 'An unexpected error occured.')
           }
+          if (page.path === SAMPLE_DISCUSSION.page.path) {
+            discussionPageId = resp.page.id
+          }
           created++
         } catch (err) {
           // -> One page at a time, and one failure does not stop the rest: a path already taken is
           //    the likely case, and the other forty-odd pages are still worth having
           failures.push(`${page.path} — ${apiErrorMessage(err)}`)
+        }
+      }
+
+      /*
+        The discussion, onto the page just written for it — and only then: a discussion page left
+        over from an earlier run already has one, and a second copy beside it is not a busier talk
+        page, it is the same conversation twice.
+
+        Through its own endpoint rather than the comment one, which posts as whoever is signed in.
+        That one creates the authors as accounts and stores each comment at the date given, which
+        is sent as an instant rather than an offset so that every comment is dated from the same now.
+      */
+      if (discussionPageId) {
+        const now = Temporal.Now.instant()
+        const toComment = ({ author, guestName, content, hoursAgo, editedHoursAgo }) => ({
+          ...(author ? { author } : { guestName }),
+          content,
+          createdAt: hoursBefore(now, hoursAgo),
+          ...(editedHoursAgo !== undefined && { editedAt: hoursBefore(now, editedHoursAgo) })
+        })
+        try {
+          await API_CLIENT.post('system/sample-content/comments', {
+            json: {
+              siteId,
+              pageId: discussionPageId,
+              authors: SAMPLE_DISCUSSION.authors,
+              threads: SAMPLE_DISCUSSION.threads.map((thread) => ({
+                ...toComment(thread),
+                replies: (thread.replies ?? []).map(toComment)
+              }))
+            }
+          }).json()
+        } catch (err) {
+          failures.push(`${SAMPLE_DISCUSSION.page.path} comments — ${apiErrorMessage(err)}`)
         }
       }
 
@@ -908,6 +975,29 @@ async function generateSampleContent() {
     }
     state.sampleLoading = false
   })
+}
+
+/**
+ * Whether a site has a page at a path, in its primary locale — which is where an unprefixed URL, and
+ * so the site root, looks. Only a 404 means no; any other failure is thrown, since it answers nothing.
+ */
+async function pageExists(siteId, path) {
+  try {
+    await API_CLIENT.get(`sites/${siteId}/pages/${pagePathHash(path)}`).json()
+    return true
+  } catch (err) {
+    if (err.response?.status === 404) {
+      return false
+    }
+    throw err
+  }
+}
+
+/** An instant some hours before another, as the ISO string the API takes. Fractions of an hour count. */
+function hoursBefore(instant, hours) {
+  return instant
+    .subtract({ minutes: Math.round(hours * 60) })
+    .toString({ smallestUnit: 'millisecond' })
 }
 
 /**

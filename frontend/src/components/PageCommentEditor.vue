@@ -367,7 +367,17 @@ function onKeydown(ev) {
 // EXPOSED
 
 defineExpose({
-  focus: () => inputEl.value?.focus()
+  /**
+   * Into the textarea, from whichever tab the box was left on: the textarea is only hidden while the
+   * preview is up, and focusing a hidden one does nothing at all.
+   *
+   * @param {FocusOptions} [options] Passed on -- `preventScroll` for a caller doing its own scrolling.
+   */
+  focus: async (options) => {
+    state.tab = 'write'
+    await nextTick()
+    inputEl.value?.focus(options)
+  }
 })
 </script>
 

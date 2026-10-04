@@ -1202,6 +1202,15 @@ function unwrap(resp) {
 }
 
 /**
+ * The hash a page at this path is addressed by, as `GET /sites/:siteId/pages/:pageIdOrHash` takes it.
+ *
+ * @param {string} path A route path or a stored one; both reduce to the same thing.
+ */
+export function pagePathHash(path) {
+  return fastHash(normalizePath(path))
+}
+
+/**
  * Reduce a route path to the form the server stores a page under.
  *
  * A page is looked up by the hash of its path, so the two sides have to agree on what the path *is*

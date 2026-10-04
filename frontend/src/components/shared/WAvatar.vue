@@ -95,4 +95,15 @@ const styles = computed(() => {
   height: 48px;
   font-size: 28.8px;
 }
+
+/*
+  Initials are centred on the letter, not on the line box. Flex centres the span's box, and where a
+  capital sits inside that box is down to the font's ascent and descent and to how the browser rounds
+  them -- which under fractional scaling put the initial of a 28px avatar visibly high. Trimmed to
+  cap height and baseline, the box IS the letter. Where `text-box` is unsupported it is ignored and
+  the old (nearly) centred layout stands.
+*/
+:slotted(span) {
+  text-box: trim-both cap alphabetic;
+}
 </style>

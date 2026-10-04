@@ -182,14 +182,19 @@ export default {
     }
     WIKI.logger.info(`Using PostgreSQL v${dbVersion.version} [ OK ]`)
 
-    // DEV - Drop schema
-    if (WIKI.config.dev?.dropSchema) {
-      WIKI.logger.warn(`DEV MODE - Dropping schema ${WIKI.config.db.schema}...`)
-      await db.execute(`DROP SCHEMA IF EXISTS ${WIKI.config.db.schema} CASCADE;`)
-    }
-
-    // Run Migrations
     if (!workerMode) {
+      /*
+        DEV - Drop schema. The main process only: it is what migrates the schema back. A worker
+        thread opens its own connection through here whenever a job first runs, mid-session, and
+        dropping there wiped the database out from under the running instance with nothing to put
+        it back.
+      */
+      if (WIKI.config.dev?.dropSchema) {
+        WIKI.logger.warn(`DEV MODE - Dropping schema ${WIKI.config.db.schema}...`)
+        await db.execute(`DROP SCHEMA IF EXISTS ${WIKI.config.db.schema} CASCADE;`)
+      }
+
+      // Run Migrations
       await this.syncSchemas(db)
     }
 

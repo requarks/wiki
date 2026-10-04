@@ -141,6 +141,7 @@ export const AUDIT_ACTIONS = {
     'purgeApiKeys',
     'invalidateSessions',
     'purgePageHistory',
+    'generateSampleComments',
     'purgeSampleContent',
     'purgeEmptyFolders',
     'checkForUpdate',

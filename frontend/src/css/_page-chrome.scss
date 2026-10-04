@@ -398,6 +398,47 @@ $toc-overlay-max: 749.98px;
   }
 }
 
+/*
+  The Talk view's surface: the pale end of the page header's gradient (`.page-header` above), so
+  the comments drawn on it as white cards (`PageComment.vue`) have something to stand off.
+
+  On the body rather than on the column, which also holds the footer: the footer is the same in
+  every view and should not change colour with the tab. The selected Talk tab is drawn in the same
+  value -- see the end of `PageViewTabs.vue` -- because the tab and what is under it are one surface.
+*/
+.page-article-col.is-talk .page-container-body {
+  @at-root .body--light & {
+    background-color: $grey-1;
+  }
+  @at-root .body--dark & {
+    background-color: $dark-3;
+  }
+}
+
+/*
+  The Talk view's column (`pages/Index.vue`): a stack of full-width buttons, starting level with the
+  first comment rather than with the top of the column -- the column runs up beside the Article / Talk
+  strip, and what these act on is the discussion under it. That is the strip's 44px (`PageViewTabs.vue`,
+  which in this view gives up its 1px gap) and the 1rem the view's body is padded by.
+
+  Only while it is a column. As a panel over the view, there is nothing beside it to line up with.
+*/
+.page-talk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: calc(44px + 1rem) 1rem 1rem;
+
+  @media (max-width: $toc-overlay-max) {
+    padding-top: 1rem;
+  }
+
+  .w-btn {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
 .page-sidebar {
   flex: 0 0 300px;
 

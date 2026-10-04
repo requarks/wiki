@@ -12,6 +12,9 @@ import {
 } from '../db/schema.ts'
 import maintenance from '../core/maintenance.ts'
 import { audit } from '../helpers/audit.ts'
+import { COMMENT_MAX_LENGTH, COMMENT_MIN_LENGTH, HANDLE_PATTERN } from '../models/comments.ts'
+import type { DatedCommentInput } from '../models/comments.ts'
+import { SAMPLE_ACCOUNT_DOMAIN } from '../models/users.ts'
 import { PAGE_PROBLEM_CHECKS } from '../models/pageProblems.ts'
 import { purgeTimeframes } from '../models/pageHistory.ts'
 import type { PurgeTimeframe } from '../models/pageHistory.ts'
@@ -26,6 +29,44 @@ import type { FastifyInstance } from 'fastify'
  * without the other leaves content that nothing will clean up.
  */
 const SAMPLE_CONTENT_TAG = 'test'
+
+/** One comment of the sample discussion, as `POST /sample-content/comments` takes it. */
+interface SampleComment {
+  author?: string
+  guestName?: string
+  content: string
+  createdAt: string
+  editedAt?: string
+}
+
+/** The JSON Schema of a {@link SampleComment}, shared by the comments that start a thread and their replies. */
+const sampleCommentProperties = {
+  author: {
+    type: 'string',
+    pattern: HANDLE_PATTERN.source,
+    description: 'The handle of one of `authors`. Leave out, and give `guestName`, for a guest.'
+  },
+  guestName: {
+    type: 'string',
+    minLength: 1,
+    maxLength: 255,
+    description: 'The name a guest comment is posted under.'
+  },
+  content: {
+    type: 'string',
+    minLength: COMMENT_MIN_LENGTH,
+    maxLength: COMMENT_MAX_LENGTH
+  },
+  createdAt: {
+    type: 'string',
+    format: 'date-time'
+  },
+  editedAt: {
+    type: 'string',
+    format: 'date-time',
+    description: 'When it was last changed, for a comment that is to read as edited.'
+  }
+} as const
 
 /**
  * Every instance connected to this database, with how it is using the connection pool.
@@ -1451,7 +1492,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Delete every page tagged `test` on a site',
         description:
-          "The counterpart to the admin area's Generate Sample Content, which tags everything it writes `test`. Membership of that tag is the only thing consulted, so a page tagged by hand is deleted too. Folders are left standing: they carry no tags, and one somebody made themselves must not go because a sample page was filed in it. Each page is deleted the way the file manager deletes one — its history records the deletion, and its copy on every storage target goes with it.",
+          "The counterpart to the admin area's Generate Sample Content, which tags everything it writes `test`. Membership of that tag is the only thing consulted, so a page tagged by hand is deleted too. Folders are left standing: they carry no tags, and one somebody made themselves must not go because a sample page was filed in it. Each page is deleted the way the file manager deletes one — its history records the deletion, and its copy on every storage target goes with it. Its comments go with it, and then so does every sample account (see `POST /system/sample-content/comments`) that no remaining comment is credited to.",
         tags: ['System'],
         body: {
           type: 'object',
@@ -1491,11 +1532,166 @@ async function routes(app: FastifyInstance) {
         id: req.session.user!.id,
         permissions: req.session.permissions ?? []
       })
-      await audit(req, 'admin', 'purgeSampleContent', { siteId: req.body.siteId, count })
+      // -> Their comments went with the pages, so the accounts that wrote only those are unused now
+      const accounts = await WIKI.models.users.deleteUnusedSampleAccounts()
+      await audit(req, 'admin', 'purgeSampleContent', { siteId: req.body.siteId, count, accounts })
 
       return {
         ok: true,
-        message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG}.`,
+        message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG} and ${accounts} sample account(s).`,
+        count
+      }
+    }
+  )
+
+  /**
+   * GENERATE SAMPLE COMMENTS
+   *
+   * The discussion on the sample content's talk page. Generate Sample Content writes its pages through
+   * the ordinary page endpoint, but a comment posted through the ordinary comment endpoint is written
+   * by whoever is signed in, and a talk page with one participant is not what a talk page looks like.
+   * So the threads are handed over whole, with who wrote each comment and when, and stored as given.
+   *
+   * The authors are real accounts — see `users.ensureSampleAccounts` for why, and for why none of them
+   * can sign in. Purge Sample Content deletes them once the comments they wrote are gone.
+   *
+   * Nothing is notified and no webhook fires: nobody posted anything.
+   */
+  app.post<{
+    Body: {
+      siteId: string
+      pageId: string
+      authors: Array<{ handle: string; name: string }>
+      threads: Array<SampleComment & { replies?: SampleComment[] }>
+    }
+  }>(
+    '/sample-content/comments',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Write the sample discussion onto a page',
+        description: `Used by the admin area's Generate Sample Content. Creates each author as an account that cannot sign in (no password, unverified), under the reserved \`${SAMPLE_ACCOUNT_DOMAIN}\` address domain (an existing one is reused), then stores the threads with the dates given. Replies are one level deep, as everywhere else. Nothing is notified. Purge Sample Content deletes these accounts once no comment is credited to them.`,
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['siteId', 'pageId', 'authors', 'threads'],
+          properties: {
+            siteId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            pageId: {
+              type: 'string',
+              format: 'uuid'
+            },
+            authors: {
+              type: 'array',
+              maxItems: 50,
+              items: {
+                type: 'object',
+                required: ['handle', 'name'],
+                properties: {
+                  handle: {
+                    type: 'string',
+                    pattern: HANDLE_PATTERN.source
+                  },
+                  name: {
+                    type: 'string',
+                    minLength: 1,
+                    maxLength: 255
+                  }
+                }
+              }
+            },
+            threads: {
+              type: 'array',
+              maxItems: 200,
+              items: {
+                type: 'object',
+                required: ['content', 'createdAt'],
+                properties: {
+                  ...sampleCommentProperties,
+                  replies: {
+                    type: 'array',
+                    maxItems: 200,
+                    items: {
+                      type: 'object',
+                      required: ['content', 'createdAt'],
+                      properties: sampleCommentProperties
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Sample comments written successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              count: {
+                type: 'number',
+                description: 'Comments written, replies included.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const { siteId, pageId, authors, threads } = req.body
+      if (!WIKI.sites[siteId]) {
+        return reply.badRequest('This site does not exist.')
+      }
+      if (!(await WIKI.models.comments.pageRef(siteId, pageId))) {
+        return reply.notFound('This page does not exist on this site.')
+      }
+      const handles = new Set(authors.map((author) => author.handle))
+      for (const comment of threads.flatMap((thread) => [thread, ...(thread.replies ?? [])])) {
+        if (comment.author ? !handles.has(comment.author) : !comment.guestName) {
+          return reply.badRequest(
+            comment.author
+              ? `"${comment.author}" is not one of the authors.`
+              : 'A comment needs either an author or a guest name.'
+          )
+        }
+      }
+
+      const accountIds = await WIKI.models.users.ensureSampleAccounts(authors)
+      const names = new Map(authors.map((author) => [author.handle, author.name]))
+      const toInput = (comment: SampleComment): DatedCommentInput => {
+        const createdAt = new Date(comment.createdAt)
+        return {
+          content: comment.content,
+          authorId: comment.author ? accountIds.get(comment.author)! : null,
+          authorName: comment.author ? names.get(comment.author)! : comment.guestName!,
+          // -> A guest's comment carries the address it was posted with; an account's carries none
+          authorEmail: comment.author ? '' : `guest@${SAMPLE_ACCOUNT_DOMAIN}`,
+          createdAt,
+          updatedAt: comment.editedAt ? new Date(comment.editedAt) : createdAt
+        }
+      }
+      const count = await WIKI.models.comments.insertThreads(
+        pageId,
+        threads.map((thread) => ({
+          ...toInput(thread),
+          replies: (thread.replies ?? []).map(toInput)
+        }))
+      )
+      await audit(req, 'admin', 'generateSampleComments', { siteId, pageId, count })
+
+      return {
+        ok: true,
+        message: `Wrote ${count} sample comment(s).`,
         count
       }
     }

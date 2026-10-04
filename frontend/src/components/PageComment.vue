@@ -1,7 +1,7 @@
 <template>
   <div class="page-comment" :class="{ 'is-reply': Boolean(comment.parentId) }">
     <div class="page-comment-avatar">
-      <w-avatar :size="comment.parentId ? `28px` : `36px`" color="primary" text-color="white">
+      <w-avatar :size="comment.parentId ? `28px` : `36px`" :color="avatarColor" text-color="white">
         <img v-if="comment.authorHasAvatar" :src="`/_user/${comment.authorId}/avatar`" alt="" />
         <span v-else>{{ initial }}</span>
       </w-avatar>
@@ -92,6 +92,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { relativeDate } from '@/helpers/datetime'
+import { avatarColorFor } from '@/helpers/avatarColors'
 import { renderComment } from '@/renderers/comment'
 
 import PageCommentEditor from '@/components/PageCommentEditor.vue'
@@ -170,6 +171,19 @@ const wasEdited = computed(() => {
 
 const initial = computed(() => (props.comment.authorName || '?').trim().charAt(0).toUpperCase())
 
+/**
+ * One colour per author, so a thread reads as who said what at a glance. An account is keyed on its
+ * id, which survives a rename; a guest has no account behind the name, so the name is all there is --
+ * the same name posting twice is the same colour, which is also what the reader would assume.
+ */
+const avatarColor = computed(() =>
+  avatarColorFor(
+    props.comment.authorId
+      ? props.comment.authorId
+      : `guest:${(props.comment.authorName || '').trim().toLowerCase()}`
+  )
+)
+
 // WATCHERS
 
 // -> The box is filled from the comment as it stands the moment it opens, and emptied when it closes
@@ -185,27 +199,85 @@ watch(
 
 <style lang="scss">
 /*
-  Stated again here rather than left to `.page-talk`, so that a comment drawn anywhere else -- a
-  moderation screen, a notification -- carries its own ink. See the note in `PageTalk.vue`.
+  A card: a surface, ink and edge of its own, so that a comment reads the same on the Talk view's grey
+  and anywhere else it is drawn -- a moderation screen, a notification. See the note in `PageTalk.vue`.
+
+  A reply is the same card stepped in, hung off a line that comes down from under the parent's avatar
+  and branches into each reply at its own avatar -- see `.is-reply` below.
 */
 .page-comment {
+  /* -> The geometry the thread line is drawn from, so the phone layout changes the numbers only */
+  --comment-pad-x: 16px;
+  --comment-gap: 8px;
+  --reply-indent: 48px;
+  --thread-line: #{$grey-4};
+
   display: flex;
   gap: 12px;
-  padding: 12px 0;
+  padding: 12px var(--comment-pad-x);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background-color: #fff;
   color: #26292e;
 
   @at-root .body--dark & {
+    /* -> Opaque, the same shade a translucent white would make over the Talk view's `$dark-3`: each
+          reply draws its branch and the trunk past it over the same stretch, and a translucent line
+          doubled up wherever the two overlap */
+    --thread-line: #{color-mix(in srgb, #fff 14%, $dark-3)};
+    border-color: rgba(255, 255, 255, 0.06);
+    background-color: $dark-2;
     color: rgba(255, 255, 255, 0.87);
   }
 
-  &.is-reply {
-    padding-left: 24px;
-    border-left: 2px solid rgba(0, 0, 0, 0.08);
-    margin-left: 18px;
+  & + & {
+    margin-top: var(--comment-gap);
+  }
 
-    @at-root .body--dark & {
-      border-left-color: rgba(255, 255, 255, 0.12);
+  @media (max-width: $breakpoint-xs-max) {
+    --comment-pad-x: 12px;
+    --reply-indent: 40px;
+  }
+
+  /*
+    The thread line, drawn by the replies rather than by the parent, since each knows whether it is
+    the last one: every reply draws the branch into itself, from the bottom of the card above down to
+    its own avatar and round the corner to its edge, and every reply but the last also carries the
+    trunk on past itself to the next one.
+
+    Placed in the reply's own border-box terms: the trunk runs down the middle of the parent's 36px
+    avatar (`--trunk-x` from the parent's edge, which is the reply's edge less the indent), and the
+    branch meets the reply at the middle of its 28px one. The extra pixel either side of each offset is
+    the card's border, which an absolutely placed child measures from the inside of.
+  */
+  &.is-reply {
+    --trunk-x: calc(1px + var(--comment-pad-x) + 18px);
+    --trunk-left: calc(var(--trunk-x) - var(--reply-indent) - 2px);
+    position: relative;
+    margin-left: var(--reply-indent);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: calc(-1px - var(--comment-gap));
+      left: var(--trunk-left);
+      width: calc(var(--reply-indent) - var(--trunk-x) + 1px);
+      /* -> Centred on the middle of the avatar, 29px down: border, padding, `.page-comment-avatar`'s
+            2px, half of 28px -- plus one for the line's own half-width below it */
+      height: calc(var(--comment-gap) + 30px);
+      border-bottom: 2px solid var(--thread-line);
+      border-left: 2px solid var(--thread-line);
+      border-bottom-left-radius: 10px;
     }
+  }
+
+  &.is-reply:has(+ .is-reply)::after {
+    content: '';
+    position: absolute;
+    top: calc(-1px - var(--comment-gap));
+    bottom: -1px;
+    left: var(--trunk-left);
+    border-left: 2px solid var(--thread-line);
   }
 }
 
@@ -268,11 +340,19 @@ watch(
   }
 
   code {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.9em;
+  }
+
+  /*
+    The chip is for code in a sentence only. Scoped by selector rather than undone inside a block,
+    because the undoing lost: the dark theme's tint is stated through `.body--dark`, which outweighs
+    a `pre code` reset, and every line of a block came out with a second background over the block's.
+  */
+  :not(pre) > code {
     padding: 1px 4px;
     border-radius: 3px;
     background-color: rgba(0, 0, 0, 0.06);
-    font-family: var(--font-mono, monospace);
-    font-size: 0.9em;
 
     @at-root .body--dark & {
       background-color: rgba(255, 255, 255, 0.1);
@@ -288,11 +368,6 @@ watch(
 
     @at-root .body--dark & {
       background-color: rgba(255, 255, 255, 0.08);
-    }
-
-    code {
-      padding: 0;
-      background: none;
     }
   }
 

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import QRCode from 'qrcode'
 import {
   authentication as authenticationTable,
+  comments as commentsTable,
   groups as groupsTable,
   sessions as sessionsTable,
   userAvatars,
@@ -190,6 +191,12 @@ const profilePrefsKeys = [
   'underlineLinks',
   'contentTextSize'
 ] as const
+
+/**
+ * The address domain of the accounts the sample content's discussion is written by, and the only
+ * thing that identifies them. `.invalid` is reserved (RFC 6761), so nothing is ever delivered to one.
+ */
+export const SAMPLE_ACCOUNT_DOMAIN = 'sample.invalid'
 
 /**
  * The square, in pixels, an avatar is resized to. The profile page and the account menu both display
@@ -1397,6 +1404,79 @@ class Users {
     await WIKI.db.delete(sessionsTable).where(eq(sessionsTable.userId, id))
     const result = await WIKI.db.delete(usersTable).where(eq(usersTable.id, id))
     return (result.rowCount ?? 0) > 0
+  }
+
+  /**
+   * The accounts the sample content's discussion is written by, created where they do not exist yet.
+   *
+   * Real accounts rather than guest names, because what the sample discussion is for is looking at a
+   * talk page, and most of what a talk page draws — a profile link, a handle, a mention that resolves
+   * — needs an account behind the comment.
+   *
+   * None of them can sign in: no password is stored, and the account is unverified, which login
+   * refuses and the notification mailer skips. Not inactive, though that would be the obvious lock —
+   * a mention only resolves to an active account, and mentions are half of what the discussion is
+   * for. An instance that generated sample content must not have gained a set of accounts anybody
+   * could use, and the reserved address domain means no link could ever reach one either. They are
+   * told apart from everybody else by their address alone, under {@link SAMPLE_ACCOUNT_DOMAIN}, which
+   * is what {@link deleteUnusedSampleAccounts} looks for. A handle somebody real already holds is left
+   * off rather than refused, so a mention of it reaches that person's profile instead.
+   *
+   * @returns The account id for each handle asked for
+   */
+  async ensureSampleAccounts(
+    authors: Array<{ handle: string; name: string }>
+  ): Promise<Map<string, string>> {
+    const ids = new Map<string, string>()
+    for (const author of authors) {
+      const email = `${author.handle.toLowerCase()}@${SAMPLE_ACCOUNT_DOMAIN}`
+      const existing = await this.getByEmail(email)
+      if (existing) {
+        ids.set(author.handle, existing.id)
+        continue
+      }
+      const userId = await this.createUser({ name: author.name, email, isVerified: false })
+      try {
+        await this.updateUser(userId, { handle: author.handle })
+      } catch (err: any) {
+        WIKI.logger.debug(`Sample account ${email} left without a handle: ${err.message}`)
+      }
+      ids.set(author.handle, userId)
+    }
+    return ids
+  }
+
+  /**
+   * Delete the sample accounts that no comment is written by any more.
+   *
+   * Called after the sample pages are purged, whose comments go with them by the foreign key's
+   * cascade. Accounts are instance-wide and pages belong to one site, so an account still credited
+   * with a comment — on another site's sample discussion — is kept until that one is purged too.
+   *
+   * @returns How many accounts were deleted
+   */
+  async deleteUnusedSampleAccounts(): Promise<number> {
+    const rows = await WIKI.db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(
+        and(
+          ilike(usersTable.email, `%@${SAMPLE_ACCOUNT_DOMAIN}`),
+          notExists(
+            WIKI.db
+              .select({ id: commentsTable.id })
+              .from(commentsTable)
+              .where(eq(commentsTable.authorId, usersTable.id))
+          )
+        )
+      )
+    let deleted = 0
+    for (const row of rows) {
+      if (await this.deleteUser(row.id)) {
+        deleted++
+      }
+    }
+    return deleted
   }
 
   async init(ids: SystemIds): Promise<void> {

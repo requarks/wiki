@@ -76,6 +76,11 @@ The web components a page can embed. Each is a \`::block-name\` in the source.
 - [Widgets](/sample/blocks/widgets)
 - [Index and Include](/sample/blocks/navigation)
 
+## A discussion
+
+- [Discussion](/sample/discussion) — a page with a busy Talk tab: several
+  people, threads of replies, mentions, a guest or two
+
 ## A folder tree to walk
 
 - [Getting Started](/sample/guides/getting-started/installation) — three pages, two levels down
@@ -1002,6 +1007,323 @@ const res = await fetch(\`/_api/sites/\${'$'}{siteId}/pages\`, {
 ]
 
 /**
+ * A page with a busy Talk tab, and the discussion on it.
+ *
+ * The page is written like any of {@link SAMPLE_PAGES}; the comments are not, because the comment
+ * endpoint posts as whoever is signed in and a talk page with one participant does not look like one.
+ * They go to `POST /system/sample-content/comments` instead, which creates each of `authors` as an
+ * account that cannot sign in and stores the threads with the dates given here — so the page reads
+ * as a week of conversation rather than as forty comments posted "just now".
+ *
+ * What it is meant to exercise: threads with no replies and threads with a dozen, replies that answer
+ * a reply (which the thread being one level deep files at the bottom of it, so they say who they are
+ * answering with a mention), mentions that resolve and one that does not, guests beside accounts, a
+ * comment that was edited, one-word comments and long ones, and every piece of markdown the comment
+ * renderer allows.
+ *
+ * Dates are hours before the moment of generating, and a reply is always later than its thread.
+ */
+export const SAMPLE_DISCUSSION = {
+  /** @type {SamplePage} */
+  page: {
+    path: 'sample/discussion',
+    title: 'Discussion',
+    description:
+      'A page with a busy Talk tab: a proposal to archive stale pages, and plenty of opinions about it.',
+    icon: 'mdi:forum',
+    tags: ['proposal'],
+    content: `# Discussion
+
+A proposal to **archive stale pages**, put up for comment.
+
+> [!TIP] This page is here for its Talk tab
+> The proposal is fictional. What it is for is the discussion underneath it — several people,
+> threads of replies, mentions and a couple of guests — so the comments view has something to draw.
+
+## Summary
+
+Move every page that nobody has edited in **two years** into an \`/archive\` folder, leave a
+redirection at its old path, and show a banner on it saying it may be out of date.
+
+## Motivation
+
+- Search results are crowded with pages describing systems we retired
+- Nobody knows which pages are still true, so nobody trusts any of them
+- New starters read the stale ones first, because the stale ones are the ones with the good titles
+
+## What would happen
+
+1. A nightly job lists pages whose last edit is older than the threshold
+2. Each owner gets two weeks' notice, and can mark a page **evergreen** to keep it where it is
+3. Whatever is left is moved, with a redirection left behind
+
+## Open questions
+
+- Is two years the right threshold, or should it differ per section?
+- Who owns a page whose author has left?
+- Should archived pages stay searchable?
+`
+  },
+  authors: [
+    { handle: 'ana_ferreira', name: 'Ana Ferreira' },
+    { handle: 'dbrooks', name: 'Daniel Brooks' },
+    { handle: 'meilin', name: 'Mei Lin Chen' },
+    { handle: 'cokafor', name: 'Chidi Okafor' },
+    { handle: 'sigrid_h', name: 'Sigrid Halvorsen' },
+    { handle: 'tomasz-k', name: 'Tomasz Kowalski' },
+    { handle: 'priya_r', name: 'Priya Raman' }
+  ],
+  threads: [
+    {
+      author: 'ana_ferreira',
+      hoursAgo: 172,
+      content: `Opening this up for comments. I'd like to hear from anyone who owns a large section before we decide anything — especially @dbrooks and @sigrid_h, since Operations and Onboarding between them hold about half the pages that would move.
+
+The question I care most about is the **threshold**. Two years was a guess.`,
+      replies: [
+        {
+          author: 'dbrooks',
+          hoursAgo: 170,
+          content: `Thanks for writing this up. Two years is too short for Operations: half our runbooks describe things that fail once every three years, and the runbook not changing is the *point*.`
+        },
+        {
+          author: 'sigrid_h',
+          hoursAgo: 168.5,
+          content: `Onboarding is the opposite problem — two years is far too long. Anything we haven't touched in six months is probably wrong.`
+        },
+        {
+          author: 'meilin',
+          hoursAgo: 167,
+          content: `So per section, then? That was the first open question anyway.`
+        },
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 165,
+          content: `@meilin yes, I think that's where this is going. A default, and a per-folder override. @dbrooks would five years work for Operations?`
+        },
+        {
+          author: 'dbrooks',
+          hoursAgo: 160,
+          content: `@ana_ferreira five is fine. Better still if a page can say it is evergreen and opt out entirely, which the proposal already has.`
+        },
+        {
+          author: 'tomasz-k',
+          hoursAgo: 141,
+          content: `+1 to per-folder thresholds.`
+        }
+      ]
+    },
+    {
+      author: 'cokafor',
+      hoursAgo: 166,
+      content: `Strong objection to moving anything. Every move breaks:
+
+- links from outside the wiki (tickets, chat history, bookmarks)
+- the edit history people search by path
+- muscle memory
+
+A redirection fixes the first one *most* of the time. Why not leave the pages where they are and just add the banner?`,
+      replies: [
+        {
+          author: 'priya_r',
+          hoursAgo: 164,
+          content: `Because the banner alone doesn't fix search, which is the actual complaint. A stale page in the results with a warning on it is still a stale page in the results.`
+        },
+        {
+          author: 'cokafor',
+          hoursAgo: 163,
+          content: `Then lower archived pages in search rather than moving them. Same effect, nothing breaks.`
+        },
+        {
+          author: 'meilin',
+          hoursAgo: 162,
+          content: `I like that a lot better, honestly.`
+        },
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 159,
+          content: `@cokafor that's a good point and I hadn't thought about it. Let me ask the search question separately (it's the third open question) and see where it lands.`
+        },
+        {
+          guestName: 'Jordan',
+          hoursAgo: 120,
+          content: `Reader from another team here. Please don't break the links — half our tickets point at your runbooks.`
+        }
+      ]
+    },
+    {
+      author: 'tomasz-k',
+      hoursAgo: 150,
+      content: `Here's the query I used to count candidates, in case anyone wants to check their own section:
+
+\`\`\`sql
+SELECT path, "updatedAt"
+  FROM pages
+ WHERE "updatedAt" < now() - interval '2 years'
+ ORDER BY "updatedAt"
+\`\`\`
+
+It comes out at **412** pages, of which 290 are under \`/ops\`.`,
+      editedHoursAgo: 149,
+      replies: [
+        {
+          author: 'dbrooks',
+          hoursAgo: 148,
+          content: `290 is more than I expected. I'll go through ours this week.`
+        },
+        {
+          author: 'priya_r',
+          hoursAgo: 147,
+          content: `That query counts a page as fresh if someone fixed a typo in it, which is roughly the opposite of what we want. A typo fix doesn't mean anyone checked the content.`
+        },
+        {
+          author: 'tomasz-k',
+          hoursAgo: 146,
+          content: `@priya_r fair. There's no way to tell those apart, though, short of asking.`
+        },
+        {
+          author: 'sigrid_h',
+          hoursAgo: 145,
+          content: `There is: a "reviewed on" date the owner sets explicitly, separate from the edit date. We do this on paper for the onboarding checklist already.`
+        },
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 144,
+          content: `Adding that to the proposal. @tomasz-k thanks for the numbers.`
+        }
+      ]
+    },
+    {
+      author: 'sigrid_h',
+      hoursAgo: 130,
+      content: `On "who owns a page whose author has left" — I'd suggest the owner of the folder, falling back to whoever last edited it. We have a lot of pages whose only author left in 2023.`
+    },
+    {
+      author: 'priya_r',
+      hoursAgo: 118,
+      content: `On searchability: archived pages should stay searchable, but behind a filter that is **off** by default. The thing people complain about is stumbling onto them, not being unable to find them on purpose.
+
+> I just want the first five results to be things that are true.
+> — every new starter, roughly
+
+A few references for how other wikis handle this:
+
+1. [Wikipedia: Content forking](https://en.wikipedia.org/wiki/Wikipedia:Content_forking)
+2. [The Diátaxis framework](https://diataxis.fr/) on what kind of page each page is meant to be`,
+      replies: [
+        {
+          author: 'cokafor',
+          hoursAgo: 116,
+          content: `Agreed, and this is basically my "lower them in search" idea with a toggle. I could live with that.`
+        },
+        {
+          author: 'meilin',
+          hoursAgo: 115,
+          content: `+1`
+        },
+        {
+          author: 'dbrooks',
+          hoursAgo: 112,
+          content: `Works for me as long as the toggle remembers what I set it to.`
+        },
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 110,
+          content: `Sounds like consensus. @nobody_here would have had an opinion on the default, I suspect, but they're not around any more.`
+        }
+      ]
+    },
+    {
+      guestName: 'R. Alvarez',
+      hoursAgo: 96,
+      content: `Is there a way to subscribe to this discussion without an account? Following along from the partner portal.`,
+      replies: [
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 95,
+          content: `Not yet, sorry — notifications need an account. I'll post the outcome on the blog as well.`
+        }
+      ]
+    },
+    {
+      author: 'meilin',
+      hoursAgo: 72,
+      content: `Small thing: can the banner say *who* to ask about the page, not just that it may be out of date? A warning with nobody to contact just makes people give up.`,
+      replies: [
+        {
+          author: 'sigrid_h',
+          hoursAgo: 71,
+          content: `Yes please. The owner from my comment above would be the natural person.`
+        }
+      ]
+    },
+    {
+      author: 'dbrooks',
+      hoursAgo: 49,
+      content: `Done going through \`/ops\`. Of the 290:
+
+- **180** are still accurate and I've marked them evergreen
+- **85** can go to the archive
+- **25** I couldn't tell, and have asked the on-call rota
+
+So the real number for Operations is closer to a hundred.`,
+      replies: [
+        {
+          author: 'tomasz-k',
+          hoursAgo: 47,
+          content: `That's a much more manageable figure. Nice work.`
+        },
+        {
+          author: 'ana_ferreira',
+          hoursAgo: 46,
+          content: `Thank you @dbrooks, that's exactly the kind of pass I was hoping owners would do. @sigrid_h would you be up for the same on Onboarding?`
+        },
+        {
+          author: 'sigrid_h',
+          hoursAgo: 44,
+          content: `Next week, yes.`
+        }
+      ]
+    },
+    {
+      author: 'ana_ferreira',
+      hoursAgo: 20,
+      content: `Summary of where this has landed, so it isn't buried:
+
+1. **Thresholds per folder**, with a site-wide default of two years
+2. A **reviewed on** date set by the owner, which is what counts — not the edit date
+3. Pages are **not moved**. They get a banner naming an owner, and drop out of search unless a filter is turned on
+4. Ownership falls back to the folder owner, then the last editor
+
+I'll rewrite the proposal along these lines. Last call for objections before Friday.`,
+      editedHoursAgo: 18,
+      replies: [
+        {
+          author: 'cokafor',
+          hoursAgo: 19,
+          content: `No objections from me now that nothing moves. Thanks for listening.`
+        },
+        {
+          author: 'priya_r',
+          hoursAgo: 6,
+          content: `LGTM.`
+        },
+        {
+          guestName: 'Jordan',
+          hoursAgo: 2,
+          content: `Thank you for keeping the links working!`
+        }
+      ]
+    },
+    {
+      author: 'tomasz-k',
+      hoursAgo: 0.5,
+      content: `Late to this, but: will the evergreen flag be visible anywhere? Would be handy in the page list.`
+    }
+  ]
+}
+
+/**
  * The blog the sample content writes, and the posts filed under it.
  *
  * Separate from {@link SAMPLE_PAGES} because a blog is not a page with a body: its front page is
@@ -1645,3 +1967,62 @@ problem this schema does not have.
 `
   }
 ]
+
+/**
+ * The site's home page, linking to every other page the sample content writes.
+ *
+ * Written only where the site has no home page yet — a home page somebody wrote is theirs, and the
+ * generator leaves it alone rather than reporting the path as taken. It carries
+ * {@link SAMPLE_CONTENT_TAG} like everything else, so the purge takes it too and the site goes back to
+ * the welcome screen it had before.
+ *
+ * Built from the lists above rather than written out, so a page added to any of them is linked from
+ * here without anybody remembering to.
+ *
+ * @returns {SamplePage}
+ */
+export function buildSampleHome() {
+  const link = (page) => `- [${page.title}](/${page.path}) — ${page.description}`
+  // -> The markdown set by its folder under /sample; the two pages directly in it lead the list
+  const sections = [
+    ['Formatting', 'sample/formatting/'],
+    ['Blocks', 'sample/blocks/'],
+    ['Guides', 'sample/guides/'],
+    ['Reference', 'sample/reference/']
+  ]
+  const posts = SAMPLE_BLOG_POSTS.toSorted((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+  return {
+    path: 'home',
+    title: 'Home',
+    description: 'Every page of the sample content, in one place.',
+    icon: 'mdi:home',
+    tags: [],
+    content: `# Home
+
+> [!NOTE] Sample content
+> This home page, and every page it links to, was written by **Generate Sample Content** in the
+> admin area's Utilities page, and is deleted by **Purge Sample Content** on the same page.
+
+## Start here
+
+${link(SAMPLE_PAGES.find((page) => page.path === 'sample/home'))}
+${link(SAMPLE_DISCUSSION.page)}
+
+${sections
+  .map(
+    ([heading, prefix]) => `## ${heading}
+
+${SAMPLE_PAGES.filter((page) => page.path.startsWith(prefix))
+  .map(link)
+  .join('\n')}`
+  )
+  .join('\n\n')}
+
+## Blog
+
+${link(SAMPLE_BLOG)}
+
+${posts.map(link).join('\n')}
+`
+  }
+}

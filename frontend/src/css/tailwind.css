@@ -298,6 +298,25 @@
   --color-yellow-6: #ffeb3b;
   --color-yellow-9: #f9a825;
 
+  /*
+    -- Avatar fills ------------------------------------------------------
+    The hues the Material families above leave out, for `helpers/avatarColors.js`, which interleaves
+    them with ten Material tones into one wheel. Material has nothing between deep orange and green
+    that holds a white initial, nor a magenta, so these were picked in OKLCH at the hue between two
+    neighbours and darkened until white text clears 5:1 -- the same footing as the Material tones they
+    sit beside.
+  */
+  --color-avatar-orange: #b15501;
+  --color-avatar-amber: #9a6404;
+  --color-avatar-olive: #7e6f01;
+  --color-avatar-lime: #5d7800;
+  --color-avatar-sea: #077f56;
+  --color-avatar-ocean: #02789d;
+  --color-avatar-slate: #5d7089;
+  --color-avatar-violet: #7b56d8;
+  --color-avatar-magenta: #b939a4;
+  --color-avatar-plum: #8d617e;
+
   /* -- Typography ---------------------------------------------------------- */
   --font-sans: 'Roboto', -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'Roboto Mono', Consolas, 'Liberation Mono', Courier, monospace;

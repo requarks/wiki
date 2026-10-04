@@ -207,6 +207,21 @@ export interface CommentInput {
   authorIP: string
 }
 
+/** A comment as `insertThreads` stores it: written by somebody, at a time given rather than now. */
+export interface DatedCommentInput {
+  content: string
+  authorId: string | null
+  authorName: string
+  authorEmail: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+/** A comment that starts a thread, and the replies under it. */
+export interface DatedThreadInput extends DatedCommentInput {
+  replies?: DatedCommentInput[]
+}
+
 /** The definition of the provider the wiki implements itself. See `BUILTIN_PROVIDER`. */
 const BUILTIN_DEFINITION = {
   title: 'Built-in Comments',
@@ -753,6 +768,33 @@ class Comments {
       })
       .returning()
     return this.describe(row!)
+  }
+
+  /**
+   * Store whole threads at once, each comment with the dates it is to carry.
+   *
+   * For the sample content's discussion and nothing else: a talk page written in one go would
+   * otherwise read "just now" from top to bottom, which is not what one looks like. None of what
+   * {@link create} answers to applies — there is no reply to rewrite, since a thread is given as a
+   * comment and its replies, and nobody posted anything to be notified of.
+   *
+   * @returns How many comments were stored, replies included
+   */
+  async insertThreads(pageId: string, threads: DatedThreadInput[]): Promise<number> {
+    let stored = 0
+    for (const { replies = [], ...comment } of threads) {
+      const [root] = await WIKI.db
+        .insert(commentsTable)
+        .values({ ...comment, pageId, parentId: null })
+        .returning({ id: commentsTable.id })
+      if (replies.length > 0) {
+        await WIKI.db
+          .insert(commentsTable)
+          .values(replies.map((reply) => ({ ...reply, pageId, parentId: root!.id })))
+      }
+      stored += 1 + replies.length
+    }
+    return stored
   }
 
   /** Replace the text of a comment. Who may is decided by the route; this only writes. */

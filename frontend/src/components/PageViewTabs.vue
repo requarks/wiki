@@ -418,4 +418,23 @@ function onKeydown(ev) {
     box-shadow: 0 0 8px color-mix(in srgb, $primary 65%, transparent);
   }
 }
+
+/*
+  Opening onto the Talk view, whose surface is grey rather than the article's (`.page-article-col.is-talk`
+  in `_page-chrome.scss`): the selected tab takes that grey, so it still reads as the front edge of
+  what is below it. And the strip gives up its 1px gap -- it exists for a site banner, which the Talk
+  view never shows, and left open it would run a line of the article's colour between tab and surface.
+*/
+.page-view-tabs:has(+ .page-article-col.is-talk) {
+  margin-bottom: 0;
+
+  .page-view-tab.is-active {
+    @at-root .body--light & {
+      background-color: $grey-1;
+    }
+    @at-root .body--dark & {
+      background-color: $dark-3;
+    }
+  }
+}
 </style>

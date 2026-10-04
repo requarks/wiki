@@ -161,6 +161,7 @@
                 is left under the strip is exactly what it gets -->
         <w-scroll-area
           class="page-container-scrl page-article-col flex-1 min-h-0"
+          :class="{ 'is-talk': activeView === `talk` }"
           ref="pageScroller"
           v-else>
           <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
@@ -198,7 +199,7 @@
               `v-show` rather than `v-if` on the article below, so that leaving the discussion and
               coming back does not re-run the page's own scripts or lose where the reader was in it.
             -->
-            <page-talk v-if="activeView === `talk`" />
+            <page-talk v-if="activeView === `talk`" ref="talkView" />
             <page-links v-if="activeView === `links`" />
             <!--
               A blog's front page, which has no article to draw: its posts are what stands in place of
@@ -350,6 +351,31 @@
           rather than built a second time.
         -->
         <page-blog-sidebar v-if="isBlog" />
+        <!--
+          The Talk view's column: what can be started from it, in place of the contents, tags, rating
+          and last editor, which are all about the article and are not what is on screen. Down at the
+          height of the first comment rather than up beside the tab strip -- see `.page-talk-actions`.
+        -->
+        <div v-else-if="activeView === `talk`" class="page-talk-actions">
+          <w-btn
+            class="acrylic-btn"
+            flat
+            no-caps
+            color="primary"
+            icon="la:comment-medical"
+            :label="t('common.comments.newComment')"
+            :disable="!talkView?.canStartComment"
+            @click="startNewComment" />
+          <!-- -> Not built yet: shown so the column says what it will hold, and held off until then -->
+          <w-btn
+            class="acrylic-btn"
+            flat
+            no-caps
+            color="primary"
+            icon="la:highlighter"
+            :label="t('common.comments.newAnnotation')"
+            disable />
+        </div>
         <template v-else>
           <template v-if="showToc">
             <!-- TOC -->
@@ -703,6 +729,8 @@ const state = reactive({
 const pageContents = ref(null)
 /** The article column, which is what scrolls -- see `scrollPageToTop`. */
 const pageScroller = ref(null)
+/** The Talk view while it is on screen, for the New Comment button in the column beside it. */
+const talkView = ref(null)
 
 // COMPUTED
 
@@ -1456,6 +1484,12 @@ function openTocPanel() {
 
 function closeTocPanel() {
   state.tocPanelOpen = false
+}
+
+/* -> Out of the way first where the column is a panel over the view: the box is under it */
+function startNewComment() {
+  closeTocPanel()
+  talkView.value?.startNewComment()
 }
 
 /**
