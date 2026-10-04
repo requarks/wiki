@@ -1,8 +1,9 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
-import { and, asc, count, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import {
+  commentAnnotations as annotationsTable,
   comments as commentsTable,
   pages as pagesTable,
   users as usersTable
@@ -86,6 +87,32 @@ export const COMMENT_MAX_LENGTH = 8000
 
 /** The shortest a comment may be, so that an empty box and a stray keystroke are both refused. */
 export const COMMENT_MIN_LENGTH = 2
+
+/**
+ * The most passages one comment may annotate.
+ *
+ * A review of a page is a handful of remarks about it; fifty is room for a thorough one, and a limit
+ * at all is what keeps a single post from becoming a few thousand rows.
+ */
+export const ANNOTATIONS_MAX = 50
+
+/** The longest an annotation's note may be. Shorter than a comment: it is a remark on one passage. */
+export const ANNOTATION_NOTE_MAX_LENGTH = 2000
+
+/**
+ * The longest passage that may be annotated, in characters of the article's text.
+ *
+ * A passage is quoted back in the Talk view and searched for in the article every time the
+ * discussion is opened, so it is a phrase or a few sentences — a remark on a whole section belongs in
+ * the comment itself.
+ */
+export const ANNOTATION_QUOTE_MAX_LENGTH = 1000
+
+/**
+ * The most context kept either side of a passage. The client takes 32 characters; the slack is so
+ * that the two can be tuned apart without the server refusing what an older tab sends.
+ */
+export const ANNOTATION_CONTEXT_MAX_LENGTH = 64
 
 /** How long a client waits between posts when nothing is configured, in seconds. */
 const DEFAULT_POST_COOLDOWN = 30
@@ -171,6 +198,46 @@ export interface CommentsPublicConfig {
   maxLength: number
 }
 
+/**
+ * Where an annotated passage is in the article, described so that it can be found again after the
+ * page has changed. Text throughout is the article's as `frontend/src/helpers/annotations.js` reads
+ * it: the rendered page with every run of whitespace folded into one space.
+ */
+export interface CommentAnchor {
+  /** The passage itself. What has to still be in the page for the annotation to be found. */
+  exact: string
+  /** The text just before it, which is what tells apart two places the same phrase occurs. */
+  prefix: string
+  /** The text just after it, likewise. */
+  suffix: string
+  /** The id of the heading it sat under, or null above the first heading. */
+  heading: string | null
+  /** How far into that heading's section it started, in characters — the last tie-breaker. */
+  offset: number
+}
+
+/** One annotation as the client posts it, alongside the comment it belongs to. */
+export interface AnnotationInput {
+  note: string
+  anchor: CommentAnchor
+}
+
+/** One annotation as the API answers with it. */
+export interface AnnotationEntry {
+  id: string
+  commentId: string
+  position: number
+  note: string
+  anchor: CommentAnchor
+  createdAt: Date
+  updatedAt: Date
+  /** When it was marked done, or null while it is open. */
+  resolvedAt: Date | null
+  resolvedById: string | null
+  /** Who marked it done, while that account exists. */
+  resolvedByName: string | null
+}
+
 /** One comment as the API answers with it. Neither the email nor the address is ever in here. */
 export interface CommentEntry {
   id: string
@@ -187,6 +254,13 @@ export interface CommentEntry {
   authorHandle: string | null
   /** Whether the comment was written by somebody with no account. */
   isGuest: boolean
+  /**
+   * Whether this is the placeholder a deleted comment leaves behind for its replies. Such an entry
+   * carries nothing of what was deleted: no content, no author, no annotations.
+   */
+  isDeleted: boolean
+  /** The passages of the article it is about, in the order they were picked. Empty for most. */
+  annotations: AnnotationEntry[]
 }
 
 /** A handle that resolved to somebody, as the renderer needs it to draw the mention as a link. */
@@ -205,6 +279,8 @@ export interface CommentInput {
   authorName: string
   authorEmail: string
   authorIP: string
+  /** The passages it is about. Only for a comment that starts a thread — see `create`. */
+  annotations?: AnnotationInput[]
 }
 
 /** A comment as `insertThreads` stores it: written by somebody, at a time given rather than now. */
@@ -647,6 +723,7 @@ class Comments {
         createdAt: commentsTable.createdAt,
         updatedAt: commentsTable.updatedAt,
         authorId: commentsTable.authorId,
+        deletedAt: commentsTable.deletedAt,
         storedName: commentsTable.authorName,
         userName: usersTable.name,
         userHandle: usersTable.handle,
@@ -657,6 +734,7 @@ class Comments {
       .where(eq(commentsTable.pageId, pageId))
       .orderBy(asc(commentsTable.createdAt))
       .limit(limit)
+    const annotations = await this.annotationsFor(rows.map((row) => row.id))
     return rows.map((row) => ({
       id: row.id,
       parentId: row.parentId,
@@ -669,7 +747,9 @@ class Comments {
       authorName: row.userName ?? row.storedName,
       authorHasAvatar: row.userHasAvatar ?? false,
       authorHandle: row.userHandle ?? null,
-      isGuest: row.authorId === null
+      isGuest: row.authorId === null && !row.deletedAt,
+      isDeleted: Boolean(row.deletedAt),
+      annotations: annotations.get(row.id) ?? []
     }))
   }
 
@@ -698,12 +778,15 @@ class Comments {
     return row ?? null
   }
 
-  /** How many comments a page has. What the Talk tab's badge counts. */
+  /**
+   * How many comments a page has. What the Talk tab's badge counts -- so not the placeholders deleted
+   * comments leave behind, which are nothing anybody said.
+   */
   async countForPage(pageId: string): Promise<number> {
     const [row] = await WIKI.db
       .select({ total: count() })
       .from(commentsTable)
-      .where(eq(commentsTable.pageId, pageId))
+      .where(and(eq(commentsTable.pageId, pageId), isNull(commentsTable.deletedAt)))
     return Number(row?.total ?? 0)
   }
 
@@ -722,6 +805,7 @@ class Comments {
         authorId: commentsTable.authorId,
         authorEmail: commentsTable.authorEmail,
         authorIP: commentsTable.authorIP,
+        deletedAt: commentsTable.deletedAt,
         pageId: commentsTable.pageId,
         path: pagesTable.path,
         locale: pagesTable.locale,
@@ -742,6 +826,10 @@ class Comments {
    * itself a reply is rewritten to that reply's own parent, so answering the third message in a thread
    * puts the answer at the bottom of the thread rather than starting a fourth level of indentation.
    * A `parentId` on another page is refused outright — that is not a thread, it is a mistake.
+   *
+   * Annotations are only for a comment that starts a thread, and a reply carrying any is refused
+   * rather than having them dropped: a reply answers the comment above it, and the passages it was
+   * posted about would be shown nowhere.
    */
   async create(input: CommentInput): Promise<CommentEntry> {
     let parentId: string | null = null
@@ -755,19 +843,38 @@ class Comments {
       }
       parentId = parent.parentId ?? parent.id
     }
-    const [row] = await WIKI.db
-      .insert(commentsTable)
-      .values({
-        pageId: input.pageId,
-        parentId,
-        content: input.content,
-        authorId: input.authorId,
-        authorName: input.authorName,
-        authorEmail: input.authorEmail,
-        authorIP: input.authorIP
-      })
-      .returning()
-    return this.describe(row!)
+    const annotations = input.annotations ?? []
+    if (parentId && annotations.length > 0) {
+      throw new Error('A reply cannot annotate the page. Only a comment that starts a thread can.')
+    }
+    // -> One transaction, so that a comment never exists without the passages it was posted about
+    //    -- its text may well be empty, and the annotations are then the whole of what it says
+    const row = await WIKI.db.transaction(async (tx) => {
+      const [comment] = await tx
+        .insert(commentsTable)
+        .values({
+          pageId: input.pageId,
+          parentId,
+          content: input.content,
+          authorId: input.authorId,
+          authorName: input.authorName,
+          authorEmail: input.authorEmail,
+          authorIP: input.authorIP
+        })
+        .returning()
+      if (annotations.length > 0) {
+        await tx.insert(annotationsTable).values(
+          annotations.map((annotation, position) => ({
+            commentId: comment!.id,
+            position,
+            note: annotation.note.trim(),
+            anchor: annotation.anchor
+          }))
+        )
+      }
+      return comment!
+    })
+    return this.describe(row, (await this.annotationsFor([row.id])).get(row.id))
   }
 
   /**
@@ -804,24 +911,191 @@ class Comments {
       .set({ content, updatedAt: new Date() })
       .where(eq(commentsTable.id, commentId))
       .returning()
-    return row ? this.describe(row) : null
+    return row ? this.describe(row, (await this.annotationsFor([row.id])).get(row.id)) : null
   }
 
   /**
-   * Delete a comment, and with it any replies underneath.
+   * Delete a comment.
    *
-   * The replies go by the foreign key's own cascade rather than by a second statement: a reply exists
-   * to answer something, and left behind it would be half of a conversation nobody can read.
+   * Its replies stay unless `withReplies` asks otherwise: one that has any is kept as a placeholder
+   * for them (see `discard`), and one that has none is deleted outright. With `withReplies` the
+   * thread goes whole, by the foreign key's cascade -- a moderator's choice, which the route checks.
+   * That is also the one way a placeholder is deleted directly: what is left under it is the thread.
    *
-   * @returns How many rows went, replies included
+   * @returns Whether there was one to delete, whether it was kept as a placeholder, and how many
+   *   replies went with it
    */
-  async remove(commentId: string): Promise<number> {
-    const replies = await WIKI.db
+  async remove(
+    commentId: string,
+    { withReplies = false }: { withReplies?: boolean } = {}
+  ): Promise<{ removed: boolean; keptForReplies: boolean; repliesDeleted: number }> {
+    return WIKI.db.transaction(async (tx) => {
+      if (withReplies) {
+        const [replies] = await tx
+          .select({ total: count() })
+          .from(commentsTable)
+          .where(eq(commentsTable.parentId, commentId))
+        const total = Number(replies?.total ?? 0)
+        if (total > 0) {
+          const result = await tx.delete(commentsTable).where(eq(commentsTable.id, commentId))
+          const removed = (result.rowCount ?? 0) > 0
+          return { removed, keptForReplies: false, repliesDeleted: removed ? total : 0 }
+        }
+      }
+      const outcome = await discard(tx, commentId)
+      return { removed: outcome !== null, keptForReplies: outcome === 'kept', repliesDeleted: 0 }
+    })
+  }
+
+  /**
+   * The annotations of these comments, each comment's in the order they were picked.
+   *
+   * One query for a whole talk page, for the same reason the authors are joined rather than fetched:
+   * the passages a comment is about are part of what the comment IS. Who resolved each one is joined
+   * live, so a rename shows through, and falls away with the account.
+   */
+  async annotationsFor(commentIds: string[]): Promise<Map<string, AnnotationEntry[]>> {
+    const byComment = new Map<string, AnnotationEntry[]>()
+    if (commentIds.length < 1) {
+      return byComment
+    }
+    const rows = await WIKI.db
+      .select({
+        annotation: annotationsTable,
+        resolvedByName: usersTable.name
+      })
+      .from(annotationsTable)
+      .leftJoin(usersTable, eq(usersTable.id, annotationsTable.resolvedById))
+      .where(inArray(annotationsTable.commentId, commentIds))
+      .orderBy(asc(annotationsTable.commentId), asc(annotationsTable.position))
+    for (const { annotation, resolvedByName } of rows) {
+      const list = byComment.get(annotation.commentId) ?? []
+      list.push(describeAnnotation(annotation, resolvedByName))
+      byComment.set(annotation.commentId, list)
+    }
+    return byComment
+  }
+
+  /** How many annotations a comment carries. What decides whether its own text may be empty. */
+  async countAnnotations(commentId: string): Promise<number> {
+    const [row] = await WIKI.db
       .select({ total: count() })
-      .from(commentsTable)
-      .where(eq(commentsTable.parentId, commentId))
-    const result = await WIKI.db.delete(commentsTable).where(eq(commentsTable.id, commentId))
-    return (result.rowCount ?? 0) > 0 ? 1 + Number(replies[0]?.total ?? 0) : 0
+      .from(annotationsTable)
+      .where(eq(annotationsTable.commentId, commentId))
+    return Number(row?.total ?? 0)
+  }
+
+  /**
+   * One annotation with the comment and page it belongs to, which is what every permission check on
+   * it needs: the comment's author, and the page a rule is matched against.
+   *
+   * @returns The annotation, or null when no such annotation exists on this site
+   */
+  async getAnnotationWithComment(annotationId: string, siteId: string) {
+    const [row] = await WIKI.db
+      .select({
+        id: annotationsTable.id,
+        note: annotationsTable.note,
+        resolvedAt: annotationsTable.resolvedAt,
+        commentId: commentsTable.id,
+        authorId: commentsTable.authorId,
+        pageId: commentsTable.pageId,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags,
+        title: pagesTable.title
+      })
+      .from(annotationsTable)
+      .innerJoin(commentsTable, eq(commentsTable.id, annotationsTable.commentId))
+      .innerJoin(pagesTable, eq(pagesTable.id, commentsTable.pageId))
+      .where(and(eq(annotationsTable.id, annotationId), eq(pagesTable.siteId, siteId)))
+    return row ?? null
+  }
+
+  /** Replace the note of an annotation. Who may is decided by the route; this only writes. */
+  async updateAnnotationNote(annotationId: string, note: string): Promise<AnnotationEntry | null> {
+    await WIKI.db
+      .update(annotationsTable)
+      .set({ note: note.trim(), updatedAt: new Date() })
+      .where(eq(annotationsTable.id, annotationId))
+    return this.getAnnotation(annotationId)
+  }
+
+  /**
+   * Mark an annotation done, or open again.
+   *
+   * `updatedAt` is left alone: it says when the note was last changed, and resolving is not a change
+   * to what anybody wrote — `resolvedAt` is its own record of when.
+   *
+   * @param resolvedById Who resolved it, or null to reopen it
+   */
+  async setAnnotationResolved(
+    annotationId: string,
+    resolved: boolean,
+    resolvedById: string | null
+  ): Promise<AnnotationEntry | null> {
+    await WIKI.db
+      .update(annotationsTable)
+      .set(
+        resolved
+          ? { resolvedAt: new Date(), resolvedById }
+          : { resolvedAt: null, resolvedById: null }
+      )
+      .where(eq(annotationsTable.id, annotationId))
+    return this.getAnnotation(annotationId)
+  }
+
+  /**
+   * Delete one annotation, and the comment with it when that was all the comment had to say.
+   *
+   * A comment posted as annotations alone has no text of its own (`create`), so taking its last
+   * annotation leaves a card with nothing in it -- that comment is deleted too, the same way
+   * `remove` deletes one: outright, or kept as a placeholder where it has replies. A comment with text
+   * of its own stays, whatever is left of its annotations. One transaction, so the count of what is
+   * left and the deletion it decides agree.
+   *
+   * @returns Whether there was one to delete, whether the comment went with it, and whether that
+   *   comment was kept as a placeholder for its replies
+   */
+  async removeAnnotation(
+    annotationId: string
+  ): Promise<{ removed: boolean; commentDeleted: boolean; keptForReplies: boolean }> {
+    return WIKI.db.transaction(async (tx) => {
+      const [removed] = await tx
+        .delete(annotationsTable)
+        .where(eq(annotationsTable.id, annotationId))
+        .returning({ commentId: annotationsTable.commentId })
+      if (!removed) {
+        return { removed: false, commentDeleted: false, keptForReplies: false }
+      }
+      const [comment] = await tx
+        .select({ content: commentsTable.content })
+        .from(commentsTable)
+        .where(eq(commentsTable.id, removed.commentId))
+      const [left] = await tx
+        .select({ total: count() })
+        .from(annotationsTable)
+        .where(eq(annotationsTable.commentId, removed.commentId))
+      if (
+        !comment ||
+        Number(left?.total ?? 0) > 0 ||
+        comment.content.trim().length >= COMMENT_MIN_LENGTH
+      ) {
+        return { removed: true, commentDeleted: false, keptForReplies: false }
+      }
+      const outcome = await discard(tx, removed.commentId)
+      return { removed: true, commentDeleted: true, keptForReplies: outcome === 'kept' }
+    })
+  }
+
+  /** One annotation as the API answers with it. */
+  private async getAnnotation(annotationId: string): Promise<AnnotationEntry | null> {
+    const [row] = await WIKI.db
+      .select({ annotation: annotationsTable, resolvedByName: usersTable.name })
+      .from(annotationsTable)
+      .leftJoin(usersTable, eq(usersTable.id, annotationsTable.resolvedById))
+      .where(eq(annotationsTable.id, annotationId))
+    return row ? describeAnnotation(row.annotation, row.resolvedByName) : null
   }
 
   /**
@@ -991,7 +1265,10 @@ class Comments {
   }
 
   /** One stored row as the API answers with it, for a write that already knows its author. */
-  private describe(row: typeof commentsTable.$inferSelect): CommentEntry {
+  private describe(
+    row: typeof commentsTable.$inferSelect,
+    annotations: AnnotationEntry[] = []
+  ): CommentEntry {
     return {
       id: row.id,
       parentId: row.parentId,
@@ -1002,8 +1279,87 @@ class Comments {
       authorName: row.authorName,
       authorHasAvatar: false,
       authorHandle: null,
-      isGuest: row.authorId === null
+      isGuest: row.authorId === null && !row.deletedAt,
+      isDeleted: Boolean(row.deletedAt),
+      annotations
     }
+  }
+}
+
+/** A transaction, as `discard` is handed one. */
+type Transaction = Parameters<Parameters<typeof WIKI.db.transaction>[0]>[0]
+
+/**
+ * Delete a comment, keeping its replies.
+ *
+ * A comment with replies is kept as a placeholder: the replies are other people's words and stay
+ * where they were, so the row they hang from stays too -- emptied of everything that was deleted.
+ * Its text, its author and its annotations go; `deletedAt` is what is left to say a comment was
+ * there. One with no replies is deleted outright, and so is the placeholder above a reply once that
+ * reply was the last one under it: there is nothing left for it to hold.
+ *
+ * @returns `kept` for a placeholder, `deleted` for a row that went, or null when there was none
+ */
+async function discard(tx: Transaction, commentId: string): Promise<'kept' | 'deleted' | null> {
+  const [comment] = await tx
+    .select({ parentId: commentsTable.parentId })
+    .from(commentsTable)
+    .where(and(eq(commentsTable.id, commentId), isNull(commentsTable.deletedAt)))
+  if (!comment) {
+    return null
+  }
+  const [replies] = await tx
+    .select({ total: count() })
+    .from(commentsTable)
+    .where(eq(commentsTable.parentId, commentId))
+  if (Number(replies?.total ?? 0) > 0) {
+    await tx.delete(annotationsTable).where(eq(annotationsTable.commentId, commentId))
+    await tx
+      .update(commentsTable)
+      .set({
+        content: '',
+        authorId: null,
+        authorName: '',
+        authorEmail: '',
+        authorIP: '',
+        meta: {},
+        deletedAt: new Date()
+      })
+      .where(eq(commentsTable.id, commentId))
+    return 'kept'
+  }
+  await tx.delete(commentsTable).where(eq(commentsTable.id, commentId))
+  if (comment.parentId) {
+    const [left] = await tx
+      .select({ total: count() })
+      .from(commentsTable)
+      .where(eq(commentsTable.parentId, comment.parentId))
+    if (Number(left?.total ?? 0) < 1) {
+      await tx
+        .delete(commentsTable)
+        .where(and(eq(commentsTable.id, comment.parentId), isNotNull(commentsTable.deletedAt)))
+    }
+  }
+  return 'deleted'
+}
+
+/** One stored annotation as the API answers with it. */
+function describeAnnotation(
+  row: typeof annotationsTable.$inferSelect,
+  resolvedByName: string | null
+): AnnotationEntry {
+  return {
+    id: row.id,
+    commentId: row.commentId,
+    position: row.position,
+    note: row.note,
+    anchor: row.anchor as CommentAnchor,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    resolvedAt: row.resolvedAt,
+    resolvedById: row.resolvedById,
+    // -> Only while it was actually resolved by somebody who still has an account
+    resolvedByName: row.resolvedAt ? resolvedByName : null
   }
 }
 

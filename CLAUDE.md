@@ -1245,8 +1245,13 @@ delete anybody's. The two are not interchangeable and neither implies the other.
   moderation queue yet, which is what the `meta` column is room for.
 - **Replies are one level deep, enforced in the model**: a `parentId` naming a comment that is itself a
   reply is rewritten to that reply's own parent, so answering the third message in a thread puts the
-  answer at the bottom of the thread. Deleting a comment takes its replies with it, by the foreign
-  key's own cascade — half a conversation is not worth keeping.
+  answer at the bottom of the thread.
+- **Deleting a comment keeps its replies** — they are other people's words. A comment that has any is
+  kept as a placeholder row (`deletedAt` set; content, author and annotations cleared) that draws as
+  "Comment was deleted." with the thread going on under it; one with none is deleted outright, and a
+  placeholder goes once the last reply under it does (`discard` in the model). Taking the whole
+  thread is `withReplies` on the delete route and is a moderator's call: `manage:comments` on the
+  page, never the author's. Placeholders are not counted on the Talk badge.
 - **Markdown is rendered in the browser, at display time**, by `frontend/src/renderers/comment.js` —
   a second, much smaller renderer than the page pipeline. `html: false` is the whole security
   boundary: markdown-it escapes every `<` it is given, so nothing stored is ever HTML and no
@@ -1260,6 +1265,19 @@ delete anybody's. The two are not interchangeable and neither implies the other.
   provider owns a wiki mention handle. The comments endpoint resolves the handles of a whole page in
   one query and the renderer links only those, so a mention never points at whoever took the handle
   later.
+- **A comment that starts a thread can annotate the article**: passages picked from it (New
+  Annotation, `PageAnnotator.vue`), each with a note, posted together as one comment whose own text
+  may then be empty. Rows in `commentAnnotations`, signed-in authors only. A passage is stored as a
+  DESCRIPTION — its text, ~32 characters either side, the heading it sat under — never as a pointer
+  into the render, and is found again in the browser against the article as drawn
+  (`helpers/annotations.js`): whitespace folded, found while the exact text is still there and can be
+  told apart from its other occurrences, reported lost otherwise. Highlights use the CSS Custom
+  Highlight API so nothing is ever inserted into the article — which also means a highlight cannot be
+  clicked: View All Annotations (`PageAnnotationsLayer.vue`) hit-tests a click against each passage's
+  client rects to open its note. Resolving, reopening and deleting one
+  is the author's, `review:pages`' or `manage:comments`'; rewriting its note follows the comment's
+  own edit rule. Deleting the last annotation of a comment with no text of its own deletes the
+  comment too, in the same transaction and the same way its author would (`removeAnnotation`).
 - **The Talk tab is for the built-in provider alone.** `Article` / `Talk` above the content, as on
   Wikipedia, with a count badge that comes with the page (`commentsCount` on the page payload) rather
   than with the comments — it has to be there before the tab is opened. Every other provider draws

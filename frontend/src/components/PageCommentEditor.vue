@@ -99,6 +99,9 @@
           @update:model-value="$emit(`update:authorEmail`, $event)" />
       </div>
     </div>
+    <!-- -> Whatever the caller has to show between the box and the buttons that act on it all: the
+            annotations a comment is about to be posted with -->
+    <slot />
     <div class="flex items-center gap-2 pt-2">
       <div class="text-caption text-grey-6 hidden sm:block">
         {{ t('common.comments.markdownHint') }}
@@ -109,7 +112,7 @@
         flat
         no-caps
         color="grey"
-        :label="t(`common.actions.cancel`)"
+        :label="cancelLabel || t(`common.actions.cancel`)"
         :disable="busy"
         @click="$emit(`cancel`)" />
       <w-btn
@@ -178,6 +181,19 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /** What the button that abandons the box says, where Cancel is not the word for it. */
+  cancelLabel: {
+    type: String,
+    default: ''
+  },
+  /**
+   * Whether the box may be submitted empty, which a comment may be only when its annotations say what
+   * it has to say. The length limit still applies.
+   */
+  allowEmpty: {
+    type: Boolean,
+    default: false
+  },
   busy: {
     type: Boolean,
     default: false
@@ -229,7 +245,8 @@ const charsLeft = computed(() => maxLength.value - props.modelValue.length)
 const showCounter = computed(() => charsLeft.value <= maxLength.value / 10)
 
 const canSubmit = computed(() => {
-  if (props.busy || props.modelValue.trim().length < 2 || charsLeft.value < 0) {
+  const tooShort = !props.allowEmpty && props.modelValue.trim().length < 2
+  if (props.busy || tooShort || charsLeft.value < 0) {
     return false
   }
   // -> A guest has two more fields to fill in, and the button says so by staying off until they are
@@ -377,6 +394,9 @@ defineExpose({
     state.tab = 'write'
     await nextTick()
     inputEl.value?.focus(options)
+    // -> At the end of whatever is already there, such as the mention a reply starts with
+    const el = inputEl.value?.el
+    el?.setSelectionRange(el.value.length, el.value.length)
   }
 })
 </script>

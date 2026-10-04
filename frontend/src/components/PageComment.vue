@@ -1,87 +1,285 @@
 <template>
-  <div class="page-comment" :class="{ 'is-reply': Boolean(comment.parentId) }">
-    <div class="page-comment-avatar">
-      <w-avatar :size="comment.parentId ? `28px` : `36px`" :color="avatarColor" text-color="white">
-        <img v-if="comment.authorHasAvatar" :src="`/_user/${comment.authorId}/avatar`" alt="" />
-        <span v-else>{{ initial }}</span>
-      </w-avatar>
-    </div>
-    <div class="min-w-0 flex-1">
-      <div class="flex flex-wrap items-baseline gap-x-2">
-        <!--
+  <!-- -> The id is what the view scrolls to once a comment has been posted from the annotator -->
+  <div
+    class="page-comment"
+    :id="`comment-${comment.id}`"
+    :class="{ 'is-reply': Boolean(comment.parentId), 'is-deleted': comment.isDeleted }">
+    <!--
+      What is left of a deleted comment that has replies: a note in its place, so the replies under it
+      still read as answers to something. Nothing of the comment is served to draw here -- no author,
+      no text. The one action is a moderator's: taking the whole thread, which is all that is left of
+      it to delete.
+    -->
+    <div class="page-comment-main">
+      <template v-if="comment.isDeleted">
+        <div class="page-comment-avatar">
+          <w-avatar size="36px" color="grey-3" text-color="grey-6">
+            <w-icon name="la:comment-slash" />
+          </w-avatar>
+        </div>
+        <div class="page-comment-deleted">{{ t('common.comments.deleted') }}</div>
+      </template>
+      <template v-else>
+        <div class="page-comment-avatar">
+          <w-avatar
+            :size="comment.parentId ? `28px` : `36px`"
+            :color="avatarColor"
+            text-color="white">
+            <img v-if="comment.authorHasAvatar" :src="`/_user/${comment.authorId}/avatar`" alt="" />
+            <span v-else>{{ initial }}</span>
+          </w-avatar>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex flex-wrap items-baseline gap-x-2">
+            <!--
           A link only where there is a profile to open. A guest has no account behind the name, and
           neither has a comment whose author was deleted -- in both cases the name is a copy the row
           kept, and nothing is there to link to.
         -->
-        <router-link
-          v-if="comment.authorId"
-          class="text-body2 font-medium page-comment-author"
-          :to="`/_user/${comment.authorId}`">
-          {{ comment.authorName }}
-        </router-link>
-        <span class="text-body2 font-medium" v-else>{{ comment.authorName }}</span>
-        <span class="text-caption text-grey-6" v-if="comment.authorHandle">
-          @{{ comment.authorHandle }}
-        </span>
-        <w-chip v-if="comment.isGuest" size="xs" color="grey-4" text-color="grey-8">
-          {{ t('common.comments.guest') }}
-        </w-chip>
-        <span class="text-caption text-grey-6">{{ relativeDate(comment.createdAt) }}</span>
-        <!-- -> Only when it is actually true of this comment, and without repeating the date: what
-             a reader needs to know is that what they are reading is not what was first posted -->
-        <span class="text-caption text-grey-6" v-if="wasEdited">
-          &middot; {{ t('common.comments.edited') }}
-        </span>
-      </div>
-      <page-comment-editor
-        class="pt-2"
-        v-if="editing"
-        v-model="draft"
-        cancelable
-        :rows="3"
-        :busy="busy"
-        :submit-label="t(`common.comments.updateComment`)"
-        @submit="$emit(`save`, { id: comment.id, content: draft })"
-        @cancel="$emit(`cancel-edit`)" />
-      <template v-else>
-        <!--
+            <router-link
+              v-if="comment.authorId"
+              class="text-body2 font-medium page-comment-author"
+              :to="`/_user/${comment.authorId}`">
+              {{ comment.authorName }}
+            </router-link>
+            <span class="text-body2 font-medium" v-else>{{ comment.authorName }}</span>
+            <span class="text-caption text-grey-6" v-if="comment.authorHandle">
+              @{{ comment.authorHandle }}
+            </span>
+            <w-chip v-if="comment.isGuest" size="xs" color="grey-4" text-color="grey-8">
+              {{ t('common.comments.guest') }}
+            </w-chip>
+            <!--
+              When, at the far end of the line: who said it is what the eye looks for first, and the
+              date is what it checks afterwards. Relative, with the moment itself on hover -- "3 days
+              ago" is what a discussion is read by, and the exact time is what settles an argument
+              about which came first.
+            -->
+            <span class="page-comment-when text-caption text-grey-6">
+              <time :datetime="comment.createdAt">
+                {{ relativeDate(comment.createdAt) }}
+                <w-tooltip>{{ fullDate }}</w-tooltip>
+              </time>
+              <!-- -> Only when it is actually true of this comment, and without repeating the date: what
+                   a reader needs to know is that what they are reading is not what was first posted -->
+              <span v-if="wasEdited"> &middot; {{ t('common.comments.edited') }}</span>
+            </span>
+          </div>
+          <page-comment-editor
+            class="pt-2"
+            v-if="editing"
+            v-model="draft"
+            cancelable
+            :allow-empty="hasAnnotations"
+            :rows="3"
+            :busy="busy"
+            :submit-label="t(`common.comments.updateComment`)"
+            @submit="$emit(`save`, { id: comment.id, content: draft })"
+            @cancel="$emit(`cancel-edit`)" />
+          <template v-else>
+            <!--
           `v-html` on output this app rendered a moment ago, from markdown with raw HTML disabled --
           see `renderers/comment.js`, where that is the whole security boundary. Nothing stored is
           HTML, so there is no older sanitizer's work being trusted here.
         -->
-        <div class="page-comment-body" v-html="rendered" />
-        <div class="flex flex-wrap items-center gap-1 pt-1">
-          <w-btn
-            v-if="canReply"
-            size="sm"
-            padding="none xs"
-            flat
-            no-caps
-            color="primary"
-            icon="la:reply"
-            :label="t(`common.comments.reply`)"
-            @click="$emit(`reply`, comment)" />
-          <w-btn
-            v-if="canEdit"
-            size="sm"
-            padding="none xs"
-            flat
-            no-caps
-            color="grey"
-            icon="la:pen"
-            :label="t(`common.actions.edit`)"
-            @click="$emit(`edit`, comment)" />
-          <w-btn
-            v-if="canDelete"
-            size="sm"
-            padding="none xs"
-            flat
-            no-caps
-            color="grey"
-            icon="la:trash"
-            :label="t(`common.actions.delete`)"
-            @click="$emit(`delete`, comment)" />
+            <div class="page-comment-body" v-html="rendered" />
+            <!--
+          The passages of the article this comment is about, each with its note. A resolved one stays,
+          dimmed and struck through: it is part of what was said, and the thread may still be talking
+          about it.
+        -->
+            <ol class="page-comment-annotations" v-if="hasAnnotations">
+              <li
+                v-for="annotation of comment.annotations"
+                :key="annotation.id"
+                class="page-comment-annotation"
+                :class="{ 'is-resolved': Boolean(annotation.resolvedAt) }">
+                <div class="min-w-0 flex-1">
+                  <div class="page-annotation-quote">{{ annotation.anchor.exact }}</div>
+                  <div v-if="editingAnnotationId === annotation.id">
+                    <w-input
+                      type="textarea"
+                      outlined
+                      dense
+                      hide-bottom-space
+                      :rows="2"
+                      :aria-label="t(`common.comments.annotationNotePlaceholder`)"
+                      :disable="annotationBusy === annotation.id"
+                      v-model="noteDraft" />
+                    <div class="flex justify-end gap-1 pt-1">
+                      <w-btn
+                        flat
+                        no-caps
+                        size="sm"
+                        padding="none sm"
+                        color="grey"
+                        :label="t(`common.actions.cancel`)"
+                        :disable="annotationBusy === annotation.id"
+                        @click="$emit(`cancel-annotation-edit`)" />
+                      <w-btn
+                        unelevated
+                        no-caps
+                        size="sm"
+                        padding="none sm"
+                        color="primary"
+                        :label="t(`common.actions.save`)"
+                        :loading="annotationBusy === annotation.id"
+                        :disable="noteDraft.trim().length < 1"
+                        @click="$emit(`save-annotation`, { id: annotation.id, note: noteDraft })" />
+                    </div>
+                  </div>
+                  <template v-else>
+                    <div
+                      class="page-comment-body page-comment-annotation-note"
+                      v-html="renderComment(annotation.note, mentions)" />
+                    <div class="flex flex-wrap items-center gap-1 pt-1">
+                      <span
+                        class="page-comment-annotation-state text-caption"
+                        v-if="annotation.resolvedAt">
+                        <w-icon name="la:check-circle" size="1.1em" />
+                        {{
+                          annotation.resolvedByName
+                            ? t('common.comments.annotationResolvedBy', {
+                                name: annotation.resolvedByName
+                              })
+                            : t('common.comments.annotationResolved')
+                        }}
+                      </span>
+                      <w-btn
+                        v-if="canResolve"
+                        size="sm"
+                        padding="none xs"
+                        flat
+                        no-caps
+                        :color="annotation.resolvedAt ? `grey` : `positive`"
+                        :icon="annotation.resolvedAt ? `la:undo` : `la:check`"
+                        :label="
+                          annotation.resolvedAt
+                            ? t(`common.comments.annotationReopen`)
+                            : t(`common.comments.annotationResolve`)
+                        "
+                        :disable="annotationBusy === annotation.id"
+                        @click="toggleResolved(annotation)" />
+                      <w-btn
+                        v-if="canEditNotes"
+                        size="sm"
+                        padding="none xs"
+                        flat
+                        no-caps
+                        color="grey"
+                        icon="la:pen"
+                        :label="t(`common.actions.edit`)"
+                        :disable="annotationBusy === annotation.id"
+                        @click="$emit(`edit-annotation`, annotation)" />
+                      <w-btn
+                        v-if="canResolve"
+                        size="sm"
+                        padding="none xs"
+                        flat
+                        no-caps
+                        color="grey"
+                        icon="la:trash"
+                        :label="t(`common.actions.delete`)"
+                        :disable="annotationBusy === annotation.id"
+                        @click="$emit(`delete-annotation`, annotation)" />
+                    </div>
+                  </template>
+                </div>
+                <!--
+              Over to the passage in the article. A different icon where the passage can no longer be
+              found, decided before the click rather than after it, so a reader can see at a glance
+              which remarks are about text that has since changed.
+            -->
+                <w-btn
+                  class="page-comment-annotation-goto"
+                  flat
+                  round
+                  dense
+                  size="sm"
+                  :color="isLost(annotation) ? `grey` : `primary`"
+                  :icon="isLost(annotation) ? `la:unlink` : `la:arrow-right`"
+                  :aria-label="
+                    isLost(annotation)
+                      ? t(`common.comments.annotationLostTitle`)
+                      : t(`common.comments.annotationGoTo`)
+                  "
+                  @click="$emit(`locate-annotation`, annotation)">
+                  <w-tooltip anchor="center left" self="center right">
+                    {{
+                      isLost(annotation)
+                        ? t('common.comments.annotationLostTitle')
+                        : t('common.comments.annotationGoTo')
+                    }}
+                  </w-tooltip>
+                </w-btn>
+              </li>
+            </ol>
+          </template>
         </div>
+      </template>
+    </div>
+    <!--
+      What can be done with the comment, in a bar of its own along the bottom of the card rather than
+      under the text: the text is what is being read, and the controls are furniture around it. Not
+      drawn at all where there is nothing to offer, nor while the comment is being edited -- the box
+      in its place carries its own buttons then.
+    -->
+    <div class="page-comment-footer" v-if="hasActions">
+      <w-btn
+        v-if="comment.isDeleted"
+        size="sm"
+        padding="none xs"
+        flat
+        no-caps
+        color="grey"
+        icon="la:trash"
+        :label="t(`common.comments.deleteThread`)"
+        :disable="busy"
+        @click="$emit(`delete-thread`, comment)" />
+      <!--
+        Reply at the far right, set apart from the two that change the comment -- answering is what
+        the bar is mostly for, and Edit and Delete are a reader's own business or a moderator's. Those
+        two are icons alone, with the word in a tooltip and for a screen reader.
+      -->
+      <template v-else>
+        <w-btn
+          v-if="canEdit"
+          size="sm"
+          flat
+          round
+          dense
+          color="grey"
+          icon="la:pen"
+          :aria-label="t(`common.actions.edit`)"
+          @click="$emit(`edit`, comment)">
+          <w-tooltip>{{ t('common.actions.edit') }}</w-tooltip>
+        </w-btn>
+        <w-btn
+          v-if="canDelete"
+          size="sm"
+          flat
+          round
+          dense
+          color="grey"
+          icon="la:trash"
+          :aria-label="t(`common.actions.delete`)"
+          @click="$emit(`delete`, comment)">
+          <w-tooltip>{{ t('common.actions.delete') }}</w-tooltip>
+        </w-btn>
+        <w-separator
+          v-if="canReply && (canEdit || canDelete)"
+          vertical
+          class="page-comment-footer-sep" />
+        <w-btn
+          v-if="canReply"
+          size="sm"
+          padding="none xs"
+          flat
+          no-caps
+          color="primary"
+          icon="la:reply"
+          :label="t(`common.comments.reply`)"
+          @click="$emit(`reply`, comment)" />
       </template>
     </div>
   </div>
@@ -126,9 +324,42 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /** On a deleted comment's placeholder: may take the whole thread under it. A moderator's call. */
+  canDeleteThread: {
+    type: Boolean,
+    default: false
+  },
   busy: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Which of its annotations can still be found in the article, by id. One missing from the map has
+   * not been looked for yet, and is offered as findable -- the click looks again either way.
+   */
+  annotationsFound: {
+    type: Object,
+    default: () => ({})
+  },
+  /** May resolve, reopen and delete its annotations: the author, `review:pages` or `manage:comments`. */
+  canResolve: {
+    type: Boolean,
+    default: false
+  },
+  /** May rewrite the notes of its annotations -- the same people who may edit the comment. */
+  canEditNotes: {
+    type: Boolean,
+    default: false
+  },
+  /** The annotation whose note is being edited, if it is one of these. Owned by the list, as `editing` is. */
+  editingAnnotationId: {
+    type: String,
+    default: null
+  },
+  /** The annotation a request is out for, if it is one of these. */
+  annotationBusy: {
+    type: String,
+    default: ''
   },
   /**
    * Whether this comment is the one being edited.
@@ -142,7 +373,20 @@ const props = defineProps({
   }
 })
 
-defineEmits(['reply', 'edit', 'cancel-edit', 'save', 'delete'])
+const emit = defineEmits([
+  'reply',
+  'edit',
+  'cancel-edit',
+  'save',
+  'delete',
+  'delete-thread',
+  'locate-annotation',
+  'resolve-annotation',
+  'edit-annotation',
+  'cancel-annotation-edit',
+  'save-annotation',
+  'delete-annotation'
+])
 
 // I18N
 
@@ -151,10 +395,33 @@ const { t } = useI18n()
 // DATA
 
 const draft = ref('')
+/** The note of the annotation being edited, as it is being rewritten. */
+const noteDraft = ref('')
 
 // COMPUTED
 
 const rendered = computed(() => renderComment(props.comment.content, props.mentions))
+
+/**
+ * The moment it was posted, in full, for the tooltip on the relative date. In the reader's own locale,
+ * as the relative date beside it is (`helpers/datetime.js`), so the two read as one statement.
+ */
+const fullDate = computed(() =>
+  Temporal.Instant.from(props.comment.createdAt).toLocaleString(undefined, {
+    dateStyle: 'full',
+    timeStyle: 'short'
+  })
+)
+
+const hasAnnotations = computed(() => (props.comment.annotations?.length ?? 0) > 0)
+
+/** Whether the footer has anything in it. See the template. */
+const hasActions = computed(() => {
+  if (props.comment.isDeleted) {
+    return props.canDeleteThread
+  }
+  return !props.editing && (props.canReply || props.canEdit || props.canDelete)
+})
 
 /**
  * Whether this comment has been changed since it was posted.
@@ -184,7 +451,27 @@ const avatarColor = computed(() =>
   )
 )
 
+// METHODS
+
+/** Whether an annotation's passage was looked for in the article and not found. */
+function isLost(annotation) {
+  return props.annotationsFound[annotation.id] === false
+}
+
+function toggleResolved(annotation) {
+  emit('resolve-annotation', { annotation, resolved: !annotation.resolvedAt })
+}
+
 // WATCHERS
+
+// -> As for the comment itself: filled from the note as it stands the moment the box opens
+watch(
+  () => props.editingAnnotationId,
+  (id) => {
+    noteDraft.value = props.comment.annotations?.find((a) => a.id === id)?.note ?? ''
+  },
+  { immediate: true }
+)
 
 // -> The box is filled from the comment as it stands the moment it opens, and emptied when it closes
 //    so that re-opening it never shows a draft from an edit that was abandoned
@@ -212,12 +499,17 @@ watch(
   --reply-indent: 48px;
   --thread-line: #{$grey-4};
 
-  display: flex;
-  gap: 12px;
-  padding: 12px var(--comment-pad-x);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   background-color: #fff;
+  /*
+    Lifted off the Talk view's grey, just: a tight layer for the edge and a soft one for the drop, both
+    faint. Not `--shadow-card`, which is the elevation of a panel -- a page of discussion is a stack
+    of these, and that much shadow on every one of them reads as a pile rather than a column.
+  */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.04);
   color: #26292e;
 
   @at-root .body--dark & {
@@ -227,6 +519,10 @@ watch(
     --thread-line: #{color-mix(in srgb, #fff 14%, $dark-3)};
     border-color: rgba(255, 255, 255, 0.06);
     background-color: $dark-2;
+    /* -> Deeper, since a faint black on a dark ground is nothing at all */
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2);
     color: rgba(255, 255, 255, 0.87);
   }
 
@@ -281,9 +577,48 @@ watch(
   }
 }
 
+.page-comment-main {
+  display: flex;
+  gap: 12px;
+  padding: 12px var(--comment-pad-x);
+}
+
+/*
+  The actions, along the bottom of the card and gathered at its right end. A shade off the card's own
+  surface and a hairline above, so it reads as the card's footer rather than as more of the comment;
+  its corners follow the card's, less the border, since the card cannot clip it -- a reply draws its
+  thread line outside itself.
+*/
+.page-comment-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 3px calc(var(--comment-pad-x) - 6px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0 0 7px 7px;
+  background-color: rgba(0, 0, 0, 0.025);
+
+  @at-root .body--dark & {
+    border-top-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+}
+
+.page-comment-footer-sep {
+  align-self: stretch;
+  margin: 4px 6px;
+}
+
 .page-comment-avatar {
   flex: none;
   padding-top: 2px;
+}
+
+.page-comment-when {
+  margin-inline-start: auto;
+  white-space: nowrap;
 }
 
 .page-comment-author {
@@ -383,5 +718,73 @@ watch(
       text-decoration: underline;
     }
   }
+}
+
+/*
+  The note a deleted comment leaves for its replies: as tall as the avatar beside it and no taller,
+  in grey, so the thread reads on past it. The avatar is a muted circle rather than nothing, because
+  the line down to the replies is drawn from where an avatar sits.
+*/
+.page-comment-deleted {
+  flex: 1;
+  align-self: center;
+  font-size: 14px;
+  font-style: italic;
+  color: $grey-6;
+}
+
+.page-comment.is-deleted .w-avatar {
+  @at-root .body--dark & {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+}
+
+/*
+  A comment's annotations, under its text: each passage quoted, the note on it, and the way over to it
+  in the article at the far end. Divided by rules rather than boxed, since they are parts of one card.
+*/
+.page-comment-annotations {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-comment-annotation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+
+  @at-root .body--dark & {
+    border-top-color: rgba(255, 255, 255, 0.07);
+  }
+
+  /*
+    Done, and still there to be read: dimmed, with what was quoted and what was said struck through.
+    The controls and the line saying who resolved it are not struck -- they are about the annotation,
+    not part of it.
+  */
+  &.is-resolved {
+    .page-annotation-quote,
+    .page-comment-annotation-note {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+  }
+}
+
+.page-comment-annotation-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-end: 4px;
+  color: var(--q-positive);
+}
+
+.page-comment-annotation-goto {
+  flex: none;
+  margin-top: 2px;
 }
 </style>

@@ -1,3 +1,7 @@
+import {
+  ANNOTATION_CONTEXT_MAX_LENGTH,
+  ANNOTATION_QUOTE_MAX_LENGTH
+} from '../../models/comments.ts'
 import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
@@ -78,6 +82,82 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * COMMENT ANCHOR - Where an annotated passage is in the article
+   */
+  app.addSchema({
+    $id: 'CommentAnchor',
+    type: 'object',
+    description:
+      'The passage, described rather than pointed at, so that it can be found again after the page has been edited. Text is the article as drawn, with every run of whitespace folded into one space. A passage is found while its `exact` text is still in the page; `prefix`, `suffix`, `heading` and `offset` decide between the places it occurs.',
+    required: ['exact', 'prefix', 'suffix', 'heading', 'offset'],
+    additionalProperties: false,
+    properties: {
+      exact: {
+        type: 'string',
+        minLength: 1,
+        maxLength: ANNOTATION_QUOTE_MAX_LENGTH,
+        description: 'The passage itself.'
+      },
+      prefix: {
+        type: 'string',
+        maxLength: ANNOTATION_CONTEXT_MAX_LENGTH,
+        description: 'The text just before it.'
+      },
+      suffix: {
+        type: 'string',
+        maxLength: ANNOTATION_CONTEXT_MAX_LENGTH,
+        description: 'The text just after it.'
+      },
+      heading: {
+        type: 'string',
+        nullable: true,
+        maxLength: 255,
+        description: 'The id of the heading it sat under, or null above the first one.'
+      },
+      offset: {
+        type: 'integer',
+        minimum: 0,
+        description: 'How far into that heading’s section it started, in characters.'
+      }
+    }
+  })
+
+  /**
+   * COMMENT ANNOTATION - One passage of the article a comment is about
+   */
+  app.addSchema({
+    $id: 'CommentAnnotation',
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      commentId: { type: 'string', format: 'uuid' },
+      position: {
+        type: 'integer',
+        description: 'Where it comes in its comment, from 0.'
+      },
+      note: {
+        type: 'string',
+        description: 'What was said about the passage. Markdown, rendered the way a comment is.'
+      },
+      anchor: { $ref: 'CommentAnchor#' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+      resolvedAt: {
+        type: 'string',
+        format: 'date-time',
+        nullable: true,
+        description: 'When it was marked done, or null while it is open.'
+      },
+      resolvedById: { type: 'string', format: 'uuid', nullable: true },
+      resolvedByName: {
+        type: 'string',
+        nullable: true,
+        description: 'Who marked it done, while that account exists.'
+      }
+    }
+  })
+
+  /**
    * COMMENT - One comment on one page, from the built-in provider
    *
    * Neither the email a guest typed nor the address it was posted from is here. Both are stored, for
@@ -120,7 +200,18 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         nullable: true,
         description: 'The handle this author is mentioned by, or null if they have not set one.'
       },
-      isGuest: { type: 'boolean' }
+      isGuest: { type: 'boolean' },
+      isDeleted: {
+        type: 'boolean',
+        description:
+          'Whether this is the placeholder a deleted comment leaves for its replies. It carries nothing of what was deleted: empty content, no author, no annotations.'
+      },
+      annotations: {
+        type: 'array',
+        description:
+          'The passages of the article this comment is about, in the order they were picked. Only a comment that starts a thread has any.',
+        items: { $ref: 'CommentAnnotation#' }
+      }
     }
   })
 

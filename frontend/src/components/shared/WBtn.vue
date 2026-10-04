@@ -21,6 +21,9 @@
       <span v-if="label !== null">{{ label }}</span>
       <slot />
     </span>
+    <!-- -> A direct child of the button rather than of the content, so a full-width button can push it
+            to the far end with `margin-inline-start: auto` -->
+    <slot name="append" />
   </component>
 </template>
 
@@ -32,7 +35,8 @@ import WSpinner from './WSpinner.vue'
  * Button.
  *
  * Variants mirror the four the app uses: raised (default), `flat`, `unelevated` and `push`.
- * Content comes from the `label` prop, the default slot, or both.
+ * Content comes from the `label` prop, the default slot, or both. The `append` slot is for something
+ * that sits apart from the content, at the far end of a button wider than it -- a count, say.
  */
 const props = defineProps({
   label: {

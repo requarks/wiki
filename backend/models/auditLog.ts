@@ -49,7 +49,15 @@ export const AUDIT_ACTIONS = {
     'deleteFolder'
   ],
   asset: ['uploadAsset', 'updateAsset', 'resizeAsset', 'deleteAsset'],
-  comment: ['createComment', 'updateComment', 'deleteComment'],
+  comment: [
+    'createComment',
+    'updateComment',
+    'deleteComment',
+    'updateAnnotation',
+    'resolveAnnotation',
+    'reopenAnnotation',
+    'deleteAnnotation'
+  ],
   auth: [
     'login',
     'logout',

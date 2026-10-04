@@ -1,9 +1,14 @@
 import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
 import { mayOnPage } from './pages.ts'
-import { COMMENT_MAX_LENGTH, COMMENT_MIN_LENGTH } from '../models/comments.ts'
+import {
+  ANNOTATION_NOTE_MAX_LENGTH,
+  ANNOTATIONS_MAX,
+  COMMENT_MAX_LENGTH,
+  COMMENT_MIN_LENGTH
+} from '../models/comments.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import type { CommentsProviderInput } from '../models/comments.ts'
+import type { AnnotationInput, CommentsProviderInput } from '../models/comments.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 
 const siteIdParam = {
@@ -33,6 +38,25 @@ const commentIdParam = {
     commentId: { type: 'string', format: 'uuid' }
   },
   required: ['siteId', 'commentId']
+}
+
+const annotationIdParam = {
+  type: 'object',
+  properties: {
+    siteId: { type: 'string', format: 'uuid' },
+    annotationId: { type: 'string', format: 'uuid' }
+  },
+  required: ['siteId', 'annotationId']
+}
+
+/**
+ * A comment's own text, which may be empty only where annotations carry what it has to say.
+ *
+ * Checked in the handler rather than by the schema's `minLength`, since whether it applies depends on
+ * the rest of the request — or, for an edit, on what the comment was posted with.
+ */
+function isTooShort(content: string): boolean {
+  return content.trim().length < COMMENT_MIN_LENGTH
 }
 
 /**
@@ -255,7 +279,10 @@ async function routes(app: FastifyInstance) {
       }
       const comments = await WIKI.models.comments.listForPage(page.id)
       const [mentions, total] = await Promise.all([
-        WIKI.models.comments.resolveMentions(comments.map((c) => c.content)),
+        // -> An annotation's note is drawn the way a comment is, mentions and all
+        WIKI.models.comments.resolveMentions(
+          comments.flatMap((c) => [c.content, ...c.annotations.map((a) => a.note)])
+        ),
         WIKI.models.comments.countForPage(page.id)
       ])
       return { comments, mentions, total }
@@ -268,14 +295,20 @@ async function routes(app: FastifyInstance) {
   // -> No route-level permissions: `write:comments` is a page rule. See the note above.
   app.post<{
     Params: { siteId: string; pageId: string }
-    Body: { content: string; parentId?: string; authorName?: string; authorEmail?: string }
+    Body: {
+      content: string
+      parentId?: string
+      authorName?: string
+      authorEmail?: string
+      annotations?: AnnotationInput[]
+    }
   }>(
     '/sites/:siteId/pages/:pageId/comments',
     {
       schema: {
         summary: 'Post a comment on a page',
         description:
-          'Needs `write:comments` on the page. A rule may grant it to the guests group, in which case a name and an email address are required of whoever is posting — the email is stored but never served, and is what the spam check is given.\n\nThe site’s posting cooldown applies to everybody who is not a moderator, counted per account and per address for a guest; going over it answers 429 with `Retry-After`. With an Akismet key configured, a comment Akismet calls spam is refused.',
+          'Needs `write:comments` on the page. A rule may grant it to the guests group, in which case a name and an email address are required of whoever is posting — the email is stored but never served, and is what the spam check is given.\n\nA comment that starts a thread may carry `annotations`: passages of the article, each with a note about it. That needs a signed-in account — an annotation is resolved later by its author, and a guest has no session to be recognized by. With at least one annotation the comment’s own `content` may be empty.\n\nThe site’s posting cooldown applies to everybody who is not a moderator, counted per account and per address for a guest; going over it answers 429 with `Retry-After`. With an Akismet key configured, a comment Akismet calls spam is refused.',
         tags: ['Comments'],
         params: pageIdParam,
         body: {
@@ -284,9 +317,8 @@ async function routes(app: FastifyInstance) {
           properties: {
             content: {
               type: 'string',
-              minLength: COMMENT_MIN_LENGTH,
               maxLength: COMMENT_MAX_LENGTH,
-              description: 'Markdown source. Raw HTML in it is escaped rather than rendered.'
+              description: `Markdown source. Raw HTML in it is escaped rather than rendered. At least ${COMMENT_MIN_LENGTH} characters, unless the comment carries annotations.`
             },
             parentId: {
               type: 'string',
@@ -305,6 +337,21 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               maxLength: 255,
               description: 'Required of a guest. Stored, never served.'
+            },
+            annotations: {
+              type: 'array',
+              maxItems: ANNOTATIONS_MAX,
+              description:
+                'Passages of the article this comment is about, in the order they were picked. Not on a reply, and not from a guest.',
+              items: {
+                type: 'object',
+                required: ['note', 'anchor'],
+                additionalProperties: false,
+                properties: {
+                  note: { type: 'string', maxLength: ANNOTATION_NOTE_MAX_LENGTH },
+                  anchor: { $ref: 'CommentAnchor#' }
+                }
+              }
             }
           }
         },
@@ -329,6 +376,22 @@ async function routes(app: FastifyInstance) {
       }
 
       const user = req.session?.authenticated ? req.session.user : null
+      const annotations = req.body.annotations ?? []
+      if (annotations.length > 0) {
+        if (!user) {
+          return reply.forbidden('Annotating a page needs an account.')
+        }
+        if (req.body.parentId) {
+          return reply.badRequest(
+            'A reply cannot annotate the page. Only a comment that starts a thread can.'
+          )
+        }
+        if (annotations.some((annotation) => annotation.note.trim().length < 1)) {
+          return reply.badRequest('Every annotation needs a note.')
+        }
+      } else if (isTooShort(req.body.content)) {
+        return reply.badRequest('The comment is empty or too short.')
+      }
       let authorName = user?.name ?? ''
       let authorEmail = user?.email ?? ''
       if (!user) {
@@ -357,8 +420,11 @@ async function routes(app: FastifyInstance) {
       }
 
       const origin = `${req.protocol}://${req.hostname}`
+      // -> Everything the post says, notes included: a comment whose text is empty and whose
+      //    annotations are all links is exactly what the check is for
+      const notes = annotations.map((annotation) => annotation.note.trim())
       const isSpam = await WIKI.models.comments.isSpam(req.params.siteId, {
-        content: req.body.content,
+        content: [req.body.content, ...notes].join('\n\n').trim(),
         authorName,
         authorEmail,
         authorIP: req.ip,
@@ -385,7 +451,8 @@ async function routes(app: FastifyInstance) {
           authorId: user?.id ?? null,
           authorName,
           authorEmail: user ? '' : authorEmail,
-          authorIP: req.ip
+          authorIP: req.ip,
+          annotations
         })
       } catch (err: any) {
         return reply.badRequest(err.message)
@@ -397,7 +464,8 @@ async function routes(app: FastifyInstance) {
         path: page.path,
         locale: page.locale,
         isReply: Boolean(comment.parentId),
-        isGuest: comment.isGuest
+        isGuest: comment.isGuest,
+        annotations: comment.annotations.length
       })
       // -> The email is a guest's alone: an account's
       //    comment stores none, and `authorId` is what identifies it
@@ -429,8 +497,14 @@ async function routes(app: FastifyInstance) {
           parentAuthorId: comment.parentId
             ? await WIKI.models.comments.authorOf(comment.parentId)
             : null,
-          excerpt: WIKI.models.comments.excerptOf(comment.content),
-          mentionHandles: WIKI.models.comments.mentionedHandles(comment.content),
+          // -> A comment posted as annotations alone has no text of its own, and is quoted by its
+          //    first note instead
+          excerpt: WIKI.models.comments.excerptOf(
+            isTooShort(comment.content) && notes.length > 0 ? notes[0]! : comment.content
+          ),
+          mentionHandles: WIKI.models.comments.mentionedHandles(
+            [comment.content, ...notes].join('\n')
+          ),
           // -> A guest's name is what they typed; an account's is looked up when the event is sent
           ...(comment.authorId ? {} : { actorName: comment.authorName })
         }
@@ -451,7 +525,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Edit a comment',
         description:
-          'Whoever holds `manage:comments` on the page may edit any comment on it; everybody else may edit their own, and only while they still hold `write:comments` there.\n\nA guest cannot edit at all: there is no session that identifies them as the author, so `their own` has nothing to mean.',
+          'Whoever holds `manage:comments` on the page may edit any comment on it; everybody else may edit their own, and only while they still hold `write:comments` there.\n\nA guest cannot edit at all: there is no session that identifies them as the author, so `their own` has nothing to mean.\n\nOnly the comment’s own text changes here. Its annotations are edited one at a time, under `/annotations/:annotationId`, and while it has any the text may be empty.',
         tags: ['Comments'],
         params: commentIdParam,
         body: {
@@ -460,7 +534,6 @@ async function routes(app: FastifyInstance) {
           properties: {
             content: {
               type: 'string',
-              minLength: COMMENT_MIN_LENGTH,
               maxLength: COMMENT_MAX_LENGTH
             }
           }
@@ -477,6 +550,12 @@ async function routes(app: FastifyInstance) {
       const comment = await requireWritableComment(req, reply)
       if (!comment) {
         return reply
+      }
+      if (
+        isTooShort(req.body.content) &&
+        (await WIKI.models.comments.countAnnotations(comment.id)) < 1
+      ) {
+        return reply.badRequest('The comment is empty or too short.')
       }
       const updated = await WIKI.models.comments.update(comment.id, req.body.content)
       if (!updated) {
@@ -539,24 +618,44 @@ async function routes(app: FastifyInstance) {
    * DELETE A COMMENT
    */
   // -> No route-level permissions: the two that matter here are page rules. See the note above.
-  app.delete<{ Params: { siteId: string; commentId: string } }>(
+  app.delete<{
+    Params: { siteId: string; commentId: string }
+    Querystring: { withReplies?: boolean }
+  }>(
     '/sites/:siteId/comments/:commentId',
     {
       schema: {
         summary: 'Delete a comment',
         description:
-          'Same rule as editing: `manage:comments` on the page deletes any comment, `write:comments` deletes your own.\n\nThe replies underneath go with it. A reply exists to answer something, and left behind it is half of a conversation nobody can read.',
+          'Same rule as editing: `manage:comments` on the page deletes any comment, `write:comments` deletes your own.\n\nThe replies underneath stay — they are other people’s words. A comment that has any is kept as a placeholder for them (`isDeleted` in the list, with its content, author and annotations cleared), and one that has none is deleted outright. A placeholder goes on its own once the last reply under it is deleted.\n\n`withReplies` deletes the whole thread instead, replies included. That is a moderator’s call and needs `manage:comments` on the page — an author may take back their own words, not the answers to them. It is also the only way to delete a placeholder directly; without it a placeholder answers 404.',
         tags: ['Comments'],
         params: commentIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            withReplies: {
+              type: 'boolean',
+              default: false,
+              description:
+                'Delete the replies under the comment too, rather than keeping them under a placeholder. Needs `manage:comments` on the page.'
+            }
+          }
+        },
         response: {
           200: {
             description: 'Comment deleted successfully',
             type: 'object',
             properties: {
               ok: { type: 'boolean' },
-              deleted: {
+              keptForReplies: {
+                type: 'boolean',
+                description:
+                  'Whether the comment was kept as a placeholder, because it has replies, rather than deleted outright.'
+              },
+              repliesDeleted: {
                 type: 'integer',
-                description: 'How many comments went, the replies underneath included.'
+                description:
+                  'How many replies went with it. Only ever more than 0 with `withReplies`.'
               }
             }
           }
@@ -564,20 +663,38 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const comment = await requireWritableComment(req, reply)
+      const withReplies = req.query.withReplies === true
+      const comment = await requireWritableComment(req, reply, { placeholder: withReplies })
       if (!comment) {
         return reply
       }
-      const deleted = await WIKI.models.comments.remove(comment.id)
+      if (
+        withReplies &&
+        !mayOnPage(req, 'manage:comments', {
+          siteId: req.params.siteId,
+          path: comment.path,
+          locale: comment.locale,
+          tags: comment.tags ?? []
+        })
+      ) {
+        return reply.forbidden('Only a moderator may delete the replies to a comment.')
+      }
+      const { removed, keptForReplies, repliesDeleted } = await WIKI.models.comments.remove(
+        comment.id,
+        { withReplies }
+      )
+      if (!removed) {
+        return reply.notFound('This comment does not exist.')
+      }
       await audit(req, 'comment', 'deleteComment', {
         commentId: comment.id,
         pageId: comment.pageId,
         path: comment.path,
-        deleted,
+        keptForReplies,
+        repliesDeleted,
+        wasPlaceholder: Boolean(comment.deletedAt),
         isOwn: comment.authorId === req.session?.user?.id
       })
-      // -> One event for the comment asked about, not one per reply the cascade took with it:
-      //    `deleted` says how many went
       await WIKI.models.hooks.emit('comment:delete', {
         id: comment.id,
         parentId: comment.parentId,
@@ -587,14 +704,230 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         authorId: comment.authorId,
         actorId: req.session?.user?.id ?? null,
-        deleted,
+        keptForReplies,
+        repliesDeleted,
         metadata: {
           authorEmail: comment.authorEmail || null,
           authorIP: comment.authorIP || null,
           isGuest: comment.authorId === null
         }
       })
-      return { ok: true, deleted }
+      return { ok: true, keptForReplies, repliesDeleted }
+    }
+  )
+
+  /**
+   * EDIT AN ANNOTATION'S NOTE
+   */
+  // -> No route-level permissions: the two that matter here are page rules. See the note above.
+  app.put<{ Params: { siteId: string; annotationId: string }; Body: { note: string } }>(
+    '/sites/:siteId/annotations/:annotationId',
+    {
+      schema: {
+        summary: 'Edit the note of an annotation',
+        description:
+          'The same rule as editing the comment it belongs to: `manage:comments` on the page edits any note, and the comment’s author edits their own while they still hold `write:comments` there. The passage it is about cannot change — an annotation on a different passage is a different annotation.',
+        tags: ['Comments'],
+        params: annotationIdParam,
+        body: {
+          type: 'object',
+          required: ['note'],
+          properties: {
+            note: { type: 'string', maxLength: ANNOTATION_NOTE_MAX_LENGTH }
+          }
+        },
+        response: {
+          200: {
+            description: 'The annotation as it now stands',
+            $ref: 'CommentAnnotation#'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const annotation = await requireAnnotation(req, reply, 'edit')
+      if (!annotation) {
+        return reply
+      }
+      if (req.body.note.trim().length < 1) {
+        return reply.badRequest('An annotation needs a note.')
+      }
+      const updated = await WIKI.models.comments.updateAnnotationNote(annotation.id, req.body.note)
+      if (!updated) {
+        return reply.notFound('This annotation does not exist.')
+      }
+      await audit(req, 'comment', 'updateAnnotation', {
+        annotationId: annotation.id,
+        commentId: annotation.commentId,
+        pageId: annotation.pageId,
+        path: annotation.path,
+        isOwn: annotation.authorId === req.session?.user?.id
+      })
+      // -> As for an edited comment: only the handles this edit added
+      const before = new Set(WIKI.models.comments.mentionedHandles(annotation.note))
+      const added = WIKI.models.comments
+        .mentionedHandles(updated.note)
+        .filter((handle) => !before.has(handle))
+      if (added.length > 0) {
+        await WIKI.models.notifications.emit('comment:edit', {
+          siteId: req.params.siteId,
+          actorId: req.session?.user?.id ?? null,
+          data: {
+            variant: 'edited',
+            page: WIKI.models.notifications.pageSnapshot({
+              id: annotation.pageId,
+              title: annotation.title,
+              path: annotation.path,
+              locale: annotation.locale,
+              tags: annotation.tags
+            }),
+            commentId: annotation.commentId,
+            excerpt: WIKI.models.comments.excerptOf(updated.note),
+            mentionHandles: added
+          }
+        })
+      }
+      return updated
+    }
+  )
+
+  /**
+   * RESOLVE OR REOPEN AN ANNOTATION
+   */
+  // -> No route-level permissions: the three that matter here are page rules. See the note above.
+  app.put<{ Params: { siteId: string; annotationId: string }; Body: { resolved: boolean } }>(
+    '/sites/:siteId/annotations/:annotationId/resolved',
+    {
+      schema: {
+        summary: 'Resolve or reopen an annotation',
+        description:
+          'Marks the passage as dealt with, or open again. A resolved annotation stays in its comment, drawn as done.\n\nThe comment’s author may (while they hold `write:comments` on the page), and so may whoever holds `review:pages` or `manage:comments` there — reviewing a page is acting on what was said about it.',
+        tags: ['Comments'],
+        params: annotationIdParam,
+        body: {
+          type: 'object',
+          required: ['resolved'],
+          properties: {
+            resolved: { type: 'boolean' }
+          }
+        },
+        response: {
+          200: {
+            description: 'The annotation as it now stands',
+            $ref: 'CommentAnnotation#'
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const annotation = await requireAnnotation(req, reply, 'resolve')
+      if (!annotation) {
+        return reply
+      }
+      const updated = await WIKI.models.comments.setAnnotationResolved(
+        annotation.id,
+        req.body.resolved,
+        req.session?.user?.id ?? null
+      )
+      if (!updated) {
+        return reply.notFound('This annotation does not exist.')
+      }
+      // -> Only a change of state is an action: resolving one that was already resolved is not
+      if (Boolean(annotation.resolvedAt) !== req.body.resolved) {
+        await audit(req, 'comment', req.body.resolved ? 'resolveAnnotation' : 'reopenAnnotation', {
+          annotationId: annotation.id,
+          commentId: annotation.commentId,
+          pageId: annotation.pageId,
+          path: annotation.path,
+          isOwn: annotation.authorId === req.session?.user?.id
+        })
+      }
+      return updated
+    }
+  )
+
+  /**
+   * DELETE AN ANNOTATION
+   */
+  // -> No route-level permissions: the three that matter here are page rules. See the note above.
+  app.delete<{ Params: { siteId: string; annotationId: string } }>(
+    '/sites/:siteId/annotations/:annotationId',
+    {
+      schema: {
+        summary: 'Delete an annotation',
+        description:
+          'Takes one passage out of its comment. Whoever may resolve it may delete it: the comment’s author, and whoever holds `review:pages` or `manage:comments` on the page.\n\nA comment that was posted as annotations alone, with no text of its own, has nothing left to say once its last annotation goes — so it is deleted too, the way its author would delete it: its replies stay, under a placeholder. `commentDeleted` says when that happened.',
+        tags: ['Comments'],
+        params: annotationIdParam,
+        response: {
+          200: {
+            description: 'Annotation deleted successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              commentDeleted: {
+                type: 'boolean',
+                description:
+                  'Whether the comment went too, because this was its last annotation and it had no text of its own.'
+              },
+              keptForReplies: {
+                type: 'boolean',
+                description:
+                  'Whether that comment was kept as a placeholder for its replies rather than deleted outright.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const annotation = await requireAnnotation(req, reply, 'resolve')
+      if (!annotation) {
+        return reply
+      }
+      // -> Read before, since the comment may not be there after: a webhook about its deletion
+      //    carries what it was
+      const comment = await WIKI.models.comments.getWithPage(
+        annotation.commentId,
+        req.params.siteId
+      )
+      const { removed, commentDeleted, keptForReplies } =
+        await WIKI.models.comments.removeAnnotation(annotation.id)
+      if (!removed) {
+        return reply.notFound('This annotation does not exist.')
+      }
+      // -> One row for one act: the comment going is a consequence of this deletion, not a second
+      //    thing the reader did, so it is recorded here rather than as a `deleteComment` beside it
+      await audit(req, 'comment', 'deleteAnnotation', {
+        annotationId: annotation.id,
+        commentId: annotation.commentId,
+        pageId: annotation.pageId,
+        path: annotation.path,
+        isOwn: annotation.authorId === req.session?.user?.id,
+        commentDeleted,
+        ...(commentDeleted && { keptForReplies })
+      })
+      // -> But a subscriber watching for comments that disappear is told, as for any other deletion
+      if (commentDeleted && comment) {
+        await WIKI.models.hooks.emit('comment:delete', {
+          id: comment.id,
+          parentId: comment.parentId,
+          pageId: comment.pageId,
+          path: comment.path,
+          locale: comment.locale,
+          siteId: req.params.siteId,
+          authorId: comment.authorId,
+          actorId: req.session?.user?.id ?? null,
+          keptForReplies,
+          repliesDeleted: 0,
+          metadata: {
+            authorEmail: comment.authorEmail || null,
+            authorIP: comment.authorIP || null,
+            isGuest: comment.authorId === null
+          }
+        })
+      }
+      return { ok: true, commentDeleted, keptForReplies }
     }
   )
 
@@ -676,14 +1009,18 @@ async function requireBuiltInPage(
  */
 async function requireWritableComment(
   req: FastifyRequest<{ Params: { siteId: string; commentId: string } }>,
-  reply: FastifyReply
+  reply: FastifyReply,
+  { placeholder = false }: { placeholder?: boolean } = {}
 ) {
   if (!WIKI.models.comments.usesBuiltIn(req.params.siteId)) {
     reply.notFound('This site does not use the built-in comments provider.')
     return null
   }
   const comment = await WIKI.models.comments.getWithPage(req.params.commentId, req.params.siteId)
-  if (!comment) {
+  // -> A placeholder is what is left of a comment already deleted: nothing in it to edit, and only
+  //    the thread under it to delete -- which the caller says it is asking about. It has no author,
+  //    so only a moderator gets past the checks below either way.
+  if (!comment || (comment.deletedAt && !placeholder)) {
     reply.notFound('This comment does not exist.')
     return null
   }
@@ -702,6 +1039,53 @@ async function requireWritableComment(
     return null
   }
   return comment
+}
+
+/**
+ * The annotation a request is about, once it is established that the caller may do what they asked.
+ *
+ * Two levels, because the two acts are not the same kind of thing. Editing a note is rewriting what
+ * somebody said, which is the comment's own rule: `manage:comments`, or the author while they still
+ * hold `write:comments`. Resolving and deleting are acting on the remark rather than rewording it,
+ * and `review:pages` is enough for that too — a reviewer is whoever the page's remarks are FOR.
+ *
+ * @returns The annotation, or null once it has sent the reply itself
+ */
+async function requireAnnotation(
+  req: FastifyRequest<{ Params: { siteId: string; annotationId: string } }>,
+  reply: FastifyReply,
+  action: 'edit' | 'resolve'
+) {
+  if (!WIKI.models.comments.usesBuiltIn(req.params.siteId)) {
+    reply.notFound('This site does not use the built-in comments provider.')
+    return null
+  }
+  const annotation = await WIKI.models.comments.getAnnotationWithComment(
+    req.params.annotationId,
+    req.params.siteId
+  )
+  if (!annotation) {
+    reply.notFound('This annotation does not exist.')
+    return null
+  }
+  const page = {
+    siteId: req.params.siteId,
+    path: annotation.path,
+    locale: annotation.locale,
+    tags: annotation.tags ?? []
+  }
+  if (
+    mayOnPage(req, 'manage:comments', page) ||
+    (action === 'resolve' && mayOnPage(req, 'review:pages', page))
+  ) {
+    return annotation
+  }
+  const userId = req.session?.authenticated ? req.session.user?.id : null
+  if (!userId || annotation.authorId !== userId || !mayOnPage(req, 'write:comments', page)) {
+    reply.forbidden('You are not allowed to modify this annotation.')
+    return null
+  }
+  return annotation
 }
 
 /**

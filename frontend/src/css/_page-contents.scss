@@ -2438,3 +2438,48 @@
     }
   }
 }
+
+/*
+  Annotated passages, painted through the CSS Custom Highlight API rather than wrapped in elements:
+  the names are `HIGHLIGHTS` in `helpers/annotations.js`, and the two have to be kept in step. Nothing
+  is ever inserted into the article, which is what keeps the text one annotation is matched against
+  the text the next one was picked from.
+
+  Top level, because a highlight pseudo-element is matched on whatever element holds the text; the
+  custom properties still resolve from there, so the article's own `--content-mark` serves both themes.
+  A highlight can only take colours and a text decoration -- no padding, no shadow, no radius.
+*/
+::highlight(wiki-annotation-pending) {
+  background-color: color-mix(in srgb, var(--q-warning) 32%, transparent);
+}
+
+::highlight(wiki-annotation-draft) {
+  background-color: color-mix(in srgb, var(--q-warning) 45%, transparent);
+  text-decoration: underline 2px var(--q-warning);
+  text-underline-offset: 3px;
+}
+
+/* -> View All Annotations: every open one, quieter than one being picked, and the resolved ones as a
+      line under the text alone -- still there to be found, and drawn as done */
+::highlight(wiki-annotation-shown) {
+  background-color: color-mix(in srgb, var(--q-warning) 22%, transparent);
+  text-decoration: underline 1px var(--q-warning);
+  text-underline-offset: 3px;
+}
+
+::highlight(wiki-annotation-resolved) {
+  text-decoration: underline dotted 1px var(--q-positive);
+  text-underline-offset: 3px;
+}
+
+/* -> Over a passage that opens its note, which a highlight cannot say itself -- see
+      `PageAnnotationsLayer.vue` for why this is an attribute */
+.page-contents[data-annotation-hover] {
+  cursor: pointer;
+}
+
+::highlight(wiki-annotation-focus) {
+  background-color: var(--content-mark);
+  text-decoration: underline 2px var(--q-primary);
+  text-underline-offset: 3px;
+}

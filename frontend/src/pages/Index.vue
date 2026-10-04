@@ -161,7 +161,11 @@
                 is left under the strip is exactly what it gets -->
         <w-scroll-area
           class="page-container-scrl page-article-col flex-1 min-h-0"
-          :class="{ 'is-talk': activeView === `talk` }"
+          :class="{
+            'is-talk': activeView === `talk`,
+            'is-annotating': isAnnotating,
+            'is-picking': isAnnotating && annotator?.isPicking
+          }"
           ref="pageScroller"
           v-else>
           <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
@@ -199,7 +203,35 @@
               `v-show` rather than `v-if` on the article below, so that leaving the discussion and
               coming back does not re-run the page's own scripts or lose where the reader was in it.
             -->
-            <page-talk v-if="activeView === `talk`" ref="talkView" />
+            <page-talk
+              v-if="activeView === `talk`"
+              ref="talkView"
+              :content-root="pageContents"
+              @locate-annotation="locateAnnotation" />
+            <!--
+              Picking passages of the article to post as a comment, started from the Talk view's column.
+              Over the article and only while it is the view on screen: the panel and the card it draws
+              are teleported to the body, so where this sits in the tree is only what owns it.
+            -->
+            <page-annotator
+              v-if="isAnnotating"
+              ref="annotator"
+              :root="pageContents"
+              @close="stopAnnotating"
+              @posted="onAnnotationsPosted" />
+            <!--
+              Every annotation on the page at once, from the Talk view's column. Mounted for as long as
+              it is switched on, whichever view is showing -- it is turned off from the Talk view, not by
+              leaving the article -- and drawing only over the article.
+            -->
+            <page-annotations-layer
+              v-if="state.showAnnotations"
+              :root="pageContents"
+              :active="activeView === `article`"
+              :interactive="!isAnnotating"
+              :reveal-id="state.revealAnnotationId"
+              @revealed="state.revealAnnotationId = null"
+              @view-comment="viewComment" />
             <page-links v-if="activeView === `links`" />
             <!--
               A blog's front page, which has no article to draw: its posts are what stands in place of
@@ -353,10 +385,15 @@
         <page-blog-sidebar v-if="isBlog" />
         <!--
           The Talk view's column: what can be started from it, in place of the contents, tags, rating
-          and last editor, which are all about the article and are not what is on screen. Down at the
-          height of the first comment rather than up beside the tab strip -- see `.page-talk-actions`.
+          and last editor, which are all about the article and are not what is on screen.
         -->
         <div v-else-if="activeView === `talk`" class="page-talk-actions">
+          <!-- -> Headed the way the article's column is ("Contents"), so the two read as one column
+                  that changed what it holds -->
+          <div class="page-talk-actions-title">
+            <w-icon class="me-2" name="la:comments" color="grey" />
+            <div class="text-caption text-grey-7">{{ t('common.comments.commentsTitle') }}</div>
+          </div>
           <w-btn
             class="acrylic-btn"
             flat
@@ -366,7 +403,11 @@
             :label="t('common.comments.newComment')"
             :disable="!talkView?.canStartComment"
             @click="startNewComment" />
-          <!-- -> Not built yet: shown so the column says what it will hold, and held off until then -->
+          <w-separator class="page-talk-actions-sep" />
+          <div class="page-talk-actions-title">
+            <w-icon class="me-2" name="la:sticky-note" color="grey" />
+            <div class="text-caption text-grey-7">{{ t('common.comments.annotationsTitle') }}</div>
+          </div>
           <w-btn
             class="acrylic-btn"
             flat
@@ -374,7 +415,33 @@
             color="primary"
             icon="la:highlighter"
             :label="t('common.comments.newAnnotation')"
-            disable />
+            :disable="!talkView?.canStartAnnotation"
+            @click="startAnnotating" />
+          <!-- -> Only something to show where there is a passage still in the page to show; turning it
+                  off is always on offer while it is on -->
+          <w-btn
+            class="acrylic-btn"
+            flat
+            no-caps
+            :color="dark.isActive ? `indigo-4` : `indigo`"
+            :icon="state.showAnnotations ? `la:eye-slash` : `la:eye`"
+            :label="
+              state.showAnnotations
+                ? t('common.comments.hideAllAnnotations')
+                : t('common.comments.viewAllAnnotations')
+            "
+            :disable="!state.showAnnotations && !talkView?.annotationCount"
+            @click="toggleAllAnnotations">
+            <!-- -> How many there are to show: the passages still in the article, open and resolved -->
+            <template #append>
+              <w-badge
+                v-if="talkView?.annotationCount > 0"
+                class="page-talk-actions-count"
+                rounded
+                :color="dark.isActive ? `indigo-4` : `indigo`"
+                :label="talkView.annotationCount" />
+            </template>
+          </w-btn>
         </div>
         <template v-else>
           <template v-if="showToc">
@@ -549,7 +616,7 @@ import {
   ref,
   watch
 } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
@@ -561,6 +628,7 @@ import { notify } from '@/composables/notify'
 import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
+import { clearHighlights, indexText, locateAnchor } from '@/helpers/annotations'
 import { isPagePath, splitLocalePath } from '@/helpers/pagePaths'
 import {
   enhanceRenderedContent,
@@ -600,6 +668,11 @@ const PageTalk = defineAsyncComponent({
   loadingComponent: LoadingGeneric
 })
 const PageCommentsEmbed = defineAsyncComponent(() => import('@/components/PageCommentsEmbed.vue'))
+/* -> Likewise, and only once somebody actually starts annotating, or asks to see the annotations */
+const PageAnnotator = defineAsyncComponent(() => import('@/components/PageAnnotator.vue'))
+const PageAnnotationsLayer = defineAsyncComponent(
+  () => import('@/components/PageAnnotationsLayer.vue')
+)
 /*
   Likewise on demand: what links to a page is a list nobody is looking at until they ask for it, and
   it is a request as well as a chunk -- see the note on the tab's missing badge in `PageViewTabs.vue`.
@@ -724,13 +797,27 @@ const state = reactive({
    * has not asked to land on the discussion of the next page they open -- unless the link they
    * followed said so, which is what `#talk` is (see `viewFromHash`).
    */
-  view: viewFromHash()
+  view: viewFromHash(),
+  /**
+   * Whether passages of the article are being picked for a comment -- see `PageAnnotator.vue`. Never
+   * carried from one page to the next: the passages are ranges into this page's render.
+   */
+  annotating: false,
+  /**
+   * Whether every annotation is painted over the article -- View All Annotations. Stays on across the
+   * two views until it is turned off, and off again on another page, whose annotations these are not.
+   */
+  showAnnotations: false,
+  /** An annotation to scroll to with its note open, once the layer has found it. */
+  revealAnnotationId: null
 })
 const pageContents = ref(null)
 /** The article column, which is what scrolls -- see `scrollPageToTop`. */
 const pageScroller = ref(null)
 /** The Talk view while it is on screen, for the New Comment button in the column beside it. */
 const talkView = ref(null)
+/** The annotator while it is open, which knows whether leaving would throw anything away. */
+const annotator = ref(null)
 
 // COMPUTED
 
@@ -1010,6 +1097,9 @@ const activeView = computed(() => {
   return 'article'
 })
 
+/** Annotating, which is only ever done over the article. */
+const isAnnotating = computed(() => state.annotating && activeView.value === 'article')
+
 /*
   The other providers, at the bottom of the article. No permission check: what a third-party widget
   shows and to whom is that provider's own business, and this wiki's page rules say nothing about an
@@ -1098,8 +1188,44 @@ watch(
   () => pageStore.id,
   () => {
     state.view = viewFromHash()
+    // -> Whatever was being annotated was in the page that has just been left
+    state.annotating = false
+    clearHighlights()
   }
 )
+
+/*
+  View All Annotations goes off whenever the reader goes anywhere: another page, and the editor too.
+  The editor is the same page at another path (`/_edit/...`), so the page id above does not move --
+  but it replaces the article the passages were found in, and the layer left mounted over it would
+  be listening to an element that is gone. A hash moving within the page is not going anywhere.
+*/
+watch(
+  () => route.path,
+  () => {
+    state.showAnnotations = false
+    state.revealAnnotationId = null
+  }
+)
+
+/*
+  Leaving the page while annotating throws away whatever was picked, so the reader is asked first.
+  Only a change of PATH counts: a heading picked from the contents, or a footnote followed, moves the
+  hash and leaves the reader exactly where the passages are.
+*/
+async function guardAnnotations(to, from) {
+  if (!state.annotating || to.path === from.path) {
+    return true
+  }
+  if (!(await confirmStopAnnotating())) {
+    return false
+  }
+  state.annotating = false
+  return true
+}
+
+onBeforeRouteLeave(guardAnnotations)
+onBeforeRouteUpdate(guardAnnotations)
 
 /*
   Reading the page is reading what the reader was told about it: its content as soon as it is on
@@ -1175,11 +1301,19 @@ function onHashChange() {
  * they move, so holding one down would otherwise start a transition per keypress with nothing
  * changing in any of them.
  */
-function switchView(view) {
+async function switchView(view) {
   if (view === state.view) {
     return
   }
-  withViewTransition(() => {
+  // -> Annotating is done over the article, so going anywhere else is the end of it -- asked first,
+  //    since it throws away the passages that were picked
+  if (state.annotating && view !== 'article') {
+    if (!(await confirmStopAnnotating())) {
+      return
+    }
+    state.annotating = false
+  }
+  return withViewTransition(() => {
     state.view = view
   })
 }
@@ -1490,6 +1624,67 @@ function closeTocPanel() {
 function startNewComment() {
   closeTocPanel()
   talkView.value?.startNewComment()
+}
+
+/** Over to the article, with the annotator open on it. */
+async function startAnnotating() {
+  closeTocPanel()
+  await switchView('article')
+  state.annotating = true
+}
+
+function stopAnnotating() {
+  state.annotating = false
+}
+
+/** Whether the annotator may close, asking the reader first if it holds anything they wrote. */
+async function confirmStopAnnotating() {
+  return annotator.value ? annotator.value.confirmDiscard() : true
+}
+
+/** Posted: over to the discussion, down to the comment that was just added to it. */
+async function onAnnotationsPosted(commentId) {
+  state.annotating = false
+  await switchView('talk')
+  scrollToAnchorWhenReady(`#comment-${commentId}`)
+}
+
+/**
+ * From an annotation in the discussion to its passage in the article: every annotation shown, as View
+ * All Annotations would, and this one scrolled to with its note already open.
+ *
+ * Looked for again on the click rather than trusting the icon the Talk view drew, since the page may
+ * have been re-rendered in between. A passage that cannot be found is said so, and the reader stays
+ * where they are -- the article is not the answer to a passage that is no longer in it.
+ */
+async function locateAnnotation(annotation) {
+  const range = pageContents.value
+    ? locateAnchor(indexText(pageContents.value), annotation.anchor)
+    : null
+  if (!range) {
+    notify({ type: 'warning', message: t('common.comments.annotationLost') })
+    return
+  }
+  state.showAnnotations = true
+  state.revealAnnotationId = annotation.id
+  await switchView('article')
+}
+
+/** View All Annotations, over the article -- or Hide All Annotations, staying on the discussion. */
+function toggleAllAnnotations() {
+  if (state.showAnnotations) {
+    state.showAnnotations = false
+    return
+  }
+  closeTocPanel()
+  state.showAnnotations = true
+  switchView('article')
+}
+
+/** From an annotation's note over the article to the comment it was posted in. */
+async function viewComment(commentId) {
+  await switchView('talk')
+  scrollToAnchorWhenReady(`#comment-${commentId}`)
 }
 
 /**

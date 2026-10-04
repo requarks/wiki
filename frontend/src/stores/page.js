@@ -53,7 +53,7 @@ export const usePageStore = defineStore('page', {
     alias: '',
     /** Whether this page shows its Links tab. The site-wide switch is `siteStore.features.backlinks`. */
     allowBacklinks: true,
-    allowComments: false,
+    allowComments: true,
     allowContributions: true,
     allowRatings: true,
     authorId: 0,
@@ -650,7 +650,7 @@ export const usePageStore = defineStore('page', {
         localeRelations: [],
         tags: props.tags ?? [],
         allowBacklinks: props.allowBacklinks ?? true,
-        allowComments: props.allowComments ?? false,
+        allowComments: props.allowComments ?? true,
         allowContributions: props.allowContributions ?? true,
         allowRatings: props.allowRatings ?? true,
         showLastEditedBy: props.showLastEditedBy ?? true,

@@ -82,7 +82,7 @@ function reveal(el) {
  * The article has its own scroller rather than the window — the shell stays put and the column moves
  * — so the position of the heading has to be read against that box, not the viewport.
  */
-function scrollerOf(el) {
+export function scrollerOf(el) {
   for (let node = el.parentElement; node; node = node.parentElement) {
     const { overflowY } = getComputedStyle(node)
     if (/(auto|scroll|overlay)/.test(overflowY) && node.scrollHeight > node.clientHeight + 1) {

@@ -254,8 +254,14 @@ export const blocks = pgTable(
  *
  * Replies are one level deep and that is enforced in the model: a reply names the comment it answers
  * in `parentId`, and a reply to a reply is attached to that reply's own parent rather than nesting
- * further. The foreign key is self-referential and cascades, so deleting a comment takes the replies
- * under it — which is the whole of what a thread is here.
+ * further.
+ *
+ * **Deleting a comment that has replies keeps its row**, emptied, with `deletedAt` set: the replies
+ * are other people's words and stay where they were, under a placeholder saying the comment they
+ * answered was deleted. Content, author and annotations are cleared from that row, so nothing of what
+ * was deleted is left to serve. A comment with no replies is simply deleted, and so is a placeholder
+ * once the last reply under it goes (`models/comments.ts`). The foreign key still cascades, for the
+ * deletions that are not one comment at a time — a page, and everything said about it.
  *
  * `content` is markdown source and there is no stored render. It is turned into HTML in the reader's
  * browser (`frontend/src/renderers/comment.js`) with raw HTML disabled, the same way a page's
@@ -302,6 +308,11 @@ export const comments = pgTable(
      * nothing should write a key into it without deciding what an absent one means.
      */
     meta: jsonb().notNull().default({}),
+    /**
+     * When it was deleted, for a comment kept as a placeholder because it has replies. Null for every
+     * comment that is still there. See the note on the table.
+     */
+    deletedAt: timestamp(),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow()
   },
@@ -311,6 +322,47 @@ export const comments = pgTable(
     index('comments_parentId_idx').on(table.parentId),
     index('comments_authorId_idx').on(table.authorId)
   ]
+)
+
+/**
+ * A passage of the article a comment is about, and what was said about it.
+ *
+ * Rows of their own rather than a list in `comments.meta`, because each one has a life of its own
+ * after it is posted: it is resolved and reopened, its note is edited and it is deleted, one at a
+ * time and by people other than the comment's author. Only a comment that starts a thread carries
+ * any — a reply answers the comment, not the page.
+ *
+ * **The passage is described, never pointed at.** `anchor` holds the quoted text, a little of what
+ * surrounded it, and the heading it sat under — no element path, no offset into the stored render.
+ * A page is edited after it is annotated, and a description is what can be found again in a page
+ * that has moved on; a pointer is only right about the version it was taken from. The matching is
+ * the browser's, against the article as drawn (`frontend/src/helpers/annotations.js`), which is the
+ * same text the passage was selected from.
+ */
+export const commentAnnotations = pgTable(
+  'commentAnnotations',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    commentId: uuid()
+      .notNull()
+      .references(() => comments.id, { onDelete: 'cascade' }),
+    /** Where it comes in its comment, from 0 — the order the passages were picked in. */
+    position: integer().notNull().default(0),
+    /** What was said about the passage. Markdown, drawn the way a comment is. */
+    note: text().notNull(),
+    /**
+     * The passage: `{ exact, prefix, suffix, heading, offset }`. See `CommentAnchor` in
+     * `models/comments.ts`, which is the shape, and the note on the table, which is why.
+     */
+    anchor: jsonb().notNull(),
+    /** When it was marked done, or null while it is open. */
+    resolvedAt: timestamp(),
+    /** Who marked it done. Kept as an id only: a resolution is a state, not something said. */
+    resolvedById: uuid().references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [index('commentAnnotations_commentId_idx').on(table.commentId, table.position)]
 )
 
 // GROUPS ------------------------------

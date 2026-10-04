@@ -374,12 +374,12 @@
     <!-- CHANGE PASSWORD SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `changePwd`">
-      <p class="auth-subtitle" v-if="state.continuationToken">
+      <p class="auth-subtitle" v-if="state.changePwdForced">
         {{ t('auth.changePwd.instructions') }}
       </p>
       <w-form ref="changePwdForm" @submit="changePwd">
         <w-input
-          v-if="!state.continuationToken"
+          v-if="!state.changePwdForced"
           ref="changePwdCurrentIpt"
           v-model="state.password"
           outlined
@@ -585,6 +585,13 @@ const state = reactive({
   password: '',
   securityCode: '',
   continuationToken: '',
+  /**
+   * Whether the change-password screen was reached part way through a login, which proves the
+   * current password already -- so the form asks only for the new one. Decided as the screen opens
+   * rather than read off `continuationToken` as it goes: a successful change answers with no token,
+   * and the form would put the current-password field back under the overlay on the way out.
+   */
+  changePwdForced: false,
   newName: '',
   newEmail: '',
   newPassword: '',
@@ -880,8 +887,9 @@ async function handleLoginResponse(resp) {
   switch (resp.nextAction) {
     case 'changePassword': {
       state.screen = 'changePwd'
+      state.changePwdForced = Boolean(state.continuationToken)
       nextTick(() => {
-        if (state.continuationToken) {
+        if (state.changePwdForced) {
           changePwdNewPwdIpt.value.focus()
         } else {
           changePwdCurrentIpt.value.focus()
