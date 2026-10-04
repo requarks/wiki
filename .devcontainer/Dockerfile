@@ -24,6 +24,13 @@ RUN apt-get update && apt-get install -qy \
     unzip \
     wget
 
+# GitHub CLI, from GitHub's own apt repository: Debian's package trails upstream by many releases
+RUN mkdir -p -m 755 /etc/apt/keyrings && \
+    wget -nv -O /etc/apt/keyrings/githubcli-archive-keyring.gpg https://cli.github.com/packages/githubcli-archive-keyring.gpg && \
+    chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && apt-get install -qy gh
+
 # The Puppeteer extension installs its own browser, in app-init.sh: the one Chrome release it is built
 # against, where a distro Chromium moves on with every update and eventually stops being one Puppeteer
 # can drive. Only the headless shell, which is all the renderer uses.

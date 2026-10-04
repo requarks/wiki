@@ -14,7 +14,7 @@ import {
   jobSchedule as jobScheduleTable,
   jobHistory as jobHistoryTable
 } from '../db/schema.ts'
-import { and, eq, inArray, lt, sql } from 'drizzle-orm'
+import { and, eq, lt, sql } from 'drizzle-orm'
 import type { PoolClient } from 'pg'
 
 /** What the scheduler hands an in-process task besides its payload. */
@@ -384,13 +384,13 @@ export default {
     let jobs: any[] = []
     try {
       jobs = await WIKI.db.transaction(async (trx: any) => {
+        // -> `= ANY(ARRAY(...))` rather than `IN (...)`: an IN subquery may be planned as a semi join
+        //    that re-runs it per outer row, each run skipping what was already deleted, so the LIMIT
+        //    stops limiting and every due job is claimed at once. ARRAY() is evaluated exactly once.
         const claimed = await trx
           .delete(jobsTable)
           .where(
-            inArray(
-              jobsTable.id,
-              sql`(SELECT id FROM jobs WHERE ("waitUntil" IS NULL OR "waitUntil" <= NOW()) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT ${availableWorkers})`
-            )
+            sql`${jobsTable.id} = ANY(ARRAY(SELECT id FROM jobs WHERE ("waitUntil" IS NULL OR "waitUntil" <= NOW()) ORDER BY id FOR UPDATE SKIP LOCKED LIMIT ${availableWorkers}))`
           )
           .returning()
         for (const job of claimed) {

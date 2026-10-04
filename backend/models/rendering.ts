@@ -1124,10 +1124,14 @@ class Rendering {
         */
         renderer ??= await this.createRenderer()
 
+        // -> `= (subquery)`, never `IN (subquery)`: postgres may plan an IN as a semi join that re-runs
+        //    the subquery per outer row, and each re-run skips the rows already deleted and hands back
+        //    the next one — so a LIMIT 1 claim empties the whole queue. A scalar subquery is an
+        //    InitPlan, evaluated exactly once.
         const claimed = await WIKI.db
           .delete(renderQueueTable)
           .where(
-            inArray(
+            eq(
               renderQueueTable.id,
               sql`(SELECT id FROM "pageRenderQueue" ORDER BY "createdAt" FOR UPDATE SKIP LOCKED LIMIT 1)`
             )

@@ -133,20 +133,24 @@ class RunContext {
  * `SKIP LOCKED` so that several instances can drain the outbox at once without two of them taking
  * the same event, and a claim older than the task timeout counts as abandoned: whatever held it has
  * stopped without saying so, and the cursor it left is where the next claim carries on.
+ *
+ * `= ANY(ARRAY(...))` and not `IN (...)`: postgres may plan an IN subquery as a semi join that re-runs
+ * it per outer row, each run skipping the rows already claimed, so the LIMIT stops limiting and the
+ * whole outbox is claimed at once. ARRAY() is evaluated exactly once.
  */
 async function claimEvents(): Promise<ClaimedEvent[]> {
   const staleSeconds = (WIKI.config.scheduler?.taskTimeout ?? 300) + 60
   const result = await WIKI.db.execute(sql`
     UPDATE ${eventsTable}
     SET "claimedAt" = now(), "claimedBy" = ${WIKI.INSTANCE_ID}
-    WHERE id IN (
+    WHERE id = ANY(ARRAY(
       SELECT id FROM ${eventsTable}
       WHERE "processedAt" IS NULL
         AND ("claimedAt" IS NULL OR "claimedAt" < now() - make_interval(secs => ${staleSeconds}))
       ORDER BY "createdAt"
       LIMIT ${EVENT_BATCH_SIZE}
       FOR UPDATE SKIP LOCKED
-    )
+    ))
     RETURNING id, kind, origin, "siteId", "actorId", data, recipients, cursor, "createdAt"
   `)
   return (result.rows as any[])
