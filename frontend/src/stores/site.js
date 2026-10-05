@@ -120,6 +120,7 @@ export const useSiteStore = defineStore('site', {
       browse: false,
       collaborativeEditing: false,
       lastEditedBy: true,
+      listFolderChildren: false,
       // -> On, for the reason `backlinks` is: the server reads a missing key as on, and the badge
       //    must not disagree with it
       notifications: true,

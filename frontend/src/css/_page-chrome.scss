@@ -105,6 +105,19 @@ $toc-overlay-max: 749.98px;
 }
 
 /*
+  The missing-page screen, which can hold more than a sentence and a button: the folder listing
+  `PageFolderChildren.vue` draws under them runs as long as the folder does. So it scrolls, and is
+  centred only while it fits -- plain centring puts an overflowing top out of reach above the
+  scrollport. The padding on top is for the case where it does not fit, so the icon is not flush
+  against the edge.
+*/
+.page-placeholder--scroll {
+  overflow-y: auto;
+  justify-content: safe center;
+  padding-top: 24px;
+}
+
+/*
   Large and faint. It is the illustration on an otherwise empty column, not something to look at -- the
   sentence under it is what the reader is here to read.
 */

@@ -279,6 +279,25 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <!--
+            What the missing-page screen shows at a path with pages under it. Off, that screen is
+            only the notice and the Create button.
+          -->
+          <w-item tag="label">
+            <blueprint-icon icon="opened-folder" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowListFolderChildren`) }}</w-item-label>
+              <w-item-label caption>
+                {{ t(`admin.general.allowListFolderChildrenHint`) }}
+              </w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.listFolderChildren"
+                :aria-label="t(`admin.general.allowListFolderChildren`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon icon="confusion" />
             <w-item-section>
@@ -714,6 +733,7 @@ function defaultConfig() {
       ratingsMode: 'off',
       comments: true,
       lastEditedBy: true,
+      listFolderChildren: false,
       notifications: true,
       reasonForChange: 'required'
     },
@@ -856,6 +876,7 @@ async function save() {
           collaborativeEditing: state.config.features?.collaborativeEditing ?? false,
           comments: state.config.features?.comments ?? true,
           lastEditedBy: state.config.features?.lastEditedBy ?? true,
+          listFolderChildren: state.config.features?.listFolderChildren ?? false,
           notifications: state.config.features?.notifications ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',

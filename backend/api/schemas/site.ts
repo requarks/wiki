@@ -112,6 +112,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Whether a page may show who last edited it, in its sidebar. A page can still opt out on its own with `showLastEditedBy`.'
           },
+          listFolderChildren: {
+            type: 'boolean',
+            description:
+              'Whether a path with no page of its own but pages under it lists them, under the notice that the page does not exist. On by default. Only the entries the user may read are listed — the same answer `/tree/browse` gives, which this also opens to readers while the `browse` feature is off.'
+          },
           notifications: {
             type: 'boolean',
             description:

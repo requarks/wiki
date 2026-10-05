@@ -332,7 +332,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Browse the tree as a reader',
         description:
-          "Lists one folder for the sidebar's browse menu: the pages a reader may open and the folders holding some, with assets, hidden pages and dead-end folders left out.\n\nA page and a folder can share a path — `/foo/bar` alongside the folder of pages under it — and such a pair comes back as a single entry with both `isPage` and `isFolder` set, since a reader sees one name with two ways in.\n\nReadable without a session, because a wiki is browsed by people who are not logged in — an anonymous request sees only published pages with no password on them, which is exactly what the page view itself would serve them. Requires the site's `browse` feature to be on.",
+          "Lists one folder for the sidebar's browse menu: the pages a reader may open and the folders holding some, with assets, hidden pages and dead-end folders left out.\n\nA page and a folder can share a path — `/foo/bar` alongside the folder of pages under it — and such a pair comes back as a single entry with both `isPage` and `isFolder` set, since a reader sees one name with two ways in.\n\nReadable without a session, because a wiki is browsed by people who are not logged in — an anonymous request sees only published pages with no password on them, which is exactly what the page view itself would serve them. Requires the site's `browse` or `listFolderChildren` feature to be on.",
         tags: ['Tree'],
         params: siteIdParam,
         querystring: {
@@ -381,9 +381,17 @@ async function routes(app: FastifyInstance) {
       if (!site) {
         return reply.notFound('This site does not exist.')
       }
-      // -> The same setting that hides the sidebar's Browse button, enforced where it counts: with
-      //    browsing off, the tree is not something to hand out one folder at a time either
-      if (!site.config?.features?.browse) {
+      /*
+        The same setting that hides the sidebar's Browse button, enforced where it counts: with
+        browsing off, the tree is not something to hand out one folder at a time either.
+
+        `listFolderChildren` opens it too, because the missing-page screen it turns on draws one
+        level of exactly this listing -- the folder at the path that has no page -- and a second
+        route answering the same question, filtered the same way, would be one more place for the
+        two to drift apart.
+      */
+      const features = site.config?.features
+      if (!features?.browse && !features?.listFolderChildren) {
         return reply.forbidden('Browsing is disabled on this site.')
       }
       const level = await WIKI.models.tree.browse({

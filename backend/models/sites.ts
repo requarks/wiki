@@ -140,6 +140,9 @@ class Sites {
           //    choice, which is only useful to somebody who has already made it.
           comments: true,
           lastEditedBy: true,
+          // -> On: a reader who follows a link to a folder rather than a page is better served by
+          //    what is in it than by a notice that there is nothing there
+          listFolderChildren: true,
           // -> On: a reader who watches a page or is mentioned expects to be told. What each person
           //    receives, and how, is theirs to choose under Profile → Notifications
           notifications: true,
@@ -466,6 +469,7 @@ class Sites {
           ratingsMode: 'off',
           comments: true,
           lastEditedBy: true,
+          listFolderChildren: true,
           notifications: true,
           reasonForChange: 'optional',
           search: true

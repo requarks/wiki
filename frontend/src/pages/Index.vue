@@ -114,7 +114,7 @@
           for anyone who may write one the answer to "this page does not exist" is the button that
           creates it -- at this path, so that the link they followed leads somewhere afterwards.
         -->
-        <div v-else-if="pageStore.notFound" class="page-placeholder">
+        <div v-else-if="pageStore.notFound" class="page-placeholder page-placeholder--scroll">
           <w-icon class="page-placeholder-icon" name="la:file-alt" />
           <!-- -> "...yet" is an invitation, so it is for whoever can take it up; to a reader who
                cannot write here the page simply does not exist -->
@@ -149,6 +149,8 @@
             padding="xs lg"
             :label="t(`common.newpage.goback`)"
             @click="goBack" />
+          <!-- -> What is under this path, when the site lists it and there is anything to list -->
+          <page-folder-children v-if="siteStore.features.listFolderChildren" />
         </div>
         <!--
           A redirection, which is a page with nowhere to read: it takes the reader on rather than
@@ -691,6 +693,8 @@ const PageBlog = defineAsyncComponent({
   loadingComponent: LoadingGeneric
 })
 const PageBlogSidebar = defineAsyncComponent(() => import('@/components/PageBlogSidebar.vue'))
+// -> Only on a missing page, and only where the site has it turned on
+const PageFolderChildren = defineAsyncComponent(() => import('@/components/PageFolderChildren.vue'))
 
 const editorComponents = {
   markdown: defineAsyncComponent({
