@@ -210,8 +210,13 @@ export class BlockIndexElement extends LitElement {
       li a {
         display: flex;
         color: var(--q-primary);
-        /* -> Vertical only: the horizontal inset is what the arrow's own offset is set against */
-        padding: 0.75rem 1rem;
+        /*
+          -> The right inset clears the arrow, which is positioned out of the flow and so takes no
+             room in the row on its own: its 16px offset, its 32px width, and the same 14px gap the
+             icon keeps on the left. Without it a long title or description runs under the arrow
+             instead of wrapping before it.
+        */
+        padding: 0.75rem calc(16px + 32px + 14px) 0.75rem 1rem;
         text-decoration: none;
         flex: 1;
         flex-direction: row;

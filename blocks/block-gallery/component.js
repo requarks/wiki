@@ -1,15 +1,7 @@
 import { LitElement, html, css } from 'lit'
 
+import { resolveFilePath } from '../shared/files.js'
 import { DarkMode } from '../shared/theme.js'
-
-/** Where an uploaded file is served from, and so what a bare path in the body is taken to mean. */
-const FILES_PREFIX = '/_files/'
-
-/**
- * An address that already says where it points: a full URL, a protocol-relative one, a data URI —
- * or one of the wiki's own `/_` routes, `/_files/` among them.
- */
-const ABSOLUTE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|\/_)/i
 
 /**
  * An attribute that means "off" when it says so.
@@ -31,24 +23,6 @@ const ICONS = {
   next: 'M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z',
   close:
     'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z'
-}
-
-/**
- * The address a line of the body points at.
- *
- * Anything that names its own location is left exactly as written. Everything else is a path into the
- * file manager, which is where the images on a wiki page live — so `photos/summer.jpg` and
- * `/photos/summer.jpg` both mean `/_files/photos/summer.jpg`, and an author can paste the path the
- * file manager shows without having to remember the prefix. Wiki routes are spared that: they all
- * start with `/_`, and `/_files/` is one of them, so a path already carrying the prefix is not given
- * a second one.
- */
-function resolveSource(value) {
-  const address = value.trim()
-  if (ABSOLUTE.test(address)) {
-    return address
-  }
-  return FILES_PREFIX + address.replace(/^\/+/, '')
 }
 
 /**
@@ -416,10 +390,10 @@ https://example.com/photo-2.jpg`
   firstUpdated() {
     const fence = this.querySelector('pre')
     const source = ((fence ?? this).textContent ?? '').trim()
-    const found = source.split(/\s+/).filter(Boolean).map(resolveSource)
+    const found = source.split(/\s+/).filter(Boolean).map(resolveFilePath)
     if (!fence) {
       for (const image of this.querySelectorAll('img')) {
-        found.push(resolveSource(image.getAttribute('src') ?? ''))
+        found.push(resolveFilePath(image.getAttribute('src') ?? ''))
       }
     }
     // -> An address written once and drawn twice -- as a link and as the image it points at -- is one
