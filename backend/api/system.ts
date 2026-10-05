@@ -2186,7 +2186,12 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async (req) => {
+    async (req, reply) => {
+      // -> The task skips itself offline, which here would answer with whatever was stored last
+      if (WIKI.config.offline) {
+        return reply.badRequest('Wiki.js is in offline mode and cannot check for updates.')
+      }
+
       const renderJob = await WIKI.scheduler.addJob({
         task: 'checkVersion',
         maxRetries: 0,

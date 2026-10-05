@@ -2,6 +2,7 @@ import { readdir, stat, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { locales as localesTable } from '../db/schema.ts'
 import { eq, sql } from 'drizzle-orm'
+import { CustomError } from '../helpers/common.ts'
 
 /** Where the locale packages published for this major version live. */
 const REMOTE_BASE_URL = 'https://github.com/requarks/wiki-locales/raw/main'
@@ -288,8 +289,19 @@ class Locales {
 
   /**
    * Read the list of locale packages published upstream.
+   *
+   * Everything that downloads a locale goes through here first, so this is the one place offline
+   * mode has to refuse it. A `CustomError` so that the admin area is told why, rather than a bare 500.
+   *
+   * @throws When offline mode is on, the request fails, or the response is not the expected list
    */
   async fetchRemoteMetadata(): Promise<RemoteLocale[]> {
+    if (WIKI.config.offline) {
+      throw new CustomError(
+        'localesOffline',
+        'Wiki.js is in offline mode and cannot reach the locale repository. Upload a locale file instead.'
+      )
+    }
     const resp = await fetch(`${REMOTE_BASE_URL}/metadata.json`)
     if (!resp.ok) {
       throw new Error(`Remote locale metadata could not be fetched (HTTP ${resp.status}).`)

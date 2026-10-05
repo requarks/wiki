@@ -62,8 +62,16 @@ logFormat: default
 # ---------------------------------------------------------------------
 # Offline Mode
 # ---------------------------------------------------------------------
-# If your server cannot access the internet. Set to true and manually
-# download the offline files for sideloading.
+# Set to true if your server cannot access the internet. Wiki.js then
+# makes no request of its own to upstream services:
+#  - Icons: icon sets cannot be added, and only icons the wiki has
+#    already stored can be used. The interface's own icons are built in
+#    and unaffected.
+#  - Locales: nothing is downloaded. Install a locale by uploading its
+#    file instead (Admin > Locale).
+#  - Update checks: skipped.
+# Services you configure yourself (authentication providers, storage
+# targets, mail, Akismet) are still contacted, since you chose them.
 
 offline: false
 
@@ -100,6 +108,24 @@ scheduler:
   # Leave 'auto' for one fewer than the CPUs available to the process (at
   # least 1), which respects a container's CPU limit.
   workers: auto
+
+# ---------------------------------------------------------------------
+# Database Connection Pool
+# ---------------------------------------------------------------------
+# Passed as-is to the PostgreSQL connection pool (node-postgres) of
+# each instance, so any of its options is accepted:
+# https://node-postgres.com/apis/pool
+#
+# `max` (default 10) is the one worth knowing: with several instances
+# behind a load balancer, each opens up to `max` connections, and the
+# total must stay under the server's `max_connections`. Three of each
+# instance's connections are held open for good (event, scheduler and
+# collaboration listeners), so `max` must be well above 3 or queries
+# will wait for a connection that never comes free.
+# Worker threads ignore this and use one connection each.
+
+# pool:
+#   max: 10
 
 # ---------------------------------------------------------------------
 # Dev Mode

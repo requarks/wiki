@@ -1,4 +1,9 @@
 export async function task(): Promise<void> {
+  // -> Nothing to reach, and a nightly failure saying so would be noise rather than news
+  if (WIKI.config.offline) {
+    return
+  }
+
   WIKI.logger.info('Checking for latest version...')
 
   try {
