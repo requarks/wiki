@@ -5,6 +5,7 @@ import {
   tree as treeTable
 } from '../db/schema.ts'
 import { decodeTreePath } from '../helpers/common.ts'
+import { liveCondition } from '../helpers/publishing.ts'
 
 /**
  * Page graph model
@@ -48,7 +49,8 @@ export interface GraphPageRef {
   locale: string
   path: string
   tags: string[]
-  publishState: string
+  /** Whether the page is open to its readers now — see `helpers/publishing.ts`. */
+  isLive: boolean
 }
 
 export interface GraphPage {
@@ -90,21 +92,24 @@ interface PageRow {
   path: string
   title: string
   tags: string[] | null
-  publishState: string
+  isLive: boolean
   editor: string
   alias: string | null
   relations: unknown
 }
 
-const pageColumns = {
-  id: pagesTable.id,
-  locale: pagesTable.locale,
-  path: pagesTable.path,
-  title: pagesTable.title,
-  tags: pagesTable.tags,
-  publishState: pagesTable.publishState,
-  editor: pagesTable.editor,
-  alias: pagesTable.alias
+/** A function, not a constant: whether a page is live is a question about the time of the query. */
+function pageColumns() {
+  return {
+    id: pagesTable.id,
+    locale: pagesTable.locale,
+    path: pagesTable.path,
+    title: pagesTable.title,
+    tags: pagesTable.tags,
+    isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
+    editor: pagesTable.editor,
+    alias: pagesTable.alias
+  }
 }
 
 /** Precedence when one page reaches another in more than one way: the strongest link is kept. */
@@ -133,7 +138,7 @@ class PageGraphModel {
     // -> The locale's own pages. Relations are read here and nowhere else: they are what tells a
     //    relation apart from a link in the rows below, and only a source page's matter
     const pageRows = (await WIKI.db
-      .select({ ...pageColumns, relations: pagesTable.relations })
+      .select({ ...pageColumns(), relations: pagesTable.relations })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.locale, locale)))
       .orderBy(pagesTable.path)
@@ -163,7 +168,7 @@ class PageGraphModel {
         locale: row.locale,
         path: row.path,
         tags: row.tags ?? [],
-        publishState: row.publishState
+        isLive: row.isLive
       })
       if (!seen) {
         refused.add(row.id)
@@ -284,7 +289,7 @@ class PageGraphModel {
         lookups.push(sql`${pagesTable.alias} = ANY(${sql.param(refs)}::text[])`)
       }
       const others = (await WIKI.db
-        .select(pageColumns)
+        .select(pageColumns())
         .from(pagesTable)
         .where(
           and(eq(pagesTable.siteId, siteId), sql`(${sql.join(lookups, sql` OR `)})`)

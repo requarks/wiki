@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { mayOnPage } from './pages.ts'
+import { mayOnPage, unpublishedFor } from './pages.ts'
 import { normalizePagePath } from '../helpers/common.ts'
 
 const siteIdParam = {
@@ -186,7 +186,7 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         blog,
         actor: WIKI.models.groups.actorForRequest(req),
-        publicOnly: !req.session?.authenticated,
+        unpublished: unpublishedFor(req),
         filter: {
           tag: req.query.tag,
           year: req.query.year,

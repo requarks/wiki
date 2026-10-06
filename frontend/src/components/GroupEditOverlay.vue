@@ -235,90 +235,81 @@
           <w-card class="shadow-1 pb-2" v-else>
             <w-card-section>
               <div class="admin-groups-rule" v-for="rule of state.group.rules" :key="rule.id">
-                <div class="admin-groups-rule-icon" :class="getRuleModeColor(rule.mode)">
-                  <w-icon
-                    :name="getRuleModeIcon(rule.mode)"
-                    color="white"
-                    @click="cycleRuleMode(rule)" />
-                </div>
+                <!-- -> The timeline down the left, which the mode button's disc sits at the top of -->
+                <div class="admin-groups-rule-icon" :class="getRuleModeColor(rule.mode)" />
                 <div class="admin-groups-rule-name">
-                  <div class="admin-groups-rule-name-text">
-                    <strong :class="getRuleModeColor(rule.mode)">{{
-                      getRuleModeName(rule.mode)
-                    }}</strong>
-                  </div>
+                  <!--
+                    The disc and the mode name are one button opening the choice of mode
+                    (`RuleModeMenu`), so the whole of it is one target with one hover. It reaches back
+                    over the timeline's column to put the disc where it has always been. Disabled for a
+                    reader who may look at a rule but not change it.
+                  -->
+                  <button
+                    type="button"
+                    class="admin-groups-rule-mode w-unstyled"
+                    :class="getRuleModeColor(rule.mode)"
+                    :disabled="!canManage">
+                    <span class="admin-groups-rule-mode-disc">
+                      <w-icon :name="getRuleModeIcon(rule.mode)" />
+                    </span>
+                    <strong>{{ getRuleModeName(rule.mode) }}</strong>
+                    <w-icon v-if="canManage" name="la:angle-down" size="10px" />
+                    <rule-mode-menu :mode="rule.mode" @select="(mode) => setRuleMode(rule, mode)" />
+                  </button>
                   <w-separator class="ml-2 mr-1" vertical />
                   <input
                     type="text"
                     v-model="rule.name"
                     placeholder="Rule Name"
                     :disabled="!canManage" />
+                  <w-btn
+                    v-if="canManage"
+                    class="admin-groups-rule-delete"
+                    flat
+                    round
+                    dense
+                    size="sm"
+                    icon="la:trash"
+                    color="negative"
+                    :aria-label="t(`admin.groups.ruleDelete`)"
+                    @click="deleteRule(rule.id)">
+                    <w-tooltip>{{ t('admin.groups.ruleDelete') }}</w-tooltip>
+                  </w-btn>
                 </div>
                 <w-card class="admin-groups-rule-card mt-4" flat>
                   <w-card-section
                     class="admin-groups-rule-card-permissions"
                     :class="getRuleModeClass(rule.mode)">
-                    <w-select
-                      class="mt-1"
-                      standout
-                      v-model="rule.roles"
-                      emit-value
-                      map-options
-                      dense
-                      :aria-label="t(`admin.groups.ruleSites`)"
-                      :options="ruleOptions"
-                      :disable="!canManage"
-                      placeholder="Select permissions..."
-                      option-value="permission"
-                      option-label="title"
-                      options-dense
-                      multiple
-                      use-chips
-                      stack-label>
-                      <template #selected-item="scope">
-                        <w-chip
-                          square
-                          dense
-                          :tabindex="scope.tabindex"
-                          :color="getRuleModeBgColor(rule.mode)"
-                          text-color="white">
-                          <span class="text-caption">{{ scope.opt.title }}</span>
-                        </w-chip>
-                      </template>
-                      <template #option="{ itemProps, itemEvents, opt, selected, toggleOption }">
-                        <w-item v-bind="itemProps" v-on="itemEvents">
-                          <w-item-section side>
-                            <w-toggle
-                              :model-value="selected"
-                              @update:model-value="toggleOption(opt)"
-                              color="primary"
-                              checked-icon="la:check"
-                              unchecked-icon="la:times"
-                              :aria-label="opt.label" />
-                          </w-item-section>
-                          <!-- q-item-section(side, style='flex-basis: 150px;') -->
-                          <!-- q-chip.text-caption( -->
-                          <!-- square -->
-                          <!-- color='teal' -->
-                          <!-- text-color='white' -->
-                          <!-- dense -->
-                          <!-- ) {{opt.permission}} -->
-                          <w-item-section>
-                            <w-item-label>{{ opt.title }}</w-item-label>
-                            <w-item-label caption>{{ opt.hint }}</w-item-label>
-                          </w-item-section>
-                        </w-item>
-                      </template>
-                    </w-select>
+                    <!--
+                      The permissions themselves, in the bar rather than behind a dropdown: a rule is
+                      read far more often than it is changed, and what it grants is the first thing a
+                      reader wants. Picking them is a dialog of its own (`RulePermissionsDialog`), which
+                      has room to lay them out by what the rule's pattern means to each.
+                    -->
+                    <div class="admin-groups-rule-roles">
+                      <w-chip
+                        v-for="perm of ruleRoleChips(rule)"
+                        :key="perm.permission"
+                        square
+                        dense
+                        :color="getRuleModeBgColor(rule.mode)"
+                        text-color="white">
+                        <span class="text-caption">{{ perm.title }}</span>
+                      </w-chip>
+                      <span v-if="rule.roles.length < 1" class="text-caption text-grey-6">
+                        {{ t('admin.groups.rulePermissionsNone') }}
+                      </span>
+                    </div>
                     <w-btn
-                      class="acrylic-btn ml-4"
-                      flat
-                      icon="la:trash"
-                      color="negative"
-                      padding="sm sm"
-                      size="md"
                       v-if="canManage"
-                      @click="deleteRule(rule.id)" />
+                      class="admin-groups-rule-select acrylic-btn ml-4 shrink-0"
+                      flat
+                      no-caps
+                      :color="getRuleModeBgColor(rule.mode)"
+                      icon="la:list-alt"
+                      padding="xs md"
+                      :label="t(`admin.groups.rulePermissionsSelect`)"
+                      @click="selectRulePermissions(rule)" />
                   </w-card-section>
                   <w-card-section horizontal>
                     <w-card-section class="admin-groups-rule-card-filters">
@@ -336,28 +327,11 @@
                         option-value="id"
                         option-label="title"
                         multiple
-                        behavior="dialog"
                         :display-value="
                           t(`admin.groups.selectedSites`, rule.sites.length, {
                             count: rule.sites.length
                           })
                         ">
-                        <template #option="{ itemProps, itemEvents, opt, selected, toggleOption }">
-                          <w-item v-bind="itemProps" v-on="itemEvents">
-                            <w-item-section>
-                              <w-item-label>{{ opt.title }}</w-item-label>
-                            </w-item-section>
-                            <w-item-section side>
-                              <w-toggle
-                                :model-value="selected"
-                                @update:model-value="toggleOption(opt)"
-                                color="primary"
-                                checked-icon="la:check"
-                                unchecked-icon="la:times"
-                                :aria-label="opt.label" />
-                            </w-item-section>
-                          </w-item>
-                        </template>
                       </w-select>
                       <w-select
                         class="mt-2"
@@ -372,7 +346,6 @@
                         option-value="code"
                         option-label="name"
                         multiple
-                        behavior="dialog"
                         :display-value="
                           t(
                             `admin.groups.selectedLocales`,
@@ -385,22 +358,6 @@
                             rule.locales.length
                           )
                         ">
-                        <template #option="{ itemProps, opt, selected, toggleOption }">
-                          <w-item v-bind="itemProps">
-                            <w-item-section>
-                              <w-item-label>{{ opt.name }}</w-item-label>
-                            </w-item-section>
-                            <w-item-section side>
-                              <w-toggle
-                                :model-value="selected"
-                                @update:model-value="toggleOption(opt)"
-                                color="primary"
-                                checked-icon="la:check"
-                                unchecked-icon="la:times"
-                                :aria-label="opt.name" />
-                            </w-item-section>
-                          </w-item>
-                        </template>
                       </w-select>
                     </w-card-section>
                     <w-card-section class="admin-groups-rule-card-pattern">
@@ -794,6 +751,8 @@ import { useUserStore } from '@/stores/user'
 
 import { v4 as uuid } from 'uuid'
 import { fileOpen, fileSave } from 'browser-fs-access'
+import RuleModeMenu from '@/components/RuleModeMenu.vue'
+import RulePermissionsDialog from '@/components/RulePermissionsDialog.vue'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
 
@@ -1028,7 +987,8 @@ const GUEST_ROLES = [
   'read:history',
   'read:assets',
   'read:comments',
-  'write:comments'
+  'write:comments',
+  'read:glossary'
 ]
 
 const rules = [
@@ -1167,6 +1127,32 @@ const rules = [
     warning: false,
     restrictedForSystem: true,
     disabled: false
+  },
+  /*
+    The two rule permissions that ignore the path: a glossary belongs to a site and a locale, so every
+    rule naming one that is scoped to them applies, and mode alone decides -- see `resolveLocaleRule`
+    in `helpers/pageRules.ts`. The hints say so, because a DENY written for one folder closing the
+    whole glossary is not what anybody would guess. `scope: 'locale'` is what puts them in the
+    picker's second column (`RulePermissionsDialog`), whose heading carries that warning for both,
+    and has to match `LOCALE_PERMISSIONS` in `models/groups.ts`.
+  */
+  {
+    permission: 'read:glossary',
+    scope: 'locale',
+    title: 'Read Glossary',
+    hint: "Can view the site's glossary.",
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'manage:glossary',
+    scope: 'locale',
+    title: 'Manage Glossary',
+    hint: 'Can create, edit and delete glossary terms, and view them.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
   }
 ]
 
@@ -1299,16 +1285,6 @@ function getRuleModeIcon(mode) {
   )
 }
 
-function getNextRuleMode(mode) {
-  return (
-    {
-      DENY: 'FORCEALLOW',
-      ALLOW: 'DENY',
-      FORCEALLOW: 'ALLOW'
-    }[mode] || 'ALLOW'
-  )
-}
-
 function getRuleModeName(mode) {
   switch (mode) {
     case 'ALLOW':
@@ -1435,15 +1411,39 @@ function newRule() {
 }
 
 /*
-  Cycle a rule between ALLOW, DENY and FORCEALLOW. Guarded here rather than in the template, because
-  the control is an icon with a click handler rather than a form control there is a `disable` to set
-  -- a reader holding `read:groups` may look at a rule, not re-point it.
+  Set what a rule does. Guarded here as well as by the disabled triggers, since the menu is the only
+  thing between a reader holding `read:groups` and re-pointing a rule.
 */
-function cycleRuleMode(rule) {
+function setRuleMode(rule, mode) {
   if (!canManage.value) {
     return
   }
-  rule.mode = getNextRuleMode(rule.mode)
+  rule.mode = mode
+}
+
+/**
+ * A rule's permissions as the bar draws them: in the order the picker offers them, with anything the
+ * rule names that is not on offer (an imported rule may) shown under its raw name at the end.
+ */
+function ruleRoleChips(rule) {
+  const roles = new Set(rule.roles)
+  const known = rules.filter((opt) => roles.has(opt.permission))
+  const unknown = rule.roles
+    .filter((role) => !rules.some((opt) => opt.permission === role))
+    .map((role) => ({ permission: role, title: role }))
+  return [...known, ...unknown]
+}
+
+function selectRulePermissions(rule) {
+  dialog({
+    component: RulePermissionsDialog,
+    componentProps: {
+      options: ruleOptions.value,
+      selected: rule.roles
+    }
+  }).onOk((roles) => {
+    rule.roles = roles
+  })
 }
 
 function deleteRule(id) {
@@ -1628,22 +1628,14 @@ onMounted(() => {
   position: relative;
   padding: 10px 0 24px 40px;
 
+  /* -> Drawing only, under the mode button's disc: it must never take the click meant for it */
   &-icon {
     position: absolute;
     top: 0;
     left: 0;
     bottom: 0;
     width: 31px;
-
-    &::before {
-      position: absolute;
-      content: '';
-      border-radius: 100%;
-      width: 31px;
-      height: 31px;
-      background-color: currentColor;
-      top: 4px;
-    }
+    pointer-events: none;
 
     &::after {
       position: absolute;
@@ -1656,25 +1648,65 @@ onMounted(() => {
       background-color: currentColor;
       display: block;
     }
+  }
 
-    /*
-      Sized and placed to the disc `::before` draws, with the glyph inset by the padding: an inline
-      <svg> scales its viewBox to whatever box it is given, so the old `width: 100%; height: 38px`
-      -- metrics for the icon FONT this replaced, where `font-size` did the sizing -- stretched the
-      mark across the whole circle.
+  /*
+    The mode: disc, name and caret as one button, in the rule's colour (`currentColor` throughout, from
+    the `text-*` class the template sets).
 
-      The box stays the full 31px even though the glyph is 15px, so the click target is the disc a
-      reader is aiming at rather than the mark inside it.
-    */
-    .w-icon {
-      position: absolute;
-      top: 4px;
-      left: 0;
-      box-sizing: border-box;
+    It sits in the title row but has to put its disc where the timeline starts, at the rule's left
+    edge and 4px down: hence the negative left margin over the row's 40px of padding, and the negative
+    vertical margins that let a 31px disc ride a 12px row without making it taller. The 9px gap is what
+    leaves the name where it always was, 40px in.
+  */
+  &-mode {
+    position: relative;
+    flex: 0 0 auto;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 31px;
+    margin: -9.5px 0 -9.5px -40px;
+    padding-right: 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background-color: color-mix(in srgb, currentColor 12%, transparent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    &-disc {
+      display: inline-flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
       width: 31px;
       height: 31px;
-      padding: 8px;
-      cursor: pointer;
+      border-radius: 100%;
+      background-color: currentColor;
+
+      .w-icon {
+        width: 15px;
+        height: 15px;
+        color: #fff;
+      }
+    }
+
+    > .w-icon {
+      margin-left: -5px;
     }
   }
 
@@ -1690,11 +1722,6 @@ onMounted(() => {
     */
     align-items: baseline;
     padding-top: 4px;
-
-    &-text {
-      flex: 0 0;
-      white-space: nowrap;
-    }
 
     input {
       font-weight: 700;
@@ -1722,6 +1749,23 @@ onMounted(() => {
     }
   }
 
+  /* -> At the end of the title row, level with the mode name and the rule's title */
+  &-delete {
+    align-self: center;
+    margin: -6px 0 -6px 0.5rem;
+  }
+
+  /* -> The chips wrap onto as many lines as the rule needs; the picker button keeps its place */
+  &-roles {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 32px;
+  }
+
   &-card {
     background-color: $grey-2 !important;
 
@@ -1735,10 +1779,6 @@ onMounted(() => {
       display: flex;
       align-items: center;
 
-      .w-select {
-        flex-basis: 100%;
-      }
-
       &.is-allow {
         background-color: rgba($positive, 0.1);
         border-bottom: 1px solid rgba($positive, 0.3);
@@ -1750,6 +1790,25 @@ onMounted(() => {
       &.is-forceallow {
         background-color: rgba($blue, 0.1);
         border-bottom: 1px solid rgba($blue, 0.3);
+      }
+
+      /*
+        -> The mode's colour on its own pale bar is too light to read as text, in light mode: each one
+           darkened by the same amount rather than swapped for a deeper Material shade, which would be
+           another hue. `!important` because `WBtn` writes its colour as an inline style, which
+           nothing else outranks.
+      */
+      @at-root .body--light & .admin-groups-rule-select {
+        color: color-mix(in srgb, var(--rule-select-color) 65%, black) !important;
+      }
+      @at-root .body--light &.is-allow {
+        --rule-select-color: var(--color-positive);
+      }
+      @at-root .body--light &.is-deny {
+        --rule-select-color: var(--color-negative);
+      }
+      @at-root .body--light &.is-forceallow {
+        --rule-select-color: var(--color-blue);
       }
     }
 

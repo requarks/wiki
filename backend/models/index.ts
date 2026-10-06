@@ -9,6 +9,7 @@ import { blogs } from './blogs.ts'
 import { comments } from './comments.ts'
 import { extensions } from './extensions.ts'
 import { flags } from './flags.ts'
+import { glossary } from './glossary.ts'
 import { groups } from './groups.ts'
 import { hooks } from './hooks.ts'
 import { icons } from './icons.ts'
@@ -52,6 +53,7 @@ export default {
   comments,
   extensions,
   flags,
+  glossary,
   groups,
   hooks,
   icons,

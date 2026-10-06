@@ -381,8 +381,7 @@ async function bodyForBlog(siteId: string, page: PageDescription): Promise<strin
   const { posts } = await WIKI.models.blogs.postsFor({
     siteId,
     blog,
-    actor: WIKI.models.groups.actorForPublic(),
-    publicOnly: true
+    actor: WIKI.models.groups.actorForPublic()
   })
   const intro = blog.settings.intro ? `<p>${htmlEscape(blog.settings.intro)}</p>` : ''
   const items = posts

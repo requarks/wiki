@@ -1,25 +1,24 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
-import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor } from './pages.ts'
+import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import type { ApprovalPageRef, ApprovalRulePatch, ReviewerScope } from '../models/approvals.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
  * The page a suggestion is about, with the source it would be edited from.
  *
- * Loaded the way the public page route loads it — an anonymous reader sees published pages only, and a
- * password still has to have been entered — so eligibility to suggest an edit never becomes a way to
+ * Loaded the way the public page route loads it — a page that is not live is there only for whoever
+ * may edit it, and a password still has to have been entered — so eligibility to suggest an edit never becomes a way to
  * read something that was not readable. The source itself is fetched regardless of who is asking,
  * because the caller has to be able to edit what they are looking at; the routes below only hand it
  * over once a rule says this actor may suggest edits to this page.
  */
 async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: string) {
-  const actor = actorFrom(req)
   const page = await WIKI.models.pages.getPage({
     siteId,
     id: pageId,
     withContent: true,
-    publicOnly: !actor,
+    unpublished: unpublishedFor(req),
     unlocked: (id: string) => unlockedFor(req, id),
     withPassword: mayBypassPassword(req)
   })

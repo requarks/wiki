@@ -3,7 +3,7 @@ import { and, count, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError } from '../helpers/common.ts'
-import { resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
+import { resolveLocaleRule, resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
 import type { FastifyRequest } from 'fastify'
 
@@ -91,8 +91,21 @@ export const PAGE_PERMISSIONS = [
   'read:comments',
   'write:comments',
   'manage:comments',
-  'manage:navigation'
+  'manage:navigation',
+  'read:glossary',
+  'manage:glossary'
 ]
+
+/**
+ * The page permissions that are about a site and a locale rather than a page.
+ *
+ * Granted through rules like every other page permission, but a rule's `match`, `path` and `tags` say
+ * nothing about them: a glossary has no path. Every rule naming one that is scoped to the site and the
+ * locale applies, and the modes rank as they always do — see `resolveLocaleRule` in
+ * `helpers/pageRules.ts`. `checkAccess` routes them there, so a caller asking about one at a page gets
+ * the locale's answer rather than one that changes from page to page.
+ */
+export const LOCALE_PERMISSIONS = ['read:glossary', 'manage:glossary']
 
 /** Whether a permission list carries any of `ELEVATED_PERMISSIONS`. */
 export function isElevated(permissions: readonly string[]): boolean {
@@ -231,7 +244,8 @@ export const GUEST_ROLES = [
   'read:history',
   'read:assets',
   'read:comments',
-  'write:comments'
+  'write:comments',
+  'read:glossary'
 ]
 
 /**
@@ -333,8 +347,42 @@ class Groups {
     if (actor.permissions.includes('manage:system')) {
       return true
     }
+    if (LOCALE_PERMISSIONS.includes(permission)) {
+      return this.checkLocaleAccess(actor, permission, page.siteId, page.locale)
+    }
     const rule = resolvePageRule(this.rulesForGroups(actor.groupIds), permission, page)
     return rule ? rule.mode !== 'DENY' : false
+  }
+
+  /**
+   * Whether this caller holds a locale permission (`LOCALE_PERMISSIONS`) on a site, in a locale.
+   *
+   * The question `checkAccess` cannot ask without a page. Every rule naming the permission that is
+   * scoped to the site and the locale counts, whatever it addresses, and mode alone decides between
+   * them: a DENY anywhere closes the locale, a FORCE ALLOW anywhere reopens it.
+   *
+   * `manage:glossary` implies `read:glossary` in the same locale: editing a glossary one may not read is
+   * not a state worth supporting, and the editor needs the list to pick related terms from. Each is
+   * decided on its own rules first, so a DENY on reading does not take managing with it.
+   *
+   * @param locale Absent, rules limited to particular locales are not excluded — as for a page
+   *   reference that leaves the locale out
+   */
+  checkLocaleAccess(
+    actor: AccessActor,
+    permission: string,
+    siteId: string,
+    locale?: string
+  ): boolean {
+    if (actor.permissions.includes('manage:system')) {
+      return true
+    }
+    const rules = this.rulesForGroups(actor.groupIds)
+    const grants = (name: string) => {
+      const rule = resolveLocaleRule(rules, name, { siteId, locale })
+      return rule ? rule.mode !== 'DENY' : false
+    }
+    return grants(permission) || (permission === 'read:glossary' && grants('manage:glossary'))
   }
 
   /**
@@ -381,7 +429,13 @@ class Groups {
             */
             id: uuid(),
             name: 'Default Rule',
-            roles: ['read:pages', 'read:assets', 'read:comments', 'write:comments'],
+            roles: [
+              'read:pages',
+              'read:assets',
+              'read:comments',
+              'write:comments',
+              'read:glossary'
+            ],
             match: 'START',
             mode: 'ALLOW',
             path: '',
@@ -405,6 +459,10 @@ class Groups {
               statement about comments: an operator opening the wiki up flips this one rule to ALLOW,
               and what they get is the set the guests group is allowed to hold (`GUEST_ROLES`) rather
               than a public wiki whose readers still cannot say anything.
+
+              `read:glossary` is deliberately NOT named here. It ignores the path, so a DENY for it
+              anywhere outranks every ALLOW for it everywhere: named in this rule, an operator's later
+              ALLOW for guests would do nothing. Guests are denied it anyway with no rule at all.
             */
             roles: ['read:pages', 'read:assets', 'read:comments', 'write:comments'],
             match: 'START',
@@ -462,9 +520,9 @@ class Groups {
 
   async createGroup(name: string): Promise<string> {
     const startingPermissions = ['read:pages', 'read:assets', 'read:comments']
-    // -> The rule grants one more than the group-wide list does: see the note on the Users group in
+    // -> The rule grants more than the group-wide list does: see the note on the Users group in
     //    `init()` for why the two differ
-    const startingRoles = [...startingPermissions, 'write:comments']
+    const startingRoles = [...startingPermissions, 'write:comments', 'read:glossary']
     const result = await WIKI.db
       .insert(groupsTable)
       .values({

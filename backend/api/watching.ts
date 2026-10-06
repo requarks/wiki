@@ -1,19 +1,20 @@
 import { audit } from '../helpers/audit.ts'
-import { actorFrom, mayOnPage, unlockedFor } from './pages.ts'
+import { actorFrom, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
  * The page being watched, as this requester is allowed to see it.
  *
  * Watching a page is a thing done TO a page, so it goes through the same gate as reading one: an
- * anonymous requester never gets here at all, and a page somebody may not read is answered as though
- * it were not there. A password is not part of it — the watcher is asking to be told when the page
+ * anonymous requester never gets here at all, and a page somebody may not read — or may not see
+ * before it is live — is answered as though it were not there. A password is not part of it — the watcher is asking to be told when the page
  * changes, not to read what it says.
  */
 async function loadWatchablePage(req: FastifyRequest, siteId: string, pageId: string) {
   const page = await WIKI.models.pages.getPage({
     siteId,
     id: pageId,
+    unpublished: unpublishedFor(req),
     unlocked: (id: string) => unlockedFor(req, id)
   })
   if (!page || !mayOnPage(req, 'read:pages', page)) {

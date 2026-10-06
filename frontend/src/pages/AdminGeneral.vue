@@ -279,6 +279,19 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="parchment" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowGlossary`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowGlossaryHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.glossary"
+                :aria-label="t(`admin.general.allowGlossary`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <!--
             What the missing-page screen shows at a path with pages under it. Off, that screen is
             only the notice and the Create button.
@@ -732,6 +745,7 @@ function defaultConfig() {
       collaborativeEditing: false,
       ratingsMode: 'off',
       comments: true,
+      glossary: true,
       lastEditedBy: true,
       listFolderChildren: false,
       notifications: true,
@@ -875,6 +889,7 @@ async function save() {
           //    silent: the toggle moved, the save succeeded, and the next load put it back.
           collaborativeEditing: state.config.features?.collaborativeEditing ?? false,
           comments: state.config.features?.comments ?? true,
+          glossary: state.config.features?.glossary ?? true,
           lastEditedBy: state.config.features?.lastEditedBy ?? true,
           listFolderChildren: state.config.features?.listFolderChildren ?? false,
           notifications: state.config.features?.notifications ?? true,

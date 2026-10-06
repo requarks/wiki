@@ -9,7 +9,15 @@ import { sanitizeMeta } from '../helpers/audit.ts'
  * migration. The admin area's filter is built from this list, and `admin.audit.kinds.<kind>` is the
  * translation of each.
  */
-export const AUDIT_KINDS = ['page', 'asset', 'comment', 'auth', 'profile', 'admin'] as const
+export const AUDIT_KINDS = [
+  'page',
+  'asset',
+  'comment',
+  'glossary',
+  'auth',
+  'profile',
+  'admin'
+] as const
 export type AuditKind = (typeof AUDIT_KINDS)[number]
 
 /**
@@ -58,6 +66,7 @@ export const AUDIT_ACTIONS = {
     'reopenAnnotation',
     'deleteAnnotation'
   ],
+  glossary: ['createGlossaryTerm', 'updateGlossaryTerm', 'deleteGlossaryTerm'],
   auth: [
     'login',
     'logout',

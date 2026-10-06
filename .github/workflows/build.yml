@@ -114,7 +114,7 @@ jobs:
             ghcr.io/requarks/wiki
           tags: |
             type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
-            type=raw,value=3.0.0-beta
+            type=raw,value=3.0.0-beta,enable=${{ github.event_name == 'workflow_dispatch' }}
           labels: |
             org.opencontainers.image.title=Wiki.js
             org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
@@ -155,9 +155,11 @@ jobs:
       # BUILD HELM/OCI CHARTS
       # ---------------------------------------------------
       - name: Set up Helm
+        if: github.event_name == 'workflow_dispatch'
         uses: azure/setup-helm@v5
 
       - name: Package and push Helm chart
+        if: github.event_name == 'workflow_dispatch'
         env:
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

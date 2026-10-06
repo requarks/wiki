@@ -57,24 +57,18 @@
             <w-tooltip>Create New Page</w-tooltip>
             <new-menu />
           </w-btn>
-          <!--
-            -> Whoever may put a file somewhere: `write:assets` outright, or `write:pages` for an
-               author whose rules cover the pages but not the assets beside them, since the editor
-               sends them here to insert an image. Every folder and every file is checked again by the
-               endpoints behind the manager, which answer per path, so this decides only whether the
-               door is shown.
-          -->
+          <!-- -> Shown to everyone: Tags and the Glossary are for readers, and the menu holds back its
+                  File Manager row by itself; see `HeaderLibraryMenu` -->
           <w-btn
-            v-if="userStore.can(`write:assets`) || userStore.can(`write:pages`)"
             class="ml-4"
             flat
             round
             dense
-            icon="la:folder-open"
+            icon="mdi:museum-outline"
             color="positive"
-            aria-label="File Manager"
-            @click="openFileManager">
-            <w-tooltip>File Manager</w-tooltip>
+            :aria-label="t(`common.header.library`)">
+            <w-tooltip>{{ t('common.header.library') }}</w-tooltip>
+            <header-library-menu />
           </w-btn>
           <w-btn
             v-if="userStore.authenticated"
@@ -159,6 +153,7 @@ import { useUserStore } from '@/stores/user'
 import AccountMenu from '@/components/AccountMenu.vue'
 import NewMenu from '@/components/PageNewMenu.vue'
 import HeaderActionsMenu from '@/components/HeaderActionsMenu.vue'
+import HeaderLibraryMenu from '@/components/HeaderLibraryMenu.vue'
 import HeaderSearch from '@/components/HeaderSearch.vue'
 
 /**
@@ -307,10 +302,6 @@ function onKeydown(ev) {
 
 function toggleSearchRow() {
   searchRowIsOpen.value = !searchRowIsOpen.value
-}
-
-function openFileManager() {
-  siteStore.openFileManager()
 }
 </script>
 

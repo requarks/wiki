@@ -3,6 +3,8 @@ import { pages as pagesTable, tree as treeTable, users as usersTable } from '../
 import { decodeTreePath, encodeTreePath } from '../helpers/common.ts'
 import { isBodylessEditor, parseBlogContent, type BlogContent } from './pages.ts'
 import type { AccessActor } from './groups.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
+import { liveCondition } from '../helpers/publishing.ts'
 
 /**
  * How many of a blog's posts are read out of the database for one request.
@@ -99,6 +101,7 @@ export interface BlogFilter {
 /** One candidate row, before the page rules and the nesting rule have had their say. */
 interface Candidate extends BlogPost {
   editor: string
+  isLive: boolean
 }
 
 /**
@@ -288,18 +291,22 @@ class Blogs {
    * - **A page the reader may not open**, by the same rule the page view applies. Filtered here rather
    *   than in SQL because a page rule is not a `WHERE` clause.
    *
-   * @param publicOnly Restrict to what a reader with no session may see, i.e. published posts only.
+   * - **A post that is not live**, unless `unpublished` says this reader may see it — the page view's
+   *   own rule (`helpers/publishing.ts`). Live posts only by default.
+   *
+   * @param unpublished As for `pages.getPage`: false holds the listing to live posts in SQL, and a
+   *                    predicate is asked of each post that is not live.
    */
   async postsFor({
     siteId,
     blog,
     actor,
-    publicOnly = true
+    unpublished = false
   }: {
     siteId: string
     blog: BlogRef
     actor?: AccessActor
-    publicOnly?: boolean
+    unpublished?: false | ((page: RulePageRef) => boolean)
   }): Promise<{ posts: BlogPost[]; truncated: boolean }> {
     const encodedPath = encodeTreePath(blog.path)
     const depth = blog.settings.depth
@@ -326,8 +333,8 @@ class Blogs {
       eq(treeTable.type, 'page'),
       sql`${treeTable.folderPath} ~ ${pathQuery}::lquery`
     ]
-    if (publicOnly) {
-      conditions.push(eq(pagesTable.publishState, 'published'))
+    if (!unpublished) {
+      conditions.push(liveCondition(pagesTable))
     }
 
     const rows = await WIKI.db
@@ -343,6 +350,7 @@ class Blogs {
         updatedAt: pagesTable.updatedAt,
         authorId: pagesTable.authorId,
         authorName: usersTable.name,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         publishedAt
       })
       .from(treeTable)
@@ -366,7 +374,8 @@ class Blogs {
         publishedAt: row.publishedAt,
         updatedAt: row.updatedAt,
         authorId: row.authorId,
-        authorName: row.authorName ?? ''
+        authorName: row.authorName ?? '',
+        isLive: row.isLive
       }
     })
 
@@ -386,18 +395,18 @@ class Blogs {
       if (nestedRoots.some((root) => row.path.startsWith(root))) {
         return false
       }
+      const ref = { siteId, path: row.path, locale: blog.locale, tags: row.tags }
+      if (!row.isLive && !(unpublished && unpublished(ref))) {
+        return false
+      }
       if (!actor) {
         return true
       }
-      return WIKI.models.groups.checkAccess(actor, 'read:pages', {
-        siteId,
-        path: row.path,
-        locale: blog.locale,
-        tags: row.tags
-      })
+      return WIKI.models.groups.checkAccess(actor, 'read:pages', ref)
     })
 
-    // -> Which editor wrote a post is how it was filtered, not something a listing shows
+    // -> Which editor wrote a post, and whether it is live, are how it was filtered, not something a
+    //    listing shows
     return {
       posts: posts.map((post) => ({
         id: post.id,
@@ -459,16 +468,16 @@ class Blogs {
     siteId,
     blog,
     actor,
-    publicOnly = true,
+    unpublished = false,
     filter = {}
   }: {
     siteId: string
     blog: BlogRef
     actor?: AccessActor
-    publicOnly?: boolean
+    unpublished?: false | ((page: RulePageRef) => boolean)
     filter?: BlogFilter
   }): Promise<BlogListing> {
-    const { posts: readable, truncated } = await this.postsFor({ siteId, blog, actor, publicOnly })
+    const { posts: readable, truncated } = await this.postsFor({ siteId, blog, actor, unpublished })
     const facets = this.facetsFor(readable)
 
     const matching = readable.filter((post) => {

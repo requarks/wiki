@@ -1,5 +1,5 @@
 import { audit } from '../helpers/audit.ts'
-import { actorFrom, mayOnPage, unlockedFor } from './pages.ts'
+import { actorFrom, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { RatingMode } from '../models/pageRatings.ts'
 import type { Page } from '../models/pages.ts'
@@ -51,6 +51,7 @@ async function loadRateable(
   const page = await WIKI.models.pages.getPage({
     siteId: req.params.siteId,
     id: req.params.pageId,
+    unpublished: unpublishedFor(req),
     unlocked: (id: string) => unlockedFor(req, id)
   })
   if (!page || !mayOnPage(req, 'read:pages', page)) {

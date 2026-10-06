@@ -107,6 +107,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Whether this site has comments at all. Which provider handles them is `comments.provider`; this turns every one of them off without losing that choice, and a page can still opt out on its own with `allowComments`.'
           },
+          glossary: {
+            type: 'boolean',
+            description:
+              'Whether this site has a glossary. On by default. Off hides it everywhere — the Library menu has no Glossary row and the glossary routes answer as though there were no terms — and keeps every term for when it is turned back on. Who may read it is the `read:glossary` page permission, and who may edit it `manage:glossary`, both granted per locale.'
+          },
           lastEditedBy: {
             type: 'boolean',
             description:

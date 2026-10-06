@@ -15,6 +15,7 @@ import {
   parseModuleProps
 } from '../helpers/common.ts'
 import type { ModuleProp } from '../helpers/common.ts'
+import { liveCondition } from '../helpers/publishing.ts'
 
 /**
  * The key of the provider that IS this wiki, as opposed to the ones that are somebody else's service.
@@ -759,7 +760,7 @@ class Comments {
    * Its path, locale and tags because that is what a page rule is matched against, and
    * `allowComments` because a page can be closed to discussion from its own properties dialog
    * whatever the site has configured. Deliberately not `pages.getPage` — that assembles a page for
-   * reading, and this is four columns and a scoping check.
+   * reading, and this is a few columns and a scoping check. `isLive` is the caller's to act on.
    *
    * @returns The reference, or null when no such page exists on this site
    */
@@ -771,7 +772,10 @@ class Comments {
         locale: pagesTable.locale,
         title: pagesTable.title,
         tags: pagesTable.tags,
-        allowComments: sql<boolean>`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`
+        allowComments: sql<boolean>`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`,
+        // -> A discussion quotes its page, annotations word for word, so it is only there while the
+        //    page is — see `helpers/publishing.ts`
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(and(eq(pagesTable.id, pageId), eq(pagesTable.siteId, siteId)))

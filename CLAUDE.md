@@ -572,7 +572,7 @@ that is already on it needs no permission from anybody.
 **Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
 `review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
 `read:history`, `read:assets`, `write:assets`, `manage:assets`, `read:comments`, `write:comments`,
-`manage:comments`, `manage:navigation` (`PAGE_PERMISSIONS` in `api/pages.ts`). A group grants them through **rules**:
+`manage:comments`, `manage:navigation`, `read:glossary`, `manage:glossary` (`PAGE_PERMISSIONS` in `models/groups.ts`). A group grants them through **rules**:
 each rule names some of them (`roles`) plus how it addresses pages (`match` + `path`, or tags) and
 what it does with them (`mode`: ALLOW / DENY / FORCEALLOW). Nothing is granted by default, and when
 several rules match, the most specific one wins — `helpers/pageRules.ts` documents the ordering.
@@ -603,6 +603,22 @@ Consequences worth knowing:
   it rewrite the menu handed down to it. `api/navigation.ts` has the pair of checks
   (`mayManageNavAt`, `mayEditNavItems`), and the `inherited` route answers `canEditItems` so the
   editor knows which of its two halves to offer.
+- **`read:glossary` and `manage:glossary` ignore the path.** They are the page permissions about a
+  site and a locale rather than a page (`LOCALE_PERMISSIONS` in `models/groups.ts`): every rule naming
+  one that is scoped to the site and locale applies, whatever it matches, and mode alone decides —
+  ALLOW < DENY < FORCE ALLOW. So a DENY written for one folder closes the whole glossary. Ask
+  `groups.checkLocaleAccess(actor, permission, siteId, locale)`; `checkAccess` routes them there too.
+  `manage:glossary` in a locale implies `read:glossary` there. Neither is in the Guests group's seeded
+  DENY rule, where it would outrank any ALLOW an administrator wrote for guests later.
+- **A page that is not live is its editors' alone.** Live is `published`, or `scheduled` inside its
+  window (`publishStartDate` inclusive, `publishEndDate` exclusive); the dates gate nothing on a
+  `published` page, where `publishStartDate` is what a blog post is dated by. Any other page is seen —
+  render, source, history, comments, a listing or search result — only by a signed-in session holding
+  `write:pages` or `manage:pages` on it; `read:pages` and `read:source` are not enough, and a request
+  without a session (an API key included) never sees one. `helpers/publishing.ts` is the rule:
+  `liveCondition` for SQL, `maySeeUnpublished` per page, and `unpublishedFor(req)` in `api/pages.ts`
+  is what a reader-facing `getPage` passes as `unpublished`. That option defaults to open because most
+  callers are the wiki acting on its own pages, so a new route answering a reader has to pass it.
 - **An anonymous request is the guests group**, not an absence of groups: that is how a wiki opens
   reading, and suggesting edits, to the public. Deny guests explicitly where an account is genuinely
   required (`reviewerFor` in `api/approvals.ts` is the worked example).
@@ -1074,8 +1090,8 @@ document is whether the client will run the app, and each has its own function:
   — and therefore the only half that is cached and handed on.
 - **`fragmentsForBrowser`** — for a browser that will. The head alone, describing the page as THAT
   requester may see it (`pages.describePageForRequest`), which makes exactly the cut the page route
-  makes: `read:pages` per path, and any signed-in session sees an unpublished page while an API key is
-  answered as the public is. Never cached, because the answer is one reader's. It carries no body (the
+  makes: `read:pages` per path, and a page that is not live only for a session that may edit it (see
+  [Permissions](#permissions)). Never cached, because the answer is one reader's. It carries no body (the
   app is about to draw the page properly, so a copy is bytes on every hard navigation for content the
   browser discards), never 404s (whether a path this reader may create is empty is the app's own flow
   to present) and adds no page-specific `noindex`.
@@ -1189,6 +1205,28 @@ instead. A `num` placeholder that is not a number drops its whole snippet for th
 **Nothing here can be `sensitive`.** Every value is rendered into a document served to the public, so
 a prop that had to be kept out of a browser could not be used by a provider in the first place. This
 is why `api/analytics.ts` is the one module-prop surface with no `maskSensitiveProps` on the way out.
+
+### Glossary
+
+Terms per site and per locale, read and edited in an overlay opened from the header's **Library**
+menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glossary.ts`,
+`components/GlossaryOverlay.vue`.
+
+- **A name means one term.** A term's name and its aliases share one namespace per site and locale,
+  compared case-insensitively. The unique index covers term against term; aliases are checked by the
+  model, which answers 409 naming the holder. `caseSensitive` is about matching in text, never about
+  uniqueness.
+- **Related terms are two-way**: one row per pair in `glossaryTermRelations`, smaller id first, read
+  from both sides. Saving a term's list replaces every pair touching it.
+- **A save names the `updatedAt` it was opened with** (`expectedUpdatedAt`), compared at millisecond
+  precision inside the UPDATE; a mismatch is 409 with the term as it now stands. Dates are written
+  from JS rather than `now()` so that what is stored is what the client was given.
+- **The definition is basic markdown, rendered in the browser** by `renderers/glossary.js` — the
+  comment renderer's feature set without `nofollow ugc` or mentions. Never HTML.
+- **The frontend learns access from `GET /sites/:siteId/glossary/access`** (`stores/glossary.js`),
+  once per site and session — the locales the session may read in and may edit in. Neither permission
+  changes from page to page, and the per-page permissions are empty on every route that is not a page.
+- **`autoLink` is stored and not yet acted on**; the spec's §9 is the design it is waiting for.
 
 ### Comments
 

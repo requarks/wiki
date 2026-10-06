@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
 import { audit } from '../helpers/audit.ts'
 import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
-import { actorFrom } from './pages.ts'
+import { actorFrom, unpublishedFor } from './pages.ts'
 
 interface TreeQuery {
   parentId?: string
@@ -280,7 +280,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the page graph',
         description:
-          "Every page of one locale the caller may read, the folders they sit in, and the links between them — what the file manager's graph view draws.\n\nA page that is not published is included only for a caller who may also edit it (`write:pages`), and is marked with `isPublished: false`. A link is included only when the caller may see both of its ends. Links reaching a page in another locale bring that page along, so the far end can be named.",
+          "Every page of one locale the caller may read, the folders they sit in, and the links between them — what the file manager's graph view draws.\n\nA page that is not live — a draft, or a scheduled page outside its publishing window — is included only for a signed-in caller who may also edit it (`write:pages` or `manage:pages`), and is marked with `isPublished: false`. A link is included only when the caller may see both of its ends. Links reaching a page in another locale bring that page along, so the far end can be named.",
         tags: ['Tree'],
         params: siteIdParam,
         querystring: {
@@ -301,9 +301,9 @@ async function routes(app: FastifyInstance) {
     async (req) => {
       const siteId = req.params.siteId
       const actor = WIKI.models.groups.actorForRequest(req)
-      // -> A draft belongs to the people working on it, and an API key is answered as the public is
-      //    -- the same line the page route draws, via `actorFrom`
-      const isSession = actorFrom(req) !== null
+      // -> A page that is not live belongs to the people working on it, and an API key is answered as
+      //    the public is -- the same line the page route draws
+      const unpublished = unpublishedFor(req)
       return WIKI.models.pageGraph.graphFor({
         siteId,
         locale: req.query.locale || defaultLocale(siteId),
@@ -312,12 +312,10 @@ async function routes(app: FastifyInstance) {
           if (!WIKI.models.groups.checkAccess(actor, 'read:pages', ref)) {
             return null
           }
-          if (page.publishState === 'published') {
+          if (page.isLive) {
             return 'published'
           }
-          return isSession && WIKI.models.groups.checkAccess(actor, 'write:pages', ref)
-            ? 'draft'
-            : null
+          return unpublished && unpublished(ref) ? 'draft' : null
         }
       })
     }
@@ -398,7 +396,7 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         path: req.query.path,
         locale: req.query.locale ?? defaultLocale(req.params.siteId),
-        publicOnly: !req.session?.authenticated
+        unpublished: unpublishedFor(req)
       })
       if (!level) {
         return reply.notFound('This folder does not exist.')
@@ -513,7 +511,7 @@ async function routes(app: FastifyInstance) {
         orderBy: req.query.orderBy,
         orderByDirection: req.query.orderByDirection,
         depth: req.query.depth,
-        publicOnly: !req.session?.authenticated
+        unpublished: unpublishedFor(req)
       })
       // -> An index block is drawn inside a page, but it lists other pages: each one still has to be
       //    the reader's to see

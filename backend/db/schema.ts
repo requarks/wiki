@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   bytea,
+  check,
   customType,
   index,
   integer,
@@ -363,6 +364,91 @@ export const commentAnnotations = pgTable(
     updatedAt: timestamp().notNull().defaultNow()
   },
   (table) => [index('commentAnnotations_commentId_idx').on(table.commentId, table.position)]
+)
+
+// GLOSSARY ----------------------------
+
+/**
+ * One term of a site's glossary, in one locale. See `dev/specs/glossary.md`.
+ *
+ * **A name means one term.** The term and every alias share one namespace per site and locale,
+ * compared with `lower()`. The unique index below is the database's half of that, term against term;
+ * everything involving an alias is checked by the model, since an index cannot reach into an array
+ * and compare it against another row's scalar.
+ *
+ * `caseSensitive` is about how the term is matched IN TEXT and never about uniqueness: `REST` and
+ * `rest` cannot be two terms either way.
+ */
+export const glossaryTerms = pgTable(
+  'glossaryTerms',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    locale: varchar({ length: 255 }).notNull(),
+    term: varchar({ length: 255 }).notNull(),
+    /** The full form, when the term is an abbreviation. */
+    expansion: varchar({ length: 255 }),
+    /** Basic markdown source, rendered in the browser with raw HTML disabled. Never HTML. */
+    definition: text().notNull().default(''),
+    aliases: text()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::text[]`),
+    /** A page path in the term's own locale, with no locale prefix. Looked up when read. */
+    documentationPath: varchar({ length: 255 }),
+    /** Null for the default, "Read more", which is a locale string and not stored. */
+    documentationLabel: varchar({ length: 255 }),
+    /** `[{ url, label }]`, in the order given. */
+    references: jsonb().notNull().default([]),
+    caseSensitive: boolean().notNull().default(false),
+    /** Whether the term is linked automatically in page text. Nothing reads it yet. */
+    autoLink: boolean().notNull().default(true),
+    category: varchar({ length: 255 }),
+    creatorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    /** Who saved it last. */
+    authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp().notNull().defaultNow(),
+    /** Also the concurrency token: a save names the one it was opened with. */
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    index('glossaryTerms_site_locale_idx').on(table.siteId, table.locale),
+    uniqueIndex('glossaryTerms_site_locale_term_key').on(
+      table.siteId,
+      table.locale,
+      sql`lower(${table.term})`
+    ),
+    // -> What a page move with `updateLinks` looks terms up by
+    index('glossaryTerms_documentation_idx')
+      .on(table.siteId, table.locale, table.documentationPath)
+      .where(sql`"documentationPath" IS NOT NULL`)
+  ]
+)
+
+/**
+ * Two related glossary terms. Related is two-way, so a pair is ONE row, read from both sides.
+ *
+ * The check stores the smaller id first, which is what makes "A is related to B" and "B is related
+ * to A" the same row rather than two that could disagree. A join table rather than an array on the
+ * term, so that deleting a term takes it out of every other term's list by cascade alone.
+ */
+export const glossaryTermRelations = pgTable(
+  'glossaryTermRelations',
+  {
+    termId: uuid()
+      .notNull()
+      .references(() => glossaryTerms.id, { onDelete: 'cascade' }),
+    relatedId: uuid()
+      .notNull()
+      .references(() => glossaryTerms.id, { onDelete: 'cascade' })
+  },
+  (table) => [
+    primaryKey({ columns: [table.termId, table.relatedId] }),
+    index('glossaryTermRelations_relatedId_idx').on(table.relatedId),
+    check('glossaryTermRelations_order_check', sql`${table.termId} < ${table.relatedId}`)
+  ]
 )
 
 // GROUPS ------------------------------

@@ -42,9 +42,9 @@
           choice, from the same component, as the header button on a wide screen. It anchors to this row
           because `WMenu` takes the nearest `.w-item` as its trigger.
 
-          `hide-asset-btn` because this menu has a File Manager row of its own directly below, and
-          `@new-page` closes this menu once the submenu has acted: the editor opens behind it otherwise,
-          with the menu still floating over it.
+          `hide-asset-btn` because the Library submenu directly below has a File Manager row of its own,
+          and `@new-page` closes this menu once the submenu has acted: the editor opens behind it
+          otherwise, with the menu still floating over it.
         -->
         <w-item v-if="userStore.can(`write:pages`)" clickable>
           <w-item-section avatar>
@@ -56,17 +56,17 @@
           </w-item-section>
           <page-new-menu hide-asset-btn @new-page="close" />
         </w-item>
-        <!--
-          -> Whoever may put a file somewhere: `write:assets` outright, or `write:pages` for an author
-             whose rules cover the pages but not the assets beside them, since the editor sends them
-             here to insert an image. Every folder and every file is checked again by the endpoints
-             behind the manager, which answer per path, so this decides only whether the door is shown.
-        -->
-        <w-item v-if="canUseFileManager" clickable @click="openFileManager">
+        <!-- -> A submenu for the same reason as New Page above: the wide header's folder button is a menu
+                too, and this opens the same one. Everybody's, since only its File Manager row is gated -->
+        <w-item clickable>
           <w-item-section avatar>
-            <w-icon name="la:folder-open" class="text-positive" />
+            <w-icon name="mdi:museum-outline" class="text-positive" />
           </w-item-section>
-          <w-item-section>File Manager</w-item-section>
+          <w-item-section>{{ t('common.header.library') }}</w-item-section>
+          <w-item-section side>
+            <w-icon name="la:angle-right" />
+          </w-item-section>
+          <header-library-menu @navigate="close" />
         </w-item>
         <w-item v-if="userStore.authenticated" clickable to="/_inbox" @click="close">
           <w-item-section avatar>
@@ -83,10 +83,7 @@
           </w-item-section>
           <w-item-section>{{ t('common.header.admin') }}</w-item-section>
         </w-item>
-        <!-- -> Only once there is something above it to divide from the account rows below: a guest whose
-                rules grant nothing but reading has none of the four, and the menu opened on a rule with
-                blank space over it and Login alone underneath -->
-        <w-separator v-if="hasActionRows" class="my-2" />
+        <w-separator class="my-2" />
         <!--
           The account rows, flattened into this list rather than opened as a second submenu: they are two
           plain actions, and the panel they live in on a wide screen is 300px of card -- wider than this
@@ -120,18 +117,18 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useNotificationsStore } from '@/stores/notifications'
-import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
+import HeaderLibraryMenu from '@/components/HeaderLibraryMenu.vue'
 import PageNewMenu from '@/components/PageNewMenu.vue'
 
 /**
  * The phone header's overflow menu: one button standing in for every action the bar shows as its own
- * icon on a wide screen -- New Page, File Manager, Inbox, Administration, and the account.
+ * icon on a wide screen -- New Page, Library, Inbox, Administration, and the account.
  *
  * Rendered only below 900px; see `HeaderNav`. The rows repeat the permission tests the buttons they
  * replace make, rather than being handed a list, so the two cannot drift apart.
@@ -139,7 +136,6 @@ import PageNewMenu from '@/components/PageNewMenu.vue'
 
 // STORES
 
-const siteStore = useSiteStore()
 const userStore = useUserStore()
 const notificationsStore = useNotificationsStore()
 
@@ -150,27 +146,6 @@ const { t } = useI18n()
 // REFS
 
 const menu = ref(null)
-
-// COMPUTED
-
-const canUseFileManager = computed(
-  () => userStore.can('write:assets') || userStore.can('write:pages')
-)
-
-/**
- * Whether any row is shown above the account group, which is what decides the rule between the two.
- *
- * Restates the test each of those four rows makes rather than a shorter equivalent — `canUseFileManager`
- * already implies the New Page row's permission today, but a row added or a test changed up there would
- * otherwise leave this behind, and the failure is silent.
- */
-const hasActionRows = computed(
-  () =>
-    userStore.can('write:pages') ||
-    canUseFileManager.value ||
-    userStore.authenticated ||
-    userStore.can('access:admin')
-)
 
 // METHODS
 
@@ -183,15 +158,6 @@ const hasActionRows = computed(
  */
 function close() {
   menu.value?.hide()
-}
-
-/*
-  Closed before the manager opens: it is a full-screen overlay, and a menu teleported to the body
-  outranks it -- so the menu would be left floating over the panel it had just opened.
-*/
-function openFileManager() {
-  close()
-  siteStore.openFileManager()
 }
 
 function logout() {

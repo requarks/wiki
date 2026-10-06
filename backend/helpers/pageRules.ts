@@ -192,16 +192,29 @@ function outranks(a: number[], b: number[]): boolean {
   return false
 }
 
-/** Whether a rule addresses this page at all, ignoring what it then says about it. */
-export function ruleMatchesPage(rule: GroupRule, page: RulePageRef): boolean {
+/** A site and a locale, for the permissions that are about those rather than a page. */
+export interface RuleLocaleRef {
+  siteId: string
+  locale?: string
+}
+
+/** Whether a rule speaks for this site and locale at all — its `sites` and `locales`, nothing else. */
+function ruleIsScopedTo(rule: GroupRule, scope: RuleLocaleRef): boolean {
   // -> A rule may be limited to particular sites; an empty list means every one of them
-  if (rule.sites?.length > 0 && !rule.sites.includes(page.siteId)) {
+  if (rule.sites?.length > 0 && !rule.sites.includes(scope.siteId)) {
     return false
   }
-
   // -> And to particular locales, the same way. Unlike the site, a reference may leave the locale
   //    out — an asset addressed by path alone — and such a page is not one a locale rule excludes
-  if (rule.locales?.length > 0 && page.locale && !rule.locales.includes(page.locale)) {
+  if (rule.locales?.length > 0 && scope.locale && !rule.locales.includes(scope.locale)) {
+    return false
+  }
+  return true
+}
+
+/** Whether a rule addresses this page at all, ignoring what it then says about it. */
+export function ruleMatchesPage(rule: GroupRule, page: RulePageRef): boolean {
+  if (!ruleIsScopedTo(rule, page)) {
     return false
   }
 
@@ -267,6 +280,35 @@ export function resolvePageRule(
     }
   }
 
+  return winner
+}
+
+/**
+ * The rule that decides a LOCALE permission (`LOCALE_PERMISSIONS` in `models/groups.ts`), for which a
+ * rule's `match`, `path` and `tags` mean nothing.
+ *
+ * Every rule naming the permission that is scoped to the site and locale applies. Steps 1 to 3 of the
+ * ordering above rank rules by how precisely they address a PAGE, and with no page being asked about
+ * every rule is as precise as every other — so step 4 alone decides: a DENY anywhere overrides every
+ * ALLOW, and a FORCE ALLOW anywhere overrides every DENY. A rule written for `/docs` therefore speaks
+ * for the whole locale, in both directions.
+ *
+ * @returns The deciding rule, or null when nothing names the permission — which means denied
+ */
+export function resolveLocaleRule(
+  rules: GroupRule[],
+  permission: string,
+  scope: RuleLocaleRef
+): GroupRule | null {
+  let winner: GroupRule | null = null
+  for (const rule of rules) {
+    if (!rule.roles?.includes(permission) || !ruleIsScopedTo(rule, scope)) {
+      continue
+    }
+    if (!winner || MODE_PRIORITY.indexOf(rule.mode) > MODE_PRIORITY.indexOf(winner.mode)) {
+      winner = rule
+    }
+  }
   return winner
 }
 

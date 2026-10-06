@@ -30,7 +30,7 @@
               a track of its own, so it sits ON the card rather than spanning it edge to edge -->
       <w-tabs class="m-2" v-model="state.currentTab" no-caps inline-label>
         <w-tab name="page" icon="la:file-alt" :label="t(`linkPicker.page`)" />
-        <w-tab name="url" icon="la:globe" :label="t(`linkPicker.url`)" />
+        <w-tab v-if="!props.pagesOnly" name="url" icon="la:globe" :label="t(`linkPicker.url`)" />
       </w-tabs>
       <w-separator />
       <w-tab-panels v-model="state.currentTab">
@@ -210,6 +210,15 @@ const props = defineProps({
    * different answer but a wrong one, so the switcher is not offered at all.
    */
   lockLocale: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Offer the Page tab alone, for a caller whose slot holds a page of this wiki and nothing else -- a
+   * glossary term's documentation page. An `initialHref` that is a URL then opens on the page tree
+   * rather than on a tab that is not there.
+   */
+  pagesOnly: {
     type: Boolean,
     default: false
   }
@@ -445,10 +454,12 @@ onMounted(async () => {
     highlighted row once its folder is listed, and in the footer either way.
   */
   if (props.initialHref) {
-    if (/^[a-z][a-z0-9+.-]*:/i.test(props.initialHref) || props.initialHref.startsWith('//')) {
+    const isUrl =
+      /^[a-z][a-z0-9+.-]*:/i.test(props.initialHref) || props.initialHref.startsWith('//')
+    if (isUrl && !props.pagesOnly) {
       state.currentTab = 'url'
       state.url = props.initialHref
-    } else {
+    } else if (!isUrl) {
       /*
         Re-opening on a link that already carries a prefix: the locale comes off it, so the picker
         starts in the tree the link points into rather than in the page's own.

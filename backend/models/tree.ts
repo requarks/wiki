@@ -1,5 +1,7 @@
 import { and, asc, desc, eq, exists, inArray, ne, not, or, sql, type SQL } from 'drizzle-orm'
 import { alias, type PgColumn } from 'drizzle-orm/pg-core'
+import { liveCondition } from '../helpers/publishing.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import { pages as pagesTable, tree as treeTable } from '../db/schema.ts'
 import {
   CustomError,
@@ -217,10 +219,12 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
 }
 
 /**
- * What a page has to be for a reader to be shown that it exists.
+ * What a page has to be for a reader to be shown that it exists, as far as SQL can say.
  *
- * Deliberately the same rule the page view itself applies (see `pages.getPage`'s `publicOnly`), so
- * that a menu never offers a page that would answer 404 — nor hides one that would open.
+ * Deliberately the same rule the page view itself applies (see `pages.getPage`'s `unpublished`), so
+ * that a menu never offers a page that would answer 404 — nor hides one that would open. With
+ * `unpublished` false a page has to be live; with a predicate every state comes back and the rows are
+ * held to it by `isListable`, since who may see a page that is not live is a page rule's answer.
  *
  * A password-protected page is listed. It is not hidden but locked: opening it puts the reader in
  * front of the unlock prompt, which is exactly where someone who has the password wants to end up,
@@ -229,17 +233,27 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
  * The columns come in one by one rather than as a table, because this is applied both to `pages` and
  * to an alias of it, and an alias is a different type.
  *
- * @param publicOnly Restrict to what a reader with no session may see. `isBrowsable` applies either
- *                   way: it is the author saying "not in the tree", not an access rule.
+ * @param unpublished As for `pages.getPage`. `isBrowsable` applies either way: it is the author saying
+ *                    "not in the tree", not an access rule.
  */
 function pageIsVisible(
-  columns: { isBrowsable: PgColumn; publishState: PgColumn },
-  publicOnly: boolean
+  columns: {
+    isBrowsable: PgColumn
+    publishState: PgColumn
+    publishStartDate: PgColumn
+    publishEndDate: PgColumn
+  },
+  unpublished: Unpublished
 ): (SQL | undefined)[] {
-  return [
-    eq(columns.isBrowsable, true),
-    ...(publicOnly ? [eq(columns.publishState, 'published')] : [])
-  ]
+  return [eq(columns.isBrowsable, true), ...(unpublished ? [] : [liveCondition(columns)])]
+}
+
+/** Whether a page that is not live may be listed: `getPage`'s `unpublished`, minus the `true`. */
+type Unpublished = false | ((page: RulePageRef) => boolean)
+
+/** The half of `pageIsVisible` that has to be asked of each row once it is read. */
+function isListable(unpublished: Unpublished, isLive: boolean, page: RulePageRef): boolean {
+  return isLive || (unpublished !== false && unpublished(page))
 }
 
 /**
@@ -373,7 +387,7 @@ class Tree {
    * @param path Slash-separated path to list. The site root when empty.
    * @param depth How many folders below the path to include. 0, the default, is the path itself.
    * @param tags Only pages carrying every one of these tags.
-   * @param publicOnly Restrict to what a reader with no session may see. See `pageIsVisible`.
+   * @param unpublished Whether a page that is not live may be listed. See `pageIsVisible`.
    */
   async listPages({
     siteId,
@@ -384,7 +398,7 @@ class Tree {
     orderBy = 'title',
     orderByDirection = 'asc',
     depth = 0,
-    publicOnly = true
+    unpublished = false
   }: {
     siteId: string
     path?: string | null
@@ -394,7 +408,7 @@ class Tree {
     orderBy?: TreeOrderBy
     orderByDirection?: 'asc' | 'desc'
     depth?: number
-    publicOnly?: boolean
+    unpublished?: Unpublished
   }): Promise<ListedPage[]> {
     if (limit < 1 || limit > MAX_LIMIT) {
       throw new CustomError('treeInvalidLimit', `The limit must be between 1 and ${MAX_LIMIT}.`)
@@ -416,7 +430,8 @@ class Tree {
         title: treeTable.title,
         tags: treeTable.tags,
         description: pagesTable.description,
-        icon: pagesTable.icon
+        icon: pagesTable.icon,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(treeTable)
       .innerJoin(pagesTable, eq(pagesTable.id, treeTable.id))
@@ -427,15 +442,15 @@ class Tree {
           eq(treeTable.type, 'page'),
           sql`${treeTable.folderPath} ~ ${pathQuery}::lquery`,
           ...(tags && tags.length > 0 ? [sql`${treeTable.tags} @> ${sql.param(tags)}`] : []),
-          ...pageIsVisible(pagesTable, publicOnly)
+          ...pageIsVisible(pagesTable, unpublished)
         )
       )
       .orderBy(direction(treeTable[orderBy]))
       .limit(limit)
 
-    return rows.map((row) => {
+    return rows.flatMap((row) => {
       const folderPath = decodeTreePath(row.folderPath ?? '') ?? ''
-      return {
+      const page = {
         id: row.id,
         path: folderPath ? `${folderPath}/${row.fileName}` : row.fileName,
         title: row.title,
@@ -443,6 +458,14 @@ class Tree {
         icon: row.icon ?? '',
         tags: row.tags ?? []
       }
+      return isListable(unpublished, row.isLive, {
+        siteId,
+        locale,
+        path: page.path,
+        tags: page.tags
+      })
+        ? [page]
+        : []
     })
   }
 
@@ -456,19 +479,19 @@ class Tree {
    * invisible is a dead end rather than something to offer.
    *
    * @param path Slash-separated path of the folder to list. The site root when empty.
-   * @param publicOnly Restrict pages to what a reader with no session may see. See `pageIsVisible`.
+   * @param unpublished Whether a page that is not live may be listed. See `pageIsVisible`.
    * @returns The level, or null when there is no such folder
    */
   async browse({
     siteId,
     path,
     locale,
-    publicOnly = true
+    unpublished = false
   }: {
     siteId: string
     path?: string | null
     locale: string
-    publicOnly?: boolean
+    unpublished?: Unpublished
   }): Promise<BrowseLevel | null> {
     const encodedPath = encodeTreePath(path)
     const basePath = decodeTreePath(encodedPath) ?? ''
@@ -509,6 +532,10 @@ class Tree {
       A folder is created for whatever is put in it, so it can end up holding only assets, only
       drafts, or nothing at all — descending into any of those lands on an empty menu. `EXISTS` stops
       at the first hit, so this costs an index lookup per folder in the level rather than a count.
+
+      Approximate for a reader who may see SOME unpublished pages: whether they may see a particular
+      one below is a page rule's answer, which SQL cannot ask, so for them any state counts here. The
+      same is already true of `read:pages`, which is not asked of a folder's contents either.
     */
     const holdsVisiblePages = exists(
       WIKI.db
@@ -521,7 +548,7 @@ class Tree {
             eq(descendant.locale, treeTable.locale),
             eq(descendant.type, 'page'),
             sql`${descendant.folderPath} <@ (${childPathPrefix}::text || ${treeTable.fileName})::ltree`,
-            ...pageIsVisible(descendantPage, publicOnly)
+            ...pageIsVisible(descendantPage, unpublished)
           )
         )
     )
@@ -538,6 +565,7 @@ class Tree {
         title: treeTable.title,
         tags: treeTable.tags,
         icon: pagesTable.icon,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         holdsVisiblePages: sql<boolean>`${holdsVisiblePages}`.mapWith(Boolean)
       })
       .from(treeTable)
@@ -549,7 +577,7 @@ class Tree {
           eq(treeTable.folderPath, encodedPath),
           or(
             eq(treeTable.type, 'folder'),
-            and(eq(treeTable.type, 'page'), ...pageIsVisible(pagesTable, publicOnly))
+            and(eq(treeTable.type, 'page'), ...pageIsVisible(pagesTable, unpublished))
           )
         )
       )
@@ -561,8 +589,20 @@ class Tree {
       if (row.type === 'folder' && !row.holdsVisiblePages) {
         continue
       }
+      const rowPath = basePath ? `${basePath}/${row.fileName}` : row.fileName
+      if (
+        row.type === 'page' &&
+        !isListable(unpublished, row.isLive, {
+          siteId,
+          locale,
+          path: rowPath,
+          tags: row.tags ?? []
+        })
+      ) {
+        continue
+      }
       const entry = merged.get(row.fileName) ?? {
-        path: basePath ? `${basePath}/${row.fileName}` : row.fileName,
+        path: rowPath,
         fileName: row.fileName,
         title: row.title,
         icon: null,

@@ -12,6 +12,7 @@ import {
   timingSafeCompare
 } from '../helpers/common.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
+import { liveCondition, maySeeUnpublished } from '../helpers/publishing.ts'
 import { rewriteSourceLinks } from '../helpers/linkRewrite.ts'
 import type { SourceSyntax } from '../helpers/linkRewrite.ts'
 import { relinkHref, rewriteRenderLinks } from '../helpers/pageLinks.ts'
@@ -899,7 +900,7 @@ class Pages {
    * Answered from the group id the page already carries, so a page that is not part of one costs no
    * query at all — which is nearly every page on nearly every site.
    *
-   * `publicOnly` narrows it the same way it narrows the page itself: a draft translation is not
+   * `unpublished` narrows it the same way it narrows the page itself: a draft translation is not
    * something to offer a reader who could not open it. It is what makes the locale selector's list of
    * languages the list of languages this reader can actually reach.
    */
@@ -908,8 +909,13 @@ class Pages {
     {
       localeGroupId,
       id,
-      publicOnly = false
-    }: { localeGroupId: string | null; id: string; publicOnly?: boolean }
+      unpublished = true
+    }: {
+      localeGroupId: string | null
+      id: string
+      /** As for `getPage`. */
+      unpublished?: boolean | ((page: RulePageRef) => boolean)
+    }
   ): Promise<PageLocaleRelation[]> {
     if (!localeGroupId) {
       return []
@@ -919,19 +925,28 @@ class Pages {
       eq(pagesTable.localeGroupId, localeGroupId),
       ne(pagesTable.id, id)
     ]
-    if (publicOnly) {
-      conditions.push(eq(pagesTable.publishState, 'published'))
+    if (unpublished === false) {
+      conditions.push(liveCondition(pagesTable))
     }
-    return await WIKI.db
+    const rows = await WIKI.db
       .select({
         locale: pagesTable.locale,
         path: pagesTable.path,
         title: pagesTable.title,
-        tags: pagesTable.tags
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(and(...conditions))
       .orderBy(pagesTable.locale)
+    return rows
+      .filter(
+        (row) =>
+          row.isLive ||
+          typeof unpublished !== 'function' ||
+          unpublished({ siteId, locale: row.locale, path: row.path, tags: row.tags ?? [] })
+      )
+      .map(({ locale, path, title, tags }) => ({ locale, path, title, tags }))
   }
 
   /**
@@ -1255,7 +1270,7 @@ class Pages {
    * through the same check, because the enforcement is this method and not the client.
    *
    * **The defaults hand over the whole page**, `unlocked` and `withPassword` included, the way they do
-   * for `publicOnly` beside them: most callers here are a save, a move, a delete or a re-render, and
+   * for `unpublished` beside them: most callers here are a save, a move, a delete or a re-render, and
    * none of those is a reader — a save that got a withheld body back would answer its author with an
    * empty page, and a re-render would store one. A path that serves a reader has to say so, and there
    * are exactly two: the `GET` route, and `unlockPage` below.
@@ -1377,8 +1392,9 @@ class Pages {
    * A sitemap is a list handed to search engines, so the question is not what exists but what a
    * crawler may both reach and index. Four things decide it, three of them in SQL:
    *
-   * - **Published**, on the same reading as everywhere else — a `scheduled` page is not published yet
-   *   whatever its dates say, and a draft never was.
+   * - **Live**, on the same reading as everywhere else (`helpers/publishing.ts`) — a `scheduled` page
+   *   inside its window is listed, one outside it is not, and a draft never is. The list is cached, so a
+   *   window opening or closing reaches it within `SITEMAP_TTL`.
    * - **Not a redirection**, which has no body to index and sends its reader elsewhere anyway.
    * - **Not password protected**, since what a crawler would reach there is the lock screen.
    * - **`isSearchable`**, the page property whose whole purpose is keeping a page out of search
@@ -1403,7 +1419,7 @@ class Pages {
       .where(
         and(
           eq(pagesTable.siteId, siteId),
-          eq(pagesTable.publishState, 'published'),
+          liveCondition(pagesTable),
           eq(pagesTable.isSearchable, true),
           ne(pagesTable.editor, REDIRECT_EDITOR),
           isNull(pagesTable.password)
@@ -1435,14 +1451,14 @@ class Pages {
    * decide and nothing about the requester does, which is what makes the answer the same for whoever
    * fetched it and therefore safe to cache and hand on.
    *
-   * Published only, as it is everywhere the public is being answered — which is also what lets the app
+   * Live pages only, as everywhere the public is being answered — which is also what lets the app
    * shell say 404 rather than 200 at a path with nothing published at it.
    */
   async describePageForPublic(
     siteId: string,
     ref: { locale: string; path: string }
   ): Promise<PageDescription | null> {
-    return this.describePage(siteId, ref, WIKI.models.groups.actorForPublic(), true)
+    return this.describePage(siteId, ref, WIKI.models.groups.actorForPublic(), false)
   }
 
   /**
@@ -1450,9 +1466,9 @@ class Pages {
    *
    * Deliberately the same cut the page route itself makes (`GET /sites/:siteId/pages/:pageIdOrHash`),
    * so that the title in the document and the page the app then draws can never be about different
-   * things: its `read:pages` check per path, and its `publicOnly: !actorFrom(req)` — which is to say
-   * any signed-in session sees an unpublished page, and an API key is answered as the public is, since
-   * a draft belongs to the people working on it rather than to whatever holds a token.
+   * things: its `read:pages` check per path, and its `unpublished` — a page that is not live is
+   * described only to a signed-in session holding `write:pages` or `manage:pages` on it, and an API
+   * key is answered as the public is (`helpers/publishing.ts`).
    *
    * Not for caching across requesters: the answer is one reader's.
    */
@@ -1462,13 +1478,19 @@ class Pages {
     req: FastifyRequest
   ): Promise<PageDescription | null> {
     const isSession = Boolean(req.session?.authenticated && req.session.user?.id)
-    return this.describePage(siteId, ref, WIKI.models.groups.actorForRequest(req), !isSession)
+    const actor = WIKI.models.groups.actorForRequest(req)
+    return this.describePage(
+      siteId,
+      ref,
+      actor,
+      isSession ? (page: RulePageRef) => maySeeUnpublished(actor, page) : false
+    )
   }
 
   /**
    * The read behind both, which is the only thing that should call it.
    *
-   * `actor` and `publicOnly` are paired by the two methods above rather than left to a caller, because
+   * `actor` and `unpublished` are paired by the two methods above rather than left to a caller, because
    * the wrong pairing — the public actor with unpublished pages included — would describe a draft to
    * whoever asked.
    */
@@ -1476,7 +1498,7 @@ class Pages {
     siteId: string,
     { locale, path }: { locale: string; path: string },
     actor: AccessActor,
-    publicOnly: boolean
+    unpublished: false | ((page: RulePageRef) => boolean)
   ): Promise<PageDescription | null> {
     const conditions = [
       eq(pagesTable.siteId, siteId),
@@ -1486,12 +1508,13 @@ class Pages {
       //    whoever asked simply need not have — nothing here was handed a hash to look up
       eq(pagesTable.path, path)
     ]
-    if (publicOnly) {
-      conditions.push(eq(pagesTable.publishState, 'published'))
+    if (unpublished === false) {
+      conditions.push(liveCondition(pagesTable))
     }
 
     const rows = await WIKI.db
       .select({
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         locale: pagesTable.locale,
         path: pagesTable.path,
         title: pagesTable.title,
@@ -1513,6 +1536,9 @@ class Pages {
       return null
     }
     if (!WIKI.models.groups.checkAccess(actor, 'read:pages', { ...row, siteId })) {
+      return null
+    }
+    if (!row.isLive && unpublished && !unpublished({ ...row, siteId })) {
       return null
     }
 
@@ -1538,11 +1564,11 @@ class Pages {
   /**
    * The locales a page can be read in, for the alternates a document names.
    *
-   * Published and readable by this actor, and including the page itself, which is what an `hreflang`
+   * Live and readable by this actor, and including the page itself, which is what an `hreflang`
    * set calls for. A translation the asker may not read is not a URL to point them at — for the public
    * that is the same cut the sitemap makes, which is why the two say the same thing about a page.
    *
-   * Published regardless of who is asking, unlike the page itself: a draft translation is not an
+   * Live regardless of who is asking, unlike the page itself: a draft translation is not an
    * alternate version of a document, it is one that does not exist yet.
    */
   private async readableAlternates(
@@ -1560,7 +1586,7 @@ class Pages {
         and(
           eq(pagesTable.siteId, siteId),
           eq(pagesTable.localeGroupId, localeGroupId),
-          eq(pagesTable.publishState, 'published')
+          liveCondition(pagesTable)
         )
       )
       .orderBy(pagesTable.locale)
@@ -1595,7 +1621,7 @@ class Pages {
     hash,
     locale,
     withContent = false,
-    publicOnly = false,
+    unpublished = true,
     unlocked = true,
     withPassword = true
   }: {
@@ -1609,17 +1635,21 @@ class Pages {
      * request addressing a page by hash has in hand before the row is read.
      */
     withContent?: boolean | ((page: RulePageRef) => boolean)
-    /** Restrict to what a reader with no session may see: published pages. */
-    publicOnly?: boolean
+    /**
+     * Whether a page that is not live (`helpers/publishing.ts`) may be returned: `false` holds the
+     * read to live pages, and a predicate is asked of a page that is not live once its row is read.
+     * Open by default, since most callers are the wiki acting on its own pages; anything answering a
+     * reader passes one.
+     */
+    unpublished?: boolean | ((page: RulePageRef) => boolean)
     unlocked?: boolean | ((pageId: string) => boolean)
     withPassword?: boolean
   }): Promise<Page | null> {
     const conditions = [eq(pagesTable.siteId, siteId)]
-    if (publicOnly) {
-      // -> Page-level access rules are not implemented, so this is the whole of it: an anonymous
-      //    reader sees published pages, and nothing else. A password does not hide a page from them —
-      //    it withholds the body until they enter it, which is what `locked` below does.
-      conditions.push(eq(pagesTable.publishState, 'published'))
+    if (unpublished === false) {
+      // -> A password does not hide a page from a reader — it withholds the body until they enter
+      //    it, which is what `locked` below does. Being unpublished does.
+      conditions.push(liveCondition(pagesTable))
     }
     if (id) {
       conditions.push(eq(pagesTable.id, id))
@@ -1634,6 +1664,7 @@ class Pages {
     const results = await WIKI.db
       .select({
         page: pagesTable,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         authorName: usersTable.name,
         authorHasAvatar: usersTable.hasAvatar,
         navigationId: treeTable.navigationId,
@@ -1649,16 +1680,18 @@ class Pages {
     if (!row) {
       return null
     }
+    const ref: RulePageRef = {
+      path: row.page.path,
+      locale: row.page.locale,
+      siteId,
+      tags: row.page.tags ?? []
+    }
+    // -> Not there, rather than refused: whether a draft exists at a path is the draft's business
+    if (!row.isLive && typeof unpublished === 'function' && !unpublished(ref)) {
+      return null
+    }
     const isUnlocked = typeof unlocked === 'function' ? unlocked(row.page.id) : unlocked
-    const includeContent =
-      typeof withContent === 'function'
-        ? withContent({
-            path: row.page.path,
-            locale: row.page.locale,
-            siteId,
-            tags: row.page.tags ?? []
-          })
-        : withContent
+    const includeContent = typeof withContent === 'function' ? withContent(ref) : withContent
     return this.toPage(
       {
         ...row.page,
@@ -1670,7 +1703,7 @@ class Pages {
         localeRelations: await this.localeRelationsFor(siteId, {
           localeGroupId: row.page.localeGroupId,
           id: row.page.id,
-          publicOnly
+          unpublished
         })
       },
       {
@@ -1696,14 +1729,15 @@ class Pages {
     hash,
     locale,
     password,
-    publicOnly = false
+    unpublished = true
   }: {
     siteId: string
     id?: string
     hash?: string
     locale?: string
     password: string
-    publicOnly?: boolean
+    /** As for `getPage`. */
+    unpublished?: boolean | ((page: RulePageRef) => boolean)
   }): Promise<Page | null> {
     /*
       Asked for as a reader would see it, for two reasons: a wrong guess must not assemble the body in
@@ -1714,7 +1748,7 @@ class Pages {
       id,
       hash,
       locale,
-      publicOnly,
+      unpublished,
       unlocked: false,
       withPassword: false
     })
@@ -1735,7 +1769,7 @@ class Pages {
     return this.getPage({
       siteId,
       id: page.id,
-      publicOnly,
+      unpublished,
       unlocked: true,
       withPassword: false
     })

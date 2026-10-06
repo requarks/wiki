@@ -1,6 +1,6 @@
 import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
-import { mayOnPage } from './pages.ts'
+import { mayOnPage, unpublishedFor } from './pages.ts'
 import {
   ANNOTATION_NOTE_MAX_LENGTH,
   ANNOTATIONS_MAX,
@@ -988,14 +988,21 @@ async function requireBuiltInPage(
     reply.notFound('This site does not use the built-in comments provider.')
     return null
   }
-  const page = await WIKI.models.comments.pageRef(req.params.siteId, req.params.pageId)
-  if (!page) {
+  const row = await WIKI.models.comments.pageRef(req.params.siteId, req.params.pageId)
+  if (!row) {
     reply.notFound('This page does not exist.')
     return null
   }
   // -> Carrying the site, since everything below asks a page rule about this page and a rule may be
   //    limited to particular sites
-  return { ...page, siteId: req.params.siteId }
+  const { isLive, ...ref } = { ...row, siteId: req.params.siteId }
+  // -> A page that is not live is not there for its discussion either, on the page view's own terms
+  const unpublished = unpublishedFor(req)
+  if (!isLive && !(unpublished && unpublished(ref))) {
+    reply.notFound('This page does not exist.')
+    return null
+  }
+  return ref
 }
 
 /**

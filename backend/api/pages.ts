@@ -10,6 +10,7 @@ import {
   type SearchTagsMatch
 } from '../models/search.ts'
 import { audit } from '../helpers/audit.ts'
+import { maySeeUnpublished, maySeeUnpublishedAnywhere } from '../helpers/publishing.ts'
 import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
 
@@ -153,6 +154,26 @@ export function mayReadSource(req: FastifyRequest, page: RulePageRef): boolean {
 }
 
 /**
+ * What `getPage`'s `unpublished` is for this requester: whether a page that is not live — a draft, or
+ * a scheduled page outside its window — may be handed to them.
+ *
+ * Only to a signed-in session holding `write:pages` or `manage:pages` on the page itself, which are
+ * the people working on it. Reading it, its source included, is not enough. A request without a
+ * session is held to live pages outright, API keys included — see `helpers/publishing.ts`.
+ */
+export function unpublishedFor(req: FastifyRequest): false | ((page: RulePageRef) => boolean) {
+  if (!actorFrom(req)) {
+    return false
+  }
+  const actor = WIKI.models.groups.actorForRequest(req)
+  // -> Settled in SQL for the reader who may edit nothing, which is most of them
+  if (!maySeeUnpublishedAnywhere(actor)) {
+    return false
+  }
+  return (page) => maySeeUnpublished(actor, page)
+}
+
+/**
  * Every page permission this requester holds at a path.
  *
  * What the interface hides its controls by, and the reason it is a list rather than a question: each
@@ -181,16 +202,15 @@ export function pagePermissionsFor(req: FastifyRequest, page: RulePageRef): stri
 /**
  * A page, as this requester is allowed to see it — or null when they are not allowed to see it at all.
  *
- * The gate for anything that hangs off a page but is not the page itself. An anonymous requester only
- * ever reaches a published page, and a password-protected one comes back with `isLocked` set until the
+ * The gate for anything that hangs off a page but is not the page itself. A page that is not live is
+ * only reached by whoever may edit it (`unpublishedFor`), and a password-protected one comes back with `isLocked` set until the
  * session has satisfied the unlock, which the caller is expected to refuse on.
  */
 async function loadReadablePage(req: FastifyRequest, siteId: string, pageId: string) {
-  const actor = actorFrom(req)
   const page = await WIKI.models.pages.getPage({
     siteId,
     id: pageId,
-    publicOnly: !actor,
+    unpublished: unpublishedFor(req),
     unlocked: (id: string) => unlockedFor(req, id)
   })
   // -> Not readable is indistinguishable from not there, for anything hanging off the page
@@ -447,8 +467,6 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      const actor = actorFrom(req)
-      const permissions = actor?.permissions ?? []
       return WIKI.models.search.searchPages({
         siteId: req.params.siteId,
         query: req.query.query,
@@ -464,13 +482,11 @@ async function routes(app: FastifyInstance) {
         orderByDirection: req.query.orderByDirection,
         offset: req.query.offset,
         limit: req.query.limit,
-        publicOnly: !actor,
         // -> So that a page the caller could not open never shows up as a result
         actor: WIKI.models.groups.actorForRequest(req),
-        // -> An unpublished page is only of interest to someone who could have written it
-        includeDrafts: ['write:pages', 'manage:pages', 'manage:system'].some((p) =>
-          permissions.includes(p)
-        ),
+        // -> The page view's rule, asked per result: a page that is not live is only listed for
+        //    whoever may edit it, and never without a session
+        unpublished: Boolean(actorFrom(req)),
         // -> Same rule as the page view: a protected page's text is for whoever holds the password, and
         //    a search excerpt is that text. Its title and description are not covered, so the page is
         //    still listed — see `hideProtectedContent`.
@@ -488,7 +504,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a page for inclusion',
         description:
-          "What an include block needs to draw another page inside the one being read: its title and its stored render, addressed by path rather than by ID, since a path is what an author writes into the page.\n\nThe reader's own access decides the answer, exactly as it would if they opened the page themselves — an anonymous request only ever sees published pages, and a password-protected page comes back with `isLocked: true` and no body unless this session has already unlocked it. So an include can never show content its reader could not have reached on their own.",
+          "What an include block needs to draw another page inside the one being read: its title and its stored render, addressed by path rather than by ID, since a path is what an author writes into the page.\n\nThe reader's own access decides the answer, exactly as it would if they opened the page themselves — a draft, or a scheduled page outside its publishing window, is only there for a signed-in requester holding `write:pages` or `manage:pages` on it, and a password-protected page comes back with `isLocked: true` and no body unless this session has already unlocked it. So an include can never show content its reader could not have reached on their own.",
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -513,7 +529,6 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const actor = actorFrom(req)
       // -> The stored form of whatever the including page wrote, since that is what it is looked up
       //    by. The site root is the `home` page.
       const path = normalizePagePath(req.query.path)
@@ -521,7 +536,7 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         hash: generatePathHash(path || 'home'),
         locale: req.query.locale,
-        publicOnly: !actor,
+        unpublished: unpublishedFor(req),
         unlocked: (pageId) => unlockedFor(req, pageId),
         withPassword: false
       })
@@ -625,7 +640,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a single page',
         description:
-          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in — but an anonymous request only ever sees published pages. `withContent` is answered against `read:source` on the page — or `write:pages`, since the editor loads the source to edit it — which a group's rules grant to whoever they name, guests included.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
+          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in. A page that is not live — a draft, or a scheduled page outside its publishing window — answers 404 to everybody but a signed-in requester holding `write:pages` or `manage:pages` on it, its source included. `withContent` is answered against `read:source` on the page — or `write:pages`, since the editor loads the source to edit it — which a group's rules grant to whoever they name, guests included.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -677,7 +692,9 @@ async function routes(app: FastifyInstance) {
         withContent: req.query.withContent
           ? (target: RulePageRef) => mayReadSource(req, target)
           : false,
-        publicOnly: !actor,
+        // -> A draft, or a scheduled page outside its window, is not there for anybody who may not
+        //    edit it — which is what keeps its render and its source alike from a reader
+        unpublished: unpublishedFor(req),
         // -> Answered once the page is known, since a hash does not say which page it is yet
         unlocked: (pageId) => unlockedFor(req, pageId),
         withPassword: mayBypassPassword(req)
@@ -819,13 +836,12 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const isId = uuidValidate(req.params.pageIdOrHash)
-      const actor = actorFrom(req)
       const page = await WIKI.models.pages.unlockPage({
         siteId: req.params.siteId,
         ...(isId ? { id: req.params.pageIdOrHash } : { hash: req.params.pageIdOrHash }),
         locale: req.query.locale,
         password: req.body.password,
-        publicOnly: !actor
+        unpublished: unpublishedFor(req)
       })
       if (!page) {
         return reply.unauthorized('Incorrect password.')

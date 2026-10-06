@@ -119,6 +119,8 @@ export const useSiteStore = defineStore('site', {
       backlinks: true,
       browse: false,
       collaborativeEditing: false,
+      // -> On, for the reason `backlinks` is: the server reads a missing key as on
+      glossary: true,
       lastEditedBy: true,
       listFolderChildren: false,
       // -> On, for the reason `backlinks` is: the server reads a missing key as on, and the badge
@@ -410,6 +412,20 @@ export const useSiteStore = defineStore('site', {
         overlayOpts: {
           insertMode: opts?.insertMode ?? false,
           folderPath: opts?.folderPath ?? null
+        }
+      })
+    },
+    /**
+     * @param {object} [opts]
+     * @param {?string} [opts.termId] The term to open on. Absent, the list with nothing selected.
+     * @param {?string} [opts.locale] The locale to open in. Absent, the one the interface is in.
+     */
+    openGlossary(opts) {
+      this.$patch({
+        overlay: 'Glossary',
+        overlayOpts: {
+          termId: opts?.termId ?? null,
+          locale: opts?.locale ?? null
         }
       })
     },

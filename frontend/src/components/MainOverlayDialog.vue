@@ -33,6 +33,10 @@ const overlays = {
     loader: () => import('./FileManager.vue'),
     loadingComponent: LoadingGeneric
   }),
+  Glossary: defineAsyncComponent({
+    loader: () => import('./GlossaryOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   NavEdit: defineAsyncComponent({
     loader: () => import('./NavEditOverlay.vue'),
     loadingComponent: LoadingGeneric

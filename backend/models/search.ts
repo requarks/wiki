@@ -1,4 +1,9 @@
 import { sql } from 'drizzle-orm'
+import {
+  liveCondition,
+  maySeeUnpublished,
+  maySeeUnpublishedAnywhere
+} from '../helpers/publishing.ts'
 import type { AccessActor } from './groups.ts'
 
 /**
@@ -117,10 +122,12 @@ export interface SearchPagesParams {
   orderByDirection?: 'asc' | 'desc'
   offset?: number
   limit?: number
-  /** Restrict to what a reader with no session may see: published pages. */
-  publicOnly?: boolean
-  /** Whether unpublished pages belong in the results, which is an editor's view of the wiki. */
-  includeDrafts?: boolean
+  /**
+   * Whether a page that is not live (`helpers/publishing.ts`) may be listed, for an `actor` holding
+   * `write:pages` or `manage:pages` on it. False — a request without a session — holds every result
+   * to live pages.
+   */
+  unpublished?: boolean
   /**
    * Who is searching, so that a result they could not open never reaches them.
    *
@@ -258,8 +265,7 @@ class Search {
     orderByDirection = 'desc',
     offset = 0,
     limit = 25,
-    publicOnly = false,
-    includeDrafts = false,
+    unpublished = false,
     hideProtectedContent = true,
     actor
   }: SearchPagesParams): Promise<SearchPagesResult> {
@@ -286,12 +292,19 @@ class Search {
     if (hasQuery) {
       conditions.push(sql`p.ts @@ ${tsQuery}`)
     }
-    if (publicOnly) {
-      // -> Matches what a page view shows an anonymous reader, so that search cannot surface a page
-      //    that could not then be opened
-      conditions.push(sql`p."publishState" = 'published'`)
-    } else if (!includeDrafts) {
-      conditions.push(sql`p."publishState" <> 'draft'`)
+    /*
+      Matches what the page view shows, so that search cannot surface a page that could not then be
+      opened. Who may see a page that is not live is a page rule's answer, so it is settled per row
+      below; a searcher who holds neither permission anywhere is held to live pages here instead.
+    */
+    const liveNow = liveCondition({
+      publishState: sql`p."publishState"`,
+      publishStartDate: sql`p."publishStartDate"`,
+      publishEndDate: sql`p."publishEndDate"`
+    })
+    const checkUnpublished = unpublished && !!actor && maySeeUnpublishedAnywhere(actor)
+    if (!checkUnpublished) {
+      conditions.push(liveNow)
     }
     if (hideProtectedContent && hasQuery) {
       /*
@@ -392,19 +405,23 @@ class Search {
     let totalHits: number
     if (checkRules) {
       const candidates = await WIKI.db.execute(sql`
-        SELECT p.id, p.path, p.locale, p.tags, ${relevancy} AS relevancy
+        SELECT p.id, p.path, p.locale, p.tags, ${liveNow} AS "isLive", ${relevancy} AS relevancy
         FROM pages p
         WHERE ${where}
         ORDER BY ${ordering}
       `)
-      const readable = ((candidates.rows ?? candidates) as any[]).filter((row) =>
-        WIKI.models.groups.checkAccess(actor, 'read:pages', {
+      const readable = ((candidates.rows ?? candidates) as any[]).filter((row) => {
+        const ref = {
           siteId,
           path: row.path as string,
           locale: row.locale as string,
           tags: (row.tags ?? []) as string[]
-        })
-      )
+        }
+        return (
+          WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
+          (row.isLive === true || maySeeUnpublished(actor, ref))
+        )
+      })
       pageIds = readable.slice(offset, offset + limit).map((row) => row.id as string)
       totalHits = readable.length
     } else {

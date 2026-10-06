@@ -20,38 +20,62 @@ import MarkdownIt from 'markdown-it'
  * tables, no footnotes, no HTML. Links are rendered but every one of them leaves with
  * `rel="nofollow ugc noopener"` and opens in a new tab.
  */
-const md = new MarkdownIt('zero', {
-  html: false,
-  linkify: true,
-  breaks: true,
-  typographer: false
-})
-  .enable([
-    'blockquote',
-    'code',
-    'emphasis',
-    'entity',
-    'escape',
-    'fence',
-    'linkify',
-    'list',
-    'newline',
-    'backticks',
-    'link',
-    'strikethrough'
-  ])
-  // -> A comment is prose, and a rule across it is furniture; a heading in one would outrank the
-  //    page's own headings in the outline of the view it sits in
-  .disable([
-    'heading',
-    'lheading',
-    'hr',
-    'image',
-    'table',
-    'reference',
-    'html_block',
-    'html_inline'
-  ])
+
+/**
+ * The prose markdown this file renders, as a fresh instance whose links carry `rel`.
+ *
+ * Exported for the glossary's definitions (`renderers/glossary.js`), which want exactly this feature
+ * set and differ only in who wrote the links -- see there. Everything said above about `html: false`
+ * holds for both.
+ *
+ * @param {object} opts
+ * @param {string} opts.rel What every link leaves with
+ */
+export function createProseMarkdown({ rel }) {
+  const instance = new MarkdownIt('zero', {
+    html: false,
+    linkify: true,
+    breaks: true,
+    typographer: false
+  })
+    .enable([
+      'blockquote',
+      'code',
+      'emphasis',
+      'entity',
+      'escape',
+      'fence',
+      'linkify',
+      'list',
+      'newline',
+      'backticks',
+      'link',
+      'strikethrough'
+    ])
+    // -> Prose, and a rule across it is furniture; a heading in one would outrank the page's own
+    //    headings in the outline of the view it sits in
+    .disable([
+      'heading',
+      'lheading',
+      'hr',
+      'image',
+      'table',
+      'reference',
+      'html_block',
+      'html_inline'
+    ])
+
+  // -> Every link opens in a new tab: the view it is drawn in is something the reader is in the middle
+  //    of, and `noopener` (which every `rel` given here carries) keeps the tab from handing back a
+  //    handle to it
+  instance.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+    const token = tokens[idx]
+    token.attrSet('rel', rel)
+    token.attrSet('target', '_blank')
+    return self.renderToken(tokens, idx, options)
+  }
+  return instance
+}
 
 /**
  * Every link a comment carries, whoever wrote it.
@@ -60,12 +84,7 @@ const md = new MarkdownIt('zero', {
  * two attributes exist to say -- and `noopener` because the tab is opened by the wiki and must not
  * hand the opened page a handle back to it.
  */
-md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-  const token = tokens[idx]
-  token.attrSet('rel', 'nofollow ugc noopener')
-  token.attrSet('target', '_blank')
-  return self.renderToken(tokens, idx, options)
-}
+const md = createProseMarkdown({ rel: 'nofollow ugc noopener' })
 
 /**
  * A mention as it is written in a comment: `@handle`.

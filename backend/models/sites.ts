@@ -139,6 +139,9 @@ class Sites {
           //    been picked. This is the switch that turns them all off without losing that
           //    choice, which is only useful to somebody who has already made it.
           comments: true,
+          // -> On: a glossary with no terms costs a reader nothing, and the menu row that opens it is
+          //    also gated on `read:glossary`, which nobody but a fresh install's users holds
+          glossary: true,
           lastEditedBy: true,
           // -> On: a reader who follows a link to a folder rather than a page is better served by
           //    what is in it than by a notice that there is nothing there
@@ -468,6 +471,7 @@ class Sites {
           collaborativeEditing: true,
           ratingsMode: 'off',
           comments: true,
+          glossary: true,
           lastEditedBy: true,
           listFolderChildren: true,
           notifications: true,
