@@ -737,6 +737,25 @@ Rows of 2.x's `pages` minus `render` and `toc`, with `tags` flattened to a list 
   "createdAt": "…", "updatedAt": "…" }
 ```
 
+**A path is written the way 3.x writes one**, which 2.x did not hold its paths to. Letters, digits
+and combining marks of any script are kept as they are, so a Japanese, Chinese or Korean path comes
+in unchanged (in NFC). Spaces, underscores and dots become hyphens, with runs of them collapsed and
+none left at either end of a segment: `docs/my page_v1.2` becomes `docs/my-page-v1-2`. Folders from
+`tree.ndjson` and asset folders get the same treatment. An asset's file name keeps its dots, since
+one of them starts its extension. A path holding anything else (`(`, `'`, `!`…) is refused, and that page is skipped and named in
+the warnings.
+
+**Links follow the paths they point at.** Once every stream is in, `finish` reads the links in each
+page this import wrote: markdown links and images, reference definitions, HTML `href` and `src`,
+asciidoc `link:` and `image:` macros, and a redirection's target. Any link that points at nothing as
+written, but whose converted path names a page or file the site now has, is rewritten to that path.
+A sidebar item is resolved the same way as it is imported. Only the path's own segments change: a
+locale prefix, an anchor, a query, relative form and percent-encoding are kept. Links inside code,
+links to pages that were never imported, and pages already in the wiki that the import left alone are
+not touched. A rewritten page is saved again through `adoptStoredPage`, so it gets a second history
+version saying so, keeps its 2.x dates, and is reported as a count in the warnings. Page history rows
+keep the 2.x path verbatim, as above.
+
 **No render**, which is the exporter's own decision and the right one
 ([§8](#8-the-bottleneck-that-shapes-the-schedule)). `contentBlob` is a `blobs/<sha256>` digest and
 replaces `content` (set to `null`) when the source is over 1 MiB.

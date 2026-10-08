@@ -21,9 +21,17 @@ import {
 import {
   CustomError,
   dataPathRoot,
+  decodeTreePath,
+  decodeUrlPath,
+  isPageUrl,
   normalizeFolderPath,
-  normalizeNewPagePath
+  normalizeNewPagePath,
+  normalizePagePath,
+  splitLocalePath
 } from '../helpers/common.ts'
+import { rewriteSourceLinks, sourceLinkHrefs } from '../helpers/linkRewrite.ts'
+import { sanitizeFileName } from './assets.ts'
+import { SOURCE_SYNTAX } from './pages.ts'
 import { GLOBAL_PERMISSIONS, PAGE_PERMISSIONS } from './groups.ts'
 import type { GroupRule, GroupRuleMatch } from './groups.ts'
 import type { NavigationItem } from './navigation.ts'
@@ -62,6 +70,9 @@ import type { NavigationItem } from './navigation.ts'
  * a rebuilt one.
  */
 const IMPORT_NAMESPACE_ROOT = '4e2f8f3a-6c1d-4a5e-9b70-2c4f6d8e1a93'
+
+/** How many imported pages `finishSession` reads at a time while rewriting their links. */
+const RELINK_BATCH = 200
 
 /** The container version this reader understands. Anything above is refused, naming both numbers. */
 const SUPPORTED_FORMAT_VERSION = 1
@@ -340,17 +351,35 @@ function stringOf(value: unknown, fallback = ''): string {
 }
 
 /**
+ * One 2.x path segment — of a page or a folder, never a file name — as this wiki writes it.
+ *
+ * `normalizeNewPagePath`, plus the one thing 2.x allowed in a path that a path here may not hold at
+ * all: a dot, which becomes a hyphen like every other separator, so `v1.2` is `v1-2`. A file name
+ * keeps its dot, since that is its extension; `sanitizeFileName` is that one's rule.
+ */
+function segmentOf(segment: string): string {
+  return normalizeNewPagePath(segment.replaceAll('.', '-'))
+}
+
+/** A 2.x page path as this wiki writes one. See `segmentOf`. */
+function pagePathOf(value: string): string {
+  return value.split('/').filter(Boolean).map(segmentOf).join('/')
+}
+
+/**
  * A 2.x folder path as this wiki writes one: the segments `normalizeFolderPath` keeps, each written
- * the way a page path is — which is what puts a folder where the pages imported into it land, since
- * those go through the same normalization on their own way in.
+ * the way a page path's are — which is what puts a folder where the pages imported into it land.
  */
 function folderPathOf(value: unknown): string {
-  return normalizeFolderPath(stringOf(value))
-    .split('/')
-    .filter(Boolean)
-    .map(normalizeNewPagePath)
-    .join('/')
+  return pagePathOf(normalizeFolderPath(stringOf(value)))
 }
+
+/**
+ * Where a link written in 2.x points now, or null for a link this import did not break.
+ *
+ * Built once per batch from what the site holds at that moment. See `#linkResolverFor`.
+ */
+type LinkResolver = (href: string, from: { locale: string; path: string }) => string | null
 
 /**
  * A date off a record, or undefined.
@@ -1820,7 +1849,12 @@ class Import {
           WIKI.models.pages.adoptStoredPage({
             siteId: target.siteId,
             locale,
-            path: pagePath,
+            /*
+              Only the dots are converted here. Everything else a path written today changes is done
+              by `adoptStoredPage` itself, which also finds a page imported before those rules under
+              the spelling it was given then, rather than writing a second copy beside it.
+            */
+            path: pagePath.replaceAll('.', '-'),
             title: stringOf(record?.title, pagePath),
             description: stringOf(record?.description),
             editor,
@@ -1858,6 +1892,10 @@ class Import {
         }
         // -> The comments stream names its page by the 2.x page id and has nothing else to go on
         await this.#remember(session.id, 'page', [{ sourceId: record?.id, targetId: page.id }])
+        // -> And `finishSession` rewrites the links of exactly the pages this import wrote
+        await this.#remember(session.id, 'writtenPage', [
+          { sourceId: record?.id, targetId: page.id }
+        ])
         imported++
       } catch (err: any) {
         warnings.push(`"${pagePath}" could not be imported: ${err.message}`)
@@ -1960,8 +1998,208 @@ class Import {
     return systemActor
   }
 
-  /** The page a site-scoped record refers to, by the path it names. */
+  /**
+   * Where each link written in 2.x points now, for the ones whose target this import renamed.
+   *
+   * 2.x allowed spaces, underscores and dots in a path, and an imported page or file is written
+   * without them (`segmentOf`, `sanitizeFileName`) — so a link to `/docs/my page_v1.2` written in the
+   * old wiki would point at nothing here. A link is rewritten only when it does point at nothing as
+   * written, and the converted path DOES name a page or a file the site has: a link to a page that was
+   * never imported, or one already good, is left exactly as it is.
+   *
+   * Which of the two a link names is answered by what exists rather than by its shape, since nothing
+   * else can tell the page `v1.2` from the file `logo.png`. So the site's paths are read once, up
+   * front, and every link is settled against them in memory — an import of thousands of pages has
+   * tens of thousands of links.
+   *
+   * Only the segments of the path itself change. A locale prefix, an anchor, a query string, a `..`
+   * and a relative link's relativity are all kept as written, and a segment that was percent-encoded
+   * is encoded again.
+   */
+  async #linkResolverFor(siteId: string): Promise<LinkResolver> {
+    const pageRows = await WIKI.db
+      .select({ locale: pagesTable.locale, path: pagesTable.path })
+      .from(pagesTable)
+      .where(eq(pagesTable.siteId, siteId))
+    const pages = new Set(pageRows.map((row) => `${row.locale}:${row.path}`))
+    const assetRows = await WIKI.db
+      .select({ folderPath: treeTable.folderPath, fileName: treeTable.fileName })
+      .from(treeTable)
+      .where(and(eq(treeTable.siteId, siteId), eq(treeTable.type, 'asset')))
+    // -> No locale: a file is served at its path whichever locale's tree holds it
+    const assets = new Set(
+      assetRows.map((row) => {
+        const folder = decodeTreePath(row.folderPath)
+        return folder ? `${folder}/${row.fileName}` : row.fileName
+      })
+    )
+    const prefixes = WIKI.models.locales.urlPrefixesFor(WIKI.sites[siteId]?.config?.locales?.active)
+    const isName = (part: string) => Boolean(part) && part !== '.' && part !== '..'
+
+    return (href, from) => {
+      const cut = href.search(/[?#]/)
+      const pathPart = cut < 0 ? href : href.slice(0, cut)
+      // -> A URL, a protocol-relative one and a bare anchor address nothing an import renamed, and
+      //    neither does a route of the app's own
+      if (!pathPart || /^[a-z][a-z0-9+.-]*:/i.test(pathPart) || pathPart.startsWith('//')) {
+        return null
+      }
+      const isAbsolute = pathPart.startsWith('/')
+      if (isAbsolute && !isPageUrl(pathPart)) {
+        return null
+      }
+      const split = isAbsolute ? splitLocalePath(pathPart, prefixes) : null
+      const locale = split?.locale ?? from.locale
+      const parts = pathPart.split('/')
+      // -> Where the path's own segments start: after the leading slash, and after a locale prefix
+      const first = isAbsolute ? (split ? 2 : 1) : 0
+
+      // -> A relative link is resolved against the folder of the page it is written in
+      const resolved = isAbsolute ? [] : from.path.split('/').slice(0, -1)
+      for (const part of parts.slice(first)) {
+        if (part === '..') {
+          resolved.pop()
+        } else if (isName(part)) {
+          resolved.push(decodeUrlPath(part))
+        }
+      }
+      if (resolved.length < 1) {
+        return null
+      }
+      const asWritten = normalizePagePath(resolved.join('/'))
+      if (pages.has(`${locale}:${asWritten}`) || assets.has(asWritten)) {
+        return null
+      }
+      const lastIndex = parts.findLastIndex(isName)
+      const folders = resolved.slice(0, -1).map(segmentOf)
+      const kind = pages.has(`${locale}:${resolved.map(segmentOf).join('/')}`)
+        ? 'page'
+        : lastIndex === parts.length - 1 &&
+            assets.has([...folders, sanitizeFileName(resolved.at(-1)!)].join('/'))
+          ? 'asset'
+          : null
+      if (!kind) {
+        return null
+      }
+
+      const rewritten = parts
+        .map((part, index) => {
+          if (index < first || !isName(part)) {
+            return part
+          }
+          const decoded = decodeUrlPath(part)
+          const converted =
+            kind === 'asset' && index === lastIndex ? sanitizeFileName(decoded) : segmentOf(decoded)
+          return part.includes('%') ? encodeURIComponent(converted) : converted
+        })
+        .join('/')
+      const next = `${rewritten}${cut < 0 ? '' : href.slice(cut)}`
+      return next === href ? null : next
+    }
+  }
+
+  /**
+   * Rewrite the links of every page this import wrote that point at a path it renamed.
+   *
+   * At the end rather than as each page arrives, because a link points forward as often as back: the
+   * page it names may be in a batch that has not been sent yet. Only the pages this session wrote —
+   * one that was already here and left alone (`overwrite` off) is somebody's own content. Saved
+   * through `adoptStoredPage` again, the way the page itself was, so the change is a version in its
+   * history, reaches every storage target and is rendered, and the page keeps its 2.x dates.
+   *
+   * @returns How many pages had a link rewritten
+   */
+  async #relinkWrittenPages(session: ImportSession): Promise<number> {
+    const written = await WIKI.db
+      .select({ pageId: importIdMapTable.targetId })
+      .from(importIdMapTable)
+      .where(
+        and(eq(importIdMapTable.sessionId, session.id), eq(importIdMapTable.entity, 'writtenPage'))
+      )
+    const resolvers = new Map<string, LinkResolver>()
+    let rewritten = 0
+
+    // -> In slices, so that a wiki of twelve thousand pages is not held in memory at once
+    for (let i = 0; i < written.length; i += RELINK_BATCH) {
+      const rows = await WIKI.db
+        .select()
+        .from(pagesTable)
+        .where(
+          inArray(
+            pagesTable.id,
+            written.slice(i, i + RELINK_BATCH).map((row) => row.pageId)
+          )
+        )
+      for (const page of rows) {
+        let resolve = resolvers.get(page.siteId)
+        if (!resolve) {
+          resolve = await this.#linkResolverFor(page.siteId)
+          resolvers.set(page.siteId, resolve)
+        }
+        const from = { locale: page.locale, path: page.path }
+        const content = page.content ?? ''
+        let next: string | null = null
+
+        const syntax = SOURCE_SYNTAX[page.editor]
+        if (syntax) {
+          const replacements = new Map<string, string>()
+          for (const href of sourceLinkHrefs(content, syntax)) {
+            const target = resolve(href, from)
+            if (target !== null) {
+              replacements.set(href, target)
+            }
+          }
+          const result = rewriteSourceLinks(content, syntax, replacements)
+          next = result.replaced.size > 0 ? result.content : null
+        } else if (page.editor === 'redirect') {
+          try {
+            const redirect = JSON.parse(content)
+            const target = redirect?.kind === 'page' ? resolve(String(redirect.target), from) : null
+            next = target === null ? null : JSON.stringify({ ...redirect, target })
+          } catch {
+            // -> Written by `#redirectContent` above, so this does not happen
+          }
+        }
+        if (next === null) {
+          continue
+        }
+
+        try {
+          const authorId = page.authorId ?? (await this.#authorFor(session, null))
+          await WIKI.models.notifications.withOrigin('import', () =>
+            WIKI.models.pages.adoptStoredPage({
+              siteId: page.siteId,
+              locale: page.locale,
+              path: page.path,
+              title: page.title,
+              description: page.description ?? '',
+              editor: page.editor,
+              tags: page.tags ?? [],
+              isPublished: page.publishState !== 'draft',
+              content: next,
+              createdAt: page.createdAt,
+              updatedAt: page.updatedAt,
+              authorId,
+              overwrite: true
+            })
+          )
+          rewritten++
+        } catch (err: any) {
+          WIKI.logger.warn(
+            `Could not rewrite the links of the imported page ${page.path}: ${err.message}`
+          )
+        }
+      }
+    }
+    return rewritten
+  }
+
+  /**
+   * The page a site-scoped record refers to, by the 2.x path it names: under that path as it was
+   * written, for a page imported before paths were converted, or as this import writes it.
+   */
   async #pageAt(siteId: string, locale: string, pagePath: string): Promise<{ id: string } | null> {
+    const asWritten = normalizePagePath(pagePath)
     const rows = await WIKI.db
       .select({ id: pagesTable.id })
       .from(pagesTable)
@@ -1969,9 +2207,10 @@ class Import {
         and(
           eq(pagesTable.siteId, siteId),
           eq(pagesTable.locale, locale),
-          eq(pagesTable.path, pagePath)
+          inArray(pagesTable.path, [asWritten, pagePathOf(pagePath)])
         )
       )
+      .orderBy(sql`${pagesTable.path} = ${asWritten} desc`)
       .limit(1)
     return rows[0] ?? null
   }
@@ -2265,6 +2504,8 @@ class Import {
     let imported = 0
     let skipped = 0
     const localeOf = await this.#localeMapperFor(target.siteId)
+    // -> The stream order puts this after pages and assets, so everything a sidebar points at is here
+    const resolve = await this.#linkResolverFor(target.siteId)
 
     for (const record of records) {
       const locale = localeOf(stringOf(record?.localeCode).trim())
@@ -2294,7 +2535,9 @@ class Import {
         continue
       }
 
-      const items = await this.#translateNavItems(session, record.items, warnings)
+      const items = await this.#translateNavItems(session, record.items, warnings, (target) =>
+        resolve(target, { locale, path: '' })
+      )
       await WIKI.db.update(navigationTable).set({ items }).where(eq(navigationTable.id, navId))
       imported++
     }
@@ -2305,7 +2548,8 @@ class Import {
   async #translateNavItems(
     session: ImportSession,
     value: any[],
-    warnings: string[]
+    warnings: string[],
+    relink: (target: string) => string | null
   ): Promise<NavigationItem[]> {
     const items: NavigationItem[] = []
     for (const entry of value) {
@@ -2323,12 +2567,14 @@ class Import {
       }
       const targetType = stringOf(entry?.targetType, 'page')
       const isExternal = targetType === 'external' || targetType === 'externalblank'
+      const target = stringOf(entry?.target)
       items.push({
         id: uuidv5(`nav:${stringOf(entry?.id)}`, session.namespace),
         type,
         label: stringOf(entry?.label),
         icon: normalizeIcon(entry?.icon),
-        target: targetType === 'home' ? '/' : stringOf(entry?.target),
+        // -> A page this import renamed is pointed at under its new path, as a link in content is
+        target: targetType === 'home' ? '/' : isExternal ? target : (relink(target) ?? target),
         openInNewWindow:
           targetType === 'externalblank' || (isExternal && entry?.openInNewWindow === true),
         visibilityGroups:
@@ -2366,8 +2612,16 @@ class Import {
     if (!session) {
       throw new CustomError('importNoSession', 'No such import session.', 404)
     }
+    const relinked = await this.#relinkWrittenPages(session)
+    const warnings =
+      relinked > 0
+        ? [
+            ...session.warnings,
+            `${relinked} pages linked to pages or files that were given a new path on the way in (2.x allowed spaces, underscores and dots in a path); their links were rewritten to match.`
+          ]
+        : session.warnings
     await this.#clearStaging(id)
-    await this.#patch(id, { state: 'finished' })
+    await this.#patch(id, { state: 'finished', warnings })
 
     /*
       What the operator is told to expect, which is the whole of §8 in one number: the render queue is
@@ -2405,7 +2659,7 @@ class Import {
 
     return {
       progress: session.progress,
-      warnings: session.warnings,
+      warnings,
       pendingRenders,
       unrenderable
     }

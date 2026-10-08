@@ -508,7 +508,7 @@ export interface RelinkResult {
 }
 
 /** Which source syntax a link is looked for in, per editor. The rest keep links in JSON, or none. */
-const SOURCE_SYNTAX: Record<string, SourceSyntax> = {
+export const SOURCE_SYNTAX: Record<string, SourceSyntax> = {
   markdown: 'markdown',
   visual: 'markdown',
   asciidoc: 'adoc'

@@ -42,8 +42,9 @@ function isAbsoluteUrl(href: string): boolean {
  */
 function patternsFor(href: string, syntax: SourceSyntax): RegExp[] {
   const h = escapeRegExp(href)
-  // -> Raw HTML is allowed in both, and an author reaching for it writes an ordinary anchor
-  const patterns = [new RegExp(`(\\bhref\\s*=\\s*["'])${h}(?=["'])`, 'g')]
+  // -> Raw HTML is allowed in both, and an author reaching for it writes an ordinary anchor -- or an
+  //    `<img>`, whose `src` addresses a file the way an `href` addresses a page
+  const patterns = [new RegExp(`(\\b(?:href|src)\\s*=\\s*["'])${h}(?=["'])`, 'g')]
 
   if (syntax === 'markdown') {
     patterns.push(
@@ -65,7 +66,9 @@ function patternsFor(href: string, syntax: SourceSyntax): RegExp[] {
     patterns.push(
       // -> `link:href[text]`, and the passthrough form a target with odd characters needs
       new RegExp(`(\\blink:)${h}(?=\\[)`, 'g'),
-      new RegExp(`(\\blink:\\+\\+)${h}(?=\\+\\+\\[)`, 'g')
+      new RegExp(`(\\blink:\\+\\+)${h}(?=\\+\\+\\[)`, 'g'),
+      // -> `image::file[]` and the inline `image:file[]`
+      new RegExp(`(\\bimage::?)${h}(?=\\[)`, 'g')
     )
     if (isAbsoluteUrl(href)) {
       // -> `https://…[text]`, or a bare URL, which asciidoctor links on its own
@@ -199,4 +202,47 @@ export function rewriteSourceLinks(
     .join('')
 
   return { content, replaced }
+}
+
+/**
+ * Every link destination `rewriteSourceLinks` could rewrite in `source`, as written there.
+ *
+ * The same places it looks — a markdown link, image or reference definition, an asciidoc `link:` or
+ * `image:` macro, an HTML `href` or `src` — and the same code it skips, so that what this finds is
+ * exactly what handing it back as a key would rewrite. For a caller with no rendered HTML to read the
+ * links off, which is what `pageLinks` rows are made from: a page an import has just written has no
+ * render yet.
+ *
+ * Bare URLs are not looked for. They are only ever links to somewhere else, never a path.
+ */
+export function sourceLinkHrefs(source: string, syntax: SourceSyntax): string[] {
+  const patterns = [/\b(?:href|src)\s*=\s*"([^"]*)"/g, /\b(?:href|src)\s*=\s*'([^']*)'/g]
+  if (syntax === 'markdown') {
+    patterns.push(
+      /\]\(\s*<([^>\n]+)>/g,
+      /\]\(\s*([^\s<)][^\s)]*)/g,
+      /^[ \t]{0,3}\[[^\]\n]+\]:[ \t]*<([^>\n]+)>/gm,
+      /^[ \t]{0,3}\[[^\]\n]+\]:[ \t]*([^\s<][^\s]*)/gm
+    )
+  } else {
+    patterns.push(
+      /\blink:\+\+(.+?)\+\+\[/g,
+      /\blink:([^\s[]+)\[/g,
+      // -> Asciidoctor lets an image target hold spaces, as long as it neither starts nor ends with one
+      /\bimage::?([^\s[](?:[^\n[]*[^\s[])?)\[/g
+    )
+  }
+  const found = new Set<string>()
+  for (const segment of segments(source, syntax)) {
+    if (segment.code) {
+      continue
+    }
+    for (const pattern of patterns) {
+      for (const match of segment.text.matchAll(pattern)) {
+        found.add(match[1].trim())
+      }
+    }
+  }
+  found.delete('')
+  return [...found]
 }
