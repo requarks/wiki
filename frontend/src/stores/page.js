@@ -1218,7 +1218,8 @@ export function pagePathHash(path) {
  * root is the `home` page rather than an empty path.
  */
 function normalizePath(path) {
-  const clean = (path ?? '').replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase()
+  // -> NFC as the server's `normalizePagePath` does, or a decomposed spelling hashes as another page
+  const clean = (path ?? '').replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase().normalize('NFC')
   return clean || 'home'
 }
 

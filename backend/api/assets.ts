@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
 import { audit } from '../helpers/audit.ts'
-import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
+import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 
 const assetIdParam = {
@@ -159,7 +159,7 @@ async function routes(app: FastifyInstance) {
         ? await WIKI.models.tree.getFolderById(req.query.folderId)
         : null
       const folderPath = req.query.folderId ? null : normalizeFolderPath(req.query.folderPath)
-      const parentPath = folder ? (decodeTreePath(folder.folderPath ?? '') ?? '') : ''
+      const parentPath = folder ? decodeTreePath(folder.folderPath) : ''
       const destination = folder
         ? [parentPath, folder.fileName].filter(Boolean).join('/')
         : (folderPath ?? '')
@@ -294,10 +294,7 @@ async function routes(app: FastifyInstance) {
       }
 
       if (download) {
-        reply.header(
-          'Content-Disposition',
-          `attachment; filename="${encodeURIComponent(asset.fileName)}"`
-        )
+        reply.header('Content-Disposition', attachmentDisposition(asset.fileName))
       }
       // -> The bytes came from a user, so the browser must take the type at its word rather than
       //    looking for something more interesting in them

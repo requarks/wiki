@@ -71,11 +71,10 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { reactive, ref, watch } from 'vue'
-import slugify from 'slugify'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
-import { normalizePagePath } from '@/helpers/pagePaths'
+import { isValidPathSegment, normalizeNewPagePath, pathSegmentFromTitle } from '@/helpers/pagePaths'
 
 // PROPS
 
@@ -134,7 +133,7 @@ const titleValidation = [
 
 const pathValidation = [
   (val) => val.length > 0 || t('fileman.folderFileNameMissing'),
-  (val) => /^[a-z0-9-]+$/.test(val) || t('fileman.folderFileNameInvalid')
+  (val) => isValidPathSegment(val) || t('fileman.folderFileNameInvalid')
 ]
 
 // WATCHERS
@@ -146,7 +145,7 @@ watch(
       state.pathDirty = false
     }
     if (!state.pathDirty) {
-      state.path = slugify(newValue, { lower: true, strict: true })
+      state.path = pathSegmentFromTitle(newValue)
     }
   }
 )
@@ -157,7 +156,7 @@ async function create() {
   state.loading++
   try {
     // -> The name is a segment of every page path under the folder, and is corrected the way one is
-    state.path = normalizePagePath(state.path)
+    state.path = normalizeNewPagePath(state.path)
     const isFormValid = await newFolderForm.value.validate(true)
     if (!isFormValid) {
       throw new Error(t('fileman.createFolderInvalidData'))

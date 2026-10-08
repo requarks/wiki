@@ -2,7 +2,14 @@ import * as cheerio from 'cheerio'
 import type { FastifyRequest } from 'fastify'
 import type { AnalyticsInjections } from '../models/analytics.ts'
 import type { PageDescription } from '../models/pages.ts'
-import { htmlEscape, isPageUrl, normalizePagePath, originOf, splitLocalePath } from './common.ts'
+import {
+  decodeUrlPath,
+  htmlEscape,
+  isPageUrl,
+  normalizePagePath,
+  originOf,
+  splitLocalePath
+} from './common.ts'
 
 /**
  * What the app shell is enriched with before it is handed to a client that will not run it.
@@ -198,7 +205,7 @@ function resolvePagePath(
   return {
     locale: split?.locale ?? locales?.primary ?? 'en',
     // -> The site root is the `home` page rather than an empty path, the same as everywhere else
-    path: normalizePagePath(below) || HOME_PATH,
+    path: normalizePagePath(decodeUrlPath(below)) || HOME_PATH,
     isRoot: ROOT_PATHS.has(below)
   }
 }

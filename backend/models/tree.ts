@@ -5,12 +5,18 @@ import type { RulePageRef } from '../helpers/pageRules.ts'
 import { pages as pagesTable, tree as treeTable } from '../db/schema.ts'
 import {
   CustomError,
+  decodeTreeLabel,
   decodeTreePath,
+  encodeTreeLabel,
   encodeTreePath,
   generateHash,
   generatePathHash,
+  isValidPathSegment,
+  MAX_PATH_SEGMENT_BYTES,
   normalizeFolderPath,
-  normalizePagePath
+  normalizeNewPagePath,
+  normalizePagePath,
+  treeLabelSql
 } from '../helpers/common.ts'
 import type { PageActor } from './pages.ts'
 
@@ -146,7 +152,6 @@ export interface TreeRow {
 }
 
 /** Folders are addressed by URL, so their file name is restricted to what reads well in one. */
-const rePathName = /^[a-z0-9-]+$/
 const reTitle = /^[^<>"]+$/
 
 /** Ceiling on how many entries one listing returns, and how deep it may recurse. */
@@ -161,20 +166,41 @@ const MAX_NAME_ATTEMPTS = 100
 
 /**
  * The ltree path of a folder's *contents*, i.e. the value its children carry in `folderPath`.
+ *
+ * The folder's own name is a `fileName`, which is stored as written, so it is encoded on the way onto
+ * the end of its parent's path — the two are never the same string, see `encodeTreeLabel`.
  */
 function childPathOf(folder: { folderPath?: string | null; fileName: string }): string {
-  return folder.folderPath ? `${folder.folderPath}.${folder.fileName}` : folder.fileName
+  const label = encodeTreeLabel(folder.fileName)
+  return folder.folderPath ? `${folder.folderPath}.${label}` : label
 }
 
 /**
- * Split an ltree path into the (folderPath, fileName) pair that addresses the entry itself.
+ * Split an ltree path into the (folderPath, fileName) pair that addresses the entry itself: the
+ * parent's path still encoded, as `folderPath` is compared, and the last label decoded, as `fileName`
+ * is.
  */
 function splitPath(path: string): { folderPath: string; fileName: string } {
   const parts = path.split('.')
   return {
     folderPath: parts.slice(0, -1).join('.'),
-    fileName: parts.at(-1) ?? ''
+    fileName: decodeTreeLabel(parts.at(-1) ?? '')
   }
+}
+
+/**
+ * The name a folder is created or renamed to, normalized as a page path is written, or an error if
+ * what is left cannot be one.
+ */
+function folderNameFrom(pathName: string): string {
+  const name = normalizeNewPagePath(pathName)
+  if (!isValidPathSegment(name)) {
+    throw new CustomError(
+      'treeInvalidPath',
+      `A folder path name may only contain letters, numbers and hyphens, and be at most ${MAX_PATH_SEGMENT_BYTES} bytes long.`
+    )
+  }
+  return name
 }
 
 /**
@@ -186,7 +212,7 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
     id: row.id,
     type: row.type,
     depth,
-    folderPath: decodeTreePath(folderPath) ?? '',
+    folderPath: decodeTreePath(folderPath),
     fileName: row.fileName,
     title: row.title,
     tags: row.tags ?? [],
@@ -339,7 +365,7 @@ class Tree {
         locations.push(
           and(
             eq(treeTable.folderPath, parts.slice(0, parts.length - 1 - i).join('.')),
-            eq(treeTable.fileName, parts[parts.length - 1 - i]),
+            eq(treeTable.fileName, decodeTreeLabel(parts[parts.length - 1 - i])),
             eq(treeTable.type, 'folder')
           )!
         )
@@ -449,7 +475,7 @@ class Tree {
       .limit(limit)
 
     return rows.flatMap((row) => {
-      const folderPath = decodeTreePath(row.folderPath ?? '') ?? ''
+      const folderPath = decodeTreePath(row.folderPath)
       const page = {
         id: row.id,
         path: folderPath ? `${folderPath}/${row.fileName}` : row.fileName,
@@ -494,7 +520,7 @@ class Tree {
     unpublished?: Unpublished
   }): Promise<BrowseLevel | null> {
     const encodedPath = encodeTreePath(path)
-    const basePath = decodeTreePath(encodedPath) ?? ''
+    const basePath = decodeTreePath(encodedPath)
 
     // -> What the level is called. The root is not a folder, so it has no row and no title of its own
     //    — and a path that is not a folder is nothing this can list.
@@ -523,7 +549,7 @@ class Tree {
     const descendant = alias(treeTable, 'descendantTree')
     const descendantPage = alias(pagesTable, 'descendantPage')
     // -> Text rather than an ltree operator, so that the child path can be built from a bound prefix
-    //    and the row's own name: `foo.bar.` + `baz`
+    //    and the row's own name, encoded in SQL as `childPathOf` encodes it: `foo.bar.` + `baz`
     const childPathPrefix = encodedPath ? `${encodedPath}.` : ''
 
     /*
@@ -547,7 +573,7 @@ class Tree {
             eq(descendant.siteId, treeTable.siteId),
             eq(descendant.locale, treeTable.locale),
             eq(descendant.type, 'page'),
-            sql`${descendant.folderPath} <@ (${childPathPrefix}::text || ${treeTable.fileName})::ltree`,
+            sql`${descendant.folderPath} <@ (${childPathPrefix}::text || ${treeLabelSql(treeTable.fileName)})::ltree`,
             ...pageIsVisible(descendantPage, unpublished)
           )
         )
@@ -753,7 +779,7 @@ class Tree {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
     }
     return this.createFolder({
-      parentPath: folderPath,
+      parentPath: decodeTreePath(folderPath),
       pathName: fileName,
       title: fileName,
       locale: locale!,
@@ -786,13 +812,7 @@ class Tree {
   }): Promise<TreeRow> {
     // -> A folder name is a segment of every page path under it, so it is normalized the same way a
     //    page path is before it is held to what a segment may contain
-    const name = normalizePagePath(pathName)
-    if (!rePathName.test(name)) {
-      throw new CustomError(
-        'treeInvalidPath',
-        'A folder path name may only contain lowercase alphanumeric and hyphen characters.'
-      )
-    }
+    const name = folderNameFrom(pathName)
     if (!reTitle.test(title)) {
       throw new CustomError('treeInvalidTitle', 'The folder title contains invalid characters.')
     }
@@ -840,9 +860,9 @@ class Tree {
     //    a rename that left a gap — so every level above the new folder is filled in first
     if (path) {
       const parts = path.split('.')
-      const expected = parts.map((_, i) => ({
+      const expected = parts.map((label, i) => ({
         folderPath: parts.slice(0, i).join('.'),
-        fileName: parts[i]
+        fileName: decodeTreeLabel(label)
       }))
       const found = await WIKI.db
         .select({ folderPath: treeTable.folderPath, fileName: treeTable.fileName })
@@ -869,6 +889,15 @@ class Tree {
               (row.folderPath ?? '') === ancestor.folderPath && row.fileName === ancestor.fileName
           )
       )
+      // -> Created under the name the path asked for, so it is held to what a folder created on its own
+      //    would be: a path is only checked where it is written, and this is where these are. Checked
+      //    before any is created, so that a bad segment deep in the path leaves nothing behind.
+      if (missing.some((ancestor) => !isValidPathSegment(ancestor.fileName))) {
+        throw new CustomError(
+          'treeInvalidPath',
+          'A folder path name may only contain letters, numbers and hyphens.'
+        )
+      }
       // -> Shallowest first, so that each one's own parent is already there to be counted against
       for (const ancestor of missing) {
         WIKI.logger.debug(
@@ -935,14 +964,10 @@ class Tree {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
     }
     // -> Normalized as it is on the way in, since this renames the segment every page path under the
-    //    folder is built from
-    const name = normalizePagePath(pathName)
-    if (!rePathName.test(name)) {
-      throw new CustomError(
-        'treeInvalidPath',
-        'A folder path name may only contain lowercase alphanumeric and hyphen characters.'
-      )
-    }
+    //    folder is built from. Unless it is the name the folder already has: one created before
+    //    underscores became hyphens keeps its own, rather than a title change moving every page in it.
+    const name =
+      normalizePagePath(pathName) === folder.fileName ? folder.fileName : folderNameFrom(pathName)
     if (!reTitle.test(title)) {
       throw new CustomError('treeInvalidTitle', 'The folder title contains invalid characters.')
     }
@@ -982,7 +1007,7 @@ class Tree {
     }
 
     const oldPath = childPathOf(folder)
-    const newPath = folder.folderPath ? `${folder.folderPath}.${name}` : name
+    const newPath = childPathOf({ folderPath: folder.folderPath, fileName: name })
 
     WIKI.logger.debug(`Renaming folder ${folder.id} from ${oldPath} to ${newPath}...`)
 
@@ -1084,9 +1109,9 @@ class Tree {
         previous: {
           locale: row.locale,
           // -> Where it was: the same place it is now, with the renamed segment put back
-          folderPath: (decodeTreePath(row.folderPath ?? '') ?? '').replace(
-            decodeTreePath(newPath)!,
-            decodeTreePath(oldPath)!
+          folderPath: decodeTreePath(row.folderPath).replace(
+            decodeTreePath(newPath),
+            decodeTreePath(oldPath)
           ),
           fileName: row.fileName
         }
@@ -1151,7 +1176,7 @@ class Tree {
     const destinationLocale = locale || source.locale
     const requested = normalizeFolderPath(folderPath)
     const sourcePath = childPathOf(source)
-    const ownPath = decodeTreePath(sourcePath) ?? ''
+    const ownPath = decodeTreePath(sourcePath)
 
     // -> On the paths, before anything is created: a folder copied into its own subtree would be
     //    copying into what it is still reading from
@@ -1206,10 +1231,10 @@ class Tree {
     }
 
     const copyPath = childPathOf(copy)
-    const newPrefix = decodeTreePath(copyPath) ?? ''
+    const newPrefix = decodeTreePath(copyPath)
     /** Where an entry under the source sits under the copy, as a slash-separated folder path. */
     const mapFolder = (path: string | null) =>
-      `${newPrefix}${(decodeTreePath(path ?? '') ?? '').slice(ownPath.length)}`
+      `${newPrefix}${decodeTreePath(path).slice(ownPath.length)}`
 
     WIKI.logger.debug(
       `Copying folder ${source.id} and ${descendants.length} descendant(s) to ${destinationLocale}:${copyPath}...`
@@ -1383,7 +1408,7 @@ class Tree {
     const oldParentPath = folder.folderPath ?? ''
     const oldPath = childPathOf(folder)
     const requested = normalizeFolderPath(folderPath)
-    const ownPath = decodeTreePath(oldPath) ?? ''
+    const ownPath = decodeTreePath(oldPath)
 
     // -> Decided on the paths, before the destination is resolved: resolving it would create it, and
     //    a folder moved inside itself would take its own subtree out of the tree entirely
@@ -1437,7 +1462,7 @@ class Tree {
       )
     }
 
-    const newPath = newParentPath ? `${newParentPath}.${folder.fileName}` : folder.fileName
+    const newPath = childPathOf({ folderPath: newParentPath, fileName: folder.fileName })
     const isLocaleChange = destinationLocale !== folder.locale
 
     WIKI.logger.debug(
@@ -1557,8 +1582,8 @@ class Tree {
           sql`${treeTable.folderPath} <@ ${newPath}::ltree`
         )
       )
-    const newPrefix = decodeTreePath(newPath)!
-    const oldPrefix = decodeTreePath(oldPath)!
+    const newPrefix = decodeTreePath(newPath)
+    const oldPrefix = decodeTreePath(oldPath)
     await WIKI.models.assets.relocateAssets(
       siteId,
       movedAssets.map((row) => ({
@@ -1567,7 +1592,7 @@ class Tree {
           locale: folder.locale,
           // -> Where it was: the same place it is now, with the moved folder's path put back. Sliced
           //    rather than replaced, since the segment that moved can occur again further down.
-          folderPath: `${oldPrefix}${(decodeTreePath(row.folderPath ?? '') ?? '').slice(newPrefix.length)}`,
+          folderPath: `${oldPrefix}${decodeTreePath(row.folderPath).slice(newPrefix.length)}`,
           fileName: row.fileName
         }
       })),
@@ -1649,7 +1674,7 @@ class Tree {
 
     const movedPages = []
     for (const row of rows) {
-      const folderPath = decodeTreePath(row.folderPath ?? '')
+      const folderPath = decodeTreePath(row.folderPath)
       const fullPath = folderPath ? `${folderPath}/${row.fileName}` : row.fileName
       await WIKI.db
         .update(treeTable)
@@ -1728,7 +1753,7 @@ class Tree {
 
     const asEntry = (row: (typeof deleted)[number]): DeletedEntry => ({
       id: row.id,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       fileName: row.fileName,
       locale: row.locale
     })
@@ -1764,7 +1789,8 @@ class Tree {
       an empty one is what the next pass is for; anything else and the branch stays.
 
       The folder's own path is built from its row, as `browse` does above: `foo.bar` + `.` + `baz`,
-      and `baz` alone at the root, where `folderPath` is the empty path rather than an absent one.
+      and `baz` alone at the root, where `folderPath` is the empty path rather than an absent one —
+      the name encoded in SQL as `childPathOf` encodes it.
     */
     const holdsNothing = not(
       exists(
@@ -1775,7 +1801,7 @@ class Tree {
             and(
               eq(child.siteId, treeTable.siteId),
               eq(child.locale, treeTable.locale),
-              sql`${child.folderPath} <@ (COALESCE(NULLIF(${treeTable.folderPath}::text, '') || '.', '') || ${treeTable.fileName})::ltree`
+              sql`${child.folderPath} <@ (COALESCE(NULLIF(${treeTable.folderPath}::text, '') || '.', '') || ${treeLabelSql(treeTable.fileName)})::ltree`
             )
           )
       )
@@ -1976,7 +2002,7 @@ class Tree {
       }
     }
 
-    const folderPath = decodeTreePath(entry.folderPath ?? '')
+    const folderPath = decodeTreePath(entry.folderPath)
     const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName
     const updated = await WIKI.db
       .update(treeTable)

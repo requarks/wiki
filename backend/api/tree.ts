@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
 import { audit } from '../helpers/audit.ts'
-import { decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
+import { decodeTreePath, normalizeFolderPath, normalizeNewPagePath } from '../helpers/common.ts'
 import { actorFrom, unpublishedFor } from './pages.ts'
 
 interface TreeQuery {
@@ -128,7 +128,7 @@ function visibleTreeItems<T extends { type?: string; folderPath?: string; fileNa
 function toFolderResponse(folder: TreeRow) {
   return {
     ...folder,
-    folderPath: decodeTreePath(folder.folderPath ?? '') ?? '',
+    folderPath: decodeTreePath(folder.folderPath),
     childrenCount: folder.meta?.children ?? 0,
     // -> Absent rather than zero on a folder nobody has coloured; see `setFolderColor`
     ...(folder.meta?.hue ? { hue: folder.meta.hue } : {})
@@ -136,7 +136,7 @@ function toFolderResponse(folder: TreeRow) {
 }
 
 function folderPathOf(folder: { folderPath?: string | null; fileName: string }): string {
-  const parent = decodeTreePath(folder.folderPath ?? '') ?? ''
+  const parent = decodeTreePath(folder.folderPath)
   return parent ? `${parent}/${folder.fileName}` : folder.fileName
 }
 
@@ -626,7 +626,8 @@ async function routes(app: FastifyInstance) {
         const parent = await WIKI.models.tree.getFolderById(req.body.parentId)
         parentPath = parent ? folderPathOf(parent) : parentPath
       }
-      const target = [parentPath, req.body.pathName].filter(Boolean).join('/')
+      // -> Under the name it will be created as, which is what a rule written for it names
+      const target = [parentPath, normalizeNewPagePath(req.body.pathName)].filter(Boolean).join('/')
       const locale = req.body.locale ?? defaultLocale(req.params.siteId)
       if (!mayOnFolder(req, 'manage:pages', target, locale)) {
         return reply.forbidden('You are not allowed to create a folder here.')
@@ -903,7 +904,7 @@ async function routes(app: FastifyInstance) {
         !mayOnFolder(
           req,
           'manage:pages',
-          [destination, req.body.pathName].filter(Boolean).join('/'),
+          [destination, normalizeNewPagePath(req.body.pathName)].filter(Boolean).join('/'),
           destinationLocale
         )
       ) {

@@ -5,6 +5,7 @@ import mime from 'mime'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import { sql, type SQL, type SQLWrapper } from 'drizzle-orm'
 
 export interface Deferred<T = void> {
   resolve: (value: T) => void
@@ -141,35 +142,128 @@ export function htmlEscape(value: string): string {
 }
 
 /**
- * Decode a tree path
+ * One path segment as the ltree label the tree stores it under: the hex of its UTF-8 bytes.
  *
- * @param str String to decode
- * @returns Decoded tree path
+ * An ltree label may only hold what the database's locale calls alphanumeric, plus `_` and `-` — on a
+ * `C` database that is ASCII, on any other it is whatever its C library says, and even a UTF-8 locale
+ * refuses combining marks (Hindi, Thai, decomposed kana). A path segment is none of those things'
+ * business, so the label is an encoding of it that every database accepts and every database reads
+ * back the same. Hex rather than an escape scheme because postgres can produce it too —
+ * `treeLabelSql` is the same function for a column, which queries that build a child's path from
+ * its parent's row depend on — and because it never contains anything lquery would read as syntax.
+ *
+ * The segment is taken as given: callers hand in a name already lowercased and NFC-normalized, which
+ * is the form `fileName` is stored in and what `treeLabelSql` encodes.
  */
-export function decodeTreePath(str?: string | null): string | undefined {
-  return str?.replaceAll('.', '/')
+export function encodeTreeLabel(segment: string): string {
+  return Buffer.from(segment, 'utf8').toString('hex')
 }
 
 /**
- * Encode a tree path
+ * The path segment an ltree label encodes. The exact inverse of `encodeTreeLabel`.
+ */
+export function decodeTreeLabel(label: string): string {
+  return Buffer.from(label, 'hex').toString('utf8')
+}
+
+/**
+ * `encodeTreeLabel` in SQL, for a query that builds a path from a row's own `fileName`.
  *
- * @param str String to encode
- * @returns Encoded tree path
+ * `convert_to` is what makes it byte-for-byte the same as `Buffer.from(…, 'utf8')`: the database's
+ * encoding is not assumed to be UTF-8, the conversion says so explicitly.
+ */
+export function treeLabelSql(fileName: SQLWrapper): SQL {
+  return sql`encode(convert_to(${fileName}, 'UTF8'), 'hex')`
+}
+
+/**
+ * A slash-separated folder path as the ltree the tree stores it under.
+ *
+ * Each segment is lowercased and NFC-normalized before it is encoded, which is the form every folder
+ * name is stored in — so a lookup does not care how the path it was handed was spelled. Empty
+ * segments are dropped rather than encoded as labels ltree would refuse.
+ *
+ * Never hand it a path that is already encoded: hex has no slashes, so the whole dotted path would be
+ * taken as one segment and encoded a second time.
  */
 export function encodeTreePath(str?: string | null): string {
-  return str?.toLowerCase()?.replaceAll('/', '.') || ''
+  return (str ?? '')
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => encodeTreeLabel(segment.toLowerCase().normalize('NFC')))
+    .join('.')
 }
 
 /**
- * Reduce a page path to the single form it is stored, addressed and looked up under.
+ * An ltree path from the tree as the slash-separated path it encodes. Empty for the site root.
  *
- * A path is a URL, and a URL that differs only in casing or in how a space was encoded is the same
- * page as far as anyone reading the wiki is concerned — so there is one spelling, and everything
- * that takes a path from a human or from page content passes it through here first. Wrapping slashes
- * go, runs of whitespace become a single hyphen, and what is left is lowercased.
+ * Only ever for a value read off a row, or built by `encodeTreePath` / `encodeTreeLabel` — decoding a
+ * path that is already slash-separated reads it as hex and returns garbage.
+ */
+export function decodeTreePath(str?: string | null): string {
+  return str ? str.split('.').map(decodeTreeLabel).join('/') : ''
+}
+
+/**
+ * A `Content-Disposition` that downloads a file under its own name, whatever script it is written in.
  *
- * What it does not do is decide whether the result is *allowed*: the characters a path may contain
- * are the page model's rule to enforce, on the normalized form.
+ * RFC 6266: `filename*` carries the name as UTF-8, which every current browser reads, and `filename`
+ * is the fallback for anything that does not. That one is held to printable ASCII, with everything
+ * else replaced rather than percent-encoded — a browser reading `filename` shows a `%E6` literally.
+ */
+export function attachmentDisposition(fileName: string): string {
+  const fallback = fileName.replaceAll(/[^\x20-\x7e]|["\\]/gu, '_')
+  // -> `encodeURIComponent` leaves `'()*` alone, and RFC 5987 does not allow them unencoded
+  const encoded = encodeURIComponent(fileName).replaceAll(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  )
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`
+}
+
+/**
+ * Longest a single path segment may be, in UTF-8 bytes — a folder name, a page's own name, an asset's
+ * file name.
+ *
+ * Bytes rather than characters, because each limit it stands in front of counts bytes: a file system
+ * name is 255 of them on ext4 and most others, and a page is stored as its name plus an extension of
+ * up to five; and an ltree label is 1000 characters, which hex spends two of per byte. 240 clears both
+ * — about 80 characters of Japanese, 240 of ASCII.
+ */
+export const MAX_PATH_SEGMENT_BYTES = 240
+
+/**
+ * What one segment of a page or folder path may be made of: letters and digits of any script, the
+ * combining marks some scripts cannot be written without, and the hyphen — between them, never at
+ * either end.
+ *
+ * Nothing that means something in a URL, a file system or a git pathspec — no `/`, `\`, `.`, `%`,
+ * `?`, `#`, `*` or whitespace — which is what lets a path be concatenated into a link, a file path or
+ * an object key without escaping it first. The hyphen is kept off the ends because a leading one is
+ * an option to every command-line tool a path is handed to, and a trailing one is a separator with
+ * nothing after it. Checked on the normalized form, so uppercase letters never reach it.
+ */
+const PATH_SEGMENT = /^[\p{L}\p{M}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?$/u
+
+/**
+ * Whether a normalized segment is one a path may be written with. See `PATH_SEGMENT`.
+ */
+export function isValidPathSegment(segment: string): boolean {
+  return PATH_SEGMENT.test(segment) && Buffer.byteLength(segment, 'utf8') <= MAX_PATH_SEGMENT_BYTES
+}
+
+/**
+ * Reduce a page path to the single form it is looked up under.
+ *
+ * A path is a URL, and a URL that differs only in casing, in how a space was encoded, or in how an
+ * accented letter was composed is the same page as far as anyone reading the wiki is concerned — so
+ * there is one spelling, and everything that takes a path from a human or from page content passes it
+ * through here first. Wrapping slashes go, runs of whitespace become a single hyphen, and what is left
+ * is lowercased and NFC-normalized (macOS hands out decomposed names, which would otherwise be a
+ * different path to the same eye).
+ *
+ * A path being WRITTEN goes through `normalizeNewPagePath` instead, which is this and then some: the
+ * two differ in `_`, which a path written today never has and a path written before may still.
  */
 export function normalizePagePath(input?: string | null): string {
   return (input ?? '')
@@ -178,6 +272,49 @@ export function normalizePagePath(input?: string | null): string {
     .replace(/\/+$/, '')
     .replaceAll(/\s+/g, '-')
     .toLowerCase()
+    .normalize('NFC')
+}
+
+/**
+ * A URL path as the page path it spells: each segment percent-decoded.
+ *
+ * What a request line or an `href` carries is encoded — a browser percent-encodes every character of
+ * `/にほんご` before sending it — while a page path is stored as the characters themselves. So a URL
+ * path is decoded before it is normalized and hashed, or it names a page that is not there. A segment
+ * that will not decode is not one a page path could have produced, and is left as it is. Mirrored by
+ * `decodeUrlPath` in the frontend's `helpers/pagePaths.js`.
+ */
+export function decodeUrlPath(urlPath: string): string {
+  return urlPath
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment)
+      } catch {
+        return segment
+      }
+    })
+    .join('/')
+}
+
+/**
+ * Reduce a path that is about to be written — a page created or moved, a folder created or renamed —
+ * to the form it is stored under.
+ *
+ * `normalizePagePath`, with underscores turned into hyphens as whitespace already is: a path uses ONE
+ * hyphen to separate words, whichever of the three the author typed and however many of them, so
+ * `part 1 - intro` is `part-1-intro`. And since a hyphen only ever separates, one left at either end
+ * of a segment — from `_draft`, from `notes /` — is dropped. Only for a path being written, because
+ * pages written before those rules kept their `_` (or `--`), and looking one of them up through this
+ * would look for a page that is not there.
+ *
+ * What it does not do is decide whether the result is *allowed*: see `isValidPathSegment`.
+ */
+export function normalizeNewPagePath(input?: string | null): string {
+  return normalizePagePath((input ?? '').trim().replaceAll(/[\s_-]+/g, '-'))
+    .split('/')
+    .map((segment) => segment.replaceAll(/^-+|-+$/g, ''))
+    .join('/')
 }
 
 /**

@@ -1,3 +1,4 @@
+import { attachmentDisposition } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 import type { FastifyInstance } from 'fastify'
 
@@ -107,10 +108,7 @@ async function routes(app: FastifyInstance) {
     }
 
     if (download) {
-      reply.header(
-        'Content-Disposition',
-        `attachment; filename="${encodeURIComponent(asset.fileName)}"`
-      )
+      reply.header('Content-Disposition', attachmentDisposition(asset.fileName))
     }
     // -> Set by hand because the body may be a stream, which Fastify would otherwise send chunked —
     //    and a download with no length is a download with no progress bar

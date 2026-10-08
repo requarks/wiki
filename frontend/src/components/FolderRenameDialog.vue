@@ -66,11 +66,10 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { onMounted, reactive, ref, watch } from 'vue'
-import slugify from 'slugify'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
-import { normalizePagePath } from '@/helpers/pagePaths'
+import { isValidPathSegment, pathSegmentFromTitle, pathSegmentToWrite } from '@/helpers/pagePaths'
 
 // PROPS
 
@@ -103,6 +102,8 @@ const { t } = useI18n()
 
 const state = reactive({
   path: '',
+  // -> The name it has now, which is kept as it is when asked for again -- see `pathSegmentToWrite`
+  currentPath: null,
   title: '',
   pathDirty: false,
   loading: false
@@ -122,7 +123,8 @@ const titleValidation = [
 
 const pathValidation = [
   (val) => val.length > 0 || t('fileman.folderFileNameMissing'),
-  (val) => /^[a-z0-9-]+$/.test(val) || t('fileman.folderFileNameInvalid')
+  (val) =>
+    val === state.currentPath || isValidPathSegment(val) || t('fileman.folderFileNameInvalid')
 ]
 
 // WATCHERS
@@ -134,7 +136,7 @@ watch(
       state.pathDirty = false
     }
     if (!state.pathDirty) {
-      state.path = slugify(newValue, { lower: true, strict: true })
+      state.path = pathSegmentFromTitle(newValue)
     }
   }
 )
@@ -145,7 +147,7 @@ async function rename() {
   state.loading++
   try {
     // -> The name is a segment of every page path under the folder, and is corrected the way one is
-    state.path = normalizePagePath(state.path)
+    state.path = pathSegmentToWrite(state.path, state.currentPath)
     const isFormValid = await renameFolderForm.value.validate(true)
     if (!isFormValid) {
       throw new Error(t('fileman.renameFolderInvalidData'))
@@ -187,6 +189,7 @@ onMounted(async () => {
       throw new Error('Failed to fetch folder data.')
     }
     state.path = folder.fileName
+    state.currentPath = folder.fileName
     state.title = folder.title
     state.pathDirty = true
   } catch (err) {

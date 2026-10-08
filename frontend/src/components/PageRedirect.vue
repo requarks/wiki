@@ -71,6 +71,7 @@ import { useI18n } from 'vue-i18n'
 
 import { loading } from '@/composables/loading'
 
+import { decodeUrlPath } from '@/helpers/pagePaths'
 import { isFollowable, parseRedirect, REDIRECT_INTERSTITIAL_MS } from '@/helpers/pageRedirect'
 
 import { usePageStore } from '@/stores/page'
@@ -228,7 +229,7 @@ function clear() {
 /** Whether a page target is the page holding it, however the two are spelled. */
 function isSelf(target) {
   const stored = `/${pageStore.path}`.replace(/\/+$/, '')
-  const to = target.replace(/\/+$/, '').toLowerCase()
+  const to = decodeUrlPath(target).replace(/\/+$/, '').toLowerCase()
   return to === stored.toLowerCase() || (stored === '/home' && to === '')
 }
 

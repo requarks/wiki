@@ -1444,7 +1444,9 @@ export const tree = pgTable(
   {
     id: uuid().primaryKey().defaultRandom(),
     // -> Genuinely hierarchical, and queried as such with `<@`, `@>` and lquery: this is what ltree is
-    //    for. The locale beside it is not, and is a plain string.
+    //    for. The locale beside it is not, and is a plain string. Each label is a folder name ENCODED
+    //    (`encodeTreeLabel`), never the name itself — what ltree accepts in a label depends on the
+    //    database's locale, and a path segment's characters are no business of the database's.
     folderPath: ltree('folderPath'),
     fileName: varchar({ length: 255 }).notNull(),
     hash: varchar({ length: 255 }).notNull(),
@@ -1465,7 +1467,9 @@ export const tree = pgTable(
       .references(() => sites.id)
   },
   (table) => [
-    index('tree_folderpath_idx').on(table.folderPath),
+    // -> Hash rather than btree for the equality lookups a folder listing makes: a btree entry may not
+    //    exceed a third of a page, and a deep path of encoded non-Latin names gets there
+    index('tree_folderpath_idx').using('hash', table.folderPath),
     index('tree_folderpath_gist_idx').using('gist', table.folderPath),
     index('tree_fileName_idx').on(table.fileName),
     index('tree_hash_idx').on(table.hash),

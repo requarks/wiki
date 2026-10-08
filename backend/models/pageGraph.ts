@@ -388,7 +388,7 @@ class PageGraphModel {
 
     const folders: GraphFolder[] = []
     for (const row of rows) {
-      const parent = decodeTreePath(row.folderPath ?? '') ?? ''
+      const parent = decodeTreePath(row.folderPath)
       const path = parent ? `${parent}/${row.fileName}` : row.fileName
       if (!wanted.has(path)) {
         continue

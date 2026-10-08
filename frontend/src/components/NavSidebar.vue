@@ -55,6 +55,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { decodeUrlPath } from '@/helpers/pagePaths'
 import { routableHref } from '@/helpers/renderedContent'
 
 import { usePageStore } from '@/stores/page'
@@ -143,7 +144,8 @@ function destination(item) {
  */
 function isCurrent(item) {
   const { to } = destination(item)
-  return Boolean(to) && router.resolve(to).path === route.path
+  // -> Decoded on both sides: either may be percent-encoded, depending on how it was arrived at
+  return Boolean(to) && decodeUrlPath(router.resolve(to).path) === decodeUrlPath(route.path)
 }
 
 /** ...and whether one of a group's children is, which is what opens the group. */

@@ -18,7 +18,12 @@ import {
   userGroups as userGroupsTable,
   users as usersTable
 } from '../db/schema.ts'
-import { CustomError, dataPathRoot } from '../helpers/common.ts'
+import {
+  CustomError,
+  dataPathRoot,
+  normalizeFolderPath,
+  normalizeNewPagePath
+} from '../helpers/common.ts'
 import { GLOBAL_PERMISSIONS, PAGE_PERMISSIONS } from './groups.ts'
 import type { GroupRule, GroupRuleMatch } from './groups.ts'
 import type { NavigationItem } from './navigation.ts'
@@ -332,6 +337,19 @@ function emailOf(value: unknown): string {
 
 function stringOf(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback
+}
+
+/**
+ * A 2.x folder path as this wiki writes one: the segments `normalizeFolderPath` keeps, each written
+ * the way a page path is — which is what puts a folder where the pages imported into it land, since
+ * those go through the same normalization on their own way in.
+ */
+function folderPathOf(value: unknown): string {
+  return normalizeFolderPath(stringOf(value))
+    .split('/')
+    .filter(Boolean)
+    .map(normalizeNewPagePath)
+    .join('/')
 }
 
 /**
@@ -1470,9 +1488,7 @@ class Import {
     let skipped = 0
 
     for (const record of records) {
-      const folderPath = stringOf(record?.path)
-        .trim()
-        .replace(/^\/+|\/+$/g, '')
+      const folderPath = folderPathOf(record?.path)
       const locale = localeOf(stringOf(record?.localeCode).trim())
       if (!folderPath || !locale) {
         warnings.push(
@@ -2119,9 +2135,7 @@ class Import {
         const asset = await WIKI.models.assets.adoptStoredFile({
           siteId: target.siteId,
           locale,
-          folderPath: stringOf(record?.folderPath)
-            .trim()
-            .replace(/^\/+|\/+$/g, ''),
+          folderPath: folderPathOf(record?.folderPath),
           fileName,
           data,
           authorId: await this.#authorFor(session, record?.authorId),

@@ -631,7 +631,7 @@ import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { clearHighlights, indexText, locateAnchor } from '@/helpers/annotations'
-import { isPagePath, splitLocalePath } from '@/helpers/pagePaths'
+import { decodeUrlPath, isPagePath, splitLocalePath } from '@/helpers/pagePaths'
 import {
   enhanceRenderedContent,
   resolveContentClick,
@@ -1418,7 +1418,9 @@ watch(
          No prefix means the site's primary locale, which is what the API assumes when none is given.
     */
     const localePath = splitLocalePath(newValue, siteStore.localePrefixes)
-    const pagePath = localePath?.path ?? newValue
+    // -> Decoded: a reload or a link click hands the path over percent-encoded, which would be hashed
+    //    as the name of some other page
+    const pagePath = decodeUrlPath(localePath?.path ?? newValue)
     const pageLocale = localePath?.locale
 
     /*

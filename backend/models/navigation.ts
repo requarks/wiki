@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { navigation as navigationTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError, decodeTreePath } from '../helpers/common.ts'
+import { CustomError, decodeTreePath, encodeTreeLabel, treeLabelSql } from '../helpers/common.ts'
 
 export const NAVIGATION_MODES = [
   'inherit',
@@ -169,9 +169,9 @@ class Navigation {
       FROM tree
       WHERE "siteId" = ${siteId}
         AND "locale" = ${locale}
-        AND ("folderPath" || "fileName") @> ${folderPath}::ltree
+        AND ("folderPath" || ${treeLabelSql(sql`"fileName"`)}) @> ${folderPath}::ltree
         AND "navigationMode" IN ('override', 'hide')
-      ORDER BY nlevel("folderPath" || "fileName") DESC
+      ORDER BY nlevel("folderPath") DESC
       LIMIT 1
     `)
     const rows = (result.rows ?? result) as any[]
@@ -225,7 +225,7 @@ class Navigation {
       and always asking about the page lets them rewrite one handed down from above.
     */
     if (mode !== 'inherit') {
-      const own = decodeTreePath(folderPath) ?? ''
+      const own = decodeTreePath(folderPath)
       return {
         navigationId: entry.id,
         path: own ? `${own}/${entry.fileName}` : entry.fileName,
@@ -314,7 +314,8 @@ class Navigation {
     //    which is what makes it the menu every other page in that locale inherits
     const isSiteRoot = folderPath === '' && entry.fileName === 'home'
     const ownNavId = isSiteRoot ? await this.siteNavId(siteId, entry.locale) : entry.id
-    const fullPath = folderPath ? `${folderPath}.${entry.fileName}` : entry.fileName
+    const label = encodeTreeLabel(entry.fileName)
+    const fullPath = folderPath ? `${folderPath}.${label}` : label
 
     const ancestorId = await this.ancestorNavId(siteId, entry.locale, folderPath)
 
@@ -404,7 +405,7 @@ class Navigation {
               AND tc."locale" = ${entry.locale}
               AND tc.tree IN ('page', 'folder')
               AND tc."folderPath" <@ ${fullPath}::ltree
-              AND (tc."folderPath" || tc."fileName") @> tt."folderPath"
+              AND (tc."folderPath" || ${treeLabelSql(sql`tc."fileName"`)}) @> tt."folderPath"
               AND tc."navigationMode" IN ('override', 'hide')
           )
       `)
@@ -446,7 +447,8 @@ class Navigation {
     fileName: string
   }): Promise<void> {
     const inherited = await this.ancestorNavId(siteId, locale, folderPath)
-    const fullPath = folderPath ? `${folderPath}.${fileName}` : fileName
+    const label = encodeTreeLabel(fileName)
+    const fullPath = folderPath ? `${folderPath}.${label}` : label
 
     // -> The folder itself first: it is not under its own path, so the cascade below passes it over
     await WIKI.db
@@ -470,7 +472,7 @@ class Navigation {
             AND tc."locale" = ${locale}
             AND tc.tree IN ('page', 'folder')
             AND tc."folderPath" <@ ${fullPath}::ltree
-            AND (tc."folderPath" || tc."fileName") @> tt."folderPath"
+            AND (tc."folderPath" || ${treeLabelSql(sql`tc."fileName"`)}) @> tt."folderPath"
             AND tc."navigationMode" IN ('override', 'hide')
         )
     `)

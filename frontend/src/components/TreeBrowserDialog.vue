@@ -208,8 +208,6 @@ import { dialog, dialogComponentEmits, useDialogComponent } from '@/composables/
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
-import slugify from 'slugify'
-
 import fileTypes from '../helpers/fileTypes'
 import { folderIconStyle } from '@/helpers/folderColors'
 
@@ -219,7 +217,12 @@ import Tree from '@/components/TreeNav.vue'
 
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
-import { normalizePagePath } from '@/helpers/pagePaths'
+import {
+  isValidPathSegment,
+  normalizeNewPagePath,
+  pathSegmentFromTitle,
+  pathSegmentToWrite
+} from '@/helpers/pagePaths'
 
 // PROPS
 
@@ -290,6 +293,9 @@ const state = reactive({
   fileList: [],
   title: '',
   path: '',
+  // -> The page's own name in the modes that start from one, kept as it is when asked for again --
+  //    see `pathSegmentToWrite`
+  currentPath: null,
   typesToFetch: [],
   pathDirty: false,
   updateLinks: true
@@ -402,7 +408,7 @@ watch(
       state.pathDirty = false
     }
     if (!state.pathDirty) {
-      state.path = slugify(newValue, { lower: true, strict: true })
+      state.path = pathSegmentFromTitle(newValue)
     }
   }
 )
@@ -435,8 +441,8 @@ async function save() {
       notify({ type: 'negative', message: t('fileman.folderTitleMissing') })
       return
     }
-    state.path = normalizePagePath(state.path)
-    if (!/^[a-z0-9-]+$/.test(state.path)) {
+    state.path = normalizeNewPagePath(state.path)
+    if (!isValidPathSegment(state.path)) {
       notify({ type: 'negative', message: t('fileman.folderFileNameInvalid') })
       return
     }
@@ -477,10 +483,10 @@ async function save() {
     })
     return
   }
-  // -> A path is a URL: casing and spaces are corrected rather than refused, the way the server does
-  //    it, and the field is left showing what will actually be saved
-  state.path = normalizePagePath(state.path)
-  if (!/^[a-z0-9-]+$/.test(state.path)) {
+  // -> A path is a URL: casing, spaces and underscores are corrected rather than refused, the way the
+  //    server does it, and the field is left showing what will actually be saved
+  state.path = pathSegmentToWrite(state.path, state.currentPath)
+  if (state.path !== state.currentPath && !isValidPathSegment(state.path)) {
     notify({
       type: 'negative',
       message: t('pageSaveDialog.pathInvalid')
@@ -717,6 +723,7 @@ onMounted(async () => {
     case 'restorePage': {
       state.typesToFetch = ['folder', 'page']
       state.pathDirty = true
+      state.currentPath = fName || null
       break
     }
     /*

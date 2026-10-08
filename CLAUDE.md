@@ -3,13 +3,20 @@
 Next-generation open source wiki. This is the **3.x development branch** — incomplete, unstable, and
 with no upgrade path from 2.x. AGPL-3.0.
 
-**Nothing here has to stay compatible with an existing installation.** Nobody is expected to be
-running an earlier state of this branch, so do not write migration shims, legacy-value fallbacks,
-deprecated aliases or "old data may still contain X" handling. Change the shape, change the callers,
-and delete the old path — a fallback for a case that cannot occur is dead code that still has to be
-read, tested and reasoned about. This applies to db columns, API payloads, stored settings and
-config keys alike; only real migrations under `backend/db/migrations/` are exempt, because Drizzle
-needs the history to get a live dev database to the current schema.
+**A database created by committed code has to be brought forward by a migration.** Anything that
+has been committed may be running somewhere, so when a change alters what is stored — a column, the
+format of a value, the meaning of a setting — an installation on an earlier commit must reach the new
+shape through a migration under `backend/db/migrations/`. That includes rewriting data, not only
+schema: a format change gets a migration that converts the existing rows. Converting the data is the
+point — the code is not to carry fallbacks for the old format alongside the new one; once the
+migration has run there is one shape, and the code reads only that.
+
+**Nothing has to stay compatible with code that was never committed.** A shape introduced in
+uncommitted work, which only a developer's own dev database can hold, can be changed freely: change
+the shape, change the callers, and delete the old path, with no migration shim, legacy-value
+fallback, deprecated alias or "old data may still contain X" handling — a fallback for a case that
+cannot occur is dead code that still has to be read, tested and reasoned about. This applies to db
+columns, API payloads, stored settings and config keys alike.
 
 The one sanctioned exception is a value an existing installation **cannot** have and no static
 default can stand in for — a secret generated per installation, say. That goes in a **startup check**
@@ -691,6 +698,36 @@ Consequences worth knowing:
 - State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
   [Utilities and dates](#utilities-and-dates); the `lodash-es` and `luxon` still present in older
   files are on their way out.
+
+### Page paths and the tree
+
+A path segment — a folder name, a page's own name, an asset's file name — may be written in any
+script: letters, digits and combining marks of any language, plus the hyphen, which may separate
+them but never start or end a segment (`isValidPathSegment` in `helpers/common.ts`, mirrored in the
+frontend's `helpers/pagePaths.js`), at most
+`MAX_PATH_SEGMENT_BYTES` (240) UTF-8 bytes. Always lowercase and NFC-normalized. Nothing that means
+something in a URL, a file system or a git pathspec is allowed, which is why a path can be
+concatenated into a link or a file path without escaping.
+
+- **Written and looked up are two different normalizations.** `normalizeNewPagePath` is for a path
+  being written (create, move, folder create or rename): it turns every run of spaces, underscores
+  and hyphens into a single hyphen, then drops any hyphen left at either end of a segment.
+  `normalizePagePath` is for a lookup and turns only spaces into hyphens, because pages written before
+  the underscore rule keep their `_` and must stay reachable. A move or rename that asks for a page's
+  or folder's current name again gets exactly that name back (`normalizePath(input, current)` in
+  `models/pages.ts`, `pathSegmentToWrite` in the frontend), so editing only a title never moves
+  anything.
+- **ltree labels are hex, never the name.** `tree.folderPath` is an ltree whose every label is
+  `encodeTreeLabel(name)`, the hex of the name's UTF-8 bytes, while `fileName` holds the name itself.
+  This is because ltree accepts in a label only what the database's locale calls alphanumeric (ASCII
+  on a `C` database, and never a combining mark). `encodeTreePath` and `decodeTreePath` convert a
+  whole slash path. Neither is idempotent, so encode a human path once and decode a value read off a
+  row once. A query that builds a child's path from a row's own `fileName` in SQL wraps it in
+  `treeLabelSql`, never the bare column. `childPathOf` and `splitPath` in `models/tree.ts` are the
+  JavaScript side of the same rule.
+- **A URL path is percent-encoded and a page path is not.** Decode with `decodeUrlPath` (backend and
+  frontend) before normalizing or hashing anything that came from a request line, an `href` or
+  `route.path`. The router never decodes a path for you.
 
 ### Drawings (the Excalidraw editor)
 

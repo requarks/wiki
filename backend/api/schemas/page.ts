@@ -27,8 +27,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       path: {
         type: 'string',
         maxLength: 255,
-        pattern: '^/?[a-zA-Z0-9-_/]*$',
-        description: 'Where the page lives, without a leading slash. Lowercased when stored.'
+        pattern: '^/?[\\p{L}\\p{M}\\p{N}\\s_/-]*$',
+        description:
+          'Where the page lives, without a leading slash. Lowercased when stored, with spaces and underscores turned into hyphens.'
       },
       title: {
         type: 'string',

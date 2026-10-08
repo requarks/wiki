@@ -457,7 +457,8 @@ async function reattach(repo: Repo, branch: string): Promise<string> {
 /** Whether the repository's own ignore rules exclude this path. */
 async function isIgnored(repo: Repo, relPath: string): Promise<boolean> {
   try {
-    return (await repo.git.checkIgnore([relPath])).length > 0
+    // -> Raw, for the `--`: a path is never read as an option, whatever it starts with
+    return (await repo.git.raw(['check-ignore', '--', relPath])).trim().length > 0
   } catch {
     // -> `check-ignore` exits non-zero when nothing matches, which simple-git raises
     return false
@@ -504,7 +505,16 @@ async function commitPaths(
   if (!staged.trim()) {
     return false
   }
-  await repo.git.commit(message, paths, { '--author': await commitAuthor(target, actorId) })
+  // -> Raw, for the `--` that keeps a path from being read as an option -- `commit()` puts the paths
+  //    straight after the message with nothing in between
+  await repo.git.raw([
+    'commit',
+    '-m',
+    message,
+    `--author=${await commitAuthor(target, actorId)}`,
+    '--',
+    ...paths
+  ])
   return true
 }
 
@@ -519,7 +529,7 @@ async function stageAndCommit(
   if (await isIgnored(repo, relPath)) {
     return
   }
-  await repo.git.add(relPath)
+  await repo.git.raw(['add', '--', relPath])
   await commitPaths(repo, target, [relPath], message, actorId)
 }
 

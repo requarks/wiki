@@ -1,6 +1,11 @@
 import { and, eq, inArray, sql, type SQL } from 'drizzle-orm'
 import { pages as pagesTable, tree as treeTable, users as usersTable } from '../db/schema.ts'
-import { decodeTreePath, encodeTreePath } from '../helpers/common.ts'
+import {
+  decodeTreeLabel,
+  decodeTreePath,
+  encodeTreePath,
+  normalizeNewPagePath
+} from '../helpers/common.ts'
 import { isBodylessEditor, parseBlogContent, type BlogContent } from './pages.ts'
 import type { AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
@@ -217,9 +222,9 @@ class Blogs {
    *
    * **It never fails the caller.** The folder is a convenience and the blog is complete without it,
    * so the two ways this can legitimately not work are logged and stepped over rather than raised:
-   * a folder name is held to `[a-z0-9-]` while a page path may also carry underscores (a blog at
-   * `my_blog` has no legal folder name), and an ASSET already sitting at that name blocks a folder
-   * where it would not have blocked the page.
+   * a page written before underscores became hyphens may still carry one, which a folder name may
+   * not (a blog at `my_blog` has no legal folder name), and an ASSET already sitting at that name
+   * blocks a folder where it would not have blocked the page.
    *
    * @returns Whether a folder was created. False when one was already there, and when one could not be.
    */
@@ -236,7 +241,7 @@ class Blogs {
   }): Promise<boolean> {
     const encoded = encodeTreePath(path)
     const parts = encoded.split('.')
-    const fileName = parts.at(-1)!
+    const fileName = decodeTreeLabel(parts.at(-1)!)
     const folderPath = parts.slice(0, -1).join('.')
 
     /*
@@ -262,9 +267,18 @@ class Blogs {
       return false
     }
 
+    // -> Refused here rather than by `createFolder`, which would write the name as a new path is
+    //    written — `my-blog`, a folder beside the blog rather than the one its posts sit in
+    if (normalizeNewPagePath(fileName) !== fileName) {
+      WIKI.logger.warn(
+        `Could not create the folder for the blog at /${path}: "${fileName}" is not a valid folder name.`
+      )
+      return false
+    }
+
     try {
       await WIKI.models.tree.createFolder({
-        parentPath: decodeTreePath(folderPath) ?? '',
+        parentPath: decodeTreePath(folderPath),
         pathName: fileName,
         title,
         locale,
@@ -362,7 +376,7 @@ class Blogs {
 
     const truncated = rows.length > MAX_POSTS
     const candidates: Candidate[] = rows.slice(0, MAX_POSTS).map((row) => {
-      const folderPath = decodeTreePath(row.folderPath ?? '') ?? ''
+      const folderPath = decodeTreePath(row.folderPath)
       return {
         id: row.id,
         path: folderPath ? `${folderPath}/${row.fileName}` : row.fileName,

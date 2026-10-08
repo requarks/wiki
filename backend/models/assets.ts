@@ -7,6 +7,7 @@ import {
   CustomError,
   decodeTreePath,
   encodeTreePath,
+  MAX_PATH_SEGMENT_BYTES,
   normalizeFolderPath
 } from '../helpers/common.ts'
 import {
@@ -132,8 +133,10 @@ export interface AssetAtPath extends Asset {}
  * Reduce whatever a client called the file to something safe to store, address and serve.
  *
  * Any directory part is dropped — the folder comes from the request, never from the name — and what
- * is left is lowercased down to the characters that survive a URL untouched, which is the same bar
- * folder path names are held to.
+ * is left is held to the bar a path segment is (`isValidPathSegment`), plus the dots an extension
+ * needs: lowercased and NFC-normalized, whitespace and underscores turned into hyphens and runs of
+ * them into one, and anything that is not a letter, a digit or a combining mark of some script
+ * dropped.
  *
  * Applied to every upload, with nothing to turn it off: a stored name is a URL, and a path is looked
  * up lowercased, so a name that skipped this would be one the site could not serve back.
@@ -142,22 +145,69 @@ export function sanitizeFileName(input: string): string {
   const base = path.basename(input.trim().replaceAll('\\', '/'))
   const cleaned = base
     .toLowerCase()
-    .replaceAll(/\s+/g, '-')
-    .replaceAll(/[^a-z0-9._-]/g, '')
-    // -> A leading dot would make it a hidden file, and a run of them can walk out of the folder
-    .replace(/^\.+/, '')
+    .normalize('NFC')
+    .replaceAll(/[\s_]+/g, '-')
+    .replaceAll(/[^\p{L}\p{M}\p{N}.-]/gu, '')
+    // -> One hyphen between words, as a path has: after the removal above, since `a ? b` is `a---b`
+    //    by then
+    .replaceAll(/-{2,}/g, '-')
+    // -> A run of dots can walk out of the folder
     .replaceAll(/\.{2,}/g, '.')
-  return cleaned.slice(0, 255)
+    // -> A hyphen only ever separates two words, so none against a dot -- `photo-.png` -- nor at
+    //    either end, where a leading one is an option to every tool a path is handed to. A leading dot
+    //    would make it a hidden file.
+    .replaceAll(/-*\.-*/g, '.')
+    .replace(/^[.-]+/, '')
+    .replace(/-+$/, '')
+  return truncateFileName(cleaned)
+}
+
+/**
+ * Cut a file name down to `MAX_PATH_SEGMENT_BYTES`, from the end of its stem so that the extension —
+ * which decides how it is served — survives. Whole characters only, since the limit is in bytes and a
+ * character may be four of them.
+ */
+function truncateFileName(name: string): string {
+  if (Buffer.byteLength(name, 'utf8') <= MAX_PATH_SEGMENT_BYTES) {
+    return name
+  }
+  const dot = name.lastIndexOf('.')
+  const ext = dot > 0 ? name.slice(dot) : ''
+  // -> An "extension" that alone outgrows the limit is not one worth keeping
+  const suffix = Buffer.byteLength(ext, 'utf8') < MAX_PATH_SEGMENT_BYTES ? ext : ''
+  const stem = suffix ? name.slice(0, dot) : name
+  const budget = MAX_PATH_SEGMENT_BYTES - Buffer.byteLength(suffix, 'utf8')
+  let kept = ''
+  let used = 0
+  for (const char of stem) {
+    used += Buffer.byteLength(char, 'utf8')
+    if (used > budget) {
+      break
+    }
+    kept += char
+  }
+  // -> The cut may land just after a hyphen, which would then end the stem
+  return `${kept.replace(/-+$/, '')}${suffix}`
+}
+
+/**
+ * A file name as a path looks it up: lowercased and NFC-normalized, nothing more. Not
+ * `sanitizeFileName`, which is what a name is WRITTEN as — a file uploaded before underscores became
+ * hyphens is still found under its own.
+ */
+function lookupFileName(name: string): string {
+  return name.toLowerCase().normalize('NFC')
 }
 
 /**
  * The form a file path is cached under.
  *
- * Matches what the lookup does with it — empty segments dropped, lowercased — so that the spellings
- * of a path that reach the same asset share one cache entry instead of each getting their own.
+ * Matches what the lookup does with it — empty segments dropped, lowercased, NFC — so that the
+ * spellings of a path that reach the same asset share one cache entry instead of each getting their
+ * own.
  */
 function normalizePath(filePath: string): string {
-  return filePath.split('/').filter(Boolean).join('/').toLowerCase()
+  return lookupFileName(filePath.split('/').filter(Boolean).join('/'))
 }
 
 /**
@@ -411,7 +461,7 @@ class Assets {
         id: occupant.id,
         siteId,
         locale,
-        folderPath: decodeTreePath(occupant.folderPath ?? '') ?? '',
+        folderPath: decodeTreePath(occupant.folderPath),
         fileName: occupant.fileName,
         title: occupant.title,
         fileExt,
@@ -444,7 +494,7 @@ class Assets {
     const storedName = entry.fileName
     // -> Read off the row rather than from the request: the folder may have just been created, and a
     //    name that was taken took the next free one
-    const storedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
+    const storedFolderPath = decodeTreePath(entry.folderPath)
 
     try {
       // -> The metadata row goes in before the bytes, since the database target writes them into it
@@ -751,7 +801,7 @@ class Assets {
     return {
       ...rest,
       fileSize: row.fileSize ?? 0,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       hasPreview: Boolean(row.hasPreview),
       ...dimensionMeta(dimensionsOf(meta as Record<string, any>))
     } as Asset
@@ -763,14 +813,15 @@ class Assets {
    *
    * The path lives on the tree row rather than on the asset — the two share an ID — so the lookup
    * splits it into the folder and the file the way the tree stores them, the folder as an ltree.
-   * Both are lowercased, because that is what an upload stored them as.
+   * Both are lowercased and NFC-normalized, because that is what an upload stored them as.
    *
    * A path can exist once per locale and the URL carries none, so the site's primary locale wins
    * where more than one has a file there. That is also the only one the file manager uploads into.
    */
   async getAssetByPath(siteId: string, filePath: string): Promise<AssetAtPath | null> {
     const segments = filePath.split('/').filter(Boolean)
-    const fileName = segments.pop()?.toLowerCase()
+    const last = segments.pop()
+    const fileName = last && lookupFileName(last)
     if (!fileName) {
       return null
     }
@@ -815,7 +866,7 @@ class Assets {
     return {
       ...rest,
       fileSize: row.fileSize ?? 0,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       hasPreview: Boolean(row.hasPreview),
       ...dimensionMeta(dimensionsOf(meta as Record<string, any>))
     } as AssetAtPath
@@ -855,7 +906,7 @@ class Assets {
       id: row.id,
       siteId: row.siteId,
       locale: row.locale,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       fileName: row.fileName,
       kind: row.kind,
       fileSize: row.fileSize ?? 0
@@ -894,7 +945,7 @@ class Assets {
       siteId,
       actorId,
       locale: row.locale,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       fileName: row.fileName,
       kind: row.kind,
       fileSize: row.fileSize ?? 0
@@ -936,7 +987,7 @@ class Assets {
       id: row.id,
       siteId,
       locale: row.locale,
-      folderPath: decodeTreePath(row.folderPath ?? '') ?? '',
+      folderPath: decodeTreePath(row.folderPath),
       fileName: row.fileName,
       kind: row.kind,
       fileSize: row.fileSize ?? 0
@@ -1019,7 +1070,20 @@ class Assets {
     overwrite?: boolean
     dispatch?: boolean
   }): Promise<Asset | null> {
-    const safeName = sanitizeFileName(fileName)
+    // -> A file uploaded before underscores became hyphens is found under its own name, and one
+    //    uploaded since under the name this file would be written as — so that a tree the wiki
+    //    exported itself comes back in onto the files it came from, rather than beside them
+    const asWritten = lookupFileName(fileName)
+    const sanitized = sanitizeFileName(fileName)
+    const keepsOwnName =
+      asWritten !== sanitized &&
+      (await WIKI.models.tree.getEntryAt({
+        siteId,
+        locale,
+        parentPath: folderPath,
+        fileName: asWritten
+      })) !== null
+    const safeName = keepsOwnName ? asWritten : sanitized
     if (!safeName) {
       return null
     }
@@ -1063,7 +1127,7 @@ class Assets {
         id: occupant.id,
         siteId,
         locale,
-        folderPath: decodeTreePath(occupant.folderPath ?? '') ?? '',
+        folderPath: decodeTreePath(occupant.folderPath),
         // -> The names it is already filed under, not the ones off the file: they only differ by
         //    sanitization, and the entry is the authority on what it is actually called
         fileName: occupant.fileName,
@@ -1088,7 +1152,7 @@ class Assets {
     })
     // -> Read off the row rather than from the caller: the folder may have just been created, and a
     //    name that was taken took the next free one
-    const importedFolderPath = decodeTreePath(entry.folderPath ?? '') ?? ''
+    const importedFolderPath = decodeTreePath(entry.folderPath)
 
     try {
       // -> The metadata row goes in before the bytes, since the database target writes them into it
@@ -1451,7 +1515,11 @@ class Assets {
     if (!asset || !entry) {
       return null
     }
-    const safeName = fileName === undefined ? asset.fileName : sanitizeFileName(fileName)
+    // -> Its own name back is no rename, even one written before underscores became hyphens
+    const safeName =
+      fileName === undefined || lookupFileName(fileName) === asset.fileName
+        ? asset.fileName
+        : sanitizeFileName(fileName)
     if (!safeName) {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }

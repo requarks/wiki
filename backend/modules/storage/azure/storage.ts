@@ -5,6 +5,7 @@ import {
   generateBlobSASQueryParameters
 } from '@azure/storage-blob'
 import { DefaultAzureCredential } from '@azure/identity'
+import { attachmentDisposition } from '../../../helpers/common.ts'
 import { objectStorageModule, signingBaseUrl } from '../../../helpers/storageObjects.ts'
 import type { ContainerClient } from '@azure/storage-blob'
 import type { ObjectStoreClient } from '../../../helpers/storageObjects.ts'
@@ -137,9 +138,7 @@ const azureClient: ObjectStoreClient = {
       startsOn: new Date(now - 60_000),
       expiresOn: new Date(now + expiresInSeconds * 1000),
       contentType,
-      ...(downloadAs
-        ? { contentDisposition: `attachment; filename="${encodeURIComponent(downloadAs)}"` }
-        : {})
+      ...(downloadAs ? { contentDisposition: attachmentDisposition(downloadAs) } : {})
     }
 
     const sas = accountKey

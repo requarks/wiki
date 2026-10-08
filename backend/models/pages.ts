@@ -8,6 +8,9 @@ import {
 import {
   CustomError,
   generatePathHash,
+  isValidPathSegment,
+  MAX_PATH_SEGMENT_BYTES,
+  normalizeNewPagePath,
   normalizePagePath,
   timingSafeCompare
 } from '../helpers/common.ts'
@@ -213,8 +216,6 @@ function sitemapCacheKey(siteId: string): string {
  */
 const sitemapBuilds = new Map<string, Promise<SitemapPage[]>>()
 
-/** A page path is what ends up in a URL, so it is held to what reads and routes cleanly. */
-const rePagePath = /^[a-zA-Z0-9-_/]*$/
 const reAlias = /^[a-zA-Z0-9-_]*$/
 
 /** Fields kept in the `config` blob rather than as columns, and flattened again on the way out. */
@@ -534,15 +535,23 @@ function hasPermission(actor: PageActor, permission: string): boolean {
 /**
  * Normalize a path to the form that gets stored, and refuse it if what is left is not addressable.
  *
- * Casing and spaces are corrected rather than rejected — `My Page` is a path someone meant, and it
- * means `my-page`. Anything else outside the allowed characters is not something to guess at.
+ * Casing, spaces and underscores are corrected rather than rejected — `My_Page` is a path someone
+ * meant, and it means `my-page`. Anything else outside what a segment may hold
+ * (`isValidPathSegment`) is not something to guess at.
+ *
+ * @param current The path the page already has, when this is a move or a restore. Asked for the same
+ *   path back, it gets exactly that path: one written before underscores became hyphens keeps its
+ *   `_`, rather than a rename that only changes the title moving the page somewhere new.
  */
-function normalizePath(input: string): string {
-  const path = normalizePagePath(input)
-  if (!rePagePath.test(path)) {
+function normalizePath(input: string, current?: string): string {
+  if (current !== undefined && normalizePagePath(input) === current) {
+    return current
+  }
+  const path = normalizeNewPagePath(input)
+  if (!path.split('/').every(isValidPathSegment)) {
     throw new CustomError(
       'pageInvalidPath',
-      'A page path may only contain alphanumeric, hyphen, underscore and slash characters.'
+      `A page path may only contain letters, numbers, hyphens and slashes, and each part of it be at most ${MAX_PATH_SEGMENT_BYTES} bytes long.`
     )
   }
   return path
@@ -2290,7 +2299,7 @@ class Pages {
       return null
     }
     const existingContent = page.content
-    const newPath = normalizePath(path)
+    const newPath = normalizePath(path, page.path)
     /*
       A move may cross locales — the same page, translated, is the same page moved — so the
       destination is a locale AND a path, and everything below asks about the pair rather than about
@@ -2778,7 +2787,7 @@ class Pages {
 
     const meta = deletion.meta
     const title = input.title?.trim() || deletion.title
-    const path = normalizePath(input.path ?? deletion.path)
+    const path = normalizePath(input.path ?? deletion.path, deletion.path)
     const locale = input.locale || deletion.locale
     const editor = meta.editor || 'markdown'
     const contentType = meta.contentType || EDITOR_CONTENT_TYPES[editor] || 'text'
@@ -3298,21 +3307,26 @@ class Pages {
     authorId: string
     overwrite?: boolean
   }): Promise<Page | null> {
-    const normalized = normalizePath(path)
+    // -> A page written before underscores became hyphens is found under its own path, and one written
+    //    since under the path this file would be written as — so that a tree the wiki exported itself
+    //    comes back in onto the pages it came from, rather than beside them
+    const asWritten = normalizePagePath(path)
     const existing = await WIKI.db
-      .select({ id: pagesTable.id })
+      .select({ id: pagesTable.id, path: pagesTable.path })
       .from(pagesTable)
       .where(
         and(
           eq(pagesTable.siteId, siteId),
           eq(pagesTable.locale, locale),
-          eq(pagesTable.path, normalized)
+          inArray(pagesTable.path, [asWritten, normalizeNewPagePath(path)])
         )
       )
+      .orderBy(desc(sql`${pagesTable.path} = ${asWritten}`))
       .limit(1)
     if (existing.length > 0 && !overwrite) {
       return null
     }
+    const normalized = existing[0]?.path ?? normalizePath(path)
 
     /*
       Imported content is rendered with NO script or style permission, whoever ran the import.

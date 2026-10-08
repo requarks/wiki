@@ -6,6 +6,7 @@ import {
   S3Client
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { attachmentDisposition } from '../../../helpers/common.ts'
 import { objectStorageModule, signingBaseUrl } from '../../../helpers/storageObjects.ts'
 import type { ObjectStoreClient } from '../../../helpers/storageObjects.ts'
 import type { StorageTarget } from '../../../models/storage.ts'
@@ -182,11 +183,7 @@ const s3Client: ObjectStoreClient = {
         Bucket: bucket,
         Key: key,
         ResponseContentType: contentType,
-        ...(downloadAs
-          ? {
-              ResponseContentDisposition: `attachment; filename="${encodeURIComponent(downloadAs)}"`
-            }
-          : {})
+        ...(downloadAs ? { ResponseContentDisposition: attachmentDisposition(downloadAs) } : {})
       }),
       { expiresIn: expiresInSeconds }
     )

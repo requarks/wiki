@@ -150,7 +150,7 @@ import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
 import fileTypes from '@/helpers/fileTypes'
 import { folderIconStyle } from '@/helpers/folderColors'
-import { splitLocalePath } from '@/helpers/pagePaths'
+import { decodeUrlPath, splitLocalePath } from '@/helpers/pagePaths'
 
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 import Tree from '@/components/TreeNav.vue'
@@ -468,7 +468,7 @@ onMounted(async () => {
       if (split) {
         state.locale = split.locale
       }
-      state.path = (split?.path ?? props.initialHref).replace(/^\/+/, '')
+      state.path = decodeUrlPath(split?.path ?? props.initialHref).replace(/^\/+/, '')
     }
   }
 

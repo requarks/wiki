@@ -164,8 +164,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'string',
         minLength: 1,
         maxLength: 255,
-        pattern: '^[a-z0-9-]+$',
-        description: "The folder's own path segment, as it appears in a URL."
+        pattern: '^[\\p{L}\\p{M}\\p{N}\\s_-]+$',
+        description:
+          "The folder's own path segment, as it appears in a URL. Lowercased when stored, with spaces and underscores turned into hyphens."
       },
       title: {
         type: 'string',

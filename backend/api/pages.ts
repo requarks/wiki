@@ -1201,7 +1201,7 @@ async function routes(app: FastifyInstance) {
             path: {
               type: 'string',
               maxLength: 255,
-              pattern: '^/?[a-zA-Z0-9-_/]*$'
+              pattern: '^/?[\\p{L}\\p{M}\\p{N}\\s_/-]*$'
             },
             locale: {
               type: 'string',

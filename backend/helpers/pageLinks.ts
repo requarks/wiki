@@ -1,6 +1,12 @@
 import path from 'node:path'
 import * as cheerio from 'cheerio'
-import { isPageUrl, normalizePagePath, splitLocalePath, stripPageExtension } from './common.ts'
+import {
+  decodeUrlPath,
+  isPageUrl,
+  normalizePagePath,
+  splitLocalePath,
+  stripPageExtension
+} from './common.ts'
 
 /**
  * Reading a link the way the reader's browser will.
@@ -241,7 +247,8 @@ function resolvePage(href: string, urlPath: string, targetSiteId: string): Resol
     targetLocale: split?.locale ?? locales?.primary ?? 'en',
     // -> The site root is the page stored at the empty path, which is what `normalizePagePath` makes
     //    of `/` -- and of `/fr` once its prefix has come off above
-    targetPath: normalizePagePath(split?.path ?? withoutExtension),
+    // -> Decoded, since an `href` written by markdown percent-encodes every character outside ASCII
+    targetPath: normalizePagePath(decodeUrlPath(split?.path ?? withoutExtension)),
     targetRef: null
   }
 }

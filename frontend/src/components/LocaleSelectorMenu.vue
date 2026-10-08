@@ -48,7 +48,7 @@ import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { splitLocalePath } from '@/helpers/pagePaths'
+import { decodeUrlPath, splitLocalePath } from '@/helpers/pagePaths'
 
 import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
@@ -119,7 +119,9 @@ const currentLocale = computed(() => props.selected ?? commonStore.locale)
  */
 const onCurrentPage = computed(() => {
   const current = splitLocalePath(route.path, siteStore.localePrefixes)
-  const path = (current?.path ?? route.path).replace(/^\/+/, '').replace(/\/+$/, '')
+  const path = decodeUrlPath(current?.path ?? route.path)
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
   return (path || 'home') === (pageStore.path || 'home')
 })
 
