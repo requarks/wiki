@@ -1263,7 +1263,23 @@ menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glos
 - **The frontend learns access from `GET /sites/:siteId/glossary/access`** (`stores/glossary.js`),
   once per site and session — the locales the session may read in and may edit in. Neither permission
   changes from page to page, and the per-page permissions are empty on every route that is not a page.
-- **`autoLink` is stored and not yet acted on**; the spec's §9 is the design it is waiting for.
+- **`?glossary=<name>` opens a term over the page it is on** (`helpers/glossaryUrl.js`), answered by
+  `MainOverlayDialog.vue` — which every screen able to show an overlay mounts, not only `MainLayout`.
+  The overlay keeps the parameter in step with `router.replace`; a link in an article pushes it, so
+  Back puts the overlay away.
+- **Terms are linked in page text in the reader's browser, never in the stored render**
+  (`helpers/glossaryLinker.js`, run by `pages/Index.vue`; spec §9). The first mention of each term per
+  page is wrapped in a real `<a class="glossary-term" href="?glossary=…">`, matched on `Intl.Segmenter`
+  word boundaries, longest name first. A link written by hand to `?glossary=` — or
+  `[[Glossary:Term]]` — is drawn the same way whatever the switches say: the term's `autoLink`, the
+  site's `features.glossaryAutoLink` and the page's `allowGlossaryLinks`. **Linking moves text into
+  elements, which puts any live `Range` boundary inside a term on its edge**, so `Index.vue` bumps
+  `contentRevision` and the annotation components find their passages again by text; anything new that
+  holds ranges into the article needs the same.
+- **A bare `?query` href is not a page link** to the server (`resolveLink`), as a bare `#fragment` is
+  not — it is the page it sits on, asked something.
+- **A page move with `updateLinks` takes the terms it documents along** (`glossary.relinkDocumentation`,
+  from `relinkMovedPage`): rewritten in the same locale, cleared when the page leaves it.
 
 ### Comments
 

@@ -1257,6 +1257,15 @@ async function routes(app: FastifyInstance) {
                         reason: { type: 'string', enum: ['forbidden', 'notInSource', 'failed'] }
                       }
                     }
+                  },
+                  glossary: {
+                    type: 'object',
+                    description:
+                      'The glossary terms documented by the page. `updated`: now pointing at its new path. `cleared`: their documentation page was removed, because the page moved to another locale and a term may only be documented in its own.',
+                    properties: {
+                      updated: { type: 'integer' },
+                      cleared: { type: 'integer' }
+                    }
                   }
                 }
               }
@@ -1333,7 +1342,10 @@ async function routes(app: FastifyInstance) {
         previousPath: target.path,
         versionId,
         // -> Each edited page by id and the version its edit produced, which is the record of it
-        ...(relink ? { relinked: relink.updated } : {})
+        ...(relink ? { relinked: relink.updated } : {}),
+        // -> The glossary terms it rewrote, here rather than as entries of their own (spec §8)
+        ...(relink?.glossary.updated.length ? { glossaryRelinked: relink.glossary.updated } : {}),
+        ...(relink?.glossary.cleared.length ? { glossaryCleared: relink.glossary.cleared } : {})
       })
 
       return {
@@ -1347,7 +1359,12 @@ async function routes(app: FastifyInstance) {
                 skippedCount: relink.skipped.length,
                 // -> Named only where the caller may read the page: a page they may not edit may well
                 //    be one whose title they are not allowed to know either
-                skipped: relink.skipped.filter((skip) => mayOnPage(req, 'read:pages', skip))
+                skipped: relink.skipped.filter((skip) => mayOnPage(req, 'read:pages', skip)),
+                // -> Counts only: the terms are in a glossary the mover need not be able to read
+                glossary: {
+                  updated: relink.glossary.updated.length,
+                  cleared: relink.glossary.cleared.length
+                }
               }
             }
           : {})

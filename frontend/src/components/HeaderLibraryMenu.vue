@@ -14,13 +14,9 @@
       <!--
         -> Where the site has a glossary and this session may read it in at least one locale --
            `read:glossary` ignores the path, so the answer does not change from page to page and is
-           asked once (`stores/glossary.js`). Experimental for now: this row is the glossary's only
-           way in, so the flag hides the feature as a whole.
+           asked once (`stores/glossary.js`).
       -->
-      <w-item
-        v-if="flagsStore.experimental && glossaryStore.isAvailable"
-        clickable
-        @click="openGlossary">
+      <w-item v-if="glossaryStore.isAvailable" clickable @click="openGlossary">
         <blueprint-icon icon="parchment" />
         <w-item-section class="pr-2">{{ t('common.header.glossary') }}</w-item-section>
       </w-item>
@@ -36,7 +32,6 @@
 import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useFlagsStore } from '@/stores/flags'
 import { useGlossaryStore } from '@/stores/glossary'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -55,7 +50,6 @@ const emit = defineEmits(['navigate'])
 
 // STORES
 
-const flagsStore = useFlagsStore()
 const glossaryStore = useGlossaryStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -72,14 +66,11 @@ const canUseFileManager = computed(
 
 // WATCHERS
 
-// -> Asked again whenever the answer could have changed: a login, a logout, another site -- and not
-//    at all while the glossary is behind the experimental flag and nothing would show it
+// -> Asked again whenever the answer could have changed: a login, a logout, another site
 watch(
-  () => [flagsStore.experimental, siteStore.id, userStore.authenticated, userStore.id],
+  () => [siteStore.id, userStore.authenticated, userStore.id],
   () => {
-    if (flagsStore.experimental) {
-      glossaryStore.ensureAccess()
-    }
+    glossaryStore.ensureAccess()
   },
   { immediate: true }
 )

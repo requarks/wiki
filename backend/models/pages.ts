@@ -223,6 +223,7 @@ const CONFIG_FIELDS = [
   'allowBacklinks',
   'allowComments',
   'allowContributions',
+  'allowGlossaryLinks',
   'allowRatings',
   'showLastEditedBy',
   'showSidebar',
@@ -313,6 +314,8 @@ export interface Page {
   content?: string
   allowComments: boolean
   allowContributions: boolean
+  /** Whether glossary terms are linked automatically in this page's text. See `features.glossaryAutoLink`. */
+  allowGlossaryLinks: boolean
   allowRatings: boolean
   showLastEditedBy: boolean
   showSidebar: boolean
@@ -367,6 +370,7 @@ export interface PageInput {
   tags?: string[]
   allowComments?: boolean
   allowContributions?: boolean
+  allowGlossaryLinks?: boolean
   allowRatings?: boolean
   showLastEditedBy?: boolean
   showSidebar?: boolean
@@ -505,6 +509,11 @@ export interface RelinkResult {
   /** Each page whose links were rewritten, with the version recording it. */
   updated: { id: string; versionId: string | null }[]
   skipped: RelinkSkip[]
+  /**
+   * The glossary terms documented by the page: `updated` now point at its new path, `cleared` lost it
+   * because the page left their locale. See `glossary.relinkDocumentation`.
+   */
+  glossary: { updated: string[]; cleared: string[] }
 }
 
 /** Which source syntax a link is looked for in, per editor. The rest keep links in JSON, or none. */
@@ -883,6 +892,7 @@ class Pages {
       allowBacklinks: config.allowBacklinks ?? true,
       allowComments: config.allowComments ?? true,
       allowContributions: config.allowContributions ?? true,
+      allowGlossaryLinks: config.allowGlossaryLinks ?? true,
       allowRatings: config.allowRatings ?? true,
       showLastEditedBy: config.showLastEditedBy ?? true,
       showSidebar: config.showSidebar ?? true,
@@ -2472,6 +2482,8 @@ class Pages {
    * source in a form that can be rewritten is left as it is and reported, because a fixed render over
    * an unfixed source would break again the next time the page is rendered.
    *
+   * Glossary terms documented by the page follow it too, in the same call (`relinkDocumentation`).
+   *
    * @param previous Where the page was before the move.
    * @param mayEdit Whether the mover may edit a given page. Every page here is somebody else's, so this
    *                is asked of each one, and a page they may not edit is reported rather than changed —
@@ -2484,7 +2496,11 @@ class Pages {
     actor: PageActor,
     mayEdit: (page: RulePageRef) => boolean
   ): Promise<RelinkResult> {
-    const result: RelinkResult = { updated: [], skipped: [] }
+    const result: RelinkResult = {
+      updated: [],
+      skipped: [],
+      glossary: { updated: [], cleared: [] }
+    }
     const [moved] = await WIKI.db
       .select({ locale: pagesTable.locale, path: pagesTable.path })
       .from(pagesTable)
@@ -2494,6 +2510,10 @@ class Pages {
       return result
     }
     const target = { siteId, locale: moved.locale, path: moved.path }
+
+    // -> Ahead of the linking pages, and whether or not there are any: a page can document a term
+    //    without a single page linking to it
+    result.glossary = await WIKI.models.glossary.relinkDocumentation(siteId, previous, moved)
 
     const rows = await WIKI.db
       .select({ pageId: pageLinksTable.pageId, href: pageLinksTable.href })
@@ -3597,6 +3617,7 @@ class Pages {
       allowBacklinks: input.allowBacklinks ?? existing.allowBacklinks ?? true,
       allowComments: input.allowComments ?? existing.allowComments ?? true,
       allowContributions: input.allowContributions ?? existing.allowContributions ?? true,
+      allowGlossaryLinks: input.allowGlossaryLinks ?? existing.allowGlossaryLinks ?? true,
       allowRatings: input.allowRatings ?? existing.allowRatings ?? true,
       showLastEditedBy: input.showLastEditedBy ?? existing.showLastEditedBy ?? true,
       showSidebar: input.showSidebar ?? existing.showSidebar ?? true,

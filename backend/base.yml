@@ -247,21 +247,3 @@ systemIds:
   localAuthId: '5a528c4c-0a82-4ad2-96a5-2b23811e6588'
   guestsGroupId: '10000000-0000-4000-8000-000000000001'
   usersGroupId: '20000000-0000-4000-8000-000000000002'
-groups:
-  defaultPermissions:
-    - 'read:pages'
-    - 'read:assets'
-    - 'read:comments'
-    - 'write:comments'
-  defaultRules:
-    - name: Default Rule
-      mode: ALLOW
-      match: START
-      roles:
-        - 'read:pages'
-        - 'read:assets'
-        - 'read:comments'
-        - 'write:comments'
-      path: ''
-      locales: []
-      sites: []

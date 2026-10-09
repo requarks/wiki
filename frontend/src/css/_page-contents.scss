@@ -770,6 +770,31 @@
     }
 
     /*
+      A glossary term (`helpers/glossaryLinker.js`): linked automatically, or written by hand as
+      `?glossary=<term>`. Drawn as `abbr[title]` above is -- the words in the paragraph's own ink, a
+      dotted line under them saying there is a definition here -- rather than as a link, which a
+      paragraph full of terms would otherwise turn into. The line takes the link colour, so it reads as
+      somewhere to go; solid under the pointer or the keyboard, as a link's underline appears.
+
+      After the Underline Links rule, and more specific than it: a term is underlined either way, and
+      dotted is what tells it apart from the links around it.
+    */
+    &.glossary-term {
+      color: inherit;
+      font-weight: inherit;
+      text-decoration: underline dotted;
+      text-decoration-color: var(--content-link);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+      cursor: help;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration-style: solid;
+      }
+    }
+
+    /*
       A link to a page that does not exist -- a red link, which is how a wiki shows what still needs
       writing.
 

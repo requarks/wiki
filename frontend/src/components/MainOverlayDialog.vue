@@ -10,8 +10,10 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
+import { glossaryFromRoute } from '../helpers/glossaryUrl'
 import { useSiteStore } from '../stores/site'
 
 import LoadingGeneric from './LoadingGeneric.vue'
@@ -62,4 +64,31 @@ const overlays = {
 // STORES
 
 const siteStore = useSiteStore()
+
+const route = useRoute()
+
+/*
+  `?glossary=<name>` opens the glossary over whatever this is mounted under (spec §7). Here because
+  this is what every screen able to show the overlay mounts, and it is the one thing still standing
+  when the overlay is not. Once open, the overlay keeps the URL in step itself -- and follows it, for a
+  name that changes while it is open.
+
+  The parameter going away with the overlay still up is the reader stepping back past where it was
+  opened, and the overlay goes with it.
+*/
+watch(
+  () => glossaryFromRoute(route),
+  (wanted) => {
+    if (!wanted) {
+      if (siteStore.overlay === 'Glossary') {
+        siteStore.$patch({ overlay: '' })
+      }
+      return
+    }
+    if (siteStore.overlay !== 'Glossary') {
+      siteStore.openGlossary({ name: wanted.name || null, locale: wanted.locale })
+    }
+  },
+  { immediate: true }
+)
 </script>

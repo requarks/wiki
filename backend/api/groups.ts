@@ -251,10 +251,31 @@ async function routes(app: FastifyInstance) {
               items: { $ref: 'GroupRule#' }
             }
           },
+          /*
+            -> One of each kind: page permissions are granted by a rule, never by `permissions`, which
+               holds the global ones alone -- a page permission named there grants nothing
+          */
           examples: [
             {
               name: 'Editors',
-              permissions: ['read:pages', 'write:pages']
+              permissions: [],
+              rules: [
+                {
+                  id: '6f1c2d3e-4a5b-4c6d-8e7f-9a0b1c2d3e4f',
+                  name: 'Edit the docs',
+                  roles: ['read:pages', 'write:pages'],
+                  match: 'START',
+                  mode: 'ALLOW',
+                  path: 'docs',
+                  tags: [],
+                  locales: [],
+                  sites: []
+                }
+              ]
+            },
+            {
+              name: 'Support',
+              permissions: ['access:admin', 'read:users']
             }
           ]
         },

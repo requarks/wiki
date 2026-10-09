@@ -134,17 +134,28 @@ function siteForHost(hostname: string, sourceSiteId: string): string | null {
 /**
  * Read one href as the address of something in this wiki, or null when it is not one.
  *
- * Null covers rather a lot, and all of it on purpose: an empty href, a bare fragment, a `mailto:` or
- * `tel:`, a link to another server, and every path the wiki serves for itself — `/_admin`, `/login`,
- * `/_api` — none of which is content this can be asked a question about. Links leaving the wiki are
- * not recorded at all; see the `kind` column.
+ * Null covers rather a lot, and all of it on purpose: an empty href, a bare fragment or query, a
+ * `mailto:` or `tel:`, a link to another server, and every path the wiki serves for itself —
+ * `/_admin`, `/login`, `/_api` — none of which is content this can be asked a question about. Links
+ * leaving the wiki are not recorded at all; see the `kind` column.
  *
  * @param source The page the link is written on. A relative href resolves against the URL that page
  *               is served at, locale prefix and all, which is what the browser following it does.
  */
 export function resolveLink(href: string, source: LinkSource): ResolvedLink | null {
   const raw = (href ?? '').trim()
-  if (raw.length < 1 || raw.length > MAX_HREF_LENGTH || raw.startsWith('#')) {
+  /*
+    A bare query is the page it is written on, asked something -- `?glossary=REST` opens a term over
+    it -- the way a bare fragment is the page it is written on, scrolled. Neither is a link to a page:
+    recorded, it would be the page linking to itself, and moving the page with its links updated would
+    rewrite it into an absolute path to wherever the page went.
+  */
+  if (
+    raw.length < 1 ||
+    raw.length > MAX_HREF_LENGTH ||
+    raw.startsWith('#') ||
+    raw.startsWith('?')
+  ) {
     return null
   }
 

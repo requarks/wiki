@@ -142,6 +142,9 @@ class Sites {
           // -> On: a glossary with no terms costs a reader nothing, and the menu row that opens it is
           //    also gated on `read:glossary`, which nobody but a fresh install's users holds
           glossary: true,
+          // -> On: a term is linked only where its own `autoLink` is on as well, and only for a reader
+          //    who may read the glossary, so this changes nothing until somebody writes a term
+          glossaryAutoLink: true,
           lastEditedBy: true,
           // -> On: a reader who follows a link to a folder rather than a page is better served by
           //    what is in it than by a notice that there is nothing there
@@ -472,6 +475,7 @@ class Sites {
           ratingsMode: 'off',
           comments: true,
           glossary: true,
+          glossaryAutoLink: true,
           lastEditedBy: true,
           listFolderChildren: true,
           notifications: true,

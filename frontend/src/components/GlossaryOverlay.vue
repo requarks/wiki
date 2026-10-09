@@ -34,6 +34,17 @@
           self="top right"
           @select="switchLocale" />
       </w-btn>
+      <w-btn
+        class="mr-2"
+        flat
+        rounded
+        color="white"
+        :aria-label="t(`common.actions.viewDocs`)"
+        icon="la:question-circle"
+        :href="siteStore.docsBase + `/guide/glossary`"
+        target="_blank">
+        <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+      </w-btn>
       <!-- -> The pushed Close the File Manager and the editing overlays put themselves away with -->
       <w-btn-group>
         <w-btn
@@ -178,14 +189,20 @@
           <div
             v-if="state.term.definition"
             class="glossary-definition mt-6"
-            v-html="renderedDefinition" />
+            v-html="renderedDefinition"
+            @click="onDefinitionClick" />
           <div v-else class="text-grey-6 mt-6">{{ t('glossary.noDefinition') }}</div>
 
           <dl class="glossary-facts">
             <template v-if="state.term.aliases.length > 0">
-              <dt>{{ t('glossary.alsoKnownAs') }}</dt>
+              <dt>{{ t('glossary.aliases') }}</dt>
               <dd class="flex flex-wrap gap-1">
-                <w-chip v-for="alias of state.term.aliases" :key="alias" dense :label="alias" />
+                <w-chip
+                  v-for="alias of state.term.aliases"
+                  :key="alias"
+                  dense
+                  square
+                  :label="alias" />
               </dd>
             </template>
             <template v-if="state.term.relatedTerms.length > 0">
@@ -195,6 +212,7 @@
                   v-for="related of state.term.relatedTerms"
                   :key="related.id"
                   dense
+                  square
                   clickable
                   color="primary"
                   text-color="white"
@@ -210,8 +228,8 @@
                   class="glossary-link"
                   :href="documentationHref"
                   @click.prevent="openDocumentation">
-                  <w-icon name="la:book-open" size="xs" class="mr-1" />
                   {{ state.term.documentation.label || t('glossary.readMore') }}
+                  <w-icon name="la:book-open" size="xs" class="ml-1" />
                 </a>
                 <span v-else class="text-grey-6">
                   {{ t('glossary.documentationMissing', { path: state.term.documentation.path }) }}
@@ -233,10 +251,13 @@
             </template>
             <template v-if="state.term.category">
               <dt>{{ t('glossary.category') }}</dt>
-              <dd>
+              <dd class="flex">
                 <w-chip
                   dense
+                  square
                   clickable
+                  color="secondary"
+                  text-color="white"
                   icon="la:tag"
                   :label="state.term.category"
                   @click="showCategory(state.term.category)" />
@@ -264,9 +285,23 @@
 
         <!-- FORM -->
         <div v-else-if="state.mode === `form`" class="glossary-panel glossary-panel--form">
-          <h2 class="glossary-term-name mb-6">
-            {{ state.editingId ? t('glossary.editTermTitle') : t('glossary.newTermTitle') }}
-          </h2>
+          <div class="flex items-center gap-4 mb-6">
+            <h2 class="glossary-term-name min-w-0 flex-1">
+              {{ state.editingId ? t('glossary.editTermTitle') : t('glossary.newTermTitle') }}
+            </h2>
+            <div class="flex shrink-0 gap-2">
+              <w-btn flat no-caps :label="t(`common.actions.cancel`)" @click="cancelForm" />
+              <w-btn
+                unelevated
+                no-caps
+                color="primary"
+                icon="la:check"
+                :label="state.editingId ? t(`common.actions.save`) : t(`common.actions.create`)"
+                :loading="state.saving"
+                :disable="!canSave"
+                @click="save" />
+            </div>
+          </div>
 
           <!-- -> Somebody saved this term while it was open here; spec §5.2 -->
           <w-banner v-if="state.stale" class="glossary-stale mb-6" rounded>
@@ -299,14 +334,16 @@
 
           <!--
             Two columns where the panel has room: what the term IS on the left, what it points at and
-            how it behaves on the right, with the actions closing that column. One column, in that
-            order, where it has not -- see `.glossary-form` below.
+            how it behaves on the right. One column, in that order, where it has not -- see
+            `.glossary-form` below. The actions are up beside the title, in reach however long the
+            form runs.
           -->
           <div class="glossary-form">
             <div class="glossary-form-col">
               <!-- TERM -->
               <div>
                 <w-input
+                  ref="iptTerm"
                   v-model="state.form.term"
                   outlined
                   required
@@ -438,7 +475,7 @@
                     @click="pickDocumentation" />
                 </div>
                 <w-input
-                  class="mt-3"
+                  class="mt-5"
                   v-model="state.form.documentationLabel"
                   outlined
                   dense
@@ -503,8 +540,11 @@
                       :aria-label="t(`glossary.form.caseSensitive`)" />
                   </w-item-section>
                 </w-item>
-                <!-- -> Stored and shown, not yet acted on: auto-linking is a later phase (spec §9) -->
-                <w-item>
+                <!--
+                  -> The term's own say in auto-linking (spec §9). The site's is General -> Features,
+                     and a page's its properties; this only ever narrows what those allow
+                -->
+                <w-item tag="label">
                   <w-item-section>
                     <w-item-label>{{ t('glossary.form.autoLink') }}</w-item-label>
                     <w-item-label caption>{{ t('glossary.form.autoLinkHint') }}</w-item-label>
@@ -512,24 +552,10 @@
                   <w-item-section avatar>
                     <w-toggle
                       v-model="state.form.autoLink"
-                      disable
                       :aria-label="t(`glossary.form.autoLink`)" />
                   </w-item-section>
                 </w-item>
               </w-list>
-
-              <div class="flex justify-end gap-2 mt-4">
-                <w-btn flat no-caps :label="t(`common.actions.cancel`)" @click="cancelForm" />
-                <w-btn
-                  unelevated
-                  no-caps
-                  color="primary"
-                  icon="la:check"
-                  :label="state.editingId ? t(`common.actions.save`) : t(`common.actions.create`)"
-                  :loading="state.saving"
-                  :disable="!canSave"
-                  @click="save" />
-              </div>
             </div>
           </div>
         </div>
@@ -540,13 +566,19 @@
 
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { confirm, dialog } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { apiErrorMessage } from '@/helpers/apiError'
+import {
+  glossaryFromRoute,
+  glossaryLinkTarget,
+  withGlossary,
+  withoutGlossary
+} from '@/helpers/glossaryUrl'
 import { renderDefinition } from '@/renderers/glossary'
 
 import { useCommonStore } from '@/stores/common'
@@ -564,6 +596,10 @@ import LocaleSelectorMenu from './LocaleSelectorMenu.vue'
  * Opened by `siteStore.openGlossary()`; reading is `read:glossary` and editing `manage:glossary`, both
  * page permissions granted per locale, as `stores/glossary.js` reports them. The terms are fetched when the overlay opens and after every
  * write, which is comfortable to a few thousand per locale.
+ *
+ * The URL follows it: `?glossary=<name>` names the term on screen, so a link to it can be copied from
+ * the address bar, and is followed in turn when it changes under it (spec §7, `helpers/glossaryUrl.js`).
+ * Always with `router.replace`, so browsing terms does not leave one history entry per term.
  */
 
 /** Matches `GLOSSARY_REFERENCES_MAX` in `backend/models/glossary.ts`. */
@@ -582,6 +618,7 @@ const userStore = useUserStore()
 // ROUTER
 
 const router = useRouter()
+const route = useRoute()
 
 // I18N
 
@@ -590,6 +627,7 @@ const { t } = useI18n()
 // REFS
 
 const rootEl = ref(null)
+const iptTerm = ref(null)
 
 // DATA
 
@@ -640,7 +678,11 @@ const state = reactive({
   stale: null,
   categories: [],
   definitionTab: 'write',
-  saving: false
+  saving: false,
+  /** The term name the URL was last given -- empty for the list -- so following it does not loop. */
+  urlName: '',
+  /** Set once the overlay has opened on whatever it was asked for, after which the URL is followed. */
+  ready: false
 })
 
 // COMPUTED
@@ -861,8 +903,11 @@ function urlRule(value) {
 
 /**
  * Run `action` now, or once the user has agreed to throw away the changes in the form.
+ *
+ * @param {Function} action
+ * @param {Function} [onCancel] Run instead when they keep the changes.
  */
-function guardUnsaved(action) {
+function guardUnsaved(action, onCancel) {
   if (!isDirty.value) {
     action()
     return
@@ -871,8 +916,56 @@ function guardUnsaved(action) {
     title: t('glossary.unsavedTitle'),
     message: t('glossary.unsavedMessage'),
     okLabel: t('common.actions.discard'),
-    color: 'negative'
-  }).onOk(() => action())
+    color: 'negative',
+    cancel: true
+  })
+    .onOk(() => action())
+    .onCancel(() => onCancel?.())
+}
+
+/**
+ * Put the term on screen -- its name, or null for the list -- into the URL, with the locale where it
+ * is not the page's own.
+ */
+function syncUrl(name = null) {
+  state.urlName = name ?? ''
+  router.replace({
+    query: withGlossary(route.query, {
+      name,
+      locale: state.locale,
+      pageLocale: commonStore.desiredLocale
+    }),
+    hash: route.hash
+  })
+}
+
+/**
+ * Show the term a name or an alias belongs to, as a `?glossary=` link names it. The list already on
+ * screen answers most of these; the server is asked only for what it does not hold.
+ *
+ * A name nothing answers to opens the list with a notice rather than an error (spec §7).
+ */
+async function showTermByName(name) {
+  const key = nameKey(name)
+  let id = state.terms.find(
+    (term) => nameKey(term.term) === key || term.aliases.some((alias) => nameKey(alias) === key)
+  )?.id
+  if (!id && !state.forbidden) {
+    try {
+      const found = await API_CLIENT.get(`sites/${siteStore.id}/glossary/lookup`, {
+        searchParams: { locale: state.locale, name }
+      }).json()
+      id = found?.id
+    } catch {
+      id = null
+    }
+  }
+  if (!id) {
+    notify({ type: 'warning', message: t('glossary.notFoundByName', { name }) })
+    clearSelection()
+    return false
+  }
+  return showTerm(id)
 }
 
 async function loadTerms() {
@@ -917,6 +1010,7 @@ async function showTerm(id) {
     if (!isWide.value) {
       state.listOpen = false
     }
+    syncUrl(state.term.term)
     return true
   } catch (err) {
     notify({ type: 'negative', message: apiErrorMessage(err, t('glossary.form.notFound')) })
@@ -934,6 +1028,7 @@ function clearSelection() {
   state.selectedId = null
   state.term = null
   state.mode = 'empty'
+  syncUrl(null)
 }
 
 function showList() {
@@ -975,8 +1070,16 @@ function formFrom(term) {
   }
 }
 
+/*
+  -> Focused here rather than with `autofocus`, which fires on mount: New Term from a form already
+     open (an edit, or another new term) reuses the same field, so nothing would mount.
+*/
 function newTerm() {
-  guardUnsaved(() => openForm(blankForm()))
+  guardUnsaved(async () => {
+    openForm(blankForm())
+    await nextTick()
+    iptTerm.value?.focus()
+  })
 }
 
 function editTerm() {
@@ -1094,6 +1197,10 @@ async function save() {
     state.selectedId = saved.id
     state.mode = 'view'
     state.stale = null
+    // -> A rename changes what the term is called, and so what a link to it says
+    syncUrl(saved.term)
+    // -> And the page behind the overlay re-links with the term as it now stands
+    glossaryStore.invalidate()
     notify({
       type: 'positive',
       message: isNew ? t('glossary.createSuccess') : t('glossary.saveSuccess')
@@ -1167,11 +1274,13 @@ function deleteTerm() {
     title: t('glossary.deleteConfirmTitle'),
     message: t('glossary.deleteConfirm', { term: term.term }),
     okLabel: t('common.actions.delete'),
-    color: 'negative'
+    color: 'negative',
+    cancel: true
   }).onOk(async () => {
     state.loading++
     try {
       await API_CLIENT.delete(`sites/${siteStore.id}/glossary/${term.id}`)
+      glossaryStore.invalidate()
       notify({ type: 'positive', message: t('glossary.deleteSuccess') })
       clearSelection()
       if (!isWide.value) {
@@ -1224,21 +1333,98 @@ function switchLocale(locale) {
   })
 }
 
+/**
+ * Put the overlay away, and the parameter with it. Opened by following a link in the article, the
+ * entry before this one is the page without it, and stepping back to it is what leaves the history as
+ * it was; opened any other way, the parameter is simply taken off.
+ */
 function close() {
   guardUnsaved(() => {
+    const without = router.resolve({ query: withoutGlossary(route.query), hash: route.hash })
+    if (window.history.state?.back === without.fullPath) {
+      router.back()
+    } else {
+      router.replace(without)
+    }
     siteStore.$patch({ overlay: '' })
   })
 }
+
+/**
+ * A link in a definition to another term -- `[REST](?glossary=REST)` -- moves the panel to it rather
+ * than loading the page again underneath. Any other link is left to the browser.
+ */
+function onDefinitionClick(ev) {
+  if (
+    ev.defaultPrevented ||
+    ev.button !== 0 ||
+    ev.metaKey ||
+    ev.ctrlKey ||
+    ev.shiftKey ||
+    ev.altKey
+  ) {
+    return
+  }
+  const target = glossaryLinkTarget(ev.target.closest?.('a'))
+  if (!target) {
+    return
+  }
+  ev.preventDefault()
+  showTermByName(target.name)
+}
+
+/*
+  The URL changing under the overlay -- the reader stepping back or forward -- moves it to what the URL
+  now says. What the overlay wrote itself it already shows, which is what `urlName` tells apart.
+*/
+watch(
+  () => glossaryFromRoute(route),
+  (wanted) => {
+    if (!wanted || !state.ready) {
+      return
+    }
+    const locale = wanted.locale || commonStore.desiredLocale
+    const sameLocale = locale === state.locale || !glossaryStore.readableLocales.includes(locale)
+    if (sameLocale && nameKey(wanted.name) === nameKey(state.urlName)) {
+      return
+    }
+    guardUnsaved(
+      async () => {
+        state.formSnapshot = JSON.stringify(state.form)
+        if (!sameLocale) {
+          state.locale = locale
+          state.filter = ''
+          await loadTerms()
+        }
+        if (wanted.name) {
+          await showTermByName(wanted.name)
+        } else {
+          clearSelection()
+          state.listOpen = true
+        }
+      },
+      // -> Kept the draft: the URL goes back to saying what is on screen
+      () => syncUrl(state.urlName || null)
+    )
+  }
+)
 
 // MOUNTED
 
 onMounted(async () => {
   await glossaryStore.ensureAccess()
   await loadTerms()
-  const termId = siteStore.overlayOpts?.termId
+  const { termId, name } = siteStore.overlayOpts ?? {}
   if (termId) {
-    await showTerm(termId)
+    if (!(await showTerm(termId))) {
+      syncUrl(null)
+    }
+  } else if (name) {
+    await showTermByName(name)
+  } else {
+    syncUrl(null)
   }
+  state.ready = true
 })
 </script>
 
@@ -1329,15 +1515,22 @@ onMounted(async () => {
   }
 
   /* -> Sticky, so it needs the sidebar's own colour: transparent, the terms would scroll through it */
+  /*
+    -> Fainter than a list header's usual 54% / 70%, so the letters and categories stay out of the way
+       of the terms. The colour and not `opacity`, which would let the terms show through the sticky
+       background as they scroll under it.
+  */
   &-group {
     position: sticky;
     top: 0;
     z-index: 1;
     background-color: #f5f7fa;
+    color: rgb(0 0 0 / 0.38);
     font-weight: 600;
 
     @at-root .body--dark & {
       background-color: $dark-5;
+      color: rgb(255 255 255 / 0.45);
     }
   }
 
@@ -1389,7 +1582,7 @@ onMounted(async () => {
     }
   }
 
-  /* -> No `margin` here: preflight already zeroes a heading's, and one here would beat the form's `mb-6` */
+  /* -> No `margin` here: preflight already zeroes a heading's, and the form's spacing is on the row around it */
   &-term-name {
     font-size: 1.75rem;
     font-weight: 600;
@@ -1496,9 +1689,16 @@ onMounted(async () => {
        cascade layer, which this unlayered rule's own `margin` would beat -- which is how the facts
        came to sit right under the definition.
   */
+  /*
+    -> The label column is as wide as its longest label, capped so that a long translation wraps
+       rather than pushing the values over.
+    -> Rows align on the baseline: a label is smaller than its value, and a value's line can be taller
+       than its text (the 18px link icons), so lining up the tops never put the two on one line.
+  */
   &-facts {
     display: grid;
-    grid-template-columns: 10rem 1fr;
+    grid-template-columns: fit-content(10rem) 1fr;
+    align-items: baseline;
     gap: 0.75rem 1rem;
     margin: 2rem 0 0;
 
@@ -1508,7 +1708,6 @@ onMounted(async () => {
       text-transform: uppercase;
       letter-spacing: 0.04em;
       opacity: 0.6;
-      padding-top: 0.2rem;
     }
 
     dd {
@@ -1529,6 +1728,10 @@ onMounted(async () => {
   &-link {
     color: $primary;
     text-decoration: none;
+
+    @at-root .body--dark & {
+      color: var(--color-primary-light);
+    }
 
     &:hover {
       text-decoration: underline;

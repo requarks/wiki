@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { confirm } from '@/composables/dialog'
@@ -164,6 +164,7 @@ import {
   QUOTE_MAX_LENGTH,
   describeRange,
   indexText,
+  locateAnchor,
   paintHighlight,
   placeBeside,
   scrollRangeIntoView
@@ -192,6 +193,11 @@ const props = defineProps({
   root: {
     type: Object,
     default: null
+  },
+  /** Bumped when the article's elements change under the same text. See `PageAnnotationsLayer.vue`. */
+  contentRevision: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -264,6 +270,30 @@ function paint() {
   )
   paintHighlight(HIGHLIGHTS.draft, state.draft ? [state.draft.range] : [])
 }
+
+/*
+  The passages picked so far, found again in the article as it now stands: its elements changed under
+  the same text, and a range that began or ended inside a word that was wrapped no longer does. Found by
+  the same description that will be posted, so what is painted is what will be saved; one that cannot
+  be found keeps the range it had, which is still over the right words, give or take that word.
+*/
+watch(
+  () => props.contentRevision,
+  () => {
+    if (!props.root || (state.pending.length < 1 && !state.draft)) {
+      return
+    }
+    const index = indexText(props.root)
+    for (const item of [...state.pending, state.draft].filter(Boolean)) {
+      const range = locateAnchor(index, item.anchor)
+      if (range) {
+        item.range = markRaw(range)
+      }
+    }
+    paint()
+  },
+  { flush: 'post' }
+)
 
 function togglePicking() {
   state.picking = !state.picking

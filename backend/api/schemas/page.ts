@@ -125,6 +125,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
+      allowGlossaryLinks: {
+        type: 'boolean',
+        description:
+          'Whether glossary terms are linked where they occur in this page’s text. On unless turned off; the site-wide switch is `features.glossaryAutoLink`.'
+      },
       allowRatings: { type: 'boolean' },
       showLastEditedBy: { type: 'boolean' },
       showSidebar: { type: 'boolean' },
@@ -225,6 +230,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },
       allowContributions: { type: 'boolean' },
+      allowGlossaryLinks: {
+        type: 'boolean',
+        description:
+          'Whether glossary terms are linked where they occur in this page’s text. On unless turned off; the site-wide switch is `features.glossaryAutoLink`.'
+      },
       allowRatings: { type: 'boolean' },
       commentsCount: {
         type: 'integer',

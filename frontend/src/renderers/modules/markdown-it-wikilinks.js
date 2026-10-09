@@ -1,5 +1,6 @@
 // -> Relative, like the renderers' other in-repo imports: this module is reachable from the headless
 //    renderer bundle, which is built on its own
+import { glossaryHref } from '../../helpers/glossaryUrl'
 import { normalizePagePath } from '../../helpers/pagePaths'
 
 /**
@@ -18,6 +19,12 @@ import { normalizePagePath } from '../../helpers/pagePaths'
  * The section is spelled the way `slugifyHeading` in `backend/models/rendering.ts` spells the id it
  * gives a heading, so `[[Page#Some Heading]]` finds the heading called "Some Heading". That makes this
  * one more copy of that rule, and the two have to agree.
+ *
+ * `[[Glossary:REST]]` and `[[Glossary:REST|shown text]]` are a link to a glossary TERM instead, by its
+ * name or one of its aliases: `?glossary=REST`, which opens the term over the page it is written on
+ * (see `helpers/glossaryUrl.js`). The namespace is MediaWiki's way of saying a link is to something
+ * other than an article, and is case-insensitive as theirs is. Everything after the colon is the name,
+ * `#` included -- `[[Glossary:C#]]` is a term, not a section of one.
  *
  * The tokens are an ordinary `link_open` / `link_close` pair, so everything that already reads links
  * reads these too -- the external-link class, the server's backlinks, the Visual editor. The target
@@ -41,14 +48,41 @@ function slugifySection(text) {
   )
 }
 
+/** The namespace that makes a wikilink a link to a glossary term. */
+const GLOSSARY_NAMESPACE = /^glossary:/i
+
+/** The term a `[[Glossary:…]]` target names, or null when the target is not one. */
+function glossaryTermOf(target) {
+  if (!GLOSSARY_NAMESPACE.test(target)) {
+    return null
+  }
+  const name = target.replace(GLOSSARY_NAMESPACE, '').trim()
+  return name || null
+}
+
+/**
+ * What a wikilink with no label of its own shows: the target as written, except that a glossary link
+ * shows the term without the namespace. Also how the Visual editor tells that a link's text is still
+ * the default, and can be written back as `[[Target]]`.
+ *
+ * @param {string} target The target as written.
+ */
+export function wikiLinkText(target) {
+  return glossaryTermOf(target) ?? target
+}
+
 /**
  * Where a wikilink target points, as an href.
  *
  * @param {string} target The target as written, backslash escapes already resolved.
- * @returns {string} A root-relative path, optionally with a fragment; or the fragment alone for a
- *          link to a section of the page it is written on.
+ * @returns {string} A root-relative path, optionally with a fragment; the fragment alone for a link to
+ *          a section of the page it is written on; or `?glossary=<name>` for a glossary term.
  */
 export function wikiLinkHref(target) {
+  const term = glossaryTermOf(target)
+  if (term) {
+    return glossaryHref(term)
+  }
   const hash = target.indexOf('#')
   const page = hash < 0 ? target : target.slice(0, hash)
   const section = hash < 0 ? '' : target.slice(hash + 1)
@@ -148,7 +182,7 @@ function wikilink(state, silent) {
     } else {
       // -> The target alone is shown as written, and is not parsed: it is a name, not markup
       const text = state.push('text', '', 0)
-      text.content = target
+      text.content = wikiLinkText(target)
     }
 
     const close = state.push('link_close', 'a', -1)

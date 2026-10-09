@@ -121,6 +121,7 @@ export const useSiteStore = defineStore('site', {
       collaborativeEditing: false,
       // -> On, for the reason `backlinks` is: the server reads a missing key as on
       glossary: true,
+      glossaryAutoLink: true,
       lastEditedBy: true,
       listFolderChildren: false,
       // -> On, for the reason `backlinks` is: the server reads a missing key as on, and the badge
@@ -418,6 +419,7 @@ export const useSiteStore = defineStore('site', {
     /**
      * @param {object} [opts]
      * @param {?string} [opts.termId] The term to open on. Absent, the list with nothing selected.
+     * @param {?string} [opts.name] Or the term by name or alias, as a `?glossary=` link names it.
      * @param {?string} [opts.locale] The locale to open in. Absent, the one the interface is in.
      */
     openGlossary(opts) {
@@ -425,6 +427,7 @@ export const useSiteStore = defineStore('site', {
         overlay: 'Glossary',
         overlayOpts: {
           termId: opts?.termId ?? null,
+          name: opts?.name ?? null,
           locale: opts?.locale ?? null
         }
       })

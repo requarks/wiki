@@ -42,8 +42,9 @@ export interface GlossaryTermInput {
 /**
  * A term as the sidebar lists it.
  *
- * Also exactly what auto-linking will need to build its matcher (spec §9), which is why the two case
- * and linking flags are here although the sidebar draws neither.
+ * The two case and linking flags are here although the sidebar draws neither: they are what the
+ * auto-link list (`autoLinkList`, spec §9) is cut from, and the list is the one place a client sees
+ * every term of a locale at once.
  */
 export interface GlossaryTermSummary {
   id: string
@@ -205,6 +206,62 @@ class Glossary {
       .from(termsTable)
       .where(and(eq(termsTable.siteId, siteId), eq(termsTable.locale, locale)))
       .orderBy(sql`lower(${termsTable.term})`, asc(termsTable.term))
+  }
+
+  /**
+   * Whether terms are linked where they occur in page text — `features.glossaryAutoLink`. On unless
+   * switched off, as `isEnabled` reads, and nothing at all while the glossary itself is off.
+   */
+  isAutoLinkEnabled(siteId: string): boolean {
+    return (
+      this.isEnabled(siteId) && WIKI.sites[siteId]?.config?.features?.glossaryAutoLink !== false
+    )
+  }
+
+  /**
+   * What the glossary of a locale looks like right now, as cheaply as it can be asked: how many terms
+   * and when the latest was saved. Every write changes one or the other — a delete the count, a create
+   * or a save `updatedAt` — so this is what the auto-link list's ETag is made of (spec §9), and what
+   * spares a reader re-downloading the list on every page.
+   */
+  async version(siteId: string, locale: string): Promise<{ count: number; latestAt: string }> {
+    const [row] = await WIKI.db
+      .select({
+        count: sql<number>`count(*)::int`,
+        latestAt: sql<string | null>`max(${termsTable.updatedAt})`
+      })
+      .from(termsTable)
+      .where(and(eq(termsTable.siteId, siteId), eq(termsTable.locale, locale)))
+    return { count: row?.count ?? 0, latestAt: String(row?.latestAt ?? '') }
+  }
+
+  /**
+   * The terms a page in this locale links automatically: those with `autoLink` on, with exactly what
+   * the matcher needs and the expansion, which a link carries as its title. Longest name first is the
+   * matcher's business, since it has the aliases to weigh too.
+   */
+  async autoLinkList(
+    siteId: string,
+    locale: string
+  ): Promise<
+    Array<Pick<GlossaryTermSummary, 'id' | 'term' | 'expansion' | 'aliases' | 'caseSensitive'>>
+  > {
+    return WIKI.db
+      .select({
+        id: termsTable.id,
+        term: termsTable.term,
+        expansion: termsTable.expansion,
+        aliases: termsTable.aliases,
+        caseSensitive: termsTable.caseSensitive
+      })
+      .from(termsTable)
+      .where(
+        and(
+          eq(termsTable.siteId, siteId),
+          eq(termsTable.locale, locale),
+          eq(termsTable.autoLink, true)
+        )
+      )
   }
 
   /** The categories in use in a locale, for the form's suggestions. */
@@ -419,6 +476,45 @@ class Glossary {
       .where(and(eq(termsTable.id, id), eq(termsTable.siteId, siteId)))
       .returning({ term: termsTable.term, locale: termsTable.locale })
     return deleted[0] ?? null
+  }
+
+  /**
+   * Follow a page that moved with `updateLinks`: every term documented by it now points where it went
+   * (spec §5.3).
+   *
+   * Only the terms in the page's OLD locale can be pointing at it, since a documentation page is in
+   * its term's own locale. A move within that locale rewrites their path; a move to another locale
+   * clears it, label and all, because the page is no longer one those terms may name.
+   *
+   * Not asked about per term, unlike the pages relinked beside it: whoever moves a page with
+   * `updateLinks` has asked for what pointed at it to follow. `updatedAt` is bumped on each, so a form
+   * open on one of them is refused with a 409 rather than saving the old path back.
+   *
+   * @returns The ids of the terms rewritten and of those cleared
+   */
+  async relinkDocumentation(
+    siteId: string,
+    previous: { locale: string; path: string },
+    next: { locale: string; path: string }
+  ): Promise<{ updated: string[]; cleared: string[] }> {
+    const sameLocale = previous.locale === next.locale
+    const rows = await WIKI.db
+      .update(termsTable)
+      .set(
+        sameLocale
+          ? { documentationPath: next.path, updatedAt: new Date() }
+          : { documentationPath: null, documentationLabel: null, updatedAt: new Date() }
+      )
+      .where(
+        and(
+          eq(termsTable.siteId, siteId),
+          eq(termsTable.locale, previous.locale),
+          eq(termsTable.documentationPath, previous.path)
+        )
+      )
+      .returning({ id: termsTable.id })
+    const ids = rows.map((row) => row.id)
+    return sameLocale ? { updated: ids, cleared: [] } : { updated: [], cleared: ids }
   }
 
   /** The columns a create or a save writes, normalized. */

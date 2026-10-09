@@ -219,6 +219,7 @@
               v-if="isAnnotating"
               ref="annotator"
               :root="pageContents"
+              :content-revision="state.contentRevision"
               @close="stopAnnotating"
               @posted="onAnnotationsPosted" />
             <!--
@@ -232,8 +233,20 @@
               :active="activeView === `article`"
               :interactive="!isAnnotating"
               :reveal-id="state.revealAnnotationId"
+              :content-revision="state.contentRevision"
               @revealed="state.revealAnnotationId = null"
               @view-comment="viewComment" />
+            <!--
+              The card over a glossary term in the article, and only where this reader sees glossary
+              links at all. The links themselves are made by `applyGlossaryLinks` below.
+            -->
+            <page-glossary-card
+              v-if="glossaryReadable"
+              ref="glossaryCard"
+              :root="pageContents"
+              :locale="pageStore.locale"
+              :resolve-term-id="resolveGlossaryTermId"
+              @open="openGlossaryLink" />
             <page-links v-if="activeView === `links`" />
             <!--
               A blog's front page, which has no article to draw: its posts are what stands in place of
@@ -631,6 +644,14 @@ import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { clearHighlights, indexText, locateAnchor } from '@/helpers/annotations'
+import {
+  buildMatcher,
+  linkTerms,
+  markGlossaryLinks,
+  termByName,
+  unlinkTerms
+} from '@/helpers/glossaryLinker'
+import { glossaryLinkTarget, withGlossary } from '@/helpers/glossaryUrl'
 import { decodeUrlPath, isPagePath, splitLocalePath } from '@/helpers/pagePaths'
 import {
   enhanceRenderedContent,
@@ -643,6 +664,7 @@ import { parseBlog } from '@/helpers/pageBlog'
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
 import { useFlagsStore } from '@/stores/flags'
+import { useGlossaryStore } from '@/stores/glossary'
 import { useNotificationsStore } from '@/stores/notifications'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -696,6 +718,9 @@ const PageBlogSidebar = defineAsyncComponent(() => import('@/components/PageBlog
 // -> Only on a missing page, and only where the site has it turned on
 const PageFolderChildren = defineAsyncComponent(() => import('@/components/PageFolderChildren.vue'))
 
+/* -> Brings the definition renderer with it, which a reader of a wiki with no glossary never needs */
+const PageGlossaryCard = defineAsyncComponent(() => import('@/components/PageGlossaryCard.vue'))
+
 const editorComponents = {
   markdown: defineAsyncComponent({
     loader: () => import('../components/EditorMarkdown.vue'),
@@ -740,6 +765,7 @@ const editorComponents = {
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
+const glossaryStore = useGlossaryStore()
 const notificationsStore = useNotificationsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
@@ -812,10 +838,16 @@ const state = reactive({
    * two views until it is turned off, and off again on another page, whose annotations these are not.
    */
   showAnnotations: false,
+  /**
+   * Bumped whenever the glossary links in the article change under the same render, which the
+   * annotation components find their passages again on -- see `helpers/glossaryLinker.js`.
+   */
+  contentRevision: 0,
   /** An annotation to scroll to with its note open, once the layer has found it. */
   revealAnnotationId: null
 })
 const pageContents = ref(null)
+const glossaryCard = ref(null)
 /** The article column, which is what scrolls -- see `scrollPageToTop`. */
 const pageScroller = ref(null)
 /** The Talk view while it is on screen, for the New Comment button in the column beside it. */
@@ -1173,13 +1205,52 @@ const breadcrumbs = computed(() => [
   The copy buttons on code blocks are part of the content, so they are re-added whenever the content
   is. Keyed on the render rather than on the route: it arrives after the page has already mounted, and
   it is replaced again on every save without the route moving at all.
+
+  And on the element it is drawn into, which is not there at all while the editor is open: the render
+  changes as the author types, with nowhere to draw it, and is the same render once Save puts the
+  article back -- so keyed on the render alone, a page came back from its editor without its copy
+  buttons, its heading links or its glossary terms until it was loaded again. Both steps leave alone
+  what they have already done, so the two arriving together costs nothing.
 */
 watch(
-  () => pageStore.render,
+  () => [pageStore.render, pageContents.value],
   () => {
-    nextTick(() => enhanceRenderedContent(pageContents.value))
+    nextTick(() => {
+      enhanceRenderedContent(pageContents.value)
+      applyGlossaryLinks()
+    })
   },
   { immediate: true }
+)
+
+/*
+  -> Glossary
+  Terms are linked in the article as it is drawn, in this browser (spec §9; `helpers/glossaryLinker.js`):
+  again whenever the render is, and whenever anything that decides it changes -- a term saved in the
+  overlay over this page, which bumps the store's revision, or a login that changes what may be read.
+*/
+const glossaryReadable = computed(
+  () =>
+    siteStore.features.glossary &&
+    glossaryStore.enabled &&
+    glossaryStore.readableLocales.includes(pageStore.locale)
+)
+const glossaryAutoLink = computed(
+  () =>
+    glossaryReadable.value && siteStore.features.glossaryAutoLink && pageStore.allowGlossaryLinks
+)
+
+watch(
+  () => [siteStore.id, userStore.authenticated, userStore.id],
+  () => {
+    glossaryStore.ensureAccess()
+  },
+  { immediate: true }
+)
+
+watch(
+  () => [glossaryStore.revision, glossaryReadable.value, glossaryAutoLink.value],
+  () => applyGlossaryLinks()
 )
 
 /*
@@ -1591,9 +1662,96 @@ function relationLink(rel) {
   return /^https?:$/.test(url.protocol) ? { href: url.toString() } : {}
 }
 
+/** The matcher the article was last linked with, which also names the terms of links written by hand. */
+let glossaryMatcher = null
+let glossaryRun = 0
+
+/**
+ * Make the article's glossary links: draw the ones written by hand, then link the first occurrence of
+ * every other term. Undone first, so that it can run again over the same render.
+ */
+async function applyGlossaryLinks() {
+  const root = pageContents.value
+  const run = ++glossaryRun
+  glossaryCard.value?.hide()
+  if (!root) {
+    return
+  }
+  const unlinked = unlinkTerms(root)
+  glossaryMatcher = null
+  if (unlinked > 0) {
+    state.contentRevision++
+  }
+  if (!glossaryReadable.value) {
+    return
+  }
+  const written = markGlossaryLinks(root)
+  if (!glossaryAutoLink.value) {
+    return
+  }
+  const locale = pageStore.locale
+  const terms = await glossaryStore.autoLinkTerms(locale)
+  // -> Another page, another render or another answer arrived while this one was out
+  if (run !== glossaryRun || root !== pageContents.value) {
+    return
+  }
+  const matcher = buildMatcher(terms, locale)
+  glossaryMatcher = matcher
+  // -> A term linked by hand has had its one link on this page
+  const linked = new Set(
+    written
+      .map((anchor) => termByName(matcher, glossaryLinkTarget(anchor)?.name)?.id)
+      .filter(Boolean)
+  )
+  if (linkTerms(root, matcher, linked) > 0) {
+    state.contentRevision++
+  }
+}
+
+/** Which term a glossary link in the article is to, for its card. */
+async function resolveGlossaryTermId(anchor) {
+  if (anchor.dataset.termId) {
+    return anchor.dataset.termId
+  }
+  const target = glossaryLinkTarget(anchor)
+  if (!target) {
+    return null
+  }
+  const locale = target.locale || pageStore.locale
+  if (locale === pageStore.locale) {
+    const known = termByName(glossaryMatcher, target.name)
+    if (known) {
+      return known.id
+    }
+  }
+  return glossaryStore.lookup(locale, target.name)
+}
+
+/**
+ * Follow a glossary link on this page -- from the article, or from the Read More of its card: the
+ * term, in the overlay over it. Through the URL, as following the link would have gone, so that Back
+ * puts it away again; the overlay host is what opens it (`MainOverlayDialog.vue`), by the same rule as
+ * for a link arriving from outside.
+ *
+ * @param {{ name: string, locale: ?string }} target
+ */
+function openGlossaryLink({ name, locale }) {
+  glossaryCard.value?.hide()
+  router.push({
+    path: route.path,
+    query: withGlossary(route.query, { name, locale, pageLocale: pageStore.locale }),
+    hash: route.hash
+  })
+}
+
 function onContentClick(ev) {
   const intent = resolveContentClick(ev, window.location)
   if (!intent) {
+    return
+  }
+  if (intent.kind === 'glossary') {
+    ev.preventDefault()
+    openGlossaryLink(intent)
     return
   }
   /*

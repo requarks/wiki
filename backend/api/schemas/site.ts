@@ -112,6 +112,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Whether this site has a glossary. On by default. Off hides it everywhere — the Library menu has no Glossary row and the glossary routes answer as though there were no terms — and keeps every term for when it is turned back on. Who may read it is the `read:glossary` page permission, and who may edit it `manage:glossary`, both granted per locale.'
           },
+          glossaryAutoLink: {
+            type: 'boolean',
+            description:
+              'Whether terms are linked to the glossary where they occur in page text, in the reader’s browser. On by default; does nothing while `glossary` is off. A term can opt out with its own `autoLink`, and a page with `allowGlossaryLinks`. A link written by hand to `?glossary=<term>` is shown either way.'
+          },
           lastEditedBy: {
             type: 'boolean',
             description:

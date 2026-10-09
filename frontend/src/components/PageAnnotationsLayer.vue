@@ -135,6 +135,15 @@ const props = defineProps({
   revealId: {
     type: String,
     default: null
+  },
+  /**
+   * Bumped when the article's ELEMENTS change under the same render -- glossary terms linked or
+   * unlinked (`helpers/glossaryLinker.js`). The text is the same, but a range that started or ended
+   * inside a word that was wrapped has been stretched to the edge of it, so every passage is found again.
+   */
+  contentRevision: {
+    type: Number,
+    default: 0
   }
 })
 
@@ -403,7 +412,7 @@ watch(
 
 // -> A save re-renders the page, and every range into the old render points at nothing
 watch(
-  () => pageStore.render,
+  () => [pageStore.render, props.contentRevision],
   () => locateAll(),
   { flush: 'post' }
 )

@@ -1288,6 +1288,7 @@ class Tree {
               allowBacklinks: page.allowBacklinks,
               allowComments: page.allowComments,
               allowContributions: page.allowContributions,
+              allowGlossaryLinks: page.allowGlossaryLinks,
               allowRatings: page.allowRatings,
               showLastEditedBy: page.showLastEditedBy,
               showSidebar: page.showSidebar,

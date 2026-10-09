@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { audit } from '../helpers/audit.ts'
 import { GLOSSARY_INPUT_PROPERTIES } from './schemas/glossary.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
@@ -270,6 +272,65 @@ async function routes(app: FastifyInstance) {
         return []
       }
       return WIKI.models.glossary.categories(req.params.siteId, req.query.locale)
+    }
+  )
+
+  /**
+   * AUTO-LINK LIST
+   */
+  // -> No route-level permissions: `read:glossary` is a page rule. See the note above.
+  app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
+    '/sites/:siteId/glossary/autolink',
+    {
+      schema: {
+        summary: 'List the glossary terms linked in page text',
+        description:
+          'The terms of a locale that pages link automatically — those with `autoLink` on — with what finding them in text takes: the name, the aliases and whether case matters. Fetched once per locale by a reader’s browser and revalidated with the `ETag` it answers with, which changes whenever any term of the locale does.\n\nNeeds `read:glossary` in the locale. Empty while the site’s glossary, or its `features.glossaryAutoLink`, is switched off.',
+        tags: ['Glossary'],
+        params: siteIdParam,
+        querystring: localeQuery,
+        response: {
+          200: {
+            description: 'The terms to link',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                term: { type: 'string' },
+                expansion: { type: 'string', nullable: true },
+                aliases: { type: 'array', items: { type: 'string' } },
+                caseSensitive: { type: 'boolean' }
+              }
+            }
+          },
+          304: { description: 'Nothing has changed since the ETag sent', type: 'null' }
+        }
+      }
+    },
+    async (req, reply) => {
+      const { siteId } = req.params
+      if (!guardRead(req, reply, siteId, req.query.locale)) {
+        return reply
+      }
+      const enabled = WIKI.models.glossary.isAutoLinkEnabled(siteId)
+      const version = enabled
+        ? await WIKI.models.glossary.version(siteId, req.query.locale)
+        : { count: 0, latestAt: '' }
+      /*
+        The same list for everybody who may read it, so the tag names the glossary and not the caller:
+        the permission is checked above on every request, 304 included. The switch is in it too, so
+        turning auto-linking off reaches a browser holding the list from before.
+      */
+      const etag = `"${createHash('sha1')
+        .update(`${siteId}|${req.query.locale}|${enabled}|${version.count}|${version.latestAt}`)
+        .digest('base64url')}"`
+      reply.header('Cache-Control', 'private, no-cache')
+      reply.header('ETag', etag)
+      if (req.headers['if-none-match'] === etag) {
+        return reply.code(304).send()
+      }
+      return enabled ? WIKI.models.glossary.autoLinkList(siteId, req.query.locale) : []
     }
   )
 

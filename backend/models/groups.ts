@@ -417,16 +417,18 @@ class Groups {
       {
         id: ids.groupUserId,
         name: 'Users',
-        permissions: ['read:pages', 'read:assets', 'read:comments'],
+        /*
+          No global permissions: everything an ordinary account may do is about pages, and page
+          permissions are granted by the rule below -- the list is checked by the route hook, which
+          only understands global ones (see `PAGE_PERMISSIONS`), so a page permission named in it
+          grants nothing.
+        */
+        permissions: [],
         rules: [
           {
-            /*
-              `write:comments` is granted here while the group-wide list above leaves it out, and the
-              two lists are answering different questions: the rule is what `checkAccess` reads for a
-              page permission, and the list above is checked by the route hook, which only understands
-              global permissions. Without it in the rule, a wiki that turns comments on has a
-              discussion nobody but an administrator can join.
-            */
+            // -> `write:comments` so that a wiki which turns comments on has a discussion its
+            //    accounts can join, rather than one nobody but an administrator can
+
             id: uuid(),
             name: 'Default Rule',
             roles: [
@@ -449,7 +451,8 @@ class Groups {
       {
         id: ids.groupGuestId,
         name: 'Guests',
-        permissions: ['read:pages', 'read:assets', 'read:comments'],
+        // -> None, for the reason the Users group has none: what guests may do is the rule below
+        permissions: [],
         rules: [
           {
             id: uuid(),
@@ -519,17 +522,21 @@ class Groups {
   }
 
   async createGroup(name: string): Promise<string> {
-    const startingPermissions = ['read:pages', 'read:assets', 'read:comments']
-    // -> The rule grants more than the group-wide list does: see the note on the Users group in
-    //    `init()` for why the two differ
-    const startingRoles = [...startingPermissions, 'write:comments', 'read:glossary']
+    // -> What the Users group starts with, for the same reasons: see `init()`
+    const startingRoles = [
+      'read:pages',
+      'read:assets',
+      'read:comments',
+      'write:comments',
+      'read:glossary'
+    ]
     const result = await WIKI.db
       .insert(groupsTable)
       .values({
         // -> Trimmed here rather than at the boundary, so that what is stored is what `validateName`
         //    compared and no route can store a name that would not have passed
         name: name.trim(),
-        permissions: startingPermissions,
+        permissions: [],
         rules: [
           {
             id: uuid(),

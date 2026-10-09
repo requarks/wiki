@@ -184,6 +184,7 @@ export function versionPageProps(version) {
       password: meta.password,
       allowComments: config.allowComments,
       allowContributions: config.allowContributions,
+      allowGlossaryLinks: config.allowGlossaryLinks,
       allowRatings: config.allowRatings,
       showLastEditedBy: config.showLastEditedBy,
       showSidebar: config.showSidebar,

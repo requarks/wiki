@@ -181,6 +181,16 @@
             checked-icon="la:check"
             unchecked-icon="la:times" />
         </div>
+        <!-- -> Hidden where the site links no terms at all, for the reason the backlinks switch is -->
+        <div class="pt-4" v-if="siteStore.features.glossary && siteStore.features.glossaryAutoLink">
+          <w-toggle
+            v-model="pageStore.allowGlossaryLinks"
+            dense
+            :label="t(`editor.props.allowGlossaryLinks`)"
+            color="primary"
+            checked-icon="la:check"
+            unchecked-icon="la:times" />
+        </div>
       </w-card-section>
       <!--
         Only for an author who may actually write them: the server drops a script or a stylesheet from

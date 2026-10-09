@@ -1,12 +1,13 @@
 <template>
   <!--
-    `leading-tight` rather than the inherited 1.5: a chip is a single nowrap line, so its height is
-    its line box plus padding, and body line-height made it noticeably taller than the text it wraps.
-    Tight still clears the glyph box, which matters because the label span clips its overflow -- any
-    less and descenders would be cut.
+    A chip is a single nowrap line, so its height is its line box plus padding; the line height
+    comes with the font size, from `SIZES` below. See the note there.
+
+    The label is `self-baseline` so that it, not a leading icon, is the chip's baseline when a
+    baseline-aligned row lines text up against one. Being the tallest item, it does not move.
   -->
   <div
-    class="w-chip inline-flex max-w-full flex-nowrap items-center gap-1.5 leading-tight align-middle"
+    class="w-chip inline-flex max-w-full flex-nowrap items-center gap-1.5 align-middle"
     :class="classes"
     :style="styles"
     :tabindex="clickable ? 0 : undefined"
@@ -14,7 +15,7 @@
     @click="clickable && $emit('click', $event)"
     @keydown.enter.prevent="clickable && $emit('click', $event)">
     <w-icon v-if="icon" :name="icon" class="shrink-0" />
-    <span class="truncate">
+    <span class="truncate self-baseline">
       <slot>{{ label }}</slot>
     </span>
     <button
@@ -82,7 +83,28 @@ const props = defineProps({
 
 defineEmits(['click', 'remove'])
 
-const SIZES = { xs: '10px', sm: '12px', md: '14px', lg: '16px' }
+/*
+  Each size's line height is a whole number of pixels, picked so that the label is centred.
+
+  Around 1.25em, rather than the inherited 1.5, which made a chip noticeably taller than the text it
+  wraps; at least the glyph box, since the label span clips its overflow and descenders would be cut.
+  But not 1.25 itself: at 14px that is a 17.5px line box, and the half pixel is resolved differently
+  depending on where the chip lands on the device pixel grid -- measured 1px high at one position
+  and 0.5px at the next, up to 1.4px at 125% display scaling. And not merely rounded either: Chrome
+  rounds Roboto's ascent and descent to whole pixels, and when what the line box leaves over that
+  is odd, the spare pixel goes below the glyphs and the label sits a pixel high (12px on 15, 16px on
+  20). These leave an even remainder, which keeps every size within half a pixel of centre at every
+  scale measured, 100% to 200%.
+
+  A size given as a CSS length gets 1.25em rounded to a pixel, which settles the first problem and
+  leaves the second to chance.
+*/
+const SIZES = {
+  xs: { fontSize: '10px', lineHeight: '13px' },
+  sm: { fontSize: '12px', lineHeight: '16px' },
+  md: { fontSize: '14px', lineHeight: '18px' },
+  lg: { fontSize: '16px', lineHeight: '21px' }
+}
 
 const classes = computed(() => [
   props.square ? 'rounded-sm' : 'rounded-full',
@@ -93,7 +115,7 @@ const classes = computed(() => [
 ])
 
 const styles = computed(() => ({
-  fontSize: SIZES[props.size] ?? props.size,
+  ...(SIZES[props.size] ?? { fontSize: props.size, lineHeight: 'round(1.25em, 1px)' }),
   backgroundColor: props.color ? `var(--color-${props.color})` : undefined,
   color: props.textColor ? `var(--color-${props.textColor})` : undefined
 }))
@@ -112,7 +134,7 @@ const styles = computed(() => ({
   `font-size: inherit` is load-bearing: it keeps the avatar on the CHIP's font size, so the `em`
   lengths below are chip-ems. Were a font size set here instead, they would resolve against it.
 
-  1.25em matches the `leading-tight` line box on the tag above, so the avatar sits WITHIN the label's
+  1.25em fits the line box the chip's size gives it (`SIZES`), so the avatar sits WITHIN the label's
   line instead of setting the chip's height. Anything taller becomes the tallest thing in the box and
   the chip grows around it, which is what made it stand a row tall.
 

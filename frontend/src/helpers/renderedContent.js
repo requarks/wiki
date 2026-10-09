@@ -1,6 +1,7 @@
 import { BUNDLED_ICONS } from '@/assets/icons.generated'
 
 import { copyToClipboard } from './clipboard'
+import { glossaryLinkTarget } from './glossaryUrl'
 import { isServerPath } from './serverPaths'
 import { notify } from '@/composables/notify'
 
@@ -264,8 +265,9 @@ export function sameDocumentHash({ href, target, download, rel } = {}, current) 
  *
  * @param {MouseEvent} ev The click, as delegated from the element holding the content.
  * @param {Location|{origin: string, pathname: string}} current Where the reader is now.
- * @returns {{kind: 'hash', hash: string}|{kind: 'route', target: string}|null} What to do, or null to
- *   leave the click alone.
+ * @returns {{kind: 'hash', hash: string}|{kind: 'route', target: string}|{kind: 'glossary', name: string, locale: ?string}|null}
+ *   What to do, or null to leave the click alone. `glossary` is a `?glossary=<term>` link to this same
+ *   page (`helpers/glossaryUrl.js`), which a view opens the term for rather than loading anything.
  */
 export function resolveContentClick(ev, current) {
   if (
@@ -281,6 +283,11 @@ export function resolveContentClick(ev, current) {
   const anchor = ev.target?.closest?.('a[href]')
   if (!anchor) {
     return null
+  }
+  // -> `?glossary=<term>` on this same page: the term, over it, rather than the page loaded again
+  const glossary = glossaryLinkTarget(anchor)
+  if (glossary) {
+    return { kind: 'glossary', ...glossary }
   }
   const hash = sameDocumentHash(anchor, current)
   if (hash) {

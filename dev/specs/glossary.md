@@ -1,11 +1,10 @@
 # Glossary
 
-**Status:** phases 1 to 3 of [§11](#11-suggested-order) implemented — storage, permissions, the API
-and the overlay. URLs (§7) and the page-move rewrite (§5.3) are still to come. Where building it
-changed the design, this document was changed with it.
+**Status:** every phase of [§11](#11-suggested-order) implemented — storage, permissions, the API, the
+overlay, URLs, the page-move rewrite and auto-linking. Where building it changed the design, this
+document was changed with it.
 **Covers:** what a glossary term is, how it is stored, who may read and edit it, the overlay it is read
-and edited in, its URL, and what the first version does to leave room for linking terms automatically
-in page text later.
+and edited in, its URL, and how terms are linked in page text.
 
 A wiki accumulates vocabulary: product names, acronyms, words that mean something narrower here than
 they do anywhere else. A glossary gives each of them one place to be defined, one page that documents
@@ -43,12 +42,11 @@ The constraints this is written against:
 - **Lost updates are refused, not silent**: a save against a term somebody else changed in the meantime
   answers 409 ([§5.2](#52-concurrent-edits)).
 - **A per-site switch**, `features.glossary`.
+- **Linking terms in page text** ([§9](#9-linking-terms-in-page-text)): automatically, the first time
+  each is mentioned on a page, and by hand with `[[Glossary:Term]]` or any link to `?glossary=Term`.
 
 **Non-goals for the first version**
 
-- **Linking terms in page text automatically.** Planned; the `autoLink` column ships now and its
-  toggle is shown disabled. [§9](#9-auto-linking-later) is the design the first version is built to
-  accommodate.
 - **A `block-glossary` content block**, listing terms (or one category's) inside a page, and an inline
   block for marking a term explicitly.
 - **Glossary terms in site search results.**
@@ -72,7 +70,9 @@ The constraints this is written against:
 | Overlay | `frontend/src/components/GlossaryOverlay.vue`, registered in `MainOverlayDialog.vue`, opened by `siteStore.openGlossary()` |
 | Definition renderer | `frontend/src/renderers/glossary.js`, built on `createProseMarkdown` from `renderers/comment.js` ([§6.4](#64-the-definition)) |
 | Access | `frontend/src/stores/glossary.js`, from `GET /glossary/access` ([§4.5](#45-on-the-frontend)) |
-| Entry point | The Glossary row of `HeaderLibraryMenu.vue` |
+| Entry point | The Glossary row of `HeaderLibraryMenu.vue`, and `?glossary=` links answered by `MainOverlayDialog.vue` |
+| URLs | `frontend/src/helpers/glossaryUrl.js` ([§7](#7-urls)) |
+| Links in page text | `frontend/src/helpers/glossaryLinker.js` and `components/PageGlossaryCard.vue`, driven by `pages/Index.vue` ([§9](#9-linking-terms-in-page-text)) |
 | Strings | `glossary.*` in `backend/locales/en.json` |
 
 ---
@@ -94,7 +94,7 @@ The constraints this is written against:
 | `documentationLabel` | varchar(255), nullable | Null means the default, "Read more", which comes from the locale strings and is not stored |
 | `references` | jsonb, not null, default `[]` | `[{ url, label }]`, in the order given |
 | `caseSensitive` | boolean, not null, default false | How the term is *matched in text*; never how it is compared for uniqueness ([§3.3](#33-uniqueness)) |
-| `autoLink` | boolean, not null, default true | Whether the term is linked automatically in page text; no effect until [§9](#9-auto-linking-later) ships |
+| `autoLink` | boolean, not null, default true | Whether the term is linked automatically in page text ([§9](#9-linking-terms-in-page-text)). A link written by hand is drawn either way |
 | `category` | varchar(255), nullable | One per term, free text, used to group terms in the sidebar |
 | `creatorId` | uuid, → `users`, on delete set null | |
 | `authorId` | uuid, → `users`, on delete set null | Who saved it last |
@@ -261,7 +261,8 @@ All under `/_api/sites/:siteId/glossary`, tagged `Glossary`.
 | Method and path | Permission | What it does |
 | --- | --- | --- |
 | `GET /access` | none (it reports the permissions) | `{ enabled, readableLocales, manageableLocales }` for the caller ([§4.5](#45-on-the-frontend)) |
-| `GET /?locale=` | `read:glossary` in the locale | The list: `id`, `term`, `expansion`, `aliases`, `category`, `caseSensitive`, `autoLink`. Everything the sidebar draws and everything [§9](#9-auto-linking-later) will need, and nothing else |
+| `GET /?locale=` | `read:glossary` in the locale | The list: `id`, `term`, `expansion`, `aliases`, `category`, `caseSensitive`, `autoLink`. Everything the sidebar draws, and nothing else |
+| `GET /autolink?locale=` | `read:glossary` in the locale | The terms with `autoLink` on, as `id`, `term`, `expansion`, `aliases`, `caseSensitive`: what [§9](#9-linking-terms-in-page-text) matches page text against. Answers with an `ETag` and 304; empty while either switch is off |
 | `GET /categories?locale=` | `read:glossary` in the locale | Distinct categories, for the form's suggestions |
 | `GET /:termId` | `read:glossary` in the term's locale | The whole term, with `relatedTerms` as `[{ id, term }]` and `documentation` as `{ path, label, title, exists }` |
 | `GET /lookup?locale=&name=` | `read:glossary` in the locale | Resolves a name or alias to a term id, for [§7](#7-urls); 404 when nothing matches |
@@ -273,7 +274,7 @@ All under `/_api/sites/:siteId/glossary`, tagged `Glossary`.
 moving a term to another locale would orphan its relations and its documentation path at once, and a
 term in another locale is a different term.
 
-Every write fails with 404 when `features.glossary` is off for the site, the two lists answer empty, and
+Every write fails with 404 when `features.glossary` is off for the site, the lists answer empty, and
 a single term and a lookup answer 404, so that turning the switch off hides the glossary without
 deleting it.
 
@@ -296,8 +297,14 @@ A term deleted while it was open answers 404, and the form says so.
 same call:
 
 - **Same locale**: the path is replaced.
-- **Another locale**: the term's path is cleared, since a documentation page must be in the term's own
-  locale. The move's result reports the terms affected, so the dialog can say so.
+- **Another locale**: the term's path is cleared, label and all, since a documentation page must be in
+  the term's own locale.
+
+The move's result reports both as counts (`relinked.glossary: { updated, cleared }`) — counts only,
+since the terms are in a glossary the mover need not be able to read — and the mover is told: the first
+as a passing notice, the second as one that stays, because it is something to go and fix. It runs
+whether or not any page links to the moved one; a page can document a term without a single page
+linking to it.
 
 These are not edits to somebody else's work in the way relinking a page is, so they are not asked about
 per term: the person moving the page with `updateLinks` has asked for what pointed at it to follow.
@@ -378,7 +385,7 @@ Shown by New Term and by Edit, in the main panel.
 | Documentation label | Text input, placeholder "Read more" |
 | References | Repeatable rows of URL + label, with add and remove |
 | Case sensitive | Toggle |
-| Auto-link | Toggle, shown on and **disabled**, with a "Coming soon" hint ([§9](#9-auto-linking-later)) |
+| Auto-link | Toggle, on by default ([§9](#9-linking-terms-in-page-text)) |
 | Category | Select with suggestions from `GET /categories`; Enter on a new name uses it; shown as a removable chip |
 
 **Renaming.** When the Term field of an existing term is changed, a checkbox appears under it: *Keep
@@ -411,20 +418,30 @@ mention pass.
 
 ## 7. URLs
 
-**`?glossary=<name>` on any path the main layout draws** opens the overlay on that term, in the locale of
-the path. `<name>` is the term's name, URL-encoded, resolved with `GET /lookup`, which matches aliases
-too, so a term renamed with its old name kept as an alias keeps its old links working.
+**`?glossary=<name>` on any path that can show the overlay** opens it on that term, in the locale of
+the path. `<name>` is the term's name, URL-encoded, resolved through the list already loaded or
+`GET /lookup`, which match aliases too, so a term renamed with its old name kept as an alias keeps its
+old links working. `helpers/glossaryUrl.js` holds every piece of it.
 
 - Opening the overlay from the menu adds `?glossary` with no value (the list, nothing selected).
-- Selecting a term replaces the value; closing the overlay removes the parameter. Both use
-  `router.replace`, so browsing the glossary does not fill the history with one entry per term.
+- Selecting a term replaces the value, as does saving one (a rename changes what a link to it says).
+  Both use `router.replace`, so browsing the glossary does not fill the history with one entry per term,
+  and the router keeps its scroll position for a navigation that changed nothing else.
+- Following a glossary link in an article **pushes** the parameter, as following any link would, so
+  Back puts the overlay away again. Closing the overlay steps back over that entry when it was one,
+  and otherwise takes the parameter off with `replace`.
+- The parameter changing under an open overlay (Back, Forward) moves it to what the URL now says,
+  asking first about an unsaved form; going away altogether closes it.
 - A name that resolves to nothing opens the list with a notice, rather than an error page.
 - Switching locale in the overlay adds `&glossaryLocale=<code>` when it differs from the path's locale,
   and removes it when it does not.
+- A link in a definition to another term moves the panel to it rather than loading the page again.
 
 A query parameter rather than a route of its own, so a shared link opens the term **over the page it was
-shared from**, which is usually the context it was being discussed in. The overlay is only mounted by
-`MainLayout`, so the admin area and the profile pages ignore the parameter.
+shared from**, which is usually the context it was being discussed in. The parameter is answered by
+`MainOverlayDialog.vue`, which is what every screen able to show an overlay mounts — `MainLayout`, and
+the Tags, Search, inbox and profile screens that draw their own. The admin area mounts none, and ignores
+it.
 
 ---
 
@@ -433,48 +450,101 @@ shared from**, which is usually the context it was being discussed in. The overl
 A new kind, `glossary`, with three actions: `createGlossaryTerm`, `updateGlossaryTerm`,
 `deleteGlossaryTerm`. Each records `siteId`, `locale`, `termId` and `term`; an update also records which
 fields changed, not their values, as configuration routes do. The terms rewritten by a page move are
-recorded in that move's own entry (`meta.glossaryRelinked: [termId…]`) rather than as entries of their
-own.
+recorded in that move's own entry (`meta.glossaryRelinked: [termId…]`, and `meta.glossaryCleared` for
+those whose documentation page left their locale) rather than as entries of their own.
 
 Strings: `admin.audit.kinds.glossary` and `admin.audit.actions.<action>`.
 
 ---
 
-## 9. Auto-linking (later)
+## 9. Linking terms in page text
 
-Recognising terms in page text and linking them to their definitions. Not built in the first version,
-but the first version is shaped for it: the `autoLink` and `caseSensitive` columns, aliases, the list
-endpoint carrying exactly what a matcher needs, and the uniqueness rule that makes every match resolve to
-a single term.
+A term is linked where it is mentioned in an article: a dotted underline, a card with its definition on
+hover or focus, and the overlay on click. Automatically, for the first mention of each term on a page,
+and by hand anywhere.
 
-**It happens in the reader's browser, when the page is drawn.** A page's render is produced once at save
-time; linking terms into it then would mean re-rendering every page whenever any term changes, and would
-freeze a link to whatever a word meant on the day the page was saved. Drawn at display time, a new term
-appears in every page at once and a deleted one disappears.
+**It happens in the reader's browser, when the page is drawn** (`helpers/glossaryLinker.js`, called from
+`pages/Index.vue`). A page's render is produced once at save time; linking terms into it then would mean
+re-rendering every page whenever any term changes, and would freeze a link to whatever a word meant on
+the day the page was saved. Drawn at display time, a new term appears in every page at once and a
+deleted one disappears. **Crawlers never see it**: the app shell's prerendered body is the stored render,
+unchanged.
 
-Sketch, to be settled when it is built:
+### 9.1 What is linked
 
-- **The list**, `GET /?locale=` filtered to `autoLink`, fetched once per locale per session and
-  revalidated with an ETag derived from the locale's newest `updatedAt` and term count.
-- **The matcher** is compiled from every name and alias, longest first, so `REST API` wins over `REST`.
-  Case-insensitive terms compare with `toLocaleLowerCase(locale)`. Word boundaries come from
-  `Intl.Segmenter(locale, { granularity: 'word' })`, which is what makes it work in languages written
-  without spaces.
-- **Where it looks**: text in the article body only. Not in headings, links, `code`, `pre`, `kbd`, blocks,
-  or the table of contents.
-- **How often**: the first occurrence of each term per page, so a paragraph about REST is not a wall of
-  underlines.
-- **What a match looks like**: an underline, a hover card (expansion and the first lines of the
-  definition), and a click that opens the overlay on the term. It has to be focusable and reachable by
-  keyboard.
-- **Switches**: the term's `autoLink`, a site setting, and a page property to opt a page out.
-- **Crawlers** never see it. The app shell's prerendered body is the stored render, unchanged.
+- **The list** is `GET /autolink?locale=`, fetched once per locale per session (`stores/glossary.js`)
+  and revalidated by the browser with an `ETag` built from the locale's term count, its newest
+  `updatedAt` and the switch — every write changes one of them. The overlay drops it after every save
+  and delete, which re-links the page behind it at once.
+- **The matcher** is compiled from every name and alias, cut into word segments by
+  `Intl.Segmenter(locale, { granularity: 'word' })` exactly as the text is, so a match starts and ends on
+  a word boundary in any script — including those written without spaces — and `REST` is never found in
+  `RESTful`. Candidates are tried longest first, so `REST API` wins over `REST`; where the longest name
+  at a position belongs to a term already linked, nothing shorter is linked inside it. Case-insensitive
+  terms compare with `toLocaleLowerCase(locale)`; a run of whitespace is one space.
+- **Where it looks**: the article's text only. Never in headings, links, `code`, `pre`, `kbd`, `samp`,
+  `var`, `abbr`, `dfn`, `nav`, form controls, media, SVG or MathML, a content block (any custom element),
+  a rendered formula (`.katex`) or diagram (`.mermaid`) — nor in anything an author marked
+  `.no-glossary` (`{.no-glossary}` in markdown).
+- **How often**: the first occurrence of each term per page, in document order, so a paragraph about
+  REST is not a wall of underlines. A link written by hand counts as that term's occurrence.
+- **Where `Intl.Segmenter` is missing**, nothing is linked automatically.
 
-**Open design point: spans or highlights.** Wrapping matches in elements is the simplest way to get
-hover, focus and keyboard access, but changes the DOM of the article. Annotations deliberately insert
-nothing and use the CSS Custom Highlight API with click hit-testing (`PageAnnotationsLayer.vue`); the two
-features have to coexist on one article, and annotations find their passages again by text, which
-wrapped matches must not disturb.
+### 9.2 Links written by hand
+
+**Any link to `?glossary=<name>` on the page it sits on is a glossary link** — `[REST](?glossary=REST)`
+in any editor — and markdown has a shorthand where the site has wikilinks on: `[[Glossary:REST]]` and
+`[[Glossary:REST|shown text]]` (`renderers/modules/markdown-it-wikilinks.js`; the namespace is
+case-insensitive, and everything after the colon is the name, `#` included). They are drawn exactly as
+automatic ones are and open the same card, **whatever the auto-link switches say**: they are the way to
+reference a term where nothing is linked automatically. The Visual editor writes `[[Glossary:REST]]`
+back as it found it.
+
+A bare `?query` href is not a link to a page for the server (`resolveLink` in `helpers/pageLinks.ts`),
+as a bare `#fragment` is not: recorded, it would be the page linking to itself, and a move with
+`updateLinks` would rewrite it into an absolute path.
+
+### 9.3 What a match looks like
+
+- **A real link**, `<a class="glossary-term" href="?glossary=<term>">`, around the matched words. That
+  is what makes it focusable, reachable by keyboard, announced as a link and copyable as a URL without
+  any of it being built by hand; the alternative, painting matches with the CSS Custom Highlight API as
+  annotations do, could have none of that.
+- **Drawn as an abbreviation is**: the paragraph's own ink, a dotted underline in the link colour, solid
+  under the pointer or the keyboard (`_page-contents.scss`). Dotted is what tells it apart from the
+  links around it, Underline Links setting included.
+- **A card** (`PageGlossaryCard.vue`) after a short hover, or at once on focus: the name, the expansion,
+  the first five lines of the definition and a **Read more** link that does what a click on the term
+  does. A tooltip in the ARIA sense — the link is `aria-describedby` it while it is up — so Read more is
+  for the pointer only, out of the tab order: keyboard focus stays on the term, whose Enter does the
+  same thing. Escape puts the card away.
+- **A click**, or Enter, pushes `?glossary=<term>` and the overlay opens on it ([§7](#7-urls)). A
+  middle-click or a modified click is the browser's, as on any link.
+
+### 9.4 Switches
+
+All three must allow it, and none of them affects a link written by hand:
+
+- the term's `autoLink` (the form's Auto-link toggle);
+- the site's `features.glossaryAutoLink` (General → Features, **on** by default and read as on where it
+  was never saved, as `features.glossary` is; nothing while the glossary itself is off);
+- the page's `allowGlossaryLinks` (its properties, Relations card; on unless turned off, kept in the
+  page's `config` beside `allowComments`).
+
+And the reader must hold `read:glossary` in the page's locale: the list answers 403 otherwise, and a
+page is linked for nobody who could not open what the link leads to.
+
+### 9.5 Annotations
+
+**Both live on the same article, and the links change its elements but never its text.** Annotations
+find their passages again by text (`helpers/annotations.js`), and an `<a>` is not one of the elements
+whose text they skip, so a link changes nothing about where a passage is.
+
+What linking cannot keep is a live `Range` exactly where it was: moving the matched words into a link
+takes them out of the tree for a moment, and the DOM puts a range boundary that was *inside* them on the
+link's edge. So `Index.vue` bumps `contentRevision` whenever it links or unlinks anything, and the
+annotation layer and the annotator find their passages again by text on it — as the layer already did
+whenever the render changed.
 
 ---
 
@@ -501,7 +571,10 @@ wrapped matches must not disturb.
 3. The overlay: list, view, form, and the Library menu row.
 4. URLs.
 5. `relinkMovedPage` rewriting documentation paths.
-6. Later: auto-linking ([§9](#9-auto-linking-later)), then the other non-goals as they are wanted.
+6. Linking terms in page text ([§9](#9-linking-terms-in-page-text)), then the other non-goals as they
+   are wanted.
+
+All six are done.
 
 ---
 
