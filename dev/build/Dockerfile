@@ -10,6 +10,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -qy --no-in
     gnupg \
     openssh-client \
     pandoc \
+    tini \
     && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /wiki && \
     mkdir -p /logs && \
@@ -112,6 +113,18 @@ VOLUME ["/wiki/data/repo"]
 
 EXPOSE 3000
 EXPOSE 3443
+
+# An init in front of node, because whatever is PID 1 inherits every orphaned process in the container
+# and has to reap it, and node never does. git orphans one on every commit, pull and rebase: each runs
+# `git maintenance run --auto --detach` on the way out, which forks into the background whether or not
+# there is anything to maintain, and its parent exits -- so a git storage target left a zombie behind
+# per page save, thousands of them on a busy wiki. The browser Puppeteer drives forks helpers of its
+# own the same way.
+#
+# `-s` registers tini as a subreaper, so it still collects them when it is not PID 1 itself (`docker
+# run --init`, or a pod sharing its process namespace). Signals are forwarded to node unchanged, so the
+# graceful shutdown in `index.ts` sees the same SIGTERM it did before.
+ENTRYPOINT ["tini", "-s", "--"]
 
 # Web Storage off, which is what it was before Node 26 turned it on by default.
 #
