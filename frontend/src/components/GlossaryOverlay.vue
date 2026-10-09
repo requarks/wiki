@@ -1,61 +1,98 @@
 <template>
   <w-layout ref="rootEl" class="glossary" view="hHh lpR fFf" container>
-    <w-header class="card-header px-4 py-2">
-      <!-- -> Below 900px the list and the term take turns; this is the way back to the list -->
-      <w-btn
-        v-if="!isWide && !state.listOpen"
-        class="mr-2"
-        icon="la:arrow-left"
-        color="white"
-        dense
-        flat
-        :aria-label="t(`glossary.backToList`)"
-        @click="showList" />
-      <w-icon name="img:/_assets/icons/ultraviolet-parchment.svg" left size="md" />
-      <span>{{ t('glossary.title') }}</span>
-      <w-space />
-      <transition name="syncing">
-        <w-spinner class="mr-4" v-show="state.loading > 0" color="accent" size="20px" />
-      </transition>
-      <!-- -> Only where there is a choice to make, as in the link picker -->
-      <w-btn
-        v-if="siteStore.locales.active.length > 1"
-        class="acrylic-btn mr-4"
-        flat
-        dense
-        padding="xs md"
-        color="white"
-        :label="siteStore.localeAlias(state.locale)"
-        :aria-label="siteStore.localeAlias(state.locale)">
-        <locale-selector-menu
-          :selected="state.locale"
-          :navigate="false"
-          anchor="bottom right"
-          self="top right"
-          @select="switchLocale" />
-      </w-btn>
-      <w-btn
-        class="mr-2"
-        flat
-        rounded
-        color="white"
-        :aria-label="t(`common.actions.viewDocs`)"
-        icon="la:question-circle"
-        :href="siteStore.docsBase + `/guide/glossary`"
-        target="_blank">
-        <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
-      </w-btn>
-      <!-- -> The pushed Close the File Manager and the editing overlays put themselves away with -->
-      <w-btn-group>
+    <!--
+      The File Manager's header, toolbar for toolbar (`FileManager.vue`): the title, then the locale and
+      the filter in the middle, then the help and Close at the end. Below 900px the three wrap onto two
+      lines, the filter's on the second; see the stylesheet.
+    -->
+    <w-header class="card-header">
+      <w-toolbar class="glossary-hdr-title" dark>
+        <!-- -> Below 900px the list and the term take turns; this is the way back to the list -->
         <w-btn
-          push
+          v-if="!isWide && !state.listOpen"
+          class="mr-2"
+          icon="la:arrow-left"
           color="white"
-          text-color="grey-7"
-          :label="t(`common.actions.close`)"
-          :aria-label="t(`common.actions.close`)"
-          icon="la:times"
-          @click="close" />
-      </w-btn-group>
+          dense
+          flat
+          :aria-label="t(`glossary.backToList`)"
+          @click="showList" />
+        <w-icon name="img:/_assets/icons/ultraviolet-parchment.svg" left size="md" />
+        <span>{{ t('glossary.title') }}</span>
+      </w-toolbar>
+      <w-toolbar class="glossary-hdr-search" dark>
+        <!-- -> Only where there is a choice to make, as in the link picker -->
+        <w-btn
+          v-if="siteStore.locales.active.length > 1"
+          class="glossary-locale mr-2 acrylic-btn"
+          flat
+          color="white"
+          :label="siteStore.localeAlias(state.locale)"
+          :aria-label="siteStore.localeAlias(state.locale)"
+          style="height: 40px">
+          <locale-selector-menu :selected="state.locale" :navigate="false" @select="switchLocale" />
+        </w-btn>
+        <!-- -> The File Manager's search pill, matching names and aliases. See `.glossary-search` -->
+        <div class="glossary-search" :class="{ 'is-focused': state.filterIsFocused }">
+          <w-icon class="glossary-search-lead" name="la:search" />
+          <input
+            v-model="state.filter"
+            type="text"
+            class="glossary-search-input"
+            :placeholder="t(`glossary.filter`)"
+            :aria-label="t(`glossary.filter`)"
+            autocomplete="off"
+            @focus="state.filterIsFocused = true"
+            @blur="state.filterIsFocused = false" />
+          <button
+            v-if="state.filter.length > 0"
+            type="button"
+            class="glossary-search-clear"
+            :aria-label="t(`common.actions.clear`)"
+            @click="state.filter = ``">
+            <w-icon name="la:times" />
+          </button>
+        </div>
+      </w-toolbar>
+      <w-toolbar class="glossary-hdr-actions" dark>
+        <w-space />
+        <transition name="syncing">
+          <w-spinner class="mr-4" v-show="state.loading > 0" color="accent" size="20px" />
+        </transition>
+        <w-btn
+          class="mr-2"
+          flat
+          rounded
+          color="white"
+          :aria-label="t(`common.actions.viewDocs`)"
+          icon="la:question-circle"
+          :href="siteStore.docsBase + `/guide/glossary`"
+          target="_blank">
+          <w-tooltip>{{ t(`common.actions.viewDocs`) }}</w-tooltip>
+        </w-btn>
+        <!--
+          -> The pushed Close the File Manager and the editing overlays put themselves away with, and
+             New Term joined to it the way the group editor joins its actions to Close
+        -->
+        <w-btn-group push>
+          <w-btn
+            v-if="canManage && !state.forbidden"
+            push
+            color="primary"
+            text-color="white"
+            icon="la:plus"
+            :label="t(`glossary.newTerm`)"
+            @click="newTerm" />
+          <w-btn
+            push
+            color="white"
+            text-color="grey-7"
+            :label="t(`common.actions.close`)"
+            :aria-label="t(`common.actions.close`)"
+            icon="la:times"
+            @click="close" />
+        </w-btn-group>
+      </w-toolbar>
     </w-header>
 
     <!-- ----------------------------------------------------- -->
@@ -75,25 +112,8 @@
       :overlay-below="0">
       <div class="glossary-sidebar-inner">
         <div class="glossary-sidebar-tools">
-          <w-btn
-            v-if="canManage && !state.forbidden"
-            class="w-full mb-3"
-            unelevated
-            color="primary"
-            icon="la:plus"
-            no-caps
-            :label="t(`glossary.newTerm`)"
-            @click="newTerm" />
-          <w-input
-            v-model="state.filter"
-            outlined
-            dense
-            clearable
-            hide-bottom-space
-            :placeholder="t(`glossary.filter`)"
-            :aria-label="t(`glossary.filter`)" />
           <w-btn-toggle
-            class="glossary-toggle glossary-grouping mt-3"
+            class="glossary-toggle glossary-grouping"
             v-model="state.grouping"
             push
             no-caps
@@ -657,6 +677,8 @@ const state = reactive({
   forbidden: false,
   loadFailed: false,
   filter: '',
+  /** Whether the filter in the header has focus, which turns it to ink-on-white as the File Manager's does. */
+  filterIsFocused: false,
   grouping: storedGrouping(),
   /** Which term the sidebar marks. Kept through the form, so cancelling goes back to it. */
   selectedId: null,
@@ -859,6 +881,17 @@ watch(
       localStorage.setItem(GROUPING_STORAGE_KEY, grouping)
     } catch {
       // -> A remembered tab is a convenience; a browser that refuses to store it loses nothing else
+    }
+  }
+)
+
+// -> Below 900px the filter is in the header whichever of list and term is showing: typing in it is
+//    asking for the list
+watch(
+  () => state.filter,
+  (filter) => {
+    if (filter && !isWide.value) {
+      state.listOpen = true
     }
   }
 )
@@ -1413,6 +1446,9 @@ watch(
 
 onMounted(async () => {
   await glossaryStore.ensureAccess()
+  // -> Chosen again now the answer is current: the one the state was built from may have predated a
+  //    locale being turned on, and would send the overlay to a locale it did list
+  state.locale = initialLocale()
   await loadTerms()
   const { termId, name } = siteStore.overlayOpts ?? {}
   if (termId) {
@@ -1429,6 +1465,9 @@ onMounted(async () => {
 </script>
 
 <style lang="scss">
+/* -> Where the header wraps onto two lines, as `$fileman-hdr-wrap-max` does -- and where the list and the term start taking turns */
+$glossary-hdr-wrap-max: 899.98px;
+
 .glossary {
   /*
     The ink, stated: the dialog panel draws no text colour of its own, and an overlay that is not built
@@ -1439,6 +1478,103 @@ onMounted(async () => {
 
   @at-root .body--dark & {
     color: #fff;
+  }
+
+  /*
+    THE HEADER, as the File Manager's (`FileManager.vue`, "THE HEADER ON A NARROW SCREEN"): three
+    toolbars sharing one row, and below 900px two lines -- the title with the help and Close at its
+    end, then the locale and the filter. Close stays on the first line, where it cannot be pushed off
+    the side of a phone.
+  */
+  @media (max-width: $glossary-hdr-wrap-max) {
+    > .card-header {
+      flex-wrap: wrap;
+    }
+
+    &-hdr-title {
+      width: auto;
+      flex: 1 1 auto;
+      white-space: nowrap;
+    }
+
+    &-hdr-actions {
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    &-hdr-search {
+      order: 1;
+    }
+  }
+
+  /* -> Cut to the filter's 7px, as `.fileman-locale` is, and unlayered for the reason given there */
+  &-locale {
+    border-radius: 7px;
+  }
+
+  /*
+    The filter: `.fileman-search` in `FileManager.vue`, rule for rule -- the File Manager states its
+    field rather than borrowing the site header's, and this does the same rather than reaching into
+    another overlay's stylesheet. The reasons for the fill and the corners are written there; keep the
+    two in step.
+  */
+  &-search {
+    display: flex;
+    flex: 1 1;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 8px 0 12px;
+    border-radius: 7px;
+    background-color: $dark-2;
+    color: rgba(255, 255, 255, 0.85);
+    transition:
+      background-color 0.25s var(--ease-standard),
+      color 0.25s var(--ease-standard);
+
+    &.is-focused {
+      background-color: #fff;
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    &-lead {
+      flex-shrink: 0;
+      font-size: 20px;
+      opacity: 0.7;
+    }
+
+    &-input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      outline: none;
+
+      &::placeholder {
+        color: currentColor;
+        opacity: 0.55;
+      }
+    }
+
+    &-clear {
+      flex-shrink: 0;
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 9999px;
+      border: 0;
+      background: none;
+      color: inherit;
+      opacity: 0.6;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 
   &-sidebar {
@@ -1474,12 +1610,20 @@ onMounted(async () => {
     height: 100%;
   }
 
+  /*
+    A shade darker than the list under it, setting the switch apart: the File Manager's tree colour
+    (`.fileman-left`) in light mode. Not in dark mode, where that is `$dark-4` -- lighter than the list,
+    and the main panel's own colour, so the strip read as a piece of the panel. One step down the ramp
+    instead.
+  */
   &-sidebar-tools {
     padding: 1rem;
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background-color: $blue-grey-1;
 
     @at-root .body--dark & {
       border-bottom-color: rgba(255, 255, 255, 0.08);
+      background-color: $dark-6;
     }
   }
 

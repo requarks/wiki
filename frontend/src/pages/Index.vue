@@ -1241,7 +1241,7 @@ const glossaryAutoLink = computed(
 )
 
 watch(
-  () => [siteStore.id, userStore.authenticated, userStore.id],
+  () => glossaryStore.accessKey,
   () => {
     glossaryStore.ensureAccess()
   },

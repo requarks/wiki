@@ -28,7 +28,7 @@ The constraints this is written against:
 **Goals**
 
 - A **Glossary overlay**, opened from the header's **Library** menu: terms listed in a sidebar, the
-  selected term in the main panel, and a **New Term** button at the top of the sidebar that opens the
+  selected term in the main panel, and a **New Term** button in the overlay's header that opens the
   form in the main panel.
 - The fields in [§3.1](#31-glossaryterms): term, expansion, definition, aliases, related terms,
   documentation page and its label, external references, case sensitivity, category, and auto-link.
@@ -330,11 +330,10 @@ Features**. Off, the Library menu has no Glossary row and the API behaves as in
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Glossary                                          [ en ▾ ]       [×] │
+│ Glossary        [ en ▾ ][ Filter…          ]  (?) [+ New Term | × ]  │
 ├──────────────────────┬───────────────────────────────────────────────┤
-│ [ + New Term ]       │                                               │
-│ [ Filter…          ] │   TERM                                        │
-│ [Category ▾]         │   Expansion                                   │
+│ [ A–Z | Category ]   │   TERM                                        │
+│                      │   Expansion                                   │
 │                      │                                               │
 │ A                    │   Definition…                                 │
 │   API                │                                               │
@@ -347,9 +346,11 @@ Features**. Off, the Library menu has no Glossary row and the API behaves as in
 └──────────────────────┴───────────────────────────────────────────────┘
 ```
 
-- **Header**: title, the locale picker (only where the site has more than one active locale), close.
-- **Sidebar**: New Term (for `manage:glossary`), a filter field matching names and aliases, an
-  **A–Z / Category** switch, then the terms, each with its expansion as a second line.
+- **Header**, laid out as the File Manager's: the title; then the locale picker (only where the site
+  has more than one active locale) and a filter matching names and aliases; then help, and New Term
+  (for `manage:glossary`) joined to Close in one button group, as the group editor joins its actions.
+  Below 900px it wraps onto two lines, the locale and the filter on the second.
+- **Sidebar**: an **A–Z / Category** switch, then the terms, each with its expansion as a second line.
   - **A–Z**, the default: under letter headings. Letters are the term's first character, upper-cased
     in the locale; everything that is not a letter goes under `#`.
   - **Category**: under one heading per category, sorted by name, A–Z within each, with the terms that

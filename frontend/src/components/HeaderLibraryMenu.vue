@@ -66,9 +66,9 @@ const canUseFileManager = computed(
 
 // WATCHERS
 
-// -> Asked again whenever the answer could have changed: a login, a logout, another site
+// -> Asked again whenever the answer could have changed: see `accessKey`
 watch(
-  () => [siteStore.id, userStore.authenticated, userStore.id],
+  () => glossaryStore.accessKey,
   () => {
     glossaryStore.ensureAccess()
   },

@@ -19,7 +19,7 @@ import { useUserStore } from './user'
  */
 export const useGlossaryStore = defineStore('glossary', {
   state: () => ({
-    /** Whose answer this is -- `siteId:userId` -- so a login, a logout or another site asks again. */
+    /** Which `accessKey` this answer is for. */
     loadedFor: null,
     enabled: false,
     readableLocales: [],
@@ -29,6 +29,26 @@ export const useGlossaryStore = defineStore('glossary', {
     revision: 0
   }),
   getters: {
+    /**
+     * Everything the access answer depends on: the site, who is asking, and the two parts of the
+     * site's configuration it is drawn from -- the glossary switch and the active locales. Whatever
+     * changes it is a reason to ask again, which is what the watchers calling `ensureAccess` key on.
+     *
+     * The configuration matters as much as the session: an administrator who turns a locale on and
+     * goes to a page in it has changed nothing about who they are, and was otherwise sent to the
+     * glossary of a locale the stale answer did list, until a reload.
+     */
+    accessKey() {
+      const siteStore = useSiteStore()
+      const userStore = useUserStore()
+      const locales = siteStore.locales.active.map((lc) => lc.code).join(',')
+      return [
+        siteStore.id,
+        userStore.authenticated ? userStore.id : 'guest',
+        siteStore.features.glossary ? 'on' : 'off',
+        locales
+      ].join(':')
+    },
     /** Whether there is a glossary this session may open, in any locale. */
     isAvailable: (state) => state.enabled && state.readableLocales.length > 0,
     /** Whether this session may create, edit and delete terms in a locale. */
@@ -36,18 +56,17 @@ export const useGlossaryStore = defineStore('glossary', {
   },
   actions: {
     /**
-     * Fetch the access answer, unless it is already the one for this site and this session.
+     * Fetch the access answer, unless it is already the one for `accessKey`.
      *
      * A failure leaves the glossary unavailable rather than throwing: the menu row is the only thing
      * waiting on it, and a missing row is the right answer to not knowing.
      */
     async ensureAccess() {
       const siteStore = useSiteStore()
-      const userStore = useUserStore()
       if (!siteStore.id) {
         return
       }
-      const key = `${siteStore.id}:${userStore.authenticated ? userStore.id : 'guest'}`
+      const key = this.accessKey
       if (this.loadedFor === key) {
         return
       }
