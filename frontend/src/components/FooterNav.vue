@@ -28,8 +28,8 @@
         </template>
       </i18n-t>
     </div>
-    <div v-if="!props.generic && siteStore.footerExtra" class="site-footer-line">
-      <span>{{ siteStore.footerExtra }}</span>
+    <div v-if="!props.generic && siteStore.footerExtra" class="site-footer-line site-footer-extra">
+      <span v-html="footerExtraHtml" />
     </div>
   </div>
 </template>
@@ -38,6 +38,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { renderFooter } from '@/renderers/footer'
 import { useSiteStore } from '@/stores/site'
 
 /**
@@ -74,6 +75,7 @@ const currentYear = new Date().getFullYear()
 const hasSiteFooter = computed(() => {
   return !props.generic && siteStore.company && siteStore.contentLicense
 })
+const footerExtraHtml = computed(() => renderFooter(siteStore.footerExtra))
 const isCopyright = computed(() => {
   return siteStore.contentLicense === 'alr'
 })
@@ -96,13 +98,14 @@ const isCopyright = computed(() => {
   text-align: center;
 }
 
-.site-footer-line a {
+.site-footer-line :deep(a) {
   text-decoration: none;
   color: inherit;
 }
 
-.site-footer-line a:hover,
-.site-footer-line a:focus {
+.site-footer-line :deep(a:hover),
+.site-footer-line :deep(a:focus),
+.site-footer-extra :deep(a) {
   text-decoration: underline;
 }
 </style>

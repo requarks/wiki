@@ -150,7 +150,11 @@
                 outlined
                 v-model="state.config.footerExtra"
                 dense
-                :aria-label="t(`admin.general.footerExtra`)" />
+                :aria-label="t(`admin.general.footerExtra`)">
+                <template #append>
+                  <w-icon name="mdi:language-markdown-outline" color="grey" size="sm" />
+                </template>
+              </w-input>
             </w-item-section>
           </w-item>
         </w-card>

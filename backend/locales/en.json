@@ -556,7 +556,7 @@
   "admin.general.features": "Features",
   "admin.general.footerCopyright": "Footer / Copyright",
   "admin.general.footerExtra": "Additional Footer Text",
-  "admin.general.footerExtraHint": "Optionally add more content to the footer, such as additional copyright terms or mandatory regulatory info.",
+  "admin.general.footerExtraHint": "Optionally add more content to the footer, such as additional copyright terms or mandatory regulatory info. Basic markdown is supported.",
   "admin.general.general": "General",
   "admin.general.glossaryAutoLink": "Link Glossary Terms",
   "admin.general.glossaryAutoLinkHint": "Link glossary terms where they appear in page text, the first time each one is mentioned on a page. A term and a page can each opt out on their own.",
