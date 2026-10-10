@@ -804,9 +804,10 @@ async function routes(app: FastifyInstance) {
         /*
           The badge on the Talk tab, which has to be there before the tab is opened — so it comes with
           the page rather than with the comments. One indexed count, and not even that for a site
-          whose discussions live at a third party or that has comments turned off.
+          whose discussions live at a third party or that has comments turned off -- nor for a page
+          still waiting for its password, whose discussion is behind it with the body.
         */
-        WIKI.models.comments.usesBuiltIn(req.params.siteId)
+        WIKI.models.comments.usesBuiltIn(req.params.siteId) && !page.isLocked
           ? WIKI.models.comments.countForPage(page.id)
           : 0,
         /*
@@ -933,7 +934,12 @@ async function routes(app: FastifyInstance) {
         path: page.path
       })
 
-      return page
+      // -> The Talk tab's badge, withheld while the page was locked (see the page route) and now the
+      //    reader's to see along with the discussion itself
+      const commentsCount = WIKI.models.comments.usesBuiltIn(req.params.siteId)
+        ? await WIKI.models.comments.countForPage(page.id)
+        : 0
+      return { ...page, commentsCount }
     }
   )
 

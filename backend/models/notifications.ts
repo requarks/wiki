@@ -3,6 +3,7 @@ import { and, count, desc, eq, gte, inArray, isNotNull, isNull, lt, or, sql } fr
 import {
   notificationEvents as eventsTable,
   notifications as notificationsTable,
+  pages as pagesTable,
   userNotificationPrefs as prefsTable
 } from '../db/schema.ts'
 import { durationToSeconds } from '../helpers/common.ts'
@@ -381,11 +382,27 @@ class Notifications {
    *
    * Keyset-paginated on `(updatedAt, id)` — the cursor is the last entry of the previous page — since
    * an entry that absorbs a new event moves to the top, and an offset would skip or repeat around it.
+   *
+   * **A comment on a password-protected page is not quoted** until the reader has satisfied that
+   * password (`unlocked`, which is `unlockedFor` in `api/pages.ts`): the entry says `excerptWithheld`
+   * in place of the excerpt, as the Talk view refuses the comment itself. Decided from the page as it
+   * is NOW rather than when the entry was written, so a password added since withholds what is already
+   * in the inbox, and one taken off quotes it again -- the excerpt stays in the snapshot either way.
    */
   async list(
     userId: string,
     siteId: string,
-    { cursor, unread, limit }: { cursor?: string; unread?: boolean; limit?: number } = {}
+    {
+      cursor,
+      unread,
+      limit,
+      unlocked
+    }: {
+      cursor?: string
+      unread?: boolean
+      limit?: number
+      unlocked: (pageId: string) => boolean
+    }
   ): Promise<{ entries: InboxEntry[]; next: string | null }> {
     const size = Math.min(Math.max(limit ?? INBOX_PAGE_SIZE, 1), INBOX_PAGE_MAX)
     const conditions = [this.inboxScope(userId, siteId)]
@@ -410,9 +427,12 @@ class Notifications {
         data: notificationsTable.data,
         readAt: notificationsTable.readAt,
         createdAt: notificationsTable.createdAt,
-        updatedAt: notificationsTable.updatedAt
+        updatedAt: notificationsTable.updatedAt,
+        // -> Null where the page has gone, which leaves nothing behind a password
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean)
       })
       .from(notificationsTable)
+      .leftJoin(pagesTable, eq(pagesTable.id, notificationsTable.pageId))
       .where(and(...conditions))
       .orderBy(desc(notificationsTable.updatedAt), desc(notificationsTable.id))
       .limit(size + 1)
@@ -420,12 +440,18 @@ class Notifications {
     const last = page[page.length - 1]
     return {
       entries: page.map((row) => {
-        const { readAt, data, ...rest } = row
+        const { readAt, data, isProtected, ...rest } = row
         const { excerpt, ...snapshot } = (data ?? {}) as Record<string, unknown>
+        // -> A comment's text only while the comment exists: deleting it takes it out of every inbox
+        const quoted = Boolean(row.commentId) && excerpt !== undefined
+        const withheld = quoted && isProtected && !!row.pageId && !unlocked(row.pageId)
         return {
           ...rest,
-          // -> A comment's text only while the comment exists: deleting it takes it out of every inbox
-          data: row.commentId && excerpt !== undefined ? { ...snapshot, excerpt } : snapshot,
+          data: withheld
+            ? { ...snapshot, excerptWithheld: true }
+            : quoted
+              ? { ...snapshot, excerpt }
+              : snapshot,
           isRead: readAt !== null
         }
       }),

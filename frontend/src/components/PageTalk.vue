@@ -28,6 +28,9 @@
             :editing-annotation-id="state.editingAnnotationId"
             :annotation-busy="state.busy"
             :can-delete-thread="canModerate"
+            :reply-count="thread.replies.length"
+            :replies-collapsed="Boolean(state.collapsed[thread.id])"
+            @toggle-replies="toggleReplies"
             @reply="startReply"
             @edit="startEdit"
             @cancel-edit="state.editingId = null"
@@ -41,7 +44,7 @@
             @save-annotation="saveAnnotation"
             @delete-annotation="confirmDeleteAnnotation" />
           <page-comment
-            v-for="reply of thread.replies"
+            v-for="reply of state.collapsed[thread.id] ? [] : thread.replies"
             :key="reply.id"
             :comment="reply"
             :mentions="state.mentions"
@@ -121,7 +124,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
@@ -214,7 +217,13 @@ const state = reactive({
   /** The annotation whose note is being edited, held here for the same reason as `editingId`. */
   editingAnnotationId: null,
   /** Whether each annotation's passage is still in the article, by id. See the note above. */
-  annotationsFound: {}
+  annotationsFound: {},
+  /**
+   * The threads whose replies are folded away, by the id of the comment that opens them. Kept across
+   * a reload of the list -- posting somewhere else on the page should not unfold what was folded --
+   * but not across pages.
+   */
+  collapsed: {}
 })
 
 // COMPUTED
@@ -289,7 +298,10 @@ watch(
 //    leaving the previous discussion under the new article
 watch(
   () => pageStore.id,
-  () => load()
+  () => {
+    state.collapsed = {}
+    load()
+  }
 )
 
 // METHODS
@@ -355,6 +367,23 @@ async function load() {
   state.loading = false
 }
 
+function toggleReplies(comment) {
+  state.collapsed[comment.id] = !state.collapsed[comment.id]
+}
+
+/**
+ * Unfold the thread a `#comment-<id>` fragment points into, if it is folded, so that the reply it
+ * names exists to be scrolled to -- `pages/Index.vue` looks for it on the same hash change, and keeps
+ * looking for a few seconds, so unfolding it here is enough.
+ */
+function onHashChange() {
+  const id = window.location.hash.slice(1).replace(/^comment-/, '')
+  const parentId = state.comments.find((c) => c.id === id)?.parentId
+  if (parentId && state.collapsed[parentId]) {
+    state.collapsed[parentId] = false
+  }
+}
+
 function startEdit(comment) {
   // -> One box at a time, and never two: a reply box open under a comment that is itself being
   //    edited is two drafts of the same thing on screen
@@ -367,6 +396,8 @@ function startReply(comment) {
   // -> A reply always attaches to the thread, so the box opens under it whichever message was
   //    clicked -- but it is addressed to whoever was actually being answered
   state.replyTo = comment.parentId ?? comment.id
+  // -> The box opens at the bottom of the thread, under the replies it is about to join
+  state.collapsed[state.replyTo] = false
   state.replyToName = comment.authorName
   /*
     Started with a mention of whoever is being answered, where they have a handle to be mentioned by
@@ -627,6 +658,11 @@ function startNewComment() {
 
 onMounted(() => {
   load()
+  window.addEventListener('hashchange', onHashChange)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', onHashChange)
 })
 
 // EXPOSED

@@ -97,6 +97,12 @@
                 <w-item-label v-if="entry.data.excerpt" caption class="inbox-excerpt">
                   “{{ entry.data.excerpt }}”
                 </w-item-label>
+                <!-- -> A comment on a page behind a password the reader has not entered: not quoted,
+                     and said so, since the page is where it can be read once it is unlocked -->
+                <w-item-label v-else-if="entry.data.excerptWithheld" caption>
+                  <w-icon name="la:lock" size="1.1em" />
+                  {{ t('notifications.excerptWithheld') }}
+                </w-item-label>
                 <w-item-label caption>
                   <!-- -> Anchored on the date itself, or WTooltip climbs to the row's `.w-item` -->
                   <span data-tooltip-anchor>

@@ -73,9 +73,10 @@
         <!--
           CONTRIBUTIONS
           =============
-          Two questions of the same person -- what they started and what they touched last -- so the
-          two tabs are two searches differing only in which column they filter on and which date they
-          order and display by.
+          Three questions of the same person. What they started and what they touched last are two
+          searches differing only in which column they filter on and which date they order and display
+          by; what they said in discussions is a list of comments, each leading to the Talk view of its
+          page and drawn as a line or two of what was said rather than as a page.
         -->
         <w-card v-if="!state.notFound" class="layout-userprofile-card mt-6">
           <w-card-section>
@@ -95,7 +96,44 @@
                 class="p-6 text-center">
                 <em class="text-grey">{{ tab.empty }}</em>
               </div>
-              <w-list separator>
+              <w-list v-if="tab.name === `comments`" separator>
+                <w-item
+                  v-for="item of lists.comments.results"
+                  :key="item.id"
+                  clickable
+                  :to="commentUrl(item)">
+                  <w-item-section avatar>
+                    <w-avatar color="primary" text-color="white" rounded>
+                      <w-icon :name="item.parentId ? `la:reply` : `la:comment`" size="24px" />
+                    </w-avatar>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-item-label
+                      v-if="item.preview"
+                      class="layout-userprofile-comment"
+                      lines="2"
+                      >{{ item.preview }}</w-item-label
+                    >
+                    <w-item-label v-else class="layout-userprofile-comment text-grey">
+                      <em>{{ t('userProfile.commentAnnotationsOnly', item.annotationCount) }}</em>
+                    </w-item-label>
+                    <w-item-label caption>{{
+                      item.parentId
+                        ? t('userProfile.replyOn', { title: item.pageTitle })
+                        : t('userProfile.commentOn', { title: item.pageTitle })
+                    }}</w-item-label>
+                    <w-item-label class="text-grey" caption>{{
+                      pageUrl({ locale: item.pageLocale, path: item.pagePath })
+                    }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section side top>
+                    <div class="text-caption text-right">
+                      {{ userStore.formatDateTime(t, item.createdAt) }}
+                    </div>
+                  </w-item-section>
+                </w-item>
+              </w-list>
+              <w-list v-else separator>
                 <w-item
                   v-for="item of lists[tab.name].results"
                   :key="item.id"
@@ -139,7 +177,7 @@
                   color="primary"
                   :label="t(`userProfile.loadMore`)"
                   :disable="lists[tab.name].loading > 0"
-                  @click="loadMoreCurrent" />
+                  @click="fetchCurrent" />
               </div>
             </w-tab-panel>
           </w-tab-panels>
@@ -168,6 +206,7 @@ import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { renderComment } from '@/renderers/comment'
 
 /** How many pages one tab fetches at a time. Load More asks for the next batch of the same size. */
 const PAGE_SIZE = 25
@@ -213,13 +252,14 @@ const state = reactive({
 })
 
 /**
- * One list per tab, fetched the first time its tab is looked at rather than both up front: a reader
- * arriving here is shown the pages this person created, and the other list is a second query for a
- * tab that may never be opened.
+ * One list per tab, fetched the first time its tab is looked at rather than all up front: a reader
+ * arriving here is shown the pages this person created, and the other lists are more queries for
+ * tabs that may never be opened.
  */
 const lists = reactive({
   created: { results: [], total: 0, offset: 0, loading: 0, fetched: false },
-  updated: { results: [], total: 0, offset: 0, loading: 0, fetched: false }
+  updated: { results: [], total: 0, offset: 0, loading: 0, fetched: false },
+  comments: { results: [], total: 0, offset: 0, loading: 0, fetched: false }
 })
 
 /** The moment the clock line is drawn from, ticked by the interval below. */
@@ -233,8 +273,10 @@ const defaultPageIcon = DEFAULT_PAGE_ICON
 const userId = computed(() => route.params.userId)
 
 /**
- * What separates the two tabs, in one place: which column the search filters on, and which of the two
- * dates it orders and labels the rows by.
+ * What separates the page tabs, in one place: which column the search filters on, and which of the two
+ * dates it orders and labels the rows by. The comments tab is drawn and fetched by its own code, and
+ * is only there on a site whose discussions are the wiki's own -- a third-party provider's comments
+ * are not stored here to be listed.
  */
 const tabs = computed(() => [
   {
@@ -254,7 +296,17 @@ const tabs = computed(() => [
     filter: 'authorId',
     dateField: 'updatedAt',
     orderBy: 'updatedAt'
-  }
+  },
+  ...(siteStore.comments.isBuiltIn
+    ? [
+        {
+          name: 'comments',
+          label: t('userProfile.comments'),
+          icon: 'la:comments',
+          empty: t('userProfile.noComments')
+        }
+      ]
+    : [])
 ])
 
 const currentTab = computed(() => tabs.value.find((tb) => tb.name === state.tab))
@@ -308,7 +360,7 @@ watch(
     }
     await fetchProfile()
     if (!state.notFound) {
-      fetchPages()
+      fetchCurrent()
     }
   },
   { immediate: true }
@@ -319,7 +371,7 @@ watch(
   () => state.tab,
   () => {
     if (!state.notFound && !lists[state.tab].fetched) {
-      fetchPages()
+      fetchCurrent()
     }
   }
 )
@@ -334,6 +386,25 @@ watch(
  */
 function pageUrl(item) {
   return `${siteStore.localeUrlPrefix(item.locale)}/${item.path}`
+}
+
+/** Where a comment listed here leads: the Talk view of its page, scrolled to it (`pages/Index.vue`). */
+function commentUrl(item) {
+  return `${pageUrl({ locale: item.pageLocale, path: item.pagePath })}#comment-${item.id}`
+}
+
+/**
+ * What a comment row shows of the comment: its text with the markdown taken out, run together onto
+ * one line for the row to cut at its second (`lines` on the label).
+ *
+ * Rendered rather than stripped by pattern, so that what is left is what a reader sees on the page --
+ * the renderer already knows what is syntax. Parsed into an inert document to read the text back,
+ * never into the live one: nothing in it is drawn as HTML.
+ */
+function commentPreview(excerpt) {
+  const html = renderComment(excerpt)
+  const text = new DOMParser().parseFromString(html, 'text/html').body.textContent ?? ''
+  return text.replace(/\s+/g, ' ').trim()
 }
 
 /**
@@ -415,8 +486,44 @@ async function fetchPages() {
   }
 }
 
-function loadMoreCurrent() {
-  fetchPages()
+/**
+ * Fetch one batch of this person's comments, appending to what is already there.
+ *
+ * The server settles which comments this reader may see before it pages -- the page rules of the page
+ * each one is on -- so as with the page lists, every batch but the last is full and the total counts
+ * nothing they were refused.
+ */
+async function fetchComments() {
+  const list = lists.comments
+  list.loading++
+  try {
+    const resp = await API_CLIENT.get(`sites/${siteStore.id}/users/${userId.value}/comments`, {
+      searchParams: { offset: list.offset, limit: PAGE_SIZE }
+    }).json()
+    list.results.push(
+      ...(resp?.results ?? []).map((r) => ({ ...r, preview: commentPreview(r.excerpt) }))
+    )
+    list.offset += PAGE_SIZE
+    list.total = resp?.total ?? 0
+    list.fetched = true
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('userProfile.commentsLoadingFailed'),
+      caption: apiErrorMessage(err)
+    })
+  } finally {
+    list.loading--
+  }
+}
+
+/** Fetch the next batch of whichever list the open tab shows. */
+function fetchCurrent() {
+  if (state.tab === 'comments') {
+    fetchComments()
+  } else {
+    fetchPages()
+  }
 }
 
 // MOUNTED
@@ -504,6 +611,15 @@ onUnmounted(() => {
   &-identity-text {
     flex: 1 1 auto;
     min-width: 15rem;
+  }
+
+  /*
+    A comment row's text, clamped to two lines by the label itself (`lines`). A comment can hold a URL
+    or a run of characters with no break opportunity, which would otherwise widen the row rather than
+    wrap onto the second line.
+  */
+  &-comment {
+    overflow-wrap: anywhere;
   }
 
   &-avatar {

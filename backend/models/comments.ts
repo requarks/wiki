@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
-import { and, asc, count, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import {
   commentAnnotations as annotationsTable,
   comments as commentsTable,
@@ -15,7 +15,9 @@ import {
   parseModuleProps
 } from '../helpers/common.ts'
 import type { ModuleProp } from '../helpers/common.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import { liveCondition } from '../helpers/publishing.ts'
+import type { AccessActor } from './groups.ts'
 
 /**
  * The key of the provider that IS this wiki, as opposed to the ones that are somebody else's service.
@@ -262,6 +264,28 @@ export interface CommentEntry {
   isDeleted: boolean
   /** The passages of the article it is about, in the order they were picked. Empty for most. */
   annotations: AnnotationEntry[]
+}
+
+/**
+ * How much of a comment a listing of somebody's comments carries, in characters. A row shows a line or
+ * two of it, so the rest of up to `COMMENT_MAX_LENGTH` would be bytes nobody reads.
+ */
+export const AUTHORED_EXCERPT_LENGTH = 400
+
+/** One comment in a listing of what one person wrote, with the page it is on. */
+export interface AuthoredCommentEntry {
+  id: string
+  parentId: string | null
+  /** The start of the markdown source, cut at `AUTHORED_EXCERPT_LENGTH` with no regard for syntax. */
+  excerpt: string
+  createdAt: Date
+  updatedAt: Date
+  /** How many passages it annotates -- what stands in for its text when it has none of its own. */
+  annotationCount: number
+  pageId: string
+  pageTitle: string
+  pagePath: string
+  pageLocale: string
 }
 
 /** A handle that resolved to somebody, as the renderer needs it to draw the mention as a link. */
@@ -755,12 +779,120 @@ class Comments {
   }
 
   /**
+   * The comments one person has written on a site, newest first, as one reader may see them -- what
+   * the Comments tab of a public profile lists.
+   *
+   * A comment is listed where the reader could follow it to the page's Talk view and find it there:
+   * `read:pages` to open the page, `read:comments` for its discussion, the page live or one this reader
+   * may see while it is not (`unpublished`, as the page view decides it), the password satisfied where
+   * the page has one (`unlocked`) -- the discussion is behind it as much as the body is -- and the page
+   * still taking comments, since with that switched off it has no Talk view to land on. Placeholders of deleted comments
+   * are never listed; there is nothing of the author left in one.
+   *
+   * Decided BEFORE paging, as `search.searchPages` does it and for the same reason: a page rule can be
+   * a pattern or a set of tags, so only a row can answer it, and a batch filtered after its `LIMIT`
+   * comes back short with a total still counting what the reader was refused -- which is itself
+   * something about pages they may not see. The first query reads only what a rule looks at, the
+   * second the full rows of the one batch returned.
+   */
+  async listByAuthor({
+    siteId,
+    authorId,
+    actor,
+    unpublished,
+    unlocked,
+    offset = 0,
+    limit = 25
+  }: {
+    siteId: string
+    authorId: string
+    actor: AccessActor
+    unpublished: false | ((page: RulePageRef) => boolean)
+    /** Whether this reader has satisfied the password of a protected page, by its id. */
+    unlocked: (pageId: string) => boolean
+    offset?: number
+    limit?: number
+  }): Promise<{ results: AuthoredCommentEntry[]; total: number }> {
+    const conditions = [
+      eq(commentsTable.authorId, authorId),
+      eq(pagesTable.siteId, siteId),
+      isNull(commentsTable.deletedAt),
+      sql`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`
+    ]
+    // -> The reader who may see no unpublished page anywhere is held to live ones here, as the search does
+    if (unpublished === false) {
+      conditions.push(liveCondition(pagesTable))
+    }
+    const candidates = await WIKI.db
+      .select({
+        id: commentsTable.id,
+        pageId: pagesTable.id,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean)
+      })
+      .from(commentsTable)
+      .innerJoin(pagesTable, eq(pagesTable.id, commentsTable.pageId))
+      .where(and(...conditions))
+      .orderBy(desc(commentsTable.createdAt), desc(commentsTable.id))
+
+    // -> Per page rather than per comment: a person's comments cluster on the pages they discuss
+    const pageVerdicts = new Map<string, boolean>()
+    const readable = candidates.filter((row) => {
+      let verdict = pageVerdicts.get(row.pageId)
+      if (verdict === undefined) {
+        const ref = { siteId, path: row.path, locale: row.locale, tags: row.tags ?? [] }
+        verdict =
+          WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
+          WIKI.models.groups.checkAccess(actor, 'read:comments', ref) &&
+          (row.isLive || (unpublished !== false && unpublished(ref))) &&
+          (!row.isProtected || unlocked(row.pageId))
+        pageVerdicts.set(row.pageId, verdict)
+      }
+      return verdict
+    })
+    const ids = readable.slice(offset, offset + limit).map((row) => row.id)
+    if (ids.length < 1) {
+      return { results: [], total: readable.length }
+    }
+
+    const rows = await WIKI.db
+      .select({
+        id: commentsTable.id,
+        parentId: commentsTable.parentId,
+        excerpt: sql<string>`left(${commentsTable.content}, ${AUTHORED_EXCERPT_LENGTH})`,
+        createdAt: commentsTable.createdAt,
+        updatedAt: commentsTable.updatedAt,
+        annotationCount:
+          sql<number>`(SELECT count(*) FROM ${annotationsTable} WHERE ${annotationsTable.commentId} = ${commentsTable.id})`.mapWith(
+            Number
+          ),
+        pageId: pagesTable.id,
+        pageTitle: pagesTable.title,
+        pagePath: pagesTable.path,
+        pageLocale: pagesTable.locale
+      })
+      .from(commentsTable)
+      .innerJoin(pagesTable, eq(pagesTable.id, commentsTable.pageId))
+      .where(inArray(commentsTable.id, ids))
+    // -> Back into the order the first query settled, which `IN` does not keep
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    return {
+      results: ids.map((id) => byId.get(id)).filter((row) => row !== undefined),
+      total: readable.length
+    }
+  }
+
+  /**
    * The page a comment is about, as everything that guards one needs it.
    *
    * Its path, locale and tags because that is what a page rule is matched against, and
    * `allowComments` because a page can be closed to discussion from its own properties dialog
    * whatever the site has configured. Deliberately not `pages.getPage` — that assembles a page for
-   * reading, and this is a few columns and a scoping check. `isLive` is the caller's to act on.
+   * reading, and this is a few columns and a scoping check. `isLive` and `isProtected` are the
+   * caller's to act on.
    *
    * @returns The reference, or null when no such page exists on this site
    */
@@ -775,7 +907,10 @@ class Comments {
         allowComments: sql<boolean>`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`,
         // -> A discussion quotes its page, annotations word for word, so it is only there while the
         //    page is — see `helpers/publishing.ts`
-        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
+        // -> Whether the page is behind a password, which hides its discussion as well as its body
+        //    until the session has unlocked it (`unlockedFor` in `api/pages.ts`)
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(and(eq(pagesTable.id, pageId), eq(pagesTable.siteId, siteId)))
@@ -823,6 +958,9 @@ class Comments {
         locale: pagesTable.locale,
         tags: pagesTable.tags,
         title: pagesTable.title,
+        // -> Whether the page is behind a password, which hides its discussion as well as its body
+        //    until the session has unlocked it (`unlockedFor` in `api/pages.ts`)
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean),
         allowComments: sql<boolean>`coalesce((${pagesTable.config} ->> 'allowComments')::boolean, true)`
       })
       .from(commentsTable)
@@ -1015,6 +1153,9 @@ class Comments {
         path: pagesTable.path,
         locale: pagesTable.locale,
         tags: pagesTable.tags,
+        // -> Whether the page is behind a password, which hides its discussion as well as its body
+        //    until the session has unlocked it (`unlockedFor` in `api/pages.ts`)
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean),
         title: pagesTable.title
       })
       .from(annotationsTable)

@@ -58,6 +58,8 @@ export interface MailNotificationEntry {
   pageTitle: string
   /** A comment's first lines, as typed. */
   excerpt?: string
+  /** Set in place of `excerpt` for a comment on a password-protected page, which is not quoted. */
+  excerptWithheld?: boolean
   /** Set when nobody did it by hand: `import` or `bulk`. */
   origin?: string
   /** Where the entry leads. */
@@ -564,6 +566,13 @@ class Mail {
         ...(entry.count > 1 ? [t('notifications.count', { count: entry.count })] : []),
         ...(entry.origin ? [t(`notifications.origin.${entry.origin}`)] : [])
       ].join(' · ')
+    // -> What stands where the comment would be quoted: its text, or why it is not there
+    const quoteOf = (entry: MailNotificationEntry) =>
+      entry.excerptWithheld
+        ? t('notifications.excerptWithheld')
+        : entry.excerpt
+          ? `“${entry.excerpt}”`
+          : ''
     const footer = t('mail.notification.footer', { siteName })
     const links = [
       { label: t('mail.notification.manage'), url: d.manageUrl },
@@ -577,7 +586,7 @@ class Mail {
       return {
         subject: t('mail.notification.subject', { siteName, message }),
         title: message,
-        body: [...(entry.excerpt ? [`“${entry.excerpt}”`] : []), ...(detail ? [detail] : [])],
+        body: [quoteOf(entry), detail].filter(Boolean),
         action: {
           label: t(`mail.notification.actions.${entry.category}`),
           url: entry.url
@@ -593,9 +602,7 @@ class Mail {
       title: t('mail.notificationDigest.title', { siteName }),
       body: [t('mail.notificationDigest.body', { count: total })],
       items: d.entries.map((entry) => {
-        const detail = [entry.excerpt ? `“${entry.excerpt}”` : '', detailOf(entry)]
-          .filter(Boolean)
-          .join(' — ')
+        const detail = [quoteOf(entry), detailOf(entry)].filter(Boolean).join(' — ')
         return { text: describe(entry), url: entry.url, ...(detail && { detail }) }
       }),
       action: {

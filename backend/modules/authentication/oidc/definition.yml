@@ -198,6 +198,11 @@ props:
 refs:
   callbackUrl:
     title: Authorization Callback URL
-    hint: Register this as the redirect URI at the provider. It is the same for every provider.
+    hint: Register this as the redirect / callback URI at the provider. If you have multiple sites using this strategy, you must register all the site hostnames as well.
     icon: back
     value: '{host}/_api/auth/{id}/callback'
+  logoutUrl:
+    title: Post Logout URL
+    hint: Register this as the post logout redirect / callback URI at the provider. If you have multiple sites using this strategy, you must register all the site hostnames as well. Note that if you override the logout URL in the site login settings or at the group level, you must also allow these URLs or use a wildcard match.
+    icon: back
+    value: '{host}/'

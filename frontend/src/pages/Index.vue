@@ -1058,11 +1058,14 @@ const canCreatePage = computed(
 /*
   Whether this page has a talk page to switch to.
 
-  Four things, and all four have to hold. The site must be using the wiki's OWN comments provider --
+  Five things, and all five have to hold. The site must be using the wiki's OWN comments provider --
   every other one is a widget under the article, not a second view of the page. The page must take
   comments at all, which is the switch in its properties dialog. The reader must hold `read:comments`
   HERE, from the page rules rather than from the group-wide list, since that is what the endpoint
-  behind the tab will check. And the page has to exist: an empty path has nothing to discuss.
+  behind the tab will check. The page has to exist: an empty path has nothing to discuss. And it must
+  not be waiting for its password: the discussion is behind that with the body, and the server
+  refuses it until the page is unlocked -- after which the page is loaded again, unlocked, and the tab
+  is there.
 
   With no tab, the article is simply the view, which is why everything below tests
   `activeView` rather than the view alone -- see the computed below it.
@@ -1072,6 +1075,7 @@ const showTalkTab = computed(
     siteStore.comments.isBuiltIn &&
     pageStore.allowComments &&
     !pageStore.notFound &&
+    !pageStore.isLocked &&
     !editorStore.isActive &&
     // -> A blog's front page is a listing rather than an article: there is nothing here to discuss,
     //    and the discussion a reader wants belongs on the post they are reading
@@ -1396,16 +1400,22 @@ async function switchView(view) {
 /**
  * The view the current URL asks for.
  *
- * `#talk` opens the discussion instead of the article -- what a link to a comment, or to the talk
- * page of an article, has to be able to say -- and `#links` opens the list of what points here. Read
- * from `window.location` rather than from the route, so that it answers the same before the router
- * has resolved anything and when the fragment is changed from outside the app.
+ * `#talk` opens the discussion instead of the article -- what a link to the talk page of an article
+ * has to be able to say -- and so does `#comment-<id>`, the link to one comment in it that its Copy
+ * Link button hands out (`PageComment.vue`), which is then scrolled to like any other anchor. Only
+ * with a uuid after it, since a heading called "Comment Guidelines" is `#comment-guidelines`. `#links`
+ * opens the list of what points here. Read from `window.location` rather than from the route, so that
+ * it answers the same before the router has resolved anything and when the fragment is changed from
+ * outside the app.
  *
  * A page with no such view to show simply stays on the article: `activeView` is what is drawn, so a
  * fragment naming a view this reader does not have is ignored rather than blanking the column.
  */
 function viewFromHash() {
   const view = window.location.hash.slice(1)
+  if (/^comment-[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(view)) {
+    return 'talk'
+  }
   return view === 'talk' || view === 'links' ? view : 'article'
 }
 

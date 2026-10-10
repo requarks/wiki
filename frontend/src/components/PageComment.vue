@@ -225,6 +225,26 @@
       in its place carries its own buttons then.
     -->
     <div class="page-comment-footer" v-if="hasActions">
+      <!--
+        Collapse / Expand, alone at the left end, with its icon over the line the replies hang off --
+        it is that line, and what is on it, that the button folds away. See `.page-comment-toggle`.
+      -->
+      <w-btn
+        v-if="replyCount > 0"
+        class="page-comment-toggle"
+        size="sm"
+        padding="none xs"
+        flat
+        no-caps
+        color="grey"
+        :icon="repliesCollapsed ? `la:angle-down` : `la:angle-up`"
+        :label="
+          repliesCollapsed
+            ? t(`common.comments.expandReplies`, replyCount)
+            : t(`common.comments.collapseReplies`)
+        "
+        :aria-expanded="repliesCollapsed ? `false` : `true`"
+        @click="$emit(`toggle-replies`, comment)" />
       <w-btn
         v-if="comment.isDeleted"
         size="sm"
@@ -237,11 +257,23 @@
         :disable="busy"
         @click="$emit(`delete-thread`, comment)" />
       <!--
-        Reply at the far right, set apart from the two that change the comment -- answering is what
-        the bar is mostly for, and Edit and Delete are a reader's own business or a moderator's. Those
-        two are icons alone, with the word in a tooltip and for a screen reader.
+        Reply at the far right, set apart from the ones before it -- answering is what the bar is
+        mostly for, and Edit and Delete are a reader's own business or a moderator's. Those, and the
+        link that leads them, are icons alone, with the word in a tooltip and for a screen reader.
       -->
       <template v-else>
+        <!-- -> Offered to every reader: whoever can see the comment can point somebody else at it -->
+        <w-btn
+          size="sm"
+          flat
+          round
+          dense
+          color="grey"
+          icon="la:link"
+          :aria-label="t(`common.comments.copyLink`)"
+          @click="copyLink">
+          <w-tooltip>{{ t('common.comments.copyLink') }}</w-tooltip>
+        </w-btn>
         <w-btn
           v-if="canEdit"
           size="sm"
@@ -266,10 +298,7 @@
           @click="$emit(`delete`, comment)">
           <w-tooltip>{{ t('common.actions.delete') }}</w-tooltip>
         </w-btn>
-        <w-separator
-          v-if="canReply && (canEdit || canDelete)"
-          vertical
-          class="page-comment-footer-sep" />
+        <w-separator v-if="canReply" vertical class="page-comment-footer-sep" />
         <w-btn
           v-if="canReply"
           size="sm"
@@ -289,8 +318,11 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { notify } from '@/composables/notify'
+
 import { relativeDate } from '@/helpers/datetime'
 import { avatarColorFor } from '@/helpers/avatarColors'
+import { copyToClipboard } from '@/helpers/clipboard'
 import { renderComment } from '@/renderers/comment'
 
 import PageCommentEditor from '@/components/PageCommentEditor.vue'
@@ -361,6 +393,16 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  /** How many replies hang off this comment. Only ever non-zero on the comment that opens a thread. */
+  replyCount: {
+    type: Number,
+    default: 0
+  },
+  /** Whether those replies are folded away. Owned by the list, which is what draws them. */
+  repliesCollapsed: {
+    type: Boolean,
+    default: false
+  },
   /**
    * Whether this comment is the one being edited.
    *
@@ -380,6 +422,7 @@ const emit = defineEmits([
   'save',
   'delete',
   'delete-thread',
+  'toggle-replies',
   'locate-annotation',
   'resolve-annotation',
   'edit-annotation',
@@ -418,9 +461,11 @@ const hasAnnotations = computed(() => (props.comment.annotations?.length ?? 0) >
 /** Whether the footer has anything in it. See the template. */
 const hasActions = computed(() => {
   if (props.comment.isDeleted) {
-    return props.canDeleteThread
+    // -> A placeholder always has replies, but the count is what the toggle itself goes by
+    return props.canDeleteThread || props.replyCount > 0
   }
-  return !props.editing && (props.canReply || props.canEdit || props.canDelete)
+  // -> Copy Link is always there, so only an edit in progress empties it
+  return !props.editing
 })
 
 /**
@@ -452,6 +497,22 @@ const avatarColor = computed(() =>
 )
 
 // METHODS
+
+/**
+ * Put a link to this comment on the clipboard: the page as it is addressed now, with `#comment-<id>`,
+ * which opens the page on its Talk view and scrolls to the comment (`viewFromHash` in
+ * `pages/Index.vue`). The query is left off -- it says something about this reader's visit, not about
+ * the comment.
+ */
+async function copyLink() {
+  const { origin, pathname } = window.location
+  try {
+    await copyToClipboard(`${origin}${pathname}#comment-${props.comment.id}`)
+    notify({ type: 'positive', message: t('common.comments.linkCopied') })
+  } catch (err) {
+    notify({ type: 'negative', message: err.message })
+  }
+}
 
 /** Whether an annotation's passage was looked for in the article and not found. */
 function isLost(annotation) {
@@ -499,6 +560,9 @@ watch(
   --reply-indent: 48px;
   --thread-line: #{$grey-4};
 
+  /* -> Where a scroll to the comment stops (`#comment-<id>`, View Comment on an annotation): a little
+        way short of the card, so it lands with room above it rather than flush against the top */
+  scroll-margin-top: 24px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 8px;
   background-color: #fff;
@@ -577,6 +641,17 @@ watch(
   }
 }
 
+/*
+  The comment a `#comment-<id>` link was followed to, so the reader can tell which card in a column of
+  look-alike ones they were sent to. Keyed off the class `helpers/anchors.js` leaves on it, as a
+  landed footnote is -- keep the name in step with `LANDED_CLASS` there. A ring rather than a wider
+  border, so the card's contents and the thread line drawn from its edge do not move.
+*/
+.page-comment.is-anchor-landed {
+  border-color: var(--q-primary);
+  box-shadow: 0 0 0 1px var(--q-primary);
+}
+
 .page-comment-main {
   display: flex;
   gap: 12px;
@@ -604,6 +679,18 @@ watch(
     border-top-color: rgba(255, 255, 255, 0.05);
     background-color: rgba(255, 255, 255, 0.03);
   }
+}
+
+/*
+  Its icon centred on the thread line, which runs down the middle of the 36px avatar: `--comment-pad-x`
+  plus 18px in from the card's inner edge, where the footer's own content starts 6px short of the
+  padding. Less the button's 4px padding and half its icon, which is 1.715em wide in the button's own
+  font size (`WBtn.vue`) -- so `em` here is the button's, and the sum holds at any size. The auto end
+  margin sends everything after it to the far end, where the bar keeps its other actions.
+*/
+.page-comment-toggle {
+  margin-inline-start: calc(24px - 4px - 0.8575em);
+  margin-inline-end: auto;
 }
 
 .page-comment-footer-sep {

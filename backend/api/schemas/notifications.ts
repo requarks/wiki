@@ -47,7 +47,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'object',
         additionalProperties: true,
         description:
-          'A snapshot of what the entry is about, taken when it happened, so that it can still be drawn after the page has moved or gone: `page` (`id`, `title`, `path`, `locale`), `actorName`, `variants` (every variant absorbed), `previousPath`, `submissionId`, `origin` (`import` or `bulk` when nobody did it by hand), and `excerpt` — a comment’s first lines, present only while the comment exists.'
+          'A snapshot of what the entry is about, taken when it happened, so that it can still be drawn after the page has moved or gone: `page` (`id`, `title`, `path`, `locale`), `actorName`, `variants` (every variant absorbed), `previousPath`, `submissionId`, `origin` (`import` or `bulk` when nobody did it by hand), and `excerpt` — a comment’s first lines, present only while the comment exists. A comment on a password-protected page this session has not unlocked carries `excerptWithheld: true` instead of `excerpt`.'
       },
       isRead: { type: 'boolean' },
       createdAt: { type: 'string', format: 'date-time' },

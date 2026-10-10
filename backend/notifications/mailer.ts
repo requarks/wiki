@@ -2,6 +2,7 @@ import NodeCache from 'node-cache'
 import { and, asc, eq, inArray, lte, min, sql } from 'drizzle-orm'
 import {
   notifications as notificationsTable,
+  pages as pagesTable,
   sites as sitesTable,
   userNotificationPrefs as prefsTable,
   users as usersTable
@@ -60,6 +61,8 @@ interface DueRow {
   commentId: string | null
   data: Record<string, any>
   inApp: boolean
+  /** Whether the page is behind a password now. False where the page has gone. */
+  isProtected: boolean
 }
 
 /**
@@ -108,8 +111,14 @@ function entryOf(baseUrl: string, row: DueRow): MailNotificationEntry {
     count: row.count,
     actorName: row.data.actorName ?? null,
     pageTitle: row.data.page?.title ?? '',
-    // -> Only while the comment exists, the same rule the inbox applies
-    ...(row.commentId && row.data.excerpt && { excerpt: row.data.excerpt }),
+    /*
+      Only while the comment exists, the same rule the inbox applies -- and never for a page behind a
+      password, which says so instead. Unlike the inbox there is no session here to have unlocked the
+      page, and a mail goes wherever it is forwarded, so the password is never taken as satisfied.
+    */
+    ...(row.commentId &&
+      row.data.excerpt &&
+      (row.isProtected ? { excerptWithheld: true } : { excerpt: row.data.excerpt })),
     ...(row.data.origin && { origin: row.data.origin }),
     url: urlOf(baseUrl, row)
   }
@@ -161,7 +170,12 @@ async function claim(pair: { userId: string; siteId: string | null }): Promise<D
         AND "emailAfter" <= now()
       FOR UPDATE SKIP LOCKED
     )
-    RETURNING id, category, variant, count, "pageId", "commentId", data, "inApp", "updatedAt"
+    RETURNING id, category, variant, count, "pageId", "commentId", data, "inApp", "updatedAt",
+      -- Read at send time, so a password added since the comment was written still withholds it
+      EXISTS (
+        SELECT 1 FROM ${pagesTable}
+        WHERE ${pagesTable.id} = ${notificationsTable.pageId} AND ${pagesTable.password} IS NOT NULL
+      ) AS "isProtected"
   `)
   return (result.rows as any[])
     .sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
@@ -173,7 +187,8 @@ async function claim(pair: { userId: string; siteId: string | null }): Promise<D
       pageId: row.pageId,
       commentId: row.commentId,
       data: row.data ?? {},
-      inApp: row.inApp
+      inApp: row.inApp,
+      isProtected: row.isProtected === true
     }))
 }
 

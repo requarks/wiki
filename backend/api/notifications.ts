@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { audit } from '../helpers/audit.ts'
+import { unlockedFor } from './pages.ts'
 import { NOTIFICATION_CATEGORY_KEYS } from '../notifications/index.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
@@ -101,7 +102,10 @@ async function routes(app: FastifyInstance) {
       if (!userId || !siteId) {
         return reply
       }
-      return WIKI.models.notifications.list(userId, siteId, req.query)
+      return WIKI.models.notifications.list(userId, siteId, {
+        ...req.query,
+        unlocked: (pageId) => unlockedFor(req, pageId)
+      })
     }
   )
 

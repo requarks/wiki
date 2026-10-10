@@ -1,6 +1,6 @@
 import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
-import { mayOnPage, unpublishedFor } from './pages.ts'
+import { mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import {
   ANNOTATION_NOTE_MAX_LENGTH,
   ANNOTATIONS_MAX,
@@ -243,7 +243,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'List the comments of a page',
         description:
-          'Every comment on the page, oldest first and flat — the one level of nesting is assembled by the client from `parentId`, which keeps a reply beside the comment it answers however old that comment is.\n\nOnly for a site using the built-in provider; a site whose discussions live at a third party answers 404 here. Needs `read:comments` on the page, which the guests group may hold.\n\n`mentions` resolves the handles written in these comments, so that a mention is drawn as a link to the right person without a lookup per `@`.',
+          'Every comment on the page, oldest first and flat — the one level of nesting is assembled by the client from `parentId`, which keeps a reply beside the comment it answers however old that comment is.\n\nOnly for a site using the built-in provider; a site whose discussions live at a third party answers 404 here. Needs `read:comments` on the page, which the guests group may hold. A password-protected page answers 403 until the session has unlocked it (`POST …/unlock`), as every comment route does: the discussion is behind the password along with the body.\n\n`mentions` resolves the handles written in these comments, so that a mention is drawn as a link to the right person without a lookup per `@`.',
         tags: ['Comments'],
         params: pageIdParam,
         response: {
@@ -286,6 +286,73 @@ async function routes(app: FastifyInstance) {
         WIKI.models.comments.countForPage(page.id)
       ])
       return { comments, mentions, total }
+    }
+  )
+
+  /**
+   * LIST A USER'S COMMENTS
+   */
+  /*
+    No route-level `permissions`, for the reason above: what decides each comment is the reader's page
+    rules on the page it is on, which the model settles row by row before it pages.
+  */
+  app.get<{
+    Params: { siteId: string; userId: string }
+    Querystring: { offset?: number; limit?: number }
+  }>(
+    '/sites/:siteId/users/:userId/comments',
+    {
+      schema: {
+        summary: 'List the comments a user has written',
+        description:
+          'The comments and replies one user wrote on this site, newest first — the Comments tab of their public profile. Each comes with a short excerpt and the page it is on.\n\nOnly what the caller could open on the page itself is listed: `read:pages` and `read:comments` on the page, the page live (or one the caller may see unpublished), its password satisfied where it has one (unlocked in this session, or a caller the password does not bind), and the page still taking comments. Both the batch and `total` are counted after that, so neither says anything about comments the caller may not read. Deleted comments are never listed.\n\nOnly for a site using the built-in provider; any other answers 404.',
+        tags: ['Comments'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            userId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'userId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            offset: { type: 'integer', minimum: 0, default: 0 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 25 }
+          }
+        },
+        response: {
+          200: {
+            description: 'One batch of the comments this caller may read',
+            type: 'object',
+            properties: {
+              results: {
+                type: 'array',
+                items: { $ref: 'AuthoredComment#' }
+              },
+              total: {
+                type: 'integer',
+                description: 'How many of this user’s comments the caller may read, in all.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!WIKI.models.comments.usesBuiltIn(req.params.siteId)) {
+        return reply.notFound('This site does not use the built-in comments provider.')
+      }
+      return WIKI.models.comments.listByAuthor({
+        siteId: req.params.siteId,
+        authorId: req.params.userId,
+        actor: WIKI.models.groups.actorForRequest(req),
+        unpublished: unpublishedFor(req),
+        unlocked: (pageId) => unlockedFor(req, pageId),
+        offset: req.query.offset,
+        limit: req.query.limit
+      })
     }
   )
 
@@ -995,14 +1062,40 @@ async function requireBuiltInPage(
   }
   // -> Carrying the site, since everything below asks a page rule about this page and a rule may be
   //    limited to particular sites
-  const { isLive, ...ref } = { ...row, siteId: req.params.siteId }
+  const { isLive, isProtected, ...ref } = { ...row, siteId: req.params.siteId }
   // -> A page that is not live is not there for its discussion either, on the page view's own terms
   const unpublished = unpublishedFor(req)
   if (!isLive && !(unpublished && unpublished(ref))) {
     reply.notFound('This page does not exist.')
     return null
   }
+  if (!passwordSatisfied(req, reply, { id: ref.id, isProtected })) {
+    return null
+  }
   return ref
+}
+
+/**
+ * Whether the caller is past the page's password, answering 403 when they are not.
+ *
+ * A page behind a password withholds its discussion along with its body: comments quote the page,
+ * annotations word for word, and talk about what it says. So until the session has unlocked the page
+ * (`POST …/unlock`), or the caller is somebody the password does not bind (`mayBypassPassword`), every
+ * comment route refuses it -- reading, posting, and acting on what is already there, moderators
+ * included. The same 403 the history and links routes give a locked page.
+ *
+ * @returns Whether to go on; false once it has sent the reply itself
+ */
+function passwordSatisfied(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  page: { id: string; isProtected: boolean }
+): boolean {
+  if (page.isProtected && !unlockedFor(req, page.id)) {
+    reply.forbidden('This page is password protected.')
+    return false
+  }
+  return true
 }
 
 /**
@@ -1029,6 +1122,9 @@ async function requireWritableComment(
   //    so only a moderator gets past the checks below either way.
   if (!comment || (comment.deletedAt && !placeholder)) {
     reply.notFound('This comment does not exist.')
+    return null
+  }
+  if (!passwordSatisfied(req, reply, { id: comment.pageId, isProtected: comment.isProtected })) {
     return null
   }
   const page = {
@@ -1073,6 +1169,11 @@ async function requireAnnotation(
   )
   if (!annotation) {
     reply.notFound('This annotation does not exist.')
+    return null
+  }
+  if (
+    !passwordSatisfied(req, reply, { id: annotation.pageId, isProtected: annotation.isProtected })
+  ) {
     return null
   }
   const page = {

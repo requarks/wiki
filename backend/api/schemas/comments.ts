@@ -216,6 +216,38 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
   })
 
   /**
+   * AUTHORED COMMENT - One comment in a listing of what one person wrote, with the page it is on
+   */
+  app.addSchema({
+    $id: 'AuthoredComment',
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      parentId: {
+        type: 'string',
+        format: 'uuid',
+        nullable: true,
+        description: 'The comment this one answers, or null for one that starts a thread.'
+      },
+      excerpt: {
+        type: 'string',
+        description:
+          'The start of the markdown source, cut at a fixed length with no regard for its syntax -- enough for a line or two of preview, never the whole comment. Empty for a comment whose annotations say everything.'
+      },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+      annotationCount: {
+        type: 'integer',
+        description: 'How many passages of the article it annotates.'
+      },
+      pageId: { type: 'string', format: 'uuid' },
+      pageTitle: { type: 'string' },
+      pagePath: { type: 'string' },
+      pageLocale: { type: 'string' }
+    }
+  })
+
+  /**
    * MENTION TARGET - A handle that resolved to somebody
    */
   app.addSchema({
