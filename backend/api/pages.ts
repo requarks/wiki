@@ -300,6 +300,73 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LIST NEWEST PAGES
+   */
+  app.get<{ Querystring: { limit?: number } }>(
+    '/pages/newest',
+    {
+      config: {
+        // -> `access:admin`, for the reason `pages/recent` gives: a dashboard panel, answered with
+        //    where a page is and when it was created, and nothing of what it says.
+        permissions: ['access:admin']
+      },
+      schema: {
+        summary: 'List the newest pages',
+        description:
+          'The pages created most recently, newest first, across every site. Ordered by creation, which no later edit moves.',
+        tags: ['Pages'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'The newest pages, newest first',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                siteId: { type: 'string', format: 'uuid' },
+                locale: { type: 'string' },
+                path: { type: 'string' },
+                title: { type: 'string' },
+                createdAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'RFC 3339 Date Time'
+                },
+                url: {
+                  type: 'string',
+                  description:
+                    "Where the page is, as a path on its own site — carrying a locale prefix only where that site's settings put one there."
+                },
+                hostname: {
+                  type: 'string',
+                  nullable: true,
+                  description:
+                    'The host that site answers on, for linking to a page on a site other than the one being browsed. Null for the catch-all site.'
+                },
+                creatorName: {
+                  type: 'string',
+                  nullable: true,
+                  description: 'Who created the page. Null once that account is gone.'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      reply.preventCache()
+      return WIKI.models.pages.getNewest({ limit: req.query.limit ?? 10 })
+    }
+  )
+
+  /**
    * LIST PAGES
    */
   app.get<{ Params: { siteId: string } }>(

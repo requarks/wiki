@@ -11,6 +11,9 @@ export const useAdminStore = defineStore('admin', {
       currentVersion: 'n/a',
       latestVersion: 'n/a',
       activeWorkers: 0,
+      assetsSize: 0,
+      assetsTotal: 0,
+      commentsTotal: 0,
       groupsTotal: 0,
       instancesTotal: 0,
       pagesTotal: 0,
@@ -71,7 +74,11 @@ export const useAdminStore = defineStore('admin', {
     },
     async fetchInfo() {
       const resp = await API_CLIENT.get('system/info').json()
+      this.info.pagesTotal = resp?.pagesTotal ?? 0
       this.info.activeWorkers = resp?.activeWorkers ?? 0
+      this.info.assetsSize = resp?.assetsSize ?? 0
+      this.info.assetsTotal = resp?.assetsTotal ?? 0
+      this.info.commentsTotal = resp?.commentsTotal ?? 0
       this.info.groupsTotal = resp?.groupsTotal ?? 0
       this.info.instancesTotal = resp?.instancesTotal ?? 0
       this.info.tagsTotal = resp?.tagsTotal ?? 0

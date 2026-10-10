@@ -430,6 +430,22 @@ export interface RecentPage {
   authorName: string | null
 }
 
+/** One row of the admin dashboard's newest-pages panel. */
+export interface NewestPage {
+  id: string
+  siteId: string
+  locale: string
+  path: string
+  title: string
+  createdAt: Date
+  /** As on `RecentPage`. */
+  url: string
+  /** As on `RecentPage`. */
+  hostname: string | null
+  /** Who created the page, whoever has written to it since. Null once that account is deleted. */
+  creatorName: string | null
+}
+
 /** A page as a sitemap entry sees it: where it is, when it last changed, and what it is a translation of. */
 export interface SitemapPage {
   locale: string
@@ -1343,13 +1359,49 @@ class Pages {
       */
       isNew: row.createdAt.getTime() === row.updatedAt.getTime(),
       url: this.urlFor(row.siteId, row.locale, row.path),
-      // -> `*` is the catch-all rather than a host; a link to it is whatever host you are already on
-      hostname:
-        WIKI.sites[row.siteId]?.hostname && WIKI.sites[row.siteId].hostname !== '*'
-          ? WIKI.sites[row.siteId].hostname
-          : null,
+      hostname: this.dashboardHostnameFor(row.siteId),
       authorName: row.authorName
     }))
+  }
+
+  /**
+   * The pages created most recently, newest first — the admin dashboard's other page panel.
+   *
+   * Across every site, for the reason `getRecentlyEdited` gives. Ordered by `createdAt`, which no
+   * later save moves, and named after the page's creator rather than whoever wrote to it last.
+   */
+  async getNewest({ limit = 10 }: { limit?: number } = {}): Promise<NewestPage[]> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        siteId: pagesTable.siteId,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        createdAt: pagesTable.createdAt,
+        creatorName: usersTable.name
+      })
+      .from(pagesTable)
+      // -> Left, so a page whose creator has since been deleted is still listed, without a name
+      .leftJoin(usersTable, eq(usersTable.id, pagesTable.creatorId))
+      .orderBy(desc(pagesTable.createdAt))
+      .limit(limit)
+
+    return rows.map((row) => ({
+      ...row,
+      url: this.urlFor(row.siteId, row.locale, row.path),
+      hostname: this.dashboardHostnameFor(row.siteId)
+    }))
+  }
+
+  /**
+   * The host a dashboard row links to a page on, so a caller looking at one site can still reach a
+   * page on another. `*` is the catch-all rather than a host — a link to it is whatever host you are
+   * already on, hence null.
+   */
+  private dashboardHostnameFor(siteId: string): string | null {
+    const hostname = WIKI.sites[siteId]?.hostname
+    return hostname && hostname !== '*' ? hostname : null
   }
 
   /**

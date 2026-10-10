@@ -795,6 +795,14 @@ class Comments {
   }
 
   /**
+   * How many comments there are across every site, for the admin dashboard. Counted the way the Talk
+   * tab's badge counts, so the placeholders of deleted comments are left out.
+   */
+  async countAll(): Promise<number> {
+    return WIKI.db.$count(commentsTable, isNull(commentsTable.deletedAt))
+  }
+
+  /**
    * One comment with the page it is on, which is what every permission check on it needs.
    *
    * Carries the email and address it was posted with, which are for the server's own use — the spam

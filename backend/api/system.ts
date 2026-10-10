@@ -146,6 +146,19 @@ async function routes(app: FastifyInstance) {
                 description:
                   'Jobs running right now on every instance combined, one worker slot each.'
               },
+              assetsSize: {
+                type: 'number',
+                description: 'Combined size of every asset across all sites, in bytes.'
+              },
+              assetsTotal: {
+                type: 'number',
+                description: 'Assets across all sites.'
+              },
+              commentsTotal: {
+                type: 'number',
+                description:
+                  'Comments across all sites, not counting the placeholders deleted comments leave behind.'
+              },
               configFile: {
                 type: 'string'
               },
@@ -241,8 +254,12 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
+      const assetsTotals = await WIKI.models.assets.totals()
       return {
         activeWorkers: await WIKI.models.jobs.countActive(),
+        assetsSize: assetsTotals.bytes,
+        assetsTotal: assetsTotals.count,
+        commentsTotal: await WIKI.models.comments.countAll(),
         configFile: path.join(process.cwd(), 'config.yml'),
         cpuCores: os.cpus().length,
         currentVersion: WIKI.version,

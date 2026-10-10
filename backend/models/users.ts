@@ -51,6 +51,14 @@ export interface RecentLogin {
   lastLoginAt: Date | null
 }
 
+/** A newly created account, as the admin dashboard lists it: identity and the moment only. */
+export interface NewestUser {
+  id: string
+  name: string
+  email: string
+  createdAt: Date
+}
+
 /**
  * An authentication provider linked to a user, as exposed by the API. Secrets held in the stored
  * `auth` blob (the password hash, the TFA secret) are never included — `isPasswordSet` and
@@ -385,6 +393,30 @@ class Users {
       .from(usersTable)
       .where(and(isNotNull(usersTable.lastLoginAt), eq(usersTable.isSystem, false)))
       .orderBy(desc(usersTable.lastLoginAt))
+      .limit(limit)
+  }
+
+  /**
+   * Fetch the most recently created accounts, newest first.
+   *
+   * The same bargain as `getRecentLogins()`: a dashboard panel below `read:users`, so identity and the
+   * moment only. System accounts are left out — they are made when the wiki is installed, not by
+   * anybody joining it.
+   *
+   * @param limit How many to return
+   * @returns The newest accounts, newest first
+   */
+  async getNewestUsers({ limit = 10 }: { limit?: number } = {}): Promise<NewestUser[]> {
+    return WIKI.db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        createdAt: usersTable.createdAt
+      })
+      .from(usersTable)
+      .where(eq(usersTable.isSystem, false))
+      .orderBy(desc(usersTable.createdAt))
       .limit(limit)
   }
 

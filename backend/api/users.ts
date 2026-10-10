@@ -211,6 +211,54 @@ async function routes(app: FastifyInstance) {
     }
   )
 
+  /**
+   * NEWEST USERS
+   */
+  app.get<{ Querystring: { limit?: number } }>(
+    '/newest',
+    {
+      config: {
+        // -> `access:admin`, for the reason `recent-logins` gives: a dashboard panel, answered with
+        //    identity plus a timestamp and nothing that needs `read:users`.
+        permissions: ['access:admin']
+      },
+      schema: {
+        summary: 'List the newest users',
+        description:
+          'The most recently created accounts, newest first. System accounts are left out — they come with the installation.',
+        tags: ['Users'],
+        querystring: {
+          type: 'object',
+          properties: {
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'The newest users, newest first',
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                createdAt: {
+                  type: 'string',
+                  format: 'date-time',
+                  description: 'RFC 3339 Date Time'
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return WIKI.models.users.getNewestUsers({ limit: req.query.limit ?? 10 })
+    }
+  )
+
   app.get(
     '/whoami',
     {

@@ -5,7 +5,6 @@ import { RESERVED_ROOT_FILES } from '../helpers/common.ts'
 import { classifyClientIp } from '../helpers/network.ts'
 import type { ClientIpClass } from '../helpers/network.ts'
 import {
-  assets as assetsTable,
   groups as groupsTable,
   jobs as jobsTable,
   pageEditSubmissions as submissionsTable,
@@ -250,7 +249,7 @@ class Metrics {
       groupsTotal,
       sitesTotal,
       tagsTotal,
-      assetsAggregate,
+      assetsTotals,
       jobsQueued,
       jobsActive,
       submissionsPending,
@@ -262,12 +261,7 @@ class Metrics {
       WIKI.db.$count(groupsTable),
       WIKI.db.$count(sitesTable),
       WIKI.db.$count(tagsTable),
-      WIKI.db
-        .select({
-          total: sql<number>`count(*)::int`,
-          bytes: sql<number>`coalesce(sum(${assetsTable.fileSize}), 0)::bigint`
-        })
-        .from(assetsTable),
+      WIKI.models.assets.totals(),
       WIKI.db.$count(jobsTable),
       WIKI.models.jobs.countActive(),
       WIKI.db.$count(submissionsTable),
@@ -292,10 +286,8 @@ class Metrics {
     gauge('wiki_groups_total', 'Groups.').set(groupsTotal)
     gauge('wiki_sites_total', 'Sites served by this wiki.').set(sitesTotal)
     gauge('wiki_tags_total', 'Distinct tags in use.').set(tagsTotal)
-    gauge('wiki_assets_total', 'Uploaded files.').set(assetsAggregate[0]?.total ?? 0)
-    gauge('wiki_assets_size_bytes', 'Total size of uploaded files.').set(
-      Number(assetsAggregate[0]?.bytes ?? 0)
-    )
+    gauge('wiki_assets_total', 'Uploaded files.').set(assetsTotals.count)
+    gauge('wiki_assets_size_bytes', 'Total size of uploaded files.').set(assetsTotals.bytes)
     gauge('wiki_jobs_queued', 'Jobs waiting to be picked up by an instance.').set(jobsQueued)
     gauge('wiki_jobs_active', 'Jobs running right now, across every instance.').set(jobsActive)
     gauge('wiki_page_edit_submissions_pending', 'Suggested edits waiting for a reviewer.').set(

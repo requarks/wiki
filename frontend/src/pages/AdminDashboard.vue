@@ -145,7 +145,7 @@
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
         <w-card>
           <w-card-section class="admin-dashboard-card">
-            <img src="/_assets/icons/fluent-female-working-with-a-laptop.svg" />
+            <img src="/_assets/icons/fluent-female-working-with-a-laptop-animated.svg" />
             <div>
               <strong>Logins</strong>
               <small>{{ adminStore.info.loginsPastDay }} <i>/ past 24h</i></small>
@@ -154,18 +154,103 @@
           <w-separator />
           <w-card-actions align="right">
             <!--
-              Guarded like every other action on this dashboard, and on the permission the Analytics
-              screen itself needs. Without this the one card action with no guard handed a live link
-              into a section `access:admin` alone cannot load -- every sibling button was already
-              disabled, so it read as the one thing such a user was meant to be able to open.
+              Guarded like every other action on this dashboard, and on the permission the
+              Authentication screen itself needs. Without this the one card action with no guard
+              handed a live link into a section `access:admin` alone cannot load -- every sibling
+              button was already disabled, so it read as the one thing such a user was meant to be
+              able to open.
             -->
             <w-btn
               flat
               :color="actionColor"
-              icon="la:chart-area"
-              :label="t(`admin.analytics.title`)"
+              icon="la:key"
+              :label="t(`common.actions.manage`)"
+              :disable="!userStore.can(`manage:system`)"
+              to="/_admin/auth" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-document-in-folder.svg" />
+            <div>
+              <strong>{{ t('admin.dashboard.pages') }}</strong>
+              <span>{{ adminStore.info.pagesTotal }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:history"
+              :label="t(`admin.audit.title`)"
+              :disable="!userStore.can(`read:audit`)"
+              to="/_admin/audit" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-photo-gallery.svg" />
+            <div>
+              <strong>{{ t('admin.dashboard.assets') }}</strong>
+              <span>{{ adminStore.info.assetsTotal }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:hdd"
+              :label="t(`admin.storage.title`)"
+              :disable="!userStore.can(`manage:storage`)"
+              :to="`/_admin/` + adminStore.currentSiteId + `/storage`" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-database.svg" />
+            <div>
+              <strong>{{ t('admin.dashboard.assetsSize') }}</strong>
+              <span>{{ filesize(adminStore.info.assetsSize) }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:hdd"
+              :label="t(`admin.storage.title`)"
+              :disable="!userStore.can(`manage:storage`)"
+              :to="`/_admin/` + adminStore.currentSiteId + `/storage`" />
+          </w-card-actions>
+        </w-card>
+      </div>
+      <div class="col-span-12 sm:col-span-6 lg:col-span-3">
+        <w-card>
+          <w-card-section class="admin-dashboard-card">
+            <img src="/_assets/icons/fluent-comments.svg" />
+            <div>
+              <strong>{{ t('admin.comments.title') }}</strong>
+              <span>{{ adminStore.info.commentsTotal }}</span>
+            </div>
+          </w-card-section>
+          <w-separator />
+          <w-card-actions align="right">
+            <w-btn
+              flat
+              :color="actionColor"
+              icon="la:comments"
+              :label="t(`common.actions.manage`)"
               :disable="!userStore.can(`manage:sites`)"
-              :to="`/_admin/` + adminStore.currentSiteId + `/analytics`" />
+              :to="`/_admin/` + adminStore.currentSiteId + `/comments`" />
           </w-card-actions>
         </w-card>
       </div>
@@ -270,7 +355,11 @@
           </w-card-actions>
         </w-card>
       </div>
-      <div class="col-span-12 lg:col-span-6">
+      <!--
+        Two stacked columns rather than a grid row per pair, so each second panel sits right under
+        its first whatever the height of the panel across from it.
+      -->
+      <div class="col-span-12 lg:col-span-6 flex flex-col gap-2">
         <w-card>
           <w-card-section class="admin-dashboard-panel">
             <img src="/_assets/icons/fluent-key-2.svg" />
@@ -279,10 +368,10 @@
           <w-separator />
           <w-list separator>
             <!--
-              Rows link only where the user list is reachable, the same condition the Users card puts on
-              its Manage button: the panel itself is `access:admin`, and reading one account is
-              `read:users`, so for a reader without it a link would land on a refusal.
-            -->
+                Rows link only where the user list is reachable, the same condition the Users card puts on
+                its Manage button: the panel itself is `access:admin`, and reading one account is
+                `read:users`, so for a reader without it a link would land on a refusal.
+              -->
             <w-item
               v-for="lastLogin of state.lastLogins"
               :key="lastLogin.id"
@@ -310,8 +399,43 @@
             </w-item>
           </w-list>
         </w-card>
+        <w-card>
+          <w-card-section class="admin-dashboard-panel">
+            <img src="/_assets/icons/fluent-user-update.svg" />
+            <strong>{{ t('admin.dashboard.newestUsers') }}</strong>
+          </w-card-section>
+          <w-separator />
+          <w-list separator>
+            <!-- -> Linked on the same condition as the Last Logins rows above -->
+            <w-item
+              v-for="newestUser of state.newestUsers"
+              :key="newestUser.id"
+              :clickable="usersAreVisible"
+              :to="usersAreVisible ? `/_admin/users/` + newestUser.id : null">
+              <w-item-section side>
+                <w-icon name="la:user-plus" :color="actionColor" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ newestUser.name }}</w-item-label>
+                <w-item-label caption>{{ newestUser.email }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <div class="text-caption">{{ relativeDate(newestUser.createdAt) }}</div>
+                <!-- -> The exact moment, in the reader's own pattern and zone, behind the rough one -->
+                <w-tooltip anchor="center left" self="center right">
+                  {{ userStore.formatDateTime(t, newestUser.createdAt) }}
+                </w-tooltip>
+              </w-item-section>
+            </w-item>
+            <w-item v-if="state.newestUsers.length < 1">
+              <w-item-section>
+                <w-item-label caption>{{ t('admin.dashboard.newestUsersNone') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
       </div>
-      <div class="col-span-12 lg:col-span-6">
+      <div class="col-span-12 lg:col-span-6 flex flex-col gap-2">
         <w-card>
           <w-card-section class="admin-dashboard-panel">
             <img src="/_assets/icons/fluent-copybook.svg" />
@@ -343,9 +467,13 @@
                 <!--
                   `url`, not the locale and path spelled out: the address is what a reader wants to
                   see under the title, and on a site that does not bracket its URLs by locale the
-                  prefix is not part of it — printing one would name a path that 404s.
+                  prefix is not part of it — printing one would name a path that 404s. The site's
+                  name goes in front, since the same path can exist on every site of the instance.
                 -->
-                <w-item-label caption class="font-mono">{{ pg.url }}</w-item-label>
+                <w-item-label caption>
+                  {{ siteTitleOf(pg) }} ·
+                  <span class="font-mono">{{ pg.url }}</span>
+                </w-item-label>
               </w-item-section>
               <w-item-section side class="text-right">
                 <div class="text-caption">{{ relativeDate(pg.updatedAt) }}</div>
@@ -365,6 +493,48 @@
             </w-item>
           </w-list>
         </w-card>
+        <w-card>
+          <w-card-section class="admin-dashboard-panel">
+            <img src="/_assets/icons/fluent-document-in-folder.svg" />
+            <strong>{{ t('admin.dashboard.newestPages') }}</strong>
+          </w-card-section>
+          <w-separator />
+          <w-list separator>
+            <!-- -> Linked the same two ways as the Recently Edited rows above -->
+            <w-item
+              v-for="pg of state.newestPages"
+              :key="pg.id"
+              clickable
+              :to="isCurrentSite(pg) ? pg.url : null"
+              :href="isCurrentSite(pg) ? null : externalPageUrl(pg)">
+              <w-item-section side>
+                <w-icon name="la:plus-circle" :color="actionColor" />
+              </w-item-section>
+              <w-item-section>
+                <w-item-label>{{ pg.title }}</w-item-label>
+                <w-item-label caption>
+                  {{ siteTitleOf(pg) }} ·
+                  <span class="font-mono">{{ pg.url }}</span>
+                </w-item-label>
+              </w-item-section>
+              <w-item-section side class="text-right">
+                <div class="text-caption">{{ relativeDate(pg.createdAt) }}</div>
+                <div class="text-caption text-grey">
+                  {{ pg.creatorName || t('admin.dashboard.recentPagesAuthorGone') }}
+                </div>
+                <!-- -> The exact moment, in the reader's own pattern and zone, behind the rough one -->
+                <w-tooltip anchor="center left" self="center right">
+                  {{ userStore.formatDateTime(t, pg.createdAt) }}
+                </w-tooltip>
+              </w-item-section>
+            </w-item>
+            <w-item v-if="state.newestPages.length < 1">
+              <w-item-section>
+                <w-item-label caption>{{ t('admin.dashboard.recentPagesNone') }}</w-item-label>
+              </w-item-section>
+            </w-item>
+          </w-list>
+        </w-card>
       </div>
     </div>
   </w-page>
@@ -374,6 +544,7 @@
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { computed, onMounted, reactive } from 'vue'
+import { filesize } from 'filesize'
 
 import { useMeta } from '@/composables/meta'
 import { dialog } from '@/composables/dialog'
@@ -429,6 +600,8 @@ const { t } = useI18n()
 const state = reactive({
   loading: 0,
   lastLogins: [],
+  newestPages: [],
+  newestUsers: [],
   recentPages: []
 })
 
@@ -475,9 +648,9 @@ useMeta(() => ({
   The counter cards read from the admin store, which `AdminLayout` fills once on mount -- `fetchInfo`
   for the counters on `info`, `fetchSites` for the sites card, which counts the list itself.
 
-  The logins panel is fetched here instead, and kept on this page's own state: nothing else shows it,
-  and the store is filled by the layout that every admin screen mounts, so putting it there would ask
-  for these rows on every one of them.
+  The list panels are fetched here instead, and kept on this page's own state: nothing else shows
+  them, and the store is filled by the layout that every admin screen mounts, so putting them there
+  would ask for these rows on every one of them.
 */
 // -> Reports its own failure rather than throwing on: one panel that could not be filled is not the
 //    whole dashboard failing to refresh
@@ -488,6 +661,19 @@ async function loadLastLogins() {
     notify({
       type: 'negative',
       message: 'Failed to load the last logins.',
+      caption: err.message
+    })
+  }
+}
+
+// -> Same bargain as the logins panel: its own state, its own failure
+async function loadNewestUsers() {
+  try {
+    state.newestUsers = await API_CLIENT.get('users/newest').json()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: 'Failed to load the newest users.',
       caption: err.message
     })
   }
@@ -506,6 +692,19 @@ async function loadRecentPages() {
   }
 }
 
+// -> Same bargain again
+async function loadNewestPages() {
+  try {
+    state.newestPages = await API_CLIENT.get('pages/newest').json()
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: 'Failed to load the newest pages.',
+      caption: err.message
+    })
+  }
+}
+
 /**
  * Whether a page belongs to the site this admin area is being browsed on.
  *
@@ -516,14 +715,19 @@ function isCurrentSite(pg) {
   return !pg.hostname || pg.siteId === siteStore.id
 }
 
+/** The name of the site a page belongs to, from the site list the admin layout has loaded. */
+function siteTitleOf(pg) {
+  return adminStore.sites.find((site) => site.id === pg.siteId)?.title ?? pg.hostname ?? ''
+}
+
 /** A page on another site, as an absolute URL on that site's own host. */
 function externalPageUrl(pg) {
   return `${window.location.protocol}//${pg.hostname}${pg.url}`
 }
 
-/** The two panels this page fills itself, in parallel — neither waits on the other. */
+/** The panels this page fills itself, in parallel — none waits on another. */
 function loadPanels() {
-  return Promise.all([loadLastLogins(), loadRecentPages()])
+  return Promise.all([loadLastLogins(), loadNewestUsers(), loadRecentPages(), loadNewestPages()])
 }
 
 async function load() {
@@ -540,7 +744,7 @@ async function load() {
   state.loading--
 }
 
-// -> The store is already filled by the layout; these two panels are what this page has to ask for
+// -> The store is already filled by the layout; these panels are what this page has to ask for
 onMounted(loadPanels)
 
 function newSite() {

@@ -1234,6 +1234,20 @@ class Assets {
     return results[0]?.preview ?? null
   }
 
+  /**
+   * How many assets there are across every site, and their combined size in bytes — what the admin
+   * dashboard and the metrics endpoint both report.
+   */
+  async totals(): Promise<{ count: number; bytes: number }> {
+    const results = await WIKI.db
+      .select({
+        count: sql<number>`count(*)::int`,
+        bytes: sql<number>`coalesce(sum(${assetsTable.fileSize}), 0)::bigint`.mapWith(Number)
+      })
+      .from(assetsTable)
+    return { count: results[0]?.count ?? 0, bytes: results[0]?.bytes ?? 0 }
+  }
+
   // == SERVING CACHE ==================
 
   /**
