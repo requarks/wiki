@@ -190,55 +190,71 @@ props:
     icon: envelope
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'
     order: 41
+  requireVerifiedEmail:
+    type: Boolean
+    title: Require Verified Email
+    hint: Refuse a login or registration unless the assertion says the email address was verified. An account here is matched by address, so an unverified one says nothing about who holds the mailbox — on a provider that lets people type in any address they like, it is a way into somebody else's account.
+    icon: secure
+    default: false
+    order: 42
+  mappingVerifiedEmail:
+    type: String
+    title: Verified Email Field Mapping
+    hint: The attribute saying the email address was verified. Only `true` (in any casing) or `1` counts; anything else, the attribute missing included, refuses the login. SAML has no standard one, so the provider has to be told to release it.
+    icon: email-open
+    default: email_verified
+    order: 43
+    if:
+      - { key: 'requireVerifiedEmail', eq: true }
   mappingDisplayName:
     type: String
     title: Display Name Field Mapping
     hint: The attribute holding the name to show. Falls back to the email address when the assertion has neither.
     icon: person
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
-    order: 42
+    order: 44
   mappingPicture:
     type: String
     title: Avatar Picture Field Mapping
     hint: The attribute holding the URL of the account's picture, fetched on login and stored as the avatar. Leave empty to let people keep whatever avatar they set here.
     icon: image
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
-    order: 43
+    order: 45
   mappingLocation:
     type: String
     title: Location Field Mapping
     hint: Optional - The attribute holding where the person is. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
     icon: geography
     default: ''
-    order: 44
+    order: 46
   mappingJobTitle:
     type: String
     title: Job Title Field Mapping
     hint: Optional - The attribute holding the person's job title. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
     icon: new-job
     default: ''
-    order: 45
+    order: 47
   mappingPronouns:
     type: String
     title: Pronouns Field Mapping
     hint: Optional - The attribute holding the person's pronouns. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
     icon: gender
     default: ''
-    order: 46
+    order: 48
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Put the user in the wiki groups the attribute below names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
     icon: user-groups
     default: false
-    order: 47
+    order: 49
   mappingGroups:
     type: String
     title: User Groups Field Mapping
     hint: The attribute holding the groups. Either one name or a list of them.
     icon: rules
     default: 'memberOf'
-    order: 48
+    order: 50
     if:
       - { key: 'mapGroups', eq: true }
   unassignMissingGroups:
@@ -247,7 +263,7 @@ props:
     hint: Off adds what the assertion names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
     icon: unfriend
     default: false
-    order: 49
+    order: 51
     if:
       - { key: 'mapGroups', eq: true }
 refs:

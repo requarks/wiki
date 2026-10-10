@@ -203,6 +203,7 @@ export default class SamlAuthentication {
       )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
+    this.checkEmailVerified(profile, email)
     const groups = this.conf.mapGroups === true ? this.groupsFrom(profile) : undefined
     strategyDebug(
       this,
@@ -271,6 +272,40 @@ export default class SamlAuthentication {
       return undefined
     }
     return first.trim().length > 0 ? first.trim() : undefined
+  }
+
+  /**
+   * Hold the provider to having verified the email address, when the strategy requires it.
+   *
+   * Not read through `attr()`, which keeps strings only: an attribute is normally text by the time
+   * `node-saml` hands it over, but a boolean is let through too rather than refused for its type. The
+   * first value is taken, as everywhere else.
+   *
+   * What counts as yes is `xs:boolean`'s own lexical space — `true` and `1` — plus `True` and any
+   * other casing of it, which is not valid XML Schema but is what AD FS sends, being .NET's
+   * `Boolean.ToString()`. Nothing looser: `yes` or `verified` is not a boolean in any schema a
+   * provider would write against, and a value this has to guess at is one it should refuse.
+   *
+   * Absent counts as not verified — this is the check that stops an address nobody proved they hold
+   * from logging into the account that has it, so the direction for it to fail in is closed.
+   *
+   * @throws `ERR_EMAIL_NOT_VERIFIED`
+   */
+  private checkEmailVerified(profile: Record<string, any>, email: string): void {
+    if (this.conf.requireVerifiedEmail !== true) {
+      return
+    }
+    const name = this.conf.mappingVerifiedEmail || 'email_verified'
+    const value = profile[name]
+    const first = Array.isArray(value) ? value[0] : value
+    const verified = typeof first === 'string' ? first.trim().toLowerCase() : first
+    if (verified !== true && verified !== 'true' && verified !== '1') {
+      strategyDebug(
+        this,
+        `\`${name}\` does not say <${email}> is verified (it says ${JSON.stringify(value) ?? 'nothing'}), and this strategy requires a verified address (Verified Email Field Mapping)`
+      )
+      throw new Error('ERR_EMAIL_NOT_VERIFIED')
+    }
   }
 
   /**

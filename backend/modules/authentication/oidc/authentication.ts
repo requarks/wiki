@@ -257,6 +257,7 @@ export default class OidcAuthentication {
       )
       throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
     }
+    this.checkEmailVerified(info, email)
     const groups = this.conf.mapGroups === true ? this.groupsFrom(info) : undefined
     strategyDebug(
       this,
@@ -329,6 +330,41 @@ export default class OidcAuthentication {
         `OIDC strategy ${this.strategyId} refused a login: asked for acr ${wanted.join(' ')}, the provider answered ${JSON.stringify(satisfied) ?? 'nothing'}.`
       )
       throw new Error('ERR_ACR_NOT_SATISFIED')
+    }
+  }
+
+  /**
+   * Hold the provider to having verified the email address, when the strategy requires it.
+   *
+   * Read from the merged answer rather than the ID token alone, unlike `acr`: the address itself is
+   * read from there, and a provider that keeps `email` behind the userinfo endpoint keeps
+   * `email_verified` beside it.
+   *
+   * The spec makes `email_verified` a JSON boolean, and `true` is the answer to expect. The rest of
+   * what counts is what providers are known to send instead, all of it unambiguous: the string
+   * `"true"` in any casing (Cognito sends `"true"`, a claim mapped from a string attribute or written
+   * by Python's `str()` comes out `"True"`), and `1` or `"1"` from a provider storing the flag as an
+   * integer column. Nothing looser — `"yes"` or `"verified"` is a value this would have to guess at,
+   * and one it should refuse.
+   *
+   * Absent counts as not verified — this is the check that stops an address nobody proved they hold
+   * from logging into the account that has it, so the direction for it to fail in is closed.
+   *
+   * @throws `ERR_EMAIL_NOT_VERIFIED`
+   */
+  private checkEmailVerified(info: Record<string, any>, email: string): void {
+    if (this.conf.requireVerifiedEmail !== true) {
+      return
+    }
+    const claim = this.conf.verifiedEmailClaim || 'email_verified'
+    const verified = info[claim]
+    const normalized = typeof verified === 'string' ? verified.trim().toLowerCase() : verified
+    if (normalized !== true && normalized !== 1 && normalized !== 'true' && normalized !== '1') {
+      strategyDebug(
+        this,
+        `the \`${claim}\` claim does not say <${email}> is verified (it says ${JSON.stringify(verified) ?? 'nothing'}), and this strategy requires a verified address (Verified Email Claim)`
+      )
+      throw new Error('ERR_EMAIL_NOT_VERIFIED')
     }
   }
 
