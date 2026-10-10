@@ -70,6 +70,18 @@ export interface AuthFlowCallback extends AuthFlow {
 }
 
 /**
+ * What a module is handed to build the URL that ends the session at its provider.
+ */
+export interface AuthLogout {
+  /**
+   * Where the wiki sends the browser after a logout when no provider is involved: the Logout Redirect
+   * of the user's groups or of the site, made absolute. A module whose protocol lets it may ask the
+   * provider to send the browser on there once its own session has ended.
+   */
+  returnTo: string
+}
+
+/**
  * Who signed in, as a module reports them.
  *
  * `id` is the provider's own identifier for the account and never changes; `email` is what the user is

@@ -114,6 +114,45 @@ export function isPageUrl(urlPath: string): boolean {
 }
 
 /**
+ * Whether a value handed in as a destination is a path on this wiki, and so safe to redirect to.
+ *
+ * A leading slash is not enough on its own. `//host` is a protocol-relative URL naming another site,
+ * and browsers read a backslash as a slash in that position, so `/\host` is the same thing spelled
+ * differently. They also strip tabs and newlines out of a URL before resolving it, which turns
+ * `/<tab>/host` into the first. No path on the wiki holds a backslash or a control character, so
+ * both are refused anywhere in the value rather than only in second place.
+ */
+export function isLocalRedirectPath(value: string): boolean {
+  // oxlint-disable-next-line no-control-regex -- matching control characters is the point
+  return /^\/(?![/\\])/.test(value) && !/[\\\u0000-\u001f\u007f]/.test(value)
+}
+
+/**
+ * Whether a value may be stored as a login, first-login or logout redirect, on a site or a group.
+ *
+ * A path on this wiki, or an absolute `http(s)` URL for one that sends people elsewhere -- and nothing
+ * else, because the browser navigates to it with `location`, where a `javascript:` URL is not an
+ * address but a script run in the wiki's own origin. `write:groups` may set a group's, so this is a
+ * line between that rung and every member of the group, not merely tidiness. Empty is the caller's
+ * to allow: on a group it means the site's value applies.
+ */
+export function isRedirectTarget(value: string): boolean {
+  if (isLocalRedirectPath(value)) {
+    return true
+  }
+  // oxlint-disable-next-line no-control-regex -- matching control characters is the point
+  if (/[\s\\\u0000-\u001f\u007f]/.test(value)) {
+    return false
+  }
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
  * The origin a URL this server writes into a document is built against.
  *
  * The requester's own, and deliberately not the site's configured hostname: a site may be bound to

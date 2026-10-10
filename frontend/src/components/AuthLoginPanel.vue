@@ -25,15 +25,26 @@
       the pointer is a field that cannot be clicked, which is what made focusing the email address
       take two tries.
     -->
-    <div v-if="!state.strategiesLoaded" class="flex justify-center py-8">
+    <!-- -> Kept up while leaving for the provider too, so the form is not painted for the moment
+            before the browser navigates away -->
+    <div
+      v-if="!state.strategiesLoaded || state.isAutoLoginRedirecting"
+      class="flex justify-center py-8">
       <w-spinner color="primary" size="lg" />
     </div>
     <!-- ----------------------------------------------------- -->
     <!-- LOGIN SCREEN -->
     <!-- ----------------------------------------------------- -->
     <template v-else-if="state.screen === `login`">
-      <p class="auth-subtitle" v-if="formStrategies.length < 2">{{ t('auth.enterCredentials') }}</p>
-      <template v-else>
+      <p class="auth-subtitle" v-if="formStrategies.length === 1">
+        {{ t('auth.enterCredentials') }}
+      </p>
+      <p
+        class="auth-subtitle"
+        v-else-if="formStrategies.length === 0 && redirectStrategies.length > 0">
+        {{ t('auth.selectAuthProvider') }}
+      </p>
+      <template v-else-if="formStrategies.length > 1">
         <p class="auth-subtitle">{{ t('auth.selectAuthProvider') }}</p>
         <div class="auth-strategies mb-4">
           <w-btn
@@ -55,7 +66,9 @@
             @click="selectFormStrategy(str.id)" />
         </div>
       </template>
-      <w-form ref="loginForm" @submit="login">
+      <!-- -> Only for a strategy that takes a password here: with local authentication off and nothing
+              else of that kind enabled, a username and password would have nowhere to go -->
+      <w-form v-if="formStrategies.length > 0" ref="loginForm" @submit="login">
         <!--
           `username`, whatever the strategy calls this field. It is the account identifier of a login
           form, which is what that token means — an address typed here is not an email address being
@@ -111,7 +124,7 @@
         would only be a step in the way.
       -->
       <template v-if="canUsePasskeys">
-        <w-separator class="my-4" />
+        <w-separator v-if="formStrategies.length > 0" class="my-4" />
         <w-btn
           class="acrylic-btn w-full"
           flat
@@ -128,7 +141,7 @@
         over, and it comes back at the callback route with a session already established.
       -->
       <template v-if="redirectStrategies.length > 0">
-        <w-separator class="my-4" />
+        <w-separator v-if="formStrategies.length > 0 || canUsePasskeys" class="my-4" />
         <w-btn
           class="acrylic-btn w-full mb-2"
           v-for="str of redirectStrategies"
@@ -549,13 +562,13 @@ import { useDark } from '@/composables/dark'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { localizeError } from '@/helpers/localization'
+import { loginDestination, redirectTargetOr } from '@/helpers/loginRedirect'
 
 import { useAuthConfigStore } from '@/stores/authConfig'
 import { useCommonStore } from '@/stores/common'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
-import Cookies from 'js-cookie'
 import zxcvbn from 'zxcvbn'
 import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser'
 import VOtpInput from 'vue3-otp-input'
@@ -620,6 +633,8 @@ const state = reactive({
     which is what eventually locks the address out for a quarter of an hour.
   */
   isSubmitting: false,
+  /** Whether the site's Bypass Login Screen has already sent the browser on to the provider. */
+  isAutoLoginRedirecting: false,
   isTFAShown: false,
   isTFASetupShown: false,
   tfaQRImage: '',
@@ -776,7 +791,8 @@ function switchTo(screen) {
     case 'login': {
       state.screen = 'login'
       nextTick(() => {
-        loginEmailIpt.value.focus()
+        // -> Absent on a site whose every strategy signs in elsewhere
+        loginEmailIpt.value?.focus()
       })
       break
     }
@@ -870,14 +886,14 @@ async function fetchStrategies(showAll = false) {
 function authorizeUrl(str) {
   const params = new URLSearchParams({ siteId: siteStore.id })
   /*
-    The same cookie a form login reads on its way out: whatever sent the reader to the login screen
-    left where they were going in it. The provider flow cannot come back through the code above — it
-    lands on the callback route, which redirects — so the destination travels with the request and is
-    handed back by the callback instead.
+    The page the reader was sent here from, if any. The provider flow cannot come back through the
+    code below -- it lands on the callback route, which redirects -- so the destination travels with
+    the request and is handed back by the callback instead. Without one, the server falls back to the
+    login redirect settings.
   */
-  const loginRedirect = Cookies.get('loginRedirect')
-  if (loginRedirect) {
-    params.set('redirect', loginRedirect)
+  const destination = loginDestination()
+  if (destination) {
+    params.set('redirect', destination)
   }
   return `/_api/auth/${str.id}/authorize?${params.toString()}`
 }
@@ -933,19 +949,12 @@ async function handleLoginResponse(resp) {
         message: t('auth.loginSuccess'),
         delay: 0
       })
+      /*
+        The page the reader was sent here from wins; a login somebody chose to make goes where the
+        server says, which is the first-login or login redirect of their groups or the site.
+      */
       setTimeout(() => {
-        const loginRedirect = Cookies.get('loginRedirect')
-        if (loginRedirect === '/' && resp.redirect) {
-          Cookies.remove('loginRedirect')
-          window.location.replace(resp.redirect)
-        } else if (loginRedirect) {
-          Cookies.remove('loginRedirect')
-          window.location.replace(loginRedirect)
-        } else if (resp.redirect) {
-          window.location.replace(resp.redirect)
-        } else {
-          window.location.replace('/')
-        }
+        window.location.replace(loginDestination() ?? redirectTargetOr(resp.redirect))
       }, 1000)
       break
     }
@@ -1416,8 +1425,49 @@ onMounted(async () => {
   */
   screenFromQuery()
   reportRedirectLoginError()
-  await fetchStrategies()
+  await fetchStrategies(showsAllStrategies())
+  autoLogin()
 })
+
+/**
+ * Whether the login screen was opened with `?all=1`, which lists the providers the site hides as well
+ * as the ones it shows, and stays put rather than bypassing the screen. It is how an administrator
+ * reaches the local login on a site that hides it behind a single sign-on provider, as the admin
+ * area's Login screen tells them.
+ */
+function showsAllStrategies() {
+  return new URLSearchParams(window.location.search).get('all') === '1'
+}
+
+/**
+ * The site's Bypass Login Screen: go straight to the first strategy's provider rather than showing a
+ * screen whose only useful content is its button.
+ *
+ * Only where that strategy signs in elsewhere -- a form strategy needs this screen to type into. And
+ * only on the plain login screen with nothing to report: a reset or confirmation link came here for
+ * its own screen, and a provider login that just failed would otherwise be sent straight back to the
+ * provider to fail again, in a loop the reader never gets to see the reason for. And never with
+ * `?all=1`, which is an administrator asking for the screen this would skip.
+ *
+ * `replace` rather than a navigation, so Back from the provider does not land here and bounce the
+ * reader forward again.
+ */
+function autoLogin() {
+  if (
+    !siteStore.auth.autoLogin ||
+    state.screen !== 'login' ||
+    state.errorMessage ||
+    showsAllStrategies()
+  ) {
+    return
+  }
+  const first = state.strategies[0]
+  if (first?.activeStrategy?.strategy?.useForm !== false) {
+    return
+  }
+  state.isAutoLoginRedirecting = true
+  window.location.replace(authorizeUrl(first))
+}
 
 /**
  * Say what went wrong on a login that happened somewhere else.

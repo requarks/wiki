@@ -1,8 +1,8 @@
 import { nanoid } from 'nanoid'
 import { audit } from '../helpers/audit.ts'
-import { maskSensitiveProps } from '../helpers/common.ts'
+import { isLocalRedirectPath, maskSensitiveProps, originOf } from '../helpers/common.ts'
 import { limitAuthAttempts } from '../helpers/rateLimit.ts'
-import type { AuthRequestTarget, AuthStrategy } from '../models/authentication.ts'
+import type { AuthLogout, AuthRequestTarget, AuthStrategy } from '../models/authentication.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
@@ -188,7 +188,9 @@ async function finishRedirectLogin(
       { siteId: flow.siteId, strategy, profile, ip: req.ip },
       req
     )
-    return reply.redirect(result.redirect || redirect)
+    // -> The page the reader was sent here from, when there was one; otherwise the login and
+    //    first-login settings, which is what `result.redirect` is
+    return reply.redirect(redirect !== '/' ? redirect : result.redirect || '/')
   } catch (err: any) {
     WIKI.models.flags.authDebug(
       `Login through ${strategy.module} strategy ${strategy.id} failed: ${err.message}`
@@ -207,9 +209,12 @@ async function finishRedirectLogin(
  *
  * A module says where by implementing `logoutUrl()` — the OIDC module does, from the URL its strategy
  * is configured with, and returns null when there is none. Nothing is guessed for a module that has
- * no such notion.
+ * no such notion. It is handed the wiki's own destination, which it may ask the provider to return to.
  */
-async function providerLogoutUrl(strategyId: string | undefined): Promise<string | null> {
+async function providerLogoutUrl(
+  strategyId: string | undefined,
+  logout: AuthLogout
+): Promise<string | null> {
   if (!strategyId) {
     return null
   }
@@ -227,7 +232,7 @@ async function providerLogoutUrl(strategyId: string | undefined): Promise<string
       destroyed either way.
     */
     const answered = await Promise.race([
-      instance.logoutUrl(),
+      instance.logoutUrl(logout),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), LOGOUT_URL_BUDGET_MS))
     ])
     return answered || null
@@ -1195,9 +1200,9 @@ async function routes(app: FastifyInstance) {
             siteId: { type: 'string', format: 'uuid' },
             redirect: {
               type: 'string',
-              maxLength: 255,
+              maxLength: 2048,
               description:
-                'Where to send the user once they are logged in. A path on this wiki; anything else is ignored.'
+                'The page the user was on their way to, sent back to once they are logged in in place of the login redirect settings of their groups and the site. A path on this wiki; anything else is ignored.'
             }
           }
         },
@@ -1222,7 +1227,7 @@ async function routes(app: FastifyInstance) {
         nonce: nanoid(32),
         codeVerifier: nanoid(64),
         // -> Only a path on this wiki: an open redirect is how a login page is turned into a lure
-        redirect: (req.query.redirect ?? '').startsWith('/') ? req.query.redirect! : '/',
+        redirect: isLocalRedirectPath(req.query.redirect ?? '') ? req.query.redirect! : '/',
         startedAt: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' })
       }
       req.session.authFlow = flow
@@ -1447,11 +1452,19 @@ async function routes(app: FastifyInstance) {
         The provider's own logout comes first when there is one, and takes the group's and the site's
         redirect with it: those say where a reader should end up, which is a preference, whereas an
         identity provider still holding a session is the logout not having finished. Where the browser
-        goes after that is the provider's business — it is configured with its own return URL.
+        goes after that is the provider's business, unless the strategy asks it to come back to the
+        wiki's own destination (the OIDC module's Return After Logout).
       */
+      const wikiRedirect = await WIKI.models.users.getLogoutRedirect(
+        user?.id ?? null,
+        req.params.siteId
+      )
+      // -> Absolute for the provider, which resolves nothing against this wiki's address
+      const returnTo = isLocalRedirectPath(wikiRedirect)
+        ? `${originOf(req)}${wikiRedirect}`
+        : wikiRedirect
       const redirect =
-        (await providerLogoutUrl(req.session?.strategyId)) ??
-        (await WIKI.models.users.getLogoutRedirect(user?.id ?? null, req.params.siteId))
+        (await providerLogoutUrl(req.session?.strategyId, { returnTo })) ?? wikiRedirect
 
       if (req.session) {
         // -> Drops the stored session, so the cookie the browser still holds refers to nothing

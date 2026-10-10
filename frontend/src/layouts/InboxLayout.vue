@@ -38,6 +38,7 @@ import { computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
+import { loginLocation } from '@/helpers/loginRedirect'
 
 import { useNotificationsStore } from '@/stores/notifications'
 import { useSiteStore } from '@/stores/site'
@@ -115,7 +116,7 @@ watch(
   () => route.path,
   (newValue) => {
     if (newValue.startsWith('/_inbox') && !userStore.authenticated) {
-      router.replace('/login')
+      router.replace(loginLocation(route.fullPath))
     }
   },
   { immediate: true }

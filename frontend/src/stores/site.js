@@ -158,6 +158,11 @@ export const useSiteStore = defineStore('site', {
     /** How this site handles signing in. Set in the admin area's Login section. */
     auth: {
       /**
+       * Skip the login screen and go straight to the first strategy, where that one signs in at a
+       * provider rather than with a form here.
+       */
+      autoLogin: false,
+      /**
        * Send a visitor who is not logged in straight to the login screen instead of showing them
        * the unauthorized page. For a wiki that is closed to the public, that screen is a dead end
        * with a login button on it, and this skips the step.

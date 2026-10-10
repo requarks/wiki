@@ -128,7 +128,8 @@
                 dense
                 :rules="[
                   (val) =>
-                    state.invalidCharsRegex.test(val) || t('admin.login.loginRedirectInvalidChars')
+                    state.invalidCharsRegex.test(val) || t('admin.login.loginRedirectInvalidChars'),
+                  (val) => !val || isRedirectTarget(val) || t('admin.login.redirectInvalid')
                 ]"
                 hide-bottom-space
                 :aria-label="t(`admin.login.loginRedirect`)" />
@@ -149,7 +150,8 @@
                 :rules="[
                   (val) =>
                     state.invalidCharsRegex.test(val) ||
-                    t('admin.login.welcomeRedirectInvalidChars')
+                    t('admin.login.welcomeRedirectInvalidChars'),
+                  (val) => !val || isRedirectTarget(val) || t('admin.login.redirectInvalid')
                 ]"
                 hide-bottom-space
                 :aria-label="t(`admin.login.welcomeRedirect`)" />
@@ -169,7 +171,9 @@
                 dense
                 :rules="[
                   (val) =>
-                    state.invalidCharsRegex.test(val) || t('admin.login.logoutRedirectInvalidChars')
+                    state.invalidCharsRegex.test(val) ||
+                    t('admin.login.logoutRedirectInvalidChars'),
+                  (val) => !val || isRedirectTarget(val) || t('admin.login.redirectInvalid')
                 ]"
                 hide-bottom-space
                 :aria-label="t(`admin.login.logoutRedirect`)" />
@@ -238,6 +242,8 @@ import { onMounted, reactive, watch } from 'vue'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
+import { apiErrorMessage } from '@/helpers/apiError'
+import { isRedirectTarget } from '@/helpers/loginRedirect'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -369,7 +375,8 @@ async function save() {
     notify({
       type: 'negative',
       message: 'Failed to save login configuration.',
-      caption: err.message
+      // -> ky throws above 400, with the server's reason in the body
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--

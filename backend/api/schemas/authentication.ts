@@ -37,7 +37,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       redirect: {
         type: 'string',
-        description: 'Where to send the user once logged in. A path within this wiki, or a URL.'
+        description:
+          "Where to send the user once logged in, when they were not on their way to a page: the first-login or login redirect of the first of their groups that sets one, otherwise the site's. A path within this wiki, or a URL."
       }
     }
   })

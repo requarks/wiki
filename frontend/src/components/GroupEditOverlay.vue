@@ -100,6 +100,8 @@
                       outlined
                       v-model="state.group.redirectOnLogin"
                       dense
+                      :rules="redirectRules"
+                      hide-bottom-space
                       :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogin`)" />
                   </w-item-section>
@@ -118,6 +120,8 @@
                       outlined
                       v-model="state.group.redirectOnFirstLogin"
                       dense
+                      :rules="redirectRules"
+                      hide-bottom-space
                       :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogin`)" />
                   </w-item-section>
@@ -136,6 +140,8 @@
                       outlined
                       v-model="state.group.redirectOnLogout"
                       dense
+                      :rules="redirectRules"
+                      hide-bottom-space
                       :disable="!canManage"
                       :aria-label="t(`admin.groups.redirectOnLogout`)" />
                   </w-item-section>
@@ -755,6 +761,7 @@ import RuleModeMenu from '@/components/RuleModeMenu.vue'
 import RulePermissionsDialog from '@/components/RulePermissionsDialog.vue'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { isRedirectTarget } from '@/helpers/loginRedirect'
 
 // COMPOSABLES
 
@@ -1168,6 +1175,9 @@ const groupNameValidation = [(val) => /^[^<>"]+$/.test(val) || t('admin.groups.n
   rather than left to fail at the API. Exporting rules stays -- it only reads what is on screen.
 */
 const canManage = computed(() => userStore.can('manage:groups') || userStore.can('write:groups'))
+
+/** The three redirect fields: empty defers to the site, anything else must be somewhere to go. */
+const redirectRules = [(val) => !val || isRedirectTarget(val) || t('admin.groups.redirectInvalid')]
 
 /*
   Whether this user may rewrite what the group is ALLOWED to do, which is the Permissions tab and

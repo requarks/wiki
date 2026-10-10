@@ -1,5 +1,5 @@
 import { audit } from '../helpers/audit.ts'
-import { CustomError } from '../helpers/common.ts'
+import { CustomError, isRedirectTarget } from '../helpers/common.ts'
 import { elevatedGroupGuard } from '../helpers/userGuards.ts'
 import { SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
 import type { FastifyInstance } from 'fastify'
@@ -299,6 +299,18 @@ async function routes(app: FastifyInstance) {
       const group = await WIKI.models.groups.getGroupById(req.params.groupId)
       if (!group) {
         return reply.notFound('Group does not exist.')
+      }
+
+      // -> Each is navigated to by a member's browser; see `isRedirectTarget` for why that narrows
+      //    them. Empty is how a group defers to the site.
+      for (const key of ['redirectOnLogin', 'redirectOnFirstLogin', 'redirectOnLogout'] as const) {
+        const value = req.body[key]
+        if (value !== undefined && value !== '' && !isRedirectTarget(value)) {
+          throw new CustomError(
+            'groupUpdateInvalidRedirect',
+            `${key} must be a path on this wiki or an http(s) URL.`
+          )
+        }
       }
 
       // -> Collect only the fields actually provided

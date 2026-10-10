@@ -24,6 +24,7 @@ import {
   decodeTreePath,
   decodeUrlPath,
   isPageUrl,
+  isRedirectTarget,
   normalizeFolderPath,
   normalizeNewPagePath,
   normalizePagePath,
@@ -1229,7 +1230,10 @@ class Import {
           name,
           permissions,
           rules,
-          redirectOnLogin: stringOf(record?.redirectOnLogin),
+          // -> Held to what the groups API accepts, since a member's browser navigates to it
+          redirectOnLogin: isRedirectTarget(stringOf(record?.redirectOnLogin))
+            ? stringOf(record?.redirectOnLogin)
+            : '',
           isSystem: false
         })
         .onConflictDoUpdate({ target: groupsTable.id, set: { name, permissions, rules } })

@@ -13,6 +13,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
 import { setCssVar } from '@/helpers/cssVars'
+import { loginLocation, redirectTargetOr } from '@/helpers/loginRedirect'
 import { isPagePath, splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
@@ -69,6 +70,9 @@ const route = useRoute()
 const state = reactive({
   isInitialized: false
 })
+
+/** Set by a logout on its way out, for the document it lands on to report. */
+const LOGOUT_NOTICE_KEY = 'wiki.logoutNotice'
 
 // WATCHERS
 
@@ -322,6 +326,30 @@ router.beforeEach(async (to, from) => {
   }
 
   /*
+    -> Bypass Unauthorized Screen
+    A site can skip the unauthorized screen for a visitor who is not logged in, sending them to sign
+    in instead -- for a wiki closed to the public that screen is a dead end with a login button on it.
+    Here rather than in the error page, so the screen is never drawn on the way past it. Below the
+    bootstrap above, since that is where both the setting and the session come from.
+
+    Only when nobody is logged in: somebody who IS signed in and still refused has nothing to gain
+    from the login screen, and gets the error page as usual.
+
+    Where they were refused is what the login sends them back to afterwards, in place of the site's
+    and the groups' login redirects -- see `helpers/loginRedirect.js`.
+  */
+  if (
+    to.path === '/_error/unauthorized' &&
+    siteStore.auth.bypassUnauthorized &&
+    !userStore.authenticated
+  ) {
+    // -> Only a page the reader actually reached: a direct load of the error URL has none
+    const refused =
+      from.matched.length > 0 && !from.path.startsWith('/_error') ? from.fullPath : null
+    return { ...loginLocation(refused), replace: true }
+  }
+
+  /*
     -> Page extensions
     A path ending in one of the extensions the site's content is written in addresses the page
     underneath it, so `/foo/bar.md` is `/foo/bar`. The server redirects a request that reaches it, but
@@ -397,24 +425,46 @@ router.beforeEach(async (to, from) => {
 
 // GLOBAL EVENTS HANDLERS
 
+/*
+  Where a logout goes: the provider's own logout when the strategy has one, otherwise the first group's
+  logout redirect, otherwise the site's -- the server's answer, see the logout route.
+
+  Always a full load, never a router push. Everything the app holds was fetched as the user who just
+  left: the page on screen, which a guest may not be allowed to read, and every store that caches what
+  this session may do. A push to the path already showing is no navigation at all, which is what left
+  a reader logging out from the home page looking at the same page, still drawn for an account.
+*/
 EVENT_BUS.on('logout', ({ redirect } = {}) => {
-  const target = redirect || '/'
-  // -> A group or the site can send logged out users to another site entirely, which the router cannot
-  //    navigate to — and leaving the wiki means there is no point notifying anyone either
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(target)) {
-    window.location.assign(target)
-    return
+  const target = redirectTargetOr(redirect)
+  // -> Said once the next document has booted, since this one is about to be discarded. Not for a
+  //    target that leaves the wiki, where there is nobody to say it to; a lost notice is harmless
+  if (target.startsWith('/')) {
+    try {
+      sessionStorage.setItem(LOGOUT_NOTICE_KEY, '1')
+    } catch {}
   }
-  router.push(target)
-  notify({
-    type: 'positive',
-    icon: 'mdi:logout',
-    message: i18n.t('auth.logoutSuccess')
-  })
+  window.location.assign(target)
 })
+
 EVENT_BUS.on('applyTheme', () => {
   applyTheme()
 })
+
+/** Report a logout the previous document made, if it made one. */
+function showLogoutNotice() {
+  let pending = false
+  try {
+    pending = sessionStorage.getItem(LOGOUT_NOTICE_KEY) === '1'
+    sessionStorage.removeItem(LOGOUT_NOTICE_KEY)
+  } catch {}
+  if (pending) {
+    notify({
+      type: 'positive',
+      icon: 'mdi:logout',
+      message: i18n.t('auth.logoutSuccess')
+    })
+  }
+}
 
 // LOADER
 
@@ -423,6 +473,7 @@ router.afterEach(() => {
     state.isInitialized = true
     applyTheme()
     document.querySelector('.init-loading').remove()
+    showLogoutNotice()
   }
   commonStore.routerLoading = false
 })

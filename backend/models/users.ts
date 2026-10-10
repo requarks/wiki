@@ -1768,34 +1768,46 @@ class Users {
     }
 
     // Get user groups
-    user.groups = await WIKI.db.query.users
-      .findFirst({
-        columns: {},
-        where: {
-          id: user.id
-        },
-        with: {
-          groups: {
-            columns: {
-              id: true,
-              permissions: true,
-              redirectOnLogin: true
-            }
+    const account = await WIKI.db.query.users.findFirst({
+      columns: {
+        lastLoginAt: true
+      },
+      where: {
+        id: user.id
+      },
+      with: {
+        groups: {
+          columns: {
+            id: true,
+            permissions: true,
+            redirectOnLogin: true,
+            redirectOnFirstLogin: true
           }
         }
-      })
-      .then((r: any) => r?.groups || [])
-
-    // Get redirect target
-    let redirect = '/'
-    if (user.groups && user.groups.length > 0) {
-      for (const grp of user.groups as any[]) {
-        if (grp.redirectOnLogin && grp.redirectOnLogin !== '/') {
-          redirect = grp.redirectOnLogin
-          break
-        }
       }
-    }
+    })
+    user.groups = account?.groups ?? []
+
+    /*
+      Where the login lands when it was not on its way anywhere: a reader who was sent here from a
+      page they were refused goes back to that page instead, and the client decides between the two.
+
+      A first login is one with no stamp yet. Read fresh rather than off `user`, which each caller
+      fetched its own way, and before the stamp below; a login stopped for 2FA or a password change
+      stamps nothing, so its continuation still counts as the first.
+
+      Each setting is the first group's that sets one, then the site's. A group's `/` reads as unset,
+      not as the root: it is what a 2.x group carries by default and arrives with on import.
+    */
+    const isFirstLogin = !account?.lastLoginAt
+    const groupRedirect = (user.groups as any[])
+      .map((grp) => (isFirstLogin ? grp.redirectOnFirstLogin : grp.redirectOnLogin))
+      .find((target) => target && target !== '/')
+    const siteAuth = context.siteId
+      ? (await WIKI.models.sites.getSiteById({ id: context.siteId }))?.config?.auth
+      : null
+    const redirect =
+      groupRedirect || (isFirstLogin ? siteAuth?.welcomeRedirect : siteAuth?.loginRedirect) || '/'
 
     // Get auth strategy flags
     const authStr = user.auth[strategyId] || {}

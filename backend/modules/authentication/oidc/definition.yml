@@ -82,27 +82,34 @@ props:
     order: 10
     if:
       - { key: 'useDiscovery', eq: false }
+  returnAfterLogout:
+    type: Boolean
+    title: Return After Logout
+    hint: Ask the provider to send the browser back to the wiki once its own session has ended, to the Logout Redirect of the user's group or of the site, rather than leaving them on the provider's signed-out page. Register that address with the provider as a post-logout redirect URI first — the full URL, e.g. https://wiki.example.com/ for a Logout Redirect of `/` — and one for each group's Logout Redirect too. An address it does not have registered is refused, and the provider shows an error instead of logging out.
+    icon: back
+    default: false
+    order: 11
   scopes:
     type: String
     title: Scopes
     hint: Space-separated. `openid` is required; `email` is what an account is matched on here.
     icon: rules
     default: 'openid profile email'
-    order: 11
+    order: 12
   useAcrValues:
     type: Boolean
     title: Use ACR Values
     hint: Optional - Ask the provider for a particular kind of sign-in — two-factor, a smart card, a specific policy — by naming the authentication context this wiki wants.
     icon: pin-pad
     default: false
-    order: 12
+    order: 13
   acrValues:
     type: String
     title: ACR Values
     hint: Space-separated Authentication Context Class References, most preferred first, as the provider documents them. e.g. `urn:mace:incommon:iap:silver`, or a policy name the provider defines.
     icon: rules
     default: ''
-    order: 13
+    order: 14
     if:
       - { key: 'useAcrValues', eq: true }
   requireAcr:
@@ -111,7 +118,7 @@ props:
     hint: Refuse a login whose `acr` claim is not one of the values above. Off, they are only a request — OpenID Connect lets a provider ignore them and still answer with a valid token, so without this the setting expresses a preference rather than a requirement. Turn it on once the provider is known to return the claim, since one that returns none refuses everybody.
     icon: secure
     default: false
-    order: 14
+    order: 15
     if:
       - { key: 'useAcrValues', eq: true }
   idClaim:
@@ -120,42 +127,42 @@ props:
     hint: Which claim carries the provider's own identifier for the account. Usually sub or id, which never changes.
     icon: key
     default: sub
-    order: 15
+    order: 16
   emailClaim:
     type: String
     title: Email Claim
     hint: Which claim carries the email address.
     icon: envelope
     default: email
-    order: 16
+    order: 17
   displayNameClaim:
     type: String
     title: Display Name Claim
     hint: Which claim carries the name to show. Falls back to the email address when the claim is absent.
     icon: person
     default: name
-    order: 17
+    order: 18
   pictureClaim:
     type: String
     title: Picture Claim
     hint: Which claim carries the URL of the account's picture, fetched on login and stored as the avatar. Leave empty to let people keep whatever avatar they set here.
     icon: image
     default: picture
-    order: 18
+    order: 19
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Put the user in the wiki groups a claim names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
     icon: user-groups
     default: false
-    order: 19
+    order: 20
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Which claim carries the group names. Either one name or a list of them.
     icon: rules
     default: groups
-    order: 20
+    order: 21
     if:
       - { key: 'mapGroups', eq: true }
   unassignMissingGroups:
@@ -164,7 +171,7 @@ props:
     hint: Off adds what the claim names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
     icon: unfriend
     default: false
-    order: 21
+    order: 22
     if:
       - { key: 'mapGroups', eq: true }
 refs:

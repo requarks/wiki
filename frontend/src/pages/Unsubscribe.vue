@@ -70,6 +70,7 @@ import { useI18n } from 'vue-i18n'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { loginLocation } from '@/helpers/loginRedirect'
 
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -148,7 +149,9 @@ async function unsubscribe(scope) {
 
 /** The full settings, which need a session — the login screen comes first for somebody without one. */
 function goToSettings() {
-  router.push(userStore.authenticated ? '/_profile/notifications' : '/login')
+  router.push(
+    userStore.authenticated ? '/_profile/notifications' : loginLocation('/_profile/notifications')
+  )
 }
 
 // MOUNTED

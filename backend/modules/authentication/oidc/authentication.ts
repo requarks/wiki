@@ -1,6 +1,11 @@
 import * as client from 'openid-client'
 import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
-import type { AuthFlow, AuthFlowCallback, ProviderProfile } from '../../../models/authentication.ts'
+import type {
+  AuthFlow,
+  AuthFlowCallback,
+  AuthLogout,
+  ProviderProfile
+} from '../../../models/authentication.ts'
 
 /**
  * OpenID Connect / OAuth2
@@ -86,7 +91,9 @@ export default class OidcAuthentication {
           authorization_endpoint: this.conf.authorizationURL,
           token_endpoint: this.conf.tokenURL,
           userinfo_endpoint: this.conf.userInfoURL || undefined,
-          jwks_uri: this.conf.jwksURL
+          jwks_uri: this.conf.jwksURL,
+          // -> So `logoutUrl()` reads it from one place whichever way the provider was described
+          end_session_endpoint: this.conf.logoutURL || undefined
         },
         clientId,
         clientSecret
@@ -367,14 +374,24 @@ export default class OidcAuthentication {
    * that moves it is then followed without an administrator editing anything. Null when the provider
    * publishes none — plenty do not, and RP-initiated logout is optional in the spec.
    *
-   * Sent as it stands, with no `id_token_hint` or `post_logout_redirect_uri`: neither is required,
-   * and where a provider asks the person to confirm the sign-out because of it, confirming is not the
-   * failure mode worth adding stored ID tokens to avoid.
+   * Sent bare unless Return After Logout is on, and the provider then decides where the browser goes
+   * — usually a page of its own saying the session has ended. On, it carries
+   * `post_logout_redirect_uri`, the wiki's own Logout Redirect, and the `client_id` the spec asks to
+   * accompany it when there is no `id_token_hint` (which would mean keeping ID tokens). A provider
+   * only honours an address registered for the client, which is why this is off by default: turned
+   * on before the address is registered, it makes the provider refuse the logout with an error page.
    */
-  async logoutUrl(): Promise<string | null> {
-    if (this.conf.useDiscovery === false) {
-      return this.conf.logoutURL || null
+  async logoutUrl({ returnTo }: AuthLogout): Promise<string | null> {
+    const config = await this.configuration()
+    const endpoint = config.serverMetadata().end_session_endpoint
+    if (!endpoint) {
+      return null
     }
-    return (await this.configuration()).serverMetadata().end_session_endpoint ?? null
+    if (this.conf.returnAfterLogout !== true) {
+      return endpoint
+    }
+    strategyDebug(this, `asking the provider to return to ${returnTo} after its logout`)
+    // -> `client_id` is added by the library itself
+    return client.buildEndSessionUrl(config, { post_logout_redirect_uri: returnTo }).toString()
   }
 }

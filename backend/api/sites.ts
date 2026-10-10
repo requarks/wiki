@@ -1,6 +1,6 @@
 import { validate as uuidValidate } from 'uuid'
 import { audit } from '../helpers/audit.ts'
-import { CustomError, normalizePastedDestination } from '../helpers/common.ts'
+import { CustomError, isRedirectTarget, normalizePastedDestination } from '../helpers/common.ts'
 import { detectImageMime, detectSvg, imageMimeTypes, svgMimeType } from '../helpers/images.ts'
 import { siteAssetKinds } from '../models/sites.ts'
 import type { SiteAssetKind } from '../models/sites.ts'
@@ -426,6 +426,16 @@ async function routes(app: FastifyInstance) {
       // -> Validate inputs
       if (req.body.title !== undefined && !/^[^<>"]+$/.test(req.body.title)) {
         throw new CustomError('siteUpdateInvalidTitle', 'Invalid Site Title')
+      }
+      // -> Each is navigated to by the browser; see `isRedirectTarget` for why that narrows them
+      for (const key of ['loginRedirect', 'welcomeRedirect', 'logoutRedirect'] as const) {
+        const value = req.body.auth?.[key]
+        if (value !== undefined && value !== '' && !isRedirectTarget(value)) {
+          throw new CustomError(
+            'siteUpdateInvalidRedirect',
+            `${key} must be a path on this wiki or an http(s) URL.`
+          )
+        }
       }
 
       const site = await WIKI.models.sites.getSiteById({ id: req.params.siteId })

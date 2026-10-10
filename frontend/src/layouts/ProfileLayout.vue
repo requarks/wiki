@@ -79,6 +79,7 @@ import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
+import { loginLocation } from '@/helpers/loginRedirect'
 
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
@@ -206,7 +207,7 @@ watch(
       return
     }
     if (!userStore.authenticated) {
-      router.replace('/login')
+      router.replace(loginLocation(route.fullPath))
     }
   },
   { immediate: true }
