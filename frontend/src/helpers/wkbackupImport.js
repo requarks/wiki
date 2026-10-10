@@ -24,6 +24,16 @@ const BATCH_SIZE = 500
  */
 const BATCH_BYTES = 4 * 1024 * 1024
 
+/*
+  What every request that does the import's actual work is sent with: a batch of records, a blob, and
+  `finish`, which rewrites the links of every page the import wrote. ky gives up on a request after ten
+  seconds by default, and five hundred users or pages against a database across a network, a blob of
+  a few hundred megabytes, or a relink over a whole wiki is routinely longer than that. Giving up does
+  not stop the server either — it carries on writing the batch while this side abandons the session
+  under it. Nothing on this side gives up on one, since the server does not.
+*/
+const LONG_REQUEST = { timeout: false }
+
 /**
  * The order the streams are walked in, and it is load-bearing.
  *
@@ -148,7 +158,7 @@ async function drive({ pkg, siteId, includes, overwrite, htmlConversion, log, on
     throw err
   }
 
-  const summary = await API_CLIENT.post(`import/sessions/${session.id}/finish`).json()
+  const summary = await API_CLIENT.post(`import/sessions/${session.id}/finish`, LONG_REQUEST).json()
   reportSummary(summary, log)
   onProgress(1)
   return summary
@@ -387,6 +397,7 @@ async function stageBlobsFor({ pkg, session, batch, staged, log }) {
       continue
     }
     await API_CLIENT.post(`import/sessions/${session.id}/blobs/${digest}`, {
+      ...LONG_REQUEST,
       body: bytes,
       headers: { 'content-type': 'application/octet-stream' }
     })
@@ -408,7 +419,7 @@ async function stageBlobsFor({ pkg, session, batch, staged, log }) {
  */
 async function postBatch(url, records, label, log) {
   try {
-    return await API_CLIENT.post(url, { json: { records } }).json()
+    return await API_CLIENT.post(url, { ...LONG_REQUEST, json: { records } }).json()
   } catch (err) {
     if (err.response?.status !== 413) {
       throw err
