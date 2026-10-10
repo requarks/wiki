@@ -98,6 +98,21 @@ class Sites {
     WIKI.logger.info(`Loaded ${sites.length} site configurations [ OK ]`)
   }
 
+  /**
+   * Reload the site caches here, and tell every other instance of an HA set to do the same.
+   *
+   * `WIKI.sitesMappings` is what turns a request's hostname into a site, and an instance that never
+   * heard about a change goes on answering from what it loaded at boot. For a site added beside a
+   * catch-all `*` that is the wrong site rather than no site: its hostname is not in the mapping
+   * there, so the lookup falls through to the catch-all, and which site a reader gets depends on which
+   * instance the load balancer picked. Every write to the sites table goes through here for that
+   * reason; `reloadCache` itself does not emit, or two instances would answer each other for ever.
+   */
+  async reloadCacheEverywhere(): Promise<void> {
+    await this.reloadCache()
+    WIKI.events.outbound.emit('reloadSites')
+  }
+
   async createSite(hostname: string, config: Record<string, any> = {}) {
     /*
       The whole configuration the site is created with, defaults and caller's together. Read back
@@ -306,7 +321,7 @@ class Sites {
     await WIKI.models.navigation.siteNavId(newSite.id, siteConfig.locales.primary)
 
     // -> Site lookups by id / hostname are served from cache, which must know about the new site
-    await WIKI.models.sites.reloadCache()
+    await WIKI.models.sites.reloadCacheEverywhere()
 
     // -> Otherwise the new site would have no blocks until the next restart
     await WIKI.models.blocks.syncSite(newSite.id)
@@ -354,7 +369,7 @@ class Sites {
       return false
     }
 
-    await WIKI.models.sites.reloadCache()
+    await WIKI.models.sites.reloadCacheEverywhere()
     return true
   }
 
@@ -433,7 +448,7 @@ class Sites {
       return false
     }
 
-    await WIKI.models.sites.reloadCache()
+    await WIKI.models.sites.reloadCacheEverywhere()
     return true
   }
 

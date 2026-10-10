@@ -88,6 +88,12 @@ export default {
     //    is where every other instance finds out that files it holds are for a block that no longer
     //    exists. Reconciled rather than told, so an instance that was down for the delete gets there
     //    too, on the sweep at boot.
+    // -> Sites are cached per instance, and the hostname mapping in that cache is what every request
+    //    is resolved against: an instance that missed a change sends a new site's readers to the
+    //    catch-all instead
+    WIKI.events.inbound.on('reloadSites', async () => {
+      await WIKI.models.sites.reloadCache()
+    })
     WIKI.events.inbound.on('reloadBlocks', async () => {
       await WIKI.models.blocks.refreshCustomIndex()
       await WIKI.models.blocks.sweepCache()
