@@ -204,20 +204,41 @@ props:
     icon: image
     default: 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/picture'
     order: 43
+  mappingLocation:
+    type: String
+    title: Location Field Mapping
+    hint: Optional - The attribute holding where the person is. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: geography
+    default: ''
+    order: 44
+  mappingJobTitle:
+    type: String
+    title: Job Title Field Mapping
+    hint: Optional - The attribute holding the person's job title. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: new-job
+    default: ''
+    order: 45
+  mappingPronouns:
+    type: String
+    title: Pronouns Field Mapping
+    hint: Optional - The attribute holding the person's pronouns. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: gender
+    default: ''
+    order: 46
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Put the user in the wiki groups the attribute below names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
     icon: user-groups
     default: false
-    order: 44
+    order: 47
   mappingGroups:
     type: String
     title: User Groups Field Mapping
     hint: The attribute holding the groups. Either one name or a list of them.
     icon: rules
     default: 'memberOf'
-    order: 45
+    order: 48
     if:
       - { key: 'mapGroups', eq: true }
   unassignMissingGroups:
@@ -226,7 +247,7 @@ props:
     hint: Off adds what the assertion names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
     icon: unfriend
     default: false
-    order: 46
+    order: 49
     if:
       - { key: 'mapGroups', eq: true }
 refs:

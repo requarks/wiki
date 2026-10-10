@@ -4,8 +4,16 @@ import type {
   AuthFlow,
   AuthFlowCallback,
   AuthLogout,
-  ProviderProfile
+  ProviderProfile,
+  ProviderProfileMetaKey
 } from '../../../models/authentication.ts'
+
+/** Which setting names the claim for each profile field a provider may fill in. */
+const META_CLAIM_SETTINGS: Record<ProviderProfileMetaKey, string> = {
+  location: 'locationClaim',
+  jobTitle: 'jobTitleClaim',
+  pronouns: 'pronounsClaim'
+}
 
 /**
  * OpenID Connect / OAuth2
@@ -259,6 +267,7 @@ export default class OidcAuthentication {
       email,
       name: (info[this.conf.displayNameClaim || 'name'] as string) || email,
       picture: this.pictureFrom(info),
+      meta: this.metaFrom(info),
       // -> Absent rather than empty when groups are not mapped: an empty list is the provider saying
       //    this person is in none, which with `unassignMissingGroups` on takes memberships away
       ...(groups
@@ -336,6 +345,37 @@ export default class OidcAuthentication {
     }
     const value = info[claim]
     return typeof value === 'string' && value.length > 0 ? value : undefined
+  }
+
+  /**
+   * The profile fields the claims carry, for those an administrator has mapped.
+   *
+   * Every one is unmapped by default, so people keep what they set here. A mapped claim that is
+   * missing from the answer leaves the field alone too — a provider that leaves a claim out has
+   * usually not been asked for it (a scope, an attribute not released to this client), which is not
+   * the same as saying the person has none. A claim that is present but empty does clear it.
+   */
+  private metaFrom(info: Record<string, any>): ProviderProfile['meta'] {
+    const meta: ProviderProfile['meta'] = {}
+    for (const [key, setting] of Object.entries(META_CLAIM_SETTINGS) as [
+      ProviderProfileMetaKey,
+      string
+    ][]) {
+      const claim = this.conf[setting]
+      if (!claim) {
+        continue
+      }
+      const value = info[claim]
+      if (typeof value !== 'string') {
+        strategyDebug(
+          this,
+          `the \`${claim}\` claim carries no text for ${key}, which is left as it was`
+        )
+        continue
+      }
+      meta[key] = value
+    }
+    return meta
   }
 
   /**

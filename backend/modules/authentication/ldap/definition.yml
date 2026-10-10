@@ -92,20 +92,41 @@ props:
     icon: image
     default: 'jpegPhoto'
     order: 23
+  mappingLocation:
+    type: String
+    title: Location Field Mapping
+    hint: Optional - The attribute holding where the person is, e.g. "l" or "physicalDeliveryOfficeName". Copied to their profile on every login, replacing what was set here — and clearing it for an entry without one. Leave empty to let people set their own.
+    icon: geography
+    default: ''
+    order: 24
+  mappingJobTitle:
+    type: String
+    title: Job Title Field Mapping
+    hint: Optional - The attribute holding the person's job title, usually "title". Copied to their profile on every login, replacing what was set here — and clearing it for an entry without one. Leave empty to let people set their own.
+    icon: new-job
+    default: ''
+    order: 25
+  mappingPronouns:
+    type: String
+    title: Pronouns Field Mapping
+    hint: Optional - The attribute holding the person's pronouns. No standard schema has one, so this is for a directory that has added its own. Copied to their profile on every login, replacing what was set here — and clearing it for an entry without one. Leave empty to let people set their own.
+    icon: gender
+    default: ''
+    order: 26
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Put the user in the wiki groups their directory groups are named after, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
     icon: user-groups
     default: false
-    order: 24
+    order: 27
   groupSearchBase:
     type: String
     title: Group Search Base
     hint: The base DN under which to look for the groups an entry belongs to.
     icon: folder
     default: 'ou=groups,dc=example,dc=com'
-    order: 25
+    order: 28
     if:
       - { key: 'mapGroups', eq: true }
   groupSearchFilter:
@@ -114,7 +135,7 @@ props:
     hint: Which groups count as the user's. `{{dn}}` is substituted with the value of the property below, escaped. (member={{dn}}) is right for most directories.
     icon: search
     default: '(member={{dn}})'
-    order: 26
+    order: 29
     if:
       - { key: 'mapGroups', eq: true }
   groupSearchScope:
@@ -127,7 +148,7 @@ props:
       - base
       - one
       - sub
-    order: 27
+    order: 30
     if:
       - { key: 'mapGroups', eq: true }
   groupDnProperty:
@@ -136,7 +157,7 @@ props:
     hint: Which property of the user's entry `{{dn}}` stands for in the filter above. Usually "dn".
     icon: symlink-directory
     default: dn
-    order: 28
+    order: 31
     if:
       - { key: 'mapGroups', eq: true }
   groupNameField:
@@ -145,7 +166,7 @@ props:
     hint: The attribute on a group entry holding the name to match a wiki group against. Usually "name" or "cn".
     icon: rename
     default: name
-    order: 29
+    order: 32
     if:
       - { key: 'mapGroups', eq: true }
   unassignMissingGroups:
@@ -154,6 +175,6 @@ props:
     hint: Off adds what the directory says and takes nothing away, so a membership granted here survives. On makes the directory the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
     icon: unfriend
     default: false
-    order: 30
+    order: 33
     if:
       - { key: 'mapGroups', eq: true }

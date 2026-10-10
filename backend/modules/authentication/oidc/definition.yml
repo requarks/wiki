@@ -149,20 +149,41 @@ props:
     icon: image
     default: picture
     order: 19
+  locationClaim:
+    type: String
+    title: Location Claim
+    hint: Optional - Which claim carries where the person is, e.g. a custom `office` claim. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: geography
+    default: ''
+    order: 20
+  jobTitleClaim:
+    type: String
+    title: Job Title Claim
+    hint: Optional - Which claim carries the person's job title, e.g. `job_title`. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: new-job
+    default: ''
+    order: 21
+  pronounsClaim:
+    type: String
+    title: Pronouns Claim
+    hint: Optional - Which claim carries the person's pronouns. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: gender
+    default: ''
+    order: 22
   mapGroups:
     type: Boolean
     title: Map Groups
     hint: Put the user in the wiki groups a claim names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
     icon: user-groups
     default: false
-    order: 20
+    order: 23
   groupsClaim:
     type: String
     title: Groups Claim
     hint: Which claim carries the group names. Either one name or a list of them.
     icon: rules
     default: groups
-    order: 21
+    order: 24
     if:
       - { key: 'mapGroups', eq: true }
   unassignMissingGroups:
@@ -171,7 +192,7 @@ props:
     hint: Off adds what the claim names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
     icon: unfriend
     default: false
-    order: 22
+    order: 25
     if:
       - { key: 'mapGroups', eq: true }
 refs:

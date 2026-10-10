@@ -178,6 +178,9 @@ export interface UserProfilePatch {
   contentTextSize?: string
 }
 
+/** The longest a `meta` profile field may be, as `UserProfileUpdate` enforces. */
+const MAX_PROFILE_META_LENGTH = 255
+
 /** The `meta` keys the profile owns, and the `prefs` keys it owns. */
 const profileMetaKeys = ['location', 'jobTitle', 'pronouns'] as const
 const profilePrefsKeys = [
@@ -1729,9 +1732,28 @@ class Users {
 
     auth[strategy.id] = link
     user.auth = auth
+
+    /*
+      Profile fields the provider was mapped to fill in replace the person's own, every login — once an
+      administrator has pointed a claim at one, the directory is where it is kept up to date. Fields
+      the module did not report are not touched, so an unmapped job title stays whatever was typed here.
+    */
+    const metaUpdates = Object.entries(profile.meta ?? {})
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      // -> Held to what the profile form would accept, since nothing upstream of a provider is
+      .map(([key, value]) => [key, value.trim().slice(0, MAX_PROFILE_META_LENGTH)] as const)
+    const meta = (user.meta ?? {}) as Record<string, any>
+    const metaChanged = metaUpdates.some(([key, value]) => (meta[key] ?? '') !== value)
+    if (metaChanged) {
+      user.meta = { ...meta, ...Object.fromEntries(metaUpdates) }
+      WIKI.models.flags.authDebug(
+        `Updated ${metaUpdates.map(([key]) => key).join(', ')} of user ${user.id} from strategy ${strategy.id}`
+      )
+    }
+
     await WIKI.db
       .update(usersTable)
-      .set({ auth, updatedAt: sql`now()` })
+      .set({ auth, ...(metaChanged ? { meta: user.meta } : {}), updatedAt: sql`now()` })
       .where(eq(usersTable.id, user.id))
 
     // -> After the account exists and before `afterLoginChecks`, which reads the memberships back out

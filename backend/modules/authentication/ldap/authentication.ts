@@ -3,12 +3,19 @@ import type { ConnectionOptions } from 'node:tls'
 import { Client, Filter, InvalidCredentialsError } from 'ldapts'
 import type { Entry, SearchOptions } from 'ldapts'
 import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
-import type { ProviderProfile } from '../../../models/authentication.ts'
+import type { ProviderProfile, ProviderProfileMetaKey } from '../../../models/authentication.ts'
 
 /** What a form module is handed for one attempt. `login()` in `models/users.ts` assembles it. */
 interface FormCredential {
   username: string
   password: string
+}
+
+/** Which setting names the attribute for each profile field a directory may fill in. */
+const META_MAPPINGS: Record<ProviderProfileMetaKey, string> = {
+  location: 'mappingLocation',
+  jobTitle: 'mappingJobTitle',
+  pronouns: 'mappingPronouns'
 }
 
 /** How long any one directory operation may take before the login is failed. */
@@ -176,6 +183,7 @@ export default class LdapAuthentication {
         email,
         name: this.attr(entry, this.conf.mappingDisplayName || 'displayName') || email,
         pictureData,
+        meta: this.metaFrom(entry),
         ...(groups
           ? {
               groups,
@@ -354,7 +362,7 @@ export default class LdapAuthentication {
   /**
    * Which attributes to ask for.
    *
-   * All of the user ones, because the four mappings are configurable and a directory holds far more
+   * All of the user ones, because the mappings are configurable and a directory holds far more
    * than the wiki knows to name — plus the picture as a buffer, since asking for `jpegPhoto` as a
    * string is asking for an image decoded as UTF-8.
    */
@@ -381,6 +389,33 @@ export default class LdapAuthentication {
     }
     const text = Buffer.isBuffer(first) ? first.toString('utf8') : first
     return text.trim().length > 0 ? text.trim() : undefined
+  }
+
+  /**
+   * The profile fields the entry carries, for those an administrator has mapped.
+   *
+   * Every one is unmapped by default, so people keep what they set here. A mapped attribute the entry
+   * lacks clears the field rather than leaving it, unlike a missing OIDC claim: the search asks for
+   * every attribute and a directory stores no empty values, so an attribute that is not there is the
+   * directory saying this person has none — a title taken away upstream is taken away here too.
+   */
+  private metaFrom(entry: Entry): ProviderProfile['meta'] {
+    const meta: ProviderProfile['meta'] = {}
+    for (const [key, setting] of Object.entries(META_MAPPINGS) as [
+      ProviderProfileMetaKey,
+      string
+    ][]) {
+      const name = this.conf[setting]
+      if (!name) {
+        continue
+      }
+      const value = this.attr(entry, name)
+      if (value === undefined) {
+        strategyDebug(this, `\`${entry.dn}\` has no \`${name}\`, so its ${key} is cleared`)
+      }
+      meta[key] = value ?? ''
+    }
+    return meta
   }
 
   /** The photo held in the entry, when the configuration names an attribute holding one. */
@@ -424,7 +459,7 @@ export default class LdapAuthentication {
    *
    * Names only — a directory holds a person's password hash and rather more besides, and none of the
    * values are anybody's business here. What the list answers is the question a failed mapping raises:
-   * the search asks for every attribute, so this is exactly what the four Field Mapping settings have
+   * the search asks for every attribute, so this is exactly what the Field Mapping settings have
    * to be chosen from.
    */
   private attributeNames(entry: Entry): string {

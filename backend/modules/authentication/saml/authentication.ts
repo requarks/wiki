@@ -6,8 +6,16 @@ import type {
   AuthFlow,
   AuthFlowCallback,
   AuthRequestTarget,
-  ProviderProfile
+  ProviderProfile,
+  ProviderProfileMetaKey
 } from '../../../models/authentication.ts'
+
+/** Which setting names the attribute for each profile field a provider may fill in. */
+const META_MAPPINGS: Record<ProviderProfileMetaKey, string> = {
+  location: 'mappingLocation',
+  jobTitle: 'mappingJobTitle',
+  pronouns: 'mappingPronouns'
+}
 
 /** The longest a provider's signing key list may be, so a pasted mistake cannot become a loop. */
 const MAX_CERTS = 10
@@ -205,6 +213,7 @@ export default class SamlAuthentication {
       email,
       name: this.attr(profile, this.conf.mappingDisplayName) || email,
       picture: this.attr(profile, this.conf.mappingPicture),
+      meta: this.metaFrom(profile),
       ...(groups
         ? {
             groups,
@@ -262,6 +271,36 @@ export default class SamlAuthentication {
       return undefined
     }
     return first.trim().length > 0 ? first.trim() : undefined
+  }
+
+  /**
+   * The profile fields the assertion carries, for those an administrator has mapped.
+   *
+   * Every one is unmapped by default, so people keep what they set here. A mapped attribute missing
+   * from the assertion leaves the field alone too — a provider asserts the attributes it has been
+   * told to release to this service provider, so one it leaves out has usually not been, which is
+   * not the same as saying the person has none. An attribute asserted empty does clear it, which is
+   * why this does not go through `attr()`.
+   */
+  private metaFrom(profile: Record<string, any>): ProviderProfile['meta'] {
+    const meta: ProviderProfile['meta'] = {}
+    for (const [key, setting] of Object.entries(META_MAPPINGS) as [
+      ProviderProfileMetaKey,
+      string
+    ][]) {
+      const name = this.conf[setting]
+      if (!name) {
+        continue
+      }
+      const value = profile[name]
+      const first = Array.isArray(value) ? value[0] : value
+      if (typeof first !== 'string') {
+        strategyDebug(this, `\`${name}\` carries no text for ${key}, which is left as it was`)
+        continue
+      }
+      meta[key] = first
+    }
+    return meta
   }
 
   /**

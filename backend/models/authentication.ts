@@ -116,7 +116,21 @@ export interface ProviderProfile {
    * not name is taken away again; unset, the claim only ever adds.
    */
   groupsExclusive?: boolean
+  /**
+   * Profile fields the provider is the authority for, written over the account's own on every login.
+   *
+   * A key is present only when the module is configured to map it AND the provider answered with a
+   * value — an empty string included, which clears the field. A key that is absent leaves what the
+   * person set here alone, which is the default: these are theirs to fill in unless an administrator
+   * has said otherwise. Values are trimmed and held to the profile form's length on the way in, so a
+   * module passes on what the provider said.
+   */
+  meta?: Partial<Record<ProviderProfileMetaKey, string>>
 }
+
+/** The `users.meta` keys a provider may fill in. */
+export const PROVIDER_PROFILE_META_KEYS = ['location', 'jobTitle', 'pronouns'] as const
+export type ProviderProfileMetaKey = (typeof PROVIDER_PROFILE_META_KEYS)[number]
 
 /** A configured instance of an authentication module. */
 export interface AuthStrategy {
