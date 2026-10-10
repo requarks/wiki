@@ -89,7 +89,7 @@ declare module 'fastify' {
 
   interface FastifyContextConfig {
     /**
-     * Permissions required to reach the route, enforced by the `preHandler` hook in `index.ts`.
+     * Permissions required to reach the route, enforced by the `preParsing` hook in `index.ts`.
      *
      * The outer array is OR-ed; a nested array is AND-ed. `manage:system` bypasses the check.
      */

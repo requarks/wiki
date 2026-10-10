@@ -407,7 +407,7 @@ settings table, so they have no static shape. `index.ts` and `worker.ts` build t
 literal and assert it to `WikiGlobal`, since each populates the object progressively.
 
 `backend/types/fastify.d.ts` augments Fastify: session fields (`authenticated`, `user`,
-`permissions`) and the per-route `config.permissions` used by the `preHandler` permission hook.
+`permissions`) and the per-route `config.permissions` used by the `preParsing` permission hook.
 
 **Four dynamic paths are extension-sensitive** and invisible to the type checker — they must be
 updated by hand if the files they point at are ever renamed:
@@ -643,11 +643,18 @@ Consequences worth knowing:
   configs), `WIKI.ROOTPATH`, `WIKI.SERVERPATH`, `WIKI.INSTANCE_ID`.
 - **Routes** are Fastify plugins: `async function routes(app) { ... }` with a default export.
 - **Permissions** are declared per-route in `config.permissions`, and enforced by a single
-  `preHandler` hook in `index.ts`. The array is OR-ed; a nested array is AND-ed
+  `preParsing` hook in `index.ts`. The array is OR-ed; a nested array is AND-ed
   (`permissions: ['read:sites', ['manage:users', 'manage:groups']]`). `manage:system` bypasses every
   check. `@fastify/swagger`'s `transform` folds these into the OpenAPI description automatically —
   so declaring them is also how they get documented. Only **global** permissions belong here; see
   [Permissions](#permissions) for the other kind and how they are checked.
+- **A route that takes an upload refuses before reading it.** Fastify buffers a body in full before
+  `preValidation`, let alone the handler, so a check written in the handler lets anybody make the
+  server hold `bodyLimit` bytes per request just to be told no. `config.permissions` is already
+  checked in time. A route checking in its handler instead (a page rule, a profile setting) does the
+  check in a route-level `preParsing` hook, as the asset upload and avatar routes do. That hook runs
+  on the query string BEFORE schema validation, so it has to cope with a missing or malformed value
+  rather than trust the schema.
 - **Every route needs a `schema`** with `summary`, `tags`, and response schemas. `hideUntagged` is on,
   so an untagged route is invisible in the API docs. Reuse `$ref` schemas from `api/schemas/`.
 - **Errors** via `@fastify/sensible` helpers (`reply.notFound()`, `reply.badRequest()`,

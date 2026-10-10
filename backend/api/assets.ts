@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import { validate as uuidValidate } from 'uuid'
 
 import { audit } from '../helpers/audit.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
@@ -51,6 +52,18 @@ function mayOnAsset(
   })
 }
 
+/**
+ * Where an upload is going and who is sending it, settled by the upload route's `preParsing` hook and
+ * read back by its handler, so that the write goes exactly where the permission check looked.
+ */
+interface UploadTarget {
+  authorId: string
+  folderPath: string | null
+  destination: string
+  locale: string
+}
+const uploadTargets = new WeakMap<FastifyRequest, UploadTarget>()
+
 async function routes(app: FastifyInstance) {
   // -> An upload is the raw file rather than a multipart form: one file per request, with the name and
   //    the destination in the query string. The catch-all only claims content types nothing else
@@ -78,8 +91,56 @@ async function routes(app: FastifyInstance) {
     {
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
-        from a group's RULES, which address the folder the file is in. Checked below.
+        from a group's RULES, which address the folder the file is in.
+
+        Checked here, before the body is parsed rather than in the handler: parsing buffers the whole
+        file into memory, so a check that waited for it would let anybody — signed in or not — make
+        the server hold `uploadMaxFileSize` per request only to be refused. Which also means the query
+        string has not been through the schema yet, so whatever the check reads is checked here too.
       */
+      preParsing: async (req, reply, payload) => {
+        // -> An asset records who uploaded it, and an API key is not a who
+        const authorId = req.session?.authenticated ? req.session.user?.id : null
+        if (!authorId) {
+          throw app.httpErrors.unauthorized('Uploading an asset requires a logged in user.')
+        }
+        const { fileName, folderId, folderPath: requestedPath, locale: requestedLocale } = req.query
+        if (
+          typeof fileName !== 'string' ||
+          !fileName ||
+          (folderId !== undefined && (typeof folderId !== 'string' || !uuidValidate(folderId))) ||
+          (requestedPath !== undefined && typeof requestedPath !== 'string') ||
+          (requestedLocale !== undefined && typeof requestedLocale !== 'string')
+        ) {
+          throw app.httpErrors.badRequest('Invalid upload destination.')
+        }
+
+        /*
+          Where this is going, as a path, which is what a rule addresses. An ID has to be looked up to
+          get one; a path is already one, and is normalized here rather than trusted -- the model
+          would happily create a folder called `..`.
+        */
+        const folder = folderId ? await WIKI.models.tree.getFolderById(folderId) : null
+        const folderPath = folderId ? null : normalizeFolderPath(requestedPath)
+        const parentPath = folder ? decodeTreePath(folder.folderPath) : ''
+        const destination = folder
+          ? [parentPath, folder.fileName].filter(Boolean).join('/')
+          : (folderPath ?? '')
+        // -> Settled once, since the rule check and the write have to be asking about the same locale
+        const locale =
+          requestedLocale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
+        if (
+          !mayOnAsset(req, 'write:assets', {
+            folderPath: destination,
+            fileName,
+            locale
+          })
+        ) {
+          throw app.httpErrors.forbidden('You are not allowed to upload a file here.')
+        }
+        uploadTargets.set(req, { authorId, folderPath, destination, locale })
+        return payload
+      },
       schema: {
         summary: 'Upload an asset',
         description: `The body is the file itself, not a multipart form — send the bytes with their \`Content-Type\`. At most ${Math.round((WIKI.config.security?.uploadMaxFileSize ?? 10485760) / 1024 / 1024)} MB. The file name is sanitized, so the stored name in the response may differ from the one sent; the type served back later comes from that name's extension rather than from the request. Images get a thumbnail when the Sharp extension is installed.\n\nA file already at that name in that folder is settled by the site's upload conflict behavior: \`overwrite\` (the default) replaces it in place and answers with its existing ID, \`reject\` answers 409, and \`new\` stores the arrival as the next free \`name-1.ext\`. So the name and ID in the response are what to link to — never the ones that were sent. A page or a folder holding the name is answered 409 whichever behavior is set.`,
@@ -140,41 +201,11 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      // -> An asset records who uploaded it, and an API key is not a who
-      const authorId = req.session?.authenticated ? req.session.user?.id : null
-      if (!authorId) {
-        return reply.unauthorized('Uploading an asset requires a logged in user.')
-      }
       const data = req.body
       if (!Buffer.isBuffer(data) || data.length < 1) {
         return reply.badRequest('No file was sent.')
       }
-
-      /*
-        Where this is going, as a path, which is what a rule addresses. An ID has to be looked up to
-        get one; a path is already one, and is normalized here rather than trusted -- the model would
-        happily create a folder called `..`.
-      */
-      const folder = req.query.folderId
-        ? await WIKI.models.tree.getFolderById(req.query.folderId)
-        : null
-      const folderPath = req.query.folderId ? null : normalizeFolderPath(req.query.folderPath)
-      const parentPath = folder ? decodeTreePath(folder.folderPath) : ''
-      const destination = folder
-        ? [parentPath, folder.fileName].filter(Boolean).join('/')
-        : (folderPath ?? '')
-      // -> Settled once, since the rule check and the write have to be asking about the same locale
-      const locale =
-        req.query.locale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
-      if (
-        !mayOnAsset(req, 'write:assets', {
-          folderPath: destination,
-          fileName: req.query.fileName,
-          locale
-        })
-      ) {
-        return reply.forbidden('You are not allowed to upload a file here.')
-      }
+      const { authorId, folderPath, destination, locale } = uploadTargets.get(req)!
       const asset = await WIKI.models.assets.upload({
         siteId: req.params.siteId,
         locale,

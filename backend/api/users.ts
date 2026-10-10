@@ -421,6 +421,17 @@ async function routes(app: FastifyInstance) {
   app.put(
     '/profile/avatar',
     {
+      // -> Before the body is parsed, which buffers the whole image: refusing afterwards would let
+      //    anybody make the server hold `avatarUploadLimit` per request only to be told no
+      preParsing: async (req, reply, payload) => {
+        if (!sessionUserId(req)) {
+          throw app.httpErrors.unauthorized()
+        }
+        if (!WIKI.models.authentication.isProfileEditingAllowed()) {
+          throw app.httpErrors.forbidden('Profile editing is disabled on this wiki.')
+        }
+        return payload
+      },
       schema: {
         summary: "Replace the logged in user's own avatar",
         description: `The body is the raw image, not a multipart form — send the file itself with its \`Content-Type\`. At most ${avatarUploadLimit / 1024 / 1024} MB, and it must really be one of the accepted formats: the bytes are checked, not the declared type. Resized to a 180x180 JPEG when the Sharp extension is installed, otherwise stored as uploaded. Requires profile editing to be enabled on this wiki (Administration → Authentication).`,
@@ -442,14 +453,8 @@ async function routes(app: FastifyInstance) {
         }
       }
     },
-    async (req, reply) => {
-      const userId = sessionUserId(req)
-      if (!userId) {
-        return reply.unauthorized()
-      }
-      if (!WIKI.models.authentication.isProfileEditingAllowed()) {
-        return reply.forbidden('Profile editing is disabled on this wiki.')
-      }
+    async (req) => {
+      const userId = sessionUserId(req)!
 
       const data = req.body
       if (!Buffer.isBuffer(data) || data.length < 1) {

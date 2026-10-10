@@ -608,7 +608,16 @@ async function initHTTPServer() {
   // Permissions
   // ----------------------------------------
 
-  app.addHook('preHandler', (req, reply, done) => {
+  /*
+    Before the body is parsed, not after: a parser buffers the whole body into memory, and the upload
+    routes accept megabytes (the import blob route, gigabytes) — so a check that waited for it would
+    let anybody make the server hold that much per request just to be told no. Everything this reads
+    is settled by the time `preParsing` runs, the session and the API key both being `onRequest`.
+
+    Thrown rather than sent, which is how an async `preParsing` hook ends a request — whatever it
+    resolves with is taken as the payload stream. The error reaches the same error handler either way.
+  */
+  app.addHook('preParsing', async (req, reply, payload) => {
     const routePermissions = req.routeOptions.config?.permissions
     if (routePermissions && routePermissions.length > 0) {
       // -> A verified API key stands in for a session, carrying the permissions of the groups it was
@@ -620,7 +629,7 @@ async function initHTTPServer() {
           : null
       // Unauthenticated / No Permissions
       if (!permissions || permissions.length < 1) {
-        return reply.unauthorized()
+        throw app.httpErrors.unauthorized()
       }
       // Is Root Admin?
       if (!permissions.includes('manage:system')) {
@@ -635,11 +644,11 @@ async function initHTTPServer() {
         })
         // Forbidden
         if (!isAllowed) {
-          return reply.forbidden()
+          throw app.httpErrors.forbidden()
         }
       }
     }
-    done()
+    return payload
   })
 
   // ----------------------------------------
