@@ -15,6 +15,13 @@ import { inBatches, openPackage, readBytes, readJson, readRecords, sha256Hex } f
 const BATCH_SIZE = 500
 
 /**
+ * Records per request for pages, the slow stream by far. A full batch of 500 has taken a minute on a
+ * large wiki — which is the ceiling a good many reverse proxies put on a request — where every other
+ * stream finishes one in a quarter of that.
+ */
+const PAGES_BATCH_SIZE = 250
+
+/**
  * What a batch aims to weigh, in UTF-16 code units of JSON.
  *
  * A quarter of the server's `MAX_BATCH_BYTES`, and the gap is deliberate: the measure under-counts
@@ -54,7 +61,7 @@ const INSTANCE_STREAMS = [
 
 const SITE_STREAMS = [
   { name: 'tree', requires: null },
-  { name: 'pages', requires: 'pages' },
+  { name: 'pages', requires: 'pages', batchSize: PAGES_BATCH_SIZE },
   { name: 'page-history', requires: 'history' },
   { name: 'assets', requires: 'assets' },
   { name: 'comments', requires: 'comments' }
@@ -188,7 +195,7 @@ async function writeSteps({ pkg, plan, session, siteId, log, advance }) {
         readRecords(pkg.entry(step.path), {
           onMalformed: () => log('warn', `${label}: a record could not be read and was skipped.`)
         }),
-        { maxRecords: BATCH_SIZE, maxBytes: BATCH_BYTES }
+        { maxRecords: step.batchSize ?? BATCH_SIZE, maxBytes: BATCH_BYTES }
       )) {
         read += batch.length
         await stageBlobsFor({ pkg, session, batch, staged, log })
@@ -277,7 +284,7 @@ function buildPlan({ manifest, packageSite, includes, log }) {
     })
   }
 
-  for (const { name, requires } of SITE_STREAMS) {
+  for (const { name, requires, batchSize } of SITE_STREAMS) {
     const declared = packageSite.streams?.[name]
     if (!declared?.path || (requires && !includes.includes(requires))) {
       continue
@@ -287,6 +294,7 @@ function buildPlan({ manifest, packageSite, includes, log }) {
       label: labelFor(name),
       path: declared.path,
       count: declared.count ?? null,
+      batchSize,
       url: (session, siteId) => `import/sessions/${session.id}/sites/${siteId}/streams/${name}`
     })
   }
