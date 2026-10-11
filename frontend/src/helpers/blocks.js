@@ -54,6 +54,26 @@ export function blockAttributes(block, values = {}, quote = mdcQuoteValue) {
 }
 
 /**
+ * The colons a block is fenced with. One holding blocks of its own is fenced with three rather than
+ * two, since against a two-colon fence the first `::` inside it would read as the end of this one.
+ *
+ * @param {{ template?: string }} block A block as the API describes it.
+ * @returns {string}
+ */
+export function blockFence(block) {
+  return /^::/m.test(block.template ?? '') ? ':::' : '::'
+}
+
+/**
+ * Text to put in a Monaco snippet as it stands: `$`, `}` and `\` are its syntax, and are escaped.
+ *
+ * For a block's starter body, which the editors' block-name completion writes as part of a snippet.
+ */
+export function snippetText(value) {
+  return value.replace(/[\\$}]/g, '\\$&')
+}
+
+/**
  * A block, opening and closing lines included.
  *
  * @param {{ block: string, props?: Array, template?: string }} block A block as the API describes it.
@@ -64,13 +84,9 @@ export function blockMarkdown(block, values = {}) {
   const attributes = blockAttributes(block, values).join(' ')
   const suffix = attributes ? `{${attributes}}` : ''
 
-  /*
-    A block that comes with a body to start from writes it between the two lines. One holding blocks
-    of its own is fenced with three colons rather than two, since against a two-colon fence the first
-    `::` inside it would read as the end of this one.
-  */
+  // -> A block that comes with a body to start from writes it between the two lines
   if (block.template) {
-    const fence = /^::/m.test(block.template) ? ':::' : '::'
+    const fence = blockFence(block)
     return `${fence}block-${block.block}${suffix}\n${block.template}\n${fence}`
   }
   return `::block-${block.block}${suffix}\n::`

@@ -1,4 +1,5 @@
-import { blockAttributes } from '@/helpers/blocks'
+import { blockAttributes, blockFence, snippetText } from '@/helpers/blocks'
+import { FENCE, isOutsideFences, linesOutsideFences } from '@/helpers/markdownFences'
 
 /**
  * The blocks already in a page's source, read back and rewritten.
@@ -14,9 +15,6 @@ import { blockAttributes } from '@/helpers/blocks'
  * throw that away. `findBlockContent` is the other half, for the one shape of body an editor can be
  * offered for: a block that declares a `contentEditor` and holds a single fenced source.
  */
-
-/** The opening or closing line of a fenced block, indented up to the three spaces markdown allows. */
-const FENCE = /^ {0,3}(`{3,}|~{3,})/
 
 /** The same line, with the info string after it — which for these is the language the body is in. */
 const FENCE_OPENING = /^ {0,3}(`{3,}|~{3,})[ \t]*([^\s`]*)/
@@ -67,9 +65,8 @@ function parseAttributes(source) {
  * Every block in the source, in the order they appear. Line numbers are 1-based, to be handed
  * straight to the editor.
  *
- * A block inside a fenced code block is a code sample and not a block, so those are skipped — the
- * same reading `findEditableTables` takes of the same lines. Nesting needs no tracking of its own:
- * every opening line stands on its own, whatever it is written inside.
+ * Blocks inside a fenced code block are skipped (see `linesOutsideFences`). Nesting needs no tracking
+ * of its own: every opening line stands on its own, whatever it is written inside.
  *
  * @param {string} text The page source.
  * @returns {Array<{ block: string, line: number, fence: string, attributes: Array }>}
@@ -77,21 +74,8 @@ function parseAttributes(source) {
 export function findBlocks(text) {
   const lines = text.split('\n')
   const blocks = []
-  let fence = null
 
-  for (let index = 0; index < lines.length; index++) {
-    const edge = FENCE.exec(lines[index])
-    if (fence) {
-      if (edge && edge[1][0] === fence[0] && edge[1].length >= fence.length) {
-        fence = null
-      }
-      continue
-    }
-    if (edge) {
-      fence = edge[1]
-      continue
-    }
-
+  for (const index of linesOutsideFences(lines)) {
     const opening = OPENING.exec(lines[index])
     if (opening) {
       blocks.push({
@@ -103,6 +87,159 @@ export function findBlocks(text) {
     }
   }
   return blocks
+}
+
+/** A block's opening line up to the end of its name, which may be partly typed or not typed at all. */
+const OPENING_NAME = /^(:{2,})block-([a-z0-9-]*)/
+
+/**
+ * Whether the caret is in a block's NAME, for the editor to offer the blocks it could be.
+ *
+ * `prefix` is the line up to the name. `startColumn` and `endColumn` span the whole name, the part after the caret included, so that picking
+ * a block replaces the name rather than splicing into it. `bare` says the line holds nothing past the
+ * name — a block being started rather than one being renamed, which is what decides whether picking one
+ * writes a whole block or only its name.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @param {number} column 1-based, as Monaco counts it.
+ * @returns {{ fence: string, prefix: string, startColumn: number, endColumn: number, bare: boolean }
+ *          | null}
+ */
+export function blockNameContext(text, line, column) {
+  const lines = text.split('\n')
+  const source = lines[line - 1] ?? ''
+  const opening = OPENING_NAME.exec(source)
+  if (!opening) {
+    return null
+  }
+  const start = opening[1].length + 'block-'.length
+  const end = opening[0].length
+  if (column - 1 < start || column - 1 > end || !isOutsideFences(lines, line - 1)) {
+    return null
+  }
+  return {
+    fence: opening[1],
+    prefix: source.slice(0, start),
+    startColumn: start + 1,
+    endColumn: end + 1,
+    bare: source.slice(end).trim() === ''
+  }
+}
+
+/**
+ * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
+ * holds nothing else yet.
+ *
+ * The same markup as `blockMarkdown` with somewhere to type. Each REQUIRED prop is written with an empty
+ * value and a tab stop in it — the block cannot draw without them — while the rest are left for the
+ * parameter list, which is where the caret ends up: inside the braces after them, or at the end of the
+ * name where there are none. The fence is whichever is longer of the one typed and the one the block
+ * needs, since an author who typed three colons did so to fit it inside something.
+ *
+ * @param {{ block: string, props?: Array, template?: string }} definition The block as the API describes it.
+ * @param {{ fence: string }} context Where it is being typed, from `blockNameContext`.
+ * @returns {string}
+ */
+export function blockSnippet(definition, context) {
+  const attributes = (definition.props ?? [])
+    .filter((prop) => prop.required)
+    .map((prop, index) => `${prop.name}="$${index + 1}"`)
+    .join(' ')
+  const needed = blockFence(definition)
+  const fence = context.fence.length > needed.length ? context.fence : needed
+  const body = definition.template ? `\n${snippetText(definition.template)}` : ''
+  return `${fence}block-${definition.block}${attributes ? `{${attributes}$0}` : '$0'}${body}\n${fence}`
+}
+
+/**
+ * A block's opening line up to the brace its attributes start at.
+ *
+ * Looser than `OPENING` on purpose: that one wants the whole line, closing brace included, while this
+ * is asked about a line still being typed — where the brace may not be closed yet.
+ */
+const OPENING_BRACE = /^:{2,}block-([a-z0-9-]+)[ \t]*\{/
+
+/**
+ * Where the caret sits in a block's attribute list, for the editor to offer what can be written there.
+ *
+ * Two places are worth answering for. Where a NAME goes — straight after the brace, or after the
+ * whitespace that ends the attribute before — and inside a VALUE, after `name=`, quoted or not. Anywhere
+ * else is null: outside the braces, past the closing one, in a `.class` or `#id`, or butted up against
+ * the quote that closes the previous value, where a name would run on from it.
+ *
+ * `written` is the props the list already gives, less the one under the caret, so a name is not
+ * offered twice — and a name being retyped is still offered.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @param {number} column 1-based, as Monaco counts it: the caret is before the character here.
+ * @returns {{ block: string, written: Set<string>, kind: 'name', startColumn: number }
+ *          | { block: string, written: Set<string>, kind: 'value', name: string, quoted: boolean,
+ *              startColumn: number }
+ *          | null} `startColumn` is where what is being typed began, for the range to replace.
+ */
+export function blockAttributeContext(text, line, column) {
+  const lines = text.split('\n')
+  const source = lines[line - 1] ?? ''
+  const opening = OPENING_BRACE.exec(source)
+  const base = opening?.[0].length
+  if (!opening || column - 1 < base) {
+    return null
+  }
+  // -> A block written inside a fenced code block is a code sample
+  if (!isOutsideFences(lines, line - 1)) {
+    return null
+  }
+
+  const inside = source.slice(base)
+  const caret = column - 1 - base
+  let quote = null
+  let valueStart = 0
+  // -> Where the token under the caret began, or -1 right after a closing quote
+  let tokenStart = 0
+  for (let index = 0; index < caret; index++) {
+    const char = inside[index]
+    if (quote) {
+      if (char === quote) {
+        quote = null
+        tokenStart = -1
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char
+      valueStart = index + 1
+    } else if (char === '}') {
+      return null
+    } else if (char === ' ' || char === '\t') {
+      tokenStart = index + 1
+    }
+  }
+  if (tokenStart < 0) {
+    return null
+  }
+
+  const block = opening[1]
+  const written = new Set(
+    [...inside.replace(/\}[ \t]*$/, '').matchAll(ATTRIBUTE)]
+      .filter((match) => !match[1] && match.index !== tokenStart)
+      .map((match) => match[2])
+  )
+  const token = inside.slice(tokenStart, caret)
+  const equals = token.indexOf('=')
+  if (token.startsWith('.') || token.startsWith('#')) {
+    return null
+  }
+  if (equals < 0) {
+    return quote ? null : { block, written, kind: 'name', startColumn: base + tokenStart + 1 }
+  }
+  return {
+    block,
+    written,
+    kind: 'value',
+    name: token.slice(0, equals),
+    quoted: Boolean(quote),
+    startColumn: base + (quote ? valueStart : tokenStart + equals + 1) + 1
+  }
 }
 
 /**

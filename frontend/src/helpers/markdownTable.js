@@ -26,6 +26,12 @@ export const ALIGNMENTS = ['left', 'center', 'right']
 /** A delimiter row's cell, and nothing else: dashes, with a colon at either end or both. */
 const DELIMITER_CELL = /^:?-+:?$/
 
+/**
+ * A delimiter cell of a compact column: three characters, with at most one space either side. Only asked
+ * of a cell already known to be a delimiter cell, so three of `-` and `:` is enough to say it.
+ */
+const COMPACT_DELIMITER_CELL = /^ ?[-:]{3} ?$/
+
 /** The opening or closing line of a fenced block, indented up to the three spaces markdown allows. */
 const FENCE = /^ {0,3}(`{3,}|~{3,})/
 
@@ -314,4 +320,229 @@ export function findEditableTables(text) {
   }
 
   return tables
+}
+
+/**
+ * A table's lines as the two quick actions below need them: which line is the delimiter row, and where
+ * the rows end -- before the `{.class}` line, if the table has one, which is not a row.
+ *
+ * @param {string} source A table's source, from `findEditableTables`.
+ */
+function tableLayout(source) {
+  const lines = source.split('\n')
+  return {
+    lines,
+    delimiterAt: parseDelimiters(lines[0]) ? 0 : 1,
+    lastRow: ATTRS_LINE.test(lines.at(-1) ?? '') ? lines.length - 2 : lines.length - 1,
+    columns: parseTable(source).align.length
+  }
+}
+
+/**
+ * An empty row for the "Add Row" lens, and where it goes: under the row the caret is in, or under the
+ * last row when the caret is in the header, the delimiter row, or not in the table at all.
+ *
+ * Edited in place rather than through `buildTable`, which would rewrite every row and state alignments
+ * the author left out. The new row is built cell by cell off the delimiter row, with its pipes and
+ * indentation, and each cell is as wide as the delimiter cell above it -- unless that one is the three
+ * characters a compact column is written with (`---`, `:-:`, with or without a space either side), in
+ * which case the column is not padded and its new cell is two spaces, the empty cell compact tables
+ * write. A column the delimiter row is short of -- see `parseTable` -- is added the compact way too.
+ *
+ * @param {{ startLine: number, source: string }} table From `findEditableTables`.
+ * @param {number|null} caretLine 1-based, or null for no caret in the editor.
+ * @returns {{ afterLine: number, text: string, column: number }} The row, the 1-based line it goes
+ *          under, and the 1-based column of its first cell.
+ */
+export function tableRowToAdd(table, caretLine) {
+  const { lines, delimiterAt, lastRow, columns } = tableLayout(table.source)
+  const offset = (caretLine ?? 0) - table.startLine
+  const after = offset > delimiterAt && offset <= lastRow ? offset : lastRow
+
+  const delimiter = lines[delimiterAt].trimEnd()
+  const indent = delimiter.slice(0, delimiter.length - delimiter.trimStart().length)
+  const leading = delimiter.trimStart().startsWith('|')
+  const raw = rawCells(delimiter)
+  // -> Without a leading pipe the indentation is the first cell's, and is not part of its width
+  if (!leading) {
+    raw[0] = raw[0].slice(indent.length)
+  }
+  const cells = raw.map((cell) =>
+    COMPACT_DELIMITER_CELL.test(cell) ? '  ' : cell.replaceAll(/[-:]/g, ' ')
+  )
+  cells.push(...Array(Math.max(0, columns - cells.length)).fill('  '))
+  /*
+    Two things change for a table written without outer pipes. The row is closed with one, since an
+    empty last cell with nothing after it is no cell at all. And the first cell is cut to one space: it
+    is all whitespace at the start of the line, and four of it would make the row an indented code
+    block.
+  */
+  if (!leading) {
+    cells[0] = ' '
+  }
+  const text = `${indent}${leading ? '|' : ''}${cells.join('|')}|`
+
+  // -> One space into the first cell, or as far as it goes in a table written `|-|`
+  const first = text.indexOf('|')
+  const next = text.indexOf('|', first + 1)
+  const column = leading ? Math.min(first + 2, next < 0 ? text.length : next) : indent.length
+  return { afterLine: table.startLine + after, text, column: column + 1 }
+}
+
+/**
+ * Every row of a table with one empty column added at the end, for the "Add Column" lens.
+ *
+ * In place, for the reason `tableRowToAdd` gives, and compact: ` --- ` in the delimiter row and an
+ * empty cell of two spaces in every other, which is the shape `tableRowToAdd` reads a compact column
+ * as. A row with fewer cells than the table -- which markdown allows -- is filled out first, the same
+ * way, or the new cell would land in somebody else's column. And
+ * every row ends in a pipe afterwards: without one, an empty last cell is not a cell at all, since a
+ * trailing pipe is read as closing the row rather than as opening another.
+ *
+ * @param {{ startLine: number, source: string }} table From `findEditableTables`.
+ * @returns {{ startLine: number, endLine: number, text: string, caret: { line: number, column: number } }}
+ *          The rows to replace, 1-based and inclusive, what replaces them, and where the caret goes:
+ *          the new cell of the first row that is not the delimiter.
+ */
+export function tableWithColumnAdded(table) {
+  const { lines, delimiterAt, lastRow, columns } = tableLayout(table.source)
+  const rows = lines.slice(0, lastRow + 1).map((line, index) => {
+    const blank = index === delimiterAt ? ' --- |' : '  |'
+    const added = Math.max(0, columns - rawCells(line).length) + 1
+    const trimmed = line.trimEnd()
+    const closed = trimmed.endsWith('|') && !trimmed.endsWith('\\|')
+    return `${closed ? trimmed : `${trimmed} |`}${blank.repeat(added)}`
+  })
+  const caretRow = delimiterAt === 0 ? 1 : 0
+  return {
+    startLine: table.startLine,
+    endLine: table.startLine + lastRow,
+    text: rows.join('\n'),
+    // -> One space into the new cell, which each row ends with as `  |`
+    caret: { line: table.startLine + caretRow, column: rows[caretRow].length - 1 }
+  }
+}
+
+/**
+ * Where each cell of one row sits, 0-based with `end` exclusive: between its pipes (`start`, `end`) and
+ * where its text is once the padding is left out (`textStart`, `textEnd`).
+ *
+ * The same reading as `rawCells` -- an escaped `\|` is part of a cell, and the outer pipes leave no
+ * cell of their own -- but positions rather than strings, which is what moving the caret needs.
+ *
+ * @param {string} line One row of a table.
+ * @returns {Array<{ start: number, end: number, textStart: number, textEnd: number }>}
+ */
+function cellSpans(line) {
+  const bounds = [-1]
+  for (let index = 0; index < line.length; index++) {
+    if (line[index] === '\\' && line[index + 1] === '|') {
+      index++
+    } else if (line[index] === '|') {
+      bounds.push(index)
+    }
+  }
+  bounds.push(line.length)
+  const spans = bounds.slice(0, -1).map((bound, index) => {
+    const start = bound + 1
+    const end = bounds[index + 1]
+    const text = line.slice(start, end)
+    const textStart = start + text.length - text.trimStart().length
+    return { start, end, textStart, textEnd: textStart + text.trim().length }
+  })
+  const trimmed = line.trim()
+  const blank = (span) => span && span.textStart === span.textEnd
+  if (trimmed.startsWith('|') && blank(spans[0])) {
+    spans.shift()
+  }
+  if (trimmed.endsWith('|') && !trimmed.endsWith('\\|') && blank(spans.at(-1))) {
+    spans.pop()
+  }
+  return spans
+}
+
+/**
+ * The indexes of a table's rows that hold cells: every line of it but the delimiter row and the
+ * `{.class}` line.
+ */
+function cellRows(source) {
+  const { lines, delimiterAt, lastRow } = tableLayout(source)
+  return {
+    lines,
+    rows: Array.from({ length: lastRow + 1 }, (_, index) => index).filter(
+      (index) => index !== delimiterAt
+    )
+  }
+}
+
+/**
+ * Whether a line of the source is one of the table's rows of cells -- the header or a body row -- which
+ * is where Tab moves between cells rather than indenting.
+ *
+ * @param {{ startLine: number, source: string }} table From `findEditableTables`.
+ * @param {number} line 1-based.
+ */
+export function isCellRow(table, line) {
+  return cellRows(table.source).rows.includes(line - table.startLine)
+}
+
+/**
+ * Where Tab (`direction` 1) or Shift+Tab (-1) takes the caret from a cell: the next cell along the row,
+ * or the first cell of the next row from the end of one -- and the other way round. The delimiter row is
+ * never a stop.
+ *
+ * The cell the caret is in is the one whose closing pipe it has not passed, so a caret in the padding
+ * or against a pipe belongs to the cell on its left, and one in the indentation before a row to its
+ * first cell. A row written short of cells is simply left sooner.
+ *
+ * What it answers is a range to select: the cell's text, so that typing replaces it the way it does in a
+ * spreadsheet, or a caret one space into a cell that is empty. Past the last cell of the table it
+ * answers `'addRow'`, for the editor to add one and move into it; before the first, null.
+ *
+ * @param {{ startLine: number, source: string }} table From `findEditableTables`.
+ * @param {number} line 1-based.
+ * @param {number} column 1-based.
+ * @param {1|-1} direction
+ * @returns {{ line: number, startColumn: number, endColumn: number } | 'addRow' | null}
+ */
+export function tableCellMove(table, line, column, direction) {
+  const { lines, rows } = cellRows(table.source)
+  const at = rows.indexOf(line - table.startLine)
+  if (at < 0) {
+    return null
+  }
+  const target = (row, span) => {
+    if (!span) {
+      return null
+    }
+    if (span.textEnd > span.textStart) {
+      return {
+        line: table.startLine + row,
+        startColumn: span.textStart + 1,
+        endColumn: span.textEnd + 1
+      }
+    }
+    const caret = Math.min(span.start + 1, span.end) + 1
+    return { line: table.startLine + row, startColumn: caret, endColumn: caret }
+  }
+
+  const spans = cellSpans(lines[rows[at]])
+  const found = spans.findIndex((span) => column - 1 <= span.end)
+  const cell = found < 0 ? spans.length - 1 : found
+  if (direction > 0) {
+    if (cell + 1 < spans.length) {
+      return target(rows[at], spans[cell + 1])
+    }
+    if (at + 1 < rows.length) {
+      return target(rows[at + 1], cellSpans(lines[rows[at + 1]])[0])
+    }
+    return 'addRow'
+  }
+  if (cell > 0) {
+    return target(rows[at], spans[cell - 1])
+  }
+  if (at > 0) {
+    return target(rows[at - 1], cellSpans(lines[rows[at - 1]]).at(-1))
+  }
+  return null
 }

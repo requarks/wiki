@@ -1,4 +1,4 @@
-import { asciidocQuoteValue, blockAttributes } from '@/helpers/blocks'
+import { asciidocQuoteValue, blockAsciidoc, blockAttributes, snippetText } from '@/helpers/blocks'
 
 /**
  * The blocks a page written in AsciiDoc already carries, read back and rewritten.
@@ -110,28 +110,16 @@ function closes(line, delimiter) {
 }
 
 /**
- * Every block in the source, in the order they appear. Line numbers are 1-based, to be handed
- * straight to the editor.
+ * The index of every line that is not inside a verbatim block, nor one of its delimiters, in order.
  *
- * `line` is the ATTRIBUTE line -- the one a lens is drawn over and the one `blockOpeningLine`
- * rewrites -- and `delimiter` is what the block was opened with, which is what its own closing line
- * has to match. `endLine` is that closing line, or the end of the source for a block still being
- * written.
+ * Nothing inside a verbatim block is markup, so a `[block-x]` written in a code sample is a code
+ * sample.
  *
- * A block written inside a verbatim block is a code sample and not a block, so those are skipped.
- * Nesting needs no tracking of its own: an attribute line stands on its own whatever it is written
- * inside, and the first line matching a block's own delimiter is always its close -- AsciiDoc does
- * not allow a delimited block to nest inside another of the SAME kind, which is why they alternate.
- *
- * @param {string} text The page source.
- * @returns {Array<{ block: string, line: number, endLine: number, delimiter: string,
- *          attributes: Array }>}
+ * @param {string[]} lines The page source, split into lines.
+ * @returns {Generator<number>}
  */
-export function findBlocks(text) {
-  const lines = text.split('\n')
-  const blocks = []
+function* linesOutsideVerbatim(lines) {
   let verbatim = null
-
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index]
     if (verbatim) {
@@ -145,7 +133,49 @@ export function findBlocks(text) {
       verbatim = fence[1]
       continue
     }
+    yield index
+  }
+}
 
+/**
+ * Whether a line is outside every verbatim block.
+ *
+ * @param {string[]} lines The page source, split into lines.
+ * @param {number} index 0-based.
+ */
+function isOutsideVerbatim(lines, index) {
+  for (const outside of linesOutsideVerbatim(lines)) {
+    if (outside >= index) {
+      return outside === index
+    }
+  }
+  return false
+}
+
+/**
+ * Every block in the source, in the order they appear. Line numbers are 1-based, to be handed
+ * straight to the editor.
+ *
+ * `line` is the ATTRIBUTE line -- the one a lens is drawn over and the one `blockOpeningLine`
+ * rewrites -- and `delimiter` is what the block was opened with, which is what its own closing line
+ * has to match. `endLine` is that closing line, or the end of the source for a block still being
+ * written.
+ *
+ * Blocks inside a verbatim block are skipped (see `linesOutsideVerbatim`). Nesting needs no tracking
+ * of its own: an attribute line stands on its own whatever it is written
+ * inside, and the first line matching a block's own delimiter is always its close -- AsciiDoc does
+ * not allow a delimited block to nest inside another of the SAME kind, which is why they alternate.
+ *
+ * @param {string} text The page source.
+ * @returns {Array<{ block: string, line: number, endLine: number, delimiter: string,
+ *          attributes: Array }>}
+ */
+export function findBlocks(text) {
+  const lines = text.split('\n')
+  const blocks = []
+
+  for (const index of linesOutsideVerbatim(lines)) {
+    const line = lines[index]
     const opening = OPENING.exec(line)
     /*
       The delimiter is read off the NEXT line rather than assumed, because it is what closes the
@@ -180,6 +210,157 @@ function closingLineOf(lines, delimiterIndex, delimiter) {
     }
   }
   return lines.length
+}
+
+/** An attribute line up to the end of the block's name, which may be partly typed or not at all. */
+const OPENING_NAME = /^\[block-([a-z\d-]*)/
+
+/**
+ * Whether the caret is in a block's NAME, for the editor to offer the blocks it could be.
+ *
+ * The same answer as the markdown side's, for `useBlockCompletions`. `bare` allows for the closing
+ * bracket, which the editor puts in as soon as the opening one is typed: `[block-cou]` is a line
+ * holding nothing yet, and picking a block replaces all of it.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @param {number} column 1-based, as Monaco counts it.
+ * @returns {{ prefix: string, startColumn: number, endColumn: number, bare: boolean } | null}
+ */
+export function blockNameContext(text, line, column) {
+  const lines = text.split('\n')
+  const source = lines[line - 1] ?? ''
+  const opening = OPENING_NAME.exec(source)
+  if (!opening) {
+    return null
+  }
+  const start = '[block-'.length
+  const end = opening[0].length
+  if (column - 1 < start || column - 1 > end || !isOutsideVerbatim(lines, line - 1)) {
+    return null
+  }
+  const bare = ['', ']'].includes(source.slice(end).trim())
+  return {
+    prefix: '[block-',
+    startColumn: start + 1,
+    endColumn: (bare ? source.length : end) + 1,
+    bare
+  }
+}
+
+/**
+ * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
+ * holds nothing else yet.
+ *
+ * The same markup as `blockAsciidoc` with somewhere to type. Each REQUIRED prop is written with an
+ * empty value and a tab stop in it, and the caret ends up after them, before the closing bracket --
+ * where a comma opens the list of the rest.
+ *
+ * @param {{ block: string, props?: Array }} definition The block as the API describes it.
+ * @returns {string}
+ */
+export function blockSnippet(definition) {
+  const attributes = (definition.props ?? [])
+    .filter((prop) => prop.required)
+    .map((prop, index) => `, ${prop.name}="$${index + 1}"`)
+    .join('')
+  // -> Everything below the attribute line, which is the same whatever the attributes are
+  const markup = blockAsciidoc(definition)
+  const body = markup.slice(markup.indexOf('\n'))
+  return `[block-${definition.block}${attributes}$0]${snippetText(body)}`
+}
+
+/** An attribute line up to the end of the block's name. */
+const OPENING_STYLE = /^\[block-([a-z\d-]+)/
+
+/**
+ * Where the caret sits in a block's attribute list, for the editor to offer what can be written there.
+ *
+ * The same answer as the markdown side's, for `useBlockCompletions`, for AsciiDoc's spelling of it:
+ * every prop follows a COMMA. So a name goes after a comma -- straight after it, in which case
+ * `insertPrefix` puts the space in that `blockOpeningLine` would have written -- and a value after
+ * `name=`, quoted or not. Anywhere else is null: in the name, before the first comma, past the closing
+ * bracket, in a `.role` or `#id`, or after a closed value with no comma yet.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @param {number} column 1-based, as Monaco counts it.
+ * @returns {{ block: string, written: Set<string>, kind: 'name', startColumn: number,
+ *              insertPrefix: string }
+ *          | { block: string, written: Set<string>, kind: 'value', name: string, quoted: boolean,
+ *              startColumn: number }
+ *          | null}
+ */
+export function blockAttributeContext(text, line, column) {
+  const lines = text.split('\n')
+  const source = lines[line - 1] ?? ''
+  const opening = OPENING_STYLE.exec(source)
+  const base = opening?.[0].length
+  if (!opening || column - 1 < base || !isOutsideVerbatim(lines, line - 1)) {
+    return null
+  }
+
+  const inside = source.slice(base)
+  const caret = column - 1 - base
+  let quote = null
+  let valueStart = 0
+  // -> After the last comma; null before the first one, and -1 right after a closing quote
+  let tokenStart = null
+  for (let index = 0; index < caret; index++) {
+    const char = inside[index]
+    if (quote) {
+      if (char === '\\') {
+        index++
+      } else if (char === quote) {
+        quote = null
+        tokenStart = -1
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char
+      valueStart = index + 1
+    } else if (char === ']') {
+      return null
+    } else if (char === ',') {
+      tokenStart = index + 1
+    }
+  }
+  if (tokenStart === null || tokenStart < 0) {
+    return null
+  }
+
+  const leading = /^[ \t]*/.exec(inside.slice(tokenStart, caret))[0].length
+  const start = tokenStart + leading
+  const token = inside.slice(start, caret)
+  if (token.startsWith('.') || token.startsWith('#')) {
+    return null
+  }
+  const block = opening[1]
+  const written = new Set(
+    [...inside.replace(/\][ \t]*$/, '').matchAll(ATTRIBUTE)]
+      .filter((match) => match[2] && match.index !== start)
+      .map((match) => match[2])
+  )
+  const equals = token.indexOf('=')
+  if (equals < 0) {
+    return quote
+      ? null
+      : {
+          block,
+          written,
+          kind: 'name',
+          startColumn: base + start + 1,
+          insertPrefix: leading === 0 ? ' ' : ''
+        }
+  }
+  const padding = /^[ \t]*/.exec(token.slice(equals + 1))[0].length
+  return {
+    block,
+    written,
+    kind: 'value',
+    name: token.slice(0, equals).trim(),
+    quoted: Boolean(quote),
+    startColumn: base + (quote ? valueStart : start + equals + 1 + padding) + 1
+  }
 }
 
 /**

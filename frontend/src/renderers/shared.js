@@ -229,6 +229,12 @@ function lineRows(lineCount, lineStart, highlights) {
 }
 
 /**
+ * The fence languages that are a diagram's source rather than code: left for the block holding them to
+ * draw, and given none of a code block's furniture.
+ */
+export const DIAGRAM_LANGUAGES = ['kroki', 'mermaid', 'plantuml']
+
+/**
  * One fence, as the markup it is drawn as -- always rooted at a `<pre>`, whatever it holds.
  *
  * @param {string} str The code, as the author wrote it.
@@ -238,7 +244,7 @@ function lineRows(lineCount, lineStart, highlights) {
  *                            no gutter, no title bar and no lines to mark.
  */
 export function codeBlock(str, lang, attributes) {
-  if (['kroki', 'mermaid', 'plantuml'].includes(lang)) {
+  if (DIAGRAM_LANGUAGES.includes(lang)) {
     /*
       Left as source, deliberately: a diagram is drawn by the block whose body it is —
       `block-diagram` for mermaid, `block-plantuml` and `block-kroki` for the others — and each

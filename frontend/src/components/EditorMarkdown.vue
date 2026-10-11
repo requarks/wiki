@@ -341,23 +341,29 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useBlockCompletions } from '@/composables/blockCompletions'
 import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
+import { useFenceCompletions } from '@/composables/fenceCompletions'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
+import { useTableCellNavigation } from '@/composables/tableCellNavigation'
 import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
 import {
+  blockAttributeContext,
+  blockNameContext,
   blockOpeningLine,
+  blockSnippet,
   blockValues,
   findBlockContent,
   findBlocks,
   writeBlockContent
 } from '@/helpers/markdownBlocks'
 import { findImages, imageValues, writeImage } from '@/helpers/markdownImages'
-import { findEditableTables } from '@/helpers/markdownTable'
+import { findEditableTables, tableRowToAdd, tableWithColumnAdded } from '@/helpers/markdownTable'
 import { scrollBehavior } from '@/helpers/motion'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -500,6 +506,29 @@ const imageLens = useImagePropertiesLens({
   findImages,
   imageValues,
   writeImage
+})
+
+/*
+  A block's name after `::block-`, and its parameters inside its braces. The hyphen is what ends
+  `::block-`; a space begins the next attribute, a brace the first, and a quote a value.
+*/
+const blockCompletions = useBlockCompletions({
+  getEditor: () => editor,
+  getBlocks: () => siteBlocks,
+  languageId: 'markdown',
+  triggerCharacters: ['-', ' ', '{', '"'],
+  nameContext: blockNameContext,
+  attributeContext: blockAttributeContext,
+  blockSnippet
+})
+
+// -> A code fence's `title`, `linesStart` and `linesHighlight`, after its language
+const fenceCompletions = useFenceCompletions({ getEditor: () => editor })
+
+// -> Tab and Shift+Tab between a table's cells, and Tab past the last one adds a row
+const tableCellNavigation = useTableCellNavigation({
+  getEditor: () => editor,
+  addRow: (line) => addTableRow(line)
 })
 
 const state = reactive({
@@ -709,8 +738,7 @@ function insertTable() {
  * of the click is what keeps the range and the source it hands over describing the same thing.
  */
 function editTable(line) {
-  const tables = findEditableTables(editor.getModel().getValue())
-  const table = tables.find((entry) => entry.startLine <= line && line <= entry.endLine)
+  const table = tableAt(line)
   if (!table) {
     return
   }
@@ -722,6 +750,53 @@ function editTable(line) {
       endLine: table.endLine
     }
   })
+}
+
+/**
+ * The table under a lens, found again at the moment of the click -- see `editTable` for why.
+ */
+function tableAt(line) {
+  return findEditableTables(editor.getModel().getValue()).find(
+    (entry) => entry.startLine <= line && line <= entry.endLine
+  )
+}
+
+/**
+ * An empty row, from the "Add Row" lens: under the row the caret is in, or at the end of the table when
+ * the caret is anywhere else -- in the header, or not in the table at all. Clicking a lens does not move
+ * the caret, so where it is is where the author was writing. It lands in the new row's first cell.
+ */
+function addTableRow(line) {
+  const table = tableAt(line)
+  if (!table) {
+    return
+  }
+  const row = tableRowToAdd(table, editor.getPosition()?.lineNumber ?? null)
+  const model = editor.getModel()
+  const end = model.getLineMaxColumn(row.afterLine)
+  editor.executeEdits('table', [
+    { range: new Range(row.afterLine, end, row.afterLine, end), text: `\n${row.text}` }
+  ])
+  editor.setPosition(new Position(row.afterLine + 1, row.column))
+  editor.focus()
+}
+
+/** An empty column at the end of the table, from the "Add Column" lens, with the caret in its header. */
+function addTableColumn(line) {
+  const table = tableAt(line)
+  if (!table) {
+    return
+  }
+  const result = tableWithColumnAdded(table)
+  const model = editor.getModel()
+  editor.executeEdits('table', [
+    {
+      range: new Range(result.startLine, 1, result.endLine, model.getLineMaxColumn(result.endLine)),
+      text: result.text
+    }
+  ])
+  editor.setPosition(new Position(result.caret.line, result.caret.column))
+  editor.focus()
 }
 
 /** The block as this site describes it, or undefined for one it does not list. */
@@ -1624,19 +1699,30 @@ onMounted(async () => {
     every lens twice.
   */
   const editTableCommand = editor.addCommand(0, (_accessor, line) => editTable(line))
+  const addTableRowCommand = editor.addCommand(0, (_accessor, line) => addTableRow(line))
+  const addTableColumnCommand = editor.addCommand(0, (_accessor, line) => addTableColumn(line))
   tableLensProvider = monaco.languages.registerCodeLensProvider('markdown', {
     provideCodeLenses(model) {
-      return {
-        lenses: findEditableTables(model.getValue()).map((table) => ({
-          range: new Range(table.startLine, 1, table.startLine, 1),
-          command: {
-            id: editTableCommand,
-            title: t('editor.markup.editTable'),
-            arguments: [table.startLine]
-          }
-        })),
-        dispose() {}
+      /*
+        "Add Row" and "Add Column" beside it, from the same provider so the three always come in the
+        same order. They edit the source in place rather than through the overlay -- see
+        `tableRowToAdd` -- and are offered over the same tables, since a table the overlay cannot hold
+        is one these could not be trusted to read either.
+      */
+      const lenses = []
+      for (const table of findEditableTables(model.getValue())) {
+        const range = new Range(table.startLine, 1, table.startLine, 1)
+        const lens = (id, title) => ({
+          range,
+          command: { id, title, arguments: [table.startLine] }
+        })
+        lenses.push(
+          lens(editTableCommand, t('editor.markup.editTable')),
+          lens(addTableRowCommand, t('editor.markup.addTableRow')),
+          lens(addTableColumnCommand, t('editor.markup.addTableColumn'))
+        )
       }
+      return { lenses, dispose() {} }
     }
   })
 
@@ -1693,6 +1779,11 @@ onMounted(async () => {
       return { lenses, dispose() {} }
     }
   })
+
+  // -> Block names and parameters, and code fence attributes, as they are typed
+  blockCompletions.register()
+  fenceCompletions.register()
+  tableCellNavigation.register()
 
   // -> "Image Properties" over every image in the page -- see `useImagePropertiesLens`
   imageLens.register()
@@ -1913,6 +2004,9 @@ onBeforeUnmount(() => {
   // -> Registered against the markdown language, not this editor, so nothing else takes it down
   tableLensProvider?.dispose()
   blockLensProvider?.dispose()
+  blockCompletions.dispose()
+  fenceCompletions.dispose()
+  tableCellNavigation.dispose()
   imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header

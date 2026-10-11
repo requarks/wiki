@@ -299,6 +299,7 @@ import {
 } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useBlockCompletions } from '@/composables/blockCompletions'
 import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
@@ -308,7 +309,10 @@ import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockAsciidoc } from '@/helpers/blocks'
 import {
+  blockAttributeContext,
+  blockNameContext,
   blockOpeningLine,
+  blockSnippet,
   blockValues,
   findBlockContent,
   findBlocks,
@@ -442,6 +446,20 @@ const imageLens = useImagePropertiesLens({
   findImages,
   imageValues,
   writeImage
+})
+
+/*
+  A block's name after `[block-`, and its parameters in the attribute line. The hyphen is what ends
+  `[block-`; a comma begins the next attribute, a space after it the same, and a quote a value.
+*/
+const blockCompletions = useBlockCompletions({
+  getEditor: () => editor,
+  getBlocks: () => siteBlocks,
+  languageId: ASCIIDOC_LANGUAGE_ID,
+  triggerCharacters: ['-', ',', ' ', '"'],
+  nameContext: blockNameContext,
+  attributeContext: blockAttributeContext,
+  blockSnippet
 })
 
 const state = reactive({
@@ -1458,6 +1476,9 @@ onMounted(async () => {
     }
   })
 
+  // -> Block names and parameters as they are typed -- see `useBlockCompletions`
+  blockCompletions.register()
+
   // -> "Image Properties" over every image in the page -- see `useImagePropertiesLens`
   imageLens.register()
 
@@ -1652,6 +1673,7 @@ onBeforeUnmount(() => {
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
   // -> Registered against the language, not this editor, so nothing else takes it down
   blockLensProvider?.dispose()
+  blockCompletions.dispose()
   imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
   //    this author's avatar out of everyone else's header
