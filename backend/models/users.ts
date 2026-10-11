@@ -2600,7 +2600,7 @@ class Users {
    * Nobody is signed in by it: the new password is what does that, on the login screen.
    *
    * @throws `ERR_INVALID_VALIDATION_TOKEN`, `ERR_EXPIRED_VALIDATION_TOKEN`, `ERR_INVALID_USER`,
-   *         `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT`
+   *         `ERR_INACTIVE_USER`, `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT`
    */
   async resetPassword({
     token,
@@ -2617,6 +2617,10 @@ class Users {
     const { user, strategyId } = await this.validateToken({ kind: 'resetPwd', token })
     if (!user) {
       throw new Error('ERR_INVALID_USER')
+    }
+    // -> A link sent before the account was deactivated must not still be able to change it
+    if (!user.isActive) {
+      throw new Error('ERR_INACTIVE_USER')
     }
     const auth = (user.auth ?? {}) as Record<string, any>
     // -> The strategy could have been deleted, or password login turned off, since the link was sent
