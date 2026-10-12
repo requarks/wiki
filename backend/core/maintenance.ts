@@ -55,6 +55,7 @@ export default {
     await WIKI.models.assets.purgeCache()
     await WIKI.models.icons.purgeCache()
     await WIKI.models.blocks.purgeCache()
+    WIKI.models.storage.targetCache.clear()
 
     await WIKI.models.locales.reloadCache()
     await WIKI.models.sites.reloadCache()
@@ -93,6 +94,15 @@ export default {
     //    catch-all instead
     WIKI.events.inbound.on('reloadSites', async () => {
       await WIKI.models.sites.reloadCache()
+    })
+    // -> Storage targets are cached per instance too, and decide where every upload is written. Dropped
+    //    rather than reloaded: the next request that needs them reads them back.
+    WIKI.events.inbound.on('reloadStorageTargets', ({ data: siteId }) => {
+      if (typeof siteId === 'string') {
+        WIKI.models.storage.targetCache.delete(siteId)
+      } else {
+        WIKI.models.storage.targetCache.clear()
+      }
     })
     WIKI.events.inbound.on('reloadBlocks', async () => {
       await WIKI.models.blocks.refreshCustomIndex()

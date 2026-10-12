@@ -21,9 +21,11 @@ import type { TaskContext } from '../../core/scheduler.ts'
  * must not stop the rest of them syncing. `executeAction` records the outcome on the target itself,
  * so a failure shows up on its Status card in the admin area rather than only in this log.
  *
- * **One instance at a time.** The scheduler hands a job to a single instance, which is the one whose
- * working copy is synced. Every instance in a high-availability set keeps its own, so they each fall
- * in step at their own turn rather than fighting over one repository.
+ * **Any instance will do.** The scheduler hands each tick to whichever instance claims it, and a
+ * target's working copy on that instance is only a cache: what the wiki has not yet published is
+ * queued in the database, and so is the commit it last agreed with the remote on, so a sync rebuilds
+ * the working copy from those wherever it runs. Two instances never sync the same target at once — one
+ * that finds another already at it reports so and leaves it be.
  */
 export async function task(_payload: unknown, { signal }: TaskContext): Promise<void> {
   const syncable = await WIKI.models.storage.syncableTargets()

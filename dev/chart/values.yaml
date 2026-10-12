@@ -184,16 +184,17 @@ volumeMounts: []
 #    subPath: known_hosts
 #    readOnly: true
 
-# The wiki's data directory, /wiki/data. Holds the caches (icons, served files, blocks), which rebuild
-# themselves from the database, plus the default locations of the Local Disk (`data/content`) and Git
-# (`data/repo`) storage targets. An emptyDir is enough unless one of those two is in use.
+# The wiki's data directory, /wiki/data. Holds the caches (icons, served files, blocks, and a Git
+# storage target's working copy), which rebuild themselves from the database and the remote, plus the
+# default location of the Local Disk storage target (`data/content`). An emptyDir is enough unless
+# that target is in use, or a Git target with no remote configured.
 persistence:
   enabled: false
   # Use an existing claim instead of creating one.
   existingClaim: ''
   # `-` for the cluster's default class, empty to leave it unset.
   storageClass: ''
-  # ReadWriteMany is what lets several replicas share one Local Disk or Git storage target.
+  # ReadWriteMany is what lets several replicas share one Local Disk storage target.
   accessModes:
     - ReadWriteOnce
   size: 10Gi

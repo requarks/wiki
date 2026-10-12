@@ -107,8 +107,11 @@ included, so no sticky sessions are needed.
 
 The data directory (`/wiki/data`) is per replica unless `persistence` points every replica at one
 ReadWriteMany claim. That does not matter for the caches it normally holds, which are rebuilt from
-the database. It does matter for a **Local Disk** or **Git** storage target left at its default
-location under `data/`, which would otherwise be a separate copy on each replica.
+the database, nor for a **Git** storage target with a remote: each replica's working copy under
+`data/repo` is a cache too, rebuilt from the remote and from the changes queued in the database, so
+any replica can sync and none of them needs a volume. It does matter for a **Local Disk** storage
+target left at its default location under `data/`, and for a Git target with no remote configured,
+either of which would otherwise be a separate copy on each replica.
 
 With one replica on a ReadWriteOnce claim, set `strategy.type: Recreate`. Otherwise a rolling
 update's new pod may land on a node the volume cannot be attached to.

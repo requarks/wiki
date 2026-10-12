@@ -53,6 +53,11 @@ export const ROOT_PAGE_NAME = 'index'
  */
 const IGNORED_SEGMENT = /^\.|\.tmp$/
 
+/** Whether a stored path is one of those, and so never content. */
+export function isIgnoredPath(segments: string[]): boolean {
+  return segments.some((segment) => IGNORED_SEGMENT.test(segment))
+}
+
 /**
  * A configured root as an absolute path.
  *
@@ -352,7 +357,7 @@ export async function walkStored(root: string): Promise<StoredFile[] | null> {
     }
     const filePath = path.join(entry.parentPath, entry.name)
     const segments = path.relative(root, filePath).split(path.sep)
-    if (segments.some((segment) => IGNORED_SEGMENT.test(segment))) {
+    if (isIgnoredPath(segments)) {
       continue
     }
     files.push({ filePath, segments })

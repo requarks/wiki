@@ -966,9 +966,9 @@ Everything else follows from that:
   database's. Imported content is rendered with **no script or style permission** whoever ran the
   import, since the file need not have been written by them.
 - **An import is never written back to the target it reads from.** What it adopts is saved like any
-  edit and so copied to every target holding it, and `git` and `sftp` serialize every operation per
-  target — with the import itself being one, a copy back to the source waits on the import that is
-  waiting on it. `importTree` runs under `storage.importingFrom(target)`, an `AsyncLocalStorage`
+  edit and so copied to every target holding it, and `sftp` serializes every operation per target —
+  with the import itself being one, a copy back to the source waits on the import that is waiting on
+  it. For `git` the copy back would be a queued change re-publishing what was just pulled. `importTree` runs under `storage.importingFrom(target)`, an `AsyncLocalStorage`
   scope that `putAsset`, `eachPageTarget` and `eachAssetTarget` skip that target in (counting it,
   for `putAsset`, as somewhere the file is held). Anything else a module does to the wiki while
   holding its own queue — git's removals in `applyIncoming` — needs the same scope.
@@ -1002,15 +1002,25 @@ misconfigured one reads healthy until something is actually asked of it.
 
 **The git target is the disk target plus history and a remote.** Same tree, same helpers, and then:
 
-- **Commits are local and immediate; the network is batched.** A page save writes, commits and
-  returns — `prepareRepo` deliberately never contacts a remote, so an unreachable one cannot make the
-  wiki slow to edit or fail an upload. `ensureRemote` is the half that does, and only `sync` calls it.
+- **The working copy is a cache; the database is what every instance agrees on.** An HA set has a
+  working copy per pod, on no shared volume and perhaps on no volume at all, so nothing is kept only
+  there. A page save or an upload queues a row in `storageOutbox` — the file as written, who wrote it,
+  when — and that is all it does: nothing on the request path touches git or the network. The commit
+  the wiki and the remote last agreed on is `storageSyncState`, recorded against the remote URL and
+  branch it belongs to. A sync, on whichever instance runs it, `checkoutAt`s that commit (wiping
+  whatever its own copy held, an interrupted rebase and a stale `index.lock` included), `replay`s the
+  queue as one commit per change with the original author and date, settles with the remote, pushes,
+  applies what came back, and only then drops the published rows and records the new commit, in one
+  transaction. Rows are dropped by id, never by range, since ids are not handed out in commit order.
+- **One sync per target across the whole set.** `storage.exclusivelyFor` holds a session advisory lock
+  (`pg_try_advisory_lock(TARGET_LOCK_CLASS, hashtext(targetId))`) for the length of it; an instance
+  that finds it taken reports so and does nothing, since the holder is doing the same job. `withRepo`
+  serializes within the process on top of that.
 - **`sync` runs on a schedule.** `tasks/simple/sync-storage-targets.ts`, on a `* * * * *`
   `jobSchedule` row seeded by `jobs.init()`, walks every enabled target whose module declares a `sync`
   handler (`storage.syncableTargets`) and runs it through `executeAction`, so a failure lands on the
-  target's Status card. The **Force Sync** action is the same call on demand. In an HA set the
-  scheduler hands the job to one instance, which is the one whose working copy syncs — each instance
-  keeps its own.
+  target's Status card. The **Force Sync** action is the same call on demand. Which instance gets a
+  tick does not matter.
 - **How often is `storage.syncInterval`, per site** (the **Configuration** tab, `syncIntervalFor`,
   default `5m`). Since it is per site, one cron row cannot express it: the tick is every minute — as
   fine as the shortest interval anyone can set — and the task skips the sites whose turn it is not.
@@ -1024,38 +1034,41 @@ misconfigured one reads healthy until something is actually asked of it.
   has to come off the tree rather than the file: the stem is looked up first and only counts as the
   page if `pages.storageFileNameOf` matches the name that went, so a deleted `readme.pdf` never takes
   the page `readme` with it.
-- **A conflict is settled, never left open.** The pull is `--rebase --autostash`, and a rebase that
-  conflicts stops and waits for a human that this working copy does not have — with the index
-  unmerged, which git then refuses every write against, so it is not one failed sync but every commit
-  after it (`ensureRemote`'s checkout is the first thing to fail, and what such a target reports).
-  `pullRebase` therefore rolls a conflicted rebase back and pulls again with `-X ours`, which during a
-  rebase is the *remote*, consistent with a pull being authoritative. What `-X` cannot settle is a
-  file one side changed and the other deleted; that fails the sync, but leaves the working copy usable.
-  `abortInterrupted` also runs at the top of every sync and in `prepareRepo`, so a copy somebody left
-  mid-rebase by hand heals itself instead of needing Purge.
-- **A working copy started again from nothing re-attaches itself.** It is a directory in a container
-  while the content is a database elsewhere, so an upgrade that replaces the container without a volume
-  for `data/repo` takes it with it — and `prepareRepo` then inits an empty one, the next page save
-  commits into it, and the wiki has the remote's own files under a second root commit. `sync` asks
-  `sharesHistoryWith` before it pulls, and with no commit in common `reattach` merges the remote's
-  history in with `--allow-unrelated-histories -X ours` instead: the remote's history and every file
-  the wiki has not re-saved come back, the working copy's version wins where the two overlap (these
-  files were written from the database *since* the copy was created, so the remote's copy is the older
-  one), and the push that follows puts the two in step. It runs in **every** mode — a `push` mode force
-  push from a working copy created ten minutes ago would otherwise replace the whole repository with
-  it. The wiki itself is not written to and `applyIncoming` is skipped for that sync, since the diff is
-  the entire repository; Import Everything is what takes in content the repository has and the wiki
-  does not.
+- **A conflict is settled, never left open.** The queue's commits go onto the remote with `rebase
+  --onto origin/<branch> <agreed commit>`, and a rebase that conflicts stops and waits for a human
+  this working copy does not have. `rebaseOnto` therefore rolls a conflicted rebase back and runs it
+  again with `-X ours`, which during a rebase is the *remote*, consistent with a pull being
+  authoritative; what `-X` cannot settle — a file one side changed and the other deleted — is finished
+  by `settleRebase`, taking stage 2 (the remote's side) of every unmerged path. A sync that stopped
+  there would fail every sync after it, since the queue it could not publish is the next one's too.
+- **Changed in the wiki while a sync ran** means queued after it read the queue: the remote's change
+  to that path is not applied over it, and the next sync publishes the wiki's. In **Pull only** the
+  wiki queues nothing at all (`acceptsWrites`, and `canStore` declines assets), and a row left from
+  before the switch is dropped once the remote changes its path.
+- **The first sync with a remote applies nothing.** With no agreed commit — a new target, one pointed
+  at another URL or branch, an installation upgraded from before the queue existed, or a remote whose
+  history was rewritten past the agreed commit — the remote's branch is taken up as it stands and the
+  queue committed on top; there is nothing to diff it against. Import Everything is what takes in
+  content the repository has and the wiki does not, and it reads the agreed commit's tree out of git
+  (`ls-tree`, `cat-file`) rather than off any working tree.
+- **An asset is read out of git, not off the working tree** (`readBlob`), which on any given instance
+  is wherever its last sync left it. Not yet published, its bytes are the queue's — followed back
+  through a queued move — and after that they are the agreed commit's, fetched first by an instance
+  that has never seen it. The fetch is the only network a read can cost, and only on a cold instance.
 - **The diff, not the tree.** Incoming changes come from `git diff --name-status -M -z` between the
-  commit the branch was on and the one it is on now — a sync runs every few minutes and cannot read
+  commit the branch was on after the replay and the one it is on after the rebase — a sync runs every few minutes and cannot read
   every file each time. `-z` because a path may contain anything, newlines included.
-- **Every operation is serialized per target** by `withRepo`: git locks its index for the length of a
-  write, so two concurrent uploads would otherwise have one fail on `index.lock`.
 - **An empty commit is never made.** Most page saves do not change the stored form of the page (a
   re-publish, a tag reordered into the same order), and `commitPaths` checks `diff --cached` before
   committing so the history says what actually changed.
 - Operator git config is inherited on purpose — including `commit.gpgsign`, which will fail every
-  commit if it is on without a usable key. The failure surfaces as the target's recorded `error`.
+  commit if it is on without a usable key. The failure surfaces as the target's recorded `error`, and
+  the queue is kept for the sync after it. simple-git strips every ambient `GIT_*` variable before
+  spawning git, so `GIT_CONFIG_GLOBAL` cannot switch that off for a test instance; a `HOME` of its own
+  can.
+- **Without a Repository URI the repository is one instance's own**: the queue is committed into
+  whichever working copy syncs, and nothing else holds those commits. That needs a single instance on
+  a persistent volume; with a remote, neither is needed.
 
 **A change carries who made it, and only git cares.** `StorageAssetRef` and `StoragePageRef` carry an
 optional `actorId`, which is the user id the models already had in hand at each dispatch site;

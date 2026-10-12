@@ -1411,6 +1411,70 @@ export const storage = pgTable(
   (table) => [uniqueIndex('storage_composite_idx').on(table.siteId, table.module)]
 )
 
+/**
+ * Changes a target has accepted and not yet published, oldest first.
+ *
+ * For a target whose own copy of the content is not somewhere every instance can see — the git
+ * target, whose working copy is a directory on whichever pod made the change. A change is recorded
+ * here instead, by whichever instance made it, and the target's sync replays the queue as commits on
+ * whichever instance runs it. So the queue is what every instance of an HA set agrees on, and a
+ * working copy is a cache any of them can rebuild.
+ *
+ * `data` is a snapshot of the file as it was written, not a pointer to the page or asset: forty saves
+ * between two syncs are forty commits, each with what that save wrote, and an asset whose only home is
+ * this target has its bytes nowhere else until the sync has pushed them.
+ */
+export const storageOutbox = pgTable(
+  'storageOutbox',
+  {
+    // -> Replay order. Bigint because every page save on a busy wiki takes one.
+    id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    targetId: uuid()
+      .notNull()
+      .references(() => storage.id, { onDelete: 'cascade' }),
+    // -> Which decides the commit message
+    kind: varchar({ length: 16 }).$type<'page' | 'asset'>().notNull(),
+    op: varchar({ length: 16 }).$type<'put' | 'delete' | 'move'>().notNull(),
+    // -> Relative to the target's root, as the layout files it. Where a move ends up.
+    path: text().notNull(),
+    // -> Where a move started
+    previousPath: text(),
+    // -> How a commit message names the content, worked out when the change was made
+    label: text().notNull(),
+    previousLabel: text(),
+    // -> The file as written, for a `put`
+    data: bytea(),
+    // -> Not a foreign key: a commit made after the account is gone still happened, and falls back to
+    //    the target's default author
+    actorId: uuid(),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    index('storageOutbox_targetId_idx').on(table.targetId, table.id),
+    // -> A read of a file this target has accepted and not yet published
+    index('storageOutbox_path_idx').on(table.targetId, table.path)
+  ]
+)
+
+/**
+ * Where a target that syncs with a remote last left off, as every instance sees it.
+ *
+ * `commit` is the remote's commit the wiki and the remote last agreed on: everything the outbox held up
+ * to then was pushed in it, and everything the remote had up to then was applied to the wiki. It is
+ * only meaningful for the remote and branch it was recorded against, which is why those are kept with
+ * it — a target pointed somewhere else starts again from that remote rather than diffing against a
+ * commit the remote has never had.
+ */
+export const storageSyncState = pgTable('storageSyncState', {
+  targetId: uuid()
+    .primaryKey()
+    .references(() => storage.id, { onDelete: 'cascade' }),
+  remote: text().notNull(),
+  branch: varchar({ length: 255 }).notNull(),
+  commit: varchar({ length: 64 }).notNull(),
+  updatedAt: timestamp().notNull().defaultNow()
+})
+
 // TAGS --------------------------------
 export const tags = pgTable(
   'tags',

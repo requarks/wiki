@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { load } from 'js-yaml'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, getTableColumns, inArray, lt } from 'drizzle-orm'
 import {
   CustomError,
   dataPathRoot,
@@ -11,7 +11,12 @@ import {
   parseModuleProps,
   resolveLocalPath
 } from '../helpers/common.ts'
-import { sites as sitesTable, storage as storageTable } from '../db/schema.ts'
+import {
+  sites as sitesTable,
+  storage as storageTable,
+  storageOutbox as storageOutboxTable,
+  storageSyncState as storageSyncStateTable
+} from '../db/schema.ts'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { AssetKind } from './assets.ts'
 
@@ -28,6 +33,12 @@ const DB_MODULE = 'db'
 
 /** The target an import in progress is reading from. See `Storage.importingFrom`. */
 const importSource = new AsyncLocalStorage<string>()
+
+/**
+ * The first half of every per-target advisory lock (`exclusivelyFor`), the target's id hashed being
+ * the second. The two-key form is a keyspace of its own, apart from the single-key locks elsewhere.
+ */
+const TARGET_LOCK_CLASS = 4210003
 
 /** Which content type an asset falls into when it is not large enough to count as a large file. */
 const CONTENT_TYPE_BY_KIND: Record<AssetKind, ContentType> = {
@@ -96,10 +107,9 @@ const SIZE_UNIT_BYTES: Record<string, number> = {
 /**
  * How long the configured targets of a site are trusted before they are read again.
  *
- * The backstop rather than the mechanism: saving the admin form drops the entry on the instance that
- * handled the request, but a second instance has no way to hear about it — so every entry expires on
- * its own as well. Short enough that a change made elsewhere takes effect promptly, long enough that
- * a burst of uploads resolves its target once rather than once per file.
+ * The backstop rather than the mechanism: a saved change drops the entry on every instance at once
+ * (`invalidateTargets`), and this only bounds how long an instance that missed the notification — its
+ * listening connection was down at the time — goes on answering from the old configuration.
  */
 const TARGET_CACHE_TTL_MS = 30_000
 
@@ -413,6 +423,34 @@ export interface StoragePageContent {
   updatedAt: Date
   /** The source, as the author wrote it. Never the render. */
   content: string
+}
+
+/** A change as a target queues it. See `storageOutbox` in the schema. */
+export interface StorageOutboxChange {
+  kind: 'page' | 'asset'
+  op: 'put' | 'delete' | 'move'
+  path: string
+  previousPath?: string | null
+  label: string
+  previousLabel?: string | null
+  data?: Buffer | null
+  actorId?: string | null
+}
+
+/** A queued change as it is read back, without its bytes. */
+export interface StorageQueuedChange extends Omit<StorageOutboxChange, 'data'> {
+  id: number
+  previousPath: string | null
+  previousLabel: string | null
+  actorId: string | null
+  createdAt: Date
+}
+
+/** Where a target that syncs last agreed with its remote. See `storageSyncState` in the schema. */
+export interface StorageSyncState {
+  remote: string
+  branch: string
+  commit: string
 }
 
 /**
@@ -756,6 +794,20 @@ class Storage {
   }
 
   /**
+   * Drop a site's cached targets here and on every other instance.
+   *
+   * A target's configuration decides where an upload is written and whether a page save is queued for
+   * git at all, so an instance answering from the old one for the length of `TARGET_CACHE_TTL_MS`
+   * would write into a target that was just switched off — or, for a git target just set to Pull
+   * only, queue changes nothing will ever publish. Not emitted from `syncSite`, which every instance
+   * runs for itself at boot.
+   */
+  invalidateTargets(siteId: string): void {
+    this.targetCache.delete(siteId)
+    WIKI.events.outbound.emit('reloadStorageTargets', siteId)
+  }
+
+  /**
    * The same list, answered from memory where it can be.
    *
    * What every upload and every cache-missing read resolves through, hence the cache: those are hot
@@ -1072,7 +1124,7 @@ class Storage {
       .update(storageTable)
       .set(values)
       .where(and(eq(storageTable.siteId, siteId), eq(storageTable.id, target.id)))
-    this.targetCache.delete(siteId)
+    this.invalidateTargets(siteId)
     return (result.rowCount ?? 0) > 0
   }
 
@@ -1237,7 +1289,7 @@ class Storage {
     }
     const updated = await WIKI.models.sites.updateSite(siteId, { config: { storage: config } })
     // -> A target's content type depends on the threshold, so the resolved list is now stale
-    this.targetCache.delete(siteId)
+    this.invalidateTargets(siteId)
     return updated
   }
 
@@ -1777,6 +1829,147 @@ class Storage {
     const actor: StorageActor = { name: user.name, email: user.email }
     this.actorCache.set(actorId, actor)
     return actor
+  }
+
+  /**
+   * Record a change a target has accepted, for its sync to publish.
+   *
+   * What a target does instead of writing to its own copy when that copy is not somewhere every
+   * instance can see. See `storageOutbox` in the schema.
+   */
+  async queueChange(target: StorageTarget, change: StorageOutboxChange): Promise<void> {
+    await WIKI.db.insert(storageOutboxTable).values({ ...change, targetId: target.id })
+  }
+
+  /**
+   * Every change queued for a target, oldest first — without the bytes, which `queuedData` reads one
+   * at a time. An offload can queue every file a site has, and holding all of them at once would be
+   * the whole asset table in memory.
+   */
+  async queuedChanges(target: StorageTarget): Promise<StorageQueuedChange[]> {
+    const { data: _data, ...columns } = getTableColumns(storageOutboxTable)
+    return WIKI.db
+      .select(columns)
+      .from(storageOutboxTable)
+      .where(eq(storageOutboxTable.targetId, target.id))
+      .orderBy(asc(storageOutboxTable.id))
+  }
+
+  /** The file a queued `put` wrote. */
+  async queuedData(id: number): Promise<Buffer | null> {
+    const [row] = await WIKI.db
+      .select({ data: storageOutboxTable.data })
+      .from(storageOutboxTable)
+      .where(eq(storageOutboxTable.id, id))
+    return row?.data ?? null
+  }
+
+  /**
+   * The latest queued change that left something at this path, or took it away.
+   *
+   * @param beforeId Only changes queued before this one — for following a move back to where the
+   *   file was before it
+   */
+  async latestQueuedAt(
+    target: StorageTarget,
+    relPath: string,
+    beforeId?: number
+  ): Promise<StorageQueuedChange | null> {
+    const { data: _data, ...columns } = getTableColumns(storageOutboxTable)
+    const [row] = await WIKI.db
+      .select(columns)
+      .from(storageOutboxTable)
+      .where(
+        and(
+          eq(storageOutboxTable.targetId, target.id),
+          eq(storageOutboxTable.path, relPath),
+          beforeId === undefined ? undefined : lt(storageOutboxTable.id, beforeId)
+        )
+      )
+      .orderBy(desc(storageOutboxTable.id))
+      .limit(1)
+    return row ?? null
+  }
+
+  /** Where a target that syncs last agreed with its remote, if it has. See `storageSyncState`. */
+  async syncStateFor(target: StorageTarget): Promise<StorageSyncState | null> {
+    const [row] = await WIKI.db
+      .select({
+        remote: storageSyncStateTable.remote,
+        branch: storageSyncStateTable.branch,
+        commit: storageSyncStateTable.commit
+      })
+      .from(storageSyncStateTable)
+      .where(eq(storageSyncStateTable.targetId, target.id))
+    return row ?? null
+  }
+
+  /**
+   * Finish a sync: drop the changes it published and record where it left off, both or neither.
+   *
+   * By id rather than by "everything up to the last one": ids are handed out when a row is inserted
+   * and become visible when it commits, which is not the same order, so a change saved on another
+   * instance while the sync ran can carry a lower id than one the sync already read.
+   */
+  async settleSync(
+    target: StorageTarget,
+    { published, state }: { published: number[]; state: StorageSyncState | null }
+  ): Promise<void> {
+    await WIKI.db.transaction(async (trx) => {
+      if (published.length > 0) {
+        await trx.delete(storageOutboxTable).where(inArray(storageOutboxTable.id, published))
+      }
+      if (state) {
+        await trx
+          .insert(storageSyncStateTable)
+          .values({ targetId: target.id, ...state })
+          .onConflictDoUpdate({
+            target: storageSyncStateTable.targetId,
+            set: { ...state, updatedAt: new Date() }
+          })
+      }
+    })
+  }
+
+  /**
+   * Run something no other instance is running for this target at the same time.
+   *
+   * A session-level advisory lock on a connection held for the length of the work, rather than a
+   * transaction-level one, because the work is a sync — minutes of network and git — and a
+   * transaction held open across it would pin rows as well as a connection. Postgres drops the lock
+   * with the connection, so an instance that dies mid-sync does not leave it held.
+   *
+   * @returns `{ busy: true }` without running anything when another instance holds it. A sync is
+   *   periodic: the instance that has it is doing the job, and waiting to do it again straight after is
+   *   no use to anybody.
+   */
+  async exclusivelyFor<T>(
+    target: StorageTarget,
+    work: () => Promise<T>
+  ): Promise<{ busy: true } | { busy: false; result: T }> {
+    const client = await WIKI.dbManager.pool!.connect()
+    let broken = false
+    try {
+      const { rows } = await client.query(
+        'SELECT pg_try_advisory_lock($1, hashtext($2)) AS locked',
+        [TARGET_LOCK_CLASS, target.id]
+      )
+      if (!rows[0]?.locked) {
+        return { busy: true }
+      }
+      try {
+        return { busy: false, result: await work() }
+      } finally {
+        await client
+          .query('SELECT pg_advisory_unlock($1, hashtext($2))', [TARGET_LOCK_CLASS, target.id])
+          .catch(() => {
+            // -> A connection that cannot unlock is thrown away, which unlocks it
+            broken = true
+          })
+      }
+    } finally {
+      client.release(broken)
+    }
   }
 
   /**

@@ -2,7 +2,7 @@ key: git
 title: Git
 icon: '/_assets/icons/ultraviolet-git.svg'
 banner: '/_assets/storage/git.jpg'
-description: Keep this site's content in a Git repository, committed as it changes and synchronized with a remote. Every page and file is an ordinary versioned file, so the wiki's history is also the repository's.
+description: Keep this site's content in a Git repository, committed per change and synchronized with a remote. Every page and file is an ordinary versioned file, so the wiki's history is also the repository's. Changes are committed and pushed by each sync, from any instance, so it needs no persistent or shared volume.
 assetDelivery:
   isDirectAccessSupported: false
 contentTypes:
@@ -22,21 +22,21 @@ props:
   repoUrl:
     type: String
     title: Repository URI
-    hint: Git-compliant URI (e.g. git@server.com:org/repo.git for SSH, https://server.com/org/repo.git for basic). Leave empty to keep a purely local repository, committed but never pushed.
+    hint: Git-compliant URI (e.g. git@server.com:org/repo.git for SSH, https://server.com/org/repo.git for basic). Leave empty to keep a purely local repository, committed but never pushed - which lives on one instance's disk only, so needs a persistent volume and a single instance.
     icon: dns
     order: 2
   branch:
     type: String
     default: 'main'
     title: Branch
-    hint: The branch to use during pull / push. It must already exist on the remote.
+    hint: The branch to use during pull / push. The first push creates it on a remote that has no branches yet.
     icon: code-fork
     order: 3
   syncMode:
     type: String
     default: 'sync'
     title: Sync Direction
-    hint: Sync pulls and then pushes. Push force-pushes the wiki's commits and never takes anything back, so the wiki always wins. Pull only takes changes in, and is what makes the remote the authority.
+    hint: Sync pulls and then pushes. Push force-pushes the wiki's commits and never takes anything back, so the wiki always wins. Pull only takes changes in and never writes the wiki's own to the repository, which makes the remote the authority.
     icon: synchronize
     enum:
       - sync|Sync
@@ -127,7 +127,7 @@ props:
     type: String
     title: Local Repository Path
     default: './data/repo'
-    hint: Where the working copy is kept. Give each site its own path unless you turn on Add Site ID Prefix under Configuration, since two sites sharing a repository would otherwise write over each other. Relative paths are resolved from the Wiki.js install directory.
+    hint: Where each instance keeps its working copy, which is a cache it rebuilds from the remote whenever it needs to. Give each site its own path unless you turn on Add Site ID Prefix under Configuration, since two sites sharing a repository would otherwise write over each other. Relative paths are resolved from the Wiki.js install directory.
     icon: symlink-directory
     order: 32
     localPath: data
@@ -146,15 +146,15 @@ actions:
     icon: synchronize
   syncUntracked:
     label: Add Untracked Changes
-    hint: Write every page and file this target is configured to hold into the repository and commit whatever is missing. Content created before Git was enabled - or while it was turned off - is untracked until this is run.
+    hint: Write every page and file this target is configured to hold into the repository, commit whatever is missing and sync. Content created before Git was enabled - or while it was turned off - is untracked until this is run.
     icon: database-daily-export
   importAll:
     label: Import Everything
-    hint: Take everything currently in the local repository into the wiki, whatever the last commit did. For picking up content from a remote repository that existed before Git was enabled here.
-    warn: The repository wins every collision. A page it replaces keeps its previous version in its history, but a file has none - the bytes it replaces are gone from every storage target holding them.
+    hint: Take everything the repository held at the last sync into the wiki, whatever the last commit did. For picking up content from a remote repository that existed before Git was enabled here, which the first sync does not take in.
+    warn: The repository wins every collision, except with changes the wiki has not published yet. A page it replaces keeps its previous version in its history, but a file has none - the bytes it replaces are gone from every storage target holding them.
     icon: database-daily-import
   purge:
     label: Purge Local Repository
-    hint: Empty the local working copy and clone it again from the remote. A working copy that was replaced re-attaches itself on the next sync, so this is for one git can no longer make sense of at all. The remote is not touched and nothing is committed.
-    warn: Any commit that exists only in the local repository and has never been pushed is lost. Run a Force Sync first if you are not sure.
+    hint: Delete the working copy of the instance that answers this request. The next sync there takes it again from the remote, with the changes the wiki has queued on top, so nothing is lost. The remote is not touched and nothing is committed.
+    warn: With no Repository URI configured, the working copy is the whole repository, and its history is deleted with it.
     icon: trash
