@@ -1291,12 +1291,26 @@ function onEditorDrop(event) {
  */
 const collabWatchers = []
 
+/**
+ * The source as this editor last wrote it, which is what a change is measured against.
+ *
+ * Measured against the editor's OWN serialization rather than the page store's: what was loaded is
+ * the stored markdown, which the serializer may spell differently without anything having changed,
+ * and comparing the two made merely joining a collaborative room count as an edit -- `enableCollab`
+ * writes the room's document to the store, and an unchanged one was still marked unsaved, which the
+ * leave warning then asked about on the way out of a page nobody had touched.
+ */
+let lastSerialized = null
+
 const syncContentToStore = debounce(() => {
   if (!editor) {
     return
   }
   const markdown = editor.getMarkdown()
-  editorStore.$patch({ lastChangeTimestamp: Temporal.Now.instant() })
+  if (markdown !== lastSerialized) {
+    lastSerialized = markdown
+    editorStore.$patch({ lastChangeTimestamp: Temporal.Now.instant() })
+  }
   pageStore.$patch({
     content: markdown,
     // -> What the author has written IS the source, whatever the load did or did not deliver; see
@@ -1331,6 +1345,21 @@ function reloadEditorContent({ replacements = [] } = {}) {
     the page would go up with a render still full of `blob:` URLs, and then be marked dirty half a
     second later by the very edit that fixed it, needing a second save to publish.
   */
+  syncContentToStore.flush()
+}
+
+/**
+ * Put back a whole source the author wrote and never saved — see `composables/editorBuffer.js`.
+ *
+ * Parsed into the document as one transaction, which in a collaborative session `ySyncPlugin` carries
+ * into the room as this author's change. Only asked for once `isReady` says the room's document is in
+ * place, since one put in before it would be replaced by the room's.
+ */
+function restoreEditorContent({ content }) {
+  if (!editor) {
+    return
+  }
+  editor.setMarkdown(content ?? '')
   syncContentToStore.flush()
 }
 
@@ -1403,6 +1432,8 @@ onMounted(async () => {
     onChange: syncContentToStore,
     onSelectionChange: refreshActive
   })
+  // -> What the loaded page serializes to, before anybody has changed anything
+  lastSerialized = editor.getMarkdown()
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
@@ -1444,6 +1475,13 @@ onMounted(async () => {
           }
           if (status !== 'connecting') {
             editor.view.setProps({ editable: () => true })
+            /*
+              Holding the room's document now, or carrying on as a plain editor without one -- and the
+              store says so before anything asks: what the room holds may be somebody's unsaved edit,
+              and the debounce would leave the store on the loaded page for another half second.
+            */
+            syncContentToStore.flush()
+            editorStore.isReady = true
           }
           if (status === 'denied') {
             notify({ type: 'warning', message: t('editor.collab.notAllowed') })
@@ -1478,6 +1516,14 @@ onMounted(async () => {
     refreshActive()
     editor.view.focus()
   })
+
+  EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
+
+  // -> Ready now, unless a room is still to answer -- the status watcher above says when that is.
+  //    Not if the editor was closed while this hook was still awaiting.
+  if (!collabEnabled.value && editorStore.isActive) {
+    editorStore.isReady = true
+  }
 })
 
 onBeforeUnmount(() => {
@@ -1497,6 +1543,7 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
+  EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
   editor?.destroy()
   editor = null
 })

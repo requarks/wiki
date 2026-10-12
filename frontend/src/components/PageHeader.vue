@@ -609,6 +609,16 @@ function onEditableBlur(field, event) {
 }
 
 async function discardChanges() {
+  const hadPendingChanges = editorStore.hasPendingChanges
+  const wasSuggesting = isSuggesting.value
+
+  /*
+    Thrown away, which is said before anything navigates: the router asks before leaving an editor
+    with unsaved edits, and the browser buffer keeps whatever is unsaved when the editor closes --
+    neither of which is what the author just asked for.
+  */
+  editorStore.settleChanges()
+
   /*
     Abandoning a page that is being written, which is a different thing from reverting an edit: there
     is nothing stored to go back to, so the editor closes and the reader is put back on the site.
@@ -633,9 +643,6 @@ async function discardChanges() {
     router.replace(localeRoot)
     return
   }
-
-  const hadPendingChanges = editorStore.hasPendingChanges
-  const wasSuggesting = isSuggesting.value
 
   loading.show()
   try {

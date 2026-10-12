@@ -34,11 +34,30 @@ export const useEditorStore = defineStore('editor', {
     configIsLoaded: false,
     reasonForChange: '',
     ignoreRouteChange: false,
-    pendingAssets: []
+    pendingAssets: [],
+    /**
+     * Whether the open editor holds its document and can take an edit from outside -- mounted, and
+     * past the wait for a collaborative room. Until then a document put into it is overwritten: the
+     * room's binding replaces whatever the editor was holding. Set by the editor itself, since only it
+     * knows when that is; see `restoreEditorContent` in each one and `composables/editorBuffer.js`.
+     */
+    isReady: false
   }),
   getters: {
     hasPendingChanges: (state) => {
       return state.lastSaveTimestamp && state.lastSaveTimestamp !== state.lastChangeTimestamp
+    },
+    /**
+     * Whether something was changed that has not been saved -- `hasPendingChanges`, and a page being
+     * created as well. That one never had a save, so `lastSaveTimestamp` is null there when the app
+     * was opened straight onto the create route, and `hasPendingChanges` says no however much has
+     * been written. Not tied to the editor being open: the moment it closes is exactly when this is
+     * asked, by the buffer deciding what to keep.
+     */
+    hasUnsavedEdits: (state) => {
+      return (
+        Boolean(state.lastChangeTimestamp) && state.lastChangeTimestamp !== state.lastSaveTimestamp
+      )
     }
   },
   actions: {
@@ -58,11 +77,23 @@ export const useEditorStore = defineStore('editor', {
     closeEditor() {
       this.$patch({
         isActive: false,
+        isReady: false,
         editor: '',
         mode: 'edit',
         // -> Only ever meaningful while a page is being created: it is where Discard goes back to
         originPageId: ''
       })
+    },
+    /**
+     * Say that nothing is unsaved any more, because what was has just been saved or thrown away.
+     *
+     * The same instant in both, which is how "no pending changes" is spelled. Done BEFORE anything
+     * navigates away from the editor: the router's guard asks about unsaved edits on the way out, and
+     * the browser buffer keeps whatever is still unsaved when the editor closes.
+     */
+    settleChanges() {
+      const now = Temporal.Now.instant()
+      this.$patch({ lastChangeTimestamp: now, lastSaveTimestamp: now })
     },
     /**
      * Take a file the author has just put into a page, to be uploaded when the page is saved.

@@ -140,6 +140,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { confirmDiscardUnsaved } from '@/composables/editorBuffer'
 import { useMinWidth } from '@/composables/screen'
 import { splitLocalePath } from '@/helpers/pagePaths'
 
@@ -257,28 +258,28 @@ onBeforeUnmount(() => {
  * Out of the editor, on the way home. The navigation itself is the link's.
  *
  * The logo is the way out of any screen the wiki can get into, which is why it is drawn in every one
- * of them -- so it has to close the editor as well as go home. Leaving the editor is otherwise the
- * job of the page view's route watcher, and that cannot help here: the editor opens WITHOUT changing
- * the URL, so an author editing the home page is already at `/`, the router treats the push as a
- * duplicate and runs no navigation at all, and the watcher never fires. The result was a logo that
- * looked broken on the one page it is most likely to be tried from.
+ * of them -- so it has to be a way out of the editor as well. Almost always the link does that on its
+ * own: the editor has a path of its own (`/_edit/...`, `/_create/...`), so the click is a real
+ * navigation, the page view's guard asks about anything unsaved, and its route watcher closes the
+ * editor. Nothing is done here in that case, and must not be: closing the editor before the router
+ * runs left the guard looking at no editor at all, so unsaved edits were thrown away without a word.
  *
- * The page is re-read in exactly that case. Nothing else is going to: the store holds what the editor
- * last wrote into it -- the source AND the render -- so closing the editor over it would draw
- * somebody's unsaved draft as though it were the page. Where the click really does navigate, the
- * destination is loaded anyway and a reload here would be a second request for a page already on its
- * way.
- *
- * A page being CREATED never reaches that branch: it is written at `/_create/...`, which is never the
- * home path, so the click is a real navigation and the page view's watcher does the rest.
+ * What is left is the click that goes NOWHERE, which no guard or watcher will ever see: a suggestion
+ * being written on the home page, which is written at the page's own address. The router treats the
+ * push as a duplicate, so this asks the guard's question itself, then closes the editor. The page is
+ * re-read in that case too, since nothing else is going to: the store holds what the editor last wrote
+ * into it -- the source AND the render -- and closing the editor over it would draw somebody's
+ * unsaved draft as though it were the page.
  */
-function leaveEditorForHome() {
-  if (!editorStore.isActive) {
+async function leaveEditorForHome() {
+  if (!editorStore.isActive || route.path !== homePath.value) {
     return
   }
-  const isSamePlace = route.path === homePath.value
+  if (!(await confirmDiscardUnsaved(t))) {
+    return
+  }
   editorStore.closeEditor()
-  if (isSamePlace && pageStore.id) {
+  if (pageStore.id) {
     // -> Failing to put the page back is not a reason to keep the reader in an editor they have just
     //    left; the view draws what it has
     pageStore.pageLoad({ id: pageStore.id }).catch(() => {})

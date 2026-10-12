@@ -636,6 +636,7 @@ import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
 import { dialog } from '@/composables/dialog'
+import { confirmDiscardUnsaved, useEditorBuffer } from '@/composables/editorBuffer'
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { usePageScripts } from '@/composables/pageScripts'
@@ -789,6 +790,12 @@ const dark = useDark()
   page store on its own, for as long as this view is mounted.
 */
 usePageScripts()
+
+/*
+  What is typed into the editor, kept in this browser until it is saved and offered back if it never
+  is. Here because this is what mounts the editors; it follows the editor store on its own.
+*/
+useEditorBuffer()
 
 // META
 
@@ -1305,6 +1312,28 @@ async function guardAnnotations(to, from) {
 
 onBeforeRouteLeave(guardAnnotations)
 onBeforeRouteUpdate(guardAnnotations)
+
+/*
+  Leaving the editor with unsaved edits throws them away, so the author is asked first: a link in the
+  sidebar, Back, a click on the logo. Leaving is going somewhere else -- a change of query or hash is
+  the same editor still -- and a create route being put in place by `pageCreate` itself is not leaving
+  anything (`ignoreRouteChange`).
+
+  Saying yes is discarding, and is settled as one before the navigation goes on, so that the browser
+  buffer does not keep what the author has just said to throw away. Everything that leaves the editor
+  on purpose -- a save, Discard, a submitted suggestion -- settles first for the same reason, and so
+  never reaches this question. A full unload is asked by the browser instead; see
+  `composables/editorBuffer.js`.
+*/
+async function guardUnsavedEdits(to, from) {
+  if (editorStore.ignoreRouteChange || to.path === from.path) {
+    return true
+  }
+  return confirmDiscardUnsaved(t)
+}
+
+onBeforeRouteLeave(guardUnsavedEdits)
+onBeforeRouteUpdate(guardUnsavedEdits)
 
 /*
   Reading the page is reading what the reader was told about it: its content as soon as it is on

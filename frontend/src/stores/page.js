@@ -49,6 +49,43 @@ const DUPLICATED_PAGE_PROPS = [
   'tocDepth'
 ]
 
+/**
+ * The page fields a save sends, which is everything the editor and the properties panel can change.
+ *
+ * Shared with the browser buffer (`composables/editorBuffer.js`), so that what is kept for an edit
+ * nobody saved is exactly what saving it would have sent.
+ */
+export const SAVED_PAGE_FIELDS = [
+  'alias',
+  'allowBacklinks',
+  'allowComments',
+  'allowContributions',
+  'allowGlossaryLinks',
+  'allowRatings',
+  'content',
+  'description',
+  'icon',
+  'isBrowsable',
+  'isSearchable',
+  'localeRelations',
+  'password',
+  'publishEndDate',
+  'publishStartDate',
+  'publishState',
+  'relations',
+  'render',
+  'scriptJsLoad',
+  'scriptJsUnload',
+  'scriptCss',
+  'showLastEditedBy',
+  'showSidebar',
+  'showTags',
+  'showToc',
+  'tags',
+  'title',
+  'tocDepth'
+]
+
 export const usePageStore = defineStore('page', {
   state: () => ({
     alias: '',
@@ -707,6 +744,13 @@ export const usePageStore = defineStore('page', {
         storedProps: { title: '', description: '', icon: '' },
         mode: 'edit'
       })
+      /*
+        Nothing about the new page is unsaved until somebody writes something. Whatever the store was
+        holding before -- a property edit left pending on the page this was started from -- belonged to
+        a page that is no longer in it, and would otherwise make the router and the browser buffer
+        treat an untouched new page as somebody's unsaved work.
+      */
+      editorStore.settleChanges()
 
       /*
         -> Page permissions at the path the new page will sit at
@@ -832,6 +876,8 @@ export const usePageStore = defineStore('page', {
       if (!resp?.ok) {
         throw new Error(resp?.message || 'An unexpected error occured.')
       }
+      // -> Submitting is the suggestion's save: nothing typed into it is unsaved any more
+      useEditorStore().settleChanges()
       this.hasOpenSuggestion = true
       return resp.submission
     },
@@ -991,36 +1037,7 @@ export const usePageStore = defineStore('page', {
         //    against what this author may embed, and deriving the table of contents — so the page it
         //    returns is the authority on what was actually saved.
         const body = {
-          ...pick(this, [
-            'alias',
-            'allowBacklinks',
-            'allowComments',
-            'allowContributions',
-            'allowGlossaryLinks',
-            'allowRatings',
-            'content',
-            'description',
-            'icon',
-            'isBrowsable',
-            'isSearchable',
-            'localeRelations',
-            'password',
-            'publishEndDate',
-            'publishStartDate',
-            'publishState',
-            'relations',
-            'render',
-            'scriptJsLoad',
-            'scriptJsUnload',
-            'scriptCss',
-            'showLastEditedBy',
-            'showSidebar',
-            'showTags',
-            'showToc',
-            'tags',
-            'title',
-            'tocDepth'
-          ]),
+          ...pick(this, SAVED_PAGE_FIELDS),
           /*
             Not a page field: it describes the save rather than the page, and the server records it on
             the history version this save produces. Collected by the reason-for-change dialog before
@@ -1119,6 +1136,14 @@ export const usePageStore = defineStore('page', {
         */
         siteStore.staleTags()
 
+        /*
+          Saved, so nothing is pending -- and said so BEFORE the navigation below rather than after it.
+          The router's guard asks whether the editor is being left with unsaved edits, and a page that
+          was just created would otherwise be asked about as though it were being abandoned.
+        */
+        editorStore.settleChanges()
+        editorStore.reasonForChange = ''
+
         if (editorStore.mode === 'create') {
           editorStore.$patch({ mode: 'edit' })
           /*
@@ -1129,14 +1154,6 @@ export const usePageStore = defineStore('page', {
           */
           await this.router.replace(this.editorExitPath)
         }
-
-        // Update editor state timestamps
-        const curDate = Temporal.Now.instant()
-        editorStore.$patch({
-          lastChangeTimestamp: curDate,
-          lastSaveTimestamp: curDate,
-          reasonForChange: ''
-        })
       } catch (err) {
         console.warn(err)
         throw err

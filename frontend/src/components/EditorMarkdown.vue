@@ -342,7 +342,12 @@ import {
 import { useI18n } from 'vue-i18n'
 
 import { useBlockCompletions } from '@/composables/blockCompletions'
-import { bindCollabEditor, startCollabSession, stopCollabSession } from '@/composables/collab'
+import {
+  bindCollabEditor,
+  isCollabActive,
+  startCollabSession,
+  stopCollabSession
+} from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { useFenceCompletions } from '@/composables/fenceCompletions'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
@@ -1635,6 +1640,22 @@ function reloadEditorContent({ replacements = [] } = {}) {
   }
 }
 
+/**
+ * Put back a whole source the author wrote and never saved — see `composables/editorBuffer.js`.
+ *
+ * The one case where replacing everything IS the edit, so it is done as one: a single edit over the
+ * full range rather than `setValue`, which keeps it undoable and, in a collaborative session, carries
+ * it into the room through the binding as this author's change. Only asked for once `isReady` says
+ * the binding is in place, since a source put in before it would be overwritten by the room's.
+ */
+function restoreEditorContent({ content }) {
+  const model = editor.getModel()
+  editor.pushUndoStop()
+  editor.executeEdits('restore', [{ range: model.getFullModelRange(), text: content ?? '' }])
+  editor.pushUndoStop()
+  syncContentToStore.flush()
+}
+
 // MOUNTED
 
 onMounted(async () => {
@@ -1939,19 +1960,31 @@ onMounted(async () => {
     collabWatchers.push(
       watch(
         () => collabStore.status,
-        (status) => {
-          if (status === 'connected') {
-            bindCollabEditor(editor)
-          }
-          if (status !== 'connecting') {
-            editor.updateOptions({ readOnly: false })
-          }
+        async (status) => {
           if (status === 'denied') {
             notify({
               type: 'warning',
               message: t('editor.collab.notAllowed')
             })
           }
+          if (status === 'connecting') {
+            return
+          }
+          editor.updateOptions({ readOnly: false })
+          if (status === 'connected') {
+            await bindCollabEditor(editor)
+            // -> The editor was closed while the binding loaded, and is not ready for anything
+            if (!isCollabActive()) {
+              return
+            }
+          }
+          /*
+            Holding the room's document now, or carrying on as a plain editor without one -- and the
+            store says so before anything asks: what the room holds may be somebody's unsaved edit,
+            and the debounce would leave the store on the loaded page for another half second.
+          */
+          syncContentToStore.flush()
+          editorStore.isReady = true
         }
       ),
       /*
@@ -1985,6 +2018,13 @@ onMounted(async () => {
   EVENT_BUS.on('insertBlock', insertBlockClb)
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
+  EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
+
+  // -> Ready now, unless a room is still to answer -- the status watcher above says when that is.
+  //    Not if the editor was closed while this hook was still awaiting.
+  if (!collabEnabled.value && editorStore.isActive) {
+    editorStore.isReady = true
+  }
 })
 
 onBeforeUnmount(() => {
@@ -1998,6 +2038,7 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('insertBlock', insertBlockClb)
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
+  EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
   monacoRef.value?.removeEventListener('drop', onEditorDrop)

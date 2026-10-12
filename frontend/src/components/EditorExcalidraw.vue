@@ -139,6 +139,9 @@ const adopting = new Set()
 /** Bumped per sync, so a slow export cannot overwrite a newer one. */
 let syncToken = 0
 
+/** The source as this editor last wrote it to the store, which is what a change is measured against. */
+let lastWritten = null
+
 // COMPUTED
 
 /**
@@ -197,9 +200,16 @@ async function writeToStore({ touch }) {
     contentLoaded: true
   })
   pageStore.setRender(render)
-  if (touch) {
+  /*
+    An edit only when the drawing actually changed. Joining a room runs through here too -- the room's
+    drawing goes onto the canvas and into the store -- and for a room holding exactly what was loaded
+    that is nothing anybody did; marking it made every visit unsaved, which the leave warning then
+    asked about on the way out of a drawing nobody had touched.
+  */
+  if (touch && content !== lastWritten) {
     editorStore.lastChangeTimestamp = Temporal.Now.instant()
   }
+  lastWritten = content
 }
 
 /**
@@ -365,6 +375,31 @@ function reloadEditorContent({ replacements = [] } = {}) {
   pageStore.setRender(render)
 }
 
+/**
+ * Put back a whole drawing the author made and never saved — see `composables/editorBuffer.js`.
+ *
+ * Through the canvas, as a change the author made: Excalidraw reports it to `onChange` like any other,
+ * which publishes it to the room and writes it to the store, and it is recorded for undo. Its files go
+ * in first, since an image element drawn before its file arrives draws as a placeholder. The pictures
+ * pasted in the lost session are pending assets again by now, and their entries already point at the
+ * new `blob:` URLs the buffer made for them.
+ *
+ * Only the background is taken from the stored app state: the rest of it is how the canvas is being
+ * looked at, which belongs to the author in front of it rather than to the drawing.
+ */
+function restoreEditorContent({ content }) {
+  if (!handle) {
+    return
+  }
+  const scene = parseScene(content)
+  handle.addFiles(Object.values(scene.files))
+  handle.updateScene({
+    elements: scene.elements,
+    appState: { viewBackgroundColor: scene.appState.viewBackgroundColor },
+    captureUpdate: CaptureUpdateAction.IMMEDIATELY
+  })
+}
+
 /** Take the room's drawing onto this canvas. */
 function applyRemote() {
   const handles = collabHandles()
@@ -439,8 +474,11 @@ onMounted(async () => {
     onPointerUpdate: publishPointer
   })
   state.ready = true
+  // -> What the loaded drawing serializes to, set before a room can answer and be measured against it
+  lastWritten = serializeScene(handle.getScene())
 
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
+  EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
 
   /*
     Live collaboration. Unlike the text editors there is nothing to lock while the room answers: a
@@ -457,12 +495,26 @@ onMounted(async () => {
     collabWatchers.push(
       watch(
         () => collabStore.status,
-        (status) => {
+        async (status) => {
           if (status === 'connected') {
             enableCollab()
           }
           if (status === 'denied') {
             notify({ type: 'warning', message: t('editor.collab.notAllowed') })
+          }
+          if (status === 'connecting') {
+            return
+          }
+          /*
+            Holding the room's drawing now, or carrying on alone without one -- and the store says so
+            before anything asks: what the room holds may be somebody's unsaved edit, and the debounce
+            would leave the store on the loaded drawing for a while yet.
+          */
+          syncToStore.cancel()
+          await writeToStore({ touch: true })
+          // -> Closed while the export ran
+          if (handle) {
+            editorStore.isReady = true
           }
         }
       ),
@@ -486,6 +538,12 @@ onMounted(async () => {
     neither until this runs. Not an edit, so it does not touch the change clock -- see `writeToStore`.
   */
   await writeToStore({ touch: false })
+
+  // -> Ready now, unless a room is still to answer -- the status watcher above says when that is.
+  //    Not if the editor was closed while this hook was still awaiting.
+  if (!collabEnabled.value && editorStore.isActive && handle) {
+    editorStore.isReady = true
+  }
 })
 
 /*
@@ -512,6 +570,7 @@ onBeforeUnmount(() => {
   stopCollabSession()
   collaborating = false
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
+  EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
   handle?.destroy()
   handle = null
 })

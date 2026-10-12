@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { getAccessibleColor } from '@/helpers/accessibility'
+import { clearBufferForUser } from '@/helpers/editorBuffer'
 
 import { useSiteStore } from './site'
 
@@ -171,6 +172,12 @@ export const useUserStore = defineStore('user', {
         //    left looking at a page that still says they are signed in.
         console.warn(err)
       }
+      /*
+        And whatever this browser kept of their unsaved edits. Whoever sits down at it next has no
+        business finding somebody else's pages in it, and the account that wrote them is not the one
+        that will be offered them -- see `helpers/editorBuffer.js`. Taken before the id below is gone.
+      */
+      await clearBufferForUser(this.id)
       this.setToGuest()
       EVENT_BUS.emit('logout', { redirect })
     },
