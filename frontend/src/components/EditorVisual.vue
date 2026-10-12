@@ -399,6 +399,44 @@
                 }}</w-tooltip>
               </w-btn>
             </div>
+            <!--
+              The slash menu, which `editor/visual/slash.js` opens, filters and answers the keys for --
+              this only draws it. Here and `v-show` for the table bar's reasons, and the mousedown is
+              stopped for the bars' one: the focus has to stay in the document, whose blur closes it.
+            -->
+            <div
+              v-show="slash.shown"
+              ref="slashMenuRef"
+              class="visual-slash-menu"
+              role="listbox"
+              :style="{
+                top: `${slash.top}px`,
+                left: `${slash.left}px`,
+                maxHeight: `${slash.maxHeight}px`
+              }"
+              @mousedown.prevent>
+              <template v-for="(item, idx) of slash.items" :key="item.key">
+                <template v-if="item.group !== slash.items[idx - 1]?.group">
+                  <w-separator v-if="idx > 0" class="my-1" />
+                  <div class="visual-slash-group">{{ item.groupLabel }}</div>
+                </template>
+                <div
+                  class="visual-slash-item"
+                  :class="{ 'is-active': idx === slash.index }"
+                  role="option"
+                  :aria-selected="idx === slash.index"
+                  @mousemove="highlightSlash(idx)"
+                  @click="chooseSlash(idx)">
+                  <span class="visual-slash-icon">
+                    <w-icon :name="item.icon" :class="item.iconClass" />
+                  </span>
+                  <span class="visual-slash-text">
+                    <span class="visual-slash-label">{{ item.label }}</span>
+                    <span class="visual-slash-hint">{{ item.hint }}</span>
+                  </span>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -426,7 +464,7 @@ import { dialog } from '@/composables/dialog'
 import { useImagePropertiesDialog } from '@/composables/imagePropertiesDialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
-import { blockMarkdown } from '@/helpers/blocks'
+import { blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
 import { classValues } from '@/helpers/markdownImages'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -466,6 +504,7 @@ import {
 } from '@/editor/visual/commands'
 import { applyImageEdit, applyImageSrc, findImage, imageClasses } from '@/editor/visual/images'
 import { applyLink, removeLink } from '@/editor/visual/links'
+import { chooseSlashItem, highlightSlashItem } from '@/editor/visual/slash'
 import { ALERT_KINDS, schema } from '@/editor/visual/schema'
 
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands'
@@ -500,6 +539,7 @@ const { t } = useI18n()
 
 const mountRef = ref(null)
 const tableBarRef = ref(null)
+const slashMenuRef = ref(null)
 
 /**
  * Whether this edit is shared with whoever else has the page open.
@@ -714,6 +754,170 @@ async function placeTableBar() {
   tableBar.top = above >= 0 ? above : rect.bottom - box.top + 6
   tableBar.left = Math.max(0, rect.left - box.left)
 }
+
+const slash = reactive({ shown: false, items: [], index: 0, top: 0, left: 0, maxHeight: 0 })
+
+/**
+ * Draw the slash menu as the plugin describes it, or take it away -- see `editor/visual/slash.js`.
+ *
+ * Under the line, and above it when the pane has no room left below and does above, so the last line
+ * of a long page does not open a menu that has to be scrolled to. Kept inside the surface on the other
+ * side too. Measured after it is shown, since a hidden element has no size.
+ *
+ * Its height is capped by whichever side it is going to open on: 32rem where the pane has that much
+ * room, as much as there is down to 24rem where it does not, and 24rem in a pane with less room than
+ * that on either side -- where it opens below and the pane is scrolled to it.
+ */
+async function onSlashMenu(menu) {
+  if (!menu) {
+    slash.shown = false
+    return
+  }
+  const surface = mountRef.value
+  if (!surface) {
+    return
+  }
+  const box = surface.getBoundingClientRect()
+  const pane = surface.parentElement.getBoundingClientRect()
+  const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const roomBelow = pane.bottom - (box.top + menu.bottom + 6) - 8
+  const roomAbove = box.top + menu.top - 6 - pane.top - 8
+  const room = roomBelow >= 24 * rem ? roomBelow : roomAbove >= 24 * rem ? roomAbove : 24 * rem
+  slash.maxHeight = Math.min(32 * rem, room)
+
+  const opening = !slash.shown
+  slash.items = menu.items
+  slash.index = menu.index
+  slash.shown = true
+  await nextTick()
+  const el = slashMenuRef.value
+  if (!el) {
+    return
+  }
+  const height = el.offsetHeight
+  const fitsBelow = box.top + menu.bottom + 6 + height <= pane.bottom
+  const fitsAbove = box.top + menu.top - 6 - height >= pane.top
+  slash.top = !fitsBelow && fitsAbove ? menu.top - 6 - height : menu.bottom + 6
+  slash.left = Math.max(0, Math.min(menu.left, surface.clientWidth - el.offsetWidth - 8))
+  await nextTick()
+
+  /*
+    The menu scrolls on its own once it is taller than its cap, so the highlighted entry is kept in
+    view inside it -- the arrow keys would otherwise walk off the bottom of what can be seen. Which is
+    also why the entries answer `mousemove` rather than `mouseenter`: scrolled under a pointer that is
+    standing still, an entry would be entered, and would take the highlight off the one the keys chose.
+    After placing it, so that bringing an entry into view never scrolls the pane to where the menu was.
+  */
+  if (opening || menu.index === 0) {
+    el.scrollTop = 0
+  }
+  const activeItem = el.querySelector('.visual-slash-item.is-active')
+  activeItem?.scrollIntoView({ block: 'nearest' })
+  // -> The first entry of a group brings its heading along, which is right above it
+  if (activeItem?.previousElementSibling?.classList.contains('visual-slash-group')) {
+    activeItem.previousElementSibling.scrollIntoView({ block: 'nearest' })
+  }
+  // -> Room on neither side, in a short window: below, with the pane scrolled to as much of it as fits
+  if (opening && !fitsBelow && !fitsAbove) {
+    el.scrollIntoView({ block: 'nearest' })
+  }
+}
+
+/**
+ * The slash menu's entries that are this component's to carry out, after the editor's own: the
+ * sidebar's inserts, and every block the site has switched on -- see `slashMenu` for the shape.
+ *
+ * Each runs what the matching sidebar button runs, so the two never insert differently. The blocks are
+ * the ones the Markdown editor offers after `::block-` -- switched on, and not a child, which means
+ * nothing outside its parent -- with the tabset first, the one the sidebar inserts too.
+ */
+function slashItems() {
+  const elements = [
+    {
+      key: 'codeBlock',
+      icon: 'mdi:code-json',
+      title: t('editor.visual.slash.codeBlock'),
+      description: t('editor.visual.slash.codeBlockHint'),
+      keywords: ['code', 'pre', 'fence', 'snippet'],
+      run: () => insertCodeBlock(null)
+    },
+    {
+      key: 'image',
+      icon: 'mdi:image-plus-outline',
+      title: t('editor.visual.slash.image'),
+      description: t('editor.visual.slash.imageHint'),
+      keywords: ['image', 'picture', 'photo', 'file', 'asset', 'upload'],
+      run: insertAssets
+    },
+    {
+      key: 'link',
+      icon: 'mdi:link-variant-plus',
+      title: t('editor.visual.slash.link'),
+      description: t('editor.visual.slash.linkHint'),
+      keywords: ['link', 'url', 'page'],
+      run: insertLink
+    },
+    {
+      key: 'horizontalLine',
+      icon: 'mdi:line-scan',
+      title: t('editor.visual.slash.horizontalLine'),
+      description: t('editor.visual.slash.horizontalLineHint'),
+      keywords: ['hr', 'divider', 'line', 'separator', 'rule'],
+      run: insertHorizontalBar
+    },
+    {
+      key: 'table',
+      icon: 'mdi:table-large-plus',
+      title: t('editor.visual.slash.table'),
+      description: t('editor.visual.slash.tableHint'),
+      keywords: ['table', 'grid', 'rows', 'columns'],
+      run: insertTable
+    }
+  ].map((item) => ({ ...item, group: 'elements' }))
+
+  const usable = siteBlocks.filter((block) => block.isEnabled && !block.isChild)
+  const blocks = [
+    ...usable.filter((block) => block.block === 'tabs'),
+    ...usable.filter((block) => block.block !== 'tabs')
+  ].map((definition) => ({
+    key: `block-${definition.block}`,
+    group: 'blocks',
+    // -> The picker's own icon for the block
+    icon: `img:/_assets/icons/ultraviolet-${definition.isCustom || !definition.icon ? 'plugin' : definition.icon}.svg`,
+    title: definition.block === 'tabs' ? t('editor.visual.slash.tabset') : definition.name,
+    description: definition.description ?? '',
+    keywords: [definition.block, 'block', ...(definition.block === 'tabs' ? ['tabset'] : [])],
+    run: () => insertSiteBlock(definition)
+  }))
+
+  return [...elements, ...blocks]
+}
+
+/**
+ * A block from its definition, as the picker would insert it left at its defaults -- and with its
+ * parameters dialog opened over it when a required prop has no default to stand in, since a block
+ * missing one draws nothing. Cancelling leaves the block in place for its header's own button.
+ */
+function insertSiteBlock(definition) {
+  const { $from } = editor.view.state.selection
+  // -> Where `insertMarkdown` puts a block: over an empty line, otherwise after the one the caret is in
+  const pos =
+    $from.parent.isTextblock && $from.parent.content.size === 0 ? $from.before() : $from.after()
+  insertMarkdown(blockMarkdown(definition), { block: true })
+  const defaults = Object.fromEntries(
+    (definition.props ?? []).map((prop) => [prop.name, prop.default ?? ''])
+  )
+  if (blockPropsFilled(definition, defaults)) {
+    return
+  }
+  const node = editor.view.state.doc.nodeAt(pos)
+  if (node?.attrs.name === definition.block) {
+    editBlockParams(node, pos)
+  }
+}
+
+const highlightSlash = (index) => editor && highlightSlashItem(editor.view, index)
+const chooseSlash = (index) => editor && chooseSlashItem(editor.view, index)
 
 /** Read the toolbar's state off the selection. */
 function refreshActive() {
@@ -1425,6 +1629,8 @@ onMounted(async () => {
       removeLink: unlink,
       editImage,
       replaceImage,
+      onSlashMenu,
+      slashItems,
       alertClass: (kind) => ALERT_KINDS[kind] ?? '',
       alertLabel: (kind) => t(`editor.visual.alert.${kind}`),
       t

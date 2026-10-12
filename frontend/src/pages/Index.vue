@@ -29,9 +29,9 @@
       <div class="flex-none flex items-center justify-end gap-3">
         <!--
           Beside the date because both say what state the page is in, where the header's row is what
-          can be done with it. Whoever is looking at a draft can already see it, so the badge is not
-          gated on being logged in the way those actions are: it is telling a reader what they are
-          reading, not offering them something to do.
+          can be done with it. Whoever is looking at an unpublished page can already see it, so the
+          badge is not gated on being logged in the way those actions are: it is telling a reader what
+          they are reading, not offering them something to do.
 
           Kept on a phone, unlike the date: it is one short word, and it changes how everything under it
           should be read.

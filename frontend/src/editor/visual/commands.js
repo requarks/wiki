@@ -437,7 +437,40 @@ export function insertNode(type, attrs = {}, content = null) {
     }
     if (dispatch) {
       const tr = state.tr.replaceSelectionWith(node)
-      const pos = tr.selection.$from.pos - node.nodeSize
+      /*
+        Where the node went, read off the step that put it there: it ends where the replaced range now
+        ends. Not worked back from the selection, which is only just after the node when there is a
+        textblock after it to land in -- with an empty line as the whole document, the node replaces
+        that line, the selection falls back inside it, and subtracting its size from there gave -1.
+      */
+      let end = null
+      tr.mapping.maps.at(-1)?.forEach((_from, _to, _newFrom, newTo) => (end = newTo))
+      /*
+        Into a line with text either side of the caret, the line is split round the node and the
+        range ends just inside the second half -- so the node is found by stepping back out of
+        whatever opens there first.
+      */
+      let $end = end === null ? null : tr.doc.resolve(end)
+      while ($end && $end.depth > 0 && !$end.nodeBefore && $end.parentOffset === 0) {
+        $end = tr.doc.resolve($end.before())
+      }
+      const pos = $end?.nodeBefore?.type === type ? $end.pos - $end.nodeBefore.nodeSize : -1
+      if (pos < 0) {
+        dispatch(tr.scrollIntoView())
+        return true
+      }
+      /*
+        An atom with nothing after it -- a horizontal line on an empty page -- would leave the selection
+        on the atom itself, where the next key typed replaces it. So it gets a line to carry on in.
+      */
+      const $after = tr.doc.resolve(pos + node.nodeSize)
+      if (
+        node.isAtom &&
+        !$after.nodeAfter &&
+        $after.parent.canReplaceWith($after.index(), $after.index(), schema.nodes.paragraph)
+      ) {
+        tr.insert($after.pos, schema.nodes.paragraph.create())
+      }
       dispatch(selectInside(tr, pos).scrollIntoView())
     }
     return true

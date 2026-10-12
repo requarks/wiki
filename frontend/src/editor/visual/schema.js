@@ -337,6 +337,14 @@ export const schema = new Schema({
       content: 'block+',
       group: 'block',
       defining: true,
+      /*
+        Its edges are a wall to Backspace, Delete, joining and lifting, as a table cell's are. Without
+        it, Backspace at the start of a tab's first line lifted that line out of the tab -- taking the
+        tab with it when the line was its only content -- and left a bare paragraph as a child of the
+        tabset, where the markdown has nothing to write it as. The block's own Remove action is how its
+        content is taken out of it.
+      */
+      isolating: true,
       attrs: { name: {}, blockAttrs: { default: null } },
       parseDOM: [
         {

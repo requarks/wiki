@@ -262,6 +262,19 @@
               t('editor.markup.keyboardKey')
             }}</w-tooltip>
           </w-btn>
+
+          <w-separator class="mx-1" vertical inset dark />
+
+          <w-btn icon="mdi:undo-variant" padding="xs sm" flat @click="runUndo">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.undo')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:redo-variant" padding="xs sm" flat @click="runRedo">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.redo')
+            }}</w-tooltip>
+          </w-btn>
           <!-- -> The only way back once the preview is closed: its own toggle goes with it -->
           <template v-if="!state.previewShown">
             <w-space />
@@ -354,6 +367,7 @@ import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { useTableCellNavigation } from '@/composables/tableCellNavigation'
+import { useTagCompletions } from '@/composables/tagCompletions'
 import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
@@ -529,6 +543,9 @@ const blockCompletions = useBlockCompletions({
 
 // -> A code fence's `title`, `linesStart` and `linesHighlight`, after its language
 const fenceCompletions = useFenceCompletions({ getEditor: () => editor })
+
+// -> HTML tags such as `<kbd>` after a `<`, written with their closing tag
+const tagCompletions = useTagCompletions({ getEditor: () => editor })
 
 // -> Tab and Shift+Tab between a table's cells, and Tab past the last one adds a row
 const tableCellNavigation = useTableCellNavigation({
@@ -1069,6 +1086,18 @@ function getHeaderLevel() {
     lvl = (result?.[1] ?? '').length
   }
   return lvl
+}
+
+/**
+ * Undo / redo through Monaco's own commands, the same ones Ctrl+Z and Ctrl+Y run
+ */
+function runUndo() {
+  editor.focus()
+  editor.trigger('toolbar', 'undo', null)
+}
+function runRedo() {
+  editor.focus()
+  editor.trigger('toolbar', 'redo', null)
 }
 
 /**
@@ -1801,9 +1830,10 @@ onMounted(async () => {
     }
   })
 
-  // -> Block names and parameters, and code fence attributes, as they are typed
+  // -> Block names and parameters, code fence attributes and HTML tags, as they are typed
   blockCompletions.register()
   fenceCompletions.register()
+  tagCompletions.register()
   tableCellNavigation.register()
 
   // -> "Image Properties" over every image in the page -- see `useImagePropertiesLens`
@@ -2047,6 +2077,7 @@ onBeforeUnmount(() => {
   blockLensProvider?.dispose()
   blockCompletions.dispose()
   fenceCompletions.dispose()
+  tagCompletions.dispose()
   tableCellNavigation.dispose()
   imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes

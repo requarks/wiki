@@ -90,8 +90,10 @@ Two existing words collide here, and the interface has to keep them apart.
 
 So a page may be published and also have a draft (the case this feature exists for), or be
 unpublished with no draft. The stored `publishState` value stays `draft`; renaming it would need a
-migration for nothing a reader sees. **The interface should stop labelling that state "Draft"** and
-call it "Not published", so that "Draft" means only the new thing.
+migration for nothing a reader sees. **The interface labels that state "Unpublished"** (done: the
+properties dialog, the badge over such a page and the search filter), so that "Draft" means only the
+new thing. The locale keys keep their names (`editor.props.draft`, `search.publishStateDraft`), after
+the stored value, so that the existing translations are flagged for review rather than orphaned.
 
 Inside this document, **draft** always means a `pageDrafts` row, whatever the site's mode. In
 [direct mode](#41-direct-drafts-off) the interface calls it "unsaved changes" instead, because there

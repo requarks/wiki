@@ -381,6 +381,137 @@
   color: $negative;
 }
 
+/*
+  The slash menu: what an empty line could become, under the line it was typed on. Each entry is an
+  icon in a box and two lines of text, the name and what it is for, and the highlighted one is the one
+  Enter picks -- moved by the arrow keys and the mouse alike, so there is only ever one.
+*/
+.visual-slash-menu {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 18rem;
+  max-width: calc(100% - 16px);
+  // -> Scrolling on its own past the height `onSlashMenu` caps it at, which depends on the room left
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid $grey-4;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  color: $grey-10;
+
+  .body--dark & {
+    border-color: $grey-8;
+    background: $grey-10;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.4);
+    color: $grey-2;
+  }
+
+  // -> A capped flex column shrinks its children to fit before it scrolls; these keep their height
+  > * {
+    flex: none;
+  }
+}
+
+/*
+  The slash menu's placeholder, on the empty line the caret is in (see `decorations` in `slash.js`).
+  Only while the editor is focused and editable, so a page that is not being typed in -- or is still
+  waiting on its collaboration room -- shows nothing.
+
+  Floated with no height so that it takes up no room: the caret stays at the start of the line, in
+  front of the words, and the line is no taller than it would be empty. `inline-start` for a page
+  written right to left.
+*/
+.visual-editor-content.ProseMirror-focused[contenteditable='true']
+  > .visual-slash-placeholder::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+  user-select: none;
+  color: $grey-5;
+
+  .body--dark & {
+    color: $grey-7;
+  }
+}
+
+.visual-slash-group {
+  padding: 6px 8px 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: $grey-7;
+  user-select: none;
+
+  .body--dark & {
+    color: $grey-5;
+  }
+}
+
+.visual-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+
+  &.is-active {
+    background: $grey-2;
+
+    .body--dark & {
+      background: $grey-9;
+    }
+  }
+}
+
+.visual-slash-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid $grey-4;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 1.25rem;
+
+  .body--dark & {
+    border-color: $grey-8;
+    background: $grey-10;
+  }
+}
+
+.visual-slash-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.visual-slash-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.visual-slash-hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: $grey-7;
+
+  .body--dark & {
+    color: $grey-5;
+  }
+}
+
 .visual-link-bar button,
 .visual-link-bar-href,
 .visual-image-bar button {

@@ -15,6 +15,7 @@ import { createNodeViews } from './nodeviews'
 import { createParser } from './parse'
 import { schema } from './schema'
 import { serialize } from './serialize'
+import { slashMenu } from './slash'
 
 /**
  * The Visual editor, assembled.
@@ -80,6 +81,15 @@ export function createVisualEditor({
   let destroyed = false
 
   const buildPlugins = (isCollab) => [
+    /*
+      The slash menu, first: while it is open, Enter and the arrow keys are its own, and the keymap
+      below would otherwise act on them before it saw them -- see `slash.js`.
+    */
+    slashMenu({
+      onUpdate: (menu) => context.onSlashMenu(menu),
+      getItems: () => context.slashItems(),
+      t: context.t
+    }),
     buildInputRules(),
     keymap(buildKeymap({ collab: isCollab })),
     gapCursor(),

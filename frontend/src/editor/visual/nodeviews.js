@@ -445,7 +445,15 @@ class TabsetView {
   applyActive() {
     queueMicrotask(() => {
       for (const [index, panel] of [...this.contentDOM.children].entries()) {
-        panel.classList.toggle('is-active', index === this.active)
+        /*
+          Panels only. Anything else in a tabset -- a paragraph the markdown left loose between its
+          tabs -- is drawn by ProseMirror's own view, which does not ignore a class put on it: the
+          change reads as an edit, the node is drawn again without the class, this puts it back, and
+          the editor never stops. The stylesheet hides panels alone, so a stray child simply shows.
+        */
+        if (panel.classList.contains('visual-tab-panel')) {
+          panel.classList.toggle('is-active', index === this.active)
+        }
       }
     })
   }
