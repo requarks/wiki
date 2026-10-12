@@ -554,6 +554,14 @@ $action-btn-height: 3rem;
   }
 
   &.is-editor {
+    /*
+      The height of the bar along the top of every editor -- the Render Preview strip of the Markdown
+      and AsciiDoc editors, the Visual editor's formatting bar -- each stated as 32px in its own
+      stylesheet. Page Properties then starts level with the content below that bar rather than beside
+      it, and the brickwork at the bar's right end steps into a plain stretch of orange.
+    */
+    padding-top: 32px;
+
     @at-root .body--light & {
       background-color: $deep-orange-9;
     }

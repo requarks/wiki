@@ -276,6 +276,7 @@
           -->
           <div
             class="editor-asciidoc-preview-content page-contents is-asciidoc"
+            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }"
             :lang="pageStore.locale"
             :dir="siteStore.localeDir(pageStore.locale)"
             ref="editorPreviewContainerRef"
@@ -1778,11 +1779,12 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
     height: $editor-height;
     overflow: hidden;
 
+    // -> The page's own background in each theme: this is the render, and a tint here is a tint the article does not have
     @at-root .body--light & {
-      background-color: $grey-2;
+      background-color: #fff;
     }
     @at-root .body--dark & {
-      background-color: $dark-6;
+      background-color: $dark;
     }
     &-enter-active,
     &-leave-active {
@@ -1821,6 +1823,19 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       overflow-y: scroll;
       padding: 1rem;
       max-width: calc(50vw - 57px);
+
+      /*
+        The site theme's Centered content width, so the preview wraps where the page will. The pane is
+        the scrolling box and the render goes straight into it (see the template), so the measure is
+        made out of padding rather than a box inside: whatever the element is wider than the measure
+        by goes either side. `min()` is the element's own width -- the pane, up to the cap above --
+        since a percentage here is the pane's. Only a wide window gets past the cap to make any
+        difference. The title's rule stops at the text, as it does on the page.
+      */
+      &.is-centered {
+        --content-bleed: 0px;
+        padding-inline: max(1rem, calc((min(100%, 50vw - 57px) - $content-centered-max-width) / 2));
+      }
 
       > div {
         outline: none;

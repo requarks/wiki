@@ -77,13 +77,9 @@ const LOGOUT_NOTICE_KEY = 'wiki.logoutNotice'
 // WATCHERS
 
 watch(
-  () => userStore.appearance,
-  (newValue) => {
-    if (newValue === 'site') {
-      dark.set(siteStore.theme.dark)
-    } else {
-      dark.set(newValue === 'dark')
-    }
+  () => [userStore.appearance, route.meta.forceDark === true],
+  () => {
+    dark.set(wantsDark())
   }
 )
 
@@ -165,13 +161,23 @@ function isAdminArea() {
   return route.path === '/_admin' || route.path.startsWith('/_admin/')
 }
 
+/**
+ * A route can pin the app dark whatever the reader or the site chose (`meta.forceDark`, the login
+ * page) — and only for as long as it is open, since leaving it lands back here with the preference.
+ */
+function wantsDark() {
+  if (route.meta.forceDark === true) {
+    return true
+  }
+  if (userStore.appearance === 'site') {
+    return siteStore.theme.dark
+  }
+  return userStore.appearance === 'dark'
+}
+
 async function applyTheme() {
   // -> Dark Mode
-  if (userStore.appearance === 'site') {
-    dark.set(siteStore.theme.dark)
-  } else {
-    dark.set(userStore.appearance === 'dark')
-  }
+  dark.set(wantsDark())
 
   // -> CSS Vars
   const brand = isAdminArea()

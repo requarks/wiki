@@ -147,6 +147,60 @@
       viewport -- so it scrolls along with the link it belongs to and nothing has to listen for scroll.
     */
     position: relative;
+
+    /*
+      The site theme's Centered content width, drawn as a sheet of paper on a grey desk the way a word
+      processor lays out a page: the text measure from `.visual-editor-content` below, with a margin of
+      white either side of it, and the desk showing wherever the pane is wider than that.
+
+      The sheet is a picture behind the editable rather than the editable itself, and that is the
+      point of drawing it this way. The editable keeps the full width of the pane and makes the measure
+      out of its padding, so a click on the desk beside the sheet still lands in the text -- a sheet
+      that WAS the editable would leave all of that grey dead to the mouse. `isolation` gives the
+      `z-index: -1` somewhere to stop: in front of the desk, behind the text.
+
+      Both are measured against the same box -- the surface's width, which the editable is stretched
+      to -- so the sheet and the text inside it stay centered on each other at every width. Narrower
+      than the sheet, the sheet fills the pane and the text keeps at least the 1rem it always had.
+
+      The gap above and below is the one stretch of the pane where clicking does nothing. That is the
+      desk, and on a page that is shorter than the pane the gap below sits at the bottom of the window,
+      where nobody aims.
+    */
+    &.is-centered {
+      $sheet-margin: 3rem;
+      $sheet-gap: 1.5rem;
+
+      isolation: isolate;
+      padding-block: $sheet-gap;
+
+      @at-root .body--light & {
+        background-color: $grey-3;
+      }
+      @at-root .body--dark & {
+        background-color: $dark-6;
+      }
+
+      &::before {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        inset-block: $sheet-gap;
+        inset-inline: max(0px, calc((100% - $content-centered-max-width - 2 * $sheet-margin) / 2));
+
+        @at-root .body--light & {
+          background-color: #fff;
+          box-shadow:
+            0 1px 3px rgb(0 0 0 / 0.12),
+            0 1px 2px rgb(0 0 0 / 0.08);
+        }
+        // -> A shadow does not read against a desk this dark, so the edge is a line instead
+        @at-root .body--dark & {
+          background-color: $dark;
+          box-shadow: 0 0 0 1px $dark-3;
+        }
+      }
+    }
   }
 }
 
@@ -167,6 +221,19 @@
     the cursor at the end of the document.
   */
   padding: 1rem 1rem 6rem;
+
+  /*
+    The site theme's Centered content width, so the text wraps where the page will. Made out of the
+    side padding rather than a max-width, for the same reason the bottom is: space outside the
+    editable is space a click does not put the caret in, and here it would be most of a wide pane.
+    The surface stretches the editable to its own width, so `100%` -- the surface's -- is the
+    editable's, and whatever that is wider than the measure by goes either side. The title's rule
+    stops at the text, as it does on the page.
+  */
+  .editor-visual-surface.is-centered > & {
+    --content-bleed: 0px;
+    padding-inline: max(1rem, calc((100% - $content-centered-max-width) / 2));
+  }
 
   /*
     ProseMirror's own furniture, recoloured. The behaviour of each of these comes from the base

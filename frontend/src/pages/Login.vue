@@ -47,13 +47,22 @@ useMeta(() => ({
   */
   color: var(--color-black);
   display: flex;
+  position: relative;
+  min-height: 100vh;
 
   @at-root .body--dark & {
     background-color: $dark-6;
     color: var(--color-white);
   }
 
+  /*
+    Frosted glass over the background image, which runs under the panel as well as beside it. The
+    panel's own white (or near-black) is what keeps the text readable whatever the image is, so it
+    stays mostly opaque; the blur is what stops the image's detail from fighting the form.
+  */
   &-content {
+    position: relative;
+    z-index: 1;
     flex: 1 0 100%;
     width: 100%;
     max-width: 500px;
@@ -62,10 +71,23 @@ useMeta(() => ({
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
+    background-color: #fff;
 
+    @at-root .body--dark & {
+      background-color: rgba($dark-6, 0.8);
+      backdrop-filter: blur(24px) saturate(180%);
+    }
+
+    /* -> Full width on a phone, with nothing beside it to see through to: plain page colour */
     @media (max-width: $breakpoint-xs-max) {
       padding: 1rem 2rem;
       max-width: 100vw;
+      background-color: #fff;
+      backdrop-filter: none;
+
+      @at-root .body--dark & {
+        background-color: $dark-6;
+      }
     }
   }
 
@@ -170,22 +192,20 @@ useMeta(() => ({
     gap: 10px;
   }
 
+  /*
+    Behind the whole screen rather than beside the panel, so that the panel has something to blur.
+    The page's own background colour above is what shows if the image fails to load.
+  */
   &-bg {
-    flex: 1;
-    flex-basis: 0;
-    position: relative;
-    height: 100vh;
+    position: absolute;
+    inset: 0;
     overflow: hidden;
 
     img {
-      position: relative;
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
       margin: 0;
       padding: 0;
     }

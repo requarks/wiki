@@ -4,6 +4,8 @@ const routes = [
   {
     path: '/login',
     component: () => import('@/layouts/AuthLayout.vue'),
+    /* -> Always dark, over the login background; see `wantsDark` in App.vue */
+    meta: { forceDark: true },
     children: [{ path: '', component: () => import('@/pages/Login.vue') }]
   },
   /*

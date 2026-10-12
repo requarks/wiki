@@ -78,21 +78,26 @@
         <w-scroll-area class="page-container-scrl" v-else style="height: 100%">
           <!-- -> Half the padding on a phone, matching the page view; `--content-bleed` follows in
                   `_page-chrome.scss` -->
-          <div class="page-container-body p-2 sm:p-4">
-            <!--
-              Delegated rather than bound per link: the anchors are written by `v-html`, so there is
-              nothing here to put a handler on.
-            -->
-            <!-- -> `is-asciidoc` from the version's own editor, not the page's: a version is what the
-                    page WAS, and a page converted between editors has history on both sides of it -->
-            <div
-              class="page-contents"
-              :class="{ 'is-asciidoc': state.version?.meta?.editor === `asciidoc` }"
-              :lang="state.version?.pageLocale"
-              :dir="siteStore.localeDir(state.version?.pageLocale)"
-              ref="pageContents"
-              v-html="state.render"
-              @click="onContentClick" />
+          <!-- -> Held to the same measure as the page view when the theme centers the content -->
+          <div
+            class="page-container-body p-2 sm:p-4"
+            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }">
+            <div class="page-measure">
+              <!--
+                Delegated rather than bound per link: the anchors are written by `v-html`, so there is
+                nothing here to put a handler on.
+              -->
+              <!-- -> `is-asciidoc` from the version's own editor, not the page's: a version is what the
+                      page WAS, and a page converted between editors has history on both sides of it -->
+              <div
+                class="page-contents"
+                :class="{ 'is-asciidoc': state.version?.meta?.editor === `asciidoc` }"
+                :lang="state.version?.pageLocale"
+                :dir="siteStore.localeDir(state.version?.pageLocale)"
+                ref="pageContents"
+                v-html="state.render"
+                @click="onContentClick" />
+            </div>
           </div>
           <!-- -> Inside the scrolling column and last, so it is the bottom of the page rather than
                   something sitting over the article -->

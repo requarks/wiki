@@ -352,6 +352,7 @@
           <div
             ref="mountRef"
             class="editor-visual-surface"
+            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }"
             :lang="pageStore.locale"
             :dir="siteStore.localeDir(pageStore.locale)">
             <!--

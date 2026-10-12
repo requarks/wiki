@@ -96,7 +96,7 @@
                   :style="`background-color: ` + state.config[`color` + startCase(cl)] + `;`"
                   text-color="white">
                   <w-icon class="mr-2" name="la:fill" size="xs" />
-                  <span>Pick...</span>
+                  <span>{{ t('admin.theme.pickColor') }}</span>
                   <w-menu
                     ><w-color-picker v-model="state.config[`color` + startCase(cl)]"
                   /></w-menu>
@@ -151,25 +151,23 @@
         <!-- ----------------------- -->
         <w-card class="pb-2 mt-4">
           <w-card-header>{{ t('admin.theme.layout') }}</w-card-header>
-          <template v-if="flagStore.experimental">
-            <w-item>
-              <blueprint-icon icon="width" />
-              <w-item-section>
-                <w-item-label>{{ t(`admin.theme.contentWidth`) }}</w-item-label>
-                <w-item-label caption>{{ t(`admin.theme.contentWidthHint`) }}</w-item-label>
-              </w-item-section>
-              <w-item-section class="flex-none">
-                <w-btn-toggle
-                  v-model="state.config.contentWidth"
-                  push
-                  glossy
-                  no-caps
-                  toggle-color="primary"
-                  :options="widthOptions" />
-              </w-item-section>
-            </w-item>
-            <w-separator class="my-2" inset />
-          </template>
+          <w-item>
+            <blueprint-icon icon="width" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.contentWidth`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.contentWidthHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section class="flex-none">
+              <w-btn-toggle
+                v-model="state.config.contentWidth"
+                push
+                glossy
+                no-caps
+                toggle-color="primary"
+                :options="widthOptions" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon icon="right-navigation-toolbar" />
             <w-item-section>
@@ -331,7 +329,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, watch } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
@@ -400,26 +398,28 @@ const state = reactive({
 
 const colorKeys = ['primary', 'secondary', 'accent', 'header', 'sidebar']
 
-const widthOptions = [
-  { label: 'Full Width', value: 'full' },
-  { label: 'Centered', value: 'centered' }
-]
+// -> Computed so the labels follow the interface locale if it changes while the screen is open
+const widthOptions = computed(() => [
+  { label: t('admin.theme.contentWidthFull'), value: 'full' },
+  { label: t('admin.theme.contentWidthCentered'), value: 'centered' }
+])
 
-const rightLeftOptions = [
-  { label: 'Hide', value: 'off' },
-  { label: 'Left', value: 'left' },
-  { label: 'Right', value: 'right' }
-]
+const rightLeftOptions = computed(() => [
+  { label: t('admin.theme.positionHide'), value: 'off' },
+  { label: t('admin.theme.positionLeft'), value: 'left' },
+  { label: t('admin.theme.positionRight'), value: 'right' }
+])
 
-const fonts = [
+// -> Font names are proper names and stay as they are; only the last entry is a description
+const fonts = computed(() => [
   { label: 'Inter', value: 'inter' },
   { label: 'Open Sans', value: 'opensans' },
   { label: 'Montserrat', value: 'montserrat' },
   { label: 'Roboto', value: 'roboto' },
   { label: 'Rubik', value: 'rubik' },
   { label: 'Tajawal', value: 'tajawal' },
-  { label: 'User System Defaults', value: 'user' }
-]
+  { label: t('admin.theme.fontUserDefaults'), value: 'user' }
+])
 
 const codeThemes = [
   { label: 'A 11 Y Dark', value: 'a11y-dark' },
@@ -715,7 +715,7 @@ async function load() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: 'Failed to fetch site theme config'
+      message: t('admin.theme.loadFailed')
     })
   }
   loading.hide()
@@ -754,7 +754,7 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.theme.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        t(`admin.theme.${resp?.error}`, resp?.message || t('common.error.unexpected'))
       )
     }
     if (adminStore.currentSiteId === siteStore.id) {
@@ -770,7 +770,7 @@ async function save() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: 'Failed to save site theme config',
+      message: t('admin.theme.saveFailed'),
       caption: err.message
     })
   }

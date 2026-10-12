@@ -172,7 +172,9 @@
           v-else>
           <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
                   the stylesheet has `--content-bleed` to match -->
-          <div class="page-container-body p-2 sm:p-4">
+          <div
+            class="page-container-body p-2 sm:p-4"
+            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }">
             <!--
               Above the article rather than above the toolbars: what an administrator raises a banner
               about is the content, and this is where a reader is already looking.
@@ -185,168 +187,176 @@
             -->
             <site-banner v-if="activeView === `article`" />
             <!--
-              That this page is a post, and of what. A wiki page and a blog post look identical
-              otherwise -- the breadcrumbs above name the folder rather than the blog, and nothing
-              else on the page says a listing somewhere is drawing it.
+              Everything below the banner, held to a measure when the theme asks for the content centered
+              (`contentWidth`, see `_page-chrome.scss`). One box rather than a width on each piece: the
+              blog byline is inline and cannot be centered as a box of its own. The banner stays outside,
+              since it is the lid of the column and is drawn to its edges whatever the theme says.
+            -->
+            <div class="page-measure">
+              <!--
+                That this page is a post, and of what. A wiki page and a blog post look identical
+                otherwise -- the breadcrumbs above name the folder rather than the blog, and nothing
+                else on the page says a listing somewhere is drawing it.
 
-              Above the article rather than below it, because it is context for what follows; a link
-              rather than a label, since the blog is where the rest of the posts are.
-            -->
-            <router-link
-              class="page-blog-byline"
-              v-if="pageStore.blog && activeView === `article`"
-              :to="blogHref">
-              <w-icon name="la:newspaper" size="sm" />
-              <span class="pl-2">{{
-                t('common.blog.postedIn', { blog: pageStore.blog.title })
-              }}</span>
-            </router-link>
-            <!--
-              `v-show` rather than `v-if` on the article below, so that leaving the discussion and
-              coming back does not re-run the page's own scripts or lose where the reader was in it.
-            -->
-            <page-talk
-              v-if="activeView === `talk`"
-              ref="talkView"
-              :content-root="pageContents"
-              @locate-annotation="locateAnnotation" />
-            <!--
-              Picking passages of the article to post as a comment, started from the Talk view's column.
-              Over the article and only while it is the view on screen: the panel and the card it draws
-              are teleported to the body, so where this sits in the tree is only what owns it.
-            -->
-            <page-annotator
-              v-if="isAnnotating"
-              ref="annotator"
-              :root="pageContents"
-              :content-revision="state.contentRevision"
-              @close="stopAnnotating"
-              @posted="onAnnotationsPosted" />
-            <!--
-              Every annotation on the page at once, from the Talk view's column. Mounted for as long as
-              it is switched on, whichever view is showing -- it is turned off from the Talk view, not by
-              leaving the article -- and drawing only over the article.
-            -->
-            <page-annotations-layer
-              v-if="state.showAnnotations"
-              :root="pageContents"
-              :active="activeView === `article`"
-              :interactive="!isAnnotating"
-              :reveal-id="state.revealAnnotationId"
-              :content-revision="state.contentRevision"
-              @revealed="state.revealAnnotationId = null"
-              @view-comment="viewComment" />
-            <!--
-              The card over a glossary term in the article, and only where this reader sees glossary
-              links at all. The links themselves are made by `applyGlossaryLinks` below.
-            -->
-            <page-glossary-card
-              v-if="glossaryReadable"
-              ref="glossaryCard"
-              :root="pageContents"
-              :locale="pageStore.locale"
-              :resolve-term-id="resolveGlossaryTermId"
-              @open="openGlossaryLink" />
-            <page-links v-if="activeView === `links`" />
-            <!--
-              A blog's front page, which has no article to draw: its posts are what stands in place of
-              one. Inside the scrolling column and not instead of it, unlike a redirection -- a blog is
-              somewhere a reader stays, scrolls, and reaches the footer at the bottom of.
+                Above the article rather than below it, because it is context for what follows; a link
+                rather than a label, since the blog is where the rest of the posts are.
+              -->
+              <router-link
+                class="page-blog-byline"
+                v-if="pageStore.blog && activeView === `article`"
+                :to="blogHref">
+                <w-icon name="la:newspaper" size="sm" />
+                <span class="pl-2">{{
+                  t('common.blog.postedIn', { blog: pageStore.blog.title })
+                }}</span>
+              </router-link>
+              <!--
+                `v-show` rather than `v-if` on the article below, so that leaving the discussion and
+                coming back does not re-run the page's own scripts or lose where the reader was in it.
+              -->
+              <page-talk
+                v-if="activeView === `talk`"
+                ref="talkView"
+                :content-root="pageContents"
+                @locate-annotation="locateAnnotation" />
+              <!--
+                Picking passages of the article to post as a comment, started from the Talk view's column.
+                Over the article and only while it is the view on screen: the panel and the card it draws
+                are teleported to the body, so where this sits in the tree is only what owns it.
+              -->
+              <page-annotator
+                v-if="isAnnotating"
+                ref="annotator"
+                :root="pageContents"
+                :content-revision="state.contentRevision"
+                @close="stopAnnotating"
+                @posted="onAnnotationsPosted" />
+              <!--
+                Every annotation on the page at once, from the Talk view's column. Mounted for as long as
+                it is switched on, whichever view is showing -- it is turned off from the Talk view, not by
+                leaving the article -- and drawing only over the article.
+              -->
+              <page-annotations-layer
+                v-if="state.showAnnotations"
+                :root="pageContents"
+                :active="activeView === `article`"
+                :interactive="!isAnnotating"
+                :reveal-id="state.revealAnnotationId"
+                :content-revision="state.contentRevision"
+                @revealed="state.revealAnnotationId = null"
+                @view-comment="viewComment" />
+              <!--
+                The card over a glossary term in the article, and only where this reader sees glossary
+                links at all. The links themselves are made by `applyGlossaryLinks` below.
+              -->
+              <page-glossary-card
+                v-if="glossaryReadable"
+                ref="glossaryCard"
+                :root="pageContents"
+                :locale="pageStore.locale"
+                :resolve-term-id="resolveGlossaryTermId"
+                @open="openGlossaryLink" />
+              <page-links v-if="activeView === `links`" />
+              <!--
+                A blog's front page, which has no article to draw: its posts are what stands in place of
+                one. Inside the scrolling column and not instead of it, unlike a redirection -- a blog is
+                somewhere a reader stays, scrolls, and reaches the footer at the bottom of.
 
-              No `activeView` test, unlike the article below: a blog shows neither tab (see
-              `showTalkTab`), so there is no other view for this column to be on.
-            -->
-            <page-blog v-if="isBlog" />
-            <!--
-              Delegated rather than bound per link: the anchors are written by `v-html`, so there is
-              nothing here to put a handler on, and they are replaced wholesale on every render.
-            -->
-            <!-- -> Written in the page's own language and direction, which need not be the interface's -->
-            <div
-              class="page-contents"
-              :class="{
-                'is-asciidoc': pageStore.editor === `asciidoc`,
-                'has-red-links': siteStore.colorizeBrokenLinks
-              }"
-              :lang="pageStore.locale"
-              :dir="siteStore.localeDir(pageStore.locale)"
-              ref="pageContents"
-              v-show="activeView === `article` && !isBlog"
-              v-html="pageStore.render"
-              @click="onContentClick" />
-            <!--
-              A box of its own rather than a bare `<template>`, so that `css/_print.scss` has something
-              to hide: these are links onward -- the next page, the previous one, a related topic --
-              which is the one thing a sheet of paper cannot do anything with. The separator goes with
-              them, since it exists only to divide them from the article above.
-            -->
-            <div
-              class="page-relations"
-              v-if="
-                pageStore.relations && pageStore.relations.length > 0 && activeView === `article`
-              ">
-              <w-separator class="my-6" />
-              <div class="flex flex-wrap">
-                <div class="min-w-0 flex-1 text-left" v-if="relationsLeft.length > 0">
-                  <w-btn
-                    class="mr-2 mb-2"
-                    padding="sm md"
-                    outline
-                    no-caps
-                    color="primary"
-                    v-for="rel of relationsLeft"
-                    :key="`rel-id-` + rel.id"
-                    v-bind="relationLink(rel)">
-                    <w-icon :name="rel.icon" />
-                    <div class="flex flex-col text-left pl-4">
-                      <div class="text-body2">
-                        <strong>{{ rel.label }}</strong>
-                      </div>
-                      <div class="text-caption">{{ rel.caption }}</div>
-                    </div>
-                  </w-btn>
-                </div>
-                <div class="min-w-0 flex-1 text-center" v-if="relationsCenter.length > 0">
-                  <div class="flex flex-col">
+                No `activeView` test, unlike the article below: a blog shows neither tab (see
+                `showTalkTab`), so there is no other view for this column to be on.
+              -->
+              <page-blog v-if="isBlog" />
+              <!--
+                Delegated rather than bound per link: the anchors are written by `v-html`, so there is
+                nothing here to put a handler on, and they are replaced wholesale on every render.
+              -->
+              <!-- -> Written in the page's own language and direction, which need not be the interface's -->
+              <div
+                class="page-contents"
+                :class="{
+                  'is-asciidoc': pageStore.editor === `asciidoc`,
+                  'has-red-links': siteStore.colorizeBrokenLinks
+                }"
+                :lang="pageStore.locale"
+                :dir="siteStore.localeDir(pageStore.locale)"
+                ref="pageContents"
+                v-show="activeView === `article` && !isBlog"
+                v-html="pageStore.render"
+                @click="onContentClick" />
+              <!--
+                A box of its own rather than a bare `<template>`, so that `css/_print.scss` has something
+                to hide: these are links onward -- the next page, the previous one, a related topic --
+                which is the one thing a sheet of paper cannot do anything with. The separator goes with
+                them, since it exists only to divide them from the article above.
+              -->
+              <div
+                class="page-relations"
+                v-if="
+                  pageStore.relations && pageStore.relations.length > 0 && activeView === `article`
+                ">
+                <w-separator class="my-6" />
+                <div class="flex flex-wrap">
+                  <div class="min-w-0 flex-1 text-left" v-if="relationsLeft.length > 0">
                     <w-btn
-                      color="primary"
-                      flat
+                      class="mr-2 mb-2"
+                      padding="sm md"
+                      outline
                       no-caps
-                      v-for="rel of relationsCenter"
+                      color="primary"
+                      v-for="rel of relationsLeft"
                       :key="`rel-id-` + rel.id"
                       v-bind="relationLink(rel)">
-                      <w-icon class="mr-2" :name="rel.icon" />
-                      <span>{{ rel.label }}</span>
+                      <w-icon :name="rel.icon" />
+                      <div class="flex flex-col text-left pl-4">
+                        <div class="text-body2">
+                          <strong>{{ rel.label }}</strong>
+                        </div>
+                        <div class="text-caption">{{ rel.caption }}</div>
+                      </div>
+                    </w-btn>
+                  </div>
+                  <div class="min-w-0 flex-1 text-center" v-if="relationsCenter.length > 0">
+                    <div class="flex flex-col">
+                      <w-btn
+                        color="primary"
+                        flat
+                        no-caps
+                        v-for="rel of relationsCenter"
+                        :key="`rel-id-` + rel.id"
+                        v-bind="relationLink(rel)">
+                        <w-icon class="mr-2" :name="rel.icon" />
+                        <span>{{ rel.label }}</span>
+                      </w-btn>
+                    </div>
+                  </div>
+                  <div class="min-w-0 flex-1 text-right" v-if="relationsRight.length > 0">
+                    <w-btn
+                      class="ml-2 mb-2"
+                      padding="sm md"
+                      outline
+                      no-caps
+                      color="primary"
+                      v-for="rel of relationsRight"
+                      :key="`rel-id-` + rel.id"
+                      v-bind="relationLink(rel)">
+                      <div class="flex flex-col text-left pr-4">
+                        <div class="text-body2">
+                          <strong>{{ rel.label }}</strong>
+                        </div>
+                        <div class="text-caption">{{ rel.caption }}</div>
+                      </div>
+                      <w-icon :name="rel.icon" />
                     </w-btn>
                   </div>
                 </div>
-                <div class="min-w-0 flex-1 text-right" v-if="relationsRight.length > 0">
-                  <w-btn
-                    class="ml-2 mb-2"
-                    padding="sm md"
-                    outline
-                    no-caps
-                    color="primary"
-                    v-for="rel of relationsRight"
-                    :key="`rel-id-` + rel.id"
-                    v-bind="relationLink(rel)">
-                    <div class="flex flex-col text-left pr-4">
-                      <div class="text-body2">
-                        <strong>{{ rel.label }}</strong>
-                      </div>
-                      <div class="text-caption">{{ rel.caption }}</div>
-                    </div>
-                    <w-icon :name="rel.icon" />
-                  </w-btn>
-                </div>
               </div>
+              <!--
+                Every provider that is not this wiki's own: at the bottom of the article, which is where
+                a site that uses one of them puts its comments and where a reader who uses that provider
+                elsewhere expects to find them.
+              -->
+              <page-comments-embed v-if="showCommentsEmbed" />
             </div>
-            <!--
-              Every provider that is not this wiki's own: at the bottom of the article, which is where
-              a site that uses one of them puts its comments and where a reader who uses that provider
-              elsewhere expects to find them.
-            -->
-            <page-comments-embed v-if="showCommentsEmbed" />
           </div>
           <!--
             Inside the scrolling column, and last: this is the bottom of the PAGE, so it is reached by

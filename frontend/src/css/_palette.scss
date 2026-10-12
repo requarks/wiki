@@ -77,3 +77,8 @@ $shadow-2:
 $breakpoint-xs-max: 599.98px;
 $breakpoint-sm-max: 1023.98px;
 $breakpoint-md-max: 1439.98px;
+
+// The measure a page's content is held to when the site theme's Content Width is Centered
+// (`contentWidth`): the page view, a version of it, the markdown and asciidoc previews and the
+// visual editor.
+$content-centered-max-width: 1000px;

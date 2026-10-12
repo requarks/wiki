@@ -340,6 +340,26 @@ $toc-overlay-max: 749.98px;
       --content-bleed: 0.5rem;
     }
   }
+
+  /*
+    The theme's Centered content width (`contentWidth`): the article held to a measure in the middle
+    of the column rather than running to its edges, the way the Talk view holds its threads
+    (`.page-talk`). `.page-measure` is the box inside the padding that wraps everything but the site
+    banner, which keeps its full width.
+
+    The title's rule stops reaching back through the padding: the article is now a block of its own
+    in the middle of the column, and a rule hanging 1rem out of its left side points at a sidebar
+    that is nowhere near it. After the phone rule above, and more specific, so it wins there too.
+  */
+  &.is-centered {
+    .page-measure {
+      max-width: $content-centered-max-width;
+      margin-inline: auto;
+    }
+    .page-contents {
+      --content-bleed: 0px;
+    }
+  }
 }
 
 /*
