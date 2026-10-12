@@ -92,7 +92,13 @@ function assetKey(
   return objectKey(target, assetRelPath(target, ref))
 }
 
-/** Where a page's object sits in this target's bucket. */
+/**
+ * Where a page's object sits in this target's bucket.
+ *
+ * A home page filed as a README always takes its format's first name here (`README.md`,
+ * `README.adoc`), where the disk and git targets look for whichever README is already there: nothing
+ * but the wiki writes into a bucket, so there is no other.
+ */
 function pageKey(target: StorageTarget, ref: StoragePageRef): string | null {
   return objectKey(target, pageRelPath(target, ref))
 }

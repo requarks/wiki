@@ -621,6 +621,19 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="home" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.mapReadmeToHome`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.mapReadmeToHomeHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.mapReadmeToHome"
+                :aria-label="t(`admin.storage.mapReadmeToHome`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon class="self-start" icon="disconnected" />
             <w-item-section>
@@ -709,7 +722,8 @@ const state = reactive({
   directAccessFallback: 'stream',
   sitePrefix: false,
   localePrefix: true,
-  stripLeadingH1: false
+  stripLeadingH1: false,
+  mapReadmeToHome: false
 })
 
 // CONSTANTS
@@ -1054,6 +1068,7 @@ async function load() {
     state.sitePrefix = resp?.sitePrefix ?? false
     state.localePrefix = resp?.localePrefix ?? true
     state.stripLeadingH1 = resp?.stripLeadingH1 ?? false
+    state.mapReadmeToHome = resp?.mapReadmeToHome ?? false
     state.targets = (resp?.targets ?? []).map((tgt) => ({
       ...tgt,
       config: buildConfigEditor(tgt.props, tgt.config),
@@ -1168,6 +1183,7 @@ async function save() {
         sitePrefix: state.sitePrefix,
         localePrefix: state.localePrefix,
         stripLeadingH1: state.stripLeadingH1,
+        mapReadmeToHome: state.mapReadmeToHome,
         targets: state.targets.map(payloadFor)
       }
     }).json()

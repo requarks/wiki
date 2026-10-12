@@ -4,13 +4,20 @@ import { CheckRepoActions, simpleGit } from 'simple-git'
 import {
   absPathIn,
   assetRelPath,
+  existsUnder,
+  HOME_PATH,
   importTree,
   isIgnoredPath,
+  matchStoredReadme,
   moveStored,
   pageRelPath,
+  readmeExtension,
+  readmeVariants,
   resolveRoot,
   serializePage
 } from '../../../helpers/storageFiles.ts'
+import { generatePathHash } from '../../../helpers/common.ts'
+import { pageFileExtension } from '../../../models/pages.ts'
 import type { ImportSummary, StoredFile } from '../../../helpers/storageFiles.ts'
 import type { SimpleGit } from 'simple-git'
 import type {
@@ -407,25 +414,34 @@ async function replay(
   changes: StorageQueuedChange[]
 ): Promise<number[]> {
   const replayed: number[] = []
+  const inRepo = existsUnder(repo.root)
   for (const change of changes) {
     const by = { actorId: change.actorId, date: change.createdAt }
+    // -> A home page filed as a README goes under the name the repository already has for it, which
+    //    only the working copy can say: the change was queued on the request path, without looking
+    const relPath =
+      change.kind === 'page' ? await matchStoredReadme(target, change.path, inRepo) : change.path
+    const previousPath =
+      change.kind === 'page'
+        ? await matchStoredReadme(target, change.previousPath ?? null, inRepo)
+        : change.previousPath
     if (change.op === 'put') {
       const data = await WIKI.models.storage.queuedData(change.id)
-      const filePath = absPathIn(repo.root, change.path)
+      const filePath = absPathIn(repo.root, relPath)
       // -> Which of the two verbs a page's commit gets. Read before the write, since afterwards every
       //    page looks like one that was already there.
       const existed = await fs.access(filePath).then(
         () => true,
         () => false
       )
-      if (data && !(await isIgnored(repo, change.path))) {
+      if (data && !(await isIgnored(repo, relPath))) {
         await fs.mkdir(path.dirname(filePath), { recursive: true })
         await fs.writeFile(filePath, data)
-        await repo.git.raw(['add', '--', change.path])
+        await repo.git.raw(['add', '--', relPath])
         await commitPaths(
           repo,
           target,
-          [change.path],
+          [relPath],
           change.kind === 'page'
             ? `docs: ${existed ? 'update' : 'create'} ${change.label}`
             : `docs: upload ${change.label}`,
@@ -433,18 +449,15 @@ async function replay(
         )
       }
     } else if (change.op === 'delete') {
-      await fs.rm(absPathIn(repo.root, change.path), { force: true })
+      await fs.rm(absPathIn(repo.root, relPath), { force: true })
       // -> From the index rather than `git rm`, which fails on a path git has never heard of — an
       //    ordinary situation here, for a file deleted before this target was enabled
-      await repo.git.raw(['rm', '--cached', '--ignore-unmatch', '--quiet', '--', change.path])
-      await commitPaths(repo, target, [change.path], `docs: delete ${change.label}`, by)
-    } else if (
-      change.previousPath &&
-      (await moveStored(repo.root, change.previousPath, change.path)) === 'moved'
-    ) {
-      const paths = [change.previousPath, change.path]
-      for (const relPath of paths) {
-        await repo.git.add(['-A', '--', relPath])
+      await repo.git.raw(['rm', '--cached', '--ignore-unmatch', '--quiet', '--', relPath])
+      await commitPaths(repo, target, [relPath], `docs: delete ${change.label}`, by)
+    } else if (previousPath && (await moveStored(repo.root, previousPath, relPath)) === 'moved') {
+      const paths = [previousPath, relPath]
+      for (const moved of paths) {
+        await repo.git.add(['-A', '--', moved])
       }
       await commitPaths(
         repo,
@@ -775,6 +788,27 @@ async function removeFromWiki(
   const ext = path.extname(fileName).replace(/^\./, '').toLowerCase()
   const stem = fileName.slice(0, fileName.length - (ext ? ext.length + 1 : 0))
 
+  // -> A root README is the home page, when the home page is in the format that README is: one in
+  //    another format is filed under another name, and the README that went was never it. No asset is
+  //    ever named `README` either — an asset's name is lowercase — so there is nothing else for it to
+  //    have been.
+  const readmeExt = rest.length === 0 ? readmeExtension(fileName) : null
+  if (readmeExt && WIKI.models.storage.mapReadmeToHomeFor(target.siteId)) {
+    const home = await WIKI.models.pages.getPage({
+      siteId: target.siteId,
+      hash: generatePathHash(HOME_PATH),
+      locale: stored.locale
+    })
+    if (!home || pageFileExtension(home.contentType) !== readmeExt) {
+      return null
+    }
+    await WIKI.models.pages.deletePage(target.siteId, home.id, {
+      id: actorId,
+      permissions: ['manage:system']
+    })
+    return 'page'
+  }
+
   if (stem) {
     const asPage = await WIKI.models.tree.getEntryAt({
       siteId: target.siteId,
@@ -841,7 +875,11 @@ async function writeEverything(
 
   if (target.contentTypes.activeTypes.includes('pages')) {
     for (const { ref, content } of await WIKI.models.pages.listForStorage(target.siteId)) {
-      const relPath = pageRelPath(target, ref)
+      const relPath = await matchStoredReadme(
+        target,
+        pageRelPath(target, ref),
+        existsUnder(repo.root)
+      )
       if (!relPath) {
         counts.unstored++
         continue
@@ -1267,8 +1305,12 @@ async function publish(
   const pending = (await WIKI.models.storage.queuedChanges(target)).filter(
     (change) => !replayed.has(change.id)
   )
+  // -> A home page's README is queued as `README.md` whatever the repository calls it, so a change to
+  //    any of its names on the remote is a change to the same file
   const touched = (change: StorageQueuedChange) =>
-    change.previousPath ? [change.path, change.previousPath] : [change.path]
+    (change.previousPath ? [change.path, change.previousPath] : [change.path]).flatMap((relPath) =>
+      readmeVariants(target, relPath)
+    )
   const discarded: number[] = []
   let held = new Set<string>()
   if (mode === 'pull') {

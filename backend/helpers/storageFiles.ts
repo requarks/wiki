@@ -27,14 +27,23 @@ const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 /** The extension whose pages are written as one JSON document rather than front matter and a body. */
 export const JSON_EXTENSION = 'json'
 
-/** The extension a markdown page is filed under, and so the one a leading H1 is read off. */
+/** The extension a markdown page is filed under. */
 const MARKDOWN_EXTENSION = 'md'
+
+/** The extension an AsciiDoc page is filed under. */
+const ASCIIDOC_EXTENSION = 'adoc'
 
 /** An ATX H1 on the first line, without the optional closing run of `#`. */
 const LEADING_ATX_H1 = /^#[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*(?:\r?\n|$)/
 
 /** A setext H1 on the first two lines: the text, then a line of `=`. */
 const LEADING_SETEXT_H1 = /^([^\r\n]+)\r?\n=+[ \t]*(?:\r?\n|$)/
+
+/** An AsciiDoc document title on the first line: one `=`, where a section has two or more. */
+const LEADING_ASCIIDOC_TITLE = /^=[ \t]+(.*?)[ \t]*(?:\r?\n|$)/
+
+/** An AsciiDoc attribute entry, `:toc:` or `:imagesdir: images` or `:sectnums!:`. */
+const ASCIIDOC_ATTRIBUTE_ENTRY = /^:!?\w[\w-]*!?:/
 
 /**
  * The editor an imported page falls back to.
@@ -45,12 +54,39 @@ const LEADING_SETEXT_H1 = /^([^\r\n]+)\r?\n=+[ \t]*(?:\r?\n|$)/
 const DEFAULT_PAGE_EDITOR = 'markdown'
 
 /**
- * What the site's root page is filed as.
+ * The page a site's root addresses, which is the page a root README stands for.
  *
- * A page path may be empty, which is the page a site serves at `/`. It still needs a name of its own
- * on disk, and `index` is the one every other tool that writes a tree of documents picks.
+ * Mirrors `HOME_PATH` in `helpers/appShell.ts`. Without `mapReadmeToHome` it is filed like any other
+ * page, as `home.<ext>`.
  */
-export const ROOT_PAGE_NAME = 'index'
+export const HOME_PATH = 'home'
+
+/**
+ * The names the home page goes by when the site's `mapReadmeToHome` setting is on, by the extension
+ * its content type is filed under. A home page in a format with no entry here keeps `home.<ext>`.
+ *
+ * Only at the root of the tree — a README in a folder is an ordinary page or file of that folder — and
+ * only spelled this way, which is also what keeps them apart from every page: a page path is always
+ * lowercase, so no page is ever filed as `README`. The first of each is what a new file is called, and
+ * the order of the rest is the order `matchStoredReadme` looks for them in.
+ */
+const README_FILE_NAMES: Record<string, string[]> = {
+  md: ['README.md', 'README', 'README.MD'],
+  adoc: ['README.adoc']
+}
+
+/** Every README name, in the order one is preferred when a tree holds more than one. */
+const ALL_README_FILE_NAMES = Object.values(README_FILE_NAMES).flat()
+
+/** The extension a README name stands for — `md` for a bare `README` — or null for any other name. */
+export function readmeExtension(fileName: string): string | null {
+  for (const [ext, names] of Object.entries(README_FILE_NAMES)) {
+    if (names.includes(fileName)) {
+      return ext
+    }
+  }
+  return null
+}
 
 /**
  * Names never walked by an import.
@@ -110,9 +146,78 @@ export function pageRelPath(target: StorageTarget, ref: StoragePageRef): string 
   if (!prefix) {
     return null
   }
-  const segments = ref.path.split('/').filter(Boolean)
-  const fileName = segments.pop() ?? ROOT_PAGE_NAME
-  return [...prefix, ...segments, `${fileName}.${pageFileExtension(ref.contentType)}`].join('/')
+  const ext = pageFileExtension(ref.contentType)
+  // -> Whichever of a format's READMEs is already there is the module's to find out, since this
+  //    answers without looking — see `matchStoredReadme`
+  const readmes = README_FILE_NAMES[ext]
+  if (ref.path === HOME_PATH && readmes && WIKI.models.storage.mapReadmeToHomeFor(target.siteId)) {
+    return [...prefix, readmes[0]].join('/')
+  }
+  return `${[...prefix, ...ref.path.split('/').filter(Boolean)].join('/')}.${ext}`
+}
+
+/**
+ * Whether a stored path is a root README, read the way the site's layout writes one.
+ *
+ * Deliberately not gated on `mapReadmeToHome`: nothing but that setting ever names a file `README`,
+ * so a path that is one was put there by it — and a queued change written while it was on still has to
+ * land on the file it meant after it has been turned off.
+ */
+function isRootReadme(siteId: string, relPath: string): boolean {
+  const stored = WIKI.models.storage.parseStoredPath(siteId, relPath.split('/'))
+  return stored?.segments.length === 1 && readmeExtension(stored.segments[0]) !== null
+}
+
+/**
+ * Every name a root README of the same format could be stored under, given the one `pageRelPath`
+ * answered — never another format's, which would be a markdown page written into `README.adoc`.
+ *
+ * For anything that is not a root README this is the path alone, so a caller comparing paths can
+ * always go through it.
+ */
+export function readmeVariants(target: StorageTarget, relPath: string): string[] {
+  if (!isRootReadme(target.siteId, relPath)) {
+    return [relPath]
+  }
+  const dir = relPath.split('/')
+  const ext = readmeExtension(dir.pop()!)!
+  return README_FILE_NAMES[ext].map((name) => [...dir, name].join('/'))
+}
+
+/**
+ * The README a home page is to be written to: whichever one the target already holds.
+ *
+ * `pageRelPath` cannot know, since it answers without looking — a git target answers on the request
+ * path, where nothing may touch the repository. So a module asks this at the point it can see what
+ * is there, and writes the format's first name when nothing is. Any other path comes straight back.
+ *
+ * @param exists Whether the target holds a file at a path relative to its root
+ */
+export async function matchStoredReadme<T extends string | null>(
+  target: StorageTarget,
+  relPath: T,
+  exists: (relPath: string) => Promise<boolean>
+): Promise<T> {
+  // -> Every other page, which is to say nearly every call: asked nothing, since a probe on SFTP is a
+  //    round trip
+  if (!relPath || !isRootReadme(target.siteId, relPath)) {
+    return relPath
+  }
+  for (const candidate of readmeVariants(target, relPath)) {
+    if (await exists(candidate)) {
+      return candidate as T
+    }
+  }
+  return relPath
+}
+
+/** An `exists` for `matchStoredReadme`, for a tree on this machine. */
+export function existsUnder(root: string): (relPath: string) => Promise<boolean> {
+  return (relPath) =>
+    fs.access(absPathIn(root, relPath)).then(
+      () => true,
+      () => false
+    )
 }
 
 /**
@@ -237,18 +342,34 @@ function pageMeta(page: StoragePageContent): Record<string, any> {
 }
 
 /**
- * Take the H1 a markdown body opens with off it, as the site's `stripLeadingH1` setting asks.
+ * Take the H1 a body opens with off it, as the site's `stripLeadingH1` setting asks.
  *
- * Only the very first block counts, ATX (`# Title`) or setext (`Title` over `===`), and only a
- * non-empty one: a heading further down is a section of the page, not its name. The heading text is
- * kept as written, inline markup and all, because it has to be exactly what `withLeadingH1` wrote for
- * a page to come back from a target with the title it went out with.
+ * Only the very first block counts, and only a non-empty one: a heading further down is a section of
+ * the page, not its name. In markdown that is an ATX (`# Title`) or setext (`Title` over `===`) H1;
+ * in AsciiDoc it is the document title, `= Title`. The heading text is kept as written, inline markup
+ * and all, because it has to be exactly what `withLeadingH1` wrote for a page to come back from a
+ * target with the title it went out with.
+ *
+ * An AsciiDoc title is only taken when what follows it is a blank line or attribute entries. Anything
+ * else on the next line is the header's author or revision line, which needs the title above it to be
+ * read as one — taken away, it would be drawn as the page's first paragraph. Attribute entries keep
+ * working without it, as document attributes set before the first block.
  *
  * @param content The body with its front matter already gone and its ends trimmed
+ * @param ext The extension the page is filed under, which says what it is written in
  * @returns The heading and what follows it, or null when the body does not open with one
  */
-function takeLeadingH1(content: string): { title: string; content: string } | null {
-  const match = LEADING_ATX_H1.exec(content) ?? LEADING_SETEXT_H1.exec(content)
+function takeLeadingH1(content: string, ext: string): { title: string; content: string } | null {
+  let match: RegExpExecArray | null = null
+  if (ext === MARKDOWN_EXTENSION) {
+    match = LEADING_ATX_H1.exec(content) ?? LEADING_SETEXT_H1.exec(content)
+  } else if (ext === ASCIIDOC_EXTENSION) {
+    match = LEADING_ASCIIDOC_TITLE.exec(content)
+    const nextLine = match ? content.slice(match[0].length).split(/\r?\n/, 1)[0] : ''
+    if (nextLine.trim() && !ASCIIDOC_ATTRIBUTE_ENTRY.test(nextLine)) {
+      return null
+    }
+  }
   const title = match?.[1].trim()
   if (!match || !title) {
     return null
@@ -257,15 +378,27 @@ function takeLeadingH1(content: string): { title: string; content: string } | nu
 }
 
 /**
- * Put a page's title back on the front of its markdown body, the inverse of `takeLeadingH1`.
+ * Put a page's title back on the front of its body, the inverse of `takeLeadingH1`.
  *
  * Always added, even to a body that already opens with a heading of the same text. Leaving it out
  * there would read that heading back as the title and lose it from the body, so a page would come
- * back from its own target different from how it went out.
+ * back from its own target different from how it went out. An AsciiDoc body opening with attribute
+ * entries gets the title directly above them, which is where they were when it was taken off.
+ *
+ * @returns The body unchanged for a format with no such heading
  */
-function withLeadingH1(title: string, content: string): string {
+function withLeadingH1(title: string, content: string, ext: string): string {
   const heading = title.replace(/\s+/g, ' ').trim()
-  return heading ? `# ${heading}\n\n${content}` : content
+  if (!heading) {
+    return content
+  }
+  if (ext === MARKDOWN_EXTENSION) {
+    return `# ${heading}\n\n${content}`
+  }
+  if (ext === ASCIIDOC_EXTENSION) {
+    return `= ${heading}\n${ASCIIDOC_ATTRIBUTE_ENTRY.test(content) ? '' : '\n'}${content}`
+  }
+  return content
 }
 
 /**
@@ -295,11 +428,9 @@ export function serializePage(ref: StoragePageRef, page: StoragePageContent): st
   }
   // -> The title stays in the front matter as well: it is what every other tool reads a title from,
   //    and the heading is there for the people reading the file
-  const content =
-    pageFileExtension(ref.contentType) === MARKDOWN_EXTENSION &&
-    WIKI.models.storage.stripLeadingH1For(ref.siteId)
-      ? withLeadingH1(page.title, page.content)
-      : page.content
+  const content = WIKI.models.storage.stripLeadingH1For(ref.siteId)
+    ? withLeadingH1(page.title, page.content, pageFileExtension(ref.contentType))
+    : page.content
   return `---\n${dumpYaml(pageMeta(page))}---\n\n${content}\n`
 }
 
@@ -484,7 +615,27 @@ async function adoptTree({
 
   const reserved: string[] = WIKI.sites[target.siteId]?.config?.pageExtensions ?? []
   const stripLeadingH1 = WIKI.models.storage.stripLeadingH1For(target.siteId)
+  const mapReadme = WIKI.models.storage.mapReadmeToHomeFor(target.siteId)
   const summary: ImportSummary = { pages: 0, assets: 0, skipped: 0, failed: 0 }
+
+  // -> The README each locale's home page is taken from in this run. One per locale: several files
+  //    for one page would leave it as whichever the walk reached last, so the first by
+  //    `ALL_README_FILE_NAMES` wins and the rest are skipped — as is a root `home.<ext>`, which is
+  //    left from before the setting was on.
+  const homeReadmes = new Map<string, string>()
+  if (mapReadme) {
+    for (const { segments } of found) {
+      const stored = WIKI.models.storage.parseStoredPath(target.siteId, segments)
+      if (stored?.segments.length !== 1) {
+        continue
+      }
+      const rank = ALL_README_FILE_NAMES.indexOf(stored.segments[0])
+      const current = homeReadmes.get(stored.locale)
+      if (rank >= 0 && (current === undefined || rank < ALL_README_FILE_NAMES.indexOf(current))) {
+        homeReadmes.set(stored.locale, stored.segments[0])
+      }
+    }
+  }
 
   for (const { filePath, segments } of found) {
     // -> The prefix the site's layout writes, read back off the path. Null for a file that is not
@@ -498,6 +649,14 @@ async function adoptTree({
     const fileName = rest.pop()!
     const ext = path.extname(fileName).replace(/^\./, '').toLowerCase()
     const folderPath = rest.join('/')
+    const isRootFile = rest.length === 0
+    const isHomeReadme = isRootFile && homeReadmes.get(locale) === fileName
+    if (mapReadme && isRootFile && !isHomeReadme && readmeExtension(fileName)) {
+      summary.skipped++
+      continue
+    }
+    // -> A bare README is markdown, which its name does not say
+    const pageExt = isHomeReadme ? readmeExtension(fileName)! : ext
 
     let raw: Buffer
     try {
@@ -509,10 +668,10 @@ async function adoptTree({
       }
       throw err
     }
-    const declared = deserializePage(raw.toString('utf8'), ext)
+    const declared = deserializePage(raw.toString('utf8'), pageExt)
     const isReservedExtension = Boolean(ext) && reserved.includes(ext)
 
-    if (!declared && !isReservedExtension) {
+    if (!declared && !isReservedExtension && !isHomeReadme) {
       const asset = await WIKI.models.assets.adoptStoredFile({
         siteId: target.siteId,
         locale,
@@ -532,13 +691,17 @@ async function adoptTree({
 
     // -> A page is addressed without its extension: `guides/setup.md` is the page at `guides/setup`
     const name = fileName.slice(0, fileName.length - (ext ? ext.length + 1 : 0))
+    if (isRootFile && name === HOME_PATH && homeReadmes.has(locale)) {
+      summary.skipped++
+      continue
+    }
     const meta = declared?.meta ?? {}
     // -> Undeclared means there was no front matter to strip, so the file is all body
     let content = declared?.content ?? raw.toString('utf8').trim()
     let title = typeof meta.title === 'string' && meta.title ? meta.title : name
     // -> The heading wins over a front matter title when both are there: it is the one somebody
     //    reading the file sees and edits, and what the wiki writes keeps the two the same anyway
-    const heading = stripLeadingH1 && ext === MARKDOWN_EXTENSION ? takeLeadingH1(content) : null
+    const heading = stripLeadingH1 ? takeLeadingH1(content, pageExt) : null
     if (heading) {
       title = heading.title
       // -> A file that is nothing but its heading keeps it as the body, since a page cannot be empty
@@ -549,8 +712,7 @@ async function adoptTree({
       const imported = await WIKI.models.pages.adoptStoredPage({
         siteId: target.siteId,
         locale,
-        // -> The root page is filed under a name of its own, and takes the empty path back
-        path: [...rest, ...(name === ROOT_PAGE_NAME ? [] : [name])].join('/'),
+        path: isHomeReadme ? HOME_PATH : [...rest, name].join('/'),
         // -> The declaration first, then the file itself: a page written by hand carries no title,
         //    and its name is the next best thing
         title,
@@ -558,7 +720,7 @@ async function adoptTree({
         editor:
           typeof meta.editor === 'string' && meta.editor
             ? meta.editor
-            : (pageEditorForExtension(ext) ?? DEFAULT_PAGE_EDITOR),
+            : (pageEditorForExtension(pageExt) ?? DEFAULT_PAGE_EDITOR),
         tags: Array.isArray(meta.tags) ? meta.tags.map(String) : [],
         isPublished: meta.published !== false,
         content,

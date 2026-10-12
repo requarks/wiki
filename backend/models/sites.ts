@@ -292,6 +292,7 @@ class Sites {
           sitePrefix: false,
           localePrefix: true,
           stripLeadingH1: false,
+          mapReadmeToHome: false,
           syncInterval: '5m',
           directAccessFallback: 'stream'
         },
@@ -612,6 +613,7 @@ class Sites {
           sitePrefix: false,
           localePrefix: true,
           stripLeadingH1: false,
+          mapReadmeToHome: false,
           syncInterval: '5m',
           directAccessFallback: 'stream'
         },

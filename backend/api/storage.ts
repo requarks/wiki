@@ -116,7 +116,12 @@ async function routes(app: FastifyInstance) {
               stripLeadingH1: {
                 type: 'boolean',
                 description:
-                  'Whether a markdown page is stored with its title as a leading H1. Off by default. On, an import takes the H1 a file opens with off the body and uses it as the page title, and every markdown page written to a path-based target gets its title put back as that H1.'
+                  'Whether a markdown or AsciiDoc page is stored with its title as a leading H1 (`# Title` or `= Title`). Off by default. On, an import takes the H1 a file opens with off the body and uses it as the page title, and every such page written to a path-based target gets its title put back as that H1.'
+              },
+              mapReadmeToHome: {
+                type: 'boolean',
+                description:
+                  'Whether the home page is filed as the README at the root of the tree rather than as `home`. Off by default. On, a root `README`, `README.md`, `README.MD` or `README.adoc` is imported as the home page, and a markdown or AsciiDoc home page is written back under whichever README of its format is already there - `README.md` or `README.adoc` when none is.'
               },
               syncInterval: {
                 type: 'string',
@@ -150,6 +155,7 @@ async function routes(app: FastifyInstance) {
         sitePrefix: layout.sitePrefix,
         localePrefix: layout.localePrefix,
         stripLeadingH1: WIKI.models.storage.stripLeadingH1For(req.params.siteId),
+        mapReadmeToHome: WIKI.models.storage.mapReadmeToHomeFor(req.params.siteId),
         syncInterval: `${WIKI.models.storage.syncIntervalFor(req.params.siteId)}m`,
         directAccessFallback: WIKI.models.storage.directAccessFallbackFor(req.params.siteId),
         /*
@@ -280,7 +286,12 @@ async function routes(app: FastifyInstance) {
             stripLeadingH1: {
               type: 'boolean',
               description:
-                'Take the H1 a markdown file opens with as the page title on import, and write the title back as that H1. Applies to every target of the site.'
+                'Take the H1 a markdown or AsciiDoc file opens with as the page title on import, and write the title back as that H1. Applies to every target of the site.'
+            },
+            mapReadmeToHome: {
+              type: 'boolean',
+              description:
+                'File the home page as the README at the root of the tree. Applies to every target of the site. Nothing already stored is renamed.'
             },
             syncInterval: {
               type: 'string',

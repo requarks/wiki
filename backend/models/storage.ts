@@ -84,7 +84,7 @@ const DEFAULT_SITE_PREFIX = false
 const DEFAULT_LOCALE_PREFIX = true
 
 /**
- * Whether a markdown page's title travels as the H1 its file opens with.
+ * Whether a markdown or AsciiDoc page's title travels as the H1 its file opens with.
  *
  * Off, because a file the wiki writes already carries the title in its front matter, and a heading
  * that appeared in every file on the day this was turned on would be a change nobody asked for. On is
@@ -92,6 +92,15 @@ const DEFAULT_LOCALE_PREFIX = true
  * title IS the first heading, and taking it in as the body as well puts it on the page twice.
  */
 const DEFAULT_STRIP_LEADING_H1 = false
+
+/**
+ * Whether a site's home page is filed as the README at the root of its tree.
+ *
+ * Off, because `home` is what the home page has always been filed as, and a target that started
+ * writing it somewhere else would leave the old file behind. On is for a repository whose front page
+ * is its README, which is what every git host shows first.
+ */
+const DEFAULT_MAP_README_TO_HOME = false
 
 /**
  * How often a target with a remote is synced, on a site that has never said.
@@ -360,6 +369,7 @@ export interface StorageSiteConfigInput {
   sitePrefix?: boolean
   localePrefix?: boolean
   stripLeadingH1?: boolean
+  mapReadmeToHome?: boolean
   syncInterval?: string
   directAccessFallback?: StorageDirectAccessFallback
 }
@@ -1164,7 +1174,7 @@ class Storage {
   }
 
   /**
-   * Whether this site's markdown pages are stored with their title as a leading H1.
+   * Whether this site's markdown and AsciiDoc pages are stored with their title as a leading H1.
    *
    * Read by `serializePage` and `importTree`, which are the two halves of it and have to agree: a
    * heading written out on the way to a target is taken back off on the way in, so a page survives
@@ -1172,6 +1182,16 @@ class Storage {
    */
   stripLeadingH1For(siteId: string): boolean {
     return WIKI.sites[siteId]?.config?.storage?.stripLeadingH1 ?? DEFAULT_STRIP_LEADING_H1
+  }
+
+  /**
+   * Whether this site's home page is filed as the README at the root of its tree.
+   *
+   * `pageRelPath` and `importTree` read it, and a module writing to a tree it can see asks
+   * `matchStoredReadme` which of the README's names is already there. See `DEFAULT_MAP_README_TO_HOME`.
+   */
+  mapReadmeToHomeFor(siteId: string): boolean {
+    return WIKI.sites[siteId]?.config?.storage?.mapReadmeToHome ?? DEFAULT_MAP_README_TO_HOME
   }
 
   /**
@@ -1300,6 +1320,7 @@ class Storage {
       'sitePrefix',
       'localePrefix',
       'stripLeadingH1',
+      'mapReadmeToHome',
       'syncInterval',
       'directAccessFallback'
     ] as const) {

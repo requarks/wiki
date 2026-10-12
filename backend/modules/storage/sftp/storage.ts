@@ -3,11 +3,12 @@ import SftpClient from 'ssh2-sftp-client'
 import {
   assetRelPath,
   importTree,
+  matchStoredReadme,
   pageRelPath,
   serializePage
 } from '../../../helpers/storageFiles.ts'
 import type { ImportSummary, StoredFile } from '../../../helpers/storageFiles.ts'
-import type { StorageModule, StorageTarget } from '../../../models/storage.ts'
+import type { StorageModule, StoragePageRef, StorageTarget } from '../../../models/storage.ts'
 
 /** Where files go when the target has no base path configured, matching the definition default. */
 const DEFAULT_BASE_PATH = '/var/wiki'
@@ -255,6 +256,17 @@ async function moveRemote(
   }
 }
 
+/** Where a page's file is, a home page filed as a README going under the name it already has. */
+function storedPagePath(
+  client: SftpClient,
+  target: StorageTarget,
+  ref: StoragePageRef
+): Promise<string | null> {
+  return matchStoredReadme(target, pageRelPath(target, ref), async (relPath) =>
+    Boolean(await client.exists(remotePath(target, relPath)))
+  )
+}
+
 /** What an import run did, in the words the two import actions report it with. */
 function describeImport(summary: ImportSummary | null, overwrite: boolean): string {
   if (!summary) {
@@ -355,34 +367,35 @@ const sftpStorage: StorageModule = {
   },
 
   async putPage(target, ref, page) {
-    const relPath = pageRelPath(target, ref)
-    // -> Unlike an asset, a page with no place here is not worth failing over: it is in the
-    //    database, which is where a page always is, and this copy is the thing the site declined
-    if (!relPath) {
-      return
-    }
-    await withClient(target, (client) =>
-      writeRemote(client, target, relPath, Buffer.from(serializePage(ref, page), 'utf8'))
-    )
+    await withClient(target, async (client) => {
+      const relPath = await storedPagePath(client, target, ref)
+      // -> Unlike an asset, a page with no place here is not worth failing over: it is in the
+      //    database, which is where a page always is, and this copy is the thing the site declined
+      if (!relPath) {
+        return
+      }
+      await writeRemote(client, target, relPath, Buffer.from(serializePage(ref, page), 'utf8'))
+    })
   },
 
   async deletePage(target, ref) {
     // -> Exactly one name, taken from the page's own content type: in a folder where pages and
     //    attachments sit together, guessing at the others would delete whatever is beside it
-    const relPath = pageRelPath(target, ref)
-    if (!relPath) {
-      return
-    }
-    await withClient(target, (client) => removeRemote(client, target, relPath))
+    await withClient(target, async (client) => {
+      const relPath = await storedPagePath(client, target, ref)
+      if (relPath) {
+        await removeRemote(client, target, relPath)
+      }
+    })
   },
 
   async movePage(target, ref, previous) {
-    await withClient(target, (client) =>
+    await withClient(target, async (client) =>
       moveRemote(
         client,
         target,
-        pageRelPath(target, { ...ref, ...previous }),
-        pageRelPath(target, ref)
+        await storedPagePath(client, target, { ...ref, ...previous }),
+        await storedPagePath(client, target, ref)
       )
     )
   },
@@ -426,7 +439,7 @@ const sftpStorage: StorageModule = {
 
       if (target.contentTypes.activeTypes.includes('pages')) {
         for (const { ref, content } of await WIKI.models.pages.listForStorage(target.siteId)) {
-          const relPath = pageRelPath(target, ref)
+          const relPath = await storedPagePath(client, target, ref)
           if (!relPath) {
             unstored++
             continue

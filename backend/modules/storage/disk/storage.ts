@@ -3,7 +3,9 @@ import path from 'node:path'
 import {
   absPathIn,
   assetRelPath,
+  existsUnder,
   importTree,
+  matchStoredReadme,
   moveStored,
   pageRelPath,
   pruneEmptyDirs,
@@ -12,7 +14,7 @@ import {
   writeFileAtomic
 } from '../../../helpers/storageFiles.ts'
 import type { ImportSummary } from '../../../helpers/storageFiles.ts'
-import type { StorageModule, StorageTarget } from '../../../models/storage.ts'
+import type { StorageModule, StoragePageRef, StorageTarget } from '../../../models/storage.ts'
 
 /** Where files go when the target has no path configured, matching the definition's default. */
 const DEFAULT_PATH = './data/content'
@@ -20,6 +22,11 @@ const DEFAULT_PATH = './data/content'
 /** The root this target writes under, as an absolute path. */
 function baseDir(target: StorageTarget): string {
   return resolveRoot(target.config.path, DEFAULT_PATH)
+}
+
+/** Where a page's file is, a home page filed as a README going under the name it already has. */
+function storedPagePath(target: StorageTarget, ref: StoragePageRef): Promise<string | null> {
+  return matchStoredReadme(target, pageRelPath(target, ref), existsUnder(baseDir(target)))
 }
 
 /** What an import run did, in the words the two import actions report it with. */
@@ -139,7 +146,7 @@ const diskStorage: StorageModule = {
   },
 
   async putPage(target, ref, page) {
-    const relPath = pageRelPath(target, ref)
+    const relPath = await storedPagePath(target, ref)
     // -> Unlike an asset, a page that has no place here is not a failure worth reporting: it is in
     //    the database, which is where a page always is, and this copy is the thing the site declined
     if (!relPath) {
@@ -152,7 +159,7 @@ const diskStorage: StorageModule = {
     // -> Exactly one name, taken from the page's own content type. Guessing at the others would mean
     //    deleting whatever happens to sit beside it: in this folder `readme.html` is as likely to be
     //    an attachment as it is to be the page `readme`.
-    const relPath = pageRelPath(target, ref)
+    const relPath = await storedPagePath(target, ref)
     if (!relPath) {
       return
     }
@@ -166,8 +173,8 @@ const diskStorage: StorageModule = {
     // -> Which editor wrote it does not change when a page moves, so both ends share an extension
     await moveStored(
       baseDir(target),
-      pageRelPath(target, { ...ref, ...previous }),
-      pageRelPath(target, ref)
+      await storedPagePath(target, { ...ref, ...previous }),
+      await storedPagePath(target, ref)
     )
   },
 
