@@ -27,6 +27,15 @@ const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
 /** The extension whose pages are written as one JSON document rather than front matter and a body. */
 export const JSON_EXTENSION = 'json'
 
+/** The extension a markdown page is filed under, and so the one a leading H1 is read off. */
+const MARKDOWN_EXTENSION = 'md'
+
+/** An ATX H1 on the first line, without the optional closing run of `#`. */
+const LEADING_ATX_H1 = /^#[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*(?:\r?\n|$)/
+
+/** A setext H1 on the first two lines: the text, then a line of `=`. */
+const LEADING_SETEXT_H1 = /^([^\r\n]+)\r?\n=+[ \t]*(?:\r?\n|$)/
+
 /**
  * The editor an imported page falls back to.
  *
@@ -228,6 +237,38 @@ function pageMeta(page: StoragePageContent): Record<string, any> {
 }
 
 /**
+ * Take the H1 a markdown body opens with off it, as the site's `stripLeadingH1` setting asks.
+ *
+ * Only the very first block counts, ATX (`# Title`) or setext (`Title` over `===`), and only a
+ * non-empty one: a heading further down is a section of the page, not its name. The heading text is
+ * kept as written, inline markup and all, because it has to be exactly what `withLeadingH1` wrote for
+ * a page to come back from a target with the title it went out with.
+ *
+ * @param content The body with its front matter already gone and its ends trimmed
+ * @returns The heading and what follows it, or null when the body does not open with one
+ */
+function takeLeadingH1(content: string): { title: string; content: string } | null {
+  const match = LEADING_ATX_H1.exec(content) ?? LEADING_SETEXT_H1.exec(content)
+  const title = match?.[1].trim()
+  if (!match || !title) {
+    return null
+  }
+  return { title, content: content.slice(match[0].length).trim() }
+}
+
+/**
+ * Put a page's title back on the front of its markdown body, the inverse of `takeLeadingH1`.
+ *
+ * Always added, even to a body that already opens with a heading of the same text. Leaving it out
+ * there would read that heading back as the title and lose it from the body, so a page would come
+ * back from its own target different from how it went out.
+ */
+function withLeadingH1(title: string, content: string): string {
+  const heading = title.replace(/\s+/g, ' ').trim()
+  return heading ? `# ${heading}\n\n${content}` : content
+}
+
+/**
  * A page as a file that stands on its own, in one of two forms.
  *
  * A **text** page is YAML front matter and then the source as the author wrote it — the convention
@@ -252,7 +293,14 @@ export function serializePage(ref: StoragePageRef, page: StoragePageContent): st
     }
     return `${JSON.stringify({ ...pageMeta(page), content }, null, 2)}\n`
   }
-  return `---\n${dumpYaml(pageMeta(page))}---\n\n${page.content}\n`
+  // -> The title stays in the front matter as well: it is what every other tool reads a title from,
+  //    and the heading is there for the people reading the file
+  const content =
+    pageFileExtension(ref.contentType) === MARKDOWN_EXTENSION &&
+    WIKI.models.storage.stripLeadingH1For(ref.siteId)
+      ? withLeadingH1(page.title, page.content)
+      : page.content
+  return `---\n${dumpYaml(pageMeta(page))}---\n\n${content}\n`
 }
 
 /**
@@ -435,6 +483,7 @@ async function adoptTree({
   }
 
   const reserved: string[] = WIKI.sites[target.siteId]?.config?.pageExtensions ?? []
+  const stripLeadingH1 = WIKI.models.storage.stripLeadingH1For(target.siteId)
   const summary: ImportSummary = { pages: 0, assets: 0, skipped: 0, failed: 0 }
 
   for (const { filePath, segments } of found) {
@@ -484,6 +533,18 @@ async function adoptTree({
     // -> A page is addressed without its extension: `guides/setup.md` is the page at `guides/setup`
     const name = fileName.slice(0, fileName.length - (ext ? ext.length + 1 : 0))
     const meta = declared?.meta ?? {}
+    // -> Undeclared means there was no front matter to strip, so the file is all body
+    let content = declared?.content ?? raw.toString('utf8').trim()
+    let title = typeof meta.title === 'string' && meta.title ? meta.title : name
+    // -> The heading wins over a front matter title when both are there: it is the one somebody
+    //    reading the file sees and edits, and what the wiki writes keeps the two the same anyway
+    const heading = stripLeadingH1 && ext === MARKDOWN_EXTENSION ? takeLeadingH1(content) : null
+    if (heading) {
+      title = heading.title
+      // -> A file that is nothing but its heading keeps it as the body, since a page cannot be empty
+      //    and the file imported before this setting was turned on
+      content = heading.content || content
+    }
     try {
       const imported = await WIKI.models.pages.adoptStoredPage({
         siteId: target.siteId,
@@ -492,7 +553,7 @@ async function adoptTree({
         path: [...rest, ...(name === ROOT_PAGE_NAME ? [] : [name])].join('/'),
         // -> The declaration first, then the file itself: a page written by hand carries no title,
         //    and its name is the next best thing
-        title: typeof meta.title === 'string' && meta.title ? meta.title : name,
+        title,
         description: typeof meta.description === 'string' ? meta.description : '',
         editor:
           typeof meta.editor === 'string' && meta.editor
@@ -500,8 +561,7 @@ async function adoptTree({
             : (pageEditorForExtension(ext) ?? DEFAULT_PAGE_EDITOR),
         tags: Array.isArray(meta.tags) ? meta.tags.map(String) : [],
         isPublished: meta.published !== false,
-        // -> Undeclared means there was no front matter to strip, so the file is all body
-        content: declared?.content ?? raw.toString('utf8').trim(),
+        content,
         createdAt: parseFileDate(meta.dateCreated),
         updatedAt: parseFileDate(meta.date),
         authorId: actorId,

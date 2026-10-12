@@ -84,6 +84,16 @@ const DEFAULT_SITE_PREFIX = false
 const DEFAULT_LOCALE_PREFIX = true
 
 /**
+ * Whether a markdown page's title travels as the H1 its file opens with.
+ *
+ * Off, because a file the wiki writes already carries the title in its front matter, and a heading
+ * that appeared in every file on the day this was turned on would be a change nobody asked for. On is
+ * for a tree written outside the wiki — a repository of READMEs, a static site's sources — where the
+ * title IS the first heading, and taking it in as the body as well puts it on the page twice.
+ */
+const DEFAULT_STRIP_LEADING_H1 = false
+
+/**
  * How often a target with a remote is synced, on a site that has never said.
  *
  * Five minutes, which is what the schedule was fixed at before it was configurable. Site-wide rather
@@ -349,6 +359,7 @@ export interface StorageSiteConfigInput {
   largeThreshold?: string
   sitePrefix?: boolean
   localePrefix?: boolean
+  stripLeadingH1?: boolean
   syncInterval?: string
   directAccessFallback?: StorageDirectAccessFallback
 }
@@ -1153,6 +1164,17 @@ class Storage {
   }
 
   /**
+   * Whether this site's markdown pages are stored with their title as a leading H1.
+   *
+   * Read by `serializePage` and `importTree`, which are the two halves of it and have to agree: a
+   * heading written out on the way to a target is taken back off on the way in, so a page survives
+   * the round trip with the body it had. See `DEFAULT_STRIP_LEADING_H1`.
+   */
+  stripLeadingH1For(siteId: string): boolean {
+    return WIKI.sites[siteId]?.config?.storage?.stripLeadingH1 ?? DEFAULT_STRIP_LEADING_H1
+  }
+
+  /**
    * What this site does when a direct link cannot be signed. See `directAccessFailed`.
    */
   directAccessFallbackFor(siteId: string): StorageDirectAccessFallback {
@@ -1277,6 +1299,7 @@ class Storage {
       'largeThreshold',
       'sitePrefix',
       'localePrefix',
+      'stripLeadingH1',
       'syncInterval',
       'directAccessFallback'
     ] as const) {

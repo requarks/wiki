@@ -113,6 +113,11 @@ async function routes(app: FastifyInstance) {
                 description:
                   'Whether the paths a target stores content under are bracketed by locale. On by default. Off, the site stores its primary locale only, directly under the root - content in any other locale has no path and is not written to a path-based target at all.'
               },
+              stripLeadingH1: {
+                type: 'boolean',
+                description:
+                  'Whether a markdown page is stored with its title as a leading H1. Off by default. On, an import takes the H1 a file opens with off the body and uses it as the page title, and every markdown page written to a path-based target gets its title put back as that H1.'
+              },
               syncInterval: {
                 type: 'string',
                 description:
@@ -144,6 +149,7 @@ async function routes(app: FastifyInstance) {
         largeThreshold: WIKI.models.storage.largeThresholdFor(req.params.siteId),
         sitePrefix: layout.sitePrefix,
         localePrefix: layout.localePrefix,
+        stripLeadingH1: WIKI.models.storage.stripLeadingH1For(req.params.siteId),
         syncInterval: `${WIKI.models.storage.syncIntervalFor(req.params.siteId)}m`,
         directAccessFallback: WIKI.models.storage.directAccessFallbackFor(req.params.siteId),
         /*
@@ -270,6 +276,11 @@ async function routes(app: FastifyInstance) {
               type: 'boolean',
               description:
                 'Prepend the locale to every path. Applies to every target of the site. Turning it off leaves every locale but the primary one without a path to be stored under.'
+            },
+            stripLeadingH1: {
+              type: 'boolean',
+              description:
+                'Take the H1 a markdown file opens with as the page title on import, and write the title back as that H1. Applies to every target of the site.'
             },
             syncInterval: {
               type: 'string',

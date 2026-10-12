@@ -291,6 +291,7 @@ class Sites {
           largeThreshold: '25MB',
           sitePrefix: false,
           localePrefix: true,
+          stripLeadingH1: false,
           syncInterval: '5m',
           directAccessFallback: 'stream'
         },
@@ -610,6 +611,7 @@ class Sites {
           largeThreshold: '25MB',
           sitePrefix: false,
           localePrefix: true,
+          stripLeadingH1: false,
           syncInterval: '5m',
           directAccessFallback: 'stream'
         },

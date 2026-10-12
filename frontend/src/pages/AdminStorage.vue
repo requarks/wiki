@@ -608,6 +608,19 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="typography" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.storage.stripLeadingH1`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.storage.stripLeadingH1Hint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.stripLeadingH1"
+                :aria-label="t(`admin.storage.stripLeadingH1`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon class="self-start" icon="disconnected" />
             <w-item-section>
@@ -695,7 +708,8 @@ const state = reactive({
   syncInterval: '',
   directAccessFallback: 'stream',
   sitePrefix: false,
-  localePrefix: true
+  localePrefix: true,
+  stripLeadingH1: false
 })
 
 // CONSTANTS
@@ -1039,6 +1053,7 @@ async function load() {
     state.directAccessFallback = resp?.directAccessFallback ?? 'stream'
     state.sitePrefix = resp?.sitePrefix ?? false
     state.localePrefix = resp?.localePrefix ?? true
+    state.stripLeadingH1 = resp?.stripLeadingH1 ?? false
     state.targets = (resp?.targets ?? []).map((tgt) => ({
       ...tgt,
       config: buildConfigEditor(tgt.props, tgt.config),
@@ -1152,6 +1167,7 @@ async function save() {
         directAccessFallback: state.directAccessFallback,
         sitePrefix: state.sitePrefix,
         localePrefix: state.localePrefix,
+        stripLeadingH1: state.stripLeadingH1,
         targets: state.targets.map(payloadFor)
       }
     }).json()

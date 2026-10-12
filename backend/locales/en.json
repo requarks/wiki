@@ -1221,6 +1221,8 @@
   "admin.storage.stateNoContentTypes": "No content type",
   "admin.storage.stateWarning": "Degraded",
   "admin.storage.status": "Status",
+  "admin.storage.stripLeadingH1": "Strip Leading H1 and Use as Page Title",
+  "admin.storage.stripLeadingH1Hint": "On import, a markdown page that starts with an H1 heading takes that heading as its title and loses it from the content. When the page is written back to storage, its title is added back as that heading.",
   "admin.storage.subtitle": "Choose where the content of your wiki is stored and served from",
   "admin.storage.syncInterval": "Sync Interval",
   "admin.storage.syncIntervalHint": "How often storage targets with a remote are synchronized, such as 5m or 1h. Targets with nothing to synchronize with are unaffected. A sync can always be triggered immediately from a target's Actions.",
