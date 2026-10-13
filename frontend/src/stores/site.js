@@ -100,6 +100,10 @@ export const useSiteStore = defineStore('site', {
      * the class to its contents that colours them.
      */
     colorizeBrokenLinks: true,
+    /** What a page being created starts with, before its author changes anything (Admin → General). */
+    defaults: {
+      tocDepth: { min: 1, max: 2 }
+    },
     search: '',
     searchLastQuery: '',
     searchIsLoading: false,
@@ -474,6 +478,10 @@ export const useSiteStore = defineStore('site', {
         logoText: siteInfo.logoText,
         pageExtensions: siteInfo.pageExtensions ?? [],
         colorizeBrokenLinks: siteInfo.colorizeBrokenLinks ?? true,
+        defaults: {
+          ...this.defaults,
+          ...siteInfo.defaults
+        },
         company: siteInfo.company,
         contentLicense: siteInfo.contentLicense,
         footerExtra: siteInfo.footerExtra,

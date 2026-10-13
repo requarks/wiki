@@ -698,7 +698,7 @@ export const usePageStore = defineStore('page', {
         showSidebar: props.showSidebar ?? true,
         showTags: props.showTags ?? true,
         showToc: props.showToc ?? true,
-        tocDepth: props.tocDepth ?? { min: 1, max: 2 },
+        tocDepth: props.tocDepth ?? { ...useSiteStore().defaults.tocDepth },
         /*
           Writing either one needs a permission (`write:scripts`, `write:styles`), and the server
           drops what an author may not write rather than refusing the page -- so a copy made by
