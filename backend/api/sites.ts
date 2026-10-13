@@ -31,6 +31,7 @@ const SITE_CONFIG_KEYS = [
   'editors',
   'features',
   'locales',
+  'navigation',
   'robots',
   'uploads'
 ] as const
@@ -293,6 +294,12 @@ async function routes(app: FastifyInstance) {
       defaults?: Record<string, any>
       editors?: Record<string, { isActive?: boolean; config?: Record<string, any> }>
       features?: Record<string, any>
+      navigation?: {
+        addPagesToParentMenu?: boolean
+        removePagesFromParentMenu?: boolean
+        createFolderMenus?: boolean
+        deleteOrphanedMenus?: boolean
+      }
       locales?: {
         primary?: string
         active?: string[]
@@ -391,6 +398,9 @@ async function routes(app: FastifyInstance) {
             },
             locales: {
               $ref: 'Site#/properties/locales'
+            },
+            navigation: {
+              $ref: 'Site#/properties/navigation'
             },
             robots: {
               $ref: 'Site#/properties/robots'

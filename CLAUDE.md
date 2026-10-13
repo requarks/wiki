@@ -548,7 +548,7 @@ site, where its content is kept, and everything else about it are three separate
 
 | Permission | Admin screens |
 | ---------- | ------------- |
-| `manage:sites` | General, Analytics, Approvals, Comments, Content Blocks, Editors, Locale, Login — plus creating, deleting and listing sites |
+| `manage:sites` | General, Analytics, Approvals, Comments, Content Blocks, Editors, Locale, Login, Navigation — plus creating, deleting and listing sites |
 | `manage:theme` | Theme, and nothing else. `PUT /sites/:siteId/theme` takes this alone |
 | `manage:storage` | Storage, and nothing else. Every route in `api/storage.ts` takes this alone |
 

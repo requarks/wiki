@@ -10,6 +10,9 @@
       <span class="ml-3 text-caption opacity-80" v-if="isEditingInherited">
         {{ t('navEdit.editingInherited') }}
       </span>
+      <span class="ml-3 text-caption opacity-80" v-else-if="fromAdmin">
+        {{ adminStore.overlayOpts.title }}
+      </span>
       <w-space />
       <transition name="syncing">
         <w-spinner class="mr-2" v-show="state.loading > 0" color="accent" size="24px" />
@@ -527,6 +530,7 @@ import { dialog } from '@/composables/dialog'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 
+import { useAdminStore } from '@/stores/admin'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
@@ -539,8 +543,22 @@ import { apiErrorMessage } from '@/helpers/apiError'
 
 // STORES
 
+const adminStore = useAdminStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+
+/**
+ * Whether this was opened from the admin area's Navigation screen rather than from a page.
+ *
+ * The admin layout has an overlay slot of its own, driven by the admin store, and there the editor has
+ * no page in hand: it edits one menu of whichever site the admin area is on, addressed by the menu's id
+ * (`overlayOpts.siteId` / `navId`), and saves the items alone — no page's mode changes. Settled once,
+ * at setup, since the store's overlay is cleared before this unmounts.
+ */
+const fromAdmin = adminStore.overlay === 'NavEdit'
+
+/** The site the menu belongs to — the admin area's selected one, which need not be the one served. */
+const siteId = fromAdmin ? adminStore.overlayOpts.siteId : siteStore.id
 
 // I18N
 
@@ -605,11 +623,14 @@ const visibilityOptions = computed(() => [
  * menu keyed by its own id, which the server creates on the first save.
  */
 const navId = computed(() => {
+  if (fromAdmin) {
+    return adminStore.overlayOpts.navId
+  }
   return siteStore.overlayOpts.navId ?? (pageStore.isHome ? pageStore.navigationId : pageStore.id)
 })
 
 /** Whether the menu on screen is an inherited one, which is shared with every page using it. */
-const isEditingInherited = computed(() => Boolean(siteStore.overlayOpts.navId))
+const isEditingInherited = computed(() => !fromAdmin && Boolean(siteStore.overlayOpts.navId))
 
 /**
  * Whether the link being edited is a parent — one the sidebar draws as a submenu.
@@ -665,7 +686,10 @@ function browseTarget() {
       title: t('navEdit.target'),
       okLabel: t('common.actions.select'),
       initialHref: state.current.target,
-      newTabOption: false
+      newTabOption: false,
+      // -> From the admin area there is no page to take a locale from: the menu's own is the one its
+      //    links point into
+      ...(fromAdmin && { locale: adminStore.overlayOpts.locale })
     }
   }).onOk(({ href }) => {
     state.current.target = href
@@ -760,7 +784,11 @@ function updateItemPosition(ev) {
 }
 
 function close() {
-  siteStore.$patch({ overlay: '' })
+  if (fromAdmin) {
+    adminStore.$patch({ overlay: '' })
+  } else {
+    siteStore.$patch({ overlay: '' })
+  }
 }
 
 async function loadGroups() {
@@ -785,7 +813,7 @@ async function loadMenuItems() {
   try {
     // -> `full`, because the editor has to see items limited to groups the editor is not in: saving
     //    without them would delete them
-    const items = await API_CLIENT.get(`sites/${siteStore.id}/navigation/${navId.value}`, {
+    const items = await API_CLIENT.get(`sites/${siteId}/navigation/${navId.value}`, {
       searchParams: { full: true }
     }).json()
     for (const item of items ?? []) {
@@ -871,33 +899,11 @@ async function save() {
       }
     }
 
-    /*
-      The mode goes with the items, because the mode is what decides which menu they belong to: with
-      `inherit` the server stores them against the menu this page inherits — the one shown on screen,
-      and the one `navId` was resolved from — rather than starting a menu of this page's own that
-      nothing would point at.
-    */
-    const resp = await API_CLIENT.put(`sites/${siteStore.id}/navigation/pages/${pageStore.id}`, {
-      json: {
-        mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
-        items
-      }
-    }).json()
-    // -> The API client does not throw on 400, so a refusal comes back as a parsed error
-    if (resp?.ok === false) {
-      throw new Error(resp.message || 'An unexpected error occured.')
+    if (fromAdmin) {
+      await saveFromAdmin(items)
+    } else {
+      await saveFromPage(items)
     }
-    notify({
-      type: 'positive',
-      message: t('navEdit.saveSuccess')
-    })
-    pageStore.$patch({
-      navigationMode: resp.navigationMode,
-      navigationId: resp.navigationId ?? null
-    })
-    // -> Redraw the sidebar from what was just saved, rather than waiting for a navigation
-    await siteStore.fetchNavigation(resp.navigationId ?? navId.value)
-    close()
   } catch (err) {
     notify({
       type: 'negative',
@@ -908,13 +914,71 @@ async function save() {
   state.loading--
 }
 
+/** Saves the items together with the page's mode, which is what decides which menu they belong to. */
+async function saveFromPage(items) {
+  /*
+    The mode goes with the items, because the mode is what decides which menu they belong to: with
+    `inherit` the server stores them against the menu this page inherits — the one shown on screen,
+    and the one `navId` was resolved from — rather than starting a menu of this page's own that
+    nothing would point at.
+  */
+  const resp = await API_CLIENT.put(`sites/${siteStore.id}/navigation/pages/${pageStore.id}`, {
+    json: {
+      mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
+      items
+    }
+  }).json()
+  // -> The API client does not throw on 400, so a refusal comes back as a parsed error
+  if (resp?.ok === false) {
+    throw new Error(resp.message || 'An unexpected error occured.')
+  }
+  notify({
+    type: 'positive',
+    message: t('navEdit.saveSuccess')
+  })
+  pageStore.$patch({
+    navigationMode: resp.navigationMode,
+    navigationId: resp.navigationId ?? null
+  })
+  // -> Redraw the sidebar from what was just saved, rather than waiting for a navigation
+  await siteStore.fetchNavigation(resp.navigationId ?? navId.value)
+  close()
+}
+
+/**
+ * Saves the items alone, to the menu by its id: the admin area edits a menu, not how a page resolves
+ * one.
+ */
+async function saveFromAdmin(items) {
+  const resp = await API_CLIENT.put(`sites/${siteId}/navigation/${navId.value}`, {
+    json: { items }
+  }).json()
+  if (resp?.ok === false) {
+    throw new Error(resp.message || 'An unexpected error occured.')
+  }
+  notify({
+    type: 'positive',
+    message: t('navEdit.saveSuccess')
+  })
+  // -> The sidebar the site store holds is drawn again on the way back to the wiki only if its menu
+  //    changes id, which a save here never does
+  if (siteId === siteStore.id && siteStore.nav.currentId === navId.value) {
+    await siteStore.fetchNavigation(navId.value)
+  }
+  close()
+}
+
 onMounted(() => {
   loadMenuItems()
   loadGroups()
 })
 
 onBeforeUnmount(() => {
-  siteStore.overlayOpts = {}
+  if (fromAdmin) {
+    adminStore.overlayOpts = {}
+  } else {
+    siteStore.overlayOpts = {}
+  }
 })
 </script>
 

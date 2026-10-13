@@ -203,6 +203,12 @@ class Sites {
           forcePrefix: false,
           showMenu: true
         },
+        navigation: {
+          addPagesToParentMenu: false,
+          removePagesFromParentMenu: false,
+          createFolderMenus: false,
+          deleteOrphanedMenus: false
+        },
         assets: {
           logo: false,
           favicon: false,
@@ -523,6 +529,12 @@ class Sites {
           active: ['en'],
           forcePrefix: false,
           showMenu: true
+        },
+        navigation: {
+          addPagesToParentMenu: false,
+          removePagesFromParentMenu: false,
+          createFolderMenus: false,
+          deleteOrphanedMenus: false
         },
         assets: {
           logo: false,

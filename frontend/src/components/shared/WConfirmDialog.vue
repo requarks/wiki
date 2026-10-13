@@ -2,6 +2,7 @@
   <w-dialog v-model="dialogVisible" :persistent="persistent" @hide="onDialogHide">
     <w-card style="min-width: 380px; max-width: 480px">
       <w-card-section class="card-header">
+        <w-icon v-if="icon" :name="icon" size="sm" class="mr-2" />
         <span>{{ title }}</span>
       </w-card-section>
       <w-card-section>
@@ -71,6 +72,11 @@ import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
  */
 const props = defineProps({
   title: {
+    type: String,
+    default: ''
+  },
+  /** Shown before the title, as the bespoke dialogs do — `fluent-delete-bin` for a deletion. */
+  icon: {
     type: String,
     default: ''
   },

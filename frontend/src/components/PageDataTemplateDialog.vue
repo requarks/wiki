@@ -370,6 +370,7 @@ function commit() {
 function remove() {
   confirm({
     title: t('editor.pageData.templateDeleteConfirmTitle'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('editor.pageData.templateDeleteConfirmText'),
     cancel: true,
     persistent: true,

@@ -405,6 +405,7 @@ async function setupPasskey() {
 async function deactivatePasskey(pkey) {
   confirm({
     title: t('common.actions.confirm'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('profile.passkeysDeactivateConfirm'),
     cancel: true,
     color: 'negative',

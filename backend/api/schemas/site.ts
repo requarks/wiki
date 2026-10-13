@@ -283,6 +283,29 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       },
+      navigation: {
+        type: 'object',
+        description:
+          'How the navigation menus of this site follow changes to its content. All off by default.',
+        properties: {
+          addPagesToParentMenu: {
+            type: 'boolean',
+            description: 'Add a new page to the menu of its direct parent folder.'
+          },
+          removePagesFromParentMenu: {
+            type: 'boolean',
+            description: 'Remove a deleted page from the menu of its direct parent folder.'
+          },
+          createFolderMenus: {
+            type: 'boolean',
+            description: 'Create a menu for a folder when it is created.'
+          },
+          deleteOrphanedMenus: {
+            type: 'boolean',
+            description: 'Delete a menu once no page uses it any more.'
+          }
+        }
+      },
       assets: {
         type: 'object',
         description:

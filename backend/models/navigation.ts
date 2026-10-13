@@ -29,6 +29,26 @@ export interface UpdateNavigationResult {
   navigationId: string | null
 }
 
+/** One menu as the admin area lists it. */
+export interface NavigationSummary {
+  id: string
+  /** Null only for a menu whose owning tree entry is gone, which nothing can reach any more. */
+  locale: string | null
+  /** Where the owning entry sits. Empty for a locale's root menu, null for an orphaned one. */
+  path: string | null
+  /** Whether this is a locale's site-wide menu, the one every page falls back to. */
+  isRoot: boolean
+  /** Every item, children included. */
+  itemCount: number
+  /** Pages whose sidebar shows this menu, whether they own it or inherit it. */
+  pageCount: number
+}
+
+export interface NavigationPage {
+  total: number
+  menus: NavigationSummary[]
+}
+
 /** An item is visible when it names no group, or names one the viewer belongs to. */
 function isVisibleTo(item: NavigationItem, userGroups: string[]): boolean {
   const groups = item.visibilityGroups ?? []
@@ -131,6 +151,167 @@ class Navigation {
       return
     }
     await WIKI.db.delete(navigationTable).where(inArray(navigationTable.id, ids))
+  }
+
+  /**
+   * A page of the menus a site holds, for the admin area.
+   *
+   * The path is filtered and sorted here rather than in SQL because the tree stores it encoded
+   * (`folderPath` is hex labels), so a substring of the path a person typed matches nothing in the
+   * column. A site holds one menu per locale plus one per entry that overrides, which is few enough
+   * to read whole.
+   *
+   * @param filter Matched against the owning entry's path, case-insensitively
+   */
+  async listNavs({
+    siteId,
+    filter = '',
+    page = 1,
+    limit = 20
+  }: {
+    siteId: string
+    filter?: string
+    page?: number
+    limit?: number
+  }): Promise<NavigationPage> {
+    const rows = await WIKI.db
+      .select({
+        id: navigationTable.id,
+        locale: navigationTable.locale,
+        ownerLocale: treeTable.locale,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        // -> Two levels, as the editor allows: the top-level items plus each one's children
+        itemCount: sql<number>`jsonb_array_length(${navigationTable.items}) + coalesce((
+          SELECT sum(jsonb_array_length(e->'children'))
+          FROM jsonb_array_elements(${navigationTable.items}) e
+          WHERE jsonb_typeof(e->'children') = 'array'
+        ), 0)`.mapWith(Number),
+        // -> Every entry carries the menu it resolved to, so the owner and everything inheriting from
+        //    it are counted alike
+        pageCount: sql<number>`(
+          SELECT count(*)
+          FROM tree tp
+          WHERE tp."siteId" = ${navigationTable.siteId}
+            AND tp."navigationId" = ${navigationTable.id}
+            AND tp.tree = 'page'
+        )`.mapWith(Number)
+      })
+      .from(navigationTable)
+      .leftJoin(
+        treeTable,
+        and(eq(treeTable.id, navigationTable.id), eq(treeTable.siteId, navigationTable.siteId))
+      )
+      .where(eq(navigationTable.siteId, siteId))
+
+    const needle = filter.trim().toLowerCase()
+    const menus = rows
+      .map((row): NavigationSummary => {
+        // -> A site-wide menu is keyed by locale; any other is keyed by the id of the entry owning it
+        const isRoot = row.locale !== null
+        let path: string | null = null
+        if (isRoot) {
+          path = ''
+        } else if (row.fileName !== null) {
+          const folder = row.folderPath ? decodeTreePath(row.folderPath) : ''
+          path = folder ? `${folder}/${row.fileName}` : row.fileName
+        }
+        return {
+          id: row.id,
+          locale: row.locale ?? row.ownerLocale,
+          path,
+          isRoot,
+          itemCount: row.itemCount,
+          pageCount: row.pageCount
+        }
+      })
+      .filter((menu) => !needle || (menu.path ?? '').includes(needle))
+      .toSorted(
+        (a, b) =>
+          (a.locale ?? '').localeCompare(b.locale ?? '') ||
+          Number(b.isRoot) - Number(a.isRoot) ||
+          (a.path ?? '').localeCompare(b.path ?? '')
+      )
+
+    return {
+      total: menus.length,
+      menus: menus.slice((page - 1) * limit, page * limit)
+    }
+  }
+
+  /**
+   * Replace the items of a menu that already exists, addressed by its own id.
+   *
+   * What the admin area saves through: it edits a menu as a menu, with no page in hand, so neither the
+   * mode nor the descendants of any entry move — only the items of this one row.
+   */
+  async setNavItems(siteId: string, navId: string, items: NavigationItem[]): Promise<void> {
+    const updated = await WIKI.db
+      .update(navigationTable)
+      .set({ items })
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+      .returning({ id: navigationTable.id })
+    if (updated.length < 1) {
+      throw new CustomError('navNotFound', 'This navigation menu does not exist.', 404)
+    }
+  }
+
+  /**
+   * Delete a menu that belongs to a tree entry.
+   *
+   * The entry owning it is handed back to `inherit` first when it still overrides, so that it and
+   * everything below it that inherited the menu are repointed at the ancestor's — otherwise they
+   * would go on pointing at a row that no longer exists. A locale's site-wide menu cannot be deleted:
+   * it is what every page in the locale falls back to, and would only be recreated empty on the next
+   * page written there.
+   *
+   * @returns What was deleted, for the audit log
+   */
+  async deleteNav(
+    siteId: string,
+    navId: string
+  ): Promise<{ locale: string | null; path: string | null }> {
+    const menus = await WIKI.db
+      .select({ locale: navigationTable.locale })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+      .limit(1)
+    if (!menus[0]) {
+      throw new CustomError('navNotFound', 'This navigation menu does not exist.', 404)
+    }
+    if (menus[0].locale !== null) {
+      throw new CustomError(
+        'navDeleteRoot',
+        'The root navigation menu of a locale cannot be deleted.',
+        400
+      )
+    }
+
+    const entries = await WIKI.db
+      .select({
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        locale: treeTable.locale,
+        navigationMode: treeTable.navigationMode
+      })
+      .from(treeTable)
+      .where(and(eq(treeTable.id, navId), eq(treeTable.siteId, siteId)))
+      .limit(1)
+    const owner = entries[0]
+    // -> A hidden sidebar keeps hiding: the menu was not what it showed, so there is nothing to repoint
+    if (owner && ['override', 'overrideExact'].includes(owner.navigationMode)) {
+      await this.updateNavigation({ siteId, pageId: navId, mode: 'inherit' })
+    }
+
+    await WIKI.db
+      .delete(navigationTable)
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+
+    if (!owner) {
+      return { locale: null, path: null }
+    }
+    const folder = owner.folderPath ? decodeTreePath(owner.folderPath) : ''
+    return { locale: owner.locale, path: folder ? `${folder}/${owner.fileName}` : owner.fileName }
   }
 
   /** The tree entry a navigation change is addressed to. */

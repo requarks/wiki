@@ -269,6 +269,7 @@ function deleteBlock(id) {
   const block = state.blocks.find((bl) => bl.id === id)
   confirm({
     title: t('admin.blocks.delete'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('admin.blocks.deleteConfirm', { blockName: block?.name ?? '' }),
     cancel: true,
     persistent: true

@@ -54,6 +54,19 @@ async function mayEditNavItems(
   return mayOnPage(req, 'manage:navigation', { ...owner, siteId })
 }
 
+/**
+ * Whether this requester holds `manage:sites`, which is what the admin area's Navigation screen asks
+ * for: there, a menu is edited as one of the site's settings rather than from a page it belongs to.
+ */
+function mayManageSites(req: FastifyRequest): boolean {
+  const permissions = req.apiKey
+    ? req.apiKey.permissions
+    : req.session?.authenticated
+      ? (req.session.permissions ?? [])
+      : []
+  return permissions.includes('manage:sites') || permissions.includes('manage:system')
+}
+
 const navigationItem = {
   type: 'object',
   properties: {
@@ -76,7 +89,6 @@ const navigationItem = {
   }
 }
 
-
 /**
  * Navigation API Routes
  *
@@ -84,6 +96,143 @@ const navigationItem = {
  * back to — both addressed by the same id, which is why there is a single route to read one.
  */
 async function routes(app: FastifyInstance) {
+  /**
+   * LIST NAVIGATION MENUS
+   */
+  app.get<{
+    Params: { siteId: string }
+    Querystring: { filter?: string; page?: number; limit?: number }
+  }>(
+    '/sites/:siteId/navigation',
+    {
+      config: {
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: 'List the navigation menus of a site',
+        description:
+          "Every menu the site holds: one per locale, which every page in it falls back to, plus one per tree entry that overrides its sidebar. Each comes with the path of the entry owning it — empty for a locale's root menu — and how many items it has, children included.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            filter: {
+              type: 'string',
+              description:
+                'Matched against the path of the entry owning the menu, case-insensitively.',
+              maxLength: 255
+            },
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+          }
+        },
+        response: {
+          200: {
+            description: 'A page of navigation menus',
+            type: 'object',
+            properties: {
+              page: { type: 'integer' },
+              limit: { type: 'integer' },
+              total: { type: 'integer' },
+              menus: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    locale: {
+                      type: ['string', 'null'],
+                      description: 'Null only for a menu whose owning entry no longer exists.'
+                    },
+                    path: {
+                      type: ['string', 'null'],
+                      description:
+                        "Where the owning entry sits. Empty for a locale's root menu, null when the owning entry no longer exists."
+                    },
+                    isRoot: {
+                      type: 'boolean',
+                      description: "Whether this is a locale's root menu, which cannot be deleted."
+                    },
+                    itemCount: { type: 'integer' },
+                    pageCount: {
+                      type: 'integer',
+                      description:
+                        'How many pages show this menu, the one owning it and those inheriting it alike.'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const page = req.query.page ?? 1
+      const limit = req.query.limit ?? 20
+      const { total, menus } = await WIKI.models.navigation.listNavs({
+        siteId: req.params.siteId,
+        filter: req.query.filter ?? '',
+        page,
+        limit
+      })
+      return { page, limit, total, menus }
+    }
+  )
+
+  /**
+   * DELETE NAVIGATION MENU
+   */
+  app.delete<{ Params: { siteId: string; navId: string } }>(
+    '/sites/:siteId/navigation/:navId',
+    {
+      config: {
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: 'Delete a navigation menu',
+        description:
+          "Deletes a menu belonging to a tree entry. An entry still overriding with it is set back to inherit first, so that it and every page below it that showed the menu fall back to the nearest ancestor's. A locale's root menu cannot be deleted.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            navId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'navId']
+        },
+        response: {
+          200: {
+            description: 'Navigation menu deleted successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const deleted = await WIKI.models.navigation.deleteNav(req.params.siteId, req.params.navId)
+      await audit(req, 'admin', 'deleteNavigation', {
+        siteId: req.params.siteId,
+        navigationId: req.params.navId,
+        locale: deleted.locale,
+        path: deleted.path
+      })
+      return { ok: true, message: 'Navigation menu deleted successfully.' }
+    }
+  )
+
   /**
    * GET NAVIGATION
    */
@@ -93,7 +242,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a navigation menu',
         description:
-          "The items of one menu, addressed by the id a page's `navigationId` points at.\n\nReadable without a session, because the sidebar is drawn for anonymous readers too. Items limited to a group are dropped for anyone outside it, at both levels of the menu — so what comes back is what the requester may see, not the whole menu. `full` asks for the whole of it instead, and needs `manage:navigation`.",
+          "The items of one menu, addressed by the id a page's `navigationId` points at.\n\nReadable without a session, because the sidebar is drawn for anonymous readers too. Items limited to a group are dropped for anyone outside it, at both levels of the menu — so what comes back is what the requester may see, not the whole menu. `full` asks for the whole of it instead, and needs `manage:navigation` on the page the menu belongs to, or `manage:sites`.",
         tags: ['Navigation'],
         params: {
           type: 'object',
@@ -133,11 +282,15 @@ async function routes(app: FastifyInstance) {
       /*
         Reading a menu WHOLE -- including the items limited to groups the requester is not in -- is
         the editor's request rather than a reader's, so it asks the same question editing the items
-        does: `manage:navigation` on the entry the menu belongs to.
+        does: `manage:navigation` on the entry the menu belongs to. Or `manage:sites`, which is what the
+        admin area's Navigation screen edits every menu of the site with.
       */
-      if (unfiltered) {
+      if (unfiltered && !mayManageSites(req)) {
         const owner = await WIKI.models.navigation.refForNavId(req.params.siteId, req.params.navId)
-        if (!owner || !mayOnPage(req, 'manage:navigation', { ...owner, siteId: req.params.siteId })) {
+        if (
+          !owner ||
+          !mayOnPage(req, 'manage:navigation', { ...owner, siteId: req.params.siteId })
+        ) {
           return reply.forbidden(
             'Reading a menu in full requires the manage:navigation permission on the page it belongs to.'
           )
@@ -147,6 +300,67 @@ async function routes(app: FastifyInstance) {
         userGroups: req.session?.authenticated ? (req.session.groups ?? []) : [],
         unfiltered
       })
+    }
+  )
+
+  /**
+   * UPDATE NAVIGATION MENU ITEMS
+   */
+  app.put<{ Params: { siteId: string; navId: string }; Body: { items: NavigationItem[] } }>(
+    '/sites/:siteId/navigation/:navId',
+    {
+      config: {
+        permissions: ['manage:sites']
+      },
+      schema: {
+        summary: 'Replace the items of a navigation menu',
+        description:
+          "Stores `items` as the whole of an existing menu, addressed by its own id — what the admin area's Navigation screen saves through. Unlike `navigation/pages/{pageId}`, no page's mode changes and nothing is repointed: it is the same menu, with different items.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            navId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'navId']
+        },
+        body: {
+          type: 'object',
+          required: ['items'],
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                ...navigationItem,
+                properties: {
+                  ...navigationItem.properties,
+                  children: { type: 'array', items: navigationItem }
+                }
+              }
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Navigation menu updated successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      await WIKI.models.navigation.setNavItems(req.params.siteId, req.params.navId, req.body.items)
+      await audit(req, 'admin', 'updateNavigation', {
+        siteId: req.params.siteId,
+        navigationId: req.params.navId,
+        itemCount: req.body.items.length
+      })
+      return { ok: true, message: 'Navigation menu updated successfully.' }
     }
   )
 
@@ -186,7 +400,7 @@ async function routes(app: FastifyInstance) {
               canEditItems: {
                 type: 'boolean',
                 description:
-                  'Whether this requester may edit the items of that menu, as opposed to only setting this page\'s navigation mode. False when `manage:navigation` does not also reach the entry the menu belongs to — the items are shown to every page under that entry, so changing them is a change there rather than here.'
+                  "Whether this requester may edit the items of that menu, as opposed to only setting this page's navigation mode. False when `manage:navigation` does not also reach the entry the menu belongs to — the items are shown to every page under that entry, so changing them is a change there rather than here."
               }
             }
           }

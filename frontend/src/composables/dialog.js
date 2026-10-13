@@ -102,7 +102,7 @@ export function closeDialog(id, okFired, payload) {
  * Same chainable handle as `dialog()`. `onOk` receives `true` for a plain confirmation, or the
  * chosen value when `options` is given.
  *
- * @param {object} opts `{ title, message, cancel, okLabel, cancelLabel, color, persistent, options }`
+ * @param {object} opts `{ title, icon, message, cancel, okLabel, cancelLabel, color, persistent, options }`
  * @returns {{ onOk: Function, onCancel: Function, onDismiss: Function }}
  */
 export function confirm(opts = {}) {

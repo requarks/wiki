@@ -855,6 +855,7 @@ function confirmDelete() {
   }
   confirm({
     title: t('admin.auth.deleteStrategy'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('admin.auth.deleteConfirm', { strategy: strategy.displayName }),
     persistent: true,
     cancel: true,

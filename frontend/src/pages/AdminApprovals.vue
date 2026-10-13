@@ -272,6 +272,7 @@ function editRule(rule) {
 function deleteRule(rule) {
   confirm({
     title: t('admin.approval.deleteRule'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('admin.approval.deleteRuleConfirm', {
       pattern: `${matchLabel(rule.match)} ${patternLabel(rule)}`
     }),

@@ -495,6 +495,7 @@ function confirmDelete(comment) {
   }
   confirm({
     title: t('common.comments.deleteConfirmTitle'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message,
     ...(offerThread && {
       options: {
@@ -536,6 +537,7 @@ function confirmDelete(comment) {
 function confirmDeleteThread(comment) {
   confirm({
     title: t('common.comments.deleteThreadTitle'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('common.comments.deleteThreadWarn'),
     persistent: true,
     cancel: true,
@@ -611,6 +613,7 @@ function emptiesComment(annotation) {
 function confirmDeleteAnnotation(annotation) {
   confirm({
     title: t('common.comments.annotationDeleteTitle'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: emptiesComment(annotation)
       ? t('common.comments.annotationDeleteLastWarn')
       : t('common.comments.annotationDeleteWarn'),

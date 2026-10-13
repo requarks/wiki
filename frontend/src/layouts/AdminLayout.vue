@@ -195,6 +195,15 @@
               <w-item-section>{{ t('admin.login.title') }}</w-item-section>
             </w-item>
             <w-item
+              :to="`/_admin/` + adminStore.currentSiteId + `/navigation`"
+              active-class="bg-primary text-white"
+              v-if="userStore.can(`manage:sites`)">
+              <w-item-section avatar>
+                <w-icon name="img:/_assets/icons/fluent-sidebar-menu.svg" />
+              </w-item-section>
+              <w-item-section>{{ t('admin.navigation.title') }}</w-item-section>
+            </w-item>
+            <w-item
               :to="`/_admin/` + adminStore.currentSiteId + `/storage`"
               active-class="bg-primary text-white"
               v-if="userStore.can(`manage:storage`)">
@@ -514,6 +523,11 @@ const overlays = {
   }),
   ImportWikijs2Overlay: defineAsyncComponent({
     loader: () => import('../components/ImportWikijs2Overlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  // -> The same editor a page opens from its sidebar, keyed as the page view keys it
+  NavEdit: defineAsyncComponent({
+    loader: () => import('../components/NavEditOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
   PageProblemsOverlay: defineAsyncComponent({

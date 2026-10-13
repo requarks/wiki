@@ -448,6 +448,7 @@ async function setSetState(set, isEnabled) {
 function confirmDeleteSet(set) {
   confirm({
     title: t('admin.icons.deleteSet'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('admin.icons.deleteSetConfirm', { set: set.name, count: set.iconCount }),
     persistent: true,
     cancel: true,

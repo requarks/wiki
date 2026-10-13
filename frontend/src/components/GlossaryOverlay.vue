@@ -1305,6 +1305,7 @@ function deleteTerm() {
   }
   confirm({
     title: t('glossary.deleteConfirmTitle'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
     message: t('glossary.deleteConfirm', { term: term.term }),
     okLabel: t('common.actions.delete'),
     color: 'negative',
