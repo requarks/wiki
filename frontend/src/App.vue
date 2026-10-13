@@ -362,11 +362,19 @@ router.beforeEach(async (to, from) => {
     a link inside a page is followed by the router alone -- which is what this is for. Below the
     bootstrap above, since that is where the site's extensions come from. A `/_` route is the app
     itself rather than a page, and is left alone as it is by the server.
+
+    No `replace` on this redirect or the locale one below. The address being corrected never reaches
+    the history anyway -- the router writes only where a navigation ends up -- and a `replace` here is
+    not about that address: vue-router lets a redirect's `replace` overrule the navigation it
+    redirects, so every click on a link that needed correcting overwrote the entry for the page the
+    reader was on. The logo is one such link (it goes to `/` on a site whose pages all sit under a
+    locale prefix), and Back then skipped the home page altogether. Left out, the redirect is a push
+    or a replace according to whatever it redirects.
   */
   const isPage = isPagePath(to.path)
   const withoutExtension = isPage ? stripPageExtension(to.path, siteStore.pageExtensions) : null
   if (withoutExtension) {
-    return { path: withoutExtension, query: to.query, hash: to.hash, replace: true }
+    return { path: withoutExtension, query: to.query, hash: to.hash }
   }
 
   /*
@@ -385,8 +393,7 @@ router.beforeEach(async (to, from) => {
     return {
       path: `/${primary}${to.path === '/' ? '' : to.path}`,
       query: to.query,
-      hash: to.hash,
-      replace: true
+      hash: to.hash
     }
   }
 
