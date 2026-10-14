@@ -145,6 +145,24 @@
                 :aria-label="t(`admin.theme.codeBlocksAppearance`)" />
             </w-item-section>
           </w-item>
+          <!--
+            The markup a titled, numbered fence renders to (`codeBlock` in `renderers/shared.js`), inside
+            a `.page-contents` of its own so the article's code block styles apply as they would on a
+            page. The selected theme is injected scoped to this element; see `applyCodeBlocksPreview`.
+          -->
+          <w-card-section>
+            <div
+              class="page-contents admin-theme-code-preview"
+              role="figure"
+              :aria-label="t(`admin.theme.codeBlocksPreview`)">
+              <div class="codeblock-titled hljs !m-0">
+                <div class="codeblock-title">{{ CODE_PREVIEW_TITLE }}</div>
+                <pre class="codeblock hljs line-numbers !m-0"><code
+                  class="language-javascript"
+                  v-html="codePreviewHtml" /></pre>
+              </div>
+            </div>
+          </w-card-section>
         </w-card>
         <!-- ----------------------- -->
         <!-- Theme Layout -->
@@ -329,7 +347,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
@@ -340,8 +358,14 @@ import { useAdminStore } from '@/stores/admin'
 import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 
+import { loadCodeBlocksTheme } from '@/helpers/codeBlocksTheme'
+
 import { toMerged } from 'es-toolkit/object'
 import { startCase } from 'es-toolkit/string'
+// -> `lib/core` and one language, as `UtilCodeEditor` does, NOT the `highlight.js` root the page
+//    renderer imports: a preview of one snippet is no reason to fetch all ~190 languages
+import hljs from 'highlight.js/lib/core'
+import javascript from 'highlight.js/lib/languages/javascript'
 import UtilCodeEditor from '../components/UtilCodeEditor.vue'
 
 // DARK MODE
@@ -674,12 +698,81 @@ const codeThemes = [
   { label: 'Xt 256', value: 'xt256' }
 ]
 
+// CODE BLOCKS PREVIEW
+
+hljs.registerLanguage('javascript', javascript)
+
+const CODE_PREVIEW_TITLE = 'example.js'
+
+// -> Written to touch most of the token kinds a theme colours: comment, keyword, string, number,
+//    class and function titles, a built-in, a template literal
+const CODE_PREVIEW_SOURCE = `// Greet everyone on the list, once each
+class Greeter extends Base {
+  constructor(names = []) {
+    super()
+    this.names = new Set(names)
+  }
+
+  greet(limit = 3) {
+    return [...this.names].slice(0, limit).map((name) => \`Hello, \${name}!\`)
+  }
+}`
+
+/** The source line washed as `linesHighlight` would, so the theme's take on that shows too. */
+const CODE_PREVIEW_HIGHLIGHTED_LINE = 9
+
+/*
+  Highlighted once: the code never changes, only the stylesheet painting it does. The row layer after
+  the code is the one `lineRows` in `renderers/shared.js` emits, which draws the gutter's numbers and
+  the highlighted line's wash.
+*/
+const codePreviewHtml = (() => {
+  const code = hljs.highlight(CODE_PREVIEW_SOURCE, { language: 'javascript' }).value
+  const rows = CODE_PREVIEW_SOURCE.split('\n').map((line, index) =>
+    index + 1 === CODE_PREVIEW_HIGHLIGHTED_LINE
+      ? '<span class="is-highlighted"></span>'
+      : '<span></span>'
+  )
+  return `${code}<span aria-hidden="true" class="line-numbers-rows">${rows.join('')}</span>`
+})()
+
+/** The `<style>` holding the theme being previewed, while this screen is open. */
+let codePreviewStyle = null
+
+/** Bumped per request, so a slow theme cannot land on top of one picked after it. */
+let codePreviewRequest = 0
+
+/**
+ * Paint the preview in the theme currently SELECTED, saved or not.
+ *
+ * Scoped as `App.vue`'s `applyCodeBlocksTheme` scopes the site's own, but under
+ * `.page-contents.admin-theme-code-preview` -- one class more than the site's theme and the fallback
+ * palette in `_page-contents.scss`, so the selection wins over both on specificity, and the rest of
+ * the interface is untouched. An unknown name empties it, leaving the fallback palette showing, which
+ * is also what a page would show.
+ */
+async function applyCodeBlocksPreview(theme) {
+  const request = ++codePreviewRequest
+  const css = theme ? await loadCodeBlocksTheme(theme) : null
+  if (request !== codePreviewRequest || !codePreviewStyle) {
+    return
+  }
+  codePreviewStyle.textContent = css ? `.page-contents.admin-theme-code-preview {\n${css}\n}` : ''
+}
+
 // WATCHERS
 
 watch(
   () => adminStore.currentSiteId,
   (newValue) => {
     load()
+  }
+)
+
+watch(
+  () => state.config.codeBlocksTheme,
+  (newValue) => {
+    applyCodeBlocksPreview(newValue)
   }
 )
 
@@ -780,9 +873,19 @@ async function save() {
 // MOUNTED
 
 onMounted(() => {
+  codePreviewStyle = document.createElement('style')
+  codePreviewStyle.id = 'hljs-theme-preview'
+  document.head.appendChild(codePreviewStyle)
+  applyCodeBlocksPreview(state.config.codeBlocksTheme)
+
   if (adminStore.currentSiteId) {
     load()
   }
+})
+
+onBeforeUnmount(() => {
+  codePreviewStyle?.remove()
+  codePreviewStyle = null
 })
 </script>
 

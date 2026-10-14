@@ -118,6 +118,26 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item>
+            <blueprint-icon icon="math" />
+            <w-item-section>
+              <w-item-label>{{t(`admin.editors.markdown.inlineMath`)}}</w-item-label>
+              <w-item-label caption>{{t(`admin.editors.markdown.inlineMathHint`)}}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-select
+                style="width: 200px;"
+                outlined
+                v-model="state.config.inlineMath"
+                :options="inlineMathEngines"
+                emit-value
+                map-options
+                dense
+                options-dense
+                :aria-label="t(`admin.editors.markdown.inlineMath`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
             <blueprint-icon icon="data-sheet" />
             <w-item-section>
               <w-item-label>{{t(`admin.editors.markdown.multimdTable`)}}</w-item-label>
@@ -200,26 +220,6 @@
                 checked-icon="la:check"
                 unchecked-icon="la:times"
                 :aria-label="t(`admin.editors.markdown.wikiLinks`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item>
-            <blueprint-icon icon="math" />
-            <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.inlineMath`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.inlineMathHint`)}}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-select
-                style="width: 200px;"
-                outlined
-                v-model="state.config.inlineMath"
-                :options="inlineMathEngines"
-                emit-value
-                map-options
-                dense
-                options-dense
-                :aria-label="t(`admin.editors.markdown.inlineMath`)" />
             </w-item-section>
           </w-item>
         </w-card>

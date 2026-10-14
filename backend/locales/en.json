@@ -1353,6 +1353,7 @@
   "admin.theme.codeBlocks": "Code Blocks",
   "admin.theme.codeBlocksAppearance": "Code Blocks Appearance",
   "admin.theme.codeBlocksAppearanceHint": "The color theme used to display code blocks on pages.",
+  "admin.theme.codeBlocksPreview": "Code block preview",
   "admin.theme.codeInjection": "Code Injection",
   "admin.theme.colorsHint": "These colors do not apply to the administration area, which always uses the default colors. Users who have enabled a color vision deficiency setting in their profile will also see different colors.",
   "admin.theme.contentFont": "Content Font",

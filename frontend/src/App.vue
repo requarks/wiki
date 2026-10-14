@@ -12,6 +12,7 @@ import { defineAsyncComponent, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { loadCodeBlocksTheme } from '@/helpers/codeBlocksTheme'
 import { setCssVar } from '@/helpers/cssVars'
 import { loginLocation, redirectTargetOr } from '@/helpers/loginRedirect'
 import { isPagePath, splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
@@ -233,21 +234,6 @@ function applyCssOverride() {
 }
 
 /**
- * Every highlight.js theme the admin area offers, as loaders that fetch one on demand.
- *
- * `?inline` hands back the stylesheet as a STRING rather than injecting it: these have to be scoped to
- * the page content before they are applied (see below), which cannot be done to a stylesheet the
- * bundler has already added to the document. `**` covers the `base16/` family, since that is how the
- * admin's list names half of its options.
- *
- * Only the theme in use is ever fetched; the rest sit in the build as assets nobody asks for.
- */
-const HLJS_THEMES = import.meta.glob('../node_modules/highlight.js/styles/**/*.min.css', {
-  query: '?inline',
-  import: 'default'
-})
-
-/**
  * Paint code blocks in the theme chosen under Admin → Theme.
  *
  * The stylesheet is wrapped in `.page-contents { ... }` and applied through CSS nesting, for two
@@ -265,8 +251,8 @@ async function applyCodeBlocksTheme() {
     return
   }
 
-  const load = HLJS_THEMES[`../node_modules/highlight.js/styles/${desiredHljsTheme}.min.css`]
-  if (!load) {
+  const css = await loadCodeBlocksTheme(desiredHljsTheme)
+  if (css === null) {
     // -> A name the admin area offers that highlight.js does not ship; the fallback palette stands in
     console.warn(`Unknown code blocks theme: ${desiredHljsTheme}`)
     return
@@ -274,7 +260,7 @@ async function applyCodeBlocksTheme() {
 
   const styleEl = document.createElement('style')
   styleEl.id = 'hljs-theme'
-  styleEl.textContent = `.page-contents {\n${await load()}\n}`
+  styleEl.textContent = `.page-contents {\n${css}\n}`
   document.head.appendChild(styleEl)
 }
 
