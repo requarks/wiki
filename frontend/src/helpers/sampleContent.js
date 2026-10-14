@@ -545,6 +545,12 @@ e^{i\\pi} + 1 = 0
 \`\`\`
 ::
 
+## Inline
+
+A formula can also sit in a sentence: the energy of a body at rest is $\`E = mc^2\`$, and the
+roots of $\`ax^2 + bx + c\`$ are $\`\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\`$. A dollar sign without the
+backticks is just a dollar sign, so $5 and $10 stay as they are.
+
 ## See also
 
 - [Diagrams](/sample/blocks/diagrams)

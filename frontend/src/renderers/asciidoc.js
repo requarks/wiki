@@ -21,7 +21,7 @@
  */
 import { Extensions, Html5Converter, convert as asciidoctorConvert } from '@asciidoctor/core'
 
-import { codeBlock, fileSrc, isExternalHref } from './shared'
+import { MATH_ENGINES, codeBlock, fileSrc, isExternalHref } from './shared'
 
 import { escape } from 'es-toolkit/string'
 
@@ -103,7 +103,14 @@ const LOCKED_ATTRIBUTES = {
   'attribute-missing': 'skip',
   // -> It would otherwise be joined onto the front of every image target, and where a picture loads
   //    from is `fileSrc`'s answer
-  imagesdir: ''
+  imagesdir: '',
+  /*
+    What `stem:[…]` and a `[stem]` block are written in: LaTeX, the same as `latexmath`. Left to
+    Asciidoctor, an unset `stem` means AsciiMath, a different notation that neither math block reads,
+    so `stem:[x^2]` would come out as source on every page that did not think to set it. Locked
+    rather than defaulted for the same reason: a page switching it to AsciiMath gets nothing drawn.
+  */
+  stem: 'latexmath'
 }
 
 /**
@@ -197,6 +204,21 @@ function buildRegistry() {
 }
 
 /**
+ * A block title as an attribute value. It arrives converted -- entities in it, and any inline markup
+ * the title used -- so the markup goes, the entities stay as they are, and only the quote that would
+ * close the attribute is escaped (`specialcharacters` leaves quotes alone).
+ */
+function titleAttribute(title) {
+  return title.replace(/<[^>]*>/g, '').replaceAll('"', '&quot;')
+}
+
+/**
+ * The delimiters an author may have put round a `latexmath` block's content themselves. Asciidoctor
+ * accepts the content with or without them; the math blocks want the bare formula.
+ */
+const DISPLAY_MATH_DELIMITERS = /^\\\[([\s\S]*)\\\]$/
+
+/**
  * A wiki block's own attributes, as the props to write onto its element.
  *
  * Asciidoctor hands back positional attributes under numeric keys and named ones under their names,
@@ -220,7 +242,8 @@ class WikiConverter extends Html5Converter {
    * @param {string} backend The backend Asciidoctor instantiated this for.
    * @param {object} opts Asciidoctor's own converter options.
    * @param {object} context What the source cannot say about itself -- `pagePath`, which a relative
-   *                         image resolves against.
+   *                         image resolves against, and `mathTag`, the block a formula is drawn by
+   *                         (null where the site has math switched off).
    */
   constructor(backend, opts = {}, context = {}) {
     super(backend, opts)
@@ -471,6 +494,55 @@ ${await node.content()}
   }
 
   /**
+   * Inline math, `latexmath:[x^2]` -- and `stem:[x^2]`, which `LOCKED_ATTRIBUTES` makes the same
+   * thing and Asciidoctor has resolved before this is reached.
+   *
+   * The element the markdown renderer writes for `` $`x^2`$ ``, so the two syntaxes reach the same
+   * block, are allowed through by the same sanitiser rule and are fetched the same lazy way.
+   * Asciidoctor's own answer is the formula between `\(` and `\)` for MathJax to find by scanning the
+   * page, which nothing here does, so it would be shown as typed.
+   *
+   * `node.text` is already escaped -- a formula's passthrough keeps `specialcharacters` -- and goes in
+   * as it is. AsciiMath, and any formula on a site with math switched off, is shown as its source in
+   * a `<code>`, which is a formula nobody drew rather than one that went missing.
+   */
+  async convert_inline_quoted(node) {
+    if (node.type !== 'latexmath' && node.type !== 'asciimath') {
+      return super.convert_inline_quoted(node)
+    }
+    const tag = node.type === 'latexmath' ? this.wikiContext.mathTag : null
+    return tag ? `<${tag} inline="true">${node.text}</${tag}>` : `<code>${node.text}</code>`
+  }
+
+  /**
+   * A display formula, `[latexmath]` or `[stem]` over a `++++` block.
+   *
+   * The math block holding the formula as a fenced code block, which is exactly what `::block-katex`
+   * around a ```` ```latex ```` fence renders to in markdown. That is not only for symmetry: a site
+   * that switches the block off has the element stripped on save and keeps the code block inside it,
+   * so the formula is still there as source. The block's title becomes the caption under it.
+   *
+   * With math switched off, or for AsciiMath, it is that code block alone, titled the way a listing
+   * is.
+   */
+  async convert_stem(node) {
+    const source = node.getSource().trim()
+    const tag = node.style === 'latexmath' ? this.wikiContext.mathTag : null
+    if (!tag) {
+      const html = codeBlock(`${source}\n`, node.style === 'latexmath' ? 'latex' : '', {})
+      const line = this.lineAttr(node)
+      if (node.hasTitle()) {
+        return `<div class="codeblock-titled hljs"${line}><div class="codeblock-title">${node.title}</div>${html}</div>`
+      }
+      return html.replace(/^<pre/, `<pre${line}`)
+    }
+    const formula = source.match(DISPLAY_MATH_DELIMITERS)?.[1].trim() ?? source
+    const caption = node.hasTitle() ? ` caption="${titleAttribute(node.title)}"` : ''
+    const html = codeBlock(`${formula}\n`, 'latex', {})
+    return `<${tag}${caption}${this.lineAttr(node)}>\n${html}\n</${tag}>`
+  }
+
+  /**
    * A block image, pointed at where the picture actually is.
    *
    * `fileSrc` is the whole reason this is here: an author addresses a picture the way a file sitting
@@ -552,14 +624,14 @@ ${await node.content()}
 
 export class AsciidocRenderer {
   /**
-   * @param {object} [config] The site's AsciiDoc editor config. Empty today, and deliberately: every
-   *                          switch the markdown renderer offers is either hardwired in AsciiDoc (its
-   *                          text replacements, its autolinking) or spelled per block rather than per
-   *                          site. Taken all the same, so a setting added later needs no new
-   *                          signature.
+   * @param {object} [config] The site's AsciiDoc editor config. One setting: `math`, the block that
+   *                          draws a `latexmath` / `stem` formula (`katex` or `mathjax`), or `off`.
+   *                          Most of what the markdown renderer offers as switches is hardwired in
+   *                          AsciiDoc (its text replacements, its autolinking) or spelled per block.
    */
   constructor(config = {}) {
     this.config = config
+    this.mathTag = MATH_ENGINES.includes(config.math) ? `block-${config.math}` : null
     this.registry = buildRegistry()
   }
 
@@ -587,7 +659,8 @@ export class AsciidocRenderer {
       sourcemap,
       extension_registry: this.registry,
       converter_factory: {
-        createSync: (backend, opts) => new WikiConverter(backend, opts, { pagePath })
+        createSync: (backend, opts) =>
+          new WikiConverter(backend, opts, { pagePath, mathTag: this.mathTag })
       },
       attributes: { ...DEFAULT_ATTRIBUTES, ...LOCKED_ATTRIBUTES, ...this.config.attributes }
     })

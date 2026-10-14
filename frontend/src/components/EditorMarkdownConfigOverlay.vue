@@ -202,6 +202,26 @@
                 :aria-label="t(`admin.editors.markdown.wikiLinks`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="math" />
+            <w-item-section>
+              <w-item-label>{{t(`admin.editors.markdown.inlineMath`)}}</w-item-label>
+              <w-item-label caption>{{t(`admin.editors.markdown.inlineMathHint`)}}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-select
+                style="width: 200px;"
+                outlined
+                v-model="state.config.inlineMath"
+                :options="inlineMathEngines"
+                emit-value
+                map-options
+                dense
+                options-dense
+                :aria-label="t(`admin.editors.markdown.inlineMath`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <w-inner-loading :showing="state.loading > 0">
           <w-spinner color="accent" size="lg" />
@@ -213,7 +233,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
@@ -250,7 +270,8 @@ function defaultConfig() {
     underline: true,
     tabWidth: 2,
     multimdTable: true,
-    wikiLinks: true
+    wikiLinks: true,
+    inlineMath: 'katex'
   }
 }
 
@@ -273,6 +294,13 @@ const quoteStyles = [
   { value: 'spanish', label: 'Spanish' },
   { value: 'swedish', label: 'Swedish' }
 ]
+
+// -> The names of the two blocks are product names, and are not translated
+const inlineMathEngines = computed(() => [
+  { value: 'off', label: t('admin.editors.markdown.inlineMathOff') },
+  { value: 'katex', label: 'KaTeX' },
+  { value: 'mathjax', label: 'MathJax' }
+])
 
 // METHODS
 

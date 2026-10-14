@@ -1074,6 +1074,11 @@ function markDisabledBlock(el) {
     return
   }
   el.dataset.blockDisabled = ''
+  // -> A formula in a line of text keeps to the line: the notice is its tooltip, not a paragraph
+  if (el.hasAttribute('inline')) {
+    el.title = t('editor.blockNotEnabled')
+    return
+  }
   const notice = document.createElement('p')
   notice.className = 'block-disabled-notice'
   notice.textContent = t('editor.blockNotEnabled')
@@ -1878,6 +1883,17 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       /* -> Whatever the author wrote inside, which is what the saved page is left holding */
       [data-block-disabled] > .block-disabled-notice + * {
         margin-top: 0.5rem;
+      }
+      /* -> An inline formula, left as its TeX source in the sentence, underlined rather than boxed */
+      [data-block-disabled][inline] {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        border-left: 0;
+        border-radius: 0;
+        border-bottom: 2px solid var(--content-danger);
+        font-family: monospace;
+        cursor: help;
       }
     }
   }

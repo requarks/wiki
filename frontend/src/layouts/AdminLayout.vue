@@ -513,6 +513,10 @@ import LoadingGeneric from '@/components/LoadingGeneric.vue'
 //    around them is already on screen while the chunk is fetched, so without one the panel is empty
 //    until it arrives and then fills in all at once
 const overlays = {
+  EditorAsciidocConfig: defineAsyncComponent({
+    loader: () => import('../components/EditorAsciidocConfigOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   EditorMarkdownConfig: defineAsyncComponent({
     loader: () => import('../components/EditorMarkdownConfigOverlay.vue'),
     loadingComponent: LoadingGeneric

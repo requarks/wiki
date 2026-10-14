@@ -235,7 +235,9 @@ class Sites {
         editors: {
           asciidoc: {
             isActive: true,
-            config: {}
+            config: {
+              math: 'katex'
+            }
           },
           /*
             No config of its own: how a blog behaves is set up per blog, on its own front page, which
@@ -266,7 +268,8 @@ class Sites {
               tabWidth: 2,
               typographer: false,
               underline: true,
-              wikiLinks: true
+              wikiLinks: true,
+              inlineMath: 'katex'
             }
           },
           /*
@@ -544,7 +547,9 @@ class Sites {
         editors: {
           asciidoc: {
             isActive: true,
-            config: {}
+            config: {
+              math: 'katex'
+            }
           },
           /*
             No config of its own: how a blog behaves is set up per blog, on its own front page, which
@@ -575,7 +580,8 @@ class Sites {
               tabWidth: 2,
               typographer: false,
               underline: true,
-              wikiLinks: true
+              wikiLinks: true,
+              inlineMath: 'katex'
             }
           },
           /*

@@ -1718,6 +1718,19 @@
     color: var(--content-ink-muted);
   }
 
+  /*
+    Inline math, `` $`x^2`$ ``, until its block has loaded. Its TeX is the element's text, and an
+    element the browser does not know yet is just an inline span of it, so a sentence would flash its
+    source before the formula replaces it. Hidden rather than removed, so the line does not reflow
+    twice. Only here: a reader with JavaScript off gets the prerendered copy, which is not under
+    `.page-contents`, and so is still shown the source. Nor in an editor's preview when the block is
+    switched off for the site: that one stays undefined on purpose, and shows the source saving leaves.
+  */
+  block-katex[inline]:not(:defined, [data-block-disabled]),
+  block-mathjax[inline]:not(:defined, [data-block-disabled]) {
+    visibility: hidden;
+  }
+
   /* -- highlight.js tokens ------------------------------------------------------ */
 
   .hljs-comment,

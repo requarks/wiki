@@ -16,11 +16,13 @@ import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
 import mdGithubAlerts from './modules/github-alerts'
 import mdWikiLinks from './modules/markdown-it-wikilinks'
+import mdInlineMath from './modules/markdown-it-inline-math'
 import twemoji from '@twemoji/api'
 
 // -> Relative, like this file's other in-repo imports: it is also reachable from the headless
 //    renderer bundle, which is built on its own
 import {
+  MATH_ENGINES,
   codeBlock,
   fileSrc,
   isExternalHref,
@@ -292,6 +294,15 @@ export class MarkdownRenderer {
     // -> MediaWiki's `[[Page Name]]` / `[[Page Name|text]]` -- see the module for where they point
     if (config.wikiLinks) {
       this.md.use(mdWikiLinks)
+    }
+
+    /*
+      Inline math, `` $`x^2`$ `` -- see the module. Which block draws it is the site's choice, made
+      once here rather than in every formula; `off` leaves the syntax unclaimed, so it reads as a
+      dollar sign and a code span.
+    */
+    if (MATH_ENGINES.includes(config.inlineMath)) {
+      this.md.use(mdInlineMath, { tag: `block-${config.inlineMath}` })
     }
 
     /*

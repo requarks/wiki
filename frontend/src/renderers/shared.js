@@ -235,6 +235,12 @@ function lineRows(lineCount, lineStart, highlights) {
 export const DIAGRAM_LANGUAGES = ['kroki', 'mermaid', 'plantuml']
 
 /**
+ * The blocks able to typeset a TeX formula, by the name a site's editor settings choose one with —
+ * `inlineMath` for markdown, `math` for AsciiDoc. The element is `block-<name>` either way.
+ */
+export const MATH_ENGINES = ['katex', 'mathjax']
+
+/**
  * One fence, as the markup it is drawn as -- always rooted at a `<pre>`, whatever it holds.
  *
  * @param {string} str The code, as the author wrote it.

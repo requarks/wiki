@@ -97,7 +97,15 @@ const output = new SVG({
     single hidden `svg` in the document that every formula points into — and a reference from inside a
     shadow root does not resolve to it, so every letter would come out blank.
   */
-  fontCache: 'local'
+  fontCache: 'local',
+  /*
+    An inline formula as ONE drawing. MathJax 4 otherwise cuts it at every point a line may break,
+    into a run of `svg`s with an `mjx-break` between each pair -- held together by its stylesheet and
+    a font of its own, neither of which reaches a shadow root, and of which the block took only the
+    first piece, so `E = mc^2` drew as `E`. A long formula in a sentence therefore does not wrap.
+    Display formulas are not affected: this is the inline setting alone.
+  */
+  linebreaks: { inline: false }
 })
 
 /*
@@ -163,6 +171,16 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
         label: 'Alignment',
         options: ['center', 'left'],
         default: 'center'
+      },
+      /*
+        A formula in a line of text, `` $`x^2`$ `` in markdown. Written by the renderer and never by an
+        author, so no form offers it -- but it is declared, because a block's props are what the
+        sanitiser lets onto its tag.
+      */
+      {
+        name: 'inline',
+        type: 'boolean',
+        internal: true
       }
     ]
   }
@@ -206,7 +224,7 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
         The drawing takes the colour of the text around it: MathJax paints its glyphs in currentColor,
         so dark mode needs nothing here — unlike a block that picks its own colours.
       */
-      svg {
+      .drawing > svg {
         display: block;
       }
 
@@ -226,6 +244,22 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
         padding: 1rem;
         white-space: pre-wrap;
       }
+
+      /*
+        In a line of text: no box of its own, and the drawing left inline, where the vertical-align
+        MathJax writes on it puts the formula's baseline on the baseline of the words around it. An
+        error is a marker in the sentence rather than a panel across the column, with the message as
+        its tooltip.
+      */
+      :host([inline]) {
+        display: inline;
+      }
+      .error-inline {
+        color: var(--q-negative, #c10015);
+        border-bottom: 1px dashed currentColor;
+        cursor: help;
+        font-family: monospace;
+      }
     `
   }
 
@@ -243,6 +277,12 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
        */
       align: { type: String },
 
+      /**
+       * Typeset in a line of text rather than as a display formula
+       * @type {boolean}
+       */
+      inline: { type: Boolean },
+
       // Internal Properties
       _svg: { state: true },
       _error: { state: true }
@@ -253,6 +293,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     super()
     this.caption = ''
     this.align = 'center'
+    this.inline = false
+    this._source = ''
     this._svg = ''
     this._error = ''
     // -> Puts `dark` on this element for the styles above to key off
@@ -264,7 +306,7 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
    */
   _typeset(source, fenced) {
     try {
-      const container = document_.convert(source, { display: true })
+      const container = document_.convert(source, { display: !this.inline })
       const drawing = adaptor.firstChild(container)
       /*
         The formula named for a reader who cannot see it. MathJax's own answer to this is a MathML
@@ -279,7 +321,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     } catch (err) {
       this._svg = ''
       this._error = `This formula could not be typeset: ${err.message ?? err}`
-      if (!fenced) {
+      // -> An inline formula has no fence to be in; markdown already kept its source as typed
+      if (!fenced && !this.inline) {
         this._error +=
           '\n\nThe source has to go inside a fenced code block, or markdown rewrites it before this block sees it.'
       }
@@ -293,15 +336,25 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     */
     const fence = this.querySelector('pre')
     const source = ((fence ?? this).textContent ?? '').trim()
+    // -> Kept for an inline formula that fails, which shows its source in place of the drawing
+    this._source = source
     if (!source) {
-      this._error =
-        'This formula is empty. Its TeX source goes in the body of the block, inside a fenced code block.'
+      this._error = this.inline
+        ? 'This formula is empty.'
+        : 'This formula is empty. Its TeX source goes in the body of the block, inside a fenced code block.'
       return
     }
     this._typeset(source, Boolean(fence))
   }
 
   render() {
+    if (this.inline) {
+      if (!this._error) {
+        return unsafeSVG(this._svg)
+      }
+      const shown = this._source || '(empty formula)'
+      return html`<span class="error-inline" title=${this._error}>${shown}</span>`
+    }
     if (this._error) {
       return html`<div class="error">${this._error}</div>`
     }

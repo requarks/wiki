@@ -236,7 +236,6 @@ editors:
       underline: false
       wikiLinks: true
       tabWidth: 2
-      latexEngine: katex
       kroki: true
       plantuml: true
       multimdTable: true

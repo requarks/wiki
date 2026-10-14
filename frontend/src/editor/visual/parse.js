@@ -499,6 +499,8 @@ const tokenSpecs = {
     getAttrs: (tok) => ({ source: tok.content.replace(/\n$/, '') })
   },
   html_inline: { node: 'raw_inline', getAttrs: (tok) => ({ source: tok.content }) },
+  // -> Inline math, `` $`x^2`$ ``, kept as written until the schema has a node to draw it with
+  math_inline: { node: 'raw_inline', getAttrs: (tok) => ({ source: tok.markup }) },
 
   image: {
     node: 'image',

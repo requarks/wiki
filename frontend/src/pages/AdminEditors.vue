@@ -148,10 +148,11 @@ const editors = reactive([
     id: 'asciidoc',
     icon: 'asciidoc',
     /*
-      No configuration screen, and none to have: every switch the markdown editor offers is either
-      hardwired in AsciiDoc -- its text replacements and its autolinking are not optional -- or
-      spelled per block rather than per site. See `AsciidocRenderer`.
+      A short configuration screen: most of what the markdown editor offers as switches is hardwired
+      in AsciiDoc -- its text replacements and its autolinking are not optional -- or spelled per
+      block rather than per site. What is left is which block draws its math. See `AsciidocRenderer`.
     */
+    hasConfig: true,
     useRendering: true
   },
   {
@@ -287,6 +288,13 @@ async function refresh() {
 
 function openConfig(editorId) {
   switch (editorId) {
+    case 'asciidoc': {
+      adminStore.$patch({
+        overlayOpts: {},
+        overlay: 'EditorAsciidocConfig'
+      })
+      break
+    }
     case 'markdown': {
       adminStore.$patch({
         overlayOpts: {},

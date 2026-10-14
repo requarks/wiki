@@ -37,6 +37,13 @@ export interface BlockProp {
    */
   options?: (string | { label: string; value: string })[]
   default?: string | number | boolean
+  /**
+   * Written by the wiki rather than by an author: an attribute the block reads, and the sanitiser
+   * therefore has to let through, which no form should offer. A math block's `inline`, put there by
+   * the markdown renderer for a formula in a line of text, is the case. Left out of every list the API
+   * serves, so nothing that builds a form or a completion from `props` ever sees one.
+   */
+  internal?: boolean
 }
 
 /** A block as declared by its component's `static definition`. */
@@ -145,6 +152,11 @@ const blockSelection = {
   isCustom: blocksTable.isCustom,
   config: blocksTable.config,
   definition: blocksTable.definition
+}
+
+/** The props an author may set, which is every prop but the `internal` ones. */
+function authorableProps(props: BlockProp[] | undefined): BlockProp[] {
+  return (props ?? []).filter((prop) => !prop.internal)
 }
 
 /**
@@ -407,7 +419,7 @@ class Blocks {
         : this.definitions.find((d) => d.block === row.block)
       return {
         ...row,
-        props: definition?.props ?? [],
+        props: authorableProps(definition?.props),
         template: definition?.template ?? '',
         asciidocTemplate: definition?.asciidocTemplate ?? '',
         contentEditor: definition?.contentEditor ?? '',
@@ -437,7 +449,7 @@ class Blocks {
         isEnabled: true,
         isCustom: false,
         config: {},
-        props: definition.props ?? [],
+        props: authorableProps(definition.props),
         template: definition.template ?? '',
         asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',

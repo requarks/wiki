@@ -77,6 +77,16 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
         label: 'Alignment',
         options: ['center', 'left'],
         default: 'center'
+      },
+      /*
+        A formula in a line of text, `` $`x^2`$ `` in markdown. Written by the renderer and never by an
+        author, so no form offers it -- but it is declared, because a block's props are what the
+        sanitiser lets onto its tag.
+      */
+      {
+        name: 'inline',
+        type: 'boolean',
+        internal: true
       }
     ]
   }
@@ -140,6 +150,21 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
           padding: 1rem;
           white-space: pre-wrap;
         }
+
+        /*
+          In a line of text: no box of its own, so the formula sits on the baseline of the words around
+          it and wraps with them where KaTeX allows a break. An error is a marker in the sentence rather
+          than a panel across the column, with the message as its tooltip.
+        */
+        :host([inline]) {
+          display: inline;
+        }
+        .error-inline {
+          color: var(--q-negative, #c10015);
+          border-bottom: 1px dashed currentColor;
+          cursor: help;
+          font-family: monospace;
+        }
       `
     ]
   }
@@ -158,6 +183,12 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
        */
       align: { type: String },
 
+      /**
+       * Typeset in a line of text rather than as a display formula
+       * @type {boolean}
+       */
+      inline: { type: Boolean },
+
       // Internal Properties
       _markup: { state: true },
       _error: { state: true }
@@ -168,6 +199,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     super()
     this.caption = ''
     this.align = 'center'
+    this.inline = false
+    this._source = ''
     this._markup = ''
     this._error = ''
     // -> Puts `dark` on this element for the styles above to key off
@@ -180,7 +213,7 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
   _typeset(source, fenced) {
     try {
       this._markup = renderToString(source, {
-        displayMode: true,
+        displayMode: !this.inline,
         /*
           Both output forms: the drawing a reader sees, and a MathML copy of the same expression that
           KaTeX hides and a screen reader announces. That is why this block writes no aria-label — the
@@ -208,7 +241,8 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     } catch (err) {
       this._markup = ''
       this._error = `This formula could not be typeset: ${err.message ?? err}`
-      if (!fenced) {
+      // -> An inline formula has no fence to be in; markdown already kept its source as typed
+      if (!fenced && !this.inline) {
         this._error +=
           '\n\nThe source has to go inside a fenced code block, or markdown rewrites it before this block sees it.'
       }
@@ -222,15 +256,25 @@ x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}
     */
     const fence = this.querySelector('pre')
     const source = ((fence ?? this).textContent ?? '').trim()
+    // -> Kept for an inline formula that fails, which shows its source in place of the drawing
+    this._source = source
     if (!source) {
-      this._error =
-        'This formula is empty. Its TeX source goes in the body of the block, inside a fenced code block.'
+      this._error = this.inline
+        ? 'This formula is empty.'
+        : 'This formula is empty. Its TeX source goes in the body of the block, inside a fenced code block.'
       return
     }
     this._typeset(source, Boolean(fence))
   }
 
   render() {
+    if (this.inline) {
+      if (!this._error) {
+        return unsafeHTML(this._markup)
+      }
+      const shown = this._source || '(empty formula)'
+      return html`<span class="error-inline" title=${this._error}>${shown}</span>`
+    }
     if (this._error) {
       return html`<div class="error">${this._error}</div>`
     }
