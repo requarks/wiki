@@ -218,6 +218,32 @@ const sitemapBuilds = new Map<string, Promise<SitemapPage[]>>()
 
 const reAlias = /^[a-zA-Z0-9-_]*$/
 
+/**
+ * The colors a page icon may be drawn in, by Tailwind palette name. Empty is "unset", which draws it
+ * in the site's primary color. Of the greys only `slate` and `gray` are offered.
+ */
+export const PAGE_ICON_COLORS = [
+  'red',
+  'orange',
+  'amber',
+  'yellow',
+  'lime',
+  'green',
+  'emerald',
+  'teal',
+  'cyan',
+  'sky',
+  'blue',
+  'indigo',
+  'violet',
+  'purple',
+  'fuchsia',
+  'pink',
+  'rose',
+  'slate',
+  'gray'
+] as const
+
 /** Fields kept in the `config` blob rather than as columns, and flattened again on the way out. */
 const CONFIG_FIELDS = [
   'allowBacklinks',
@@ -225,6 +251,7 @@ const CONFIG_FIELDS = [
   'allowContributions',
   'allowGlossaryLinks',
   'allowRatings',
+  'iconColor',
   'showLastEditedBy',
   'showSidebar',
   'showTags',
@@ -278,6 +305,8 @@ export interface Page {
   title: string
   description: string | null
   icon: string | null
+  /** One of `PAGE_ICON_COLORS`, or empty for the site's primary color. */
+  iconColor: string
   locale: string
   editor: string
   /** The other editors this page could be opened with — see `interchangeableEditors`. */
@@ -351,6 +380,7 @@ export interface PageInput {
   locale?: string
   description?: string
   icon?: string
+  iconColor?: string
   alias?: string
   publishState?: 'draft' | 'published' | 'scheduled'
   publishStartDate?: string | null
@@ -874,6 +904,7 @@ class Pages {
       title: row.title,
       description: row.description,
       icon: row.icon,
+      iconColor: config.iconColor ?? '',
       locale: row.locale,
       editor: row.editor,
       /*
@@ -3741,6 +3772,7 @@ class Pages {
       allowContributions: input.allowContributions ?? existing.allowContributions ?? true,
       allowGlossaryLinks: input.allowGlossaryLinks ?? existing.allowGlossaryLinks ?? true,
       allowRatings: input.allowRatings ?? existing.allowRatings ?? true,
+      iconColor: input.iconColor ?? existing.iconColor ?? '',
       showLastEditedBy: input.showLastEditedBy ?? existing.showLastEditedBy ?? true,
       showSidebar: input.showSidebar ?? existing.showSidebar ?? true,
       showTags: input.showTags ?? existing.showTags ?? true,

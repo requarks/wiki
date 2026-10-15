@@ -31,6 +31,7 @@ const DUPLICATED_PAGE_PROPS = [
   'allowGlossaryLinks',
   'allowRatings',
   'icon',
+  'iconColor',
   'isBrowsable',
   'isSearchable',
   'password',
@@ -65,6 +66,7 @@ export const SAVED_PAGE_FIELDS = [
   'content',
   'description',
   'icon',
+  'iconColor',
   'isBrowsable',
   'isSearchable',
   'localeRelations',
@@ -128,6 +130,8 @@ export const usePageStore = defineStore('page', {
     description: '',
     editor: '',
     icon: DEFAULT_PAGE_ICON,
+    /** One of `PAGE_ICON_COLORS` (`helpers/pageIconColors.js`), or empty for the site's primary color. */
+    iconColor: '',
     id: '',
     isBrowsable: true,
     /**
@@ -523,6 +527,7 @@ export const usePageStore = defineStore('page', {
         title: '',
         description: '',
         icon: DEFAULT_PAGE_ICON,
+        iconColor: '',
         content: '',
         contentLoaded: false,
         render: '',
@@ -716,6 +721,7 @@ export const usePageStore = defineStore('page', {
         title: title ?? '',
         description: description ?? '',
         icon: props.icon ?? DEFAULT_PAGE_ICON,
+        iconColor: props.iconColor ?? '',
         // -> Never carried over by a copy: see `DUPLICATED_PAGE_PROPS`
         alias: '',
         publishState: props.publishState ?? 'published',

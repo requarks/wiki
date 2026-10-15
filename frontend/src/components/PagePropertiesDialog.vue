@@ -50,7 +50,10 @@
             dense />
           <w-input v-model="pageStore.icon" :label="t(`editor.props.icon`)" outlined dense>
             <template #prepend>
-              <w-icon :name="pageStore.icon" size="20px" color="primary" />
+              <w-icon
+                :class="pageIconColorClass(pageStore.iconColor)"
+                :name="pageStore.icon"
+                size="20px" />
             </template>
             <template #append>
               <!--
@@ -73,6 +76,31 @@
               </w-btn>
             </template>
           </w-input>
+          <!--
+            Off for an `img:` icon, which is a picture and has no color to change. A multicolor Iconify
+            icon ignores it the same way, but telling one apart needs the icon itself, so that case is
+            left to how it draws.
+          -->
+          <w-select
+            v-model="pageStore.iconColor"
+            :options="iconColorOptions"
+            :label="t(`editor.props.iconColor`)"
+            :disable="!isColorableIcon"
+            :hint="isColorableIcon ? null : t(`editor.props.iconColorImageHint`)"
+            emit-value
+            map-options
+            outlined
+            dense>
+            <template #prepend>
+              <span class="size-4 shrink-0 rounded-full" :class="selectedIconColorSwatch" />
+            </template>
+            <template #option="{ opt }">
+              <span class="flex flex-nowrap items-center gap-2">
+                <span class="size-3 shrink-0 rounded-full" :class="opt.swatch" />
+                <span class="truncate">{{ opt.label }}</span>
+              </span>
+            </template>
+          </w-select>
           <w-input
             v-if="pageStore.path !== `home`"
             v-model="pageStore.alias"
@@ -420,6 +448,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { scrollBehavior } from '@/helpers/motion'
+import { PAGE_ICON_COLORS, pageIconColorClass } from '@/helpers/pageIconColors'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
@@ -510,6 +539,21 @@ const quickaccess = computed(() =>
     { key: 'refCardVisibility', icon: 'la:eye', label: t('editor.props.visibility') }
   ].filter((qa) => qa.shown !== false)
 )
+
+/** Unset first, which is the site's primary color, then the palette in Tailwind's own order. */
+const iconColorOptions = computed(() => [
+  { label: t('editor.props.iconColorUnset'), value: '', swatch: 'bg-primary' },
+  ...Object.entries(PAGE_ICON_COLORS).map(([key, color]) => ({
+    label: t(`editor.props.iconColors.${key}`),
+    value: key,
+    swatch: color.swatch
+  }))
+])
+const selectedIconColorSwatch = computed(
+  () => PAGE_ICON_COLORS[pageStore.iconColor]?.swatch ?? 'bg-primary'
+)
+// -> An `img:` icon is a picture, drawn as it is
+const isColorableIcon = computed(() => !pageStore.icon?.startsWith('img:'))
 
 const publishingRange = computed({
   get() {

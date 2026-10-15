@@ -162,6 +162,7 @@ export function versionPageProps(version) {
     {
       description: meta.description,
       icon: meta.icon,
+      iconColor: config.iconColor,
       tags: meta.tags,
       /*
         Narrowed to a relation's own fields, as `pageLoad` does with the live page's: `relations` is

@@ -44,6 +44,7 @@
     <page-version-header
       v-if="state.version"
       :icon="versionIcon"
+      :icon-color="versionIconColor"
       :title="state.version.title"
       :description="versionDescription"
       :live-path="livePath"
@@ -256,6 +257,7 @@ const showTocPanelBtn = computed(() => tocIsPanel.value && showToc.value && !sta
  * this screen is what the page said then, and its icon and description are part of that.
  */
 const versionIcon = computed(() => state.version?.meta?.icon || 'la:file-alt')
+const versionIconColor = computed(() => state.version?.meta?.config?.iconColor ?? '')
 const versionDescription = computed(() => state.version?.meta?.description ?? '')
 const versionToc = computed(() => state.version?.meta?.toc ?? [])
 const tocDepth = computed(() => state.version?.meta?.config?.tocDepth ?? { min: 1, max: 2 })

@@ -5,8 +5,10 @@
     and description keep the PAGE's direction on their own text, below, which in the editor need not be
     the same one: an editor is not a page path, so the interface there stays in the reader's language.
   -->
+  <!-- -> `--page-header-tint`: the hint of the page's color the bar's gradient carries, see `_page-chrome.scss` -->
   <div
     class="page-header flex flex-wrap"
+    :style="{ '--page-header-tint': pageIconColorValue(pageStore.iconColor) }"
     :lang="commonStore.locale"
     :dir="siteStore.localeDir(commonStore.locale)">
     <!-- PAGE ICON -->
@@ -21,14 +23,19 @@
         :aria-label="t(`editor.props.icon`)"
         :style="{ minHeight: iconSize }">
         <!-- -> The same size the icon has when the page is merely being read; see the branch below -->
-        <w-icon :name="pageStore.icon" :size="iconSize" />
+        <w-icon :class="iconColorClass" :name="pageStore.icon" :size="iconSize" />
         <!-- -> Not `v-model`: writing the store is only half of what picking an icon means here, and
                 the other half is telling the editor the page changed. See `setIcon`. -->
         <w-menu content-class="shadow-7">
           <icon-picker-dialog :model-value="pageStore.icon" @update:model-value="setIcon" />
         </w-menu>
       </w-btn>
-      <w-icon class="rounded" v-else :name="pageStore.icon" :size="iconSize" color="primary" />
+      <w-icon
+        class="rounded"
+        :class="iconColorClass"
+        v-else
+        :name="pageStore.icon"
+        :size="iconSize" />
     </div>
     <!-- PAGE HEADER -->
     <!--
@@ -367,6 +374,7 @@ import { useUserStore } from '@/stores/user'
 import CollabPresence from '@/components/CollabPresence.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { pageIconColorClass, pageIconColorValue } from '@/helpers/pageIconColors'
 
 /**
  * How long the bell swings for, in milliseconds. Matches the `w-bell-ring` animation below — the class
@@ -409,6 +417,9 @@ const isPhoneViewport = computed(() => !isAtLeastSm.value)
  * stylesheet can outrank without `!important`.
  */
 const iconSize = computed(() => (isPhoneViewport.value ? '32px' : '64px'))
+
+/** The page's own icon color, or the site's primary color when it has none. */
+const iconColorClass = computed(() => pageIconColorClass(pageStore.iconColor))
 
 /** The direction the page's own locale is written in, for its title and description. */
 const contentDir = computed(() => siteStore.localeDir(pageStore.locale))

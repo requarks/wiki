@@ -114,10 +114,12 @@ export interface ListedPage {
   description: string
   /** The page's icon, as an Iconify reference. Empty when it has none. */
   icon: string
+  /** The color the icon is drawn in — see `PAGE_ICON_COLORS`. Empty for the site's primary color. */
+  iconColor: string
   /**
-   * The page's own tags. Carried for the same reason as on a browse item: the caller filters the
-   * list by `read:pages`, and a tag rule is not answerable without them. Dropped by the response
-   * schema.
+   * The page's own tags. Carried for the same reason as on a browse item — the caller filters the
+   * list by `read:pages`, and a tag rule is not answerable without them — and answered too, for an
+   * index block that lists them. Only on a page the reader may open, whose tags it already shows.
    */
   tags: string[]
 }
@@ -473,6 +475,7 @@ class Tree {
         tags: treeTable.tags,
         description: pagesTable.description,
         icon: pagesTable.icon,
+        iconColor: sql<string | null>`${pagesTable.config}->>'iconColor'`,
         isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(treeTable)
@@ -498,6 +501,7 @@ class Tree {
         title: row.title,
         description: row.description ?? '',
         icon: row.icon ?? '',
+        iconColor: row.iconColor ?? '',
         tags: row.tags ?? []
       }
       return isListable(unpublished, row.isLive, {
@@ -1327,6 +1331,7 @@ class Tree {
               title: page.title,
               description: page.description ?? '',
               icon: page.icon ?? '',
+              iconColor: page.iconColor,
               editor: page.editor,
               content: page.content ?? '',
               render: page.render,

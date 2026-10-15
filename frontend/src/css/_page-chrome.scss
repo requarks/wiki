@@ -257,13 +257,52 @@ $toc-overlay-max: 749.98px;
     height: auto;
   }
 
+  /*
+    A hint of the page's own color, rising from the bottom-left corner -- under the icon drawn in
+    the same color. `--page-header-tint` is set by the header for a page that has one; unset, the
+    mix is of transparent with transparent and the layer draws nothing. Part of the one `background`
+    rather than a rule of its own, so that print, which sets this to `none`, takes it away too.
+  */
+  --page-header-glow: radial-gradient(
+    ellipse 55% 180% at 0% 100%,
+    color-mix(
+      in oklch,
+      var(--page-header-tint, transparent) var(--page-header-tint-strength),
+      transparent
+    ),
+    transparent
+  );
+
+  /*
+    And a line of it along the bottom edge, at half strength and fading out where the glow does --
+    the ellipse's horizontal radius is 55% of the bar. Drawn ON the underline in the light theme, which
+    paints over the background (`hairline-edge` above); the dark theme has no underline, so there it
+    is a layer of the background like the glow.
+  */
+  --page-header-line: linear-gradient(
+    to right,
+    color-mix(in oklch, var(--page-header-tint, transparent) 50%, transparent),
+    transparent 55%
+  );
+
   @at-root .body--light & {
-    background: linear-gradient(to bottom, $grey-2 0%, $grey-1 100%) border-box;
+    --page-header-tint-strength: 10%;
+    background:
+      var(--page-header-glow) border-box,
+      linear-gradient(to bottom, $grey-2 0%, $grey-1 100%) border-box;
     --page-header-rule: #fff;
     --page-header-underline: #{$grey-4};
+
+    &::before {
+      background-image: var(--page-header-line);
+    }
   }
   @at-root .body--dark & {
-    background: linear-gradient(to bottom, $dark-4 0%, $dark-3 100%) border-box;
+    --page-header-tint-strength: 14%;
+    background:
+      var(--page-header-line) left bottom / 100% 1px no-repeat border-box,
+      var(--page-header-glow) border-box,
+      linear-gradient(to bottom, $dark-4 0%, $dark-3 100%) border-box;
     // -> No underline in the dark theme, and no border holding a place for one either
     border-bottom: 0;
     --page-header-rule: #{$dark-6};

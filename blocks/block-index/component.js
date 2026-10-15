@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit'
+import { styleMap } from 'lit/directives/style-map.js'
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js'
 import { fetchIcon, iconImageUrl } from '../shared/icons.js'
 import { DarkMode } from '../shared/theme.js'
@@ -24,6 +25,38 @@ const boolean = {
  * mixing pages made in the editor with pages made through the API still lines up down the left.
  */
 const DEFAULT_PAGE_ICON = 'mdi:file-document-outline'
+
+/**
+ * The colors a page icon may be given in its properties (`iconColor`), as `[light, dark]`. A row
+ * draws its icon and its left border in it, as a links-grid card does with its accent.
+ *
+ * The values of Tailwind's 500 and 400 shades, which is what the app draws the page's own header icon
+ * in (`frontend/src/helpers/pageIconColors.js`). Written out rather than read from the app's
+ * `--color-*` properties: those exist only for as long as some utility in the app happens to use
+ * them, and a block cannot see which. A page with none — or one this list does not know — keeps the
+ * link's primary color.
+ */
+const ICON_COLORS = {
+  red: ['oklch(63.7% 0.237 25.331)', 'oklch(70.4% 0.191 22.216)'],
+  orange: ['oklch(70.5% 0.213 47.604)', 'oklch(75% 0.183 55.934)'],
+  amber: ['oklch(76.9% 0.188 70.08)', 'oklch(82.8% 0.189 84.429)'],
+  yellow: ['oklch(79.5% 0.184 86.047)', 'oklch(85.2% 0.199 91.936)'],
+  lime: ['oklch(76.8% 0.233 130.85)', 'oklch(84.1% 0.238 128.85)'],
+  green: ['oklch(72.3% 0.219 149.579)', 'oklch(79.2% 0.209 151.711)'],
+  emerald: ['oklch(69.6% 0.17 162.48)', 'oklch(76.5% 0.177 163.223)'],
+  teal: ['oklch(70.4% 0.14 182.503)', 'oklch(77.7% 0.152 181.912)'],
+  cyan: ['oklch(71.5% 0.143 215.221)', 'oklch(78.9% 0.154 211.53)'],
+  sky: ['oklch(68.5% 0.169 237.323)', 'oklch(74.6% 0.16 232.661)'],
+  blue: ['oklch(62.3% 0.214 259.815)', 'oklch(70.7% 0.165 254.624)'],
+  indigo: ['oklch(58.5% 0.233 277.117)', 'oklch(67.3% 0.182 276.935)'],
+  violet: ['oklch(60.6% 0.25 292.717)', 'oklch(70.2% 0.183 293.541)'],
+  purple: ['oklch(62.7% 0.265 303.9)', 'oklch(71.4% 0.203 305.504)'],
+  fuchsia: ['oklch(66.7% 0.295 322.15)', 'oklch(74% 0.238 322.16)'],
+  pink: ['oklch(65.6% 0.241 354.308)', 'oklch(71.8% 0.202 349.761)'],
+  rose: ['oklch(64.5% 0.246 16.439)', 'oklch(71.2% 0.194 13.428)'],
+  slate: ['oklch(55.4% 0.046 257.417)', 'oklch(70.4% 0.04 256.788)'],
+  gray: ['oklch(55.1% 0.027 264.364)', 'oklch(70.7% 0.022 261.325)']
+}
 
 /**
  * Block Index
@@ -110,6 +143,28 @@ export class BlockIndexElement extends LitElement {
         default: false
       },
       {
+        name: 'usePageColors',
+        type: 'boolean',
+        label: 'Use Page Colors',
+        hint: "Draw each page in the color chosen in its properties. Off, every page uses the site's primary color.",
+        // -> True, which the `boolean` converter above is what makes safe: see the note on `props`
+        default: true
+      },
+      {
+        name: 'colorfulBorder',
+        type: 'boolean',
+        label: 'Colorful Border',
+        hint: "Draw each page's left border in its color at all times, rather than only on hover.",
+        default: false
+      },
+      {
+        name: 'showTags',
+        type: 'boolean',
+        label: 'Show Page Tags',
+        hint: "List each page's tags under its title.",
+        default: false
+      },
+      {
         name: 'noResultMsg',
         type: 'string',
         label: 'Empty Message',
@@ -170,6 +225,22 @@ export class BlockIndexElement extends LitElement {
         }
       }
 
+      /*
+        The row's accent: what its border turns on hover (or always, with colorfulBorder), the tint
+        under its hover gradient, its icon, its arrow and its tags. The site's primary, unless the page
+        has a color of its own and the block uses page colors -- render() then sets the page's pair of
+        shades on the row and marks it .has-accent. See ICON_COLORS.
+      */
+      li {
+        --accent: var(--q-primary);
+      }
+      li.has-accent {
+        --accent: var(--accent-light);
+      }
+      :host([dark]) li.has-accent {
+        --accent: var(--accent-dark);
+      }
+
       li {
         background-color: #fafafa;
         background-image: linear-gradient(to bottom,#fff,#fafafa);
@@ -192,23 +263,38 @@ export class BlockIndexElement extends LitElement {
         border-left: 5px solid rgba(255,255,255,.2);
         box-shadow: 0 3px 8px 0 rgba(0,0,0,.25);
       }
+      /* -> background-color is the faint tint the gradient lets through at its foot; the dark one is opaque */
       li:hover {
-        background-color: var(--q-primary);
+        background-color: var(--accent);
         background-image: linear-gradient(to bottom,#fff,rgba(255,255,255,.95));
-        border-left-color: var(--q-primary);
         cursor: pointer;
       }
       :host([dark]) li:hover {
         background-image: linear-gradient(to bottom,#1e232a, #161b22);
-        border-left-color: var(--q-primary);
       }
       /*
-        -> The row runs across rather than down, so an icon can sit beside the writing rather than
-           above it. The title and its description stack inside .text, which is the column the
-           anchor itself used to be.
+        -> The border in the accent: on hover, or all the time with colorfulBorder. Spelled out under
+           :host([dark]) too, whose border-left above would otherwise outrank the bare selectors.
+      */
+      li:hover,
+      :host([dark]) li:hover,
+      ul.colorful-border li,
+      :host([dark]) ul.colorful-border li {
+        border-left-color: var(--accent);
+      }
+      /*
+        -> A grid rather than a row, for the sake of the tags, laid out as a links-grid card's body:
+           the icon and .text (the title over its description) share the first row, and the tags
+           take the second row of the writing's column, which the icon does not span -- so the icon
+           is centred on the title and description alone rather than on the whole height. A row
+           without an icon has the one column. align-content centres the rows as a group when the
+           row is stretched taller than they are, as align-items did for the flex row this was.
       */
       li a {
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: center;
+        align-content: center;
         color: var(--q-primary);
         /*
           -> The right inset clears the arrow, which is positioned out of the flow and so takes no
@@ -219,26 +305,33 @@ export class BlockIndexElement extends LitElement {
         padding: 0.75rem calc(16px + 32px + 14px) 0.75rem 1rem;
         text-decoration: none;
         flex: 1;
-        flex-direction: row;
-        align-items: center;
-        gap: 14px;
+        column-gap: 14px;
         position: relative;
+      }
+      li a.has-icon {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      li a > .text,
+      li a > .tags {
+        grid-column: -2;
       }
       .text {
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        /* -> The row less the icon. min-width is what lets a long title wrap inside the card
-              rather than pushing the row wider than it. */
-        flex: 1;
+        /* -> min-width is what lets a long title wrap inside the card rather than pushing the row
+              wider than it */
         min-width: 0;
       }
-      .text span {
+      .description {
         display: block;
         color: #666;
         font-size: .8em;
         font-weight: normal;
         pointer-events: none;
+      }
+      /* -> The description grey links-grid uses on a dark card, since #666 is barely legible there */
+      :host([dark]) .description {
+        color: rgba(255,255,255,.6);
       }
       /*
         On a dark row the writing takes the app's lightened brand shade, the same one the interface
@@ -247,16 +340,44 @@ export class BlockIndexElement extends LitElement {
         site's own hue comes with it.
 
         On .text rather than on the anchor, so it is the title alone that lightens: the icon and the
-        arrow are drawn with currentColor precisely so they keep the link's normal primary.
+        arrow are drawn in the accent rather than taking it from here.
       */
       :host([dark]) .text {
         color: var(--color-primary-light);
       }
 
       /*
-        The page's own icon. Sized in em so it keeps its place beside writing at whatever size the
-        article is set in, and left to take the anchor's colour: an Iconify SVG paints with
-        currentColor, which is the whole reason it is inlined rather than pointed at with an an <img>.
+        The page's tags, drawn as links-grid draws a card's: the accent as a pale wash with the
+        writing darkened in the light theme and lightened in the dark one, since a shade 500 on a wash
+        of itself is too faint to read for the lighter hues.
+      */
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+        pointer-events: none;
+      }
+      .tags span {
+        padding: 1px 8px;
+        border: 1px solid color-mix(in oklch, var(--accent) 35%, transparent);
+        border-radius: 999px;
+        background-color: color-mix(in oklch, var(--accent) 12%, transparent);
+        color: color-mix(in oklch, var(--accent) 70%, black);
+        font-size: 0.7em;
+        font-weight: 500;
+        line-height: 1.6;
+        white-space: nowrap;
+      }
+      :host([dark]) .tags span {
+        background-color: color-mix(in oklch, var(--accent) 20%, transparent);
+        color: color-mix(in oklch, var(--accent) 60%, white);
+      }
+
+      /*
+        The page's own icon, in the accent. Sized in em so it keeps its place beside writing at
+        whatever size the article is set in. An Iconify SVG paints with currentColor, which is the
+        whole reason it is inlined rather than pointed at with an <img>.
       */
       /*
         -> The width is on the slot as well as on the drawing, so a row whose icon could not be had
@@ -267,16 +388,23 @@ export class BlockIndexElement extends LitElement {
         align-items: center;
         flex: none;
         width: 1.75em;
+        color: var(--accent);
       }
       .icon svg,
       .icon img {
         width: 1.75em;
         height: 1.75em;
       }
+      /*
+        -> Centred by hand: the static position of an absolute item in a grid is the grid's top
+           corner, where the flex row this was centred it on its own.
+      */
       li a > svg {
         width: 32px;
         position: absolute;
+        top: 50%;
         right: 16px;
+        transform: translateY(-50%);
         pointer-events: none;
       }
       li a > svg path {
@@ -286,7 +414,7 @@ export class BlockIndexElement extends LitElement {
         fill: rgba(255,255,255,.2);
       }
       li:hover a > svg path, :host([dark]) li:hover a > svg path {
-        fill: color-mix(in srgb, currentColor 50%, transparent);
+        fill: color-mix(in srgb, var(--accent) 50%, transparent);
       }
 
       .no-links {
@@ -360,6 +488,24 @@ export class BlockIndexElement extends LitElement {
        */
       showIcons: boolean,
 
+      /**
+       * Whether a page is drawn in the color chosen in its properties, rather than the site's primary
+       * @type {boolean}
+       */
+      usePageColors: boolean,
+
+      /**
+       * Whether the left border is in the page's color at all times, rather than only on hover
+       * @type {boolean}
+       */
+      colorfulBorder: boolean,
+
+      /**
+       * Whether each page's tags are listed under its title
+       * @type {boolean}
+       */
+      showTags: boolean,
+
       // Internal Properties
       _loading: { state: true },
       _pages: { state: true }
@@ -379,6 +525,9 @@ export class BlockIndexElement extends LitElement {
     this.noResultMsg = 'No pages matching your query.'
     this.columns = '2'
     this.showIcons = false
+    this.usePageColors = true
+    this.colorfulBorder = false
+    this.showTags = false
     // -> Puts `dark` on this element for the styles above to key off
     this._darkMode = new DarkMode(this)
   }
@@ -431,6 +580,14 @@ export class BlockIndexElement extends LitElement {
     this.requestUpdate()
   }
 
+  /**
+   * The page's color as a pair of shades, or null where the row keeps the site's primary: a page with
+   * none, or a block told not to use them.
+   */
+  _color(page) {
+    return (this.usePageColors && ICON_COLORS[page.iconColor]) || null
+  }
+
   /** One page's icon: an inlined SVG, or an `<img>` for a reference that names a file. */
   _icon(page) {
     const image = iconImageUrl(page.icon || DEFAULT_PAGE_ICON)
@@ -442,15 +599,26 @@ export class BlockIndexElement extends LitElement {
   render() {
     return this._pages.length > 0 || this._loading
       ? html`
-          <ul>
-            ${this._pages.map(
-              (p) =>
-                html`<li>
-                  <a href="${p.href}" @click="${this._navigate}">
+          <ul class="${this.colorfulBorder ? 'colorful-border' : ''}">
+            ${this._pages.map((p) => {
+              const color = this._color(p)
+              return html`<li
+                  class="${color ? 'has-accent' : ''}"
+                  style="${styleMap(color ? { '--accent-light': color[0], '--accent-dark': color[1] } : {})}">
+                  <a
+                    class="${this.showIcons ? 'has-icon' : ''}"
+                    href="${p.href}"
+                    @click="${this._navigate}">
                     ${this.showIcons ? this._icon(p) : null}
                     <div class="text">
-                      ${p.title} ${p.description ? html`<span>${p.description}</span>` : null}
+                      ${p.title}
+                      ${p.description ? html`<span class="description">${p.description}</span>` : null}
                     </div>
+                    ${
+                      this.showTags && p.tags?.length > 0
+                        ? html`<div class="tags">${p.tags.map((tag) => html`<span>${tag}</span>`)}</div>`
+                        : null
+                    }
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 48 48"
@@ -461,7 +629,7 @@ export class BlockIndexElement extends LitElement {
                     </svg>
                   </a>
                 </li>`
-            )}
+            })}
           </ul>
         `
       : html` <div class="no-links">${this.noResultMsg}</div> `

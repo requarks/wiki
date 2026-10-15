@@ -149,6 +149,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       icon: {
         type: 'string',
         description: "The page's icon, as an Iconify reference. Empty when it has none."
+      },
+      iconColor: {
+        type: 'string',
+        description:
+          "The color the icon is drawn in, by Tailwind palette name. Empty for the site's primary color."
+      },
+      tags: {
+        type: 'array',
+        items: { type: 'string' }
       }
     }
   })

@@ -1,4 +1,5 @@
 import { pageHistoryActions } from '../../models/pageHistory.ts'
+import { PAGE_ICON_COLORS } from '../../models/pages.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -43,6 +44,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       icon: {
         type: 'string',
         maxLength: 255
+      },
+      iconColor: {
+        type: 'string',
+        enum: ['', ...PAGE_ICON_COLORS],
+        description:
+          'The color the icon is drawn in, by Tailwind palette name. Empty draws it in the site’s primary color.'
       },
       alias: {
         type: 'string',
@@ -180,6 +187,10 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       title: { type: 'string' },
       description: { type: ['string', 'null'] },
       icon: { type: ['string', 'null'] },
+      iconColor: {
+        type: 'string',
+        description: 'A Tailwind palette name, or empty for the site’s primary color.'
+      },
       locale: { type: 'string' },
       editor: { type: 'string' },
       convertibleTo: {

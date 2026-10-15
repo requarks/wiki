@@ -1,5 +1,7 @@
 <template>
-  <div class="page-header flex flex-wrap">
+  <div
+    class="page-header flex flex-wrap"
+    :style="{ '--page-header-tint': pageIconColorValue(iconColor) }">
     <!-- PAGE ICON -->
     <!--
       Never a button, unlike `PageHeader`'s: there is no editing surface on a snapshot, so the icon is
@@ -7,7 +9,11 @@
       walking from a page to one of its versions should move the title bar's contents nowhere.
     -->
     <div class="flex-none pl-4 flex items-center">
-      <w-icon class="rounded" :name="icon" :size="iconSize" color="primary" />
+      <w-icon
+        class="rounded"
+        :class="pageIconColorClass(iconColor)"
+        :name="icon"
+        :size="iconSize" />
     </div>
     <!-- PAGE HEADING -->
     <!--
@@ -161,11 +167,18 @@ import { useMinWidth } from '@/composables/screen'
 
 import { useSiteStore } from '@/stores/site'
 
+import { pageIconColorClass, pageIconColorValue } from '@/helpers/pageIconColors'
+
 const emit = defineEmits(['download', 'restore', 'branch'])
 
 defineProps({
   /** The page's icon as the version recorded it, an Iconify reference. */
   icon: {
+    type: String,
+    default: ''
+  },
+  /** The color the version recorded for it — see `helpers/pageIconColors.js`. */
+  iconColor: {
     type: String,
     default: ''
   },

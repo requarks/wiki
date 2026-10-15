@@ -171,11 +171,12 @@ export class BlockLinksGridElement extends LitElement {
         The gap below the block lives here rather than on :host, which the app's margin reset in the
         page would beat. See block-index.
 
-        The columns themselves come from the props, as an inline style on this element.
+        The columns themselves come from the props, as an inline style on this element. The gap is
+        block-index's, so the two side by side space their cards alike.
       */
       ul {
         display: grid;
-        gap: 0.75rem;
+        gap: 0.5rem;
         padding: 0;
         margin: 0 0 16px;
         list-style: none;
