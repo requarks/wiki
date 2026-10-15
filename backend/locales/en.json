@@ -2196,6 +2196,7 @@
   "common.header.searchLoading": "Searching...",
   "common.header.searchNoResult": "No pages matching your query.",
   "common.header.searchResultsCount": "Found {total} results",
+  "common.header.searchSuggestions": "Page Suggestions",
   "common.header.siteMap": "Site Map",
   "common.header.view": "View",
   "common.header.viewSource": "View Source",

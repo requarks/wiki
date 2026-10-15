@@ -979,6 +979,10 @@ export const pages = pgTable(
     index('pages_ts_idx').using('gin', table.ts),
     index('pages_tags_idx').using('gin', table.tags),
     index('pages_isSearchableComputed_idx').on(table.isSearchableComputed),
+    // -> Trigram indexes for page suggestions, which match a typed word anywhere in a title or a
+    //    path (`ILIKE '%word%'`) — something neither a btree nor the `ts` vector can answer
+    index('pages_title_trgm_idx').using('gin', table.title.op('gin_trgm_ops')),
+    index('pages_path_trgm_idx').using('gin', table.path.op('gin_trgm_ops')),
     // -> One page per locale in a group, enforced here rather than in the model: a group is edited
     //    from any of its members, so two saves racing each other are two writers of the same set
     uniqueIndex('pages_localeGroupId_locale_idx').on(table.localeGroupId, table.locale),

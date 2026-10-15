@@ -36,7 +36,16 @@
           :placeholder="t('common.header.search')"
           :aria-label="t('common.header.search')"
           autocomplete="off"
-          @keyup.enter="onSearchEnter"
+          role="combobox"
+          aria-autocomplete="list"
+          :aria-expanded="suggestionsAreShown"
+          :aria-controls="suggestionsAreShown ? suggestionsId : undefined"
+          :aria-activedescendant="
+            suggestionsAreShown && state.activeIndex >= 0
+              ? `${suggestionsId}-${state.activeIndex}`
+              : undefined
+          "
+          @keydown="onSearchKeydown"
           @focus="state.searchIsFocused = true"
           @blur="checkSearchFocus" />
 
@@ -81,7 +90,38 @@
       </div>
 
       <div class="searchpanel" ref="searchPanel" v-if="searchPanelIsShown">
-        <template v-if="siteStore.tagsLoaded && siteStore.tags.length > 0">
+        <!--
+          Pages whose title or path matches what has been typed, in place of the tags and the tips
+          while there are any: the panel is a dropdown under a text field, and one that kept growing
+          as the reader typed would push the suggestions down out of reach.
+
+          Real links, so that a middle click opens one in a new tab. `mousedown.prevent` keeps the
+          press from blurring the input, which would close the panel before the click lands.
+        -->
+        <template v-if="suggestionsAreShown">
+          <div class="searchpanel-header">{{ t('common.header.searchSuggestions') }}</div>
+          <div :id="suggestionsId" class="searchpanel-suggestions" role="listbox">
+            <router-link
+              v-for="(item, idx) of state.suggestions"
+              :key="item.id"
+              :id="`${suggestionsId}-${idx}`"
+              :to="pageUrl(item)"
+              class="searchpanel-suggestion"
+              :class="{ 'is-active': idx === state.activeIndex }"
+              role="option"
+              :aria-selected="idx === state.activeIndex"
+              @mousedown.prevent
+              @mouseenter="state.activeIndex = idx"
+              @click="closeAfterNavigation">
+              <w-icon class="searchpanel-suggestion-icon" :name="item.icon || DEFAULT_PAGE_ICON" />
+              <span class="searchpanel-suggestion-text">
+                <span class="searchpanel-suggestion-title">{{ item.title }}</span>
+                <span class="searchpanel-suggestion-path">{{ pageUrl(item) }}</span>
+              </span>
+            </router-link>
+          </div>
+        </template>
+        <template v-else-if="siteStore.tagsLoaded && siteStore.tags.length > 0">
           <div class="searchpanel-header">
             <span>Popular Tags</span>
             <w-space />
@@ -112,21 +152,23 @@
             </w-chip>
           </div>
         </template>
-        <div class="searchpanel-header">Search Operators</div>
-        <div class="searchpanel-tips">
-          <div class="searchpanel-tip">
-            <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
+        <template v-if="!suggestionsAreShown">
+          <div class="searchpanel-header">Search Operators</div>
+          <div class="searchpanel-tips">
+            <div class="searchpanel-tip">
+              <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
+            </div>
+            <div class="searchpanel-tip">
+              <code>foo*</code> to match any term starting with "foo".
+            </div>
+            <div class="searchpanel-tip">
+              <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
+            </div>
+            <div class="searchpanel-tip">
+              <code>"foo bar"</code> to match exactly the phrase "foo bar".
+            </div>
           </div>
-          <div class="searchpanel-tip">
-            <code>foo*</code> to match any term starting with "foo".
-          </div>
-          <div class="searchpanel-tip">
-            <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
-          </div>
-          <div class="searchpanel-tip">
-            <code>"foo bar"</code> to match exactly the phrase "foo bar".
-          </div>
-        </div>
+        </template>
       </div>
     </div>
   </w-toolbar>
@@ -134,12 +176,20 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, useId, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
+import { DEFAULT_PAGE_ICON } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import { orderBy } from 'es-toolkit/array'
+import { debounce } from 'es-toolkit/function'
+
+/** Characters typed before pages are suggested. One matches nearly every title on the wiki. */
+const SUGGEST_MIN_LENGTH = 2
+const SUGGEST_LIMIT = 8
+/** Long enough that a word typed at speed is one request, short enough not to read as lag. */
+const SUGGEST_DEBOUNCE_MS = 150
 
 // PROPS
 
@@ -170,8 +220,17 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
-  searchIsFocused: false
+  searchIsFocused: false,
+  suggestions: [],
+  /** The suggestion the arrow keys are on, or -1 for the field itself. */
+  activeIndex: -1,
+  /** Escape put the suggestions away. Typing anything brings them back. */
+  suggestionsDismissed: false
 })
+
+const suggestionsId = useId()
+/** The suggestion request in flight, aborted when a newer one replaces it. */
+let suggestAbort = null
 
 const searchPanel = ref(null)
 const searchField = ref(null)
@@ -183,6 +242,35 @@ const searchPanelIsShown = computed(() => {
     state.searchIsFocused &&
     (siteStore.search !== siteStore.searchLastQuery || siteStore.search === '')
   )
+})
+
+/**
+ * What the suggestions are asked about: the words of the query, without what only means something to
+ * the full search -- `#tags`, `-excluded` and `!excluded` words, and the quote, prefix and OR operators.
+ *
+ * Empty while the field is not focused, so that a query put in the field by the search page's own URL
+ * asks for nothing, and so that focusing the field again asks afresh.
+ */
+const suggestionQuery = computed(() => {
+  if (!state.searchIsFocused) {
+    return ''
+  }
+  const query = siteStore.search
+    .replace(/[",|]/g, ' ')
+    .split(/\s+/)
+    .filter((word) => word && !/^[#!-]/.test(word))
+    .map((word) => word.replaceAll('*', ''))
+    .filter(Boolean)
+    .join(' ')
+  return query.length >= SUGGEST_MIN_LENGTH ? query : ''
+})
+
+/*
+  The previous list stays up while the next one loads, rather than the panel flickering back to the
+  tags and tips on every keystroke. It is only dropped when there is nothing left to ask about.
+*/
+const suggestionsAreShown = computed(() => {
+  return searchPanelIsShown.value && !state.suggestionsDismissed && state.suggestions.length > 0
 })
 
 const popularTags = computed(() => {
@@ -203,6 +291,24 @@ watch(searchPanelIsShown, (newValue) => {
   }
 })
 
+watch(suggestionQuery, (query) => {
+  if (query) {
+    loadSuggestions(query)
+  } else {
+    loadSuggestions.cancel()
+    suggestAbort?.abort()
+    state.suggestions = []
+    state.activeIndex = -1
+  }
+})
+
+watch(
+  () => siteStore.search,
+  () => {
+    state.suggestionsDismissed = false
+  }
+)
+
 // METHODS
 
 /*
@@ -218,6 +324,97 @@ function handleKeyPress(ev) {
       searchField.value.focus()
     }
   }
+}
+
+const loadSuggestions = debounce(async (query) => {
+  suggestAbort?.abort()
+  const controller = new AbortController()
+  suggestAbort = controller
+  try {
+    const resp = await API_CLIENT.get(`sites/${siteStore.id}/pages/suggest`, {
+      searchParams: { query, locale: siteStore.readerLocale, limit: SUGGEST_LIMIT },
+      signal: controller.signal
+    }).json()
+    if (suggestAbort === controller) {
+      state.suggestions = resp?.results ?? []
+      state.activeIndex = -1
+    }
+  } catch {
+    // -> Superseded, or failed. Either way there is nothing to suggest, and the full search is still
+    //    one Enter away -- a failure here is not worth an error over the reader's typing.
+    if (suggestAbort === controller) {
+      state.suggestions = []
+      state.activeIndex = -1
+    }
+  }
+}, SUGGEST_DEBOUNCE_MS)
+
+/** Where a suggestion leads: the page's address in its own locale, as on the search page. */
+function pageUrl(item) {
+  return `${siteStore.localeUrlPrefix(item.locale)}/${item.path}`
+}
+
+/**
+ * The arrow keys move through the suggestions, and Enter opens the one they are on -- or runs the full
+ * search when they are on none, which is what Enter always did.
+ *
+ * Down from the last suggestion goes back to the field, and Up from the field to the last suggestion,
+ * so there is always a way back to plain typing. Keydown rather than keyup so that the arrows can stop
+ * the caret moving, and so that Enter can be ignored mid-composition: an IME commits with Enter, and
+ * that keypress is not a search.
+ */
+function onSearchKeydown(ev) {
+  if (ev.isComposing) {
+    return
+  }
+  const count = suggestionsAreShown.value ? state.suggestions.length : 0
+  switch (ev.key) {
+    case 'ArrowDown':
+      if (count > 0) {
+        ev.preventDefault()
+        state.activeIndex = state.activeIndex >= count - 1 ? -1 : state.activeIndex + 1
+      }
+      break
+    case 'ArrowUp':
+      if (count > 0) {
+        ev.preventDefault()
+        state.activeIndex = state.activeIndex < 0 ? count - 1 : state.activeIndex - 1
+      }
+      break
+    case 'Escape':
+      if (count > 0) {
+        ev.preventDefault()
+        state.suggestionsDismissed = true
+        state.activeIndex = -1
+      }
+      break
+    case 'Enter':
+      if (count > 0 && state.activeIndex >= 0) {
+        ev.preventDefault()
+        router.push(pageUrl(state.suggestions[state.activeIndex]))
+        closeAfterNavigation()
+      } else {
+        onSearchEnter()
+      }
+      break
+  }
+}
+
+/**
+ * Empty the field and let go of it once a suggestion has been followed: what was typed was a way of
+ * finding that page, not a query to come back to.
+ *
+ * Not for a click that opens the link somewhere else -- a modifier key means a new tab or window, and
+ * the reader is still here with the list in front of them.
+ */
+function closeAfterNavigation(ev) {
+  if (ev && (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey)) {
+    return
+  }
+  siteStore.search = ''
+  state.suggestions = []
+  state.activeIndex = -1
+  searchField.value?.blur()
 }
 
 function onSearchEnter() {
@@ -279,6 +476,8 @@ onMounted(() => {
   }
 })
 onBeforeUnmount(() => {
+  loadSuggestions.cancel()
+  suggestAbort?.abort()
   if (!import.meta.env.SSR) {
     window.removeEventListener('keydown', handleKeyPress)
   }
@@ -488,6 +687,61 @@ $searchpanel-header-gap: 0.15rem;
   &-tip {
     font-size: 0.75rem;
     line-height: 1.4;
+  }
+
+  &-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /*
+    Pulled out by its own padding so that the highlight reaches the panel's gutter while the icons
+    stay in line with the heading above them. One highlight for the pointer and the arrow keys alike:
+    hovering moves `activeIndex`, so the two can never point at different rows.
+  */
+  &-suggestion {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 -0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    color: inherit;
+    text-decoration: none;
+
+    &.is-active {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    &-icon {
+      flex-shrink: 0;
+      font-size: 20px;
+      opacity: 0.8;
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    &-title,
+    &-path {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.3;
+    }
+
+    &-title {
+      font-size: 0.875rem;
+    }
+
+    &-path {
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
   }
 
   /*

@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { uniq } from 'es-toolkit/array'
 import {
   liveCondition,
   maySeeUnpublished,
@@ -143,6 +144,43 @@ export interface SearchPagesParams {
   hideProtectedContent?: boolean
 }
 
+export interface PageSuggestion {
+  id: string
+  path: string
+  locale: string
+  title: string
+  description: string | null
+  icon: string | null
+}
+
+export interface SuggestPagesParams {
+  siteId: string
+  /** What has been typed so far. Every word of it must be in the page's title or its path. */
+  query: string
+  /**
+   * The locale the reader is in, and the only one suggested from: a list offering the same title once
+   * per translation is mostly pages the reader cannot read. The full search is where other locales are.
+   */
+  locale: string
+  limit?: number
+  /** As in `SearchPagesParams`. */
+  unpublished?: boolean
+  /** Who is typing. Required: suggestions are only ever the pages this actor could open. */
+  actor: AccessActor
+}
+
+/** Words of a suggestion query that are matched; the rest are ignored, as typing that much is a search. */
+const SUGGEST_MAX_WORDS = 8
+
+/**
+ * How many matches a suggestion request reads before applying page rules to them.
+ *
+ * The rules run per row, in rank order, so a reader who may open most of the wiki is answered from the
+ * first handful. The cap is for one who may open almost none of it: they get fewer suggestions, or none,
+ * instead of a walk through every page whose title contains the letter they typed.
+ */
+const SUGGEST_CANDIDATES = 200
+
 /**
  * Markers `ts_headline` wraps a matched term in.
  *
@@ -153,8 +191,8 @@ export interface SearchPagesParams {
 const HL_START = '\u0002'
 const HL_STOP = '\u0003'
 
-/** Escape the LIKE wildcards, so that a path filter is a prefix rather than a pattern. */
-function escapeLikePrefix(value: string): string {
+/** Escape the LIKE wildcards, so that what was typed is matched as text rather than as a pattern. */
+function escapeLike(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
 }
 
@@ -326,7 +364,7 @@ class Search {
       conditions.push(sql`p."publishState" = ${publishState}`)
     }
     if (path) {
-      conditions.push(sql`p.path LIKE ${`${escapeLikePrefix(path)}%`}`)
+      conditions.push(sql`p.path LIKE ${`${escapeLike(path)}%`}`)
     }
     if (locales.length > 0) {
       // -> `sql.param`, because a bare array is expanded into a list of placeholders rather than
@@ -410,18 +448,9 @@ class Search {
         WHERE ${where}
         ORDER BY ${ordering}
       `)
-      const readable = ((candidates.rows ?? candidates) as any[]).filter((row) => {
-        const ref = {
-          siteId,
-          path: row.path as string,
-          locale: row.locale as string,
-          tags: (row.tags ?? []) as string[]
-        }
-        return (
-          WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
-          (row.isLive === true || maySeeUnpublished(actor, ref))
-        )
-      })
+      const readable = ((candidates.rows ?? candidates) as any[]).filter((row) =>
+        this.mayList(actor, siteId, row)
+      )
       pageIds = readable.slice(offset, offset + limit).map((row) => row.id as string)
       totalHits = readable.length
     } else {
@@ -483,6 +512,114 @@ class Search {
       }))
 
     return { results: result, totalHits }
+  }
+
+  /**
+   * Pages to offer while a query is being typed, best match first.
+   *
+   * In one locale, the reader's. Titles and paths only — never the body, which is what the full search is for, and which is what a
+   * password covers. Every word typed has to occur somewhere in the title or the path, in any order, so
+   * a word in the middle of a title finds it as readily as the first one. A match on the whole phrase
+   * ranks above one on scattered words, the start of a word above the middle of one, and a title above
+   * a path.
+   *
+   * Exact for whoever asks, as `searchPages` is: the same page rules, the same handling of pages that are
+   * not live, the same `isSearchable`. Nothing is suggested from a shared index, so nothing a reader may
+   * not open can leak through one. What makes that affordable is that only `limit` pages are needed —
+   * the candidates are checked in rank order and the walk stops as soon as enough of them pass.
+   */
+  async suggestPages({
+    siteId,
+    query,
+    locale,
+    limit = 8,
+    unpublished = false,
+    actor
+  }: SuggestPagesParams): Promise<PageSuggestion[]> {
+    const phrase = query.trim().toLowerCase().replace(/\s+/g, ' ')
+    const words = uniq(phrase.split(' ').filter(Boolean)).slice(0, SUGGEST_MAX_WORDS)
+    if (words.length < 1) {
+      return []
+    }
+    // -> A page path has hyphens where its title has spaces
+    const pathPhrase = phrase.replaceAll(' ', '-')
+
+    const liveNow = liveCondition({
+      publishState: sql`p."publishState"`,
+      publishStartDate: sql`p."publishStartDate"`,
+      publishEndDate: sql`p."publishEndDate"`
+    })
+    const conditions = [
+      sql`p."siteId" = ${siteId}`,
+      sql`p.locale = ${locale}`,
+      sql`p."isSearchable" = true`
+    ]
+    if (!(unpublished && maySeeUnpublishedAnywhere(actor))) {
+      conditions.push(liveNow)
+    }
+    // -> `ILIKE` on the title, plain `LIKE` on the path, which is lowercase already. Both are answered
+    //    by the trigram indexes on the two columns.
+    const inTitle = words.map((word) => sql`p.title ILIKE ${`%${escapeLike(word)}%`}`)
+    for (const [idx, word] of words.entries()) {
+      conditions.push(sql`(${inTitle[idx]} OR p.path LIKE ${`%${escapeLike(word)}%`})`)
+    }
+
+    const rank = sql`CASE
+      WHEN lower(p.title) = ${phrase} OR p.path = ${pathPhrase} THEN 0
+      WHEN lower(p.title) LIKE ${`${escapeLike(phrase)}%`} THEN 1
+      WHEN lower(p.title) LIKE ${`% ${escapeLike(phrase)}%`} THEN 2
+      WHEN lower(p.title) LIKE ${`%${escapeLike(phrase)}%`} THEN 3
+      WHEN ${sql.join(inTitle, sql` AND `)} THEN 4
+      ELSE 5
+    END`
+
+    const checkRules = !actor.permissions.includes('manage:system')
+    const candidates = await WIKI.db.execute(sql`
+      SELECT p.id, p.path, p.locale, p.title, p.description, p.icon, p.tags, ${liveNow} AS "isLive"
+      FROM pages p
+      WHERE ${sql.join(conditions, sql` AND `)}
+      ORDER BY ${rank}, length(p.title), lower(p.title), p.path
+      LIMIT ${checkRules ? SUGGEST_CANDIDATES : limit}
+    `)
+
+    const suggestions: PageSuggestion[] = []
+    for (const row of (candidates.rows ?? candidates) as any[]) {
+      if (suggestions.length >= limit) {
+        break
+      }
+      if (checkRules && !this.mayList(actor, siteId, row)) {
+        continue
+      }
+      suggestions.push({
+        id: row.id as string,
+        path: row.path as string,
+        locale: row.locale as string,
+        title: row.title as string,
+        description: row.description ?? null,
+        icon: row.icon ?? null
+      })
+    }
+    return suggestions
+  }
+
+  /**
+   * Whether a page row may be listed to this actor: readable under its page rules, and either live or
+   * one this actor may see while it is not. The row needs `path`, `locale`, `tags` and `isLive`.
+   *
+   * Callers skip this for `manage:system`, which is above the rules and whose query already decided
+   * whether pages that are not live are in it.
+   */
+  private mayList(actor: AccessActor, siteId: string, row: any): boolean {
+    const ref = {
+      siteId,
+      path: row.path as string,
+      locale: row.locale as string,
+      tags: (row.tags ?? []) as string[]
+    }
+    return (
+      WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
+      (row.isLive === true || maySeeUnpublished(actor, ref))
+    )
   }
 
   /**

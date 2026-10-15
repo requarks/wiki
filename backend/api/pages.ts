@@ -563,6 +563,84 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * SUGGEST PAGES
+   */
+  app.get<{
+    Params: { siteId: string }
+    Querystring: { query: string; locale: string; limit?: number }
+  }>(
+    '/sites/:siteId/pages/suggest',
+    {
+      schema: {
+        summary: 'Suggest pages while a query is typed',
+        description:
+          'Pages in `locale` whose title or path contains every word of `query`, best match first: the whole phrase as the title, then the title starting with it, a word of the title starting with it, the title containing it, and containing each of its words, then a match on the path. Meant to be asked on every keystroke, so it reads titles and paths only — never the body, which is what `pages/search` is for.\n\nThe answer is exact for whoever asks, under the same rules as the search: only pages the caller could open, pages that are not live only for a session that may edit them, and never a page marked as not searchable. A caller who may open very little of a large wiki can get fewer suggestions than `limit` even where more of their pages match, since only a bounded number of candidates is checked.',
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          required: ['query', 'locale'],
+          properties: {
+            query: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              description: 'What has been typed so far. Words are matched in any order.'
+            },
+            locale: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 10,
+              description:
+                "The reader's locale. Only pages in it are suggested; the full search covers the others."
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 20,
+              default: 8
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Suggested pages, best match first',
+            type: 'object',
+            properties: {
+              results: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    path: { type: 'string' },
+                    locale: { type: 'string' },
+                    title: { type: 'string' },
+                    description: { type: ['string', 'null'] },
+                    icon: { type: ['string', 'null'] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const results = await WIKI.models.search.suggestPages({
+        siteId: req.params.siteId,
+        query: req.query.query,
+        locale: req.query.locale,
+        limit: req.query.limit,
+        actor: WIKI.models.groups.actorForRequest(req),
+        // -> As in the search: a page that is not live only for whoever may edit it
+        unpublished: Boolean(actorFrom(req))
+      })
+      return { results }
+    }
+  )
+
+  /**
    * GET PAGE FOR INCLUSION
    */
   app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
