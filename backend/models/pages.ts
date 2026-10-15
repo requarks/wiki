@@ -2006,7 +2006,13 @@ class Pages {
       reason: input.reasonForChange
     })
 
-    const stored = this.toStoragePage(siteId, actor.id, page, page.content ?? '')
+    const stored = this.toStoragePage(
+      siteId,
+      actor.id,
+      page,
+      page.content ?? '',
+      input.reasonForChange
+    )
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
     await WIKI.models.search.indexPage(page.id, locale)
@@ -2237,7 +2243,8 @@ class Pages {
       siteId,
       actor.id,
       updated,
-      values.content ?? existing.content ?? ''
+      values.content ?? existing.content ?? '',
+      patch.reasonForChange
     )
     await WIKI.models.storage.mirrorPage(stored.ref, stored.content)
 
@@ -2539,6 +2546,7 @@ class Pages {
       locale: moved.locale,
       path: moved.path,
       title: moved.title,
+      icon: moved.icon,
       alias: moved.alias
     }
     if (isRelocated) {
@@ -3310,6 +3318,7 @@ class Pages {
    * @param content The source, which the caller has to hand: it is not on the `Page` a mutation
    *   returns unless the read asked for it, and re-reading the row to get it back would cost a query
    *   per save for something the caller just wrote.
+   * @param reason The reason for change the save was given, if any
    */
   private toStoragePage(
     siteId: string,
@@ -3327,13 +3336,15 @@ class Pages {
       createdAt: Date
       updatedAt: Date
     },
-    content: string
+    content: string,
+    reason?: string | null
   ): { ref: StoragePageRef; content: StoragePageContent } {
     return {
       ref: {
         id: page.id,
         siteId,
         actorId,
+        ...(reason?.trim() ? { reason: reason.trim() } : {}),
         locale: page.locale,
         path: page.path,
         contentType: page.contentType

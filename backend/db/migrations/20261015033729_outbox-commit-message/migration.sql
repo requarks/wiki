@@ -1,0 +1,1 @@
+ALTER TABLE "storageOutbox" ADD COLUMN "message" text;

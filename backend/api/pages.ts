@@ -1255,7 +1255,7 @@ async function routes(app: FastifyInstance) {
             },
             content: { type: 'string', description: 'The source, rewritten for the new editor.' },
             render: { type: 'string', description: 'The HTML that source renders to.' },
-            reasonForChange: { type: 'string' }
+            reasonForChange: { type: 'string', maxLength: 255 }
           }
         },
         response: {

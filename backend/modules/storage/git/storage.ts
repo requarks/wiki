@@ -44,6 +44,13 @@ const SETTLE_LIMIT = 1000
 const MAX_MOVE_HOPS = 100
 
 /**
+ * The most characters of an author's own commit message that are kept. An argument to a process is
+ * capped by the OS (128 KiB on Linux, less on Windows), and one over it fails the commit — and with
+ * it every sync after, since the change stays queued.
+ */
+const MAX_COMMIT_MESSAGE_LENGTH = 4096
+
+/**
  * This instance's working copy, as this module keeps it between operations.
  *
  * Cached against the configuration it was set up from, so that changing a setting in the admin area
@@ -442,9 +449,10 @@ async function replay(
           repo,
           target,
           [relPath],
-          change.kind === 'page'
-            ? `docs: ${existed ? 'update' : 'create'} ${change.label}`
-            : `docs: upload ${change.label}`,
+          commitMessageOf(change.message) ||
+            (change.kind === 'page'
+              ? `docs: ${existed ? 'update' : 'create'} ${change.label}`
+              : `docs: upload ${change.label}`),
           by
         )
       }
@@ -702,6 +710,38 @@ async function commitPaths(
     ...paths
   ])
   return true
+}
+
+/**
+ * A commit message given by a person — a page save's reason for change — made safe to hand git, or
+ * empty when nothing of it is left.
+ *
+ * Nothing here is about the command: git is spawned without a shell and the message is the value of
+ * `-m`, so it cannot be read as anything but the message. It is about what the message does to the
+ * terminal of whoever reads the history, and what it does to the commit:
+ * - Control characters other than a tab and a newline are dropped. Escape sequences in a commit
+ *   message reach a terminal untouched through `git log`, where they can recolour, rewrite or hide
+ *   lines, retitle the window and, through OSC 52, write the clipboard. A NUL would fail the spawn.
+ * - So are the bidirectional embedding, override and isolate characters, which make a line display
+ *   in an order other than the one it is stored in. Right-to-left text needs none of them.
+ * - It is cut to `MAX_COMMIT_MESSAGE_LENGTH`.
+ */
+function commitMessageOf(given: string | null | undefined): string {
+  const kept: string[] = []
+  for (const char of (given ?? '').replace(/\r\n?/g, '\n')) {
+    const code = char.codePointAt(0)!
+    const isControl =
+      (code < 0x20 && char !== '\n' && char !== '\t') || (code >= 0x7f && code <= 0x9f)
+    const isBidiControl = (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069)
+    if (isControl || isBidiControl) {
+      continue
+    }
+    kept.push(char)
+    if (kept.length >= MAX_COMMIT_MESSAGE_LENGTH) {
+      break
+    }
+  }
+  return kept.join('').trim()
 }
 
 /** A page's path as a commit message names it: its locale and where it sits. */
@@ -1071,6 +1111,7 @@ const gitStorage: StorageModule = {
       op: 'put',
       path: relPath,
       label: pageLabel(ref),
+      message: ref.reason,
       data: Buffer.from(serializePage(ref, page), 'utf8'),
       actorId: ref.actorId
     })

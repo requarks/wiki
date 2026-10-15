@@ -419,6 +419,11 @@ export interface StoragePageRef {
   siteId: string
   /** Who is making this change. As on `StorageAssetRef`. */
   actorId?: string
+  /**
+   * Why, in the author's words — the reason for change given on a save. A target that keeps history
+   * records it with the change; absent when nobody gave one.
+   */
+  reason?: string
   locale: string
   /** Slash-separated, with no leading slash and no file extension. */
   path: string
@@ -454,6 +459,7 @@ export interface StorageOutboxChange {
   previousPath?: string | null
   label: string
   previousLabel?: string | null
+  message?: string | null
   data?: Buffer | null
   actorId?: string | null
 }
@@ -463,6 +469,7 @@ export interface StorageQueuedChange extends Omit<StorageOutboxChange, 'data'> {
   id: number
   previousPath: string | null
   previousLabel: string | null
+  message: string | null
   actorId: string | null
   createdAt: Date
 }

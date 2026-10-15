@@ -1446,6 +1446,9 @@ export const storageOutbox = pgTable(
     // -> How a commit message names the content, worked out when the change was made
     label: text().notNull(),
     previousLabel: text(),
+    // -> The commit message its author gave — the reason for change of a page save — used instead of
+    //    the one made from the label. Null when nobody gave one.
+    message: text(),
     // -> The file as written, for a `put`
     data: bytea(),
     // -> Not a foreign key: a commit made after the account is gone still happened, and falls back to

@@ -444,7 +444,8 @@ class NavigationAutomation {
    * - Within the same menu, every link to it is pointed at where it now is.
    * - Into another, the link is taken out of the menu of the folder it left and put at the end of the
    *   menu of the folder it arrived in, keeping its label, icon and visibility. Where that folder owns
-   *   no menu it is not put back anywhere.
+   *   no menu it is not put back anywhere. Where there was no link to take, a new one is added there,
+   *   as for a page created in that folder.
    * - And any link to it in any other menu of the site is pointed at where it now is, since a link
    *   to where a page used to be is a link to nothing.
    */
@@ -478,6 +479,23 @@ class NavigationAutomation {
           children: (carried as NavigationItem).children ?? []
         }
         await this.editMenu(siteId, newNavId, (items) => [...items, moved])
+      } else if (newNavId && newNavId !== oldNavId) {
+        // -> Nothing to carry — it was never in the menu it left, or the setting came on after it was
+        //    created — so it arrives as a new page would, unless its new menu already reaches it: by
+        //    a link to either place it has been, or by the item of the folder at its new path
+        const folderId = await this.folderIdAt(siteId, to.locale, to.path)
+        const now = { id: page.id, alias: page.alias, ...to }
+        await this.editMenu(siteId, newNavId, (items) =>
+          someItem(
+            items,
+            (item) =>
+              this.pointsAt(siteId, item, to.locale, now) ||
+              this.pointsAt(siteId, item, to.locale, was) ||
+              (item.type === 'menu' && item.showLink === true && item.targetNavId === folderId)
+          )
+            ? null
+            : [...items, this.linkTo(siteId, page)]
+        )
       }
 
       // -> Every other link to it, the menu it stayed in included, pointed at where it is now
