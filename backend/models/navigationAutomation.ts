@@ -515,14 +515,24 @@ class NavigationAutomation {
   }
 
   /**
-   * A page's title has changed.
+   * A page's title or icon has changed.
    *
    * Update Link Labels on Page/Folder Title Change: every link to it whose label was its old title
-   * takes the new one, as does a menu item opening the page's own menu. A label anybody wrote to say
-   * something else is theirs, and is left alone.
+   * takes the new one, as does a menu item opening the page's own menu — and likewise its icon. A
+   * label or an icon anybody chose to say something else is theirs, and is left alone.
+   *
+   * A link to a page with no icon was given the default one (`linkTo`), so for a link that default is
+   * the page's old icon too. Not for a menu item, which starts with the folder icon: one follows the
+   * page's icon only when it was showing exactly that icon.
    */
-  async pageRetitled(siteId: string, page: AutomatedPage, previousTitle: string): Promise<void> {
-    if (previousTitle === page.title || !this.isOn(siteId, 'updateLabelsOnRename')) {
+  async pageRelabeled(
+    siteId: string,
+    page: AutomatedPage,
+    previous: { title: string; icon?: string | null }
+  ): Promise<void> {
+    const titleChanged = previous.title !== page.title
+    const iconChanged = (previous.icon ?? '') !== (page.icon ?? '')
+    if ((!titleChanged && !iconChanged) || !this.isOn(siteId, 'updateLabelsOnRename')) {
       return
     }
     await this.guarded('update page link labels', async () => {
@@ -531,11 +541,23 @@ class NavigationAutomation {
       for (const menu of await this.menusOf(siteId)) {
         await this.editMenu(siteId, menu.id, (items) =>
           mapItems(items, (item) => {
-            const isOurs =
+            const isMenu =
               (item.type === 'menu' && item.targetNavId === page.id) ||
-              (item.type === 'menu' && item.showLink === true && item.targetNavId === folderId) ||
-              this.pointsAt(siteId, item, menu.locale, page)
-            return isOurs && item.label === previousTitle ? { ...item, label: page.title } : item
+              (item.type === 'menu' && item.showLink === true && item.targetNavId === folderId)
+            if (!isMenu && !this.pointsAt(siteId, item, menu.locale, page)) {
+              return item
+            }
+            const next = { ...item }
+            if (titleChanged && item.label === previous.title) {
+              next.label = page.title
+            }
+            if (iconChanged) {
+              const oldIcon = isMenu ? previous.icon : previous.icon || DEFAULT_LINK_ICON
+              if (oldIcon && item.icon === oldIcon) {
+                next.icon = isMenu ? page.icon || DEFAULT_MENU_ICON : page.icon || DEFAULT_LINK_ICON
+              }
+            }
+            return next.label !== item.label || next.icon !== item.icon ? next : item
           })
         )
       }

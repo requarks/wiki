@@ -968,7 +968,7 @@
   "admin.navigation.subtitle": "Manage the navigation menus of your wiki site",
   "admin.navigation.title": "Navigation",
   "admin.navigation.updateLabelsOnRename": "Update Link Labels on Page/Folder Title Change",
-  "admin.navigation.updateLabelsOnRenameHint": "When the title of a page or folder changes, rename the links pointing to it whose label was exactly the previous title. A label edited to something else is kept as is.",
+  "admin.navigation.updateLabelsOnRenameHint": "When the title of a page or folder changes, rename the links pointing to it whose label was exactly the previous title. Likewise when the icon of a page changes, for the links still showing the previous icon. A label or icon edited to something else is kept as is.",
   "admin.notifications.backlog": "Backlog",
   "admin.notifications.backlogHint": "Events not yet turned into notifications. A backlog that keeps growing means delivery is falling behind.",
   "admin.notifications.configureMail": "Configure",

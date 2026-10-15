@@ -2223,19 +2223,18 @@ class Pages {
         updatedAt: sql`now()`
       })
       .where(eq(treeTable.id, id))
-    if (treeTitle !== null) {
-      await WIKI.models.navigationAutomation.pageRetitled(
-        siteId,
-        {
-          id,
-          locale: updated.locale,
-          path: updated.path,
-          title: updated.title,
-          alias: updated.alias
-        },
-        existing.title
-      )
-    }
+    await WIKI.models.navigationAutomation.pageRelabeled(
+      siteId,
+      {
+        id,
+        locale: updated.locale,
+        path: updated.path,
+        title: updated.title,
+        icon: updated.icon,
+        alias: updated.alias
+      },
+      { title: existing.title, icon: existing.icon }
+    )
 
     // -> The source is whatever this save set it to, else whatever it already was: a save that only
     //    changed the title still rewrites the copy, since the title is in its front matter
@@ -2555,7 +2554,10 @@ class Pages {
         path: page.path
       })
     }
-    await WIKI.models.navigationAutomation.pageRetitled(siteId, automated, page.title)
+    await WIKI.models.navigationAutomation.pageRelabeled(siteId, automated, {
+      title: page.title,
+      icon: page.icon
+    })
     invalidateAppShellCache()
     return { page: moved, versionId }
   }
