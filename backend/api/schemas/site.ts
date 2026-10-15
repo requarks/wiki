@@ -286,23 +286,47 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       navigation: {
         type: 'object',
         description:
-          'How the navigation menus of this site follow changes to its content. All off by default.',
+          'How the navigation menus of this site follow changes to its content. All on for a new site; a site that predates them has them off.',
         properties: {
           addPagesToParentMenu: {
             type: 'boolean',
-            description: 'Add a new page to the menu of its direct parent folder.'
+            description:
+              "Add a link to a new page at the end of the menu owned by its folder — the locale's own menu at the site root. With `createFolderMenus` as well, a new folder's menu is added there as a menu item."
           },
           removePagesFromParentMenu: {
             type: 'boolean',
-            description: 'Remove a deleted page from the menu of its direct parent folder.'
+            description:
+              'Remove the links to a deleted page from the menu owned by its folder, and the menu items opening a deleted folder from the menu owned by the folder above it.'
+          },
+          migrateLinksOnMove: {
+            type: 'boolean',
+            description:
+              "Move a moved page's link from the menu of the folder it left to the menu of the folder it arrived in (not put back where that folder owns none), and point every other link to it — or, for a moved or renamed folder, to anything under it — at where it now is."
+          },
+          updateLabelsOnRename: {
+            type: 'boolean',
+            description:
+              "Rename the links to a page, and the menu items opening a page's or folder's menu, when its title changes — those whose label was the old title exactly, and no others."
           },
           createFolderMenus: {
             type: 'boolean',
-            description: 'Create a menu for a folder when it is created.'
+            description:
+              'Give a folder an empty menu of its own (override, for it and everything under it) when it comes into existence, created on its own or along the way of something written under it.'
           },
           deleteOrphanedMenus: {
             type: 'boolean',
-            description: 'Delete a menu once no page uses it any more.'
+            description:
+              "Delete, on a schedule, every menu that is not a locale's own, is the sidebar of no page or folder, and is opened by no menu item."
+          },
+          showParentLink: {
+            type: 'boolean',
+            description:
+              'Show a "Go up" link at the top of every menu that is not a locale\'s root menu, to the page or folder above the one owning it — unless the menu was opened from a menu item, where "Go back" takes its place.'
+          },
+          includeStorageOperations: {
+            type: 'boolean',
+            description:
+              'Also run the automations for what an import or a storage sync does. Off, they run for what a person does and nothing else.'
           }
         }
       },

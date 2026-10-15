@@ -1,6 +1,17 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
-import { navigation as navigationTable, tree as treeTable } from '../db/schema.ts'
-import { CustomError, decodeTreePath, encodeTreeLabel, treeLabelSql } from '../helpers/common.ts'
+import {
+  navigation as navigationTable,
+  pages as pagesTable,
+  tree as treeTable
+} from '../db/schema.ts'
+import {
+  CustomError,
+  decodeTreePath,
+  encodeTreeLabel,
+  encodeTreePath,
+  treeLabelSql
+} from '../helpers/common.ts'
+import { liveCondition } from '../helpers/publishing.ts'
 
 export const NAVIGATION_MODES = [
   'inherit',
@@ -13,16 +24,71 @@ export type NavigationMode = (typeof NAVIGATION_MODES)[number]
 
 export interface NavigationItem {
   id: string
-  type: 'link' | 'header' | 'separator'
+  /**
+   * `menu` draws like a link but opens another menu in the sidebar instead of going anywhere — a
+   * shortcut down the tree, so that a reader can reach a page under `/guides` without first loading
+   * `/guides` to get its sidebar. Top level only: the sidebar has no way to open one from a submenu.
+   */
+  type: 'link' | 'header' | 'separator' | 'menu'
   label?: string
   icon?: string
   target?: string
+  /**
+   * A `menu` item only: the menu it opens, by id — which for a tree entry's menu is the entry's own id,
+   * so it follows the entry through a move or a rename. Always one of the same site and locale.
+   */
+  targetNavId?: string
+  /**
+   * A `menu` item only: whether it is also a link to the page at the target menu's location — the
+   * page owning it, or the one sharing a folder's path — drawn as a link with a separate chevron for
+   * the menu. Has no effect where there is no such page, as on a folder nobody wrote a page for.
+   */
+  showLink?: boolean
   openInNewWindow?: boolean
   /** A link with children only: whether the sidebar shows its submenu already open. */
   expandByDefault?: boolean
   visibilityGroups?: string[]
   children?: NavigationItem[]
 }
+
+/**
+ * A menu as something an item can point at: where the entry owning it sits, in the shape the page
+ * rules are asked about.
+ */
+export interface NavigationOwner {
+  id: string
+  /** Null only for a menu whose owning tree entry is gone, which nothing can reach any more. */
+  locale: string | null
+  /** Where the owning entry sits. Empty for a locale's root menu, null for an orphaned one. */
+  path: string | null
+  tags: string[]
+  /** Whether this is a locale's site-wide menu, the one every page falls back to. */
+  isRoot: boolean
+  /**
+   * The page at the menu's location, if one exists: the page owning it, the page sharing the path of
+   * the folder owning it, or the home page for a locale's root menu.
+   */
+  pageId: string | null
+}
+
+/**
+ * The page a `menu` item links to, as the page rules and the publishing rule are asked about it — by
+ * the route answering a reader, who may not be allowed to know it is there.
+ */
+export interface NavigationTargetPage {
+  siteId: string
+  path: string
+  locale: string
+  tags: string[]
+  isLive: boolean
+}
+
+/**
+ * Asked of every `menu` item a save ADDS, by the route handling it: whether the caller may point at
+ * that menu. Who is asking is the caller's business, so the model only applies the answer. Absent for
+ * a save made on the wiki's own behalf, which is not refused anything.
+ */
+export type MayPickMenuTarget = (target: NavigationOwner) => boolean
 
 export interface UpdateNavigationResult {
   navigationMode: NavigationMode
@@ -47,6 +113,25 @@ export interface NavigationSummary {
 export interface NavigationPage {
   total: number
   menus: NavigationSummary[]
+}
+
+/**
+ * Where the entry owning a menu sits, from the row of a menu joined to the tree: empty for a locale's
+ * root menu, which no entry owns, and null for a menu whose owning entry is gone.
+ */
+function ownerPath(row: {
+  locale: string | null
+  folderPath: string | null
+  fileName: string | null
+}): string | null {
+  if (row.locale !== null) {
+    return ''
+  }
+  if (row.fileName === null) {
+    return null
+  }
+  const folder = row.folderPath ? decodeTreePath(row.folderPath) : ''
+  return folder ? `${folder}/${row.fileName}` : row.fileName
 }
 
 /** An item is visible when it names no group, or names one the viewer belongs to. */
@@ -81,26 +166,320 @@ class Navigation {
    *                   an editor that could not see an item would drop it on the next save.
    */
   async getNav(
+    siteId: string,
     id: string,
-    { userGroups = [], unfiltered = false }: { userGroups?: string[]; unfiltered?: boolean } = {}
+    {
+      userGroups = [],
+      unfiltered = false,
+      mayOpenPage
+    }: {
+      userGroups?: string[]
+      unfiltered?: boolean
+      /**
+       * Asked of the page a `showLink` menu item would link to: whether this reader may be sent there.
+       * Without it no item links anywhere, which is the safe answer for a caller that has not said.
+       */
+      mayOpenPage?: (page: NavigationTargetPage) => boolean
+    } = {}
   ): Promise<NavigationItem[]> {
     const rows = await WIKI.db
       .select({ items: navigationTable.items })
       .from(navigationTable)
-      .where(eq(navigationTable.id, id))
+      .where(and(eq(navigationTable.id, id), eq(navigationTable.siteId, siteId)))
       .limit(1)
 
     const items = (rows[0]?.items ?? []) as NavigationItem[]
+    const targets = await this.menuTargetsOf(siteId, id, items)
     if (unfiltered) {
-      return items
+      // -> The editor is told where each `menu` item points, and which no longer point anywhere,
+      //    rather than having them dropped: it saves what it was given, so a dropped item is a deleted one
+      return items.map((item) => {
+        if (item.type !== 'menu') {
+          return item
+        }
+        const target = targets.get(item.targetNavId ?? '')
+        return {
+          ...item,
+          targetPath: target?.path ?? null,
+          targetMissing: !target,
+          targetHasPage: Boolean(target?.pageId)
+        }
+      })
     }
-    return items
+    const visible = items
       .filter((item) => isVisibleTo(item, userGroups))
-      .map((item) =>
-        item.children?.length
-          ? { ...item, children: item.children.filter((c) => isVisibleTo(c, userGroups)) }
-          : item
+      .filter((item) => item.type !== 'menu' || targets.has(item.targetNavId ?? ''))
+    const pages = await this.targetPagesOf(siteId, visible, targets)
+    return visible.map((item) => {
+      if (item.type === 'menu') {
+        // -> Only a page this reader may be sent to: anything else would hand out the path of a page
+        //    they may not know exists, for a link that could only answer them with a 404
+        const page = pages.get(item.targetNavId ?? '')
+        return page && mayOpenPage?.(page) ? { ...item, targetPage: page.path } : item
+      }
+      return item.children?.length
+        ? { ...item, children: item.children.filter((c) => isVisibleTo(c, userGroups)) }
+        : item
+    })
+  }
+
+  /**
+   * The pages the `showLink` menu items of a menu link to, by target menu id.
+   *
+   * A locale's root menu links to its home page, addressed as `home`, which is the path that page has
+   * and the one the page rules are asked about it at.
+   */
+  private async targetPagesOf(
+    siteId: string,
+    items: NavigationItem[],
+    targets: Map<string, NavigationOwner>
+  ): Promise<Map<string, NavigationTargetPage>> {
+    const wanted = new Map<string, NavigationOwner>()
+    for (const item of items) {
+      const target = targets.get(item.targetNavId ?? '')
+      if (item.type === 'menu' && item.showLink && target?.pageId) {
+        wanted.set(target.id, target)
+      }
+    }
+    if (wanted.size < 1) {
+      return new Map()
+    }
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
+      })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          inArray(
+            pagesTable.id,
+            [...wanted.values()].map((target) => target.pageId!)
+          )
+        )
       )
+    const byPage = new Map(rows.map((row) => [row.id, row]))
+    const pages = new Map<string, NavigationTargetPage>()
+    for (const target of wanted.values()) {
+      const row = byPage.get(target.pageId!)
+      if (row && target.locale) {
+        pages.set(target.id, {
+          siteId,
+          path: target.isRoot ? 'home' : target.path!,
+          locale: target.locale,
+          tags: (row.tags ?? []) as string[],
+          isLive: Boolean(row.isLive)
+        })
+      }
+    }
+    return pages
+  }
+
+  /**
+   * Who owns each of a site's menus, by menu id — all of them, or the ones named.
+   *
+   * A site-wide menu is keyed by locale and owned by nothing in the tree; any other is keyed by the id
+   * of the entry owning it, which is how the two are told apart here.
+   */
+  async describeNavs(siteId: string, ids?: string[]): Promise<Map<string, NavigationOwner>> {
+    if (ids && ids.length < 1) {
+      return new Map()
+    }
+    const rows = await WIKI.db
+      .select({
+        id: navigationTable.id,
+        locale: navigationTable.locale,
+        ownerLocale: treeTable.locale,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        tags: treeTable.tags,
+        /*
+          The page at the menu's location: the owning entry itself when it is a page, the page beside
+          it when it is a folder -- a page and a folder may share a path -- and the home page for a
+          locale's root menu, which no entry owns.
+        */
+        pageId: sql<string | null>`(
+          SELECT p.id
+          FROM tree p
+          WHERE p."siteId" = ${navigationTable.siteId}
+            AND p.tree = 'page'
+            AND p.locale = coalesce(${navigationTable.locale}, ${treeTable.locale})
+            AND p."folderPath" = coalesce(${treeTable.folderPath}, ''::ltree)
+            AND p."fileName" = coalesce(${treeTable.fileName}, 'home')
+          LIMIT 1
+        )`
+      })
+      .from(navigationTable)
+      .leftJoin(
+        treeTable,
+        and(eq(treeTable.id, navigationTable.id), eq(treeTable.siteId, navigationTable.siteId))
+      )
+      .where(
+        and(eq(navigationTable.siteId, siteId), ids ? inArray(navigationTable.id, ids) : undefined)
+      )
+    return new Map(
+      rows.map((row) => [
+        row.id,
+        {
+          id: row.id,
+          locale: row.locale ?? row.ownerLocale,
+          path: ownerPath(row),
+          tags: (row.tags ?? []) as string[],
+          isRoot: row.locale !== null,
+          pageId: row.pageId ?? null
+        }
+      ])
+    )
+  }
+
+  /**
+   * Where "Go up" goes from a menu: the page or folder above the one owning it.
+   *
+   * Above the OWNER rather than above the page being read, since that is where the menu changes: a
+   * page deep in a section shows the section's menu, and so does every folder between it and the
+   * section, so going up one folder at a time would show the same menu again at every step.
+   *
+   * A locale's root menu has nothing above it, and a menu whose owner is gone has no place to be above
+   * — null for both. For a menu owned at the top level of a locale, the parent is the locale's root,
+   * an empty path.
+   */
+  async menuParent(
+    siteId: string,
+    navId: string
+  ): Promise<{ locale: string; path: string } | null> {
+    const owner = (await this.describeNavs(siteId, [navId])).get(navId)
+    if (!owner || owner.isRoot || owner.path === null || !owner.locale) {
+      return null
+    }
+    const segments = owner.path.split('/')
+    return { locale: owner.locale, path: segments.slice(0, -1).join('/') }
+  }
+
+  /**
+   * The menus the `menu` items of one menu point at that are still there to open, by id.
+   *
+   * A target is gone when its menu was deleted — by the admin area, or with the page owning it — and
+   * also when it has moved to another locale with its entry, since a sidebar never crosses locales.
+   * Either way the item has nothing to open and is left out of what a reader is sent.
+   */
+  private async menuTargetsOf(
+    siteId: string,
+    navId: string,
+    items: NavigationItem[]
+  ): Promise<Map<string, NavigationOwner>> {
+    const ids = items.flatMap((item) =>
+      item.type === 'menu' && item.targetNavId ? [item.targetNavId] : []
+    )
+    if (ids.length < 1) {
+      return new Map()
+    }
+    const owners = await this.describeNavs(siteId, [navId, ...ids])
+    const locale = owners.get(navId)?.locale
+    const targets = new Map<string, NavigationOwner>()
+    for (const id of ids) {
+      const owner = owners.get(id)
+      if (owner && owner.path !== null && owner.locale === locale) {
+        targets.set(id, owner)
+      }
+    }
+    return targets
+  }
+
+  /**
+   * The menus a `menu` item in a locale may point at: every menu of the site in that locale whose
+   * owner still exists. Who may pick which is the route's question, asked of the `NavigationOwner`s.
+   */
+  async listNavTargets(siteId: string, locale: string): Promise<NavigationOwner[]> {
+    const owners = await this.describeNavs(siteId)
+    return [...owners.values()]
+      .filter((owner) => owner.locale === locale && owner.path !== null)
+      .toSorted((a, b) => Number(b.isRoot) - Number(a.isRoot) || a.path!.localeCompare(b.path!))
+  }
+
+  /**
+   * Check the items about to be stored as a menu, refusing what the sidebar could not draw.
+   *
+   * A `menu` item must name a menu of the same site and locale that exists, and not the menu it sits
+   * in. It may not be nested: the sidebar opens one from the top level only. The same checks whoever
+   * is saving — the editor, the admin area, or an automation adding items on the wiki's behalf — so
+   * they live here rather than in a route.
+   *
+   * `mayPick` is asked only of the targets this save ADDS, compared with what is stored: an item another
+   * editor pointed at a menu this one may not manage is theirs to keep, and refusing every save of the
+   * menu until it was removed would make it this editor's problem.
+   *
+   * @param navId The menu the items are for, which for a tree entry need not exist yet
+   * @param locale The locale of that menu, which a target has to share
+   */
+  async validateItems({
+    siteId,
+    navId,
+    locale,
+    items,
+    mayPick
+  }: {
+    siteId: string
+    navId: string
+    locale: string
+    items: NavigationItem[]
+    mayPick?: MayPickMenuTarget
+  }): Promise<void> {
+    if (items.some((item) => item.children?.some((child) => child.type === 'menu'))) {
+      throw new CustomError(
+        'navMenuNested',
+        'A menu item cannot be nested under a link: it can only be added at the top level.',
+        400
+      )
+    }
+    const targetIds = items.flatMap((item) =>
+      item.type === 'menu' ? [item.targetNavId ?? ''] : []
+    )
+    if (targetIds.length < 1) {
+      return
+    }
+    if (targetIds.some((id) => !id)) {
+      throw new CustomError('navMenuNoTarget', 'A menu item has no target menu selected.', 400)
+    }
+    if (targetIds.includes(navId)) {
+      throw new CustomError('navMenuSelfTarget', 'A menu item cannot open the menu it is in.', 400)
+    }
+
+    const stored = await WIKI.db
+      .select({ items: navigationTable.items })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+      .limit(1)
+    const kept = new Set(
+      ((stored[0]?.items ?? []) as NavigationItem[]).flatMap((item) =>
+        item.type === 'menu' && item.targetNavId ? [item.targetNavId] : []
+      )
+    )
+
+    const owners = await this.describeNavs(siteId, targetIds)
+    for (const id of targetIds) {
+      const owner = owners.get(id)
+      if (!owner || owner.path === null || owner.locale !== locale) {
+        // -> An item kept from before whose target has since gone is drawn by nobody, so it is no
+        //    reason to refuse the save; only a target being added has to exist
+        if (kept.has(id)) {
+          continue
+        }
+        throw new CustomError(
+          'navMenuTargetInvalid',
+          'A menu item points at a menu that does not exist in this locale.',
+          400
+        )
+      }
+      if (mayPick && !kept.has(id) && !mayPick(owner)) {
+        throw new CustomError(
+          'navMenuTargetForbidden',
+          'You are not allowed to add a menu item opening a menu whose navigation you do not manage.',
+          403
+        )
+      }
+    }
   }
 
   /**
@@ -209,17 +588,10 @@ class Navigation {
       .map((row): NavigationSummary => {
         // -> A site-wide menu is keyed by locale; any other is keyed by the id of the entry owning it
         const isRoot = row.locale !== null
-        let path: string | null = null
-        if (isRoot) {
-          path = ''
-        } else if (row.fileName !== null) {
-          const folder = row.folderPath ? decodeTreePath(row.folderPath) : ''
-          path = folder ? `${folder}/${row.fileName}` : row.fileName
-        }
         return {
           id: row.id,
           locale: row.locale ?? row.ownerLocale,
-          path,
+          path: ownerPath(row),
           isRoot,
           itemCount: row.itemCount,
           pageCount: row.pageCount
@@ -245,7 +617,19 @@ class Navigation {
    * What the admin area saves through: it edits a menu as a menu, with no page in hand, so neither the
    * mode nor the descendants of any entry move — only the items of this one row.
    */
-  async setNavItems(siteId: string, navId: string, items: NavigationItem[]): Promise<void> {
+  async setNavItems(
+    siteId: string,
+    navId: string,
+    items: NavigationItem[],
+    { mayPick }: { mayPick?: MayPickMenuTarget } = {}
+  ): Promise<void> {
+    const owner = (await this.describeNavs(siteId, [navId])).get(navId)
+    if (!owner) {
+      throw new CustomError('navNotFound', 'This navigation menu does not exist.', 404)
+    }
+    // -> A menu whose entry is gone has no locale, which no target shares: it keeps what it holds and
+    //    gains no new `menu` item
+    await this.validateItems({ siteId, navId, locale: owner.locale ?? '', items, mayPick })
     const updated = await WIKI.db
       .update(navigationTable)
       .set({ items })
@@ -314,32 +698,121 @@ class Navigation {
     return { locale: owner.locale, path: folder ? `${folder}/${owner.fileName}` : owner.fileName }
   }
 
-  /** The tree entry a navigation change is addressed to. */
+  /**
+   * The tree entry a navigation change is addressed to: a page, or a folder — which has a sidebar of
+   * its own to set even where nobody wrote a page at its path. Never an asset, which is served as a
+   * file and is drawn in no sidebar.
+   */
   private async getEntry(siteId: string, pageId: string) {
     const entries = await WIKI.db
       .select()
       .from(treeTable)
-      .where(and(eq(treeTable.id, pageId), eq(treeTable.siteId, siteId)))
+      .where(
+        and(
+          eq(treeTable.id, pageId),
+          eq(treeTable.siteId, siteId),
+          inArray(treeTable.type, ['page', 'folder'])
+        )
+      )
       .limit(1)
     const entry = entries[0]
     if (!entry) {
-      throw new CustomError('navInvalidPage', 'This page does not exist.', 404)
+      throw new CustomError('navInvalidPage', 'This page or folder does not exist.', 404)
     }
     return entry
+  }
+
+  /**
+   * A page or folder as the page rules are asked about it, by its tree entry id — what the navigation
+   * routes check `manage:navigation` against. Null for anything else, or nothing.
+   */
+  async entryRef(
+    siteId: string,
+    entryId: string
+  ): Promise<{ path: string; locale: string; tags: string[] } | null> {
+    const entry = await this.getEntry(siteId, entryId).catch(() => null)
+    if (!entry) {
+      return null
+    }
+    const folder = entry.folderPath ? decodeTreePath(entry.folderPath) : ''
+    return {
+      path: folder ? `${folder}/${entry.fileName}` : entry.fileName,
+      locale: entry.locale,
+      tags: (entry.tags ?? []) as string[]
+    }
+  }
+
+  /**
+   * The sidebar at a path where there is no page: the folder there, if any, with how it resolves its
+   * menu — or, with no folder either, the menu a page written there would inherit.
+   *
+   * What the missing-page screen draws its sidebar from, and what its Edit Nav sets the mode of. A
+   * folder's `navigationId` is resolved and stored like a page's, so it is read rather than worked out.
+   *
+   * @param path Slash path, already normalized for a lookup
+   * @param includeFolder Look for a folder at all — false for a requester who may not know of one
+   */
+  async navigationAtPath(
+    siteId: string,
+    locale: string,
+    path: string,
+    { includeFolder = true }: { includeFolder?: boolean } = {}
+  ): Promise<{
+    folderId: string | null
+    navigationMode: NavigationMode
+    navigationId: string | null
+  }> {
+    const segments = path.split('/').filter(Boolean)
+    const fileName = segments.at(-1)
+    const folderPath = encodeTreePath(segments.slice(0, -1).join('/'))
+    if (fileName && includeFolder) {
+      const folders = await WIKI.db
+        .select({
+          id: treeTable.id,
+          navigationMode: treeTable.navigationMode,
+          navigationId: treeTable.navigationId
+        })
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId),
+            eq(treeTable.locale, locale),
+            eq(treeTable.type, 'folder'),
+            eq(treeTable.folderPath, folderPath),
+            eq(treeTable.fileName, fileName)
+          )
+        )
+        .limit(1)
+      if (folders[0]) {
+        return {
+          folderId: folders[0].id,
+          navigationMode: folders[0].navigationMode as NavigationMode,
+          navigationId: folders[0].navigationId ?? null
+        }
+      }
+    }
+    return {
+      folderId: null,
+      navigationMode: 'inherit',
+      navigationId: await this.ancestorNavId(siteId, locale, folderPath)
+    }
   }
 
   /**
    * The menu a tree entry falls back to: the nearest ancestor that overrides or hides, or the
    * site-wide menu when nothing above it does either.
    *
+   * What a page or folder is given when it is created or moved, as well as what a mode change
+   * repoints descendants to: an entry carries the menu it resolves to from the moment it exists.
+   *
+   * A page and a folder may share a path, and both may override what is under it. The page wins the
+   * tie, being the one a reader at that path sees and the one Edit Nav is offered on there — a folder's
+   * own mode is only reachable from its path while there is no page at it.
+   *
    * @param siteId Site the entry belongs to, since paths are only unique within one
    * @param folderPath Encoded ltree path of the folder holding the entry, empty at the site root
    */
-  private async ancestorNavId(
-    siteId: string,
-    locale: string,
-    folderPath: string
-  ): Promise<string | null> {
+  async ancestorNavId(siteId: string, locale: string, folderPath: string): Promise<string | null> {
     if (!folderPath) {
       return this.siteNavId(siteId, locale)
     }
@@ -352,7 +825,8 @@ class Navigation {
         AND "locale" = ${locale}
         AND ("folderPath" || ${treeLabelSql(sql`"fileName"`)}) @> ${folderPath}::ltree
         AND "navigationMode" IN ('override', 'hide')
-      ORDER BY nlevel("folderPath") DESC
+        AND tree IN ('page', 'folder')
+      ORDER BY nlevel("folderPath") DESC, (tree = 'page') DESC
       LIMIT 1
     `)
     const rows = (result.rows ?? result) as any[]
@@ -481,19 +955,21 @@ class Navigation {
     siteId,
     pageId,
     mode,
-    items
+    items,
+    mayPick
   }: {
     siteId: string
     pageId: string
     mode: NavigationMode
     items?: NavigationItem[]
+    mayPick?: MayPickMenuTarget
   }): Promise<UpdateNavigationResult> {
     const entry = await this.getEntry(siteId, pageId)
 
     const folderPath = entry.folderPath ?? ''
     // -> The home page at the root edits the site-wide menu FOR ITS LOCALE rather than one of its own,
     //    which is what makes it the menu every other page in that locale inherits
-    const isSiteRoot = folderPath === '' && entry.fileName === 'home'
+    const isSiteRoot = folderPath === '' && entry.fileName === 'home' && entry.type === 'page'
     const ownNavId = isSiteRoot ? await this.siteNavId(siteId, entry.locale) : entry.id
     const label = encodeTreeLabel(entry.fileName)
     const fullPath = folderPath ? `${folderPath}.${label}` : label
@@ -515,6 +991,9 @@ class Navigation {
           400
         )
       }
+      // -> Every menu reached from this one is in the entry's locale: an inherited menu is found by a
+      //    walk that never leaves it, and the site-wide one is the locale's own
+      await this.validateItems({ siteId, navId: targetNavId, locale: entry.locale, items, mayPick })
       await WIKI.db
         .insert(navigationTable)
         .values({ id: targetNavId, siteId, items })

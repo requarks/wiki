@@ -7,6 +7,25 @@
     :thumb-style="thumbStyle"
     :bar-style="barStyle">
     <w-list class="sidebar-nav-list" clickable dense dark>
+      <!-- -> Only in a menu opened from a `menu` item: back to the one it was opened from -->
+      <template v-if="siteStore.nav.stack.length > 0">
+        <w-item clickable @click="siteStore.closeNavigationMenu">
+          <w-item-section side><w-icon name="la:arrow-left" color="white" /></w-item-section>
+          <w-item-section class="text-white">{{ t('navEdit.goBack') }}</w-item-section>
+        </w-item>
+        <w-separator dark />
+      </template>
+      <!--
+        Otherwise, where the site has it on: up to the page or folder above the one owning the menu.
+        Never on a locale's root menu, which has nothing above it -- the server answers no parent.
+      -->
+      <template v-else-if="parentHref">
+        <w-item :to="parentHref">
+          <w-item-section side><w-icon name="la:arrow-up" color="white" /></w-item-section>
+          <w-item-section class="text-white">{{ t('navEdit.goUp') }}</w-item-section>
+        </w-item>
+        <w-separator dark />
+      </template>
       <template v-for="item of siteStore.nav.items" :key="item.id">
         <w-item-label
           class="sidebar-nav-header text-caption text-wordbreak-all"
@@ -44,6 +63,37 @@
           <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
           <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
         </w-item>
+        <!--
+          Two ways in on one row, where the item links to the page at the target menu's location too:
+          the row goes to the page and the chevron, a control of its own, opens the menu. Two siblings
+          rather than a button inside the link -- an interactive element inside an anchor is not one
+          either a browser or a screen reader can be trusted with.
+        -->
+        <div v-else-if="item.type === `menu` && item.targetPage != null" class="sidebar-nav-split">
+          <!-- -> `dense` on each: the list's own density reaches its direct rows only, and these two
+                  sit in the split row's box -->
+          <w-item class="sidebar-nav-split__link" dense :to="pageHref(item.targetPage)">
+            <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
+            <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+          </w-item>
+          <w-item
+            class="sidebar-nav-split__menu"
+            dense
+            clickable
+            :aria-label="t('navEdit.showMenu', { label: item.label })"
+            @click="siteStore.openNavigationMenu(item.targetNavId)">
+            <w-item-section side><w-icon name="mdi:chevron-right" color="white" /></w-item-section>
+          </w-item>
+        </div>
+        <!-- -> Drawn as a link, with a chevron for what it does instead: open a menu, not a page -->
+        <w-item
+          v-else-if="item.type === `menu`"
+          clickable
+          @click="siteStore.openNavigationMenu(item.targetNavId)">
+          <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
+          <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+          <w-item-section side><w-icon name="mdi:chevron-right" color="white" /></w-item-section>
+        </w-item>
         <w-separator v-else-if="item.type === `separator`" dark />
       </template>
     </w-list>
@@ -51,9 +101,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+
+import { debounce } from 'es-toolkit/function'
 
 import { decodeUrlPath } from '@/helpers/pagePaths'
 import { routableHref } from '@/helpers/renderedContent'
@@ -130,6 +182,28 @@ function destination(item) {
 }
 
 /**
+ * Where "Go up" leads: the parent the server named for the menu on screen, while it is that menu's
+ * and the site shows the link. The locale's root, for a menu owned at its top level.
+ */
+const parentHref = computed(() => {
+  const { navId, parent } = siteStore.navParent
+  if (!siteStore.navigation.showParentLink || !parent || navId !== siteStore.nav.currentId) {
+    return null
+  }
+  const prefix = siteStore.localeUrlPrefix(parent.locale)
+  return parent.path ? `${prefix}/${parent.path}` : prefix || '/'
+})
+
+/**
+ * Where a `menu` item's link goes: the page at its target's location, in the locale being read. The
+ * server sends the page's own path, which for a locale's home page is `home` -- served at the root.
+ */
+function pageHref(path) {
+  const prefix = siteStore.localeUrlPrefix(pageStore.locale)
+  return path === 'home' ? prefix || '/' : `${prefix}/${path}`
+}
+
+/**
  * Whether a nav item points at the page being read.
  *
  * Only a routed item can be: an address that leaves the wiki is never where the reader already is, and
@@ -155,15 +229,35 @@ function containsCurrent(item) {
 
 // WATCHERS
 
+/*
+  On every page load and not only when the page's menu changes: a menu opened from a `menu` item is put
+  away by following a link out of it, even to a page that resolves to the very menu that was open.
+*/
 watch(
-  () => pageStore.navigationId,
-  (newValue) => {
-    if (newValue && newValue !== siteStore.nav.currentId) {
-      siteStore.fetchNavigation(newValue)
+  () => [pageStore.id, pageStore.navigationId],
+  ([, navigationId]) => {
+    if (navigationId) {
+      siteStore.showPageNavigation(navigationId)
     }
   },
   { immediate: true }
 )
+
+/*
+  A write this browser made to pages or the tree may have changed the menu on screen, through one of
+  the site's navigation automations -- see `contentChanged` in `boot/api.js`. Debounced, because one
+  action is often several writes: a move with its links updated, a folder rename with its title.
+*/
+const onContentChanged = debounce(() => siteStore.refreshNavigation(), 300)
+
+onMounted(() => {
+  EVENT_BUS.on('contentChanged', onContentChanged)
+})
+
+onBeforeUnmount(() => {
+  EVENT_BUS.off('contentChanged', onContentChanged)
+  onContentChanged.cancel()
+})
 </script>
 
 <style lang="scss">
@@ -195,8 +289,38 @@ $sidebar-overlay-max: 1199.98px;
     two link shapes and not for every first child.
   */
   &-list > .w-item:first-child,
-  &-list > .w-expansion-item:first-child {
+  &-list > .w-expansion-item:first-child,
+  &-list > .sidebar-nav-split:first-child {
     margin-top: 10px;
+  }
+
+  /*
+    A `menu` item that is a link as well: the link takes the row, the chevron its own square at the end,
+    set off by a hairline so that it reads as a second target rather than a decoration on the first.
+  */
+  &-split {
+    display: flex;
+    align-items: stretch;
+    /* -> The notch of the page being read is the ROW's, not the link's: positioned off this box, it
+       stays at the sidebar's edge instead of being cut in front of the chevron */
+    position: relative;
+
+    &__link {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    &__menu {
+      flex: 0 0 auto;
+      border-inline-start: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* -> The chevron's section is the row's only one, so it reads as LEADING and keeps the gap a leading
+       icon leaves before its label -- 16px on top of the row's own, with no label after it. Without
+       it the chevron sits square in its box. Three classes, to beat WItemSection's scoped two. */
+    > .sidebar-nav-split__menu > .w-item-section--side {
+      padding-inline-end: 0;
+    }
   }
 
   .w-list {
@@ -249,6 +373,11 @@ $sidebar-overlay-max: 1199.98px;
           border-color: transparent $dark-6 transparent transparent;
         }
       }
+    }
+
+    /* -> Inside a split row the notch is placed off the row, as said at `.sidebar-nav-split` */
+    .sidebar-nav-split > .w-item.router-link-exact-active {
+      position: static;
     }
 
     /*

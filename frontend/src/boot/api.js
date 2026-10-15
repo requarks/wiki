@@ -1,5 +1,11 @@
 import ky from 'ky'
 
+/** The requests that change something, as opposed to reading it. */
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+/** A route under pages or the tree of a site: where a write can move what a sidebar menu shows. */
+const CONTENT_ROUTE = /^\/_api\/sites\/[^/]+\/(pages|tree)(\/|$)/
+
 /**
  * The HTTP client every call to the API goes through, exposed as the `API_CLIENT` global.
  *
@@ -34,6 +40,28 @@ export function initializeApi() {
       methods: ['get', 'head'],
       statusCodes: [408, 500, 502, 503, 504],
       afterStatusCodes: []
+    },
+    hooks: {
+      afterResponse: [
+        /*
+          A successful write to a page or to the tree says so on the event bus. The server may have
+          changed a navigation menu while answering it -- the automations a site can switch on add,
+          move, relabel and remove links as pages and folders change -- and the sidebar has no other
+          way to hear of that while the reader stays where they are. Announced for every such write,
+          not only one that did change a menu, because this end cannot tell; what listens re-reads one
+          small menu and redraws nothing when it is the same.
+        */
+        ({ request, response }) => {
+          if (
+            response.ok &&
+            // -> Upper-cased, since `fetch` normalizes every method's case but PATCH's
+            WRITE_METHODS.has(request.method.toUpperCase()) &&
+            CONTENT_ROUTE.test(new URL(request.url).pathname)
+          ) {
+            globalThis.EVENT_BUS?.emit('contentChanged')
+          }
+        }
+      ]
     }
   })
 

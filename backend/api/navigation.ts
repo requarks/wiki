@@ -1,27 +1,32 @@
 import { audit } from '../helpers/audit.ts'
-import { mayOnPage } from './pages.ts'
+import { normalizePagePath } from '../helpers/common.ts'
+import { mayOnPage, unpublishedFor } from './pages.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { NAVIGATION_MODES, type NavigationItem, type NavigationMode } from '../models/navigation.ts'
+import {
+  NAVIGATION_MODES,
+  type NavigationItem,
+  type NavigationMode,
+  type NavigationOwner
+} from '../models/navigation.ts'
 
 /**
- * Whether this requester may manage the navigation of the page at `pageId`.
+ * Whether this requester may manage the navigation of the page or folder at `pageId`.
  *
- * `manage:navigation` is a PAGE RULE, so it is a question about a path and is asked of the page the
- * caller is standing on. What it buys there is the MODE — whether this page inherits, overrides or
- * hides its sidebar — which is a property of the page and affects nothing above it.
- *
- * @returns The page as the rules see it, or null when there is no such page or no permission
+ * `manage:navigation` is a PAGE RULE, so it is a question about a path and is asked of the entry the
+ * caller is standing on — a page, or a folder at a path with no page, which has a sidebar of its own.
+ * What it buys there is the MODE — whether this entry inherits, overrides or hides its sidebar — which
+ * is a property of the entry and affects nothing above it.
  */
 async function mayManageNavAt(
   req: FastifyRequest,
   siteId: string,
   pageId: string
 ): Promise<boolean> {
-  const page = await WIKI.models.pages.getPage({ siteId, id: pageId })
-  if (!page) {
+  const entry = await WIKI.models.navigation.entryRef(siteId, pageId)
+  if (!entry) {
     return false
   }
-  return mayOnPage(req, 'manage:navigation', page)
+  return mayOnPage(req, 'manage:navigation', { ...entry, siteId })
 }
 
 /**
@@ -67,14 +72,45 @@ function mayManageSites(req: FastifyRequest): boolean {
   return permissions.includes('manage:sites') || permissions.includes('manage:system')
 }
 
+/**
+ * Whether this requester may point a `menu` item at a menu: `manage:navigation` on the entry owning
+ * it, the same question as editing that menu's items. `manage:sites` covers every menu of the site, as
+ * it does on the admin area's Navigation screen.
+ *
+ * A locale's root menu is owned by nothing in the tree, and the rules are asked about it at the home
+ * page's path, as `menuOwnerRef` reports it.
+ */
+function mayPickMenuTarget(req: FastifyRequest, siteId: string, target: NavigationOwner): boolean {
+  if (mayManageSites(req)) {
+    return true
+  }
+  return mayOnPage(req, 'manage:navigation', {
+    siteId,
+    path: target.isRoot ? 'home' : (target.path ?? ''),
+    locale: target.locale ?? undefined,
+    tags: target.tags
+  })
+}
+
 const navigationItem = {
   type: 'object',
   properties: {
     id: { type: 'string' },
-    type: { type: 'string', enum: ['link', 'header', 'separator'] },
+    type: { type: 'string', enum: ['link', 'header', 'separator', 'menu'] },
     label: { type: 'string' },
     icon: { type: 'string' },
     target: { type: 'string' },
+    targetNavId: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'A `menu` item only: the menu it opens in the sidebar, which must be of the same site and locale. `menu` items are top level only.'
+    },
+    showLink: {
+      type: 'boolean',
+      description:
+        "A `menu` item only: whether it also links to the page at the target menu's location — the page owning it, the page sharing its folder's path, or the home page for a locale's root menu. No effect where there is no such page."
+    },
     openInNewWindow: { type: 'boolean' },
     expandByDefault: {
       type: 'boolean',
@@ -270,7 +306,27 @@ async function routes(app: FastifyInstance) {
               ...navigationItem,
               properties: {
                 ...navigationItem.properties,
-                children: { type: 'array', items: navigationItem }
+                children: { type: 'array', items: navigationItem },
+                targetPath: {
+                  type: ['string', 'null'],
+                  description:
+                    "With `full`, on a `menu` item: where the entry owning the menu it opens sits — empty for a locale's root menu, null when the target is gone."
+                },
+                targetMissing: {
+                  type: 'boolean',
+                  description:
+                    'With `full`, on a `menu` item: whether the menu it opens is gone. Without `full` such items are left out.'
+                },
+                targetHasPage: {
+                  type: 'boolean',
+                  description:
+                    "With `full`, on a `menu` item: whether there is a page at the target menu's location for `showLink` to link to."
+                },
+                targetPage: {
+                  type: 'string',
+                  description:
+                    "Without `full`, on a `showLink` menu item: the path of the page it links to, when this reader may open it. `home` for a locale's home page. Absent otherwise, and the item then only opens the menu."
+                }
               }
             }
           }
@@ -296,10 +352,218 @@ async function routes(app: FastifyInstance) {
           )
         }
       }
-      return WIKI.models.navigation.getNav(req.params.navId, {
+      // -> A page that is not live is linked to only for whoever may see it so, as everywhere else
+      const unpublished = unpublishedFor(req)
+      return WIKI.models.navigation.getNav(req.params.siteId, req.params.navId, {
         userGroups: req.session?.authenticated ? (req.session.groups ?? []) : [],
-        unfiltered
+        unfiltered,
+        mayOpenPage: (page) =>
+          mayOnPage(req, 'read:pages', page) &&
+          (page.isLive || (unpublished !== false && unpublished(page)))
       })
+    }
+  )
+
+  /**
+   * GET WHERE "GO UP" LEADS FROM A MENU
+   */
+  app.get<{ Params: { siteId: string; navId: string } }>(
+    '/sites/:siteId/navigation/:navId/parent',
+    {
+      /*
+        No route-level permissions: readable by whoever can read the menu, which is anybody. The path
+        it answers with is a page rule's question, asked below.
+      */
+      schema: {
+        summary: 'Get the parent of a navigation menu',
+        description:
+          "Where the sidebar's \"Go up\" link leads from a menu: the page or folder above the one owning it — the locale's root, as an empty path, for a menu owned at the top level. Above the owner rather than above the page being read, since every folder between the two shows the same menu. Null for a locale's root menu, which has nothing above it, for a menu whose owner is gone, and where the requester may not read what is above it.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' },
+            navId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId', 'navId']
+        },
+        response: {
+          200: {
+            description: 'The parent, or null',
+            type: 'object',
+            properties: {
+              parent: {
+                type: ['object', 'null'],
+                properties: {
+                  locale: { type: 'string' },
+                  path: {
+                    type: 'string',
+                    description: "Slash path of the parent. Empty for the locale's root."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const parent = await WIKI.models.navigation.menuParent(req.params.siteId, req.params.navId)
+      // -> The root of a locale always answers, as the site root does; anything else is a link only
+      //    for whoever may read what is there
+      if (parent?.path && !mayOnPage(req, 'read:pages', { siteId: req.params.siteId, ...parent })) {
+        return { parent: null }
+      }
+      return { parent }
+    }
+  )
+
+  /**
+   * GET THE NAVIGATION AT A PATH WITH NO PAGE
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { path: string; locale: string } }>(
+    '/sites/:siteId/navigation/path',
+    {
+      /*
+        No route-level permissions: what is at a path is a page rule's question, asked below. A menu is
+        readable by anybody, so the menu a path inherits is not what is being protected -- the folder
+        is.
+      */
+      schema: {
+        summary: 'Get the navigation at a path with no page',
+        description:
+          "What the missing-page screen draws its sidebar from and sets the navigation mode of: the folder at the path with how it resolves its menu, or — with no folder there, or none the requester may read — the menu a page written there would inherit, with `folderId` null.\n\nThe locale must be one of the site's active locales.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', maxLength: 2048, description: 'Slash-separated path.' },
+            locale: { type: 'string', maxLength: 255 }
+          },
+          required: ['path', 'locale']
+        },
+        response: {
+          200: {
+            description: 'The navigation at that path',
+            type: 'object',
+            properties: {
+              folderId: {
+                type: ['string', 'null'],
+                description:
+                  'The folder at the path, whose navigation mode Edit Nav sets. Null when there is none.'
+              },
+              navigationMode: { type: 'string', enum: NAVIGATION_MODES },
+              navigationId: {
+                type: ['string', 'null'],
+                description: 'The menu the sidebar shows there. Null when it is hidden.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const site = WIKI.sites[req.params.siteId]
+      if (!site) {
+        return reply.notFound('This site does not exist.')
+      }
+      // -> Resolving an inherited menu creates the locale's own on demand, which an unvalidated value
+      //    from anybody must not get to do
+      if (!(site.config?.locales?.active ?? []).includes(req.query.locale)) {
+        return reply.badRequest('This locale is not active on this site.')
+      }
+      const path = normalizePagePath(req.query.path)
+      // -> A folder nobody may read here is no folder to this requester: the answer is what a page at
+      //    the path would inherit, as it is where there is nothing at all
+      return WIKI.models.navigation.navigationAtPath(req.params.siteId, req.query.locale, path, {
+        includeFolder: mayOnPage(req, 'read:pages', {
+          siteId: req.params.siteId,
+          path,
+          locale: req.query.locale
+        })
+      })
+    }
+  )
+
+  /**
+   * LIST THE MENUS A MENU ITEM MAY OPEN
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
+    '/sites/:siteId/navigation/targets',
+    {
+      /*
+        No route-level permissions: what may be picked is a page rule, `manage:navigation` on each
+        menu's owner, so the list is filtered here instead -- and is empty for whoever holds it nowhere.
+      */
+      schema: {
+        summary: 'List the menus a menu item may open',
+        description:
+          "The menus of a locale that the requester may point a `menu` item at: those whose owning page they hold `manage:navigation` on, or every one of them with `manage:sites`. A locale's root menu is asked about at the home page's path. What the navigation editor's menu picker lists.",
+        tags: ['Navigation'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            locale: {
+              type: 'string',
+              description: 'The locale of the menu being edited, which a target has to share.',
+              maxLength: 255
+            }
+          },
+          required: ['locale']
+        },
+        response: {
+          200: {
+            description: 'The menus that may be picked, root menu first and then by path',
+            type: 'object',
+            properties: {
+              menus: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    path: {
+                      type: 'string',
+                      description: "Where the owning entry sits. Empty for the locale's root menu."
+                    },
+                    isRoot: { type: 'boolean' },
+                    hasPage: {
+                      type: 'boolean',
+                      description:
+                        "Whether there is a page at the menu's location for a `showLink` item to link to."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const targets = await WIKI.models.navigation.listNavTargets(
+        req.params.siteId,
+        req.query.locale
+      )
+      return {
+        menus: targets
+          .filter((target) => mayPickMenuTarget(req, req.params.siteId, target))
+          .map(({ id, path, isRoot, pageId }) => ({ id, path, isRoot, hasPage: Boolean(pageId) }))
+      }
     }
   )
 
@@ -512,7 +776,8 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         pageId: req.params.pageId,
         mode: req.body.mode,
-        items: req.body.items
+        items: req.body.items,
+        mayPick: (target) => mayPickMenuTarget(req, req.params.siteId, target)
       })
       // -> The mode and how many items, not the tree itself: a sidebar is hundreds of entries and
       //    the point of the record is that somebody changed the navigation of this page

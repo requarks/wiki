@@ -141,6 +141,12 @@ export const usePageStore = defineStore('page', {
     navigationId: null,
     navigationMode: 'inherit',
     /**
+     * The folder at a path with no page, whose sidebar `navigationId` and `navigationMode` then
+     * describe: a folder has a navigation of its own to set, shown at its path until somebody writes
+     * a page there. Empty on a page, and on a missing path with no folder either.
+     */
+    folderId: '',
+    /**
      * The header fields as the server last told us they are, kept beside the live ones.
      *
      * Not a duplicate: `title`, `description` and `icon` hold what is ON SCREEN, which the properties
@@ -255,6 +261,11 @@ export const usePageStore = defineStore('page', {
       return ['', 'home'].includes(state.path)
     },
     /**
+     * The tree entry whose navigation is shown and set here: the page, or the folder at a path with no
+     * page. Empty where there is neither, which leaves nothing for Edit Nav to set a mode on.
+     */
+    navEntryId: (state) => state.id || state.folderId,
+    /**
      * Where to send someone who is leaving the editor on this page.
      *
      * Its own path, except for a redirection, which is held on arrival: whoever just wrote down where
@@ -346,6 +357,7 @@ export const usePageStore = defineStore('page', {
               settled whether THIS page is protected.
             */
             notFound: false,
+            folderId: '',
             storedProps: storedPropsOf(pageData)
           })
           this.applyViewerState(pageData.viewer)
@@ -535,8 +547,38 @@ export const usePageStore = defineStore('page', {
         rating: null,
         viewerRating: 0,
         blog: null,
-        notFound: true
+        notFound: true,
+        // -> Not the previous page's: what the sidebar shows here is the folder's, or what a page here
+        //    would inherit, and both are asked of the server below
+        navigationId: null,
+        navigationMode: 'inherit',
+        folderId: ''
       })
+      this.loadPathNavigation({ path: this.path, locale: this.locale })
+    },
+    /**
+     * The navigation at a path with no page: the folder there, or the menu a page there would inherit.
+     *
+     * Dropped if the store has moved on to another path while it was in flight. Quiet on failure: a
+     * missing page with no sidebar is still a missing page, and says so.
+     */
+    async loadPathNavigation({ path, locale }) {
+      const siteStore = useSiteStore()
+      try {
+        const resp = await API_CLIENT.get(`sites/${siteStore.id}/navigation/path`, {
+          searchParams: { path, locale }
+        }).json()
+        if (!this.notFound || this.path !== path || this.locale !== locale) {
+          return
+        }
+        this.$patch({
+          folderId: resp?.folderId ?? '',
+          navigationMode: resp?.navigationMode ?? 'inherit',
+          navigationId: resp?.navigationId ?? null
+        })
+      } catch (err) {
+        console.warn(err.message)
+      }
     },
     /**
      * PAGE - GET PATH FROM ALIAS
@@ -740,6 +782,7 @@ export const usePageStore = defineStore('page', {
         blog: null,
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
+        folderId: '',
         // -> Nothing is stored for a page that does not exist, so everything about it is pending
         storedProps: { title: '', description: '', icon: '' },
         mode: 'edit'

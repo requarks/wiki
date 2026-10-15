@@ -777,6 +777,7 @@ function purgeRevokedKeys() {
 async function generateSampleContent() {
   const {
     SAMPLE_CONTENT_TAG,
+    SAMPLE_FOLDERS,
     SAMPLE_PAGES,
     SAMPLE_DISCUSSION,
     SAMPLE_BLOG,
@@ -886,9 +887,28 @@ async function generateSampleContent() {
         }))
       ]
 
+      // -> The folders first, so that they carry their titles rather than their path names. One that
+      //    exists answers 409 and is left as it is; anything else is reported with the pages
+      const failures = []
+      for (const folder of SAMPLE_FOLDERS) {
+        const segments = folder.path.split('/')
+        try {
+          await API_CLIENT.post(`sites/${siteId}/tree/folders`, {
+            json: {
+              parentPath: segments.slice(0, -1).join('/'),
+              pathName: segments.at(-1),
+              title: folder.title
+            }
+          }).json()
+        } catch (err) {
+          if (err?.response?.status !== 409) {
+            failures.push(`${folder.path} — ${apiErrorMessage(err)}`)
+          }
+        }
+      }
+
       let created = 0
       let discussionPageId = null
-      const failures = []
       for (const page of documents) {
         try {
           const resp = await API_CLIENT.post(`sites/${siteId}/pages`, {

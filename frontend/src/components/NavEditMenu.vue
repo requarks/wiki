@@ -155,8 +155,9 @@ const state = reactive({
 
 // COMPUTED
 
+// -> The home PAGE: a folder that happens to be called `home` is an ordinary folder
 const isRoot = computed(() => {
-  return pageStore.path === '' || pageStore.path === 'home'
+  return Boolean(pageStore.id) && (pageStore.path === '' || pageStore.path === 'home')
 })
 
 const canEditMenuItems = computed(() => {
@@ -200,7 +201,7 @@ async function loadInheritedNav() {
   //    menu opens, and a spinner there would read as a save in flight
   try {
     const resp = await API_CLIENT.get(
-      `sites/${siteStore.id}/navigation/pages/${pageStore.id}/inherited`
+      `sites/${siteStore.id}/navigation/pages/${pageStore.navEntryId}/inherited`
     ).json()
     state.inheritedNavId = resp?.navigationId ?? null
     state.canEditItems = Boolean(resp?.canEditItems)
@@ -230,9 +231,12 @@ async function save() {
   state.loading++
   try {
     // -> Only the mode: the menu items themselves are what the overlay saves
-    const resp = await API_CLIENT.put(`sites/${siteStore.id}/navigation/pages/${pageStore.id}`, {
-      json: { mode: state.mode }
-    }).json()
+    const resp = await API_CLIENT.put(
+      `sites/${siteStore.id}/navigation/pages/${pageStore.navEntryId}`,
+      {
+        json: { mode: state.mode }
+      }
+    ).json()
     // -> The API client does not throw on 400, so a refusal comes back as a parsed error
     if (resp?.ok === false) {
       throw new Error(resp.message || t(`common.error.unexpected`))

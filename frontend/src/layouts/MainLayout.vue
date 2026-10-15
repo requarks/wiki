@@ -373,6 +373,8 @@ const showSidebarActions = computed(() => siteStore.locales.showMenu || canBrows
 */
 const showEditNav = computed(() => {
   return (
+    // -> A page, or the folder at a path with none: a path with neither has no navigation to set
+    Boolean(pageStore.navEntryId) &&
     userStore.authenticated &&
     userStore.pagePermissions.includes('manage:navigation') &&
     isAtLeastSm.value

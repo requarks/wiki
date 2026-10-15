@@ -2023,6 +2023,13 @@ class Pages {
       actorId: actor.id,
       data: { variant: 'created', page: WIKI.models.notifications.pageSnapshot(page) }
     })
+    await WIKI.models.navigationAutomation.pageCreated(siteId, {
+      id: page.id,
+      locale: page.locale,
+      path: page.path,
+      title: page.title,
+      icon: page.icon
+    })
 
     /*
       Everything a document served to a client that will not run the app says about a page comes out
@@ -2210,6 +2217,19 @@ class Pages {
         updatedAt: sql`now()`
       })
       .where(eq(treeTable.id, id))
+    if (treeTitle !== null) {
+      await WIKI.models.navigationAutomation.pageRetitled(
+        siteId,
+        {
+          id,
+          locale: updated.locale,
+          path: updated.path,
+          title: updated.title,
+          alias: updated.alias
+        },
+        existing.title
+      )
+    }
 
     // -> The source is whatever this save set it to, else whatever it already was: a save that only
     //    changed the title still rewrites the copy, since the title is in its front matter
@@ -2512,6 +2532,22 @@ class Pages {
         previousLocale: page.locale
       }
     })
+    // -> The links follow the page first, so that a title changed in the same move is then looked
+    //    for where they now point
+    const automated = {
+      id,
+      locale: moved.locale,
+      path: moved.path,
+      title: moved.title,
+      alias: moved.alias
+    }
+    if (isRelocated) {
+      await WIKI.models.navigationAutomation.pageMoved(siteId, automated, {
+        locale: page.locale,
+        path: page.path
+      })
+    }
+    await WIKI.models.navigationAutomation.pageRetitled(siteId, automated, page.title)
     invalidateAppShellCache()
     return { page: moved, versionId }
   }
@@ -2796,6 +2832,13 @@ class Pages {
     // -> A page that overrode the sidebar owns a menu keyed by its own id, which nothing could reach
     //    once the page is gone
     await WIKI.models.navigation.deleteNavForEntries([id])
+    await WIKI.models.navigationAutomation.pageDeleted(siteId, {
+      id,
+      locale: page.locale,
+      path: page.path,
+      title: page.title,
+      alias: page.alias
+    })
     await WIKI.models.storage.removePage({
       id,
       siteId,
@@ -3023,6 +3066,14 @@ class Pages {
       actorId: actor.id,
       data: { variant: 'restored', page: WIKI.models.notifications.pageSnapshot(page) }
     })
+    // -> Back where it was, and so back in the menu its deletion took it out of
+    await WIKI.models.navigationAutomation.pageCreated(siteId, {
+      id: page.id,
+      locale: page.locale,
+      path: page.path,
+      title: page.title,
+      icon: page.icon
+    })
 
     invalidateAppShellCache()
 
@@ -3043,18 +3094,24 @@ class Pages {
    *
    * @returns How many pages were deleted
    */
-  async deletePagesByTag(siteId: string, tag: string, actor: PageActor): Promise<number> {
+  async deletePagesByTag(
+    siteId: string,
+    tag: string,
+    actor: PageActor
+  ): Promise<{ locale: string; path: string }[]> {
     const rows = await WIKI.db
       .select({ id: pagesTable.id })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), sql`${pagesTable.tags} @> ${sql.param([tag])}`))
 
-    let deleted = 0
+    // -> Where each one was, for a caller tidying up after them -- the folders they sat in
+    const deleted: { locale: string; path: string }[] = []
     // -> One action, however many pages: watchers hear about theirs, nobody else about every one
     await WIKI.models.notifications.withOrigin('bulk', async () => {
       for (const row of rows) {
-        if (await this.deletePage(siteId, row.id, actor)) {
-          deleted++
+        const change = await this.deletePage(siteId, row.id, actor)
+        if (change) {
+          deleted.push({ locale: change.page.locale, path: change.page.path })
         }
       }
     })

@@ -175,6 +175,22 @@ function childPathOf(folder: { folderPath?: string | null; fileName: string }): 
   return folder.folderPath ? `${folder.folderPath}.${label}` : label
 }
 
+/** A folder row, as the navigation automations are told about it. */
+function automatedFolder(row: {
+  id: string
+  locale: string
+  folderPath?: string | null
+  fileName: string
+  title: string
+}) {
+  return {
+    id: row.id,
+    locale: row.locale,
+    path: decodeTreePath(childPathOf(row)),
+    title: row.title
+  }
+}
+
 /**
  * Split an ltree path into the (folderPath, fileName) pair that addresses the entry itself: the
  * parent's path still encoded, as `folderPath` is compared, and the last label decoded, as `fileName`
@@ -906,17 +922,28 @@ class Tree {
         const ancestorFullPath = ancestor.folderPath
           ? `${decodeTreePath(ancestor.folderPath)}/${ancestor.fileName}`
           : ancestor.fileName
-        await WIKI.db.insert(treeTable).values({
-          folderPath: ancestor.folderPath,
-          fileName: ancestor.fileName,
-          type: 'folder',
-          title: ancestor.fileName,
-          hash: generateHash(ancestorFullPath),
-          locale: effectiveLocale,
-          siteId,
-          meta: { children: 0 }
-        })
+        const created = await WIKI.db
+          .insert(treeTable)
+          .values({
+            folderPath: ancestor.folderPath,
+            fileName: ancestor.fileName,
+            type: 'folder',
+            title: ancestor.fileName,
+            hash: generateHash(ancestorFullPath),
+            locale: effectiveLocale,
+            siteId,
+            meta: { children: 0 },
+            navigationId: await WIKI.models.navigation.ancestorNavId(
+              siteId,
+              effectiveLocale,
+              ancestor.folderPath
+            )
+          })
+          .returning()
         await this.countTowardsFolderAt(siteId, effectiveLocale, ancestor.folderPath, 1)
+        // -> A folder made along the way is as much a new folder as the one asked for, and each is
+        //    seen before the next one down, whose parent menu it may have just become
+        await WIKI.models.navigationAutomation.folderCreated(siteId, automatedFolder(created[0]!))
       }
     }
 
@@ -931,14 +958,19 @@ class Tree {
         hash: generateHash(fullPath),
         locale: effectiveLocale,
         siteId,
-        meta: { children: 0 }
+        meta: { children: 0 },
+        // -> A folder has a sidebar of its own, shown at its path while there is no page there, and
+        //    starts on the menu its location inherits exactly as a page does
+        navigationId: await WIKI.models.navigation.ancestorNavId(siteId, effectiveLocale, path)
       })
       .returning()
 
     await this.countTowardsFolderAt(siteId, effectiveLocale, path, 1)
+    await WIKI.models.navigationAutomation.folderCreated(siteId, automatedFolder(inserted[0]!))
 
     WIKI.logger.debug(`Created folder ${inserted[0].id} successfully.`)
-    return inserted[0] as TreeRow
+    // -> Read back, since an automation giving it a menu has set its navigation mode since
+    return ((await this.getFolderById(inserted[0].id)) ?? inserted[0]) as TreeRow
   }
 
   /**
@@ -978,6 +1010,11 @@ class Tree {
         .set({ title, updatedAt: sql`now()` })
         .where(eq(treeTable.id, folder.id))
         .returning()
+      await WIKI.models.navigationAutomation.folderRetitled(
+        folder.siteId,
+        automatedFolder(updated[0]!),
+        folder.title
+      )
       return updated[0] as TreeRow
     }
 
@@ -1122,6 +1159,22 @@ class Tree {
     // -> Every asset under it is served from a different path now, and nothing about the assets
     //    themselves changed for the file cache to notice
     WIKI.models.assets.forgetAllPaths()
+
+    // -> Links follow the branch first, so that a title changed with the name is looked for where
+    //    they now point
+    await WIKI.models.navigationAutomation.folderMoved(
+      folder.siteId,
+      automatedFolder(updated[0]!),
+      {
+        locale: folder.locale,
+        path: decodeTreePath(oldPath)
+      }
+    )
+    await WIKI.models.navigationAutomation.folderRetitled(
+      folder.siteId,
+      automatedFolder(updated[0]!),
+      folder.title
+    )
 
     WIKI.logger.debug(`Renamed folder ${folder.id} successfully.`)
     return updated[0] as TreeRow
@@ -1618,6 +1671,11 @@ class Tree {
     await this.countTowardsFolderAt(siteId, folder.locale, oldParentPath, -1)
     await this.countTowardsFolderAt(siteId, destinationLocale, newParentPath, 1)
 
+    await WIKI.models.navigationAutomation.folderMoved(siteId, automatedFolder(updated[0]!), {
+      locale: folder.locale,
+      path: decodeTreePath(oldPath)
+    })
+
     WIKI.logger.debug(`Moved folder ${folder.id} successfully.`)
     return updated[0] as TreeRow
   }
@@ -1747,6 +1805,7 @@ class Tree {
 
     // -> Any of them may have owned a sidebar menu keyed by its own id, the folder included
     await WIKI.models.navigation.deleteNavForEntries([...deleted.map((n) => n.id), folder.id])
+    await WIKI.models.navigationAutomation.folderDeleted(folder.siteId, automatedFolder(folder))
 
     await this.countTowardsFolderAt(folder.siteId, folder.locale, folder.folderPath ?? '', -1)
 
@@ -1809,6 +1868,14 @@ class Tree {
     )
 
     const deletedIds: string[] = []
+    const deletedFolders: {
+      id: string
+      siteId: string
+      locale: string
+      folderPath: string | null
+      fileName: string
+      title: string
+    }[] = []
     /** Each deleted folder's OWN path, which is what its children carry — i.e. what a parent is. */
     const deletedPaths = new Set<string>()
     /** How many children each folder lost, keyed the same way, applied once the passes are done. */
@@ -1826,12 +1893,14 @@ class Tree {
           siteId: treeTable.siteId,
           locale: treeTable.locale,
           folderPath: treeTable.folderPath,
-          fileName: treeTable.fileName
+          fileName: treeTable.fileName,
+          title: treeTable.title
         })
       if (deleted.length < 1) {
         break
       }
       for (const row of deleted) {
+        deletedFolders.push(row)
         deletedIds.push(row.id)
         deletedPaths.add(`${row.siteId}|${row.locale}|${childPathOf(row)}`)
         const parentPath = row.folderPath ?? ''
@@ -1862,9 +1931,81 @@ class Tree {
 
     // -> Any of them may have owned a sidebar menu keyed by its own id
     await WIKI.models.navigation.deleteNavForEntries(deletedIds)
+    // -> And any may be opened by a menu item in the menu above it, as when deleted one at a time
+    for (const row of deletedFolders) {
+      await WIKI.models.navigationAutomation.folderDeleted(row.siteId, automatedFolder(row))
+    }
 
     WIKI.logger.debug(`Deleted ${deletedIds.length} empty folder(s).`)
     return deletedIds.length
+  }
+
+  /**
+   * Delete the folders some deleted pages sat in, where that left them holding nothing at all.
+   *
+   * What Purge Sample Content tidies up with. Sample pages are generated into folders the generator
+   * did not ask for -- the tree creates each one as a page is written under it -- and left standing,
+   * those folders keep the next generation from being a first one: nothing is created, so nothing
+   * that answers to a folder being created (its navigation menu, say) happens again.
+   *
+   * Only a folder the pages were IN, at any depth above them, and only once it is empty -- no page,
+   * asset or folder left under it -- so a folder holding anything that was not purged stays, and so
+   * does every folder no purged page was in. Deepest first, since emptying a folder can empty the one
+   * holding it. Each goes through `deleteFolder`, which is what its menu and the menu items opening
+   * it are cleared up by.
+   *
+   * @returns How many folders were deleted
+   */
+  async deleteFoldersLeftEmpty(
+    siteId: string,
+    pages: { locale: string; path: string }[]
+  ): Promise<number> {
+    const candidates = new Map<string, { locale: string; path: string; depth: number }>()
+    for (const page of pages) {
+      const segments = page.path.split('/').slice(0, -1)
+      for (let depth = segments.length; depth > 0; depth--) {
+        const path = segments.slice(0, depth).join('/')
+        candidates.set(`${page.locale}|${path}`, { locale: page.locale, path, depth })
+      }
+    }
+
+    let deleted = 0
+    for (const folder of [...candidates.values()].toSorted((a, b) => b.depth - a.depth)) {
+      const { folderPath, fileName } = splitPath(encodeTreePath(folder.path))
+      const rows = await WIKI.db
+        .select({ id: treeTable.id })
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId),
+            eq(treeTable.locale, folder.locale),
+            eq(treeTable.type, 'folder'),
+            eq(treeTable.folderPath, folderPath),
+            eq(treeTable.fileName, fileName)
+          )
+        )
+        .limit(1)
+      if (!rows[0]) {
+        continue
+      }
+      const held = await WIKI.db
+        .select({ id: treeTable.id })
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId),
+            eq(treeTable.locale, folder.locale),
+            sql`${treeTable.folderPath} <@ ${encodeTreePath(folder.path)}::ltree`
+          )
+        )
+        .limit(1)
+      if (held.length > 0) {
+        continue
+      }
+      await this.deleteFolder(rows[0].id)
+      deleted++
+    }
+    return deleted
   }
 
   /**
@@ -1905,9 +2046,9 @@ class Tree {
       siteId,
       tags,
       meta,
-      // -> Pages inherit the navigation of the site AND LOCALE they are in until something says
-      //    otherwise; the first page written in a locale is what creates that menu
-      navigationId: await WIKI.models.navigation.siteNavId(siteId, locale),
+      // -> A page starts on the menu its location inherits: the nearest ancestor's that overrides, or
+      //    the site's for its locale -- the first page written in a locale is what creates that one
+      inheritNavigation: true,
       // -> A page's file name is its URL, chosen deliberately by whoever wrote it, so a clash is
       //    something to report rather than something to work around
       onConflict: 'error'
@@ -2045,7 +2186,7 @@ class Tree {
     siteId,
     tags,
     meta,
-    navigationId,
+    inheritNavigation = false,
     onConflict
   }: {
     id?: string
@@ -2058,7 +2199,8 @@ class Tree {
     siteId: string
     tags: string[]
     meta: Record<string, any>
-    navigationId?: string
+    /** Resolve the menu the entry inherits where it lands. Pages only: an asset has no sidebar. */
+    inheritNavigation?: boolean
     onConflict: 'error' | 'suffix'
   }): Promise<TreeRow> {
     const folder =
@@ -2075,6 +2217,9 @@ class Tree {
 
     const name = await this.resolveName({ siteId, locale, path, type, fileName, onConflict })
     const fullPath = path ? `${decodeTreePath(path)}/${name}` : name
+    const navigationId = inheritNavigation
+      ? await WIKI.models.navigation.ancestorNavId(siteId, locale, path)
+      : undefined
 
     WIKI.logger.debug(`Adding ${type} ${fullPath} to tree...`)
 
@@ -2093,7 +2238,7 @@ class Tree {
         siteId,
         tags,
         meta,
-        ...(navigationId ? { navigationId } : {})
+        ...(navigationId !== undefined ? { navigationId } : {})
       })
       .returning()
 

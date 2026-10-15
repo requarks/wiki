@@ -224,7 +224,29 @@ export const useSiteStore = defineStore('site', {
     docsBase: 'https://docs.js.wiki',
     nav: {
       currentId: null,
-      items: []
+      items: [],
+      /*
+        The menus a reader went through to reach the one on screen, by opening a `menu` item -- each as
+        `{ currentId, items }`, the page's own menu first. Empty whenever the sidebar shows the menu the
+        page resolves to, which is what "Go back" being offered depends on. Not remembered: a page
+        load, or a reload, starts again from the page's own menu.
+      */
+      stack: []
+    },
+    /*
+      How the sidebar's menus are drawn, from the site's `navigation` settings -- the display half of
+      them; the automations are the server's business alone. Off until the site says otherwise.
+    */
+    navigation: {
+      showParentLink: false
+    },
+    /*
+      Where "Go up" leads from the base menu on screen -- `{ locale, path }`, or null where there is
+      nowhere -- and which menu that was asked of, so it is asked again only when that changes.
+    */
+    navParent: {
+      navId: null,
+      parent: null
     }
   }),
   getters: {
@@ -505,6 +527,9 @@ export const useSiteStore = defineStore('site', {
           ...this.uploads,
           ...siteInfo.uploads
         },
+        navigation: {
+          showParentLink: Boolean(siteInfo.navigation.showParentLink)
+        },
         /*
           Flattened to one boolean apiece: what this store is asked is whether an editor is on, and
           the `config` blob beside each `isActive` belongs to the editor rather than to the site. A
@@ -589,7 +614,8 @@ export const useSiteStore = defineStore('site', {
         this.$patch({
           nav: {
             currentId: id,
-            items: items ?? []
+            items: items ?? [],
+            stack: []
           }
         })
       } catch (err) {
@@ -599,10 +625,121 @@ export const useSiteStore = defineStore('site', {
         this.$patch({
           nav: {
             currentId: id,
-            items: []
+            items: [],
+            stack: []
           }
         })
       }
+    },
+    /**
+     * Show the menu a page resolves to, putting away any menu opened on the way.
+     *
+     * Asked on every page load, not only when the page's menu changes: following a link out of an
+     * opened menu lands on a page that very often resolves to that same menu, and it is shown then as
+     * the page's own -- without "Go back".
+     */
+    async showPageNavigation(id) {
+      const base = this.nav.stack[0]
+      if (base?.currentId === id) {
+        this.$patch({ nav: { currentId: base.currentId, items: base.items, stack: [] } })
+        await this.refreshNavigation()
+      } else if (this.nav.stack.length > 0 || id !== this.nav.currentId) {
+        await this.fetchNavigation(id)
+      } else {
+        // -> The same menu as the page before, which may still have changed since it was read
+        await this.refreshNavigation()
+      }
+      await this.loadNavigationParent()
+    },
+    /**
+     * Where "Go up" leads from the page's own menu, asked of the server once per menu.
+     *
+     * Only the server can say: the link goes to whatever is above the page or folder owning the menu,
+     * which for an inherited menu is not where the reader is, and only while the reader may open it.
+     * Not asked at all while the site has the link switched off, and asked on the next page load once
+     * it is switched on. Quiet on failure: no link is a menu without one.
+     */
+    async loadNavigationParent() {
+      const id = this.nav.currentId
+      if (!this.navigation.showParentLink || !id || this.navParent.navId === id) {
+        return
+      }
+      try {
+        const resp = await API_CLIENT.get(`sites/${this.id}/navigation/${id}/parent`).json()
+        if (this.nav.currentId === id) {
+          this.navParent = { navId: id, parent: resp?.parent ?? null }
+        }
+      } catch (err) {
+        console.warn(err.message)
+      }
+    },
+    /**
+     * Read the menu on screen again, and redraw it only if it has changed.
+     *
+     * A menu changes under a reader who is still looking at it: an editor rearranges it, or one of the
+     * site's navigation automations adds, moves or relabels a link as a page or folder changes -- from
+     * this browser or anybody else's. Asked on every page load and after every write this browser
+     * makes to pages or the tree (the `contentChanged` event), so it costs one small request each time,
+     * and nothing at all on screen while the answer is the same.
+     *
+     * Only the page's own menu, never one opened from a `menu` item: that is somewhere the reader went,
+     * and swapping it under them would undo the step. Dropped if the sidebar moved on meanwhile, and
+     * quiet on failure -- the menu already on screen is still a menu.
+     */
+    async refreshNavigation() {
+      const id = this.nav.currentId
+      if (!id || this.nav.stack.length > 0) {
+        return
+      }
+      try {
+        const items = (await API_CLIENT.get(`sites/${this.id}/navigation/${id}`).json()) ?? []
+        if (this.nav.currentId !== id || this.nav.stack.length > 0) {
+          return
+        }
+        if (JSON.stringify(items) !== JSON.stringify(this.nav.items)) {
+          this.$patch({ nav: { items } })
+        }
+      } catch (err) {
+        console.warn(err.message)
+      }
+    },
+    /**
+     * Open the menu a `menu` item points at, in place of the one on screen.
+     *
+     * Fetched as a reader fetches any menu, so items limited to other groups are left out. Dropped if
+     * the sidebar moved on while it was in flight -- a page loaded, or another menu opened.
+     */
+    async openNavigationMenu(id) {
+      const from = this.nav.currentId
+      try {
+        const items = await API_CLIENT.get(`sites/${this.id}/navigation/${id}`).json()
+        if (this.nav.currentId !== from) {
+          return
+        }
+        this.$patch({
+          nav: {
+            currentId: id,
+            items: items ?? [],
+            stack: [...this.nav.stack, { currentId: this.nav.currentId, items: this.nav.items }]
+          }
+        })
+      } catch (err) {
+        console.warn(err.message)
+      }
+    },
+    /** Go back to the menu the one on screen was opened from. */
+    closeNavigationMenu() {
+      const previous = this.nav.stack.at(-1)
+      if (!previous) {
+        return
+      }
+      this.$patch({
+        nav: {
+          currentId: previous.currentId,
+          items: previous.items,
+          stack: this.nav.stack.slice(0, -1)
+        }
+      })
     }
   }
 })

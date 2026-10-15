@@ -37,6 +37,25 @@ export const SAMPLE_CONTENT_TAG = 'test'
  */
 
 /** @type {SamplePage[]} */
+/**
+ * The folders the sample pages are filed in, with the titles they are shown by.
+ *
+ * Created before any page, shallowest first, rather than left to the tree to make along the way of
+ * the first page written under each: a folder made that way is titled by its path name, so the menu
+ * item a site's navigation automations add for it would read "getting-started". A folder that is
+ * already there -- one a purge left holding something else -- is kept, title and all.
+ */
+export const SAMPLE_FOLDERS = [
+  { path: 'sample', title: 'Sample Content' },
+  { path: 'sample/formatting', title: 'Formatting' },
+  { path: 'sample/blocks', title: 'Content Blocks' },
+  { path: 'sample/guides', title: 'Guides' },
+  { path: 'sample/guides/getting-started', title: 'Getting Started' },
+  { path: 'sample/guides/advanced', title: 'Advanced' },
+  { path: 'sample/reference', title: 'Reference' },
+  { path: 'my-blog', title: 'My Blog' }
+]
+
 export const SAMPLE_PAGES = [
   {
     path: 'sample/home',

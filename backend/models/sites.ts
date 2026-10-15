@@ -203,11 +203,17 @@ class Sites {
           forcePrefix: false,
           showMenu: true
         },
+        // -> All on for a site created now; one that predates the automations keeps them off, as its
+        //    migrations set them, rather than starting to rewrite menus nobody asked it to touch
         navigation: {
-          addPagesToParentMenu: false,
-          removePagesFromParentMenu: false,
-          createFolderMenus: false,
-          deleteOrphanedMenus: false
+          addPagesToParentMenu: true,
+          removePagesFromParentMenu: true,
+          migrateLinksOnMove: true,
+          updateLabelsOnRename: true,
+          createFolderMenus: true,
+          deleteOrphanedMenus: true,
+          includeStorageOperations: true,
+          showParentLink: true
         },
         assets: {
           logo: false,
@@ -533,11 +539,17 @@ class Sites {
           forcePrefix: false,
           showMenu: true
         },
+        // -> All on for a site created now; one that predates the automations keeps them off, as its
+        //    migrations set them, rather than starting to rewrite menus nobody asked it to touch
         navigation: {
-          addPagesToParentMenu: false,
-          removePagesFromParentMenu: false,
-          createFolderMenus: false,
-          deleteOrphanedMenus: false
+          addPagesToParentMenu: true,
+          removePagesFromParentMenu: true,
+          migrateLinksOnMove: true,
+          updateLabelsOnRename: true,
+          createFolderMenus: true,
+          deleteOrphanedMenus: true,
+          includeStorageOperations: true,
+          showParentLink: true
         },
         assets: {
           logo: false,

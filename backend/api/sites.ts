@@ -297,8 +297,12 @@ async function routes(app: FastifyInstance) {
       navigation?: {
         addPagesToParentMenu?: boolean
         removePagesFromParentMenu?: boolean
+        migrateLinksOnMove?: boolean
+        updateLabelsOnRename?: boolean
         createFolderMenus?: boolean
         deleteOrphanedMenus?: boolean
+        includeStorageOperations?: boolean
+        showParentLink?: boolean
       }
       locales?: {
         primary?: string

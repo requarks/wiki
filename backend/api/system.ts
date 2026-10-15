@@ -1509,7 +1509,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Delete every page tagged `test` on a site',
         description:
-          "The counterpart to the admin area's Generate Sample Content, which tags everything it writes `test`. Membership of that tag is the only thing consulted, so a page tagged by hand is deleted too. Folders are left standing: they carry no tags, and one somebody made themselves must not go because a sample page was filed in it. Each page is deleted the way the file manager deletes one — its history records the deletion, and its copy on every storage target goes with it. Its comments go with it, and then so does every sample account (see `POST /system/sample-content/comments`) that no remaining comment is credited to.",
+          "The counterpart to the admin area's Generate Sample Content, which tags everything it writes `test`. Membership of that tag is the only thing consulted, so a page tagged by hand is deleted too. A folder the purged pages sat in is deleted too once nothing at all is left in it, so that generating the content again creates its folders afresh — and so does whatever answers to a folder being created, such as its navigation menu; one still holding anything else stays standing, as does every folder no purged page was in. Each page is deleted the way the file manager deletes one — its history records the deletion, and its copy on every storage target goes with it. Its comments go with it, and then so does every sample account (see `POST /system/sample-content/comments`) that no remaining comment is credited to.",
         tags: ['System'],
         body: {
           type: 'object',
@@ -1535,6 +1535,10 @@ async function routes(app: FastifyInstance) {
               count: {
                 type: 'number',
                 description: 'Pages deleted.'
+              },
+              folders: {
+                type: 'number',
+                description: 'Folders deleted for being left empty by the purge.'
               }
             }
           }
@@ -1545,18 +1549,26 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.sites[req.body.siteId]) {
         return reply.badRequest('This site does not exist.')
       }
-      const count = await WIKI.models.pages.deletePagesByTag(req.body.siteId, SAMPLE_CONTENT_TAG, {
+      const purged = await WIKI.models.pages.deletePagesByTag(req.body.siteId, SAMPLE_CONTENT_TAG, {
         id: req.session.user!.id,
         permissions: req.session.permissions ?? []
       })
+      const count = purged.length
+      const folders = await WIKI.models.tree.deleteFoldersLeftEmpty(req.body.siteId, purged)
       // -> Their comments went with the pages, so the accounts that wrote only those are unused now
       const accounts = await WIKI.models.users.deleteUnusedSampleAccounts()
-      await audit(req, 'admin', 'purgeSampleContent', { siteId: req.body.siteId, count, accounts })
+      await audit(req, 'admin', 'purgeSampleContent', {
+        siteId: req.body.siteId,
+        count,
+        folders,
+        accounts
+      })
 
       return {
         ok: true,
-        message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG} and ${accounts} sample account(s).`,
-        count
+        message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG}, ${folders} folder(s) left empty and ${accounts} sample account(s).`,
+        count,
+        folders
       }
     }
   )

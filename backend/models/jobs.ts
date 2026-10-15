@@ -43,6 +43,9 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   // -> Same reasoning, and the cutoff is in hours but measured in days
   { task: 'purgeImportSessions', cron: '25 0 * * *' },
   { task: 'purgeRateLimits', cron: '10 * * * *' },
+  // -> Hourly, off the hour: an orphaned menu is unreachable, so nothing waits on it going -- this
+  //    only keeps the table from filling with menus nobody can open
+  { task: 'purgeOrphanedMenus', cron: '40 * * * *' },
   // -> Daily, for the same reason as the audit log: retention is counted in days
   { task: 'purgeNotifications', cron: '30 0 * * *' },
   /*

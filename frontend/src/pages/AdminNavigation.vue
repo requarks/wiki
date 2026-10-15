@@ -82,7 +82,17 @@
     <!-- ========================================== -->
     <div class="grid grid-cols-12 p-4 gap-4" v-if="state.displayMode === `menus`">
       <div class="col-span-12">
-        <w-card>
+        <!--
+          A banner rather than an empty table, as the audit log has: a site with no menu yet is the
+          normal state of one with no page yet, and worth saying how a menu comes to exist.
+        -->
+        <w-banner
+          v-if="state.menus.length < 1 && state.loading < 1"
+          rounded
+          :class="dark.isActive ? `bg-dark-3 text-grey-4` : `bg-grey-2 text-grey-8`">
+          {{ state.search ? t('admin.navigation.noneMatching') : t('admin.navigation.none') }}
+        </w-banner>
+        <w-card v-else>
           <w-table
             :rows="state.menus"
             :columns="headers"
@@ -181,74 +191,51 @@
     <!-- CONFIGURATION -->
     <!-- ========================================== -->
     <div class="flex flex-wrap p-4 gap-4" v-else-if="state.displayMode === `config`">
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 flex-1 flex flex-col gap-4">
         <w-card class="pb-2">
-          <!-- -> Every toggle is disabled until the automation behind it is implemented -->
+          <w-card-header>
+            {{ t('admin.navigation.general') }}
+            <template #hint>{{ t('admin.navigation.generalHint') }}</template>
+          </w-card-header>
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="arrow-up" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.navigation.showParentLink`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.navigation.showParentLinkHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.showParentLink"
+                :aria-label="t(`admin.navigation.showParentLink`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <w-card class="pb-2">
           <w-card-header>
             {{ t('admin.navigation.automations') }}
             <template #hint>{{ t('admin.navigation.automationsHint') }}</template>
           </w-card-header>
-          <w-item tag="label">
-            <blueprint-icon class="self-start" icon="new-document" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.navigation.addPagesToParentMenu`) }}</w-item-label>
-              <w-item-label caption>{{
-                t(`admin.navigation.addPagesToParentMenuHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.addPagesToParentMenu"
-                disable
-                :aria-label="t(`admin.navigation.addPagesToParentMenu`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon class="self-start" icon="eraser" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.navigation.removePagesFromParentMenu`) }}</w-item-label>
-              <w-item-label caption>{{
-                t(`admin.navigation.removePagesFromParentMenuHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.removePagesFromParentMenu"
-                disable
-                :aria-label="t(`admin.navigation.removePagesFromParentMenu`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon class="self-start" icon="add-folder" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.navigation.createFolderMenus`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.navigation.createFolderMenusHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.createFolderMenus"
-                disable
-                :aria-label="t(`admin.navigation.createFolderMenus`)" />
-            </w-item-section>
-          </w-item>
-          <w-separator class="my-2" inset />
-          <w-item tag="label">
-            <blueprint-icon class="self-start" icon="trash" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.navigation.deleteOrphanedMenus`) }}</w-item-label>
-              <w-item-label caption>{{
-                t(`admin.navigation.deleteOrphanedMenusHint`)
-              }}</w-item-label>
-            </w-item-section>
-            <w-item-section avatar>
-              <w-toggle
-                v-model="state.config.deleteOrphanedMenus"
-                disable
-                :aria-label="t(`admin.navigation.deleteOrphanedMenus`)" />
-            </w-item-section>
-          </w-item>
+          <!--
+            From a list rather than written out seven times: every row is a toggle bound to one key of
+            the site's `navigation` settings, named and explained by strings of the same key.
+          -->
+          <template v-for="(automation, idx) of automations" :key="automation.key">
+            <w-separator v-if="idx > 0" class="my-2" inset />
+            <w-item tag="label">
+              <blueprint-icon class="self-start" :icon="automation.icon" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.navigation.${automation.key}`) }}</w-item-label>
+                <w-item-label caption>{{
+                  t(`admin.navigation.${automation.key}Hint`)
+                }}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-toggle
+                  v-model="state.config[automation.key]"
+                  :aria-label="t(`admin.navigation.${automation.key}`)" />
+              </w-item-section>
+            </w-item>
+          </template>
         </w-card>
       </div>
     </div>
@@ -304,10 +291,28 @@ const state = reactive({
   config: {
     addPagesToParentMenu: false,
     removePagesFromParentMenu: false,
+    migrateLinksOnMove: false,
+    updateLabelsOnRename: false,
     createFolderMenus: false,
-    deleteOrphanedMenus: false
+    deleteOrphanedMenus: false,
+    includeStorageOperations: false,
+    showParentLink: false
   }
 })
+
+/**
+ * The Automations card, in the order it is drawn: what happens to a page, then to a folder, then the
+ * sweep -- and last the switch that says whose changes the others answer to.
+ */
+const automations = [
+  { key: 'addPagesToParentMenu', icon: 'new-document' },
+  { key: 'removePagesFromParentMenu', icon: 'eraser' },
+  { key: 'migrateLinksOnMove', icon: 'move-stock' },
+  { key: 'updateLabelsOnRename', icon: 'rename' },
+  { key: 'createFolderMenus', icon: 'add-folder' },
+  { key: 'deleteOrphanedMenus', icon: 'trash' },
+  { key: 'includeStorageOperations', icon: 'synchronize' }
+]
 
 /*
   A computed for the same reason as on the Users page: the locale strings can land after `setup()`
@@ -445,6 +450,10 @@ async function saveConfig() {
     }).json()
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    // -> The sidebar draws "Go up" off this, so the site being read follows the save at once
+    if (adminStore.currentSiteId === siteStore.id) {
+      siteStore.navigation.showParentLink = Boolean(state.config.showParentLink)
     }
     notify({
       type: 'positive',

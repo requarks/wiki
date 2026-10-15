@@ -98,6 +98,42 @@
                 @toggle-nesting="toggleNesting"
                 @delete="removeItem" />
             </w-item>
+            <!--
+              A link's row with a chevron for what it opens, and a warning where that is nothing: no
+              menu picked yet, or one that has since been deleted -- the sidebar leaves such an item
+              out, so the editor is the only place it still shows.
+
+              Not `nav-edit-item-link`, though, which is the class the nesting rules read as a parent:
+              a link nested under one of these has nothing to hang off, and is marked like one under a
+              header.
+            -->
+            <w-item
+              class="nav-edit-item nav-edit-item-menu"
+              v-else-if="element.type === `menu`"
+              dense
+              :class="{ 'is-active': state.selected === element.id }"
+              @click="setItem(element)"
+              @contextmenu="setItem(element)"
+              clickable>
+              <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
+              <w-item-section class="text-wordbreak-all">{{ element.label }}</w-item-section>
+              <w-item-section side>
+                <w-icon
+                  v-if="!element.targetNavId || element.targetMissing"
+                  name="la:exclamation-triangle"
+                  color="warning"
+                  size="sm" />
+                <w-icon v-else name="mdi:chevron-right" color="white" size="sm" />
+              </w-item-section>
+              <w-item-section side>
+                <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
+              </w-item-section>
+              <nav-edit-item-menu
+                :item="element"
+                @duplicate="duplicateItem"
+                @toggle-nesting="toggleNesting"
+                @delete="removeItem" />
+            </w-item>
             <div
               class="nav-edit-item nav-edit-item-separator"
               v-else
@@ -138,6 +174,12 @@
                     <w-item-section side><w-icon name="la:link" /></w-item-section>
                     <w-item-section>
                       <w-item-label>{{ t('navEdit.link') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="addItem(`menu`)">
+                    <w-item-section side><w-icon name="mdi:menu-open" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.menu') }}</w-item-label>
                     </w-item-section>
                   </w-item>
                   <w-item clickable @click="addItem(`separator`)">
@@ -270,9 +312,15 @@
         </template>
         <template v-if="state.current.type === `link`">
           <w-card class="pb-2">
-            <w-card-section
-              ><div class="text-subtitle1">{{ t('navEdit.link') }}</div></w-card-section
-            >
+            <w-card-section>
+              <div class="text-subtitle1">
+                {{ currentIsParent ? t('navEdit.linkTrigger') : t('navEdit.link') }}
+              </div>
+              <!-- -> Why Target and Open in New Window are gone below, and how to get them back -->
+              <div v-if="currentIsParent" class="text-caption text-grey-7">
+                {{ t('navEdit.linkParentHint') }}
+              </div>
+            </w-card-section>
             <w-item>
               <blueprint-icon icon="typography" />
               <w-item-section>
@@ -467,6 +515,167 @@
               @click="removeItem(state.current)" />
           </w-card>
         </template>
+        <template v-if="state.current.type === `menu`">
+          <w-card class="pb-2">
+            <w-card-section>
+              <div class="text-subtitle1">{{ t('navEdit.menu') }}</div>
+              <div class="text-caption text-grey-7">{{ t('navEdit.menuHint') }}</div>
+            </w-card-section>
+            <w-item>
+              <blueprint-icon icon="typography" />
+              <w-item-section>
+                <w-item-label>{{ t(`navEdit.label`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.labelHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.label"
+                  dense
+                  hide-bottom-space
+                  :aria-label="t(`navEdit.label`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="spring" />
+              <w-item-section>
+                <w-item-label>{{ t(`navEdit.icon`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.iconHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.current.icon"
+                  dense
+                  :aria-label="t(`navEdit.icon`)">
+                  <template #append>
+                    <!-- -> The link panel's icon picker, for the reason given there -->
+                    <w-btn
+                      flat
+                      dense
+                      round
+                      icon="la:icons"
+                      color="primary"
+                      :aria-label="t(`iconPicker.open`)">
+                      <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
+                      <w-menu content-class="shadow-7">
+                        <icon-picker-dialog v-model="state.current.icon" />
+                      </w-menu>
+                    </w-btn>
+                  </template>
+                </w-input>
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="tree-structure" />
+              <w-item-section>
+                <w-item-label>{{ t(`navEdit.menuTarget`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.menuTargetHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <!--
+                  Read-only: a menu is picked, never typed. It is stored by id and shown by the path of
+                  the page owning it, which is not something to edit here -- which is also why picking
+                  is a labelled button of its own rather than an icon inside a field that looks locked.
+                -->
+                <div class="flex items-center">
+                  <w-btn
+                    class="acrylic-btn mr-2 shrink-0"
+                    flat
+                    no-caps
+                    icon="la:folder-open"
+                    color="primary"
+                    :label="t(`navEdit.menuTargetPick`)"
+                    @click="browseMenuTarget" />
+                  <w-input
+                    class="min-w-0 flex-1"
+                    outlined
+                    :model-value="menuTargetLabel"
+                    dense
+                    readonly
+                    hide-bottom-space
+                    :error="!state.current.targetNavId || state.current.targetMissing"
+                    :aria-label="t(`navEdit.menuTarget`)" />
+                </div>
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item tag="label">
+              <blueprint-icon icon="link" />
+              <w-item-section>
+                <w-item-label>{{ t(`navEdit.showLink`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.showLinkHint`) }}</w-item-label>
+                <!-- -> Said rather than refused: a page may yet be written there, and the option then
+                        applies without anybody coming back to this menu -->
+                <w-item-label
+                  v-if="
+                    state.current.showLink &&
+                    state.current.targetNavId &&
+                    !state.current.targetMissing &&
+                    !state.current.targetHasPage
+                  "
+                  class="text-warning"
+                  caption
+                  >{{ t('navEdit.showLinkNoPage') }}</w-item-label
+                >
+              </w-item-section>
+              <w-item-section avatar>
+                <w-toggle
+                  v-model="state.current.showLink"
+                  color="primary"
+                  checked-icon="la:check"
+                  unchecked-icon="la:times"
+                  :aria-label="t(`navEdit.showLink`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="user-groups" />
+              <w-item-section>
+                <w-item-label>{{ t(`navEdit.visibility`) }}</w-item-label>
+                <w-item-label caption>{{ t(`navEdit.visibilityHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section avatar>
+                <w-btn-toggle
+                  v-model="state.current.visibilityLimited"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :options="visibilityOptions" />
+              </w-item-section>
+            </w-item>
+            <w-item class="items-center" v-if="state.current.visibilityLimited">
+              <w-space />
+              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <w-select
+                style="width: 100%; max-width: calc(50% - 34px)"
+                outlined
+                v-model="state.current.visibilityGroups"
+                :options="state.groups"
+                option-value="id"
+                option-label="name"
+                emit-value
+                map-options
+                dense
+                multiple
+                :aria-label="t(`navEdit.selectGroups`)" />
+            </w-item>
+          </w-card>
+          <w-card class="p-4 mt-4 flex">
+            <w-space />
+            <w-btn
+              class="acrylic-btn"
+              flat
+              icon="la:trash-alt"
+              :label="t(`common.actions.delete`)"
+              color="negative"
+              padding="xs md"
+              @click="removeItem(state.current)" />
+          </w-card>
+        </template>
         <template v-if="state.current.type === `separator`">
           <w-card class="pb-2">
             <w-card-section>
@@ -592,6 +801,9 @@ const state = reactive({
  */
 const DEFAULT_LINK_ICON = 'mdi:text-box-outline'
 
+/** The icon a new menu item starts with: a folder, which is what such a menu nearly always belongs to. */
+const DEFAULT_MENU_ICON = 'mdi:folder-outline'
+
 const sortableOptions = {
   handle: '.handle',
   animation: 150
@@ -618,19 +830,41 @@ const visibilityOptions = computed(() => [
  * that opened this editor, so that the sidebar a page shows can be edited from that page rather than
  * only from the ancestor holding it. Saving writes it back where it lives — see `save()`.
  *
- * Otherwise the page's own menu. The home page edits the site-wide menu — the one every other page
- * inherits — which is why it goes through its resolved id rather than its own. Any other page owns a
- * menu keyed by its own id, which the server creates on the first save.
+ * Otherwise the page's own menu — or the folder's, at a path with no page. The home page edits the
+ * site-wide menu — the one every other page inherits — which is why it goes through its resolved id
+ * rather than its own. Any other page or folder owns a menu keyed by its own id, which the server
+ * creates on the first save.
  */
 const navId = computed(() => {
   if (fromAdmin) {
     return adminStore.overlayOpts.navId
   }
-  return siteStore.overlayOpts.navId ?? (pageStore.isHome ? pageStore.navigationId : pageStore.id)
+  return (
+    siteStore.overlayOpts.navId ??
+    (pageStore.id && pageStore.isHome ? pageStore.navigationId : pageStore.navEntryId)
+  )
 })
 
 /** Whether the menu on screen is an inherited one, which is shared with every page using it. */
 const isEditingInherited = computed(() => !fromAdmin && Boolean(siteStore.overlayOpts.navId))
+
+/**
+ * The locale of the menu being edited, which every menu a `menu` item opens has to share: a sidebar
+ * never crosses into another locale. The page's own from a page -- an inherited menu is found by a walk
+ * that never leaves it -- and the one the admin area passed otherwise.
+ */
+const menuLocale = computed(() => (fromAdmin ? adminStore.overlayOpts.locale : pageStore.locale))
+
+/** What the Menu Target field shows: the path of the page owning the target, or what is wrong with it. */
+const menuTargetLabel = computed(() => {
+  if (!state.current.targetNavId) {
+    return t('navEdit.menuTargetNone')
+  }
+  if (state.current.targetMissing) {
+    return t('navEdit.menuTargetMissing')
+  }
+  return `/${state.current.targetPath ?? ''}`
+})
 
 /**
  * Whether the link being edited is a parent — one the sidebar draws as a submenu.
@@ -696,6 +930,30 @@ function browseTarget() {
   })
 }
 
+/**
+ * Picks the menu a `menu` item opens, from those this editor may point one at.
+ *
+ * The list is the server's to draw up -- whoever may pick a menu is a question of the page rules on
+ * the page owning it -- so the picker shows what `navigation/targets` answers, minus the menu being
+ * edited, which an item cannot open from inside itself.
+ */
+function browseMenuTarget() {
+  dialog({
+    component: defineAsyncComponent(() => import('./MenuPickerDialog.vue')),
+    componentProps: {
+      siteId,
+      locale: menuLocale.value,
+      excludeId: navId.value,
+      selectedId: state.current.targetNavId
+    }
+  }).onOk(({ id, path, hasPage }) => {
+    state.current.targetNavId = id
+    state.current.targetPath = path
+    state.current.targetMissing = false
+    state.current.targetHasPage = hasPage
+  })
+}
+
 function addItem(type) {
   const newItem = {
     id: uuid(),
@@ -715,6 +973,16 @@ function addItem(type) {
       newItem.openInNewWindow = false
       newItem.expandByDefault = false
       newItem.isNested = false
+      break
+    }
+    case 'menu': {
+      newItem.label = t('navEdit.menu')
+      newItem.icon = DEFAULT_MENU_ICON
+      newItem.targetNavId = null
+      newItem.targetPath = null
+      newItem.targetMissing = false
+      newItem.targetHasPage = false
+      newItem.showLink = true
       break
     }
   }
@@ -826,7 +1094,14 @@ async function loadMenuItems() {
           'target',
           'openInNewWindow',
           'expandByDefault',
-          'visibilityGroups'
+          'visibilityGroups',
+          // -> A `menu` item's target, and what the server could tell about it: where its owner sits,
+          //    or that it is gone
+          'targetNavId',
+          'targetPath',
+          'targetMissing',
+          'targetHasPage',
+          'showLink'
         ]),
         visibilityLimited: item.visibilityGroups?.length > 0
       })
@@ -880,6 +1155,13 @@ function cleanMenuItem(item, isNested = false) {
         visibilityGroups: item.visibilityLimited ? item.visibilityGroups : []
       }
     }
+    case 'menu': {
+      return {
+        ...pick(item, ['id', 'type', 'label', 'icon', 'targetNavId']),
+        showLink: Boolean(item.showLink),
+        visibilityGroups: item.visibilityLimited ? item.visibilityGroups : []
+      }
+    }
   }
 }
 
@@ -887,6 +1169,11 @@ async function save() {
   state.loading++
   loading.show()
   try {
+    // -> Said here rather than left to the server, which refuses it too: the row is marked in the list,
+    //    and the message names the fix
+    if (state.items.some((item) => item.type === 'menu' && !item.targetNavId)) {
+      throw new Error(t('navEdit.menuTargetRequired'))
+    }
     const items = []
     for (const item of state.items) {
       if (item.isNested) {
@@ -922,12 +1209,15 @@ async function saveFromPage(items) {
     and the one `navId` was resolved from — rather than starting a menu of this page's own that
     nothing would point at.
   */
-  const resp = await API_CLIENT.put(`sites/${siteStore.id}/navigation/pages/${pageStore.id}`, {
-    json: {
-      mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
-      items
+  const resp = await API_CLIENT.put(
+    `sites/${siteStore.id}/navigation/pages/${pageStore.navEntryId}`,
+    {
+      json: {
+        mode: siteStore.overlayOpts.mode ?? pageStore.navigationMode,
+        items
+      }
     }
-  }).json()
+  ).json()
   // -> The API client does not throw on 400, so a refusal comes back as a parsed error
   if (resp?.ok === false) {
     throw new Error(resp.message || 'An unexpected error occured.')
@@ -1078,8 +1368,10 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+/* -> A nested link can only follow a link: after anything else it is a child of nothing */
 .nav-edit-item-header,
-.nav-edit-item-separator {
+.nav-edit-item-separator,
+.nav-edit-item-menu {
   & + .nav-edit-item-link.is-nested {
     background-color: $negative !important;
     border-left-color: color.adjust($negative, $lightness: -10%) !important;
