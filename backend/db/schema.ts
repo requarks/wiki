@@ -53,6 +53,36 @@ export const apiKeys = pgTable('apiKeys', {
   updatedAt: timestamp().notNull().defaultNow()
 })
 
+// PERSONAL ACCESS TOKENS --------------
+/**
+ * A user's own API key: signed like one (`models/apiKeys.ts`), but acting AS the user it belongs to,
+ * and only within its scopes. See `models/personalTokens.ts`.
+ *
+ * Revoking deletes the row rather than flagging it: a token is its owner's to throw away, and a row
+ * that is gone authenticates nothing. The audit log is what keeps the record that it existed.
+ */
+export const personalTokens = pgTable(
+  'personalTokens',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar({ length: 255 }).notNull(),
+    // -> Only the tail of the token, as for an API key: the token itself is never stored
+    keyShort: varchar({ length: 8 }).notNull(),
+    // -> `<category>:<level>` strings, at most one per category — `['pages:write', 'comments:read']`.
+    //    Read from here on every request rather than from the token, so the row is the one answer.
+    scopes: jsonb().notNull().default([]),
+    expiration: timestamp().notNull(),
+    // -> Written at most every few minutes per token and instance, so it is approximate by design
+    lastUsedAt: timestamp(),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [index('personalTokens_userId_idx').on(table.userId)]
+)
+
 // APPROVAL RULES ----------------------
 /**
  * Which pages accept edit suggestions, who may submit them, and who reviews them.

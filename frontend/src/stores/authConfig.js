@@ -15,7 +15,8 @@ import { defineStore } from 'pinia'
 export const useAuthConfigStore = defineStore('authConfig', {
   state: () => ({
     allowPasskeys: true,
-    allowProfileEditing: true
+    allowProfileEditing: true,
+    allowPersonalTokens: true
   }),
   getters: {},
   actions: {

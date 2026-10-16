@@ -29,6 +29,7 @@ import { pageRatings } from './pageRatings.ts'
 import { pages } from './pages.ts'
 import { pageWatching } from './pageWatching.ts'
 import { passkeys } from './passkeys.ts'
+import { personalTokens } from './personalTokens.ts'
 import { rateLimits } from './rateLimits.ts'
 import { rendering } from './rendering.ts'
 import { scim } from './scim.ts'
@@ -74,6 +75,7 @@ export default {
   pages,
   pageWatching,
   passkeys,
+  personalTokens,
   rateLimits,
   rendering,
   scim,

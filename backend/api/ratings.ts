@@ -81,6 +81,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string; pageId: string }; Body: { value: number } }>(
     '/sites/:siteId/pages/:pageId/rating',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Rate a page',
         description:
@@ -140,6 +143,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/rating',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Withdraw a rating',
         description:

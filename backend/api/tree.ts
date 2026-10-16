@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { decodeTreePath, normalizeFolderPath, normalizeNewPagePath } from '../helpers/common.ts'
 import { actorFrom, unpublishedFor, userRequired } from './pages.ts'
 
@@ -162,6 +163,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: TreeQuery }>(
     '/sites/:siteId/tree',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: page permissions come from a group's RULES, and every entry is
         filtered against them below — a caller allowed nowhere gets an empty listing rather than a
@@ -273,6 +277,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale?: string } }>(
     '/sites/:siteId/tree/graph',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level permissions: `read:pages` is a page rule, asked of every page below, and a
         caller allowed nowhere gets an empty graph -- the same answer as the tree listing above.
@@ -327,6 +334,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { path?: string; locale?: string } }>(
     '/sites/:siteId/tree/browse',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Browse the tree as a reader',
         description:
@@ -441,6 +451,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/tree/pages',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'List pages as a reader',
         description:
@@ -533,6 +546,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; folderId: string } }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
+      config: {
+        scope: 'pages'
+      },
       // -> Checked against the folder's own path below, not against the group-wide list
       schema: {
         summary: 'Get a single folder',
@@ -563,6 +579,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: FolderBody }>(
     '/sites/:siteId/tree/folders',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.
@@ -662,6 +681,9 @@ async function routes(app: FastifyInstance) {
   app.patch<{ Params: { siteId: string; folderId: string }; Body: FolderBody }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.
@@ -704,7 +726,7 @@ async function routes(app: FastifyInstance) {
         folderId: req.params.folderId,
         pathName: req.body.pathName,
         title: req.body.title,
-        actorId: req.session.user?.id
+        actorId: requestUserId(req) ?? undefined
       })
       await audit(req, 'page', 'updateFolder', {
         folderId: req.params.folderId,
@@ -732,6 +754,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/tree/folders/:folderId/path',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.
@@ -805,7 +830,7 @@ async function routes(app: FastifyInstance) {
         folderId: req.params.folderId,
         folderPath: destination,
         locale: destinationLocale,
-        actorId: req.session.user?.id
+        actorId: requestUserId(req) ?? undefined
       })
       // -> One entry for a move that took a whole branch with it. The pages underneath moved rather
       //    than changed, so they have no history versions of their own to point at.
@@ -835,6 +860,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/tree/folders/:folderId/duplicate',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.
@@ -945,6 +973,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/tree/folders/:folderId/color',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.
@@ -1018,6 +1049,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; folderId: string } }>(
     '/sites/:siteId/tree/folders/:folderId',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions come
         from a group's RULES. Checked against the folder's own path below.

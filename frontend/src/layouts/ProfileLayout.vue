@@ -150,6 +150,11 @@ const sidenav = computed(() => [
     label: t('profile.notifications'),
     icon: 'la:bell'
   },
+  {
+    key: 'tokens',
+    label: t('profile.tokens'),
+    icon: 'la:stamp'
+  },
   // {
   //   key: 'pages',
   //   label: 'My Pages',

@@ -1515,7 +1515,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the instance-wide authentication settings',
         description:
-          'The settings that hold for every site: whether passkeys may be used, and whether a user may edit their own profile. Which strategies a site offers is part of that site’s configuration instead.',
+          'The settings that hold for every site: whether passkeys may be used, whether a user may edit their own profile, and whether users may create personal access tokens. Which strategies a site offers is part of that site’s configuration instead.',
         tags: ['Authentication'],
         response: {
           200: { $ref: 'AuthConfig#' }

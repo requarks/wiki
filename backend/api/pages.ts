@@ -10,6 +10,7 @@ import {
   type SearchTagsMatch
 } from '../models/search.ts'
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { maySeeUnpublished, maySeeUnpublishedAnywhere } from '../helpers/publishing.ts'
 import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
@@ -67,33 +68,34 @@ const pageIdParam = {
 /**
  * Who is saving, and what they may embed.
  *
- * A page records an author, so it takes a logged in user rather than an API key — and the author's
- * permissions are what the render is sanitized against.
+ * A page records an author, so it takes a user — signed in, or acting through a personal access
+ * token — rather than a system API key, and the author's permissions are what the render is
+ * sanitized against.
  */
 export function actorFrom(req: FastifyRequest): PageActor | null {
-  if (!req.session?.authenticated || !req.session.user?.id) {
+  const userId = requestUserId(req)
+  if (!userId) {
     return null
   }
   return {
-    id: req.session.user.id,
-    permissions: req.session.permissions ?? []
+    id: userId,
+    permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
   }
 }
 
 /**
  * The refusal for an action that needs a logged in user, saying why when it was an API key that asked.
  *
- * A key acts for the groups it was issued for rather than for anybody, so there is no one to record
- * as the author of what it would write — and a bare "requires a logged in user" reads, to a caller
- * holding a perfectly valid key, like the key was not accepted.
- *
- * TODO: Personal API keys, issued to a user and acting as them, are what will let a key write.
+ * A system key acts for the groups it was issued for rather than for anybody, so there is no one to
+ * record as the author of what it would write — and a bare "requires a logged in user" reads, to a
+ * caller holding a perfectly valid key, like the key was not accepted. A personal access token is
+ * what to use instead, and the message says so.
  *
  * @param action What was refused, as the start of a sentence: `Saving a page`
  */
 export function userRequired(req: FastifyRequest, action: string): string {
-  return req.apiKey
-    ? `${action} requires a logged in user. API keys act for groups rather than for a user, so they cannot be used for this.`
+  return req.apiKey?.kind === 'system'
+    ? `${action} requires a logged in user. API keys act for groups rather than for a user, so they cannot be used for this — use a personal access token instead.`
     : `${action} requires a logged in user.`
 }
 
@@ -389,6 +391,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/pages',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: page permissions come from a group's RULES, and this would have
         to filter per page against them. It has nothing to filter yet — see the description.
@@ -438,6 +443,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/search',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Search pages',
         description:
@@ -590,6 +598,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/suggest',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Suggest pages while a query is typed',
         description:
@@ -665,6 +676,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
     '/sites/:siteId/pages/include',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Get a page for inclusion',
         description:
@@ -729,6 +743,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
     '/sites/:siteId/pages/locale-relations',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Get the translation set a page belongs to',
         description:
@@ -801,6 +818,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageIdOrHash',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: 'Get a single page',
         description:
@@ -1046,6 +1066,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: PageInput }>(
     '/sites/:siteId/pages',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1133,6 +1156,9 @@ async function routes(app: FastifyInstance) {
   app.patch<{ Params: { siteId: string; pageId: string }; Body: Partial<PageInput> }>(
     '/sites/:siteId/pages/:pageId',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1253,6 +1279,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/editor',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1353,6 +1382,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/path',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1548,6 +1580,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/render',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1618,6 +1653,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -1679,6 +1717,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
     '/sites/:siteId/pages/deleted',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: the bin is gated by the page rule `delete:pages`, resolved
         per deleted page against where it was.
@@ -1754,6 +1795,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/restore',
     {
+      config: {
+        scope: 'pages'
+      },
       // -> Checked per page below, for the same reason as the recycle bin listing above
       schema: {
         summary: 'Restore a deleted page',
@@ -1870,6 +1914,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/history',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and `read:history` is a
         page permission granted by a rule. Checked against this page below instead.
@@ -1910,6 +1957,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string; versionId: string } }>(
     '/sites/:siteId/pages/:pageId/history/:versionId',
     {
+      config: {
+        scope: 'pages'
+      },
       // -> Checked per page below, for the same reason as the history list above
       schema: {
         summary: 'Get a single version of a page',
@@ -1968,6 +2018,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; versionId: string } }>(
     '/sites/:siteId/versions/:versionId',
     {
+      config: {
+        scope: 'pages'
+      },
       // -> Checked per page below, for the same reason as the history routes above
       schema: {
         summary: 'Get a page version by its ID alone',
@@ -2063,6 +2116,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; alias: string } }>(
     '/sites/:siteId/pages/alias/:alias',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and page permissions are
         granted by a group's RULES. Checked against the page in question below instead — which is
@@ -2122,6 +2178,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/id/:pageId',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`, for the reason the alias route above gives: page permissions are
         granted by a group's RULES and are checked against the page itself.
@@ -2185,6 +2244,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/backlinks',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: reading a page's backlinks is `read:pages` ON THAT PAGE, and on
         every page in the answer — see below.
@@ -2295,6 +2357,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/links',
     {
+      config: {
+        scope: 'pages'
+      },
       // -> No route-level `permissions`: `read:pages` on the page itself, as above
       schema: {
         summary: 'List the links written on a page',
@@ -2370,6 +2435,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: { path: string; locale?: string } }>(
     '/sites/:siteId/pages/userPermissions',
     {
+      config: {
+        scope: 'pages:read'
+      },
       schema: {
         summary: 'Get page user permissions',
         description:

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { unlockedFor } from './pages.ts'
 import { NOTIFICATION_CATEGORY_KEYS } from '../notifications/index.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
@@ -12,7 +13,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
  * for groups rather than for a person, has no inbox to read.
  */
 function ownerOf(req: FastifyRequest, reply: FastifyReply): string | null {
-  const userId = req.session?.authenticated ? req.session.user?.id : null
+  const userId = requestUserId(req)
   if (!userId) {
     reply.unauthorized('Notifications belong to a signed-in user.')
     return null
@@ -68,6 +69,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/notifications',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: the caller's own rows, and the session is the whole check
       schema: {
         summary: "List the caller's notifications",
@@ -115,6 +119,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/notifications/summary',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: see above
       schema: {
         summary: "Count the caller's unread notifications",
@@ -165,6 +172,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/notifications/read',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: see above
       schema: {
         summary: 'Mark notifications read',
@@ -213,6 +223,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; notificationId: string } }>(
     '/sites/:siteId/notifications/:notificationId',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: see above
       schema: {
         summary: 'Dismiss a notification',
@@ -255,6 +268,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/users/profile/notifications',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: session-scoped like the rest of `/users/profile`
       schema: {
         summary: "Get the logged in user's notification preferences",
@@ -272,7 +288,7 @@ async function routes(app: FastifyInstance) {
       }
       return {
         preferences: await WIKI.models.notifications.getPrefs(userId, {
-          permissions: req.session.permissions ?? []
+          permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
         }),
         emailAvailable: WIKI.models.mail.isConfigured
       }
@@ -285,6 +301,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Body: { preferences: Record<string, { inApp?: boolean; email?: boolean }> } }>(
     '/users/profile/notifications',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> No route-level permissions: see above
       schema: {
         summary: "Update the logged in user's notification preferences",
@@ -315,7 +334,7 @@ async function routes(app: FastifyInstance) {
       if (!userId) {
         return reply
       }
-      const actor = { permissions: req.session.permissions ?? [] }
+      const actor = { permissions: req.apiKey?.permissions ?? req.session?.permissions ?? [] }
       const changed = await WIKI.models.notifications.setPrefs(userId, actor, req.body.preferences)
       if (changed.length > 0) {
         await audit(req, 'profile', 'updateNotificationPrefs', { categories: changed.sort() })

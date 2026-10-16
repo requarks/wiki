@@ -88,11 +88,14 @@ export const AUDIT_ACTIONS = {
     'registerPasskey',
     'deletePasskey',
     'updateNotificationPrefs',
-    'unsubscribeNotifications'
+    'unsubscribeNotifications',
+    'createAccessToken',
+    'deleteAccessToken'
   ],
   admin: [
     'createApiKey',
     'revokeApiKey',
+    'deleteUserAccessToken',
     'createApprovalRule',
     'updateApprovalRule',
     'deleteApprovalRule',

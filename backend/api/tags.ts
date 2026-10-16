@@ -13,6 +13,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { limit?: number } }>(
     '/sites/:siteId/tags',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: a tag exists because a readable page carries it, so the answer
         is filtered per page below rather than refused outright.

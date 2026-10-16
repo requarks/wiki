@@ -92,6 +92,20 @@
           </w-item-section>
         </w-item>
       </w-form>
+      <!--
+        Said here, where the key is being made for a purpose, rather than discovered later as a 401
+        from the first page save: a key acts for its groups and is nobody, so nothing it writes could
+        say who wrote it. The way out is named, since it exists.
+
+        `contain-inline-size` so that the sentence takes the width the fields above give the dialog
+        and wraps in it, rather than counting towards that width: the dialog is as wide as its widest
+        content, and unwrapped this is the widest by far.
+      -->
+      <w-card-section
+        class="flex items-start gap-3 pt-0 text-caption text-black/75 contain-inline-size dark:text-white/75">
+        <w-icon class="shrink-0" name="la:info-circle" size="16px" />
+        <div>{{ t('admin.api.newKeyUserlessHint') }}</div>
+      </w-card-section>
       <w-card-actions class="card-actions">
         <w-space />
         <w-btn
@@ -161,6 +175,7 @@ const GUESTS_GROUP_ID = '10000000-0000-4000-8000-000000000001'
   it re-evaluates when `setLocaleMessage` fills the strings in.
 */
 const expirations = computed(() => [
+  { value: '7d', text: t('admin.api.expiration7d') },
   { value: '30d', text: t('admin.api.expiration30d') },
   { value: '90d', text: t('admin.api.expiration90d') },
   { value: '180d', text: t('admin.api.expiration180d') },

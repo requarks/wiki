@@ -1,5 +1,6 @@
 import { audit } from '../helpers/audit.ts'
 import { maskSensitiveProps } from '../helpers/common.ts'
+import { requestUser, requestUserId } from '../helpers/requester.ts'
 import { mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import {
   ANNOTATION_NOTE_MAX_LENGTH,
@@ -55,6 +56,15 @@ const annotationIdParam = {
  * Checked in the handler rather than by the schema's `minLength`, since whether it applies depends on
  * the rest of the request — or, for an edit, on what the comment was posted with.
  */
+/**
+ * Whether the account making the request wrote this. False for a guest, whose comments carry no
+ * author either — two absences are not the same person.
+ */
+function isAuthor(req: FastifyRequest, authorId: string | null | undefined): boolean {
+  const userId = requestUserId(req)
+  return userId !== null && authorId === userId
+}
+
 function isTooShort(content: string): boolean {
   return content.trim().length < COMMENT_MIN_LENGTH
 }
@@ -240,6 +250,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/comments',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'List the comments of a page',
         description:
@@ -302,6 +315,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/users/:userId/comments',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'List the comments a user has written',
         description:
@@ -372,6 +388,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/comments',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Post a comment on a page',
         description:
@@ -442,7 +461,7 @@ async function routes(app: FastifyInstance) {
         return reply.forbidden('You are not allowed to comment on this page.')
       }
 
-      const user = req.session?.authenticated ? req.session.user : null
+      const user = requestUser(req)
       const annotations = req.body.annotations ?? []
       if (annotations.length > 0) {
         if (!user) {
@@ -589,6 +608,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string; commentId: string }; Body: { content: string } }>(
     '/sites/:siteId/comments/:commentId',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Edit a comment',
         description:
@@ -632,7 +654,7 @@ async function routes(app: FastifyInstance) {
         commentId: comment.id,
         pageId: comment.pageId,
         path: comment.path,
-        isOwn: comment.authorId === req.session?.user?.id
+        isOwn: isAuthor(req, comment.authorId)
       })
       // -> `actorId` beside `authorId`, since a moderator editing somebody else's comment is exactly
       //    the case a subscriber is likely to be watching for
@@ -644,7 +666,7 @@ async function routes(app: FastifyInstance) {
         locale: comment.locale,
         siteId: req.params.siteId,
         authorId: comment.authorId,
-        actorId: req.session?.user?.id ?? null,
+        actorId: requestUserId(req),
         metadata: {
           authorName: updated.authorName,
           authorEmail: comment.authorEmail || null,
@@ -661,7 +683,7 @@ async function routes(app: FastifyInstance) {
       if (added.length > 0) {
         await WIKI.models.notifications.emit('comment:edit', {
           siteId: req.params.siteId,
-          actorId: req.session?.user?.id ?? null,
+          actorId: requestUserId(req),
           data: {
             variant: 'edited',
             page: WIKI.models.notifications.pageSnapshot({
@@ -691,6 +713,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/comments/:commentId',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Delete a comment',
         description:
@@ -760,7 +785,7 @@ async function routes(app: FastifyInstance) {
         keptForReplies,
         repliesDeleted,
         wasPlaceholder: Boolean(comment.deletedAt),
-        isOwn: comment.authorId === req.session?.user?.id
+        isOwn: isAuthor(req, comment.authorId)
       })
       await WIKI.models.hooks.emit('comment:delete', {
         id: comment.id,
@@ -770,7 +795,7 @@ async function routes(app: FastifyInstance) {
         locale: comment.locale,
         siteId: req.params.siteId,
         authorId: comment.authorId,
-        actorId: req.session?.user?.id ?? null,
+        actorId: requestUserId(req),
         keptForReplies,
         repliesDeleted,
         metadata: {
@@ -790,6 +815,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string; annotationId: string }; Body: { note: string } }>(
     '/sites/:siteId/annotations/:annotationId',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Edit the note of an annotation',
         description:
@@ -828,7 +856,7 @@ async function routes(app: FastifyInstance) {
         commentId: annotation.commentId,
         pageId: annotation.pageId,
         path: annotation.path,
-        isOwn: annotation.authorId === req.session?.user?.id
+        isOwn: isAuthor(req, annotation.authorId)
       })
       // -> As for an edited comment: only the handles this edit added
       const before = new Set(WIKI.models.comments.mentionedHandles(annotation.note))
@@ -838,7 +866,7 @@ async function routes(app: FastifyInstance) {
       if (added.length > 0) {
         await WIKI.models.notifications.emit('comment:edit', {
           siteId: req.params.siteId,
-          actorId: req.session?.user?.id ?? null,
+          actorId: requestUserId(req),
           data: {
             variant: 'edited',
             page: WIKI.models.notifications.pageSnapshot({
@@ -865,6 +893,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string; annotationId: string }; Body: { resolved: boolean } }>(
     '/sites/:siteId/annotations/:annotationId/resolved',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Resolve or reopen an annotation',
         description:
@@ -894,7 +925,7 @@ async function routes(app: FastifyInstance) {
       const updated = await WIKI.models.comments.setAnnotationResolved(
         annotation.id,
         req.body.resolved,
-        req.session?.user?.id ?? null
+        requestUserId(req)
       )
       if (!updated) {
         return reply.notFound('This annotation does not exist.')
@@ -906,7 +937,7 @@ async function routes(app: FastifyInstance) {
           commentId: annotation.commentId,
           pageId: annotation.pageId,
           path: annotation.path,
-          isOwn: annotation.authorId === req.session?.user?.id
+          isOwn: isAuthor(req, annotation.authorId)
         })
       }
       return updated
@@ -920,6 +951,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; annotationId: string } }>(
     '/sites/:siteId/annotations/:annotationId',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Delete an annotation',
         description:
@@ -970,7 +1004,7 @@ async function routes(app: FastifyInstance) {
         commentId: annotation.commentId,
         pageId: annotation.pageId,
         path: annotation.path,
-        isOwn: annotation.authorId === req.session?.user?.id,
+        isOwn: isAuthor(req, annotation.authorId),
         commentDeleted,
         ...(commentDeleted && { keptForReplies })
       })
@@ -984,7 +1018,7 @@ async function routes(app: FastifyInstance) {
           locale: comment.locale,
           siteId: req.params.siteId,
           authorId: comment.authorId,
-          actorId: req.session?.user?.id ?? null,
+          actorId: requestUserId(req),
           keptForReplies,
           repliesDeleted: 0,
           metadata: {
@@ -1004,6 +1038,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { q?: string } }>(
     '/sites/:siteId/comments/mentions',
     {
+      config: {
+        scope: 'comments'
+      },
       schema: {
         summary: 'Find users to mention in a comment',
         description:
@@ -1030,7 +1067,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      if (!req.session?.authenticated) {
+      if (!requestUserId(req)) {
         return reply.unauthorized('You must be signed in to look up users to mention.')
       }
       return WIKI.models.comments.searchHandles(req.query.q ?? '')
@@ -1136,7 +1173,7 @@ async function requireWritableComment(
   if (mayOnPage(req, 'manage:comments', page)) {
     return comment
   }
-  const userId = req.session?.authenticated ? req.session.user?.id : null
+  const userId = requestUserId(req)
   if (!userId || comment.authorId !== userId || !mayOnPage(req, 'write:comments', page)) {
     reply.forbidden('You are not allowed to modify this comment.')
     return null
@@ -1188,7 +1225,7 @@ async function requireAnnotation(
   ) {
     return annotation
   }
-  const userId = req.session?.authenticated ? req.session.user?.id : null
+  const userId = requestUserId(req)
   if (!userId || annotation.authorId !== userId || !mayOnPage(req, 'write:comments', page)) {
     reply.forbidden('You are not allowed to modify this annotation.')
     return null
@@ -1220,7 +1257,7 @@ async function consumeCooldown(
   }
   // -> The address is the fallback for a session with no user on it as well as for a guest: a key
   //    ending in `undefined` would be one counter shared by everybody it happened to
-  const who = (req.session?.authenticated ? req.session.user?.id : null) ?? `ip:${req.ip}`
+  const who = requestUserId(req) ?? `ip:${req.ip}`
   const verdict = await WIKI.models.rateLimits.consume(`comment:${req.params.siteId}:${who}`, {
     /*
       One post per window, and a ban as long as the window. Two attempts inside the cooldown are one

@@ -551,6 +551,30 @@
                   </w-item>
                 </template>
               </w-card>
+              <!--
+                The user's own tokens, for an administrator to see what is out there acting as this
+                account and to take one back -- a leaked token, or one belonging to somebody who has left.
+                Deactivating the account is the other lever, and stops all of them at once.
+              -->
+              <w-card class="shadow-1 pb-2 mt-4">
+                <w-card-header>
+                  {{ t('admin.users.personalTokens') }}
+                  <template #hint>{{ t('admin.users.personalTokensHint') }}</template>
+                </w-card-header>
+                <w-card-section v-if="state.tokens.length < 1" class="pt-0">
+                  <w-banner
+                    rounded
+                    :class="dark.isActive ? `bg-dark-4 text-grey-4` : `bg-grey-2 text-grey-7`"
+                    >{{ t('admin.users.noPersonalTokens') }}</w-banner
+                  >
+                </w-card-section>
+                <w-card-section v-else class="pt-0">
+                  <personal-token-list
+                    :tokens="state.tokens"
+                    :can-delete="canManage"
+                    @delete="deleteToken" />
+                </w-card-section>
+              </w-card>
             </div>
           </div>
         </div>
@@ -788,6 +812,7 @@ import { useUserStore } from '@/stores/user'
 
 import { apiErrorMessage } from '@/helpers/apiError'
 
+import PersonalTokenList from './PersonalTokenList.vue'
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
 import UtilCodeEditor from './UtilCodeEditor.vue'
 
@@ -822,6 +847,8 @@ const state = reactive({
   },
   groups: [],
   groupToAdd: null,
+  /** The user's personal access tokens. */
+  tokens: [],
   loading: 0,
   welcomeEmailLoading: false,
   metadataInvalidJSON: false
@@ -943,6 +970,49 @@ async function fetchUser() {
   }
   loading.hide()
   state.loading--
+  await fetchTokens()
+}
+
+/**
+ * Apart from the user, and after it: a list that cannot be read is a card that stays empty, not an
+ * overlay that will not open.
+ */
+async function fetchTokens() {
+  try {
+    state.tokens = (await API_CLIENT.get(`users/${adminStore.overlayOpts.id}/tokens`).json()) ?? []
+  } catch (err) {
+    state.tokens = []
+    notify({
+      type: 'negative',
+      message: t('admin.users.personalTokensLoadFailed'),
+      caption: apiErrorMessage(err)
+    })
+  }
+}
+
+function deleteToken(token) {
+  confirm({
+    title: t('common.actions.confirm'),
+    message: t('admin.users.personalTokenDeleteConfirm', { name: token.name }),
+    cancel: true,
+    color: 'negative',
+    okLabel: t('profile.tokensDelete')
+  }).onOk(async () => {
+    try {
+      await API_CLIENT.delete(`users/${state.user.id}/tokens/${token.id}`).json()
+      notify({
+        type: 'positive',
+        message: t('profile.tokensDeleteSuccess')
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('profile.tokensDeleteFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    await fetchTokens()
+  })
 }
 
 function close() {

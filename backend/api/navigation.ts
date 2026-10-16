@@ -275,6 +275,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; navId: string }; Querystring: { full?: boolean } }>(
     '/sites/:siteId/navigation/:navId',
     {
+      config: {
+        scope: 'navigation'
+      },
       schema: {
         summary: 'Get a navigation menu',
         description:
@@ -374,6 +377,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; navId: string } }>(
     '/sites/:siteId/navigation/:navId/parent',
     {
+      config: {
+        scope: 'navigation'
+      },
       /*
         No route-level permissions: readable by whoever can read the menu, which is anybody. The path
         it answers with is a page rule's question, asked below.
@@ -428,6 +434,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { path: string; locale: string } }>(
     '/sites/:siteId/navigation/path',
     {
+      config: {
+        scope: 'navigation'
+      },
       /*
         No route-level permissions: what is at a path is a page rule's question, asked below. A menu is
         readable by anybody, so the menu a path inherits is not what is being protected -- the folder
@@ -502,6 +511,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
     '/sites/:siteId/navigation/targets',
     {
+      config: {
+        scope: 'navigation'
+      },
       /*
         No route-level permissions: what may be picked is a page rule, `manage:navigation` on each
         menu's owner, so the list is filtered here instead -- and is empty for whoever holds it nowhere.
@@ -638,6 +650,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/navigation/pages/:pageId/inherited',
     {
+      config: {
+        scope: 'navigation'
+      },
       /*
         No route-level `permissions`: `manage:navigation` is a page rule now, and that hook reads the
         group-wide list only. Checked against this page below instead.
@@ -704,6 +719,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/navigation/pages/:pageId',
     {
+      config: {
+        scope: 'navigation'
+      },
       /*
         No route-level `permissions`: see the note on the route above. The two halves of this request
         are checked separately below, because they are two different permissions to hold.

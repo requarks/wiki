@@ -473,6 +473,19 @@
                 :aria-label="t(`admin.auth.allowProfileEditing`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="api" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.auth.allowPersonalTokens`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.auth.allowPersonalTokensHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.allowPersonalTokens"
+                :aria-label="t(`admin.auth.allowPersonalTokens`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
       </div>
     </div>
@@ -536,7 +549,8 @@ const state = reactive({
   /** The instance-wide settings, which belong to no strategy — the Configuration screen. */
   config: {
     allowPasskeys: true,
-    allowProfileEditing: true
+    allowProfileEditing: true,
+    allowPersonalTokens: true
   }
 })
 
@@ -773,7 +787,8 @@ async function save() {
     const resp = await API_CLIENT.put('authentication/config', {
       json: {
         allowPasskeys: state.config.allowPasskeys,
-        allowProfileEditing: state.config.allowProfileEditing
+        allowProfileEditing: state.config.allowProfileEditing,
+        allowPersonalTokens: state.config.allowPersonalTokens
       }
     }).json()
     if (!resp?.ok) {

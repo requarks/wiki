@@ -9,12 +9,14 @@ import 'fastify'
 import '@fastify/session'
 import type { ApiKeyIdentity } from '../models/apiKeys.ts'
 import type { PasskeyChallenge } from '../models/passkeys.ts'
+import type { RouteScope } from '../models/personalTokens.ts'
 
 declare module 'fastify' {
   interface FastifyRequest {
     /**
-     * Set by the API key hook in `index.ts` when a request carries a valid bearer key. Null for
-     * cookie-authenticated and anonymous requests.
+     * Set by the API key hook in `index.ts` when a request carries a valid bearer key — a system API
+     * key or a personal access token, told apart by `kind`. Null for cookie-authenticated and
+     * anonymous requests.
      */
     apiKey?: ApiKeyIdentity | null
   }
@@ -103,5 +105,16 @@ declare module 'fastify' {
      * really do get the same reply, so that the difference is stated rather than assumed.
      */
     publicAccess?: boolean
+    /**
+     * Which personal access token scope reaches this route, checked by the API key hook in
+     * `index.ts`. A bare category takes its level from the method (GET and HEAD read, anything else
+     * writes); `category:level` says it outright.
+     *
+     * Absent, no personal token may call the route at all — unless it is `publicAccess`, which serves
+     * everybody the same thing anyway. That is the default on purpose: a route has to be opted in,
+     * so an administration route, or one that manages the account's own credentials, is closed to
+     * every token without anybody having to remember to close it.
+     */
+    scope?: RouteScope
   }
 }

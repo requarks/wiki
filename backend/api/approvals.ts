@@ -433,6 +433,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/approvals/submissions',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'List the edit suggestions waiting for the caller to review',
         description:
@@ -466,6 +469,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; submissionId: string } }>(
     '/sites/:siteId/approvals/submissions/:submissionId',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'Get an edit suggestion, with both sides of the diff',
         description:
@@ -507,6 +513,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/approvals/submissions/:submissionId/approve',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'Approve an edit suggestion and write it to the page',
         description:
@@ -596,6 +605,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string; submissionId: string } }>(
     '/sites/:siteId/approvals/submissions/:submissionId/reject',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'Decline an edit suggestion',
         description: 'Discards the suggestion. The page is left exactly as it is.',
@@ -654,6 +666,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/submissions',
     {
+      config: {
+        scope: 'approvals'
+      },
       /*
         No route-level `permissions`: those are page permissions, granted by a group's rules rather
         than group-wide. `canReview` below is the real answer, and an ineligible caller gets `false`
@@ -734,6 +749,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/suggestions/self',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'Whether the caller may suggest edits to a page, and what they already suggested',
         description:
@@ -821,6 +839,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageId/suggestions/self',
     {
+      config: {
+        scope: 'approvals'
+      },
       schema: {
         summary: 'Submit an edit suggestion for a page',
         description:

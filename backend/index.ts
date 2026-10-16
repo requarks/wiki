@@ -35,6 +35,7 @@ import dbManager from './core/db.ts'
 import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
 import { runStartupChecks } from './core/startupChecks.ts'
+import { grantsScope, requiredScope } from './models/personalTokens.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
   isPageUrl,
@@ -508,6 +509,16 @@ async function initHTTPServer() {
           `${currentDescription}\n\n**No fixed permission.** What this returns, and what it acts on, is limited to what the caller is entitled to — their session, their groups' page rules, or their own account. A request that is entitled to nothing gets an empty answer or a refusal rather than an error about permissions.`.trim()
       }
 
+      // -> Which personal access token scope reaches the route, said on every route that declares
+      //    one. A route that says nothing is closed to personal tokens, and saying THAT on two hundred
+      //    admin routes would bury what each of them actually does.
+      const scope = requiredScope(route?.config?.scope, route?.method ?? 'GET')
+      if (scope) {
+        transformedSchema.description =
+          `${transformedSchema.description}\n\n**Personal access token scope:** \`${scope}\``.trim()
+        transformedSchema['x-token-scope'] = scope
+      }
+
       return { schema: transformedSchema, url }
     }
   })
@@ -598,6 +609,32 @@ async function initHTTPServer() {
       // -> Say why: the caller holds the credential and can act on "revoked" or "expired"
       WIKI.logger.debug(`Rejected an API key: ${err.message}`)
       return reply.unauthorized(err.message)
+    }
+
+    /*
+      A personal access token reaches only the routes that declare a scope it holds — see `scope` in
+      `types/fastify.d.ts`. Checked here rather than with the route permissions in `preParsing`,
+      because it is about the credential and not about the user: a token whose owner is an
+      administrator is still refused an administration route, which declares no scope.
+
+      403 rather than 401: the token is valid, and asking again with the same one gets the same answer.
+      SCIM and metrics take system keys only, and neither declares a route scope to begin with.
+    */
+    if (req.apiKey.kind === 'personal') {
+      if (!req.url.startsWith('/_api/')) {
+        return reply.forbidden('Personal access tokens are accepted by the /_api endpoints only.')
+      }
+      const config = req.routeOptions.config
+      if (config?.publicAccess) {
+        return
+      }
+      const scope = requiredScope(config?.scope, req.method)
+      if (!scope) {
+        return reply.forbidden('This endpoint cannot be used with a personal access token.')
+      }
+      if (!grantsScope(req.apiKey.scopes ?? [], scope)) {
+        return reply.forbidden(`This personal access token does not have the ${scope} scope.`)
+      }
     }
   })
 

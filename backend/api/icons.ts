@@ -23,6 +23,7 @@ async function routes(app: FastifyInstance) {
     '/sets',
     {
       config: {
+        scope: 'pages',
         permissions: PICKER_PERMISSIONS
       },
       schema: {
@@ -322,6 +323,7 @@ async function routes(app: FastifyInstance) {
     '/search',
     {
       config: {
+        scope: 'pages',
         permissions: PICKER_PERMISSIONS
       },
       schema: {
@@ -389,6 +391,7 @@ async function routes(app: FastifyInstance) {
     '/sets/:prefix/icons',
     {
       config: {
+        scope: 'pages',
         permissions: PICKER_PERMISSIONS
       },
       schema: {
@@ -443,6 +446,7 @@ async function routes(app: FastifyInstance) {
     '/materialize',
     {
       config: {
+        scope: 'pages',
         permissions: PICKER_PERMISSIONS
       },
       schema: {

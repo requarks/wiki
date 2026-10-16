@@ -48,6 +48,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/blogs/posts',
     {
+      config: {
+        scope: 'pages'
+      },
       schema: {
         summary: "List a blog's posts",
         description:

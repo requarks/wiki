@@ -111,6 +111,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description:
           'Whether a user may edit their own profile. Off for an instance whose user records are owned by an identity provider.'
+      },
+      allowPersonalTokens: {
+        type: 'boolean',
+        description:
+          'Whether users may create personal access tokens. Turned off, the tokens already created stop working too; they are kept, and work again the moment it is turned back on.'
       }
     }
   })

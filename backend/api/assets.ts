@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { validate as uuidValidate } from 'uuid'
 
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 import { userRequired } from './pages.ts'
@@ -90,6 +91,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/assets',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in.
@@ -101,7 +105,7 @@ async function routes(app: FastifyInstance) {
       */
       preParsing: async (req, reply, payload) => {
         // -> An asset records who uploaded it, and an API key is not a who
-        const authorId = req.session?.authenticated ? req.session.user?.id : null
+        const authorId = requestUserId(req)
         if (!authorId) {
           throw app.httpErrors.unauthorized(userRequired(req, 'Uploading an asset'))
         }
@@ -243,6 +247,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in. Checked below.
@@ -273,6 +280,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId/content',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in. Checked below.
@@ -346,6 +356,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/assets/:assetId',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in. Checked below.
@@ -426,7 +439,7 @@ async function routes(app: FastifyInstance) {
         req.params.siteId,
         req.params.assetId,
         req.body,
-        req.session.user?.id
+        requestUserId(req) ?? undefined
       )
       if (!asset) {
         return reply.notFound('This asset does not exist.')
@@ -467,6 +480,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/assets/:assetId/resize',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in. Checked below.
@@ -529,7 +545,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       // -> Whatever is written records who wrote it, and an API key is not a who
-      const authorId = req.session?.authenticated ? req.session.user?.id : null
+      const authorId = requestUserId(req)
       if (!authorId) {
         return reply.unauthorized(userRequired(req, 'Resizing an image'))
       }
@@ -591,6 +607,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; assetId: string } }>(
     '/sites/:siteId/assets/:assetId',
     {
+      config: {
+        scope: 'assets'
+      },
       /*
         No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
         from a group's RULES, which address the folder the file is in. Checked below.
@@ -618,7 +637,7 @@ async function routes(app: FastifyInstance) {
         !(await WIKI.models.assets.deleteAsset(
           req.params.siteId,
           req.params.assetId,
-          req.session.user?.id
+          requestUserId(req) ?? undefined
         ))
       ) {
         return reply.notFound('This asset does not exist.')

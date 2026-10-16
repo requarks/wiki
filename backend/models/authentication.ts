@@ -163,7 +163,11 @@ function isBuiltInLocal(id: string): boolean {
  * sets. The rest of that blob — the session secret, the signing keypair, the seeded IDs — is the
  * installation's own and is never read or written through here.
  */
-export const AUTH_CONFIG_FIELDS = ['allowPasskeys', 'allowProfileEditing'] as const
+export const AUTH_CONFIG_FIELDS = [
+  'allowPasskeys',
+  'allowProfileEditing',
+  'allowPersonalTokens'
+] as const
 
 /**
  * Authentication model
@@ -232,6 +236,17 @@ class Authentication {
    */
   isProfileEditingAllowed(): boolean {
     return WIKI.config.auth?.allowProfileEditing !== false
+  }
+
+  /**
+   * Whether personal access tokens may be created and used.
+   *
+   * Both, not only created: an administrator turning this off wants the tokens already out there to
+   * stop working, and the alternative way to get that — regenerating the certificates — would take
+   * every system API key down with them. The tokens are kept, so turning it back on restores them.
+   */
+  arePersonalTokensAllowed(): boolean {
+    return WIKI.config.auth?.allowPersonalTokens !== false
   }
 
   async getStrategy(module: string) {

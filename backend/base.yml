@@ -155,6 +155,9 @@ defaults:
       # Whether a user may edit their own profile — their name, their location, their avatar. Off
       # for an instance whose user records come from an identity provider and are written there.
       allowProfileEditing: true
+      # Whether users may create personal access tokens under their profile. Off, the tokens already
+      # created stop working as well — they are kept, and work again the moment it is back on.
+      allowPersonalTokens: true
     security:
       corsMode: 'OFF'
       corsConfig: ''

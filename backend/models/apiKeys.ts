@@ -3,6 +3,9 @@ import { apiKeys as apiKeysTable, groups as groupsTable } from '../db/schema.ts'
 import { and, desc, eq, gt, inArray, sql } from 'drizzle-orm'
 import { flatten, uniq } from 'es-toolkit/array'
 import { epochSeconds, signJwt, verifyJwt } from '../helpers/jwt.ts'
+import type { JwtClaims } from '../helpers/jwt.ts'
+import type { RequestUser } from '../helpers/requester.ts'
+import type { TokenScope } from './personalTokens.ts'
 
 /**
  * The `aud` claim every key carries, and the one value `verify()` accepts.
@@ -13,6 +16,14 @@ import { epochSeconds, signJwt, verifyJwt } from '../helpers/jwt.ts'
  * invalidate every key already issued.
  */
 const TOKEN_AUDIENCE = 'urn:wiki.js'
+
+/**
+ * The `aud` claim of a personal access token (`models/personalTokens.ts`).
+ *
+ * The same keypair signs both kinds, so the audience is what says which one a token is — and what
+ * keeps either from being presented as the other.
+ */
+export const PERSONAL_TOKEN_AUDIENCE = 'urn:wiki.js:pat'
 
 /** An API key signing keypair, with the passphrase its private half is encrypted under. */
 export interface SigningCertificates {
@@ -67,6 +78,7 @@ export function generateSigningCertificates(): SigningCertificates {
 
 /** The lifetimes the admin area offers, as durations the API accepts. */
 export const KEY_EXPIRATIONS = {
+  '7d': { days: 7 },
   '30d': { days: 30 },
   '90d': { days: 90 },
   '180d': { days: 180 },
@@ -98,12 +110,33 @@ export interface ApiKeyListEntry extends ApiKey {
   isInvalidated: boolean
 }
 
-/** What a verified key grants, resolved from its groups at request time. */
+/**
+ * What a verified bearer token grants, resolved at request time.
+ *
+ * One shape for both kinds, so that everything reading `req.apiKey` for permissions and groups works
+ * for either without asking which it was handed.
+ */
 export interface ApiKeyIdentity {
+  /**
+   * `system` is a key an administrator issued, acting for its groups and for nobody; `personal` is a
+   * user's own token, acting as them.
+   */
+  kind: 'system' | 'personal'
+  /** The row's ID, in `apiKeys` or `personalTokens` depending on the kind. */
   id: string
-  /** The groups the key was issued for, whose page rules decide what it may do to a page. */
+  /**
+   * The groups whose page rules decide what it may do to a page: the ones a system key was issued
+   * for, or a personal token's owner's.
+   */
   groupIds: string[]
   permissions: string[]
+  /** The account a personal token acts as. Null for a system key. */
+  user: RequestUser | null
+  /**
+   * The routes a personal token may reach, by the `config.scope` they declare. Null for a system key,
+   * which is limited by its groups alone.
+   */
+  scopes: TokenScope[] | null
 }
 
 /** Raised by `verify()` when a token is not usable, with a reason safe to return to the caller. */
@@ -140,7 +173,16 @@ class ApiKeys {
   }
 
   /**
-   * Replace the signing keypair and its passphrase, invalidating every key ever issued.
+   * Sign a set of claims with the installation keypair. Shared with `models/personalTokens.ts`, whose
+   * tokens are signed by the same key and told apart by their audience.
+   */
+  sign(claims: JwtClaims): string {
+    return signJwt(claims, this.privateKey())
+  }
+
+  /**
+   * Replace the signing keypair and its passphrase, invalidating every key ever issued — personal
+   * access tokens included, which are signed by the same keypair.
    *
    * A key is only a signature over its claims, so this is what takes back keys that have escaped:
    * the rows stay, and every token signed by the old key stops verifying on the next request. The
@@ -216,16 +258,13 @@ class ApiKeys {
       .add(KEY_EXPIRATIONS[expiration])
       .toInstant()
 
-    const key = signJwt(
-      {
-        id,
-        grp: groups,
-        aud: TOKEN_AUDIENCE,
-        iat: epochSeconds(),
-        exp: epochSeconds(expiresAt)
-      },
-      this.privateKey()
-    )
+    const key = this.sign({
+      id,
+      grp: groups,
+      aud: TOKEN_AUDIENCE,
+      iat: epochSeconds(),
+      exp: epochSeconds(expiresAt)
+    })
 
     await WIKI.db.insert(apiKeysTable).values({
       id,
@@ -303,7 +342,8 @@ class ApiKeys {
   }
 
   /**
-   * Verify a bearer token and resolve what it grants.
+   * Verify a bearer token and resolve what it grants — a system key here, a personal access token by
+   * handing its claims to `personalTokens.verifyClaims`. Turning the API off turns off both.
    *
    * @throws ApiKeyError with a reason suitable for a 401 response
    */
@@ -314,11 +354,16 @@ class ApiKeys {
 
     let claims
     try {
-      claims = verifyJwt(token, WIKI.config.auth.certs.public, {
-        audience: TOKEN_AUDIENCE
-      })
+      // -> No audience asked for here: there are two, and which one it carries is the next question
+      claims = verifyJwt(token, WIKI.config.auth.certs.public)
     } catch (err: any) {
       throw new ApiKeyError(err.message)
+    }
+    if (claims.aud === PERSONAL_TOKEN_AUDIENCE) {
+      return WIKI.models.personalTokens.verifyClaims(claims)
+    }
+    if (claims.aud !== TOKEN_AUDIENCE) {
+      throw new ApiKeyError('Token audience does not match.')
     }
 
     // -> A token this keypair signed but which names no key. There is nothing else it could be —
@@ -342,9 +387,12 @@ class ApiKeys {
 
     const groupIds = Array.isArray(claims.grp) ? (claims.grp as string[]) : []
     return {
+      kind: 'system',
       id: key.id,
       groupIds,
-      permissions: await this.resolvePermissions(groupIds)
+      permissions: await this.resolvePermissions(groupIds),
+      user: null,
+      scopes: null
     }
   }
 }

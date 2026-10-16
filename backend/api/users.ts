@@ -1,6 +1,7 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError, rethrowAsBadRequest } from '../helpers/common.ts'
 import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
+import { hasUserSession, requestUser, requestUserId } from '../helpers/requester.ts'
 import { elevatedMembershipGuard, systemUserGuard } from '../helpers/userGuards.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { UserPatch, UserProfilePatch } from '../models/users.ts'
@@ -23,33 +24,38 @@ const avatarUploadLimit = 2 * 1024 * 1024
  * The user the session belongs to, or null when the request is not from a logged in user.
  *
  * The `/profile` routes are session-authenticated rather than permission-gated: every logged in user
- * may read and change its own profile, and no permission expresses that.
+ * may read and change its own profile, and no permission expresses that. The ones a personal access
+ * token may reach (`config.scope`) ask `requestUserId` instead; the rest — passwords, 2FA, passkeys,
+ * the tokens themselves — stay on this, so that a token can never be used to take over the account it
+ * belongs to, even if a route were opened to it by mistake.
  */
 function sessionUserId(req: FastifyRequest): string | null {
   return req.session?.authenticated && req.session.user?.id ? req.session.user.id : null
 }
 
 /**
- * Who is asking, as the interface needs to know it: the account on the session and the group-wide
- * permissions it holds, or nothing at all for a guest.
+ * Who is asking, as the interface needs to know it: the account on the session — or the one a
+ * personal access token acts as — and the group-wide permissions it holds, or nothing at all for a
+ * guest.
  *
  * Exported because `bootstrap` answers the same question as part of the one call an app load makes,
  * and two versions of "who is this" would be one too many.
  */
 export function whoAmI(req: FastifyRequest): Record<string, any> {
-  if (!req.session?.authenticated) {
+  const user = requestUser(req)
+  if (!user) {
     return { authenticated: false }
   }
   return {
     authenticated: true,
-    ...req.session.user,
+    ...user,
     /*
       The same list the route permission hook checks against — written onto the session at login from
       the groups the user belongs to. Nothing is added for the interface's benefit: a control it shows
       on a permission the session does not hold leads to a button that gets a 403 from the endpoint
       behind it.
     */
-    permissions: req.session.permissions ?? []
+    permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
   }
 }
 
@@ -262,6 +268,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/whoami',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: 'Get currently logged in user info',
         description:
@@ -281,6 +290,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/profile',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: "Get the logged in user's own profile",
         description:
@@ -297,7 +309,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -316,6 +328,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Body: UserProfilePatch }>(
     '/profile',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: "Update the logged in user's own profile",
         description:
@@ -344,7 +359,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -386,19 +401,22 @@ async function routes(app: FastifyInstance) {
       }
 
       // -> The session carries a copy of the name and the preferences, which `/whoami` serves on
-      //    every page load. Left alone, it would hand back the pre-save values.
-      req.session.user = {
-        ...req.session.user!,
-        name: profile.name,
-        locale: profile.locale,
-        timezone: profile.timezone,
-        dateFormat: profile.dateFormat,
-        timeFormat: profile.timeFormat,
-        appearance: profile.appearance,
-        cvd: profile.cvd,
-        reduceMotion: profile.reduceMotion,
-        underlineLinks: profile.underlineLinks,
-        contentTextSize: profile.contentTextSize
+      //    every page load. Left alone, it would hand back the pre-save values. A personal access
+      //    token has no session copy to refresh: it reads the account afresh on every request.
+      if (hasUserSession(req)) {
+        req.session.user = {
+          ...req.session.user!,
+          name: profile.name,
+          locale: profile.locale,
+          timezone: profile.timezone,
+          dateFormat: profile.dateFormat,
+          timeFormat: profile.timeFormat,
+          appearance: profile.appearance,
+          cvd: profile.cvd,
+          reduceMotion: profile.reduceMotion,
+          underlineLinks: profile.underlineLinks,
+          contentTextSize: profile.contentTextSize
+        }
       }
 
       // -> The fields that were touched, not the values: `patch` carries whatever the profile form
@@ -421,10 +439,13 @@ async function routes(app: FastifyInstance) {
   app.put(
     '/profile/avatar',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> Before the body is parsed, which buffers the whole image: refusing afterwards would let
       //    anybody make the server hold `avatarUploadLimit` per request only to be told no
       preParsing: async (req, reply, payload) => {
-        if (!sessionUserId(req)) {
+        if (!requestUserId(req)) {
           throw app.httpErrors.unauthorized()
         }
         if (!WIKI.models.authentication.isProfileEditingAllowed()) {
@@ -454,7 +475,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      const userId = sessionUserId(req)!
+      const userId = requestUserId(req)!
 
       const data = req.body
       if (!Buffer.isBuffer(data) || data.length < 1) {
@@ -471,7 +492,9 @@ async function routes(app: FastifyInstance) {
 
       await WIKI.models.users.setAvatar(userId, data)
       // -> The account menu reads `hasAvatar` off the session on every page load
-      req.session.user = { ...req.session.user!, hasAvatar: true }
+      if (hasUserSession(req)) {
+        req.session.user = { ...req.session.user!, hasAvatar: true }
+      }
 
       await audit(req, 'profile', 'updateAvatar', {})
 
@@ -488,6 +511,9 @@ async function routes(app: FastifyInstance) {
   app.delete(
     '/profile/avatar',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: "Remove the logged in user's own avatar",
         description:
@@ -510,7 +536,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -519,7 +545,9 @@ async function routes(app: FastifyInstance) {
       }
 
       await WIKI.models.users.clearAvatar(userId)
-      req.session.user = { ...req.session.user!, hasAvatar: false }
+      if (hasUserSession(req)) {
+        req.session.user = { ...req.session.user!, hasAvatar: false }
+      }
 
       await audit(req, 'profile', 'deleteAvatar', {})
 
@@ -539,6 +567,9 @@ async function routes(app: FastifyInstance) {
   app.get(
     '/profile/groups',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: 'Get the groups the logged in user belongs to',
         description:
@@ -566,7 +597,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -584,6 +615,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { editor: string } }>(
     '/profile/editor-settings/:editor',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: "Get the logged in user's settings for one editor",
         tags: ['Users'],
@@ -605,7 +639,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -619,6 +653,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { editor: string }; Body: Record<string, any> }>(
     '/profile/editor-settings/:editor',
     {
+      config: {
+        scope: 'profile'
+      },
       schema: {
         summary: "Update the logged in user's settings for one editor",
         description:
@@ -648,7 +685,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = requestUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1339,6 +1376,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { userId: string } }>(
     '/:userId/profile',
     {
+      config: {
+        scope: 'profile'
+      },
       /*
         No route-level permissions: this is the public profile page, readable by whoever can read the
         wiki — the same reach an avatar already has under `/_user/<id>/avatar`, and for the same reason.

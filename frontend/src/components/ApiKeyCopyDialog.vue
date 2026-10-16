@@ -3,7 +3,7 @@
     <w-card style="min-width: 600px">
       <w-card-section class="card-header">
         <w-icon name="img:/_assets/icons/fluent-key-2.svg" size="sm" class="mr-2" />
-        <span>{{ t(`admin.api.copyKeyTitle`) }}</span>
+        <span>{{ props.title ?? t(`admin.api.copyKeyTitle`) }}</span>
       </w-card-section>
       <w-card-section class="card-negative">
         <i18n-t tag="span" keypath="admin.api.newKeyCopyWarn" scope="global">
@@ -16,14 +16,19 @@
         <w-item>
           <blueprint-icon icon="binary-file" class="self-start" />
           <w-item-section>
+            <!--
+              As tall as the token, never scrolled: a field showing part of it is a field somebody
+              selects part of, and the token is never shown again.
+            -->
             <w-input
               type="textarea"
+              autogrow
               outlined
               :model-value="props.keyValue"
               readonly
               dense
               hide-bottom-space
-              :label="t(`admin.api.key`)"
+              :label="props.label ?? t(`admin.api.key`)"
               autofocus />
           </w-item-section>
         </w-item>
@@ -66,6 +71,22 @@ const props = defineProps({
   keyValue: {
     type: String,
     required: true
+  },
+  /*
+    What to call the credential, for the personal access tokens of the profile, which are shown once
+    exactly as an API key is. Each defaults to the API key's own wording.
+  */
+  title: {
+    type: String,
+    default: null
+  },
+  label: {
+    type: String,
+    default: null
+  },
+  successMessage: {
+    type: String,
+    default: null
   }
 })
 
@@ -88,7 +109,7 @@ async function copyKey() {
     await copyToClipboard(props.keyValue)
     notify({
       type: 'positive',
-      message: t('admin.api.copySuccess')
+      message: props.successMessage ?? t('admin.api.copySuccess')
     })
   } catch (err) {
     notify({

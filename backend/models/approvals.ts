@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { createPatch } from 'diff'
+import { requestUserId } from '../helpers/requester.ts'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import {
   approvalRules as approvalRulesTable,
@@ -330,8 +331,10 @@ class Approvals {
    * be changed, and the ID of the account itself only exists while an instance is being seeded.
    */
   getActorGroupIds(req: any): string[] {
-    if (req.session?.authenticated && req.session.user?.id) {
-      return req.session.groups ?? []
+    // -> Whoever acts as a user — a session, or a personal access token — is judged by that user's
+    //    groups. A system API key is nobody, and stays the guests group here as it always has.
+    if (requestUserId(req)) {
+      return WIKI.models.groups.groupIdsForRequest(req)
     }
     return [WIKI.data.systemIds.guestsGroupId]
   }
@@ -400,7 +403,7 @@ class Approvals {
    * SUBMITTING — anonymous suggestions are a feature — but a review is an act with an author.
    */
   isReviewerSession(req: any): boolean {
-    return Boolean(req.session?.authenticated && req.session.user?.id)
+    return Boolean(requestUserId(req))
   }
 
   /**
@@ -423,7 +426,7 @@ class Approvals {
     canReview: boolean
     pendingSubmissions: ReviewableSubmission[]
   }> {
-    const actorId = req.session?.authenticated ? (req.session.user?.id ?? null) : null
+    const actorId = requestUserId(req)
     const groupIds = this.getActorGroupIds(req)
 
     const submitRule = await this.findSubmitRule(siteId, page, groupIds)
@@ -440,7 +443,7 @@ class Approvals {
       ? {
           groupIds,
           reviewsAll:
-            (req.session?.permissions ?? []).includes('manage:system') ||
+            (req.apiKey?.permissions ?? req.session?.permissions ?? []).includes('manage:system') ||
             WIKI.models.groups.checkAccess(
               WIKI.models.groups.actorForRequest(req),
               'review:pages',

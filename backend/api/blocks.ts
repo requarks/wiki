@@ -81,6 +81,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/blocks',
     {
+      config: {
+        scope: 'pages'
+      },
       /*
         No route-level `permissions`: who may see this list comes down to a group's rules, which that
         hook does not read — and it would refuse an anonymous reader outright, when a wiki that takes

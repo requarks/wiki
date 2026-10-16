@@ -1,4 +1,5 @@
 import { durationToSeconds } from './common.ts'
+import { requestUserId } from './requester.ts'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { RateLimitPolicy } from '../models/rateLimits.ts'
 
@@ -97,11 +98,11 @@ export async function limitAuthAttempts(req: FastifyRequest, reply: FastifyReply
  * change is an operator's job, and a root admin who wants the server busy has easier ways.
  */
 export async function limitRenders(req: FastifyRequest, reply: FastifyReply): Promise<void> {
-  if (req.session?.permissions?.includes('manage:system')) {
+  if ((req.apiKey?.permissions ?? req.session?.permissions)?.includes('manage:system')) {
     return
   }
   const verdict = await WIKI.models.rateLimits.consume(
-    `render:${req.session?.user?.id ?? req.ip}`,
+    `render:${requestUserId(req) ?? req.ip}`,
     RENDER_LIMIT
   )
   if (verdict.allowed) {

@@ -77,6 +77,8 @@
         :type="type === 'textarea' ? undefined : effectiveType"
         :value="modelValue"
         :placeholder="placeholder"
+        :min="min ?? undefined"
+        :max="max ?? undefined"
         :readonly="readonly"
         :disabled="disable || disabled"
         v-bind="autofillAttrs"
@@ -85,7 +87,10 @@
         :aria-required="required || undefined"
         :aria-describedby="describedBy"
         class="w-unstyled min-w-0 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
-        :class="monospaced ? 'font-mono text-[13px] leading-[1.4] font-semibold' : ''"
+        :class="[
+          monospaced ? 'font-mono text-[13px] leading-[1.4] font-semibold' : '',
+          isAutogrow ? 'resize-none overflow-hidden' : ''
+        ]"
         @input="onInput"
         @focus="onFocus"
         @blur="onBlur"
@@ -154,7 +159,17 @@
 </template>
 
 <script setup>
-import { computed, inject, onMounted, ref, useId, useSlots, watch } from 'vue'
+import {
+  computed,
+  inject,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  useId,
+  useSlots,
+  watch
+} from 'vue'
 
 /**
  * Text input.
@@ -187,6 +202,18 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
+    default: null
+  },
+  /**
+   * The native `min` / `max` of the input, for a `number` (or `date`) field — what its stepper and
+   * picker stay within. Not a validation, which is still the `rules`' job.
+   */
+  min: {
+    type: [String, Number],
+    default: null
+  },
+  max: {
+    type: [String, Number],
     default: null
   },
   /**
@@ -276,10 +303,19 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  /** Rows for `type="textarea"`. */
+  /** Rows for `type="textarea"`. With `autogrow`, the height it starts from. */
   rows: {
     type: [String, Number],
     default: 3
+  },
+  /**
+   * A `textarea` as tall as its content, with no scrollbar and no resize handle. For a value that
+   * has to be read in full -- a token shown once, where a scrolled-off tail is a tail somebody
+   * fails to copy.
+   */
+  autogrow: {
+    type: Boolean,
+    default: false
   },
   /** Monospaced content, e.g. code or keys. */
   monospaced: {
@@ -342,6 +378,10 @@ const emit = defineEmits(['update:modelValue', 'keyup:enter', 'focus', 'blur'])
 const slots = useSlots()
 
 const inputEl = ref(null)
+
+const isAutogrow = computed(() => props.autogrow && props.type === 'textarea')
+/** Set while an `autogrow` textarea is mounted. */
+let resizeObserver = null
 const inputId = useId()
 const errorMessage = ref(null)
 const hasBlurred = ref(false)
@@ -543,9 +583,40 @@ onMounted(() => {
   if (props.autofocus) {
     inputEl.value?.focus()
   }
+  if (isAutogrow.value && inputEl.value) {
+    /*
+      Refitted whenever the WIDTH changes, which is what rewraps the text: on first layout -- a field
+      inside a dialog mounts before the dialog is shown, when it has no width to measure against --
+      and on a resize of the window. Width only, since fitting changes the height and would
+      otherwise call itself back.
+    */
+    let lastWidth = -1
+    resizeObserver = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width
+      if (width !== lastWidth) {
+        lastWidth = width
+        fitToContent()
+      }
+    })
+    resizeObserver.observe(inputEl.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
 })
 
 // METHODS
+
+/** Size an `autogrow` textarea to its content: collapsed first, so that it can shrink as well. */
+function fitToContent() {
+  const el = inputEl.value
+  if (!isAutogrow.value || !el) {
+    return
+  }
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
 
 /**
  * Runs `rules` and records the first failure.
@@ -588,6 +659,15 @@ function onBlur(ev) {
     validate()
   }
 }
+
+watch(
+  () => props.modelValue,
+  () => {
+    if (isAutogrow.value) {
+      nextTick(fitToContent)
+    }
+  }
+)
 
 // -> With lazyRules the field stays silent until first blur, then re-validates on every keystroke
 watch(

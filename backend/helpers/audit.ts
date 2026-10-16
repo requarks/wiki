@@ -1,3 +1,4 @@
+import { requestUser } from './requester.ts'
 import type { FastifyRequest } from 'fastify'
 import type { AuditAction, AuditActor, AuditKind } from '../models/auditLog.ts'
 
@@ -86,7 +87,7 @@ function isPlainObject(value: object): boolean {
 
 /** Who is making this request, as the audit log records them. */
 function actorFromRequest(req: FastifyRequest): AuditActor {
-  const user = req.session?.authenticated ? req.session.user : null
+  const user = requestUser(req)
   return {
     id: user?.id ?? null,
     name: user?.name ?? null,
@@ -113,8 +114,10 @@ function actorFromRequest(req: FastifyRequest): AuditActor {
  * every call site does, so that a route's last statement is not a floating promise the response can
  * outrun.
  *
- * A request authenticated by an API key rather than a session is recorded with no user: a key acts
- * with the permissions of its groups, not as a person, and `meta.apiKeyId` is what identifies it.
+ * A request authenticated by a system API key rather than a session is recorded with no user: a key
+ * acts with the permissions of its groups, not as a person, and `meta.apiKeyId` is what identifies it.
+ * A personal access token acts as its owner and is recorded as them, with `meta.patId` saying it was
+ * the token rather than a browser — not `tokenId`, which `sanitizeMeta` would take for a secret.
  *
  * @param kind Which area of the wiki the action belongs to
  * @param action What was done, as a key from `AUDIT_ACTIONS`
@@ -130,6 +133,10 @@ export async function audit(
     kind,
     action,
     actor: actorFromRequest(req),
-    meta: req.apiKey ? { ...meta, apiKeyId: req.apiKey.id } : meta
+    meta: !req.apiKey
+      ? meta
+      : req.apiKey.kind === 'personal'
+        ? { ...meta, patId: req.apiKey.id }
+        : { ...meta, apiKeyId: req.apiKey.id }
   })
 }

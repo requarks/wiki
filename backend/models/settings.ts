@@ -72,7 +72,8 @@ class Settings {
           rootAdminUserId: ids.userAdminId,
           guestUserId: ids.userGuestId,
           allowPasskeys: true,
-          allowProfileEditing: true
+          allowProfileEditing: true,
+          allowPersonalTokens: true
         }
       },
       {

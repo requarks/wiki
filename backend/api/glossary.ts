@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { GLOSSARY_INPUT_PROPERTIES } from './schemas/glossary.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { GlossaryTermInput, GlossaryWriteResult } from '../models/glossary.ts'
@@ -163,6 +164,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/glossary/access',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'What the caller may do with the glossary',
         description:
@@ -214,6 +218,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
     '/sites/:siteId/glossary',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'List the glossary terms of a locale',
         description:
@@ -248,6 +255,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
     '/sites/:siteId/glossary/categories',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'List the glossary categories of a locale',
         description:
@@ -282,6 +292,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string } }>(
     '/sites/:siteId/glossary/autolink',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'List the glossary terms linked in page text',
         description:
@@ -341,6 +354,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string }; Querystring: { locale: string; name: string } }>(
     '/sites/:siteId/glossary/lookup',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'Find a glossary term by name',
         description:
@@ -387,6 +403,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; termId: string } }>(
     '/sites/:siteId/glossary/:termId',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'Get a glossary term',
         description:
@@ -421,6 +440,9 @@ async function routes(app: FastifyInstance) {
   app.post<{ Params: { siteId: string }; Body: GlossaryTermInput & { locale: string } }>(
     '/sites/:siteId/glossary',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'Create a glossary term',
         description:
@@ -459,7 +481,7 @@ async function routes(app: FastifyInstance) {
         siteId,
         req.body.locale,
         req.body,
-        req.session?.user?.id ?? null
+        requestUserId(req)
       )
       if (!result.ok) {
         return sendRefusal(reply, result)
@@ -484,6 +506,9 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/glossary/:termId',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'Update a glossary term',
         description:
@@ -517,7 +542,7 @@ async function routes(app: FastifyInstance) {
         termId,
         req.body,
         req.body.expectedUpdatedAt,
-        req.session?.user?.id ?? null
+        requestUserId(req)
       )
       if (!result.ok) {
         return sendRefusal(reply, result)
@@ -540,6 +565,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; termId: string } }>(
     '/sites/:siteId/glossary/:termId',
     {
+      config: {
+        scope: 'glossary'
+      },
       schema: {
         summary: 'Delete a glossary term',
         description:

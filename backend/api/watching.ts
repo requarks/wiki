@@ -61,6 +61,9 @@ async function routes(app: FastifyInstance) {
   app.put<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/watch',
     {
+      config: {
+        scope: 'profile'
+      },
       /*
         No route-level `permissions`: this is decided per page, by whether the caller may read it —
         which comes from a group's rules and not from the group-wide list that hook consults.
@@ -115,6 +118,9 @@ async function routes(app: FastifyInstance) {
   app.delete<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/pages/:pageId/watch',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> Same as above: readable is the test, and it is per page
       schema: {
         summary: 'Stop watching a page',
@@ -163,6 +169,9 @@ async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/watching',
     {
+      config: {
+        scope: 'profile'
+      },
       // -> Everything it returns is the caller's own, so being logged in is the whole of the check
       schema: {
         summary: 'List the pages the caller is watching',
