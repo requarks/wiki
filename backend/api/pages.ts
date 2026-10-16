@@ -81,6 +81,23 @@ export function actorFrom(req: FastifyRequest): PageActor | null {
 }
 
 /**
+ * The refusal for an action that needs a logged in user, saying why when it was an API key that asked.
+ *
+ * A key acts for the groups it was issued for rather than for anybody, so there is no one to record
+ * as the author of what it would write — and a bare "requires a logged in user" reads, to a caller
+ * holding a perfectly valid key, like the key was not accepted.
+ *
+ * TODO: Personal API keys, issued to a user and acting as them, are what will let a key write.
+ *
+ * @param action What was refused, as the start of a sentence: `Saving a page`
+ */
+export function userRequired(req: FastifyRequest, action: string): string {
+  return req.apiKey
+    ? `${action} requires a logged in user. API keys act for groups rather than for a user, so they cannot be used for this.`
+    : `${action} requires a logged in user.`
+}
+
+/**
  * Permissions that make a page's password irrelevant to the holder.
  *
  * Whoever may edit a page can read its source in the editor and can take the password off it
@@ -392,6 +409,8 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
+      // TODO: Implement, filtering every page by `mayOnPage(req, 'read:pages', page)` and leaving out
+      //       one that is not live unless `unpublishedFor(req)` lets it through, as the tree does
       return []
     }
   )
@@ -1060,7 +1079,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Saving a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Saving a page'))
       }
       /*
         Against the page as it is about to be, since there is no page to ask about yet: the path it
@@ -1142,7 +1161,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Saving a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Saving a page'))
       }
       const target = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
@@ -1274,7 +1293,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Converting a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Converting a page'))
       }
       const target = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
@@ -1428,7 +1447,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Moving a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Moving a page'))
       }
       const target = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
@@ -1557,7 +1576,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Rendering a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Rendering a page'))
       }
       const target = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
@@ -1618,7 +1637,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Deleting a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Deleting a page'))
       }
       const target = await WIKI.models.pages.getPage({
         siteId: req.params.siteId,
@@ -1785,7 +1804,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Restoring a page requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Restoring a page'))
       }
       const deletion = await WIKI.models.pageHistory.deletionOf(
         req.params.siteId,

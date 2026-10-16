@@ -297,8 +297,15 @@ class Groups {
    * An anonymous request is not group-less: it is the guests group, whose rules are how a wiki says
    * what the public may see. Treating it as no groups at all would deny everything, which is a
    * different answer from the one the administrator configured.
+   *
+   * An API key speaks for the groups it was issued for, ahead of any session riding along with it —
+   * the same precedence `actorForRequest` gives its permissions, so that one request is never the
+   * key's permissions judged against the session's rules.
    */
   groupIdsForRequest(req: FastifyRequest): string[] {
+    if (req.apiKey) {
+      return req.apiKey.groupIds
+    }
     if (req.session?.authenticated && req.session.user?.id) {
       return req.session.groups ?? []
     }

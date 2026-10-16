@@ -101,6 +101,8 @@ export interface ApiKeyListEntry extends ApiKey {
 /** What a verified key grants, resolved from its groups at request time. */
 export interface ApiKeyIdentity {
   id: string
+  /** The groups the key was issued for, whose page rules decide what it may do to a page. */
+  groupIds: string[]
   permissions: string[]
 }
 
@@ -338,11 +340,11 @@ class ApiKeys {
       throw new ApiKeyError('API key has expired.')
     }
 
+    const groupIds = Array.isArray(claims.grp) ? (claims.grp as string[]) : []
     return {
       id: key.id,
-      permissions: await this.resolvePermissions(
-        Array.isArray(claims.grp) ? (claims.grp as string[]) : []
-      )
+      groupIds,
+      permissions: await this.resolvePermissions(groupIds)
     }
   }
 }

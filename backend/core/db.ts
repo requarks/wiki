@@ -30,7 +30,7 @@ const notifier = createNotifier(() => WIKI.dbManager.pubsubClient, 'event bus')
  *
  * `ltree` types the folder paths of the page tree and answers the ancestor queries the navigation is
  * built from; `pg_trgm` backs fuzzy text matching. `pgcrypto` used to be here for `gen_random_uuid()`,
- * which every primary key defaults to — that has been core since Postgres 13, and 16 is the minimum
+ * which every primary key defaults to — that has been core since Postgres 13, and 17 is the minimum
  * this runs on, so nothing needs it any more.
  */
 const REQUIRED_EXTENSIONS = ['ltree', 'pg_trgm']
@@ -174,9 +174,12 @@ export default {
     const resVersion = await db.execute('SHOW server_version;')
     const dbVersion = semver.coerce(resVersion.rows[0].server_version as string, { loose: true })!
     this.VERSION = dbVersion.version
-    if (dbVersion.major < 16) {
+    // -> 17 for the ltree that ships with it (1.3), the first with a hash operator class, which the
+    //    tree's folder path index is built with. Checked here so that 16 is told so plainly rather than
+    //    failing halfway through the migrations
+    if (dbVersion.major < 17) {
       WIKI.logger.error(
-        `Your PostgreSQL database version (${dbVersion.major}) is too old and unsupported by Wiki.js. Requires >= 16. Exiting...`
+        `Your PostgreSQL database version (${dbVersion.major}) is too old and unsupported by Wiki.js. Requires >= 17. Exiting...`
       )
       process.exit(1)
     }

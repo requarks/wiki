@@ -418,7 +418,7 @@ postgresql:
     annotations: {}
     labels: {}
 
-# An existing PostgreSQL 16+ server, used when `postgresql.enabled` is false. The user needs to own the
+# An existing PostgreSQL 17+ server, used when `postgresql.enabled` is false. The user needs to own the
 # database, or at least be able to create a schema in it.
 #
 # Say where it is in ONE of two ways — `connectionString` or `parameters` — and leave the other empty.

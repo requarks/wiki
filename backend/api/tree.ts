@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
 import { audit } from '../helpers/audit.ts'
 import { decodeTreePath, normalizeFolderPath, normalizeNewPagePath } from '../helpers/common.ts'
-import { actorFrom, unpublishedFor } from './pages.ts'
+import { actorFrom, unpublishedFor, userRequired } from './pages.ts'
 
 interface TreeQuery {
   parentId?: string
@@ -887,7 +887,7 @@ async function routes(app: FastifyInstance) {
     async (req, reply) => {
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Duplicating a folder requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Duplicating a folder'))
       }
       const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
       if (!existing || existing.siteId !== req.params.siteId) {
@@ -1040,7 +1040,7 @@ async function routes(app: FastifyInstance) {
       //    whoever deleted it, so there has to be somebody to record
       const actor = actorFrom(req)
       if (!actor) {
-        return reply.unauthorized('Deleting a folder requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Deleting a folder'))
       }
       const existing = await WIKI.models.tree.getFolderById(req.params.folderId)
       if (!existing || existing.siteId !== req.params.siteId) {

@@ -13,7 +13,7 @@ port: 3000
 # ---------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------
-# PostgreSQL 16 or later required
+# PostgreSQL 17 or later required
 
 db:
   host: localhost

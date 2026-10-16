@@ -34,7 +34,7 @@ no root package or monorepo tooling):
 | `frontend/` | Vue 3 / Vite SPA, Tailwind CSS + an in-repo component library  |
 | `blocks/`   | Lit web components users embed into wiki pages                 |
 
-Requires Node.js **26+** and PostgreSQL **16+**. All three workspaces are ESM (`"type": "module"`).
+Requires Node.js **26+** and PostgreSQL **17+**. All three workspaces are ESM (`"type": "module"`).
 
 The backend is **TypeScript 7**; `frontend/` and `blocks/` are JavaScript. See
 [TypeScript (backend)](#typescript-backend).

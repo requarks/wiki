@@ -4,6 +4,7 @@ import { validate as uuidValidate } from 'uuid'
 import { audit } from '../helpers/audit.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
+import { userRequired } from './pages.ts'
 
 const assetIdParam = {
   type: 'object',
@@ -102,7 +103,7 @@ async function routes(app: FastifyInstance) {
         // -> An asset records who uploaded it, and an API key is not a who
         const authorId = req.session?.authenticated ? req.session.user?.id : null
         if (!authorId) {
-          throw app.httpErrors.unauthorized('Uploading an asset requires a logged in user.')
+          throw app.httpErrors.unauthorized(userRequired(req, 'Uploading an asset'))
         }
         const { fileName, folderId, folderPath: requestedPath, locale: requestedLocale } = req.query
         if (
@@ -530,7 +531,7 @@ async function routes(app: FastifyInstance) {
       // -> Whatever is written records who wrote it, and an API key is not a who
       const authorId = req.session?.authenticated ? req.session.user?.id : null
       if (!authorId) {
-        return reply.unauthorized('Resizing an image requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Resizing an image'))
       }
       const isSaveAs = req.body.mode === 'saveAs'
       if (isSaveAs && !req.body.fileName) {

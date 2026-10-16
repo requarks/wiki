@@ -355,7 +355,11 @@ async function routes(app: FastifyInstance) {
       // -> A page that is not live is linked to only for whoever may see it so, as everywhere else
       const unpublished = unpublishedFor(req)
       return WIKI.models.navigation.getNav(req.params.siteId, req.params.navId, {
-        userGroups: req.session?.authenticated ? (req.session.groups ?? []) : [],
+        userGroups: req.apiKey
+          ? req.apiKey.groupIds
+          : req.session?.authenticated
+            ? (req.session.groups ?? [])
+            : [],
         unfiltered,
         mayOpenPage: (page) =>
           mayOnPage(req, 'read:pages', page) &&

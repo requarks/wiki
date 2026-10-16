@@ -1,6 +1,7 @@
 import { audit } from '../helpers/audit.ts'
 import { dataPathRoot, maskSensitiveProps } from '../helpers/common.ts'
 import { STORAGE_DIRECT_ACCESS_FALLBACKS, STORAGE_TARGET_STATUSES } from '../models/storage.ts'
+import { userRequired } from './pages.ts'
 import type { FastifyInstance } from 'fastify'
 import type { ModuleProp } from '../helpers/common.ts'
 import type { StorageSiteConfigInput, StorageTargetInput } from '../models/storage.ts'
@@ -465,7 +466,7 @@ async function routes(app: FastifyInstance) {
       //    who, so these are reserved to a logged-in administrator.
       const actorId = req.session?.authenticated ? req.session.user?.id : null
       if (!actorId) {
-        return reply.unauthorized('Running a storage action requires a logged in user.')
+        return reply.unauthorized(userRequired(req, 'Running a storage action'))
       }
 
       try {

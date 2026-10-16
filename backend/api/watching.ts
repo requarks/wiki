@@ -1,5 +1,5 @@
 import { audit } from '../helpers/audit.ts'
-import { actorFrom, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
+import { actorFrom, mayOnPage, unlockedFor, unpublishedFor, userRequired } from './pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
@@ -33,7 +33,7 @@ async function loadWatchablePage(req: FastifyRequest, siteId: string, pageId: st
 function watcherOf(req: FastifyRequest, reply: FastifyReply): string | null {
   const actor = actorFrom(req)
   if (!actor) {
-    reply.unauthorized('Watching a page requires a logged in user.')
+    reply.unauthorized(userRequired(req, 'Watching a page'))
     return null
   }
   return actor.id

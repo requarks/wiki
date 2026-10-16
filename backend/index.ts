@@ -464,11 +464,8 @@ async function initHTTPServer() {
       },
       components: {
         securitySchemes: {
-          apiKeyAuth: {
-            type: 'apiKey',
-            in: 'header',
-            name: 'X-API-Key'
-          },
+          // -> The one way to present a key: `Authorization: Bearer <key>`, which is the only header
+          //    the API key hook below reads
           bearerAuth: {
             type: 'http',
             scheme: 'bearer',
@@ -476,7 +473,7 @@ async function initHTTPServer() {
           }
         }
       },
-      security: [{ apiKeyAuth: [] }, { bearerAuth: [] }]
+      security: [{ bearerAuth: [] }]
     },
     transform: ({ schema, url, route }: any) => {
       // Add permissions to the route schema description

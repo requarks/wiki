@@ -1,5 +1,5 @@
 import { audit } from '../helpers/audit.ts'
-import { actorFrom, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
+import { actorFrom, mayOnPage, unlockedFor, unpublishedFor, userRequired } from './pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { RatingMode } from '../models/pageRatings.ts'
 import type { Page } from '../models/pages.ts'
@@ -40,7 +40,7 @@ async function loadRateable(
 ): Promise<{ userId: string; mode: RatingMode; page: Page } | null> {
   const actor = actorFrom(req)
   if (!actor) {
-    reply.unauthorized('Rating a page requires a logged in user.')
+    reply.unauthorized(userRequired(req, 'Rating a page'))
     return null
   }
   const mode = WIKI.models.pageRatings.modeFor(req.params.siteId)

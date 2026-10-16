@@ -77,15 +77,15 @@
             </template>
           </w-input>
           <!--
-            Off for an `img:` icon, which is a picture and has no color to change. A multicolor Iconify
-            icon ignores it the same way, but telling one apart needs the icon itself, so that case is
-            left to how it draws.
+            Still editable for an `img:` icon: the picture keeps its own colors, but the color is also
+            what the page's background and border are drawn in elsewhere. A multicolor Iconify icon
+            ignores it the same way, but telling one apart needs the icon itself, so that case gets no
+            hint.
           -->
           <w-select
             v-model="pageStore.iconColor"
             :options="iconColorOptions"
             :label="t(`editor.props.iconColor`)"
-            :disable="!isColorableIcon"
             :hint="isColorableIcon ? null : t(`editor.props.iconColorImageHint`)"
             emit-value
             map-options

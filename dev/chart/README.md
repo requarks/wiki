@@ -1,6 +1,6 @@
 # Wiki.js Helm chart
 
-Deploys Wiki.js 3.x, with a bundled PostgreSQL 18 or an existing PostgreSQL 16+ server.
+Deploys Wiki.js 3.x, with a bundled PostgreSQL 18 or an existing PostgreSQL 17+ server.
 
 ## Installing
 
