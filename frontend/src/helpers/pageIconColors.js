@@ -56,3 +56,16 @@ export function pageIconColorClass(color) {
 export function pageIconColorValue(color) {
   return PAGE_ICON_COLORS[color] ? `var(--color-${color}-500)` : null
 }
+
+/**
+ * The page's color as a palette token, for a component that fills a surface with it through its
+ * `color` prop (`w-avatar` behind a white icon): its own color, or the site's primary color when it
+ * has none. The 500 step in both themes, since it is a background under white rather than ink on the
+ * page.
+ *
+ * @param {string} color The page's `iconColor`.
+ * @returns {string}
+ */
+export function pageIconColorToken(color) {
+  return PAGE_ICON_COLORS[color] ? `${color}-500` : 'primary'
+}

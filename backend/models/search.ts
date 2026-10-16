@@ -88,6 +88,8 @@ export interface SearchResult {
   title: string
   description: string | null
   icon: string | null
+  /** The color the icon is drawn in — see `PAGE_ICON_COLORS`. Empty for the site's primary color. */
+  iconColor: string
   tags: string[]
   createdAt: string
   updatedAt: string
@@ -478,6 +480,7 @@ class Search {
         p.title,
         p.description,
         p.icon,
+        p.config->>'iconColor' AS "iconColor",
         p.tags,
         to_char(p."createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "createdAt",
         to_char(p."updatedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "updatedAt",
@@ -499,6 +502,7 @@ class Search {
         title: row.title as string,
         description: row.description ?? null,
         icon: row.icon ?? null,
+        iconColor: (row.iconColor as string | null) ?? '',
         tags: (row.tags ?? []) as string[],
         createdAt: row.createdAt as string,
         updatedAt: row.updatedAt as string,

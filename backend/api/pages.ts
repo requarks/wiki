@@ -540,6 +540,11 @@ async function routes(app: FastifyInstance) {
                     title: { type: 'string' },
                     description: { type: ['string', 'null'] },
                     icon: { type: ['string', 'null'] },
+                    iconColor: {
+                      type: 'string',
+                      description:
+                        "The color the icon is drawn in, by Tailwind palette name. Empty for the site's primary color."
+                    },
                     tags: { type: 'array', items: { type: 'string' } },
                     createdAt: { type: 'string', format: 'date-time' },
                     updatedAt: { type: 'string', format: 'date-time' },

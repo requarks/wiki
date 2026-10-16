@@ -174,10 +174,10 @@
               ><em>{{ t('search.emptyQuery') }}</em></span
             >
           </div>
-          <w-list separator>
+          <w-list class="layout-search-results" separator>
             <w-item v-for="item of state.results" clickable :to="pageUrl(item)">
-              <w-item-section avatar>
-                <w-avatar color="primary" text-color="white" rounded>
+              <w-item-section avatar top>
+                <w-avatar :color="pageIconColorToken(item.iconColor)" text-color="white" rounded>
                   <w-icon :name="item.icon || defaultPageIcon" size="24px" />
                 </w-avatar>
               </w-item-section>
@@ -191,23 +191,11 @@
                   <span v-html="item.highlight" />
                 </w-item-label>
               </w-item-section>
-              <w-item-section side>
+              <w-item-section side top>
                 <div class="text-caption text-right">{{ humanizeDate(item.updatedAt) }}</div>
-                <!--
-                  `layout-search-itemtags` was a class nothing defines -- a leftover the layout
-                  migration left behind -- so the row had no gap and the chips ran together.
-                -->
-                <div class="mt-1 flex flex-wrap items-center justify-end gap-1">
-                  <w-chip
-                    v-for="tag of item.tags"
-                    :key="`tag-` + tag"
-                    square
-                    color="secondary"
-                    text-color="white"
-                    icon="la:hashtag"
-                    size="sm"
-                    >{{ tag }}</w-chip
-                  >
+                <!-- -> Drawn as the index and links-grid blocks draw a page's tags; see `&-itemtags` -->
+                <div v-if="item.tags?.length" class="layout-search-itemtags">
+                  <span v-for="tag of item.tags" :key="`tag-` + tag">{{ tag }}</span>
                 </div>
               </w-item-section>
             </w-item>
@@ -241,6 +229,7 @@ import HeaderNav from '@/components/HeaderNav.vue'
 import FooterNav from '@/components/FooterNav.vue'
 import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { pageIconColorToken } from '@/helpers/pageIconColors'
 
 const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
 
@@ -687,10 +676,36 @@ $card-gutter-max: 1199.98px;
 
   .text-highlight {
     font-style: italic;
+    // -> A quotation rule, setting the excerpt apart as the page's own words
+    margin-top: 4px;
+    padding-left: 8px;
+    border-left: 3px solid $grey-4;
 
-    > b {
-      background-color: rgba($yellow-7, 0.5);
+    @at-root .body--dark & {
+      border-left-color: $dark-1;
+    }
+
+    // -> An excerpt is cut out of the middle of the page's text, and says so at both ends
+    > span::before,
+    > span::after {
+      content: '…';
+    }
+
+    /*
+      Descendant, not child: the excerpt arrives through a `v-html` span, so the `<b>` postgres marked
+      is a grandchild of the label and a `> b` rule never matched it. A tint of the site's accent
+      rather than the accent itself, so the excerpt's own text colour still reads on top of it in
+      either theme whatever hue an administrator picked.
+    */
+    b {
+      padding: 0 2px;
       border-radius: 3px;
+      background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+      box-decoration-break: clone;
+
+      @at-root .body--dark & {
+        background-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+      }
     }
   }
 
@@ -709,9 +724,44 @@ $card-gutter-max: 1199.98px;
     }
   }
 
+  /*
+    Room either side of the rule between two results, which at the list's own 8px sat close enough to
+    the excerpt above it to read as an underline of it. `py-2` on the item is a Tailwind utility and so
+    layered; this unlayered rule outranks it without `!important`.
+  */
+  &-results > .w-item {
+    padding-block: 14px;
+  }
+
+  /*
+    A result's tags, styled to match the tags `block-index` and `block-links-grid` put on a page: a
+    pale wash of the colour with a border of it, the writing darkened in the light theme and lightened
+    in the dark one. Secondary here, where the blocks use the page's own colour or the primary.
+    In `rem` where the blocks size theirs in `em`: theirs sit in an article's 16px, these in a
+    caption, and the point is for the two to come out the same size.
+  */
   &-itemtags {
-    .w-chip:last-child {
-      margin-right: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 6px;
+
+    > span {
+      padding: 1px 8px;
+      border: 1px solid color-mix(in oklch, var(--color-secondary) 35%, transparent);
+      border-radius: 999px;
+      background-color: color-mix(in oklch, var(--color-secondary) 12%, transparent);
+      color: color-mix(in oklch, var(--color-secondary) 70%, black);
+      font-size: 0.7rem;
+      font-weight: 500;
+      line-height: 1.6;
+      white-space: nowrap;
+
+      @at-root .body--dark & {
+        background-color: color-mix(in oklch, var(--color-secondary) 20%, transparent);
+        color: color-mix(in oklch, var(--color-secondary) 60%, white);
+      }
     }
   }
 
@@ -863,15 +913,6 @@ $card-gutter-max: 1199.98px;
       flex-wrap: wrap;
     }
 
-    /*
-      And the icon goes to the top of the row rather than the middle of it. The section centres its
-      content, which is right for a row two lines tall and leaves the icon stranded halfway down one that
-      is now six.
-    */
-    .w-page .w-list .w-item-section--avatar {
-      justify-content: flex-start;
-    }
-
     .w-page .w-list .w-item-section--side:not(.w-item-section--avatar) {
       width: 100%;
       align-items: flex-start;
@@ -885,13 +926,13 @@ $card-gutter-max: 1199.98px;
       padding-left: 56px;
 
       /*
-        Both were written for a right-hand column and are Tailwind utilities, so they are layered -- these
-        unlayered rules outrank them without `!important`.
+        Both were written for a right-hand column. `text-right` is a Tailwind utility and so layered, and
+        the tags' own rule is less specific than this one, so neither needs `!important`.
       */
       .text-right {
         text-align: left;
       }
-      .justify-end {
+      .layout-search-itemtags {
         justify-content: flex-start;
       }
     }
