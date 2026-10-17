@@ -1625,7 +1625,7 @@ watch(
         } else {
           // -> Not a notification over the page the reader came from: that page is still on screen
           //    behind it, at a URL that is not its own. The view draws the missing page instead.
-          await swapTo(() => pageStore.pageNotFound({ path: pagePath, locale: pageLocale }))
+          await pageStore.pageNotFound({ path: pagePath, locale: pageLocale, applyWith: swapTo })
           /*
             The one place the page permissions have to be asked for on their own: everywhere else they
             arrive with the page, and here there is no page to carry them — while the screen about to

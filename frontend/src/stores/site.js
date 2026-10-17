@@ -609,27 +609,25 @@ export const useSiteStore = defineStore('site', {
      *           or the site itself for the one every page inherits
      */
     async fetchNavigation(id) {
-      try {
-        const items = await API_CLIENT.get(`sites/${this.id}/navigation/${id}`).json()
-        this.$patch({
-          nav: {
-            currentId: id,
-            items: items ?? [],
-            stack: []
-          }
-        })
-      } catch (err) {
-        // -> An empty sidebar is the right outcome for a menu nobody has set up, rather than an error
-        //    in front of a reader who cannot act on it
-        console.warn(err.message)
-        this.$patch({
-          nav: {
-            currentId: id,
-            items: [],
-            stack: []
-          }
-        })
-      }
+      // -> The menu's "Go up" is asked for alongside it and drawn with it: shown a moment after the
+      //    items, it would push every one of them down as it arrived
+      const [items, navParent] = await Promise.all([
+        API_CLIENT.get(`sites/${this.id}/navigation/${id}`)
+          .json()
+          .catch((err) => {
+            // -> An empty sidebar is the right outcome for a menu nobody has set up, rather than an
+            //    error in front of a reader who cannot act on it
+            console.warn(err.message)
+            return null
+          }),
+        this.fetchNavigationParent(id)
+      ])
+      this.$patch((state) => {
+        state.nav = { currentId: id, items: items ?? [], stack: [] }
+        if (navParent) {
+          state.navParent = navParent
+        }
+      })
     },
     /**
      * Show the menu a page resolves to, putting away any menu opened on the way.
@@ -661,16 +659,26 @@ export const useSiteStore = defineStore('site', {
      */
     async loadNavigationParent() {
       const id = this.nav.currentId
+      const navParent = await this.fetchNavigationParent(id)
+      if (navParent && this.nav.currentId === id) {
+        this.navParent = navParent
+      }
+    },
+    /**
+     * Ask the server where "Go up" leads from a menu, as the `navParent` to hold for it -- or null
+     * where there is nothing to ask (the link is off, or that menu's answer is already held) or the
+     * request failed.
+     */
+    async fetchNavigationParent(id) {
       if (!this.navigation.showParentLink || !id || this.navParent.navId === id) {
-        return
+        return null
       }
       try {
         const resp = await API_CLIENT.get(`sites/${this.id}/navigation/${id}/parent`).json()
-        if (this.nav.currentId === id) {
-          this.navParent = { navId: id, parent: resp?.parent ?? null }
-        }
+        return { navId: id, parent: resp?.parent ?? null }
       } catch (err) {
         console.warn(err.message)
+        return null
       }
     },
     /**

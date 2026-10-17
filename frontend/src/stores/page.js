@@ -514,75 +514,80 @@ export const usePageStore = defineStore('page', {
      * is actually known, and what the create button goes on to make a page at.
      *
      * @param {string} path The path that was requested, with or without its leading slash.
+     * The sidebar at that path is asked for FIRST and lands in the same change, for the reason
+     * `pageLoad` waits for its reply: emptied ahead of the answer, `navigationId` would drop the
+     * sidebar to its icon rail for the length of the round trip and then spring it back open.
+     *
+     * @param {string} path The path that was requested, with or without its leading slash.
      * @param {string} [locale] The locale it was requested in. A page that does not exist still has
      *   one — it is what a create button started from here writes the page in — and leaving the
      *   previous page's locale standing is how creating the French home page tried to write the
      *   English one and was refused as a duplicate.
+     * @param {(apply: () => void) => void|Promise<void>} [applyWith] As for `pageLoad`.
      */
-    pageNotFound({ path, locale }) {
-      this.$patch({
-        id: '',
-        locale: locale || this.locale,
-        path: (path ?? '').replace(/^\/+/, ''),
-        title: '',
-        description: '',
-        icon: DEFAULT_PAGE_ICON,
-        iconColor: '',
-        content: '',
-        contentLoaded: false,
-        render: '',
-        renderProduced: false,
-        toc: [],
-        tags: [],
-        relations: [],
-        localeRelations: [],
-        scriptJsLoad: '',
-        scriptJsUnload: '',
-        scriptCss: '',
-        createdAt: '',
-        updatedAt: '',
-        publishState: '',
-        isLocked: false,
-        canSuggestEdits: false,
-        hasOpenSuggestion: false,
-        canReview: false,
-        pendingSubmissions: [],
-        isWatching: false,
-        unreadNotifications: [],
-        rating: null,
-        viewerRating: 0,
-        blog: null,
-        notFound: true,
-        // -> Not the previous page's: what the sidebar shows here is the folder's, or what a page here
-        //    would inherit, and both are asked of the server below
-        navigationId: null,
-        navigationMode: 'inherit',
-        folderId: ''
-      })
-      this.loadPathNavigation({ path: this.path, locale: this.locale })
+    async pageNotFound({ path, locale, applyWith = (apply) => apply() }) {
+      const targetPath = (path ?? '').replace(/^\/+/, '')
+      const targetLocale = locale || this.locale
+      const navigation = await this.fetchPathNavigation({ path: targetPath, locale: targetLocale })
+      await applyWith(() =>
+        this.$patch({
+          id: '',
+          locale: targetLocale,
+          path: targetPath,
+          title: '',
+          description: '',
+          icon: DEFAULT_PAGE_ICON,
+          iconColor: '',
+          content: '',
+          contentLoaded: false,
+          render: '',
+          renderProduced: false,
+          toc: [],
+          tags: [],
+          relations: [],
+          localeRelations: [],
+          scriptJsLoad: '',
+          scriptJsUnload: '',
+          scriptCss: '',
+          createdAt: '',
+          updatedAt: '',
+          publishState: '',
+          isLocked: false,
+          canSuggestEdits: false,
+          hasOpenSuggestion: false,
+          canReview: false,
+          pendingSubmissions: [],
+          isWatching: false,
+          unreadNotifications: [],
+          rating: null,
+          viewerRating: 0,
+          blog: null,
+          notFound: true,
+          // -> Not the previous page's: what the sidebar shows here is the folder's, or what a page here
+          //    would inherit
+          ...navigation
+        })
+      )
     },
     /**
      * The navigation at a path with no page: the folder there, or the menu a page there would inherit.
      *
-     * Dropped if the store has moved on to another path while it was in flight. Quiet on failure: a
-     * missing page with no sidebar is still a missing page, and says so.
+     * Quiet on failure: a missing page with no sidebar is still a missing page, and says so.
      */
-    async loadPathNavigation({ path, locale }) {
+    async fetchPathNavigation({ path, locale }) {
       const siteStore = useSiteStore()
+      let resp = null
       try {
-        const resp = await API_CLIENT.get(`sites/${siteStore.id}/navigation/path`, {
+        resp = await API_CLIENT.get(`sites/${siteStore.id}/navigation/path`, {
           searchParams: { path, locale }
         }).json()
-        if (!this.notFound || this.path !== path || this.locale !== locale) {
-          return
-        }
-        this.$patch({
-          folderId: resp?.folderId ?? '',
-          navigationMode: resp?.navigationMode ?? 'inherit',
-          navigationId: resp?.navigationId ?? null
-        })
       } catch (err) {
         console.warn(err.message)
+      }
+      return {
+        folderId: resp?.folderId ?? '',
+        navigationMode: resp?.navigationMode ?? 'inherit',
+        navigationId: resp?.navigationId ?? null
       }
     },
     /**

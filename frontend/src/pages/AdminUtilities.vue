@@ -28,8 +28,8 @@
       </div>
     </div>
     <w-separator inset />
-    <div class="p-4 flex flex-col gap-4">
-      <w-card>
+    <div class="p-4 columns-1 xl:columns-2 gap-4">
+      <w-card class="mb-4 break-inside-avoid">
         <w-card-header>{{ t(`admin.utilities.groupAuthentication`) }}</w-card-header>
         <w-list separator>
           <w-item>
@@ -86,7 +86,7 @@
           </w-item>
         </w-list>
       </w-card>
-      <w-card>
+      <w-card class="mb-4 break-inside-avoid">
         <w-card-header>{{ t(`admin.utilities.groupMaintenance`) }}</w-card-header>
         <w-list separator>
           <w-item>
@@ -231,7 +231,7 @@
           </w-item>
         </w-list>
       </w-card>
-      <w-card>
+      <w-card class="mb-4 break-inside-avoid">
         <w-card-header>{{ t(`admin.utilities.groupMigration`) }}</w-card-header>
         <w-list separator>
           <w-item>
@@ -390,7 +390,7 @@
           </w-item>
         </w-list>
       </w-card>
-      <w-card>
+      <w-card class="break-inside-avoid">
         <w-card-header>{{ t(`admin.utilities.groupTesting`) }}</w-card-header>
         <w-list separator>
           <w-item>
