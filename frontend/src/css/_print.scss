@@ -118,10 +118,11 @@
      --------------------------------------------------------------------------- */
 
   /*
-    Navigation, the contents column, the action rail, the relation buttons under the article, the
-    footer, and every button that floats over the page -- all of them ways to go somewhere else, which
-    is the one thing a sheet of paper cannot do. The relations are the one that reads as content rather
-    than chrome, and they are not: they are the next page and the previous one, drawn as buttons.
+    Navigation, the contents column, the action rail, the Article / Talk / Links strip, the relation
+    buttons under the article, the footer, and every button that floats over the page -- all of them
+    ways to go somewhere else, which is the one thing a sheet of paper cannot do. The relations are the
+    one that reads as content rather than chrome, and they are not: they are the next page and the
+    previous one, drawn as buttons.
 
     The last five are the transient overlays, and they are here because printing is not a moment anyone
     prepares for: a tooltip is on screen the instant the Print button is clicked, and Ctrl+P works just
@@ -134,6 +135,7 @@
   .page-sidebar-scrim,
   .page-actions,
   .page-header-actions,
+  .page-view-tabs,
   .page-relations,
   .w-footer,
   .w-page-scroller,
@@ -145,6 +147,15 @@
   .w-dialog-backdrop,
   .w-dialog-viewport {
     display: none !important;
+  }
+
+  /*
+    And the edge the article column draws against the contents column, which is gone above. On paper it
+    is a hairline down one side of every sheet, separating the text from nothing.
+  */
+  .page-article-col {
+    border-left: 0 !important;
+    border-right: 0 !important;
   }
 
   /* ---------------------------------------------------------------------------
