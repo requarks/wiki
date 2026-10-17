@@ -124,6 +124,7 @@ export const AUDIT_ACTIONS = {
     'installLocale',
     'uploadLocale',
     'updateLocale',
+    'uninstallLocale',
     'updateMailConfig',
     'sendTestEmail',
     'updatePageNavigation',

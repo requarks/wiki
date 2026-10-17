@@ -1,8 +1,9 @@
 <template>
   <router-view />
-  <!-- Mounted once for the whole app; driven by composables/{notify,loading,dialog}.js -->
+  <!-- Mounted once for the whole app; driven by composables/{notify,loading,dialog,pageProgress}.js -->
   <w-notifications />
   <w-loading-overlay />
+  <page-progress-bar />
   <w-dialog-host />
   <component :is="DevQuickMenu" v-if="DevQuickMenu" />
 </template>
@@ -18,6 +19,9 @@ import { loginLocation, redirectTargetOr } from '@/helpers/loginRedirect'
 import { isPagePath, splitLocalePath, stripPageExtension } from '@/helpers/pagePaths'
 import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
+import { pageProgress } from '@/composables/pageProgress'
+
+import PageProgressBar from '@/components/PageProgressBar.vue'
 
 import WDialogHost from '@/components/shared/WDialogHost.vue'
 import WLoadingOverlay from '@/components/shared/WLoadingOverlay.vue'
@@ -159,7 +163,11 @@ const ADMIN_COLORS = {
 }
 
 function isAdminArea() {
-  return route.path === '/_admin' || route.path.startsWith('/_admin/')
+  return isAdminPath(route.path)
+}
+
+function isAdminPath(path) {
+  return path === '/_admin' || path.startsWith('/_admin/')
 }
 
 /**
@@ -304,8 +312,16 @@ async function loadBootstrap() {
 
 // ROUTE GUARDS
 
+/*
+  The router's hold on the progress bar, from the first guard to the end of the navigation. One hold
+  however many navigations pass through on the way: a redirect starts a navigation of its own without
+  the one it replaced ever reaching `afterEach`, so a hold per navigation would never all be released.
+*/
+let endRouterProgress = null
+
 router.beforeEach(async (to, from) => {
   commonStore.routerLoading = true
+  endRouterProgress ??= pageProgress.start()
 
   /*
     -> Site info, system flags and the session
@@ -394,6 +410,13 @@ router.beforeEach(async (to, from) => {
     screen with no locale in its path: the admin area and the profile are not pages, and keep it. The
     site's primary is also the fallback for a first visit, and for a stored locale the site no longer
     offers.
+
+    The admin area offers more than the site does: its language menu lists every INSTALLED locale,
+    since what an administrator reads the admin screens in is no business of the site being
+    administered -- and a locale has to be readable there to check a translation before switching it
+    on anywhere. So inside it the stored choice stands as long as the locale is installed at all.
+    `installedLocales` rather than the admin store's own copy, because this guard runs before the
+    admin layout has mounted to fetch that one, on a reload of an admin screen above all.
   */
   const pageLocale = isPage
     ? (splitLocalePath(to.path, siteStore.localePrefixes)?.locale ?? siteStore.locales.primary)
@@ -404,7 +427,9 @@ router.beforeEach(async (to, from) => {
     }
   } else if (
     !commonStore.desiredLocale ||
-    !siteStore.locales.active.some((l) => l.code === commonStore.desiredLocale)
+    !(isAdminPath(to.path) ? siteStore.installedLocales : siteStore.locales.active).some(
+      (l) => l.code === commonStore.desiredLocale
+    )
   ) {
     commonStore.setLocale(siteStore.locales.primary)
   }
@@ -475,5 +500,13 @@ router.afterEach(() => {
     showLogoutNotice()
   }
   commonStore.routerLoading = false
+  endRouterProgress?.()
+  endRouterProgress = null
+})
+
+// -> A guard that threw, or a route component that failed to load, never reaches `afterEach`
+router.onError(() => {
+  endRouterProgress?.()
+  endRouterProgress = null
 })
 </script>

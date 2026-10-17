@@ -480,6 +480,16 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           showPrintBtn: {
             type: 'boolean'
           },
+          showPageProgress: {
+            type: 'boolean',
+            description:
+              'Draw a thin progress bar along the top of the viewport while a page loads.'
+          },
+          pageTransitions: {
+            type: 'boolean',
+            description:
+              'Cross-fade between pages, and between the views of a page, where the browser supports view transitions.'
+          },
           baseFont: {
             type: 'string'
           },

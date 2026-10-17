@@ -217,7 +217,9 @@ export const useSiteStore = defineStore('site', {
       contentWidth: 'full',
       sidebarPosition: 'left',
       tocPosition: 'right',
-      showPrintBtn: true
+      showPrintBtn: true,
+      showPageProgress: true,
+      pageTransitions: true
     },
     sideDialogShown: false,
     sideDialogComponent: '',

@@ -1,5 +1,7 @@
 import { nextTick } from 'vue'
 
+import { useSiteStore } from '@/stores/site'
+
 /**
  * Apply a change to the app as a single cross-fade, through the View Transition API.
  *
@@ -32,6 +34,11 @@ export async function withViewTransition(update) {
   // -> Not in every browser yet (Safari and Firefox trail Chromium here), and nothing about this is
   //    load-bearing: without the API the change simply happens the way it did before
   if (!document.startViewTransition) {
+    return applyAndRender()
+  }
+
+  // -> Nor where the site has turned the fade off (Admin -> Theme -> Animations): same change, cut
+  if (!useSiteStore().theme.pageTransitions) {
     return applyAndRender()
   }
 

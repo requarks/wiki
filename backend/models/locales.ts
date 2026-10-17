@@ -1,7 +1,14 @@
 import { readdir, stat, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { locales as localesTable } from '../db/schema.ts'
-import { eq, sql } from 'drizzle-orm'
+import {
+  glossaryTerms as glossaryTermsTable,
+  groups as groupsTable,
+  locales as localesTable,
+  pages as pagesTable,
+  sites as sitesTable,
+  tree as treeTable
+} from '../db/schema.ts'
+import { and, count, eq, ne, sql } from 'drizzle-orm'
 import { CustomError } from '../helpers/common.ts'
 
 /** Where the locale packages published for this major version live. */
@@ -544,6 +551,140 @@ class Locales {
     WIKI.events.outbound.emit('reloadLocales')
     WIKI.logger.info(`Locale ${code} installed successfully. [ OK ]`)
     return code
+  }
+
+  /**
+   * Everything that still refers to a locale, described for the administrator who has to clear it.
+   *
+   * What counts is what would be left pointing at nothing: a site that offers the locale (its primary
+   * is always among its active ones, but both are asked, since nothing in the column enforces that),
+   * content filed under it — pages, and the folders and files of the tree beside them — glossary
+   * terms written in it, and group page rules scoped to it. Each of those is something an
+   * administrator can see and change, which is what makes refusing over it fair.
+   *
+   * And what does not count, on purpose:
+   * - **A site-wide navigation menu for the locale.** Sites keep one per locale and nothing outside a
+   *   page of that locale can edit it, so counting it would refuse for ever over a row nobody can
+   *   reach. It is left where it is, harmless, and is there again if the locale is reinstalled.
+   * - **Page history**, the recycle bin included. A restore chooses where the page goes back to.
+   * - **A user's `prefs.locale`.** A preference rather than content: `translator` already treats a
+   *   locale that is not installed as no preference at all, and so does the frontend's router.
+   *
+   * @returns One line per kind of use, empty when the locale is free to go.
+   */
+  async usesOf(code: string): Promise<string[]> {
+    const [sites, groups, [pages], [otherTree], [terms]] = await Promise.all([
+      WIKI.db
+        .select({
+          hostname: sitesTable.hostname,
+          title: sql<string>`${sitesTable.config} ->> 'title'`
+        })
+        .from(sitesTable)
+        .where(
+          sql`${sitesTable.config} -> 'locales' -> 'active' @> ${JSON.stringify([code])}::jsonb
+            OR ${sitesTable.config} -> 'locales' ->> 'primary' = ${code}`
+        ),
+      WIKI.db
+        .select({ name: groupsTable.name })
+        .from(groupsTable)
+        .where(sql`${groupsTable.rules} @> ${JSON.stringify([{ locales: [code] }])}::jsonb`),
+      WIKI.db.select({ total: count() }).from(pagesTable).where(eq(pagesTable.locale, code)),
+      // -> Pages have a tree entry too, and are already counted above
+      WIKI.db
+        .select({ total: count() })
+        .from(treeTable)
+        .where(and(eq(treeTable.locale, code), ne(treeTable.type, 'page'))),
+      WIKI.db
+        .select({ total: count() })
+        .from(glossaryTermsTable)
+        .where(eq(glossaryTermsTable.locale, code))
+    ])
+
+    const uses: string[] = []
+    if (sites.length > 0) {
+      const names = sites.map((st) => `"${st.title || st.hostname}"`).join(', ')
+      uses.push(`it is enabled on ${sites.length === 1 ? 'the site' : 'the sites'} ${names}`)
+    }
+    if (pages.total > 0) {
+      uses.push(`${pages.total} ${pages.total === 1 ? 'page is' : 'pages are'} written in it`)
+    }
+    if (otherTree.total > 0) {
+      uses.push(
+        `${otherTree.total} ${otherTree.total === 1 ? 'folder or file is' : 'folders and files are'} filed under it`
+      )
+    }
+    if (terms.total > 0) {
+      uses.push(
+        `${terms.total} glossary ${terms.total === 1 ? 'term is' : 'terms are'} written in it`
+      )
+    }
+    if (groups.length > 0) {
+      const names = groups.map((gr) => `"${gr.name}"`).join(', ')
+      uses.push(
+        `the page rules of ${groups.length === 1 ? 'the group' : 'the groups'} ${names} refer to it`
+      )
+    }
+    return uses
+  }
+
+  /**
+   * Remove an installed locale from the instance, as long as nothing still refers to it — see
+   * `usesOf`, whose answer is what a refusal says.
+   *
+   * **A locale upstream publishes goes back to being available rather than disappearing**: its row
+   * stays, without strings, so that it is still listed with its Install button and its completeness,
+   * exactly as it was before anybody installed it. One that upstream has never described — which is
+   * what a null `completeness` means, a locale that only ever came from an uploaded file — has no
+   * such state to return to, and its row is deleted; a later fetch adds it back as available if
+   * upstream does publish it after all. Either way its aliases go with it: an alias that outlived
+   * its locale would go on holding a short code another locale may want.
+   *
+   * **`en` is refused**, like installing it is: it is the locale the interface is written in, ships
+   * with the wiki and is loaded from disk on every boot.
+   *
+   * @throws 400 for `en`, 404 for a locale that is not installed, 409 while anything still uses it
+   */
+  async uninstall(code: string): Promise<void> {
+    if (code === SOURCE_LOCALE) {
+      throw new CustomError(
+        'localeIsSource',
+        `Locale ${code} ships with the wiki and cannot be deleted.`,
+        400
+      )
+    }
+    const locale = (await this.getLocales({ cache: false })).find((lc) => lc.code === code)
+    if (!locale?.isInstalled) {
+      throw new CustomError('localeNotInstalled', `Locale ${code} is not installed.`, 404)
+    }
+
+    const uses = await this.usesOf(code)
+    if (uses.length > 0) {
+      throw new CustomError(
+        'localeInUse',
+        `Locale ${code} is still in use: ${uses.join('; ')}.`,
+        409
+      )
+    }
+
+    WIKI.logger.info(`Deleting locale ${code}...`)
+    if (locale.completeness === null) {
+      await WIKI.db.delete(localesTable).where(eq(localesTable.code, code))
+    } else {
+      await WIKI.db
+        .update(localesTable)
+        .set({
+          isInstalled: false,
+          strings: [],
+          hash: '',
+          customCode: null,
+          customName: null,
+          updatedAt: sql`now()`
+        })
+        .where(eq(localesTable.code, code))
+    }
+    await this.reloadCache()
+    WIKI.events.outbound.emit('reloadLocales')
+    WIKI.logger.info(`Locale ${code} deleted successfully. [ OK ]`)
   }
 
   /**

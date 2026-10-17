@@ -165,9 +165,94 @@
           </w-card-section>
         </w-card>
         <!-- ----------------------- -->
+        <!-- Animations -->
+        <!-- ----------------------- -->
+        <w-card class="mt-4 pb-2">
+          <w-card-header>{{ t('admin.theme.animations') }}</w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="navigation-toolbar-top" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.showPageProgress`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.showPageProgressHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.showPageProgress"
+                :aria-label="t(`admin.theme.showPageProgress`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="swipe-right" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.pageTransitions`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.pageTransitionsHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.pageTransitions"
+                :aria-label="t(`admin.theme.pageTransitions`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+      </div>
+      <div class="col-span-12 lg:col-span-6">
+        <!-- ----------------------- -->
+        <!-- Fonts -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2" v-if="flagStore.experimental">
+          <w-card-header>
+            {{ t('admin.theme.fonts') }}
+            <template #action>
+              <w-btn
+                class="acrylic-btn"
+                icon="la:redo-alt"
+                :label="t(`admin.theme.resetDefaults`)"
+                flat
+                size="sm"
+                color="pink"
+                @click="resetFonts" />
+            </template>
+          </w-card-header>
+          <w-item>
+            <blueprint-icon icon="fonts-app" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.baseFont`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.baseFontHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.baseFont"
+                :options="fonts"
+                emit-value
+                map-options
+                dense
+                :aria-label="t(`admin.theme.baseFont`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="fonts-app" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.contentFont`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.contentFontHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                v-model="state.config.contentFont"
+                :options="fonts"
+                emit-value
+                map-options
+                dense
+                :aria-label="t(`admin.theme.contentFont`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
         <!-- Theme Layout -->
         <!-- ----------------------- -->
-        <w-card class="pb-2 mt-4">
+        <w-card :class="['pb-2', { 'mt-4': flagStore.experimental }]">
           <w-card-header>{{ t('admin.theme.layout') }}</w-card-header>
           <w-item>
             <blueprint-icon icon="width" />
@@ -233,64 +318,10 @@
             </w-item-section>
           </w-item>
         </w-card>
-      </div>
-      <div class="col-span-12 lg:col-span-6">
-        <!-- ----------------------- -->
-        <!-- Fonts -->
-        <!-- ----------------------- -->
-        <w-card class="pb-2" v-if="flagStore.experimental">
-          <w-card-header>
-            {{ t('admin.theme.fonts') }}
-            <template #action>
-              <w-btn
-                class="acrylic-btn"
-                icon="la:redo-alt"
-                :label="t(`admin.theme.resetDefaults`)"
-                flat
-                size="sm"
-                color="pink"
-                @click="resetFonts" />
-            </template>
-          </w-card-header>
-          <w-item>
-            <blueprint-icon icon="fonts-app" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.theme.baseFont`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.theme.baseFontHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section>
-              <w-select
-                outlined
-                v-model="state.config.baseFont"
-                :options="fonts"
-                emit-value
-                map-options
-                dense
-                :aria-label="t(`admin.theme.baseFont`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="fonts-app" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.theme.contentFont`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.theme.contentFontHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section>
-              <w-select
-                outlined
-                v-model="state.config.contentFont"
-                :options="fonts"
-                emit-value
-                map-options
-                dense
-                :aria-label="t(`admin.theme.contentFont`)" />
-            </w-item-section>
-          </w-item>
-        </w-card>
         <!-- ----------------------- -->
         <!-- Code Injection -->
         <!-- ----------------------- -->
-        <w-card :class="['pb-2', { 'mt-4': flagStore.experimental }]">
+        <w-card class="mt-4 pb-2">
           <w-card-header>{{ t('admin.theme.codeInjection') }}</w-card-header>
           <w-item>
             <blueprint-icon icon="css" />
@@ -410,6 +441,8 @@ function defaultConfig() {
     sidebarPosition: 'left',
     tocPosition: 'right',
     showPrintBtn: true,
+    showPageProgress: true,
+    pageTransitions: true,
     baseFont: 'roboto',
     contentFont: 'roboto'
   }
@@ -833,6 +866,8 @@ async function save() {
       sidebarPosition: state.config.sidebarPosition,
       tocPosition: state.config.tocPosition,
       showPrintBtn: state.config.showPrintBtn,
+      showPageProgress: state.config.showPageProgress,
+      pageTransitions: state.config.pageTransitions,
       baseFont: state.config.baseFont,
       contentFont: state.config.contentFont
     }

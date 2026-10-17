@@ -653,6 +653,7 @@ import { usePageScripts } from '@/composables/pageScripts'
 import { notify } from '@/composables/notify'
 import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
+import { pageProgress } from '@/composables/pageProgress'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { clearHighlights, indexText, locateAnchor } from '@/helpers/annotations'
 import {
@@ -1589,6 +1590,8 @@ watch(
 
     // -> Load Page. The contents panel belongs to the page being left, so it goes with it
     state.tocPanelOpen = false
+    // -> Picks the bar up from the router, which let go of it as this watcher was triggered
+    const endProgress = pageProgress.start()
     try {
       await pageStore.pageLoad({ path: pagePath, locale: pageLocale, applyWith: swapTo })
       // -> Load Blocks. `?.` because a locked page draws its lock screen in place of the article, so
@@ -1643,6 +1646,8 @@ watch(
           message: err.message
         })
       }
+    } finally {
+      endProgress()
     }
   },
   { immediate: true }

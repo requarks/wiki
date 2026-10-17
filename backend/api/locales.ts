@@ -264,6 +264,49 @@ async function routes(app: FastifyInstance) {
     }
   )
 
+  /**
+   * DELETE AN INSTALLED LOCALE
+   */
+  app.delete<{ Params: { code: string } }>(
+    '/:code',
+    {
+      config: {
+        // -> Not `manage:sites`, for the reason renaming one is not: a locale belongs to the whole
+        //    instance, and taking it away from one site's admin area would reach across all of them
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Delete an installed locale',
+        description:
+          "Removes a locale's strings from the installation. Refused with 409 while anything still refers to it — a site that has it enabled, pages, folders or files filed under it, glossary terms written in it, or group page rules scoped to it — and the message lists what. A site-wide navigation menu kept for the locale, page history and users' language preferences do not count, and are left as they are.\n\nA locale published upstream goes back to being available, ready to be installed again; one that only ever came from an uploaded file is removed altogether. Its aliases are cleared either way.\n\nRefused for `en`, which ships with the wiki.",
+        tags: ['Locales'],
+        params: {
+          type: 'object',
+          properties: {
+            code: { type: 'string', description: 'The locale code, e.g. `fr-FR`.' }
+          }
+        },
+        response: {
+          200: {
+            description: 'Locale deleted successfully',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      // -> A `CustomError` carries its own status (400 / 404 / 409), which the error handler forwards
+      await WIKI.models.locales.uninstall(req.params.code)
+      await audit(req, 'admin', 'uninstallLocale', { code: req.params.code })
+
+      return { ok: true, message: 'Locale deleted successfully.' }
+    }
+  )
+
   app.get<{ Params: { code: string } }>(
     '/:code/strings',
     {

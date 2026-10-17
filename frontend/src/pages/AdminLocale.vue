@@ -165,20 +165,36 @@
                 <w-separator vertical inset class="ms-4" />
               </template>
               <!--
-                Installing a locale is a site administrator's to do, but renaming one is not: the name
-                and the short code are how every site on the instance addresses it, so the endpoint
-                behind this button asks for `manage:system` and the button is offered to nobody else.
+                Installing a locale is a site administrator's to do, but renaming or deleting one is
+                not: the name and the short code are how every site on the instance addresses it, and
+                every site loses it when it goes, so the endpoints behind these buttons ask for
+                `manage:system` and the buttons are offered to nobody else. Whether anything still
+                uses the locale is the server's to say -- it is asked across every site, not just
+                this one -- and the refusal names what.
               -->
               <w-item-section v-if="lc.isInstalled && userStore.can(`manage:system`)" side>
-                <w-btn
-                  flat
-                  dense
-                  color="grey"
-                  icon="la:pen"
-                  :aria-label="t(`admin.locale.editAliases`)"
-                  @click="editAliases(lc)">
-                  <w-tooltip>{{ t(`admin.locale.editAliases`) }}</w-tooltip>
-                </w-btn>
+                <div class="flex items-center gap-1">
+                  <w-btn
+                    flat
+                    dense
+                    color="grey"
+                    icon="la:pen"
+                    :aria-label="t(`admin.locale.editAliases`)"
+                    @click="editAliases(lc)">
+                    <w-tooltip>{{ t(`admin.locale.editAliases`) }}</w-tooltip>
+                  </w-btn>
+                  <w-btn
+                    :disable="lc.code === `en`"
+                    flat
+                    dense
+                    color="grey"
+                    icon="la:trash"
+                    :loading="state.deleting === lc.code"
+                    :aria-label="t(`admin.locale.delete`)"
+                    @click="deleteLocale(lc)">
+                    <w-tooltip>{{ t(`admin.locale.delete`) }}</w-tooltip>
+                  </w-btn>
+                </div>
               </w-item-section>
               <w-item-section avatar>
                 <w-toggle
@@ -234,7 +250,7 @@ import { useI18n } from 'vue-i18n'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
-import { dialog } from '@/composables/dialog'
+import { confirm, dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
@@ -274,6 +290,7 @@ useMeta(() => ({
 const state = reactive({
   loading: 0,
   installing: null,
+  deleting: null,
   uploading: false,
   locales: [],
   primary: 'en',
@@ -344,6 +361,15 @@ async function load() {
       API_CLIENT.get(`sites/${adminStore.currentSiteId}?strict=true`).json()
     ])
     state.locales = sortBy(locales ?? [], ['name', 'nativeName'])
+    /*
+      Handed on to the two copies of the installed list the rest of the app reads, which were each
+      fetched once and never again: the admin header's language menu (so an install shows up there
+      without leaving the admin area and coming back) and the site store's, which is what the
+      header's label is resolved through (`localeAlias` -- the short code an alias edit changes).
+      Every install, upload and alias edit ends in this function, so this is the one place.
+    */
+    adminStore.applyLocales(locales)
+    siteStore.installedLocales = (locales ?? []).filter((lc) => lc.isInstalled)
     state.primary = site?.locales?.primary ?? 'en'
     state.forcePrefix = site?.locales?.forcePrefix ?? false
     state.showMenu = site?.locales?.showMenu ?? true
@@ -445,6 +471,47 @@ async function install(code) {
     })
   }
   state.installing = null
+}
+
+function deleteLocale(locale) {
+  if (state.deleting) {
+    return
+  }
+  confirm({
+    title: t('admin.locale.delete'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
+    // -> Both names, so the locale is recognisable whichever language the reader knows it in --
+    //    once where they are the same, which `en` would be and an alias may make any locale
+    message: t('admin.locale.deleteConfirm', {
+      name:
+        locale.name === locale.displayName ? locale.name : `${locale.name} (${locale.displayName})`
+    }),
+    color: 'negative',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    state.deleting = locale.code
+    try {
+      const resp = await API_CLIENT.delete(`locales/${locale.code}`).json()
+      // -> The API client does not throw on 400, which is what `en` is refused with
+      if (resp?.ok === false) {
+        throw new Error(resp.message || 'An unexpected error occured.')
+      }
+      notify({
+        type: 'positive',
+        message: t('admin.locale.deleteSuccess')
+      })
+      await load()
+    } catch (err) {
+      // -> A 409 says what still uses the locale, which is the part the administrator has to act on
+      notify({
+        type: 'negative',
+        message: t('admin.locale.deleteFailed'),
+        caption: apiErrorMessage(err)
+      })
+    }
+    state.deleting = null
+  })
 }
 
 function promptInstallFile() {

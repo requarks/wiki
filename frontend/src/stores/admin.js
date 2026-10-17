@@ -63,12 +63,19 @@ export const useAdminStore = defineStore('admin', {
   },
   actions: {
     async fetchLocales() {
-      const resp = await API_CLIENT.get('locales').json()
+      this.applyLocales(await API_CLIENT.get('locales').json())
+    },
+    /**
+     * Take in the full list `GET /locales` answers with, from whoever already asked for it — the
+     * locale admin page re-reads it after every install, and that is exactly when the interface
+     * language menu has to learn about the new one.
+     */
+    applyLocales(locales) {
       // -> Installed only: everything reading this offers a locale to *use* — the interface language
       //    menu, a group's page rules — and one with no strings downloaded has nothing to offer.
-      //    The locale admin page fetches the full list itself, since installing is what it is for.
+      //    The locale admin page keeps the full list itself, since installing is what it is for.
       this.locales = sortBy(
-        cloneDeep(resp ?? []).filter((lc) => lc.isInstalled),
+        cloneDeep(locales ?? []).filter((lc) => lc.isInstalled),
         ['nativeName', 'name']
       )
     },

@@ -235,6 +235,8 @@ class Sites {
           sidebarPosition: 'left',
           tocPosition: 'right',
           showPrintBtn: true,
+          showPageProgress: true,
+          pageTransitions: true,
           baseFont: 'roboto',
           contentFont: 'roboto'
         },
@@ -631,6 +633,8 @@ class Sites {
           sidebarPosition: 'left',
           tocPosition: 'right',
           showPrintBtn: true,
+          showPageProgress: true,
+          pageTransitions: true,
           baseFont: 'roboto',
           contentFont: 'roboto'
         },
