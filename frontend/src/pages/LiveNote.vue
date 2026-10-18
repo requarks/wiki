@@ -67,16 +67,27 @@
           class="ms-2 acrylic-btn"
           flat
           icon="la:link"
-          color="grey"
+          color="emerald-600"
           :aria-label="t(`liveNote.copyLink`)"
           @click="copyLink">
           <w-tooltip>{{ t('liveNote.copyLink') }}</w-tooltip>
+        </w-btn>
+        <!-- -> Once the room has answered: until then there is no text to publish -->
+        <w-btn
+          class="ms-2 acrylic-btn"
+          flat
+          icon="la:file-export"
+          color="blue"
+          :disabled="!collabStore.hasSynced"
+          :aria-label="t(`liveNote.publish.title`)"
+          @click="publishToPage">
+          <w-tooltip>{{ t('liveNote.publish.title') }}</w-tooltip>
         </w-btn>
         <w-btn
           class="ms-2 acrylic-btn"
           flat
           icon="la:ellipsis-v"
-          color="grey"
+          :color="dark.isActive ? `indigo-4` : `indigo`"
           :aria-label="t(`liveNote.menu`)">
           <w-tooltip>{{ t('liveNote.menu') }}</w-tooltip>
           <!-- -> `!min-w-0 !pr-2` and literal colour classes, as the page history's version menu has them -->
@@ -168,18 +179,23 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { fileSave } from 'browser-fs-access'
 
+import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { confirm, dialog } from '@/composables/dialog'
+import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { useMinWidth } from '@/composables/screen'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { assetPath, pastedAssetFolder } from '@/helpers/assets'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { relativeDate } from '@/helpers/datetime'
 import { loginLocation } from '@/helpers/loginRedirect'
 
 import CollabPresence from '@/components/CollabPresence.vue'
 import LiveNoteAccessDialog from '@/components/LiveNoteAccessDialog.vue'
+import LiveNotePublishDialog from '@/components/LiveNotePublishDialog.vue'
 import LoadingGeneric from '@/components/LoadingGeneric.vue'
+import { MarkdownRenderer } from '@/renderers/markdown'
 
 import { useCollabStore } from '@/stores/collab'
 import { useCommonStore } from '@/stores/common'
@@ -214,6 +230,10 @@ const editorStore = useEditorStore()
 const liveNoteStore = useLiveNoteStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+
+// DARK MODE
+
+const dark = useDark()
 
 // ROUTER
 
@@ -620,6 +640,145 @@ function changeAccess() {
         caption: apiErrorMessage(err)
       })
     }
+  })
+}
+
+/**
+ * A note image as the note's source points at it -- `/_files/n/<uuid>.<ext>`, what
+ * `liveNotes.addImage` answers with. Global, for `replaceAll` and `matchAll`.
+ */
+const NOTE_IMAGE_URL_RE = /\/_files\/n\/([0-9a-f-]{36}\.(?:png|jpg|gif|webp|svg))/gi
+
+/**
+ * The note's source as a page's: without the opening H1, which is all a note's title is and which the
+ * page carries as its title instead -- left in, the page would show it twice.
+ */
+function pageSourceOf(content) {
+  return content.replace(/^\s*#[ \t]+[^\n]*(?:\n+|$)/, '')
+}
+
+/**
+ * Copy the note's images out of the note image folder, beside the page about to use them, and point
+ * the source at the copies.
+ *
+ * Copied, never moved: the note carries on after it is published, and its revisions still show them.
+ * And copied at all because `n/` is not a folder a page can use -- `/_files/` serves it to signed-in
+ * readers only, and no page rule reaches it. Filed where an image pasted into the page would be
+ * (`pastedAssetFolder`), in the page's locale, under the name the note gave it with the page's own
+ * name in front -- `foobar-<uuid>.png` for a page published to `guides/foobar` -- so that a folder of
+ * them says which page each one came with.
+ *
+ * @returns {{ content: string, assetIds: string[] }} The rewritten source, and the copies made, for
+ *   the caller to take back out should the page then not be created.
+ */
+async function copyNoteImages(content, { path, locale }) {
+  const names = [...new Set([...content.matchAll(NOTE_IMAGE_URL_RE)].map((m) => m[1]))]
+  const folderPath = pastedAssetFolder(
+    siteStore.uploads.pastedDestination,
+    path.split('/').slice(0, -1).join('/')
+  )
+  const pageName = path.split('/').at(-1)
+  const assetIds = []
+  try {
+    for (const name of names) {
+      const source = await fetch(`/_files/n/${name}`, { credentials: 'same-origin' })
+      if (!source.ok) {
+        throw new Error(t('liveNote.publish.imageFailed', { name }))
+      }
+      const blob = await source.blob()
+      const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
+        searchParams: {
+          fileName: `${pageName}-${name}`,
+          locale,
+          ...(folderPath ? { folderPath } : {})
+        },
+        headers: { 'content-type': blob.type || 'application/octet-stream' },
+        body: blob
+      }).json()
+      assetIds.push(resp.asset.id)
+      // -> What the server stored, which the site's upload conflict behavior may have renamed
+      content = content.replaceAll(
+        `/_files/n/${name}`,
+        assetPath(resp.asset.folderPath, resp.asset.fileName)
+      )
+    }
+  } catch (err) {
+    await removeAssets(assetIds)
+    throw err
+  }
+  return { content, assetIds }
+}
+
+/** Take back copies made for a page that was not created. Best effort: what fails stays behind. */
+async function removeAssets(assetIds) {
+  await Promise.allSettled(
+    assetIds.map((id) => API_CLIENT.delete(`sites/${siteStore.id}/assets/${id}`))
+  )
+}
+
+/**
+ * Make a page of the note: its properties, then where it goes, then the page -- and the reader is
+ * taken to it. The note itself is left as it was.
+ *
+ * The source is the note as the room has it right now, the same as Download. Rendered here, as every
+ * save is, and for where the page is going -- see `renderFor` in `PageVersion.vue`.
+ */
+function publishToPage() {
+  dialog({
+    component: LiveNotePublishDialog,
+    componentProps: { title: liveNoteStore.title }
+  }).onOk((props) => {
+    dialog({
+      component: defineAsyncComponent(() => import('@/components/TreeBrowserDialog.vue')),
+      componentProps: {
+        mode: 'savePage',
+        folderPath: '',
+        itemTitle: props.title,
+        itemFileName: '',
+        locale: commonStore.locale
+      }
+    }).onOk(async ({ path, title, locale }) => {
+      loading.show()
+      let assetIds = []
+      try {
+        const copied = await copyNoteImages(pageSourceOf(liveNoteStore.content), { path, locale })
+        assetIds = copied.assetIds
+        const render = await new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(
+          copied.content,
+          { pagePath: path }
+        )
+        const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
+          json: {
+            ...props,
+            title,
+            path,
+            locale,
+            editor: 'markdown',
+            content: copied.content,
+            render
+          }
+        }).json()
+        const page = resp?.page
+        if (!page?.id) {
+          throw new Error(resp?.message || 'An unexpected error occured.')
+        }
+        assetIds = []
+        notify({ type: 'positive', message: t('liveNote.publish.success') })
+        if (props.tags.length > 0) {
+          siteStore.staleTags()
+        }
+        router.push(`/${page.path}`)
+      } catch (err) {
+        await removeAssets(assetIds)
+        notify({
+          type: 'negative',
+          message: t('liveNote.publish.failed'),
+          caption: apiErrorMessage(err)
+        })
+      } finally {
+        loading.hide()
+      }
+    })
   })
 }
 

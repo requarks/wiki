@@ -14,7 +14,7 @@
         <w-separator v-if="editor === dividedAt" class="my-2" inset />
         <!-- -> Not an editor: a note is not a page, and opens at a URL of its own -- see `createLiveNote` -->
         <w-item v-if="editor === LIVE_NOTE" clickable @click="createLiveNote">
-          <blueprint-icon icon="user-typing-using-typewriter" />
+          <blueprint-icon icon="note" />
           <w-item-section class="pr-2">{{ t('common.createPage.liveNote') }}</w-item-section>
         </w-item>
         <w-item v-else clickable @click="create(editor)">

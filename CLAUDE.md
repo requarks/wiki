@@ -1363,8 +1363,10 @@ under its `noteKey` prop. The site switch is `features.liveNotes`, which also ne
   anybody signed in instead, and the tree refuses `n` as a new root name. `liveNoteImages` lists each
   note's images, and `liveNotes.delete` removes them with the note. The images are kept until then,
   even after the text stops showing them, because a revision may still use them.
-- **Converting a note into a page is not built yet.** `content` is the source it would hand over, and
-  its images would have to move out of `n/`.
+- **Publish to Page** (`publishToPage` in `LiveNote.vue`) makes a page of a note in the browser, with
+  no route of its own: the note's `content` minus its opening H1 (the page's title instead), its
+  images COPIED out of `n/` to where a pasted image would go — the note and its revisions keep the
+  originals — rendered for the destination and posted to `POST /pages`. The note is left as it was.
 
 ### Comments
 

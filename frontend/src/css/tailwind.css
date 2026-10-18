@@ -313,6 +313,9 @@ body.body--dark {
   --color-lime-6: #cddc39;
   --color-lime-9: #9e9d24;
 
+  /* -> Tailwind's own emerald-600, declared here only so that it is emitted for a `color` prop */
+  --color-emerald-600: oklch(59.6% 0.145 163.225);
+
   --color-yellow: #ffeb3b;
   --color-yellow-6: #ffeb3b;
   --color-yellow-9: #f9a825;

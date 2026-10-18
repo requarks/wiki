@@ -164,7 +164,8 @@ export function titleOf(content: string): string {
  * Manager and every listing, and loaded by anybody signed in who has its URL — the same footing as
  * the note itself. `liveNoteImages` lists each note's, and deleting the note deletes them.
  *
- * Converting a note into a page is a later feature: `content` is the source it will hand over.
+ * Publishing a note as a page is done by the browser (`publishToPage` in `LiveNote.vue`), from
+ * `content`, through the ordinary page and asset routes.
  */
 class LiveNotes {
   /**
