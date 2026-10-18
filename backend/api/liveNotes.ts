@@ -133,6 +133,95 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LIST MY NOTES
+   */
+  app.get<{
+    Params: { siteId: string }
+    Querystring: { page?: number; limit?: number; filter?: string }
+  }>(
+    '/sites/:siteId/notes',
+    {
+      schema: {
+        summary: 'List my live notes',
+        description:
+          'The live notes the caller created on this site, newest first. Only ever the caller’s own: a note’s key is its credential, and nobody else’s is listed anywhere.',
+        tags: ['Live Notes'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            filter: {
+              type: 'string',
+              maxLength: 255,
+              description: 'Matched against the title, case-insensitively.'
+            },
+            page: { type: 'integer', minimum: 1, default: 1 },
+            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
+          }
+        },
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              page: { type: 'integer' },
+              limit: { type: 'integer' },
+              total: { type: 'integer' },
+              notes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: noteSchema.properties.id,
+                    key: noteSchema.properties.key,
+                    title: noteSchema.properties.title,
+                    access: noteSchema.properties.access,
+                    createdAt: noteSchema.properties.createdAt,
+                    updatedAt: noteSchema.properties.updatedAt
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const userId = noteUser(req, reply, req.params.siteId)
+      if (!userId) {
+        return reply
+      }
+      const page = req.query.page ?? 1
+      const limit = req.query.limit ?? 20
+      const { total, notes } = await WIKI.models.liveNotes.listByCreator({
+        siteId: req.params.siteId,
+        creatorId: userId,
+        filter: req.query.filter?.trim() ?? '',
+        page,
+        limit
+      })
+      return {
+        page,
+        limit,
+        total,
+        notes: notes.map((note) => ({
+          id: note.id,
+          key: note.key,
+          title: note.title,
+          access: note.access,
+          createdAt: note.createdAt.toISOString(),
+          updatedAt: note.updatedAt.toISOString()
+        }))
+      }
+    }
+  )
+
+  /**
    * CREATE A NOTE
    */
   app.post<{ Params: { siteId: string } }>(

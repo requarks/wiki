@@ -64,6 +64,7 @@ const routes = [
       { path: 'avatar', component: () => import('@/pages/ProfileAvatar.vue') },
       { path: 'auth', component: () => import('@/pages/ProfileAuth.vue') },
       { path: 'groups', component: () => import('@/pages/ProfileGroups.vue') },
+      { path: 'notes', component: () => import('@/pages/ProfileLiveNotes.vue') },
       { path: 'tokens', component: () => import('@/pages/ProfileTokens.vue') },
       { path: 'notifications', component: () => import('@/pages/ProfileNotifications.vue') }
     ]

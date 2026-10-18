@@ -145,6 +145,10 @@ const sidenav = computed(() => [
     label: t('profile.groups'),
     icon: 'la:users'
   },
+  // -> Only where the site has live notes at all, which needs collaborative editing as well
+  ...(siteStore.features.liveNotes && siteStore.features.collaborativeEditing
+    ? [{ key: 'notes', label: t('profile.liveNotes'), icon: 'la:sticky-note' }]
+    : []),
   {
     key: 'notifications',
     label: t('profile.notifications'),

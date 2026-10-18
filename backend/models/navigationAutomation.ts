@@ -2,7 +2,7 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 import { navigation as navigationTable, tree as treeTable } from '../db/schema.ts'
-import { encodeTreePath } from '../helpers/common.ts'
+import { encodeTreePath, isNoteImagesPath } from '../helpers/common.ts'
 import { relinkHref, resolveLink } from '../helpers/pageLinks.ts'
 import type { NavigationItem } from './navigation.ts'
 
@@ -576,9 +576,13 @@ class NavigationAutomation {
    * for everything under it. And with Add New Pages to Direct Parent Menu on as well, a menu item
    * opening that menu goes at the end of the menu owned by the folder holding it, as a link and a
    * chevron both — which is how a section of the site gets into the menu above it.
+   *
+   * Never for the live notes' image folder (`NOTE_IMAGES_FOLDER`), which the first image pasted into
+   * a note creates: it is hidden from everybody, so a menu item opening it would be a link to nothing
+   * in the site's root menu.
    */
   async folderCreated(siteId: string, folder: AutomatedFolder): Promise<void> {
-    if (!this.isOn(siteId, 'createFolderMenus')) {
+    if (isNoteImagesPath(folder.path) || !this.isOn(siteId, 'createFolderMenus')) {
       return
     }
     await this.guarded('create folder menu', async () => {

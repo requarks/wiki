@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from 'node:crypto'
 
-import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
 import * as Y from 'yjs'
 
 import {
@@ -11,6 +11,14 @@ import {
 } from '../db/schema.ts'
 import { CustomError, NOTE_IMAGES_FOLDER } from '../helpers/common.ts'
 import { detectImageMime, detectSvg, svgMimeType } from '../helpers/images.ts'
+
+/**
+ * Escape the LIKE wildcards `%` and `_` (and the escape character itself) so that a filter is matched
+ * literally. The same as `models/users.ts` has.
+ */
+function escapeLikePattern(value: string): string {
+  return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
+}
 
 /** What a note's URL is made of: `/n/<key>`. */
 const KEY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-'
@@ -228,6 +236,44 @@ class LiveNotes {
       .where(and(eq(liveNotesTable.siteId, siteId), eq(liveNotesTable.key, key)))
       .limit(1)
     return note ? this.summarize(note) : null
+  }
+
+  /**
+   * A page of the notes one account created on a site, newest first, for Profile → My Live Notes.
+   *
+   * The one listing that carries keys, and only because every note in it is the caller's own: its
+   * creator holds the key already and can do everything with the note anyway. A listing of anybody
+   * else's notes would hand out the credential, which is why nothing else lists them.
+   *
+   * @param filter Matched literally against the title, case-insensitively.
+   */
+  async listByCreator({
+    siteId,
+    creatorId,
+    filter = '',
+    page = 1,
+    limit = 20
+  }: {
+    siteId: string
+    creatorId: string
+    filter?: string
+    page?: number
+    limit?: number
+  }): Promise<{ total: number; notes: LiveNoteSummary[] }> {
+    const conditions = [eq(liveNotesTable.siteId, siteId), eq(liveNotesTable.creatorId, creatorId)]
+    if (filter) {
+      conditions.push(ilike(liveNotesTable.title, `%${escapeLikePattern(filter)}%`))
+    }
+    const where = and(...conditions)
+    const [totals] = await WIKI.db.select({ total: count() }).from(liveNotesTable).where(where)
+    const rows = await WIKI.db
+      .select()
+      .from(liveNotesTable)
+      .where(where)
+      .orderBy(desc(liveNotesTable.createdAt), desc(liveNotesTable.id))
+      .limit(limit)
+      .offset((page - 1) * limit)
+    return { total: totals?.total ?? 0, notes: rows.map((row) => this.summarize(row)) }
   }
 
   /** A note with the people it names looked up, and the asker's rights in it, for the API. */

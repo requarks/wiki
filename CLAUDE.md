@@ -1339,8 +1339,9 @@ under its `noteKey` prop. The site switch is `features.liveNotes`, which also ne
 `collaborativeEditing`.
 
 - **Not a page.** No tree entry, no page rules, no render, no save. The 24-character key (~143 bits,
-  `crypto`) is the credential, so it never goes in a listing, a log or an audit entry: record
-  `noteId`. Beyond the key, `liveNotes.rightsFor` is the only thing that decides access. Owners (the
+  `crypto`) is the credential, so it never goes in a log or an audit entry (record `noteId`), nor in
+  any listing but its creator's own: **Profile → My Live Notes** (`GET /sites/:siteId/notes`,
+  `liveNotes.listByCreator`) lists only the notes the caller created, whose keys they already hold. Beyond the key, `liveNotes.rightsFor` is the only thing that decides access. Owners (the
   creator, plus `manage:system`) can always do everything, and everybody else gets what `access`
   allows (`editable` / `locked` / `private`). Every route and the socket ask it; nothing works it out
   for itself.
