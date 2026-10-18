@@ -74,7 +74,7 @@
             <w-list v-else separator>
               <w-item v-for="item of editorStore.pendingAssets" :key="item.id">
                 <w-item-section side><w-icon name="la:file-image" /></w-item-section>
-                <w-item-section>{{ item.fileName }}</w-item-section>
+                <w-item-section>{{ item.file.name }}</w-item-section>
                 <w-item-section side>
                   <w-btn
                     class="acrylic-btn"

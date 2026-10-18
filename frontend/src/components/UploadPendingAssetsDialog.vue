@@ -72,6 +72,10 @@ onMounted(async () => {
   // -> Read once, not per file: every file in one save goes to the same place, and the page cannot
   //    move underneath this
   const folderPath = pastedAssetFolder(siteStore.uploads.pastedDestination, pageStore.folderPath)
+  // -> In front of each file's own `<uuid>.<ext>`, as a live note published to a page names its
+  //    images: the UUID keeps two pastes off one name, and the page says which page each one came with
+  //    in a folder that may hold the files of every page beside it
+  const pageName = pageStore.path.split('/').at(-1)
 
   try {
     for (const item of editorStore.pendingAssets) {
@@ -90,7 +94,7 @@ onMounted(async () => {
       */
       const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets`, {
         searchParams: {
-          fileName: item.fileName,
+          fileName: `${pageName}-${item.fileName}`,
           locale: pageStore.locale,
           ...(folderPath ? { folderPath } : {})
         },

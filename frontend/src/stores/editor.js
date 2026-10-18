@@ -98,36 +98,36 @@ export const useEditorStore = defineStore('editor', {
     /**
      * Take a file the author has just put into a page, to be uploaded when the page is saved.
      *
-     * @param {File|Blob} data A `File` keeps the name it arrived with; a `Blob` is given one, since
-     *   it has none and only its media type to name it by.
+     * Every one is named `<uuid>.<ext>`, whatever it arrived as. The name a `File` comes with is not
+     * one to store under: a screenshot pasted from the clipboard is `image.png` in every browser, so
+     * two of them in one save -- or in one folder, ever -- land on the same name, and under the default
+     * upload conflict behavior the second replaces the first everywhere it is shown. The upload puts
+     * the page's name in front -- see `UploadPendingAssetsDialog`, which names them the way a live
+     * note's images are named when it is published to a page.
+     *
+     * @param {File|Blob} data A `File` lends its own extension, if it has one; a `Blob` has only its
+     *   media type to go by.
      * @returns {string} A `blob:` URL to write into the content, which the upload rewrites to a
      *   stored path — see `UploadPendingAssetsDialog`.
      */
     addPendingAsset(data) {
       const blobUrl = URL.createObjectURL(data)
-      if (data instanceof File) {
-        this.pendingAssets.push({
-          id: uuid(),
-          kind: 'file',
-          file: data,
-          fileName: data.name,
-          blobUrl
-        })
-      } else {
-        const fileId = uuid()
-        const fileName = `${fileId}.${imgMimeExt[data.type] || 'dat'}`
-        this.pendingAssets.push({
-          id: fileId,
-          kind: 'blob',
-          // -> `[data]`, because the constructor takes the PARTS of a file rather than a file: a bare
-          //    blob is not iterable and throws. Nothing reached this branch until the drawing editor
-          //    did -- a paste and a drop both arrive as a `File`, so every other caller takes the
-          //    branch above, and an image out of an Excalidraw scene is the first that is only a blob
-          file: new File([data], fileName, { type: data.type }),
-          fileName,
-          blobUrl
-        })
-      }
+      const id = uuid()
+      const isFile = data instanceof File
+      const ext =
+        (isFile && data.name.match(/\.([^./\\]+)$/)?.[1]) || imgMimeExt[data.type] || 'dat'
+      const fileName = `${id}.${ext.toLowerCase()}`
+      this.pendingAssets.push({
+        id,
+        kind: isFile ? 'file' : 'blob',
+        // -> A `File` is kept as it came, so the pending list can still show what was dropped. A bare
+        //    blob is wrapped as `[data]`, because the constructor takes the PARTS of a file rather than
+        //    a file: a bare blob is not iterable and throws. An image out of an Excalidraw scene is
+        //    the one caller that hands over only a blob -- a paste and a drop both arrive as a `File`
+        file: isFile ? data : new File([data], fileName, { type: data.type }),
+        fileName,
+        blobUrl
+      })
       return blobUrl
     },
     /**
