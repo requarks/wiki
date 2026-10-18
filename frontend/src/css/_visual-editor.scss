@@ -50,8 +50,8 @@
     why both are stated as 32px rather than left to their contents.
   */
   &-sidebar {
-    flex: 0 0 auto;
-    width: 56px;
+    flex: 0 0 $rail-width;
+    width: $rail-width;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;

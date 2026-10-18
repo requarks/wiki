@@ -42,7 +42,7 @@
           class="acrylic-btn"
           flat
           :label="cancelLabel ?? t('common.actions.cancel')"
-          color="grey"
+          color="cancel"
           padding="xs md"
           @click="onDialogCancel" />
         <w-btn

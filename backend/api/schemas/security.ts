@@ -69,7 +69,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       uploadScanSVG: {
         type: 'boolean',
-        description: 'Stored, but there is no upload endpoint yet.'
+        description:
+          'Whether an uploaded SVG is sanitized before it is stored: scripts, event handlers, embedded HTML and script links are taken out, and only elements and attributes that draw are kept. Applies to every asset upload, the images added to live notes included.'
       },
       authRateLimitEnabled: {
         type: 'boolean',

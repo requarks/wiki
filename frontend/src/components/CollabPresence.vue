@@ -1,10 +1,11 @@
 <template>
   <!--
     Nothing at all when you are on your own, which is the ordinary case: a single bubble of your own
-    face says nothing you did not already know, and the header has better uses for the space.
+    face says nothing you did not already know, and the header has better uses for the space. Unless
+    the caller asks otherwise -- see `showAlone`.
   -->
   <div
-    v-if="collabStore.people.length > 1"
+    v-if="collabStore.people.length > (props.showAlone ? 0 : 1)"
     class="collab-presence"
     role="group"
     :aria-label="t('editor.collab.participants')">
@@ -63,6 +64,20 @@ import { useCollabStore } from '@/stores/collab'
  * site having the feature off, the editor being anything other than markdown, and an edit being
  * suggested rather than made.
  */
+
+// PROPS
+
+const props = defineProps({
+  /**
+   * Draw the row even when the only face in it is the reader's own. A live note asks for this: it is a
+   * room people are sent to by link, and the row is how a reader sees at a glance that they are in it
+   * and who else is.
+   */
+  showAlone: {
+    type: Boolean,
+    default: false
+  }
+})
 
 const collabStore = useCollabStore()
 

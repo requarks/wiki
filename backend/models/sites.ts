@@ -164,6 +164,9 @@ class Sites {
           // -> On: a reader who follows a link to a folder rather than a page is better served by
           //    what is in it than by a notice that there is nothing there
           listFolderChildren: true,
+          // -> Off: a note is reached by anybody signed in who holds its URL, whatever the page rules
+          //    say, so it is an administrator's decision to offer that
+          liveNotes: false,
           // -> On: a reader who watches a page or is mentioned expects to be told. What each person
           //    receives, and how, is theirs to choose under Profile → Notifications
           notifications: true,
@@ -244,7 +247,8 @@ class Sites {
           asciidoc: {
             isActive: true,
             config: {
-              math: 'katex'
+              math: 'katex',
+              minimap: false
             }
           },
           /*
@@ -274,6 +278,7 @@ class Sites {
               multimdTable: true,
               quotes: 'english',
               tabWidth: 2,
+              minimap: false,
               typographer: false,
               underline: true,
               wikiLinks: true,
@@ -512,6 +517,7 @@ class Sites {
           glossaryAutoLink: true,
           lastEditedBy: true,
           listFolderChildren: true,
+          liveNotes: false,
           notifications: true,
           reasonForChange: 'optional',
           search: true
@@ -562,7 +568,8 @@ class Sites {
           asciidoc: {
             isActive: true,
             config: {
-              math: 'katex'
+              math: 'katex',
+              minimap: false
             }
           },
           /*
@@ -592,6 +599,7 @@ class Sites {
               multimdTable: true,
               quotes: 'english',
               tabWidth: 2,
+              minimap: false,
               typographer: false,
               underline: true,
               wikiLinks: true,

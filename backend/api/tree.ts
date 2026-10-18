@@ -2,7 +2,12 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import { TREE_ORDER_BY, type TreeItemType, type TreeOrderBy, type TreeRow } from '../models/tree.ts'
 import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
-import { decodeTreePath, normalizeFolderPath, normalizeNewPagePath } from '../helpers/common.ts'
+import {
+  decodeTreePath,
+  normalizeFolderPath,
+  normalizeNewPagePath,
+  refuseNoteImagesPath
+} from '../helpers/common.ts'
 import { actorFrom, unpublishedFor, userRequired } from './pages.ts'
 
 interface TreeQuery {
@@ -647,6 +652,9 @@ async function routes(app: FastifyInstance) {
       }
       // -> Under the name it will be created as, which is what a rule written for it names
       const target = [parentPath, normalizeNewPagePath(req.body.pathName)].filter(Boolean).join('/')
+      // -> Refused by the rules below as well, but as something nobody may do here, which is not the
+      //    reason: the name is taken
+      refuseNoteImagesPath(target)
       const locale = req.body.locale ?? defaultLocale(req.params.siteId)
       if (!mayOnFolder(req, 'manage:pages', target, locale)) {
         return reply.forbidden('You are not allowed to create a folder here.')

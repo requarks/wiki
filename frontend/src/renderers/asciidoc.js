@@ -213,6 +213,15 @@ function titleAttribute(title) {
 }
 
 /**
+ * A converted title as the text a reader sees: its markup dropped and its entities decoded, the way
+ * the markdown renderer reads a heading's inline children. Parsed rather than stripped with a pattern,
+ * because what is left is shown as text, not written into markup -- `&amp;` has to come out as `&`.
+ */
+function titleText(title) {
+  return new DOMParser().parseFromString(title, 'text/html').body.textContent.trim()
+}
+
+/**
  * The delimiters an author may have put round a `latexmath` block's content themselves. Asciidoctor
  * accepts the content with or without them; the math blocks want the bare formula.
  */
@@ -242,8 +251,9 @@ class WikiConverter extends Html5Converter {
    * @param {string} backend The backend Asciidoctor instantiated this for.
    * @param {object} opts Asciidoctor's own converter options.
    * @param {object} context What the source cannot say about itself -- `pagePath`, which a relative
-   *                         image resolves against, and `mathTag`, the block a formula is drawn by
-   *                         (null where the site has math switched off).
+   *                         image resolves against, `mathTag`, the block a formula is drawn by
+   *                         (null where the site has math switched off), and `headings`, an array
+   *                         the document's headings are added to as they are converted.
    */
   constructor(backend, opts = {}, context = {}) {
     super(backend, opts)
@@ -263,6 +273,25 @@ class WikiConverter extends Html5Converter {
   lineAttr(node) {
     const line = node.getLineNumber?.()
     return line ? ` data-line="${line}"` : ''
+  }
+
+  /**
+   * A heading, noted for the editor's Contents pane -- see `renderWithHeadings`.
+   *
+   * At the level it is drawn at rather than AsciiDoc's own, so that `==` is a 2 here as `##` is in
+   * markdown and the pane treats both editors' headings alike. Only with a line to go to, which is to
+   * say only for a render with `sourcemap` on.
+   */
+  collectHeading(node) {
+    const line = node.getLineNumber?.()
+    if (!this.wikiContext.headings || !line) {
+      return
+    }
+    this.wikiContext.headings.push({
+      level: node.level + 1,
+      text: titleText(node.title ?? '') || (node.rawTitle ?? '').trim(),
+      line
+    })
   }
 
   /**
@@ -603,7 +632,14 @@ ${await node.content()}
 
   /** The same, for a section -- which is the heading and everything under it. */
   async convert_section(node) {
+    this.collectHeading(node)
     return (await super.convert_section(node)).replace(/^<div/, `<div${this.lineAttr(node)}`)
+  }
+
+  /** A `[discrete]` heading, which is a heading on the page and so in the contents as well. */
+  async convert_floating_title(node) {
+    this.collectHeading(node)
+    return super.convert_floating_title(node)
   }
 
   /**
@@ -646,8 +682,26 @@ export class AsciidocRenderer {
    *                 editor behind it would only be paying to produce it.
    * @returns {Promise<string>} The HTML.
    */
-  async render(src, { pagePath = '', sourcemap = false } = {}) {
-    return asciidoctorConvert(disableIfeval(src ?? ''), {
+  async render(src, options = {}) {
+    return (await this.renderWithHeadings(src, options)).html
+  }
+
+  /**
+   * `render`, plus the document's headings in order with the source line each starts on -- for the
+   * Contents pane beside the editor (`EditorContentsPane.vue`). The markdown renderer's `headings`
+   * counterpart, handed back rather than kept on the instance: a render here is a promise, and two
+   * in flight at once would otherwise each overwrite the other's.
+   *
+   * The lines come from `sourcemap`, so a render without it has no headings to report. Sorted, since
+   * the order sections are converted in is Asciidoctor's business rather than the document's.
+   *
+   * @param {string} src AsciiDoc source.
+   * @param {object} [options] As for `render`.
+   * @returns {Promise<{ html: string, headings: Array<{ level: number, text: string, line: number }> }>}
+   */
+  async renderWithHeadings(src, { pagePath = '', sourcemap = false } = {}) {
+    const headings = []
+    const html = await asciidoctorConvert(disableIfeval(src ?? ''), {
       standalone: false,
       doctype: 'article',
       /*
@@ -660,9 +714,10 @@ export class AsciidocRenderer {
       extension_registry: this.registry,
       converter_factory: {
         createSync: (backend, opts) =>
-          new WikiConverter(backend, opts, { pagePath, mathTag: this.mathTag })
+          new WikiConverter(backend, opts, { pagePath, mathTag: this.mathTag, headings })
       },
       attributes: { ...DEFAULT_ATTRIBUTES, ...LOCKED_ATTRIBUTES, ...this.config.attributes }
     })
+    return { html, headings: headings.sort((a, b) => a.line - b.line) }
   }
 }

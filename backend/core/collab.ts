@@ -48,6 +48,16 @@ import type { WebSocket } from 'ws'
  * of identical text therefore produce byte-identical operations, which merge as one. That is also what
  * lets a client reconnect after a network blip and push back the edits it made while it was away — its
  * local copy of the seed is the same seed a freshly created room builds.
+ *
+ * ## Live notes
+ *
+ * The one kind of room that IS storage. A live note (`models/liveNotes.ts`) has no save: its room
+ * writes its document to the note as it changes — {@link NOTE_PERSIST_DELAY} after the last edit, and
+ * at least every {@link NOTE_PERSIST_MAX_WAIT} while edits keep coming — and once more when the last
+ * participant leaves, before the room is dropped. It starts from that stored document rather than from
+ * a seed, which is what keeps a reconnecting client's offline edits mergeable after the room was gone.
+ * A note room's id is the note's id with {@link NOTE_ROOM_PREFIX} in front, so it can never be taken
+ * for a page's.
  */
 
 /** y-websocket message types. The values are that protocol's, not ours. */
@@ -78,6 +88,15 @@ const PEER_PRESENCE_TTL = 15 * 1000
 /** Keepalive interval. An idle websocket is what a reverse proxy cuts first. */
 const PING_INTERVAL = 30 * 1000
 
+/** How long a live note waits after the last edit before writing itself to the database. */
+const NOTE_PERSIST_DELAY = 2 * 1000
+
+/** The longest a live note goes unwritten while somebody is typing into it without pause. */
+const NOTE_PERSIST_MAX_WAIT = 10 * 1000
+
+/** What a live note's room id starts with — the rest is the note's id. */
+const NOTE_ROOM_PREFIX = 'note:'
+
 /**
  * Marks a document or awareness change as having arrived over the relay, so that applying it here does
  * not send it straight back out to the instance it came from.
@@ -89,6 +108,49 @@ interface CollabConn {
   clients: Set<number>
   /** Answered the last keepalive ping. */
   alive: boolean
+  /** Who is on the other end — what a live note records as having written into it. */
+  userId: string
+  /**
+   * May read the room and not write to it: somebody other than its owners, in a locked live note. Their
+   * edits are dropped here rather than trusted to the editor to have been read-only.
+   */
+  readOnly: boolean
+  /** One of a live note's owners, whom changing its access never disconnects. See `noteAccessChanged`. */
+  manager: boolean
+}
+
+/** Who a socket joining a room is, and what they may do in it — decided by the caller. */
+export interface RoomMember {
+  userId: string
+  readOnly?: boolean
+  manager?: boolean
+}
+
+/** What a room is gathered around: a page being edited, or a live note. */
+export interface RoomTarget {
+  kind: 'page' | 'note'
+  id: string
+  siteId: string
+}
+
+/** What a live note's room carries on top of an ordinary one: its write-back. */
+interface NoteRoomState {
+  noteId: string
+  /** Who has typed into this room since its last persist. */
+  authors: Set<string>
+  /** Which of them typed most recently — the note's last editor, once written. */
+  lastAuthor: string | null
+  /** The debounced persist, and when the first edit it is holding was made. */
+  persistTimer: NodeJS.Timeout | null
+  firstUnpersistedAt: number | null
+  /** A persist arranged for when the next revision falls due. See `PersistResult.revisionDueAt`. */
+  revisionTimer: NodeJS.Timeout | null
+  /** The persist in flight, so that they run one at a time and closing can wait for the last. */
+  writing: Promise<void>
+  /** Something was typed into this room since its last persist. */
+  dirty: boolean
+  /** The last persist left a revision for this room to take when its interval is up. */
+  revisionDue: boolean
 }
 
 interface CollabSession {
@@ -99,8 +161,11 @@ interface CollabSession {
 }
 
 interface CollabRoom {
-  pageId: string
-  siteId: string
+  /** The page's id, or the note's behind {@link NOTE_ROOM_PREFIX}. What the relay addresses it by. */
+  id: string
+  target: RoomTarget
+  /** Set for a live note's room, and only for one. */
+  note: NoteRoomState | null
   doc: Y.Doc
   awareness: awarenessProtocol.Awareness
   conns: Map<WebSocket, CollabConn>
@@ -119,9 +184,9 @@ interface SaveInfo {
 interface RelayEnvelope {
   /** Instance the message came from. */
   i: string
-  /** Room, i.e. page id. */
+  /** Room: a page id, or a note's id behind `NOTE_ROOM_PREFIX`. */
   r: string
-  t: 'update' | 'awareness' | 'hello' | 'state' | 'saved'
+  t: 'update' | 'awareness' | 'hello' | 'state' | 'saved' | 'deleted' | 'access'
   /** Payload: base64 for the binary kinds, JSON for `saved`, absent for `hello`. */
   p?: string
   /** Instance this is addressed to, when it is a reply rather than a broadcast. */
@@ -172,6 +237,11 @@ function toBytes(data: unknown): Uint8Array {
  * Visual editor seeds its fragment. See `editor/excalidraw/collab.js`.
  */
 const CANVAS_EDITORS = new Set(['excalidraw'])
+
+/** The key a room is held and relayed under. A page's is its id, for `pageSaved` to find it by. */
+function roomIdOf(target: RoomTarget): string {
+  return target.kind === 'note' ? `${NOTE_ROOM_PREFIX}${target.id}` : target.id
+}
 
 /**
  * The state a room starts from when it has to build one itself, as a Yjs update.
@@ -271,7 +341,19 @@ export default {
       clearTimeout(partial.timer)
     }
     this.partials.clear()
+    /*
+      Live notes write themselves out before their sockets go: what a note's room holds past its last
+      persist is otherwise only in the browsers, and those are about to be told to go elsewhere.
+    */
+    await Promise.all(
+      [...this.rooms.values()]
+        .filter((room) => room.note)
+        .map((room) => this.persistNote(room, true))
+    )
     for (const room of this.rooms.values()) {
+      if (room.note) {
+        this.cancelNoteTimers(room.note)
+      }
       for (const conn of room.conns.keys()) {
         conn.close(1001, 'Server is shutting down')
       }
@@ -351,24 +433,26 @@ export default {
   },
 
   /**
-   * Put a socket into a page's room, syncing it against whatever state that room holds.
+   * Put a socket into a page's or a note's room, syncing it against whatever state that room holds.
    *
-   * The caller is responsible for having decided that this user may edit this page — see
+   * The caller is responsible for having decided that this user may edit what the room is about — see
    * `controllers/collab.ts`. Nothing below re-checks it.
    */
   async join(
     conn: WebSocket,
-    page: { id: string; siteId: string },
-    session: CollabSession
+    target: RoomTarget,
+    session: CollabSession,
+    member: RoomMember
   ): Promise<void> {
+    const roomId = roomIdOf(target)
     /*
       Asked for repeatedly, because a room can be dropped while this socket was waiting for it: another
       socket that gave up during the same setup takes the still-empty room down with it. Joining that
       one would put this editor in a room nothing else can find.
     */
-    let room = await this.ensureRoom(page)
-    for (let attempt = 0; this.rooms.get(page.id) !== room && attempt < 3; attempt++) {
-      room = await this.ensureRoom(page)
+    let room = await this.ensureRoom(target)
+    for (let attempt = 0; this.rooms.get(roomId) !== room && attempt < 3; attempt++) {
+      room = await this.ensureRoom(target)
     }
 
     // -> The socket may well have gone away while the room was being set up
@@ -377,7 +461,13 @@ export default {
       return
     }
 
-    const state: CollabConn = { clients: new Set(), alive: true }
+    const state: CollabConn = {
+      clients: new Set(),
+      alive: true,
+      userId: member.userId,
+      readOnly: member.readOnly ?? false,
+      manager: member.manager ?? false
+    }
     room.conns.set(conn, state)
     conn.on('pong', () => {
       state.alive = true
@@ -409,13 +499,14 @@ export default {
   },
 
   /**
-   * The room for a page, creating and populating it if this instance does not have it open.
+   * The room for a page or a note, creating and populating it if this instance does not have it open.
    *
    * Concurrent joiners share one room *and one initialization*: the room goes into the map before it
    * has any state, and `ready` is what everything else waits on.
    */
-  async ensureRoom(page: { id: string; siteId: string }): Promise<CollabRoom> {
-    const existing = this.rooms.get(page.id)
+  async ensureRoom(target: RoomTarget): Promise<CollabRoom> {
+    const roomId = roomIdOf(target)
+    const existing = this.rooms.get(roomId)
     if (existing) {
       await existing.ready
       return existing
@@ -428,15 +519,29 @@ export default {
     awareness.setLocalState(null)
 
     const room: CollabRoom = {
-      pageId: page.id,
-      siteId: page.siteId,
+      id: roomId,
+      target,
+      note:
+        target.kind === 'note'
+          ? {
+              noteId: target.id,
+              authors: new Set(),
+              lastAuthor: null,
+              persistTimer: null,
+              firstUnpersistedAt: null,
+              revisionTimer: null,
+              writing: Promise.resolve(),
+              dirty: false,
+              revisionDue: false
+            }
+          : null,
       doc,
       awareness,
       conns: new Map(),
       ready: Promise.resolve(),
       provisional: true
     }
-    this.rooms.set(page.id, room)
+    this.rooms.set(roomId, room)
 
     doc.on('update', (update: Uint8Array, origin: unknown) => {
       const encoder = encoding.createEncoder()
@@ -447,7 +552,19 @@ export default {
         this.send(conn, message)
       }
       if (origin !== RELAYED) {
-        this.relay({ r: room.pageId, t: 'update', p: Buffer.from(update).toString('base64') })
+        this.relay({ r: room.id, t: 'update', p: Buffer.from(update).toString('base64') })
+        /*
+          A note writes back what was typed into it HERE. An update relayed from another instance is
+          that instance's to write, and the room's own starting state is what was just read.
+        */
+        if (room.note) {
+          const author = room.conns.get(origin as WebSocket)?.userId
+          if (author) {
+            room.note.authors.add(author)
+            room.note.lastAuthor = author
+          }
+          this.scheduleNotePersist(room)
+        }
       }
     })
 
@@ -478,7 +595,7 @@ export default {
         }
         if (origin !== RELAYED) {
           this.relay({
-            r: room.pageId,
+            r: room.id,
             t: 'awareness',
             p: Buffer.from(update).toString('base64')
           })
@@ -497,13 +614,25 @@ export default {
    */
   async initRoom(room: CollabRoom): Promise<void> {
     try {
-      const fromPeer = (await this.hasPeers()) ? await this.peerState(room.pageId) : null
+      /*
+        A note starts from what it stored, peer or no peer. Unlike a seed, the stored state is the same
+        document every room of this note has ever held — so merging it under a peer's copy adds nothing
+        that copy is missing and duplicates nothing it has, and covers a peer that is behind the
+        database because the instance that wrote it last has since gone.
+      */
+      if (room.note) {
+        const stored = await WIKI.models.liveNotes.loadState(room.note.noteId)
+        if (stored) {
+          Y.applyUpdate(room.doc, stored, RELAYED)
+        }
+      }
+      const fromPeer = (await this.hasPeers()) ? await this.peerState(room.id) : null
       if (fromPeer) {
         Y.applyUpdate(room.doc, fromPeer, RELAYED)
-      } else {
+      } else if (!room.note) {
         const page = await WIKI.models.pages.getPage({
-          siteId: room.siteId,
-          id: room.pageId,
+          siteId: room.target.siteId,
+          id: room.target.id,
           withContent: true
         })
         // -> A page that went away between the permission check and here leaves an empty room, which
@@ -511,28 +640,26 @@ export default {
         Y.applyUpdate(room.doc, buildSeed(page ?? {}), RELAYED)
       }
     } catch (err: any) {
-      WIKI.logger.warn(
-        `Failed to initialize the collaboration room for page ${room.pageId}: ${err.message}`
-      )
+      WIKI.logger.warn(`Failed to initialize the collaboration room ${room.id}: ${err.message}`)
     } finally {
       room.provisional = false
-      this.awaitingState.delete(room.pageId)
+      this.awaitingState.delete(room.id)
     }
   },
 
   /** Ask the cluster for a room's current state, resolving to null if nobody answers in time. */
-  peerState(pageId: string): Promise<Uint8Array | null> {
+  peerState(roomId: string): Promise<Uint8Array | null> {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
-        this.awaitingState.delete(pageId)
+        this.awaitingState.delete(roomId)
         resolve(null)
       }, PEER_STATE_TIMEOUT)
-      this.awaitingState.set(pageId, (update) => {
+      this.awaitingState.set(roomId, (update) => {
         clearTimeout(timer)
-        this.awaitingState.delete(pageId)
+        this.awaitingState.delete(roomId)
         resolve(update)
       })
-      this.relay({ r: pageId, t: 'hello' })
+      this.relay({ r: roomId, t: 'hello' })
     })
   },
 
@@ -543,9 +670,16 @@ export default {
       switch (decoding.readVarUint(decoder)) {
         case MESSAGE_SYNC: {
           encoding.writeVarUint(encoder, MESSAGE_SYNC)
-          // -> The socket is the origin, which is how the awareness bookkeeping above knows whose
-          //    cursors an update carries
-          syncProtocol.readSyncMessage(decoder, encoder, room.doc, conn)
+          if (room.conns.get(conn)?.readOnly) {
+            // -> Asking for the document is all a reader may do; what they send of it is dropped
+            if (decoding.readVarUint(decoder) === syncProtocol.messageYjsSyncStep1) {
+              syncProtocol.readSyncStep1(decoder, encoder, room.doc)
+            }
+          } else {
+            // -> The socket is the origin, which is how the awareness bookkeeping above knows whose
+            //    cursors an update carries
+            syncProtocol.readSyncMessage(decoder, encoder, room.doc, conn)
+          }
           if (encoding.length(encoder) > 1) {
             this.send(conn, encoding.toUint8Array(encoder))
           }
@@ -562,7 +696,7 @@ export default {
       }
     } catch (err: any) {
       WIKI.logger.warn(
-        `Failed to handle a collaboration message on page ${room.pageId}: ${err.message}`
+        `Failed to handle a collaboration message in room ${room.id}: ${err.message}`
       )
     }
   },
@@ -588,14 +722,210 @@ export default {
    *
    * Peers are not told. A room elsewhere is a replica in its own right whose participants are still
    * editing; this instance simply asks for their state again next time someone here opens the page.
+   *
+   * A live note's room is the exception to "immediately": it writes itself out first — see
+   * {@link closeNoteRoom}.
    */
   closeRoomIfEmpty(room: CollabRoom): void {
-    if (room.conns.size > 0 || this.rooms.get(room.pageId) !== room) {
+    if (room.conns.size > 0 || this.rooms.get(room.id) !== room) {
       return
     }
-    this.rooms.delete(room.pageId)
+    if (room.note) {
+      void this.closeNoteRoom(room)
+      return
+    }
+    this.dropRoom(room)
+  },
+
+  dropRoom(room: CollabRoom): void {
+    if (room.note) {
+      this.cancelNoteTimers(room.note)
+    }
+    this.rooms.delete(room.id)
     room.awareness.destroy()
     room.doc.destroy()
+  },
+
+  // ----------------------------------------
+  // Live notes
+  // ----------------------------------------
+
+  /**
+   * Close a note's room once what it holds is stored.
+   *
+   * The room stays in the map while the last write is in flight, so that somebody opening the note in
+   * that moment joins the room holding the latest text rather than a new one built from a database
+   * that does not have it yet — and if anybody did, the room is theirs and stays.
+   */
+  async closeNoteRoom(room: CollabRoom): Promise<void> {
+    this.cancelNoteTimers(room.note!)
+    await this.persistNote(room, true)
+    if (room.conns.size > 0 || this.rooms.get(room.id) !== room) {
+      return
+    }
+    this.dropRoom(room)
+  },
+
+  /**
+   * Arrange for a note to be written: {@link NOTE_PERSIST_DELAY} after this edit, unless edits have
+   * been arriving for long enough that {@link NOTE_PERSIST_MAX_WAIT} comes first.
+   */
+  scheduleNotePersist(room: CollabRoom): void {
+    const note = room.note!
+    note.dirty = true
+    const now = Date.now()
+    note.firstUnpersistedAt ??= now
+    if (note.persistTimer) {
+      clearTimeout(note.persistTimer)
+    }
+    const wait = Math.min(
+      NOTE_PERSIST_DELAY,
+      Math.max(0, note.firstUnpersistedAt + NOTE_PERSIST_MAX_WAIT - now)
+    )
+    note.persistTimer = setTimeout(() => {
+      note.persistTimer = null
+      void this.persistNote(room)
+    }, wait)
+  },
+
+  /**
+   * Write a note's room into the note — see `liveNotes.persist` for what that does with it.
+   *
+   * Writes are chained, one at a time per room: two in flight would each read the stored state before
+   * the other wrote it. A write with nothing to do is skipped, which is most of what a room that only
+   * ever received relayed edits does — those are the instance where they were typed's to write.
+   *
+   * @param final The room is closing, so a revision is taken now if anything changed since the last.
+   */
+  persistNote(room: CollabRoom, final = false): Promise<void> {
+    const note = room.note
+    if (!note) {
+      return Promise.resolve()
+    }
+    if (note.persistTimer) {
+      clearTimeout(note.persistTimer)
+      note.persistTimer = null
+    }
+    note.firstUnpersistedAt = null
+    note.writing = note.writing.then(async () => {
+      if (!note.dirty && !note.revisionDue) {
+        return
+      }
+      const authorIds = [...note.authors]
+      const lastEditorId = note.lastAuthor
+      note.authors.clear()
+      note.lastAuthor = null
+      note.dirty = false
+      try {
+        const { revisionDueAt } = await WIKI.models.liveNotes.persist({
+          id: note.noteId,
+          update: Y.encodeStateAsUpdate(room.doc),
+          authorIds,
+          lastEditorId,
+          final
+        })
+        if (note.revisionTimer) {
+          clearTimeout(note.revisionTimer)
+          note.revisionTimer = null
+        }
+        note.revisionDue = revisionDueAt !== null
+        if (revisionDueAt !== null && !final) {
+          note.revisionTimer = setTimeout(
+            () => {
+              note.revisionTimer = null
+              void this.persistNote(room)
+            },
+            Math.max(0, revisionDueAt - Date.now())
+          )
+        }
+      } catch (err: any) {
+        /*
+          Kept for the next write: what failed to be stored is still in the room, and so is the list
+          of who typed it. Not retried on a timer of its own — the next edit schedules one, and the
+          room closing makes a final attempt.
+        */
+        for (const authorId of authorIds) {
+          note.authors.add(authorId)
+        }
+        // -> Unless somebody has typed since, in which case they are the last editor now
+        note.lastAuthor ??= lastEditorId
+        note.dirty = true
+        WIKI.logger.warn(`Failed to store live note ${note.noteId}: ${err.message}`)
+      }
+    })
+    return note.writing
+  },
+
+  /**
+   * A note was deleted: close its room here and on every other instance.
+   *
+   * The room is dropped WITHOUT the write closing a room normally ends with -- there is no note left to
+   * write to -- and its sockets are closed with 4404, which the browser hands to the page as final (see
+   * `connection-close` in `composables/collab.js`): the note view asks for the note again, and finds
+   * it gone.
+   */
+  noteDeleted(noteId: string): void {
+    const roomId = `${NOTE_ROOM_PREFIX}${noteId}`
+    this.dropDeletedNote(roomId)
+    this.relay({ r: roomId, t: 'deleted' })
+  },
+
+  /**
+   * A note's access changed: everybody in it who is not one of its owners is disconnected, here and on
+   * every other instance, with 4409. Their rights may have gone up as well as down, and the handshake is
+   * the one place rights are decided -- so they reconnect, the note view asks for the note again
+   * (`pages/LiveNote.vue`), and they rejoin as whatever they now are, or are told the note is private.
+   * The owners' own sessions are not touched.
+   */
+  noteAccessChanged(noteId: string): void {
+    const roomId = `${NOTE_ROOM_PREFIX}${noteId}`
+    this.disconnectNonManagers(roomId)
+    this.relay({ r: roomId, t: 'access' })
+  },
+
+  disconnectNonManagers(roomId: string): void {
+    const room = this.rooms.get(roomId)
+    if (!room?.note) {
+      return
+    }
+    for (const [conn, state] of room.conns) {
+      if (!state.manager) {
+        conn.close(4409, 'Access to this note has changed')
+      }
+    }
+  },
+
+  dropDeletedNote(roomId: string): void {
+    const room = this.rooms.get(roomId)
+    if (!room?.note) {
+      return
+    }
+    const note = room.note
+    this.cancelNoteTimers(note)
+    // -> A write still queued finds nothing to do; one already under way finds no row, and stops
+    note.dirty = false
+    note.revisionDue = false
+    // -> Out of the map first, so the closes below do not go looking for it to close it again
+    this.rooms.delete(roomId)
+    for (const conn of room.conns.keys()) {
+      conn.close(4404, 'This note has been deleted')
+    }
+    // -> Not destroyed from under a write that is still reading it
+    void note.writing.finally(() => {
+      room.awareness.destroy()
+      room.doc.destroy()
+    })
+  },
+
+  cancelNoteTimers(note: NoteRoomState): void {
+    if (note.persistTimer) {
+      clearTimeout(note.persistTimer)
+      note.persistTimer = null
+    }
+    if (note.revisionTimer) {
+      clearTimeout(note.revisionTimer)
+      note.revisionTimer = null
+    }
   },
 
   /**
@@ -716,6 +1046,14 @@ export default {
             RELAYED
           )
         }
+        break
+      }
+      case 'deleted': {
+        this.dropDeletedNote(envelope.r)
+        break
+      }
+      case 'access': {
+        this.disconnectNonManagers(envelope.r)
         break
       }
       case 'saved': {

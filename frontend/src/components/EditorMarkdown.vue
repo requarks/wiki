@@ -1,80 +1,98 @@
 <template>
-  <div class="editor-markdown">
+  <div class="editor-markdown" :class="{ 'has-contents': contentsLaidOut }">
     <div class="editor-markdown-main">
       <div class="editor-markdown-sidebar">
         <!-- ------------------------------------------------------- -->
         <!-- SIDE TOOLBAR -->
         <!-- ------------------------------------------------------- -->
-        <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="insertLink">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertLink')
-          }}</w-tooltip>
-        </w-btn>
-        <!-- -> Straight to the File Manager. The menu this replaces offered two other sources: a remote
+        <!-- -> Nothing to insert into a note this reader may only read; see `readOnly` -->
+        <template v-if="!props.readOnly">
+          <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="insertLink">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertLink')
+            }}</w-tooltip>
+          </w-btn>
+          <!-- -> Straight to the File Manager. The menu this replaces offered two other sources: a remote
                 URL, which was never implemented, and the clipboard — see `getAssetFromClipboard`, which
-                now has no caller. -->
-        <w-btn icon="mdi:image-plus-outline" padding="sm sm" flat @click="insertAssets">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertAssets')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:code-json" padding="sm sm" flat>
-          <editor-code-block-menu anchor="top right" self="top left" @select="insertCodeBlock" />
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertCodeBlock')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertTable')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="insertTabset">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertTabset')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="insertBlock">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertBlock')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:format-list-group-plus" padding="sm sm" flat @click="insertDefinitionList">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertDefinitionList')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
-          <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertEmoji')
-          }}</w-tooltip>
-        </w-btn>
-        <!-- -> Icons only: what goes in is a `:mdi:home:` shortcode, and the picker's other tab hands
+                now has no caller. In a live note, whose images are not filed in the File Manager,
+                straight to the browser's file picker instead — see `uploadNoteImages`. -->
+          <w-btn
+            v-if="props.noteKey"
+            icon="mdi:image-plus-outline"
+            padding="sm sm"
+            flat
+            @click="pickNoteImages">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('liveNote.insertImage')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn v-else icon="mdi:image-plus-outline" padding="sm sm" flat @click="insertAssets">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertAssets')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:code-json" padding="sm sm" flat>
+            <editor-code-block-menu anchor="top right" self="top left" @select="insertCodeBlock" />
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertCodeBlock')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertTable')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="insertTabset">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertTabset')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="insertBlock">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertBlock')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-list-group-plus"
+            padding="sm sm"
+            flat
+            @click="insertDefinitionList">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertDefinitionList')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
+            <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertEmoji')
+            }}</w-tooltip>
+          </w-btn>
+          <!-- -> Icons only: what goes in is a `:mdi:home:` shortcode, and the picker's other tab hands
                 back an `img:` URL, which is not something that syntax can say -->
-        <w-btn icon="mdi:seed-plus-outline" padding="sm sm" flat>
-          <w-menu anchor="top right" self="top left" content-class="shadow-7">
-            <icon-picker-dialog no-image @update:model-value="insertIcon" />
-          </w-menu>
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertIcon')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertFootnote')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:tooltip-plus-outline" padding="sm sm" flat @click="insertAbbreviation">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertAbbreviation')
-          }}</w-tooltip>
-        </w-btn>
-        <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
-          <w-tooltip anchor="center right" self="center left">{{
-            t('editor.markup.insertHorizontalBar')
-          }}</w-tooltip>
-        </w-btn>
+          <w-btn icon="mdi:seed-plus-outline" padding="sm sm" flat>
+            <w-menu anchor="top right" self="top left" content-class="shadow-7">
+              <icon-picker-dialog no-image @update:model-value="insertIcon" />
+            </w-menu>
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertIcon')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertFootnote')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:tooltip-plus-outline" padding="sm sm" flat @click="insertAbbreviation">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertAbbreviation')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
+            <w-tooltip anchor="center right" self="center left">{{
+              t('editor.markup.insertHorizontalBar')
+            }}</w-tooltip>
+          </w-btn>
+        </template>
         <w-space />
         <span class="editor-markdown-type">Markdown</span>
       </div>
@@ -83,88 +101,93 @@
         <!-- TOP TOOLBAR -->
         <!-- ------------------------------------------------------- -->
         <div class="editor-markdown-toolbar">
-          <w-btn icon="mdi:format-bold" padding="xs sm" flat @click="toggleMarkup({ start: `**` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.bold')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-italic"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `*` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.italic')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-strikethrough"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `~~` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.strikethrough')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-color-highlight"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `==` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.highlight')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.header')
-            }}</w-tooltip>
-            <w-menu auto-close>
-              <w-list separator>
-                <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
-                  <w-item-section side>
-                    <w-icon :name="HEADER_ICONS[lvl - 1]" />
-                  </w-item-section>
-                  <w-item-section>{{
-                    t('editor.markup.headerLevel', { level: lvl })
-                  }}</w-item-section>
-                </w-item>
-              </w-list>
-            </w-menu>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-subscript"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `~` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.subscript')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-superscript"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `^` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.superscript')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:format-quote-close" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.blockquoteAdmonitions')
-            }}</w-tooltip>
-            <w-menu auto-close>
-              <w-list separator>
-                <w-item clickable @click="insertBeforeEachLine({ content: `> ` })">
-                  <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
-                  <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
-                </w-item>
-                <w-item
-                  clickable
-                  @click="insertBeforeEachLine({ content: `> `, before: `> [!NOTE]` })">
-                  <w-item-section side>
-                    <!--
+          <template v-if="!props.readOnly">
+            <w-btn
+              icon="mdi:format-bold"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `**` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.bold')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-italic"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `*` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.italic')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-strikethrough"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `~~` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.strikethrough')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-color-highlight"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `==` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.highlight')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.header')
+              }}</w-tooltip>
+              <w-menu auto-close>
+                <w-list separator>
+                  <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
+                    <w-item-section side>
+                      <w-icon :name="HEADER_ICONS[lvl - 1]" />
+                    </w-item-section>
+                    <w-item-section>{{
+                      t('editor.markup.headerLevel', { level: lvl })
+                    }}</w-item-section>
+                  </w-item>
+                </w-list>
+              </w-menu>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-subscript"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `~` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.subscript')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-superscript"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `^` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.superscript')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn icon="mdi:format-quote-close" padding="xs sm" flat>
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.blockquoteAdmonitions')
+              }}</w-tooltip>
+              <w-menu auto-close>
+                <w-list separator>
+                  <w-item clickable @click="insertBeforeEachLine({ content: `> ` })">
+                    <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
+                    <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
+                  </w-item>
+                  <w-item
+                    clickable
+                    @click="insertBeforeEachLine({ content: `> `, before: `> [!NOTE]` })">
+                    <w-item-section side>
+                      <!--
                       A colour with a utility behind it. WIcon composes the class from this name, so
                       Tailwind never sees it while scanning and emits only the ones written out in
                       full somewhere in the app -- of the blues, that is this one. Asking for the 7
@@ -173,118 +196,120 @@
                       Nothing above may spell a class out either: the scanner reads comments too, and
                       would generate whatever this explanation quoted.
                     -->
-                    <w-icon name="mdi:information-box" color="blue" />
-                  </w-item-section>
-                  <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
-                </w-item>
-                <w-item
-                  clickable
-                  @click="insertBeforeEachLine({ content: `> `, before: `> [!TIP]` })">
-                  <w-item-section side>
-                    <w-icon name="mdi:check-circle" color="positive" />
-                  </w-item-section>
-                  <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
-                </w-item>
-                <!-- -> The same speech bubble the page draws an IMPORTANT admonition with -->
-                <w-item
-                  clickable
-                  @click="insertBeforeEachLine({ content: `> `, before: `> [!IMPORTANT]` })">
-                  <w-item-section side>
-                    <w-icon name="mdi:message-alert" color="purple" />
-                  </w-item-section>
-                  <w-item-section>{{ t('editor.markup.admonitionImportant') }}</w-item-section>
-                </w-item>
-                <w-item
-                  clickable
-                  @click="insertBeforeEachLine({ content: `> `, before: `> [!WARNING]` })">
-                  <w-item-section side>
-                    <w-icon name="mdi:alert-box" color="orange" />
-                  </w-item-section>
-                  <w-item-section>{{ t('editor.markup.admonitionWarning') }}</w-item-section>
-                </w-item>
-                <w-item
-                  clickable
-                  @click="insertBeforeEachLine({ content: `> `, before: `> [!CAUTION]` })">
-                  <w-item-section side>
-                    <w-icon name="mdi:close-box" color="negative" />
-                  </w-item-section>
-                  <w-item-section>{{ t('editor.markup.admonitionDanger') }}</w-item-section>
-                </w-item>
-              </w-list>
-            </w-menu>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-list-bulleted"
-            padding="xs sm"
-            flat
-            @click="insertBeforeEachLine({ content: `- ` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.unorderedList')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-list-numbered"
-            padding="xs sm"
-            flat
-            @click="insertBeforeEachLine({ content: `1. ` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.orderedList')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.taskList')
-            }}</w-tooltip>
-            <w-menu auto-close>
-              <w-list separator>
-                <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] ` })">
-                  <w-item-section side><w-icon name="mdi:checkbox-blank-outline" /></w-item-section>
-                  <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
-                </w-item>
-                <w-item clickable @click="insertBeforeEachLine({ content: `- [x] ` })">
-                  <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
-                  <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
-                </w-item>
-              </w-list>
-            </w-menu>
-          </w-btn>
-          <w-btn icon="mdi:code-tags" padding="xs sm" flat @click="toggleMarkup({ start: '`' })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.inlineCode')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:keyboard-variant"
-            padding="xs sm"
-            flat
-            @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.keyboardKey')
-            }}</w-tooltip>
-          </w-btn>
-
-          <w-separator class="mx-1" vertical inset dark />
-
-          <w-btn icon="mdi:undo-variant" padding="xs sm" flat @click="runUndo">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.undo')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:redo-variant" padding="xs sm" flat @click="runRedo">
-            <w-tooltip anchor="top middle" self="bottom middle">{{
-              t('editor.markup.redo')
-            }}</w-tooltip>
-          </w-btn>
-          <!-- -> The only way back once the preview is closed: its own toggle goes with it -->
-          <template v-if="!state.previewShown">
+                      <w-icon name="mdi:information-box" color="blue" />
+                    </w-item-section>
+                    <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
+                  </w-item>
+                  <w-item
+                    clickable
+                    @click="insertBeforeEachLine({ content: `> `, before: `> [!TIP]` })">
+                    <w-item-section side>
+                      <w-icon name="mdi:check-circle" color="positive" />
+                    </w-item-section>
+                    <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
+                  </w-item>
+                  <!-- -> The same speech bubble the page draws an IMPORTANT admonition with -->
+                  <w-item
+                    clickable
+                    @click="insertBeforeEachLine({ content: `> `, before: `> [!IMPORTANT]` })">
+                    <w-item-section side>
+                      <w-icon name="mdi:message-alert" color="purple" />
+                    </w-item-section>
+                    <w-item-section>{{ t('editor.markup.admonitionImportant') }}</w-item-section>
+                  </w-item>
+                  <w-item
+                    clickable
+                    @click="insertBeforeEachLine({ content: `> `, before: `> [!WARNING]` })">
+                    <w-item-section side>
+                      <w-icon name="mdi:alert-box" color="orange" />
+                    </w-item-section>
+                    <w-item-section>{{ t('editor.markup.admonitionWarning') }}</w-item-section>
+                  </w-item>
+                  <w-item
+                    clickable
+                    @click="insertBeforeEachLine({ content: `> `, before: `> [!CAUTION]` })">
+                    <w-item-section side>
+                      <w-icon name="mdi:close-box" color="negative" />
+                    </w-item-section>
+                    <w-item-section>{{ t('editor.markup.admonitionDanger') }}</w-item-section>
+                  </w-item>
+                </w-list>
+              </w-menu>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-list-bulleted"
+              padding="xs sm"
+              flat
+              @click="insertBeforeEachLine({ content: `- ` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.unorderedList')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:format-list-numbered"
+              padding="xs sm"
+              flat
+              @click="insertBeforeEachLine({ content: `1. ` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.orderedList')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.taskList')
+              }}</w-tooltip>
+              <w-menu auto-close>
+                <w-list separator>
+                  <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] ` })">
+                    <w-item-section side
+                      ><w-icon name="mdi:checkbox-blank-outline"
+                    /></w-item-section>
+                    <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
+                  </w-item>
+                  <w-item clickable @click="insertBeforeEachLine({ content: `- [x] ` })">
+                    <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
+                    <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
+                  </w-item>
+                </w-list>
+              </w-menu>
+            </w-btn>
+            <w-btn icon="mdi:code-tags" padding="xs sm" flat @click="toggleMarkup({ start: '`' })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.inlineCode')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              icon="mdi:keyboard-variant"
+              padding="xs sm"
+              flat
+              @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.markup.keyboardKey')
+              }}</w-tooltip>
+            </w-btn>
+          </template>
+          <!-- -> The only way back once a pane is closed: its own toggle goes with it. One spacer
+                  for both, so that with both closed they sit together at the right end -->
+          <template v-if="!panes.previewShown || contentsClosed">
             <w-space />
             <w-btn
+              v-if="!panes.previewShown"
               icon="mdi:view-split-vertical"
               padding="xs sm"
               flat
-              @click="state.previewShown = true">
+              @click="panes.previewShown = true">
               <w-tooltip anchor="top middle" self="bottom middle">{{
                 t('editor.togglePreviewPane')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              v-if="contentsClosed"
+              icon="mdi:table-of-contents"
+              padding="xs sm"
+              flat
+              @click="panes.contentsOpen = true">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.contents.toggle')
               }}</w-tooltip>
             </w-btn>
           </template>
@@ -295,29 +320,50 @@
         <div class="editor-markdown-editor"><div ref="monacoRef" /></div>
       </div>
       <transition name="editor-markdown-preview">
-        <div class="editor-markdown-preview" v-if="state.previewShown">
-          <div class="editor-markdown-preview-toolbar">
+        <div class="editor-markdown-preview" v-if="panes.previewShown">
+          <!--
+            -> No brickwork into the actions rail unless the rail is what this bar runs up to: a note
+               has none, and the contents column takes its place beside the preview; see the stylesheet
+          -->
+          <div
+            class="editor-markdown-preview-toolbar"
+            :class="{ 'is-railless': props.noteKey || contentsLaidOut }">
             <strong class="editor-markdown-preview-label"
               ><em>{{ t('editor.renderPreview') }}</em></strong
             >
-            <w-separator class="ml-4 mr-2" vertical inset dark />
+            <w-space />
             <w-btn
-              icon="mdi:arrow-vertical-lock"
+              icon="mdi:dots-horizontal"
               padding="xs sm"
               flat
-              @click="state.previewScrollSync = !state.previewScrollSync"
-              :color="state.previewScrollSync ? `secondary` : null">
+              :aria-label="t(`editor.previewMenu`)"
+              @click="state.previewMenuShown = !state.previewMenuShown">
+              <!--
+                -> Held open rather than `auto-close`, so flipping Scroll Sync leaves the menu up to
+                   show it took. Hiding the pane closes it by hand: the button stays mounted for the
+                   length of the pane's slide out, and the menu with it
+              -->
+              <w-menu v-model="state.previewMenuShown" anchor="bottom right" self="top right">
+                <w-list dense padding>
+                  <w-item tag="label">
+                    <w-item-section side><w-icon name="mdi:arrow-vertical-lock" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('editor.previewScrollSync') }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section side>
+                      <w-toggle v-model="panes.previewScrollSync" dense />
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="hidePreview">
+                    <w-item-section side><w-icon name="mdi:eye-off-outline" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('editor.hidePreviewPane') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                </w-list>
+              </w-menu>
               <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.toggleScrollSync')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:eye-off-outline"
-              padding="xs sm"
-              flat
-              @click="state.previewShown = false">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.togglePreviewPane')
+                t('editor.previewMenu')
               }}</w-tooltip>
             </w-btn>
           </div>
@@ -330,12 +376,26 @@
           -->
           <div
             class="editor-markdown-preview-content page-contents"
-            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }"
-            :lang="pageStore.locale"
-            :dir="siteStore.localeDir(pageStore.locale)"
+            :class="{ 'is-centered': previewCentered }"
+            :lang="docLocale"
+            :dir="siteStore.localeDir(docLocale)"
             ref="editorPreviewContainerRef"
-            v-html="pageStore.render" />
+            v-html="docStore.render" />
         </div>
+      </transition>
+      <!-- ------------------------------------------------------- -->
+      <!-- CONTENTS -->
+      <!-- ------------------------------------------------------- -->
+      <!-- -> Slides out to the right and back as the preview does; see `contentsLaidOut` for the rest -->
+      <transition name="editor-contents" @after-leave="contentsLeft">
+        <editor-contents-pane
+          v-if="contentsShown"
+          :headings="headings"
+          :cursor-line="cursorLine"
+          :railless="Boolean(props.noteKey)"
+          @go-to-line="goToLine"
+          @go-to-end="goToEnd"
+          @hide="panes.contentsOpen = false" />
       </transition>
     </div>
   </div>
@@ -363,13 +423,14 @@ import {
   stopCollabSession
 } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
+import { useEditorPanes } from '@/composables/editorPanes'
 import { useFenceCompletions } from '@/composables/fenceCompletions'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
-import { useMinWidth } from '@/composables/screen'
 import { useTableCellNavigation } from '@/composables/tableCellNavigation'
 import { useTagCompletions } from '@/composables/tagCompletions'
 import { isVisible } from '@/helpers/anchors'
+import { apiErrorMessage } from '@/helpers/apiError'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
 import {
@@ -387,6 +448,7 @@ import { findEditableTables, tableRowToAdd, tableWithColumnAdded } from '@/helpe
 import { scrollBehavior } from '@/helpers/motion'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
+import EditorContentsPane from '@/components/EditorContentsPane.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
@@ -394,25 +456,63 @@ import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 import { useCollabStore } from '@/stores/collab'
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
 
+import { fileOpen } from 'browser-fs-access'
 import { debounce } from 'es-toolkit/function'
 import * as monaco from 'monaco-editor'
 import { Position, Range } from 'monaco-editor'
+import { language as markdownLanguage } from 'monaco-editor/languages/definitions/markdown/markdown.js'
 import { MarkdownRenderer } from '@/renderers/markdown'
+
+// PROPS
+
+const props = defineProps({
+  /**
+   * The live note being edited, by its key, rather than the page in the page store.
+   *
+   * The same editor with less around it: the source and its render go to the live note store instead,
+   * and everything a page has that a note does not is left out — there is no save, so no pending
+   * changes and no Ctrl+S, and no File Manager, since a note's images are not filed there. The
+   * collaboration room is the note's own, and is what stores it. See `pages/LiveNote.vue`.
+   *
+   * Fixed for the life of the component: a different note is a different mount.
+   */
+  noteKey: {
+    type: String,
+    default: ''
+  },
+  /**
+   * Show the source and its preview, and take no edits: a locked live note, to anybody but its owners.
+   * The room drops whatever such a reader sends anyway (`core/collab.ts`); this is what keeps the
+   * editor from offering edits the room is about to throw away. The toolbars go with it.
+   */
+  readOnly: {
+    type: Boolean,
+    default: false
+  }
+})
 
 // STORES
 
 const collabStore = useCollabStore()
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
+const liveNoteStore = useLiveNoteStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+
+/**
+ * Where the source being edited and its render are kept: the page store, or the live note's.
+ * Both have `content`, `render` and `setRender`, which is all the editor asks of either.
+ */
+const docStore = props.noteKey ? liveNoteStore : pageStore
 
 // I18N
 
@@ -427,12 +527,29 @@ const { t } = useI18n()
  * one person's private draft of a page they may not write to — the server refuses a room for it, and
  * asking for one anyway would only produce a rejected socket on every keystroke of every suggestion.
  */
-const collabEnabled = computed(
-  () =>
-    siteStore.features.collaborativeEditing &&
-    userStore.authenticated &&
-    editorStore.mode === 'edit' &&
-    Boolean(pageStore.id)
+const collabEnabled = computed(() =>
+  props.noteKey
+    ? siteStore.features.collaborativeEditing &&
+      siteStore.features.liveNotes &&
+      userStore.authenticated
+    : siteStore.features.collaborativeEditing &&
+      userStore.authenticated &&
+      editorStore.mode === 'edit' &&
+      Boolean(pageStore.id)
+)
+
+/**
+ * The language the preview is drawn in: the page's, or for a note — which has no locale — the
+ * interface's, which is the language the person writing it is reading the wiki in.
+ */
+const docLocale = computed(() => (props.noteKey ? commonStore.locale : pageStore.locale))
+
+/**
+ * Whether the preview is held to the centered measure. A page's follows the site theme, since it
+ * previews how the page will be drawn; a note is never drawn anywhere but here, and reads best centered.
+ */
+const previewCentered = computed(
+  () => Boolean(props.noteKey) || siteStore.theme.contentWidth === 'centered'
 )
 
 // STATE
@@ -510,15 +627,6 @@ const HEADER_ICONS = [
 */
 const PREVIEW_CONTEXT_ABOVE = 0.2
 
-/**
- * Whether the window is wide enough to open the preview beside the source.
- *
- * 1024 is the app's `md` breakpoint (`css/tailwind.css`). Below it the two panes are half a small window
- * each, and the source is the one being typed into — so the preview starts closed and is opened when
- * wanted, from the toolbar button that takes its place.
- */
-const isAtLeastMd = useMinWidth(1024)
-
 /** The "Image Properties" lens, over every image in the source. See `useImagePropertiesLens`. */
 const imageLens = useImagePropertiesLens({
   getEditor: () => editor,
@@ -554,19 +662,171 @@ const tableCellNavigation = useTableCellNavigation({
   addRow: (line) => addTableRow(line)
 })
 
+/** The preview and the Contents pane, remembered per browser. See `useEditorPanes`. */
+const { panes, contentsShown, contentsLaidOut, contentsLeft, contentsClosed } = useEditorPanes()
+
 const state = reactive({
-  /*
-    Read once, as a DEFAULT rather than a binding: past this first value the pane is the author's to open
-    and close, and a bound one would slam it shut the moment a window was dragged narrower mid-edit.
-  */
-  previewShown: isAtLeastMd.value,
-  previewScrollSync: true
+  previewMenuShown: false
 })
+
+/**
+ * The document's headings, as the last render found them -- see `collect_headings` in
+ * `renderers/markdown.js`. Replaced wholesale on each render rather than mutated.
+ */
+const headings = shallowRef([])
+
+/** The line the caret is on, for marking which section of the Contents pane is being written in. */
+const cursorLine = ref(1)
 
 // METHODS
 
+/**
+ * Monaco's own markdown tokenizer, with headings and link text given tokens of their own for the
+ * `wikijs` theme to colour, the way HedgeDoc's editor does.
+ *
+ * - An ATX heading (`# Title`) is `keyword` stock -- the same token as a list bullet, a setext
+ *   underline and a table separator -- so a theme rule cannot touch headings without every `-`
+ *   changing with them. It becomes `keyword.heading`.
+ * - An inline link's `[text]` has no token at all stock: its brackets are `string.link` along with
+ *   the `(url)`, and the text between them is plain. The bracketed half becomes `link.text`, which
+ *   needs the one regex split in four rather than three, so that `]` goes with the text and `(` with
+ *   the URL. A bare `[text]` (a reference, a task list box) is left alone.
+ *
+ * Rules are found by the tokens they emit, so a Monaco upgrade that reshapes either one leaves it
+ * stock rather than breaking anything.
+ */
+function markdownLanguageForTheme() {
+  const tokensOf = (rule) => (Array.isArray(rule[1]) ? rule[1].join() : null)
+  const root = markdownLanguage.tokenizer.root.map((rule) =>
+    tokensOf(rule) === 'white,keyword,keyword,keyword'
+      ? [rule[0], ['white', 'keyword.heading', 'keyword.heading', 'keyword.heading']]
+      : rule
+  )
+  const linecontent = markdownLanguage.tokenizer.linecontent.map((rule) =>
+    tokensOf(rule) === 'string.link,,string.link'
+      ? [
+          /(!?\[)((?:[^\]\\]|@escapes)*)(\])(\([^)]+\))/,
+          ['link.text', 'link.text', 'link.text', 'string.link']
+        ]
+      : rule
+  )
+  return {
+    ...markdownLanguage,
+    tokenizer: { ...markdownLanguage.tokenizer, root, linecontent }
+  }
+}
+
+/** The preview menu's Hide item -- closing the menu first, which would otherwise ride the pane out. */
+function hidePreview() {
+  state.previewMenuShown = false
+  panes.previewShown = false
+}
+
+/**
+ * Take the editor to a line: scrolled to near the top, with the caret at its start. Moving the caret
+ * is also what brings the preview along, when it is following the source -- see the cursor handler.
+ */
+function goToLine(line) {
+  // -> Focus first: focusing reveals the caret at once, which cancels a smooth scroll already under way
+  editor.focus()
+  editor.setPosition({ lineNumber: line, column: 1 })
+  editor.revealLineNearTop(line, monaco.editor.ScrollType.Smooth)
+}
+
+/** The end of the document, with the caret after its last character, ready to carry on writing. */
+function goToEnd() {
+  const model = editor.getModel()
+  const lineNumber = model.getLineCount()
+  editor.focus()
+  editor.setPosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) })
+  editor.revealLine(lineNumber, monaco.editor.ScrollType.Smooth)
+}
+
 function insertAssets() {
   siteStore.openFileManager({ insertMode: true })
+}
+
+/**
+ * The image formats a live note takes, as the browser's file picker is to offer them. The server
+ * decides by the bytes, not by this list; it is only what the picker filters on.
+ */
+const NOTE_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+
+/** Insert Image, in a live note: the browser's own file picker, and the picks uploaded at once. */
+async function pickNoteImages() {
+  let files
+  try {
+    files = await fileOpen({ mimeTypes: NOTE_IMAGE_TYPES, multiple: true })
+  } catch (err) {
+    // -> Closing the picker without choosing is not a failure
+    if (err.name !== 'AbortError') {
+      notify({ type: 'negative', message: err.message })
+    }
+    return
+  }
+  uploadNoteImages(files)
+}
+
+/**
+ * Upload images into the live note being edited, and write markdown for them where the cursor was.
+ *
+ * Unlike a page, a note has no save to upload them on, so each is sent the moment it arrives — into a
+ * folder of its own on the server that no listing shows (`liveNotes.addImage`) — and goes into the text
+ * only once it has a URL: a placeholder would be text every other participant sees, and is left behind
+ * in the note for good if this tab goes away mid-upload.
+ *
+ * Where it goes in is where the cursor was when it arrived, tracked through whatever is typed while the
+ * upload runs, here or by anybody else in the room: a decoration, which Monaco moves with every edit to
+ * the model the room applies.
+ *
+ * Anything that is not an image is refused before anything is sent. An image in a format the server
+ * does not take (BMP, say) is refused by the server, with its own message.
+ */
+async function uploadNoteImages(files) {
+  const images = files.filter((file) => file.type.startsWith('image/'))
+  if (images.length < files.length) {
+    notify({ type: 'warning', message: t('liveNote.imagesOnly') })
+  }
+  if (images.length < 1) {
+    return
+  }
+
+  const cursor = editor.getPosition()
+  const marker = editor.createDecorationsCollection([
+    {
+      range: new Range(cursor.lineNumber, cursor.column, cursor.lineNumber, cursor.column),
+      options: { stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges }
+    }
+  ])
+
+  const markup = []
+  for (const file of images) {
+    try {
+      const resp = await API_CLIENT.post(`sites/${siteStore.id}/notes/${props.noteKey}/images`, {
+        headers: { 'content-type': file.type },
+        body: file
+      }).json()
+      markup.push(`![${file.name}](${resp.url})`)
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('liveNote.imageUploadFailed', { name: file.name }),
+        caption: apiErrorMessage(err)
+      })
+    }
+  }
+
+  // -> The editor is gone if the note was closed meanwhile; the images are the note's either way
+  if (!editor?.getModel()) {
+    return
+  }
+  const range = marker.getRange(0)
+  marker.clear()
+  if (!range || markup.length < 1) {
+    return
+  }
+  // -> One per line, as files dropped onto a page are
+  editor.executeEdits('', [{ range, text: markup.join('\n'), forceMoveMarkers: true }])
 }
 
 /**
@@ -1090,18 +1350,6 @@ function getHeaderLevel() {
 }
 
 /**
- * Undo / redo through Monaco's own commands, the same ones Ctrl+Z and Ctrl+Y run
- */
-function runUndo() {
-  editor.focus()
-  editor.trigger('toolbar', 'undo', null)
-}
-function runRedo() {
-  editor.focus()
-  editor.trigger('toolbar', 'redo', null)
-}
-
-/**
  * Insert content at cursor
  */
 function insertAtCursor({ content, focus = true }) {
@@ -1447,8 +1695,9 @@ function processContent(newContent) {
   let html
   try {
     // -> The page's own path, because a relative image in the source is relative to the folder it
-    //    sits in -- and it is being edited, so it is whatever the path field says right now
-    html = md.render(newContent, { pagePath: pageStore.path })
+    //    sits in -- and it is being edited, so it is whatever the path field says right now. A note
+    //    sits in no folder, so its relative links are relative to the root
+    html = md.render(newContent, { pagePath: props.noteKey ? '' : pageStore.path })
   } catch (err) {
     console.error(err)
     notify({
@@ -1479,7 +1728,8 @@ function processContent(newContent) {
     (el) => el.active ?? 0
   )
 
-  pageStore.setRender(html)
+  docStore.setRender(html)
+  headings.value = md.headings
   nextTick(async () => {
     // -> With the preview pane closed there is no DOM to attend to. The render is stored either way, so
     //    the store still holds what a save would send
@@ -1552,6 +1802,15 @@ function processContent(newContent) {
  * been taken off the browser by the time this runs, so a silent return is a paste that vanished.
  */
 function insertFilesAsAssets(files) {
+  // -> Nothing goes into a note this reader may only read, and there is nothing to say about it
+  if (props.readOnly) {
+    return
+  }
+  // -> A live note has no save to upload them on, so they go up now and nowhere near the File Manager
+  if (props.noteKey) {
+    uploadNoteImages(files)
+    return
+  }
   if (editorStore.mode === 'suggest') {
     notify({
       type: 'warning',
@@ -1630,16 +1889,22 @@ function onEditorDrop(event) {
  * half a second later.
  */
 const syncContentToStore = debounce(() => {
-  editorStore.$patch({
-    lastChangeTimestamp: Temporal.Now.instant()
-  })
-  pageStore.$patch({
-    content: editor.getValue(),
-    // -> What the author has typed IS the source, whatever the load did or did not deliver; see
-    //    the guard in `pageSave`
-    contentLoaded: true
-  })
-  processContent(pageStore.content)
+  if (props.noteKey) {
+    // -> Nothing is ever pending in a note -- its room stores it -- so the change timestamp the
+    //    unsaved-changes guard reads is left alone
+    liveNoteStore.content = editor.getValue()
+  } else {
+    editorStore.$patch({
+      lastChangeTimestamp: Temporal.Now.instant()
+    })
+    pageStore.$patch({
+      content: editor.getValue(),
+      // -> What the author has typed IS the source, whatever the load did or did not deliver; see
+      //    the guard in `pageSave`
+      contentLoaded: true
+    })
+  }
+  processContent(docStore.content)
 }, 500)
 
 /**
@@ -1683,6 +1948,86 @@ function reloadEditorContent({ replacements = [] } = {}) {
  * it into the room through the binding as this author's change. Only asked for once `isReady` says
  * the binding is in place, since a source put in before it would be overwritten by the room's.
  */
+/**
+ * A level-one heading line, split into what introduces it and its text. An empty one -- `#` alone,
+ * which markdown reads as a heading with no text -- matches too, since that is what a title cleared
+ * mid-edit leaves behind.
+ */
+const H1_LINE = /^( {0,3}#)(?:[ \t]+(.*?))?[ \t]*$/
+
+/**
+ * A live note's title, typed into the bar above the editor, written into the note itself: the H1 that
+ * opens it, or a new one inserted at the top when it does not open with one. Only ever a note's, since
+ * a page has a title field of its own.
+ *
+ * "Opens it" is the first line that is not blank. The title the bar SHOWS is the note's first heading
+ * of any level (`noteTitleOf`), so a note that starts with an H2 gains an H1 above it the first time
+ * its title is typed -- after which the two are the same line.
+ *
+ * An edit like any other, through the binding and into the room, and only of the characters that
+ * changed: replacing the whole line on every keystroke would land on anybody else typing in it as
+ * their own text being deleted.
+ *
+ * @param {object} payload
+ * @param {string} payload.title What the bar holds.
+ * @param {boolean} [payload.final] The bar has lost focus. An empty title then takes its heading away
+ *   rather than leaving a `#` with nothing after it; while typing, an empty one is somebody about to
+ *   write a new title, and keeps its line.
+ */
+function setNoteTitle({ title, final = false }) {
+  const model = editor.getModel()
+  const text = title.replace(/[\r\n]+/g, ' ')
+  const lineCount = model.getLineCount()
+  let line = 1
+  while (line <= lineCount && model.getLineContent(line).trim() === '') {
+    line++
+  }
+  const current = line <= lineCount ? model.getLineContent(line) : ''
+  const heading = line <= lineCount ? H1_LINE.exec(current) : null
+
+  if (!heading) {
+    if (text.trim()) {
+      editor.executeEdits('title', [{ range: new Range(1, 1, 1, 1), text: `# ${text}\n\n` }])
+    }
+    return
+  }
+
+  if (final && !text.trim()) {
+    // -> The heading line, and the blank line under it that inserting one adds
+    const end =
+      line < lineCount && model.getLineContent(line + 1).trim() === '' ? line + 2 : line + 1
+    const range =
+      end <= lineCount
+        ? new Range(line, 1, end, 1)
+        : new Range(line, 1, lineCount, model.getLineMaxColumn(lineCount))
+    editor.executeEdits('title', [{ range, text: '' }])
+    return
+  }
+
+  const next = `${heading[1]} ${text}`
+  if (next === current) {
+    return
+  }
+  let start = 0
+  while (start < current.length && start < next.length && current[start] === next[start]) {
+    start++
+  }
+  let end = 0
+  while (
+    end < current.length - start &&
+    end < next.length - start &&
+    current[current.length - 1 - end] === next[next.length - 1 - end]
+  ) {
+    end++
+  }
+  editor.executeEdits('title', [
+    {
+      range: new Range(line, start + 1, line, current.length - end + 1),
+      text: next.slice(start, next.length - end)
+    }
+  ])
+}
+
 function restoreEditorContent({ content }) {
   const model = editor.getModel()
   editor.pushUndoStop()
@@ -1708,7 +2053,12 @@ onMounted(async () => {
   monaco.editor.defineTheme('wikijs', {
     base: 'vs-dark',
     inherit: true,
-    rules: [],
+    // -> Both taken from HedgeDoc's editor. The app's own `--color-amber` reads as yellow against a
+    //    background this dark
+    rules: [
+      { token: 'keyword.heading', foreground: 'eda15e', fontStyle: 'bold' },
+      { token: 'link.text', foreground: '8bc577' }
+    ],
     colors: {
       'editor.background': '#070a0d',
       'editor.lineHighlightBackground': '#0d1117',
@@ -1716,6 +2066,10 @@ onMounted(async () => {
       'editorGutter.background': '#0d1117'
     }
   })
+
+  // -> Set rather than left to Monaco's lazy loader, which would register the stock tokenizer: a
+  //    provider set directly is used in place of the loader's factory, and replaces one it already made
+  monaco.languages.setMonarchTokensProvider('markdown', markdownLanguageForTheme())
 
   // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
   // original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
@@ -1733,11 +2087,14 @@ onMounted(async () => {
     formatOnType: true,
     language: 'markdown',
     lineNumbersMinChars: 4,
+    // -> The site's choice, under Admin -> Editors -> Markdown. Off unless it says otherwise, which is
+    //    also what a site that has never saved the option gets
+    minimap: { enabled: editorStore.editors.markdown?.minimap === true },
     padding: { top: 10, bottom: 10 },
     scrollBeyondLastLine: false,
     tabSize: 2,
     theme: 'wikijs',
-    value: pageStore.content,
+    value: docStore.content,
     wordWrap: 'on'
   })
 
@@ -1914,17 +2271,26 @@ onMounted(async () => {
     label: 'Save',
     precondition: '',
     run(ed) {
-      EVENT_BUS.emit('savePage')
+      // -> Still claimed in a note, where there is nothing to save: the browser's own Save Page As
+      //    is not what anybody pressing it in an editor wants either
+      if (!props.noteKey) {
+        EVENT_BUS.emit('savePage')
+      }
     }
   })
 
   // -> Handle content change
   editor.onDidChangeModelContent(syncContentToStore)
 
+  // -> Which section of the Contents pane the caret is in. Not debounced: it is one number
+  editor.onDidChangeCursorPosition((ev) => {
+    cursorLine.value = ev.position.lineNumber
+  })
+
   // -> Handle cursor movement
   editor.onDidChangeCursorPosition(
     debounce(async (ev) => {
-      if (!state.previewScrollSync || !state.previewShown) {
+      if (!panes.previewScrollSync || !panes.previewShown) {
         return
       }
       /*
@@ -1982,7 +2348,11 @@ onMounted(async () => {
       author in a page they are unable to type in.
     */
     editor.updateOptions({ readOnly: true })
-    startCollabSession({ siteId: siteStore.id, pageId: pageStore.id })
+    startCollabSession(
+      props.noteKey
+        ? { siteId: siteStore.id, noteKey: props.noteKey }
+        : { siteId: siteStore.id, pageId: pageStore.id }
+    )
 
     /*
       Both handles are kept, and both are stopped by hand on the way out.
@@ -1997,7 +2367,11 @@ onMounted(async () => {
       watch(
         () => collabStore.status,
         async (status) => {
-          if (status === 'denied') {
+          /*
+            Not for a note, whose page asks for the note again on a refusal and says what it finds --
+            deleted, switched off, signed out -- in place of the editor. See `pages/LiveNote.vue`.
+          */
+          if (status === 'denied' && !props.noteKey) {
             notify({
               type: 'warning',
               message: t('editor.collab.notAllowed')
@@ -2006,7 +2380,17 @@ onMounted(async () => {
           if (status === 'connecting') {
             return
           }
-          editor.updateOptions({ readOnly: false })
+          /*
+            A note stays read-only until its room has answered once. The room IS the note: an editor
+            released without it holds an empty document that nothing would ever store, and whatever
+            was typed into it would be replaced by the note the moment the room did answer. After
+            that first sync a dropped connection is harmless, as it is for a page -- the edits are
+            held in the shared document and merged when the socket comes back.
+          */
+          if (props.noteKey && !collabStore.hasSynced) {
+            return
+          }
+          editor.updateOptions({ readOnly: props.readOnly })
           if (status === 'connected') {
             await bindCollabEditor(editor)
             // -> The editor was closed while the binding loaded, and is not ready for anything
@@ -2046,7 +2430,7 @@ onMounted(async () => {
   editor.focus()
 
   nextTick(() => {
-    processContent(pageStore.content)
+    processContent(docStore.content)
   })
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
@@ -2055,6 +2439,9 @@ onMounted(async () => {
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
+  if (props.noteKey) {
+    EVENT_BUS.on('setNoteTitle', setNoteTitle)
+  }
 
   // -> Ready now, unless a room is still to answer -- the status watcher above says when that is.
   //    Not if the editor was closed while this hook was still awaiting.
@@ -2075,6 +2462,7 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
+  EVENT_BUS.off('setNoteTitle', setNoteTitle)
   pasteCaptureNode?.removeEventListener('paste', onEditorPaste, true)
   monacoRef.value?.removeEventListener('dragover', onEditorDragOver)
   monacoRef.value?.removeEventListener('drop', onEditorDrop)
@@ -2119,6 +2507,17 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
 $editor-height-mobile: calc(100vh - 112px - 16px);
 
 .editor-markdown {
+  /*
+    The Contents pane's width (`-size`, which `EditorContentsPane.vue` reads), and what of it the
+    preview's own width has to allow for (`-width`): its measure is worked out from the window (`50vw`
+    below) rather than from the pane, and a third column takes half of itself out of each of the other
+    two. The second is 0 while there is no pane -- and still the full size while one is sliding away;
+    see `contentsLaidOut` in `useEditorPanes`.
+  */
+  --editor-contents-size: 200px;
+  &.has-contents {
+    --editor-contents-width: var(--editor-contents-size);
+  }
   &-main {
     display: flex;
     width: 100%;
@@ -2214,6 +2613,21 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
            whole of how and why.
       */
       @include brick-transition($dark-2);
+
+      // -> The menu at the right end kept clear of the brickwork, which is six bricks wide at its
+      //    bottom course (the staircase and the seam beside it)
+      padding-right: calc(var(--brick) * 6 + 0.5rem);
+
+      /*
+        -> Nothing orange beside the bar to step into: a live note has no actions rail
+           (`pages/LiveNote.vue`), and with the contents column open it is that column's bar that
+           meets the rail. The bricks are its background, and nothing else is -- so with them gone,
+           nothing needs keeping clear either.
+      */
+      &.is-railless {
+        background-image: none;
+        padding-right: 1rem;
+      }
     }
 
     /*
@@ -2228,7 +2642,8 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       height: $editor-preview-height;
       overflow-y: scroll;
       padding: 1rem;
-      max-width: calc(50vw - 57px);
+      // -> Half the window, less half of each rail -- which, the two being the same width, is one of them
+      max-width: calc(50vw - #{$rail-width} - 1px - var(--editor-contents-width, 0px) / 2);
 
       /*
         The site theme's Centered content width, so the preview wraps where the page will. The pane is
@@ -2240,7 +2655,16 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       */
       &.is-centered {
         --content-bleed: 0px;
-        padding-inline: max(1rem, calc((min(100%, 50vw - 57px) - $content-centered-max-width) / 2));
+        padding-inline: max(
+          1rem,
+          calc(
+            (
+                min(100%, 50vw - #{$rail-width} - 1px - var(--editor-contents-width, 0px) / 2) -
+                  $content-centered-max-width
+              ) /
+              2
+          )
+        );
       }
       // -ms-overflow-style: none;
       // &::-webkit-scrollbar {
@@ -2355,7 +2779,13 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
     background-color: $dark-4;
     border-top: 32px solid color.adjust($primary, $lightness: -10%);
     color: #fff;
-    width: 56px;
+    /*
+      The actions rail's width (`$rail-width`), and held to it: as a flex item this could otherwise
+      shrink, and did -- the source and the preview take half the row each, so with the Contents pane
+      beside them the row overflows and every item gave up its share, this one included.
+    */
+    flex: 0 0 $rail-width;
+    width: $rail-width;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;

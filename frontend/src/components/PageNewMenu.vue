@@ -9,10 +9,15 @@
 
         Narrowed by `only` where a caller has a reason to offer fewer -- see the prop.
       -->
-      <template v-for="editor of offeredEditors" :key="editor">
+      <template v-for="editor of entries" :key="editor">
         <!-- -> Where the editors that write an article end; see `dividedAt` -->
         <w-separator v-if="editor === dividedAt" class="my-2" inset />
-        <w-item clickable @click="create(editor)">
+        <!-- -> Not an editor: a note is not a page, and opens at a URL of its own -- see `createLiveNote` -->
+        <w-item v-if="editor === LIVE_NOTE" clickable @click="createLiveNote">
+          <blueprint-icon icon="user-typing-using-typewriter" />
+          <w-item-section class="pr-2">{{ t('common.createPage.liveNote') }}</w-item-section>
+        </w-item>
+        <w-item v-else clickable @click="create(editor)">
           <blueprint-icon :icon="EDITOR_ICONS[editor]" />
           <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
         </w-item>
@@ -38,8 +43,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import { loading } from '@/composables/loading'
+import { notify } from '@/composables/notify'
+import { apiErrorMessage } from '@/helpers/apiError'
 /*
   The icons, shared with the other two screens that offer editors. WHICH are offered, and in what
   order, is still `siteStore.activeEditors` alone. The wording lives in the locale file as
@@ -49,9 +57,13 @@ import { loading } from '@/composables/loading'
 import { EDITOR_ICONS } from '@/helpers/editors'
 
 import { useEditorStore } from '@/stores/editor'
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
+/** The menu's one entry that is not an editor, listed among them by this name. */
+const LIVE_NOTE = 'liveNote'
 
 // PROPS
 
@@ -89,6 +101,14 @@ const props = defineProps({
   locale: {
     type: String,
     default: null
+  },
+  /**
+   * Offer New Live Note as well. Only the header's menus do: a note belongs to no folder and no blog,
+   * so it has no place in a menu opened on one -- the file manager's, or a blog's New Post.
+   */
+  offerLiveNote: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -99,8 +119,14 @@ const emit = defineEmits(['newFolder', 'newPage'])
 // STORES
 
 const editorStore = useEditorStore()
+const liveNoteStore = useLiveNoteStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
+
+// ROUTER
+
+const router = useRouter()
 
 // I18N
 
@@ -114,6 +140,39 @@ const offeredEditors = computed(() =>
     ? siteStore.activeEditors.filter((editor) => props.only.includes(editor))
     : siteStore.activeEditors
 )
+
+/**
+ * Whether New Live Note is on offer: where the caller asked for it, on a site that has live notes --
+ * which needs collaborative editing too -- and for somebody signed in, since a note is only ever
+ * opened by a signed-in account.
+ */
+const offersLiveNote = computed(
+  () =>
+    props.offerLiveNote &&
+    siteStore.features.liveNotes &&
+    siteStore.features.collaborativeEditing &&
+    userStore.authenticated
+)
+
+/**
+ * Everything the menu lists, in order: the editors on offer, with New Live Note after New Blog.
+ *
+ * Placed by the editors around it rather than by an index, because which of them a site has on is the
+ * store's answer: after every article editor and the blog, and ahead of whatever follows the blog in
+ * the store's order -- a redirection, and the experimental editors.
+ */
+const entries = computed(() => {
+  const editors = offeredEditors.value
+  if (!offersLiveNote.value) {
+    return editors
+  }
+  const at = editors.findIndex(
+    (editor) => editor !== 'blog' && !siteStore.articleEditors.includes(editor)
+  )
+  return at < 0
+    ? [...editors, LIVE_NOTE]
+    : [...editors.slice(0, at), LIVE_NOTE, ...editors.slice(at)]
+})
 
 /**
  * The editor the divider is drawn above, or null where there is nothing to divide.
@@ -132,7 +191,8 @@ const offeredEditors = computed(() =>
  * nothing else, and a site with every article editor switched off has nothing above the line.
  */
 const dividedAt = computed(() => {
-  const offered = offeredEditors.value
+  const offered = entries.value
+  // -> A live note is not an article either, so on a site with no blog it is what opens the section
   const first = offered.findIndex((editor) => !siteStore.articleEditors.includes(editor))
   return first > 0 ? offered[first] : null
 })
@@ -144,6 +204,30 @@ async function create(editor) {
   emit('newPage')
   await pageStore.pageCreate({ editor, basePath: props.basePath, locale: props.locale })
   loading.hide()
+}
+
+/**
+ * A new live note, and straight into it.
+ *
+ * Created by the server rather than at a URL made up here, so that the key is drawn from a
+ * cryptographic source and nobody can open a note at an address of their choosing -- the key is the
+ * only thing guarding it. See `models/liveNotes.ts`.
+ */
+async function createLiveNote() {
+  loading.show()
+  emit('newPage')
+  try {
+    const key = await liveNoteStore.create()
+    await router.push(`/n/${key}`)
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('liveNote.createFailed'),
+      caption: apiErrorMessage(err)
+    })
+  } finally {
+    loading.hide()
+  }
 }
 
 function openFileManager() {

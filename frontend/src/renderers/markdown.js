@@ -502,6 +502,40 @@ export class MarkdownRenderer {
       parser's opinion of where each panel begins and ends, and it cannot drift from the markup the same
       parse produced. Only line numbers are kept: everything else about a panel is already in the render.
     */
+    /*
+      The document's headings, in order, with the source line each starts on -- for an outline of the
+      document beside the editor (the Contents pane, `EditorContentsPane.vue`). Collected from the token
+      stream for the reason the tabsets below are: it is the parser's word on what a heading is, so a
+      `#` in a code fence is not one and a setext heading is.
+
+      The text is what a reader sees -- the inline children's text, without the markup around it --
+      falling back to the raw source of the line for a heading made only of something with no text.
+    */
+    this.headings = []
+    this.md.core.ruler.push('collect_headings', (state) => {
+      this.headings = []
+      for (const [index, token] of state.tokens.entries()) {
+        if (token.type !== 'heading_open' || !token.map) {
+          continue
+        }
+        const inline = state.tokens[index + 1]
+        const text = (inline?.children ?? [])
+          .map((child) => {
+            if (child.type === 'text' || child.type === 'code_inline') {
+              return child.content
+            }
+            return child.type === 'softbreak' ? ' ' : ''
+          })
+          .join('')
+          .trim()
+        this.headings.push({
+          level: Number(token.tag.slice(1)),
+          text: text || (inline?.content ?? '').trim(),
+          line: token.map[0] + 1
+        })
+      }
+    })
+
     this.tabsMap = []
     this.md.core.ruler.push('collect_tabsets', (state) => {
       this.tabsMap = []

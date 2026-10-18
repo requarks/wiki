@@ -54,7 +54,11 @@ export const AUDIT_ACTIONS = {
     'moveFolder',
     'duplicateFolder',
     'setFolderColor',
-    'deleteFolder'
+    'deleteFolder',
+    'createLiveNote',
+    'changeLiveNoteAccess',
+    'addLiveNoteImage',
+    'deleteLiveNote'
   ],
   asset: ['uploadAsset', 'updateAsset', 'resizeAsset', 'deleteAsset'],
   comment: [

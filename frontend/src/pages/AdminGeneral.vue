@@ -210,6 +210,26 @@
           </w-item>
           <w-separator class="my-2" inset />
           <!--
+            Beside the switch it depends on: a live note is a collaboration room that keeps what is
+            typed into it, so with collaborative editing off there is no room to keep anything in. The
+            toggle keeps its value while disabled, which is what the server reads too -- both switches
+            have to be on (`liveNotes.isEnabled`).
+          -->
+          <w-item tag="label">
+            <blueprint-icon icon="note" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.allowLiveNotes`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.allowLiveNotesHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.features.liveNotes"
+                :disable="!state.config.features.collaborativeEditing"
+                :aria-label="t(`admin.general.allowLiveNotes`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <!--
             The site-wide switch. Which provider handles the discussion is the Comments screen's
             question; this one is whether there is a discussion at all, and it is here because it
             reads as a feature of the site alongside browsing, ratings and search.
@@ -761,6 +781,8 @@ function defaultConfig() {
         reason read the other way -- both are `!== false` on the server.
       */
       collaborativeEditing: false,
+      // -> False, for the reason `collaborativeEditing` is: the server reads a missing key as off
+      liveNotes: false,
       ratingsMode: 'off',
       comments: true,
       glossary: true,
@@ -912,6 +934,7 @@ async function save() {
           glossaryAutoLink: state.config.features?.glossaryAutoLink ?? true,
           lastEditedBy: state.config.features?.lastEditedBy ?? true,
           listFolderChildren: state.config.features?.listFolderChildren ?? false,
+          liveNotes: state.config.features?.liveNotes ?? false,
           notifications: state.config.features?.notifications ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',

@@ -731,6 +731,101 @@ export const jobs = pgTable('jobs', {
   updatedAt: timestamp().notNull().defaultNow()
 })
 
+// LIVE NOTES --------------------------
+/**
+ * A scratch document edited live by whoever has its URL — see `models/liveNotes.ts`.
+ *
+ * Not a page: it has no path in the tree, no page rules and no render. What it is, is the shared Yjs
+ * document a collaboration room holds, kept between sessions — `state` is that document, and `content`
+ * and `title` are read off it on every write so that nothing has to decode a CRDT to list a note or,
+ * later, convert one into a page.
+ */
+export const liveNotes = pgTable(
+  'liveNotes',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    /** The 24 characters of `/n/<key>`. Case-sensitive, and the only thing a URL carries. */
+    key: varchar({ length: 24 }).notNull(),
+    /** The first heading of the content, or empty. Derived; never written on its own. */
+    title: varchar({ length: 255 }).notNull().default(''),
+    /**
+     * Who besides its creator may do what with it: `editable` (anybody signed in with the key reads
+     * and writes), `locked` (they read), `private` (they do neither). See `liveNotes.rightsFor`.
+     */
+    access: varchar({ length: 16 }).notNull().default('editable'),
+    /** The markdown source, as of the last write of `state`. Derived from it, never the other way. */
+    content: text().notNull().default(''),
+    /** The room's Yjs document, as one update. Null until somebody has typed something. */
+    state: bytea(),
+    /** Who typed since the last revision. Moved onto that revision when it is taken, and emptied. */
+    pendingAuthorIds: uuid()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::uuid[]`),
+    creatorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    /** Who typed into the note most recently, as of `updatedAt`. Null until somebody has. */
+    lastEditorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp().notNull().defaultNow(),
+    /** When somebody last typed into the note — not when a revision was last taken. */
+    updatedAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [
+    uniqueIndex('liveNotes_key_key').on(table.key),
+    index('liveNotes_siteId_idx').on(table.siteId)
+  ]
+)
+
+/**
+ * A live note as it stood at one moment — the continuous history the revisions dialog lists.
+ *
+ * Taken by the room as the note is written (`liveNotes.persist`), at most once per
+ * `REVISION_INTERVAL` and once more when the last participant leaves, and only when the content
+ * differs from the revision before it.
+ */
+export const liveNoteRevisions = pgTable(
+  'liveNoteRevisions',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    noteId: uuid()
+      .notNull()
+      .references(() => liveNotes.id, { onDelete: 'cascade' }),
+    content: text().notNull(),
+    /** Everybody who typed between the previous revision and this one. */
+    authorIds: uuid()
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::uuid[]`),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [index('liveNoteRevisions_noteId_createdAt_idx').on(table.noteId, table.createdAt)]
+)
+
+/**
+ * The images added to a live note: every one ever uploaded into it, whether or not its content still
+ * shows it — a revision may, and restoring one should not find its picture gone.
+ *
+ * What deleting the note deletes along with it (`liveNotes.delete`). The images are ordinary assets
+ * in the hidden `n` folder (`NOTE_IMAGES_FOLDER`), so they are stored and served like any other file;
+ * this list is the only thing that says which note each belongs to. An asset deleted some other way —
+ * a git pull that removed the file — takes its row with it.
+ */
+export const liveNoteImages = pgTable(
+  'liveNoteImages',
+  {
+    assetId: uuid()
+      .primaryKey()
+      .references(() => assets.id, { onDelete: 'cascade' }),
+    noteId: uuid()
+      .notNull()
+      .references(() => liveNotes.id, { onDelete: 'cascade' }),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [index('liveNoteImages_noteId_idx').on(table.noteId)]
+)
+
 // LOCALES -----------------------------
 export const locales = pgTable(
   'locales',

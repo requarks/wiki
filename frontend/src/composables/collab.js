@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 
 import { useCollabStore } from '@/stores/collab'
 import { useEditorStore } from '@/stores/editor'
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { usePageStore } from '@/stores/page'
 import { useUserStore } from '@/stores/user'
 
@@ -23,6 +24,10 @@ import { useUserStore } from '@/stores/user'
  * Saving is unchanged and still explicit. All this session does about it is listen: the server writes
  * the fact of a save into the document, and the editors that did not make it stop calling themselves
  * unsaved.
+ *
+ * A live note is the other kind of session (`noteKey` rather than `pageId`). It shares the text and
+ * nothing else — a note has no header fields and no save, its room storing it as it changes — so none
+ * of the page store is touched.
  */
 
 /** How long to wait for the first sync before giving up and letting the author type offline. */
@@ -84,6 +89,8 @@ let applyingRemote = false
  * ignored where the two agree — see `adoptProps`. After it, anything arriving is somebody's edit.
  */
 let initialSyncDone = false
+/** Whether the session is a live note's, which shares only the text. */
+let isNoteSession = false
 
 /**
  * A stable colour for a user.
@@ -106,12 +113,17 @@ export function isCollabActive() {
 }
 
 /**
- * Open a session on a page.
+ * Open a session on a page, or on a live note.
  *
  * Returns without waiting for the socket: the editor stays usable throughout, and the store's status
  * is what says whether anything is live yet.
+ *
+ * @param {object} target
+ * @param {string} target.siteId
+ * @param {string} [target.pageId] The page being edited.
+ * @param {string} [target.noteKey] The live note being edited, by its key — in place of `pageId`.
  */
-export function startCollabSession({ siteId, pageId }) {
+export function startCollabSession({ siteId, pageId, noteKey }) {
   if (doc) {
     stopCollabSession()
   }
@@ -120,6 +132,7 @@ export function startCollabSession({ siteId, pageId }) {
   const pageStore = usePageStore()
   const userStore = useUserStore()
 
+  isNoteSession = Boolean(noteKey)
   doc = new Y.Doc()
   const ytext = doc.getText('content')
   const yprops = doc.getMap('props')
@@ -128,7 +141,7 @@ export function startCollabSession({ siteId, pageId }) {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   provider = new WebsocketProvider(
     `${protocol}//${window.location.host}/_collab`,
-    `${siteId}/${pageId}`,
+    isNoteSession ? `${siteId}/notes/${noteKey}` : `${siteId}/${pageId}`,
     doc
   )
 
@@ -158,6 +171,10 @@ export function startCollabSession({ siteId, pageId }) {
     if (transaction?.local) {
       markTyping()
     }
+    // -> Not the room's opening state, which is the note as it was rather than anybody's edit
+    if (isNoteSession && initialSyncDone && transaction) {
+      noteEditedIn(transaction)
+    }
   })
 
   provider.on('status', ({ status }) => {
@@ -178,6 +195,11 @@ export function startCollabSession({ siteId, pageId }) {
     }
     clearTimeout(syncTimer)
     collabStore.$patch({ status: 'connected', hasSynced: true })
+    initialSyncDone = true
+    if (isNoteSession) {
+      refreshParticipants()
+      return
+    }
     /*
       The room may have been holding header fields somebody else changed and has not saved. Those are
       the current state of this edit, so they win over what this browser loaded from the API.
@@ -187,7 +209,6 @@ export function startCollabSession({ siteId, pageId }) {
       equal to the stored one carries no edit at all — see `adoptProps`.
     */
     adoptProps({ initial: true })
-    initialSyncDone = true
     /*
       And then this browser's own, which the watcher below will never publish: it fires on change, and
       anything typed into the properties panel before the editor was opened changed before there was a
@@ -220,6 +241,13 @@ export function startCollabSession({ siteId, pageId }) {
       collabStore.status = 'disconnected'
     }
   }, SYNC_TIMEOUT)
+
+  ensureStyleElement()
+
+  // -> Everything below is the page's header fields and its saves, neither of which a note has
+  if (isNoteSession) {
+    return { doc, ytext }
+  }
 
   /*
     A header field somebody else edited, arriving mid-session — or the room's own opening state, which
@@ -260,8 +288,6 @@ export function startCollabSession({ siteId, pageId }) {
       }
     )
   )
-
-  ensureStyleElement()
 
   return { doc, ytext }
 }
@@ -323,6 +349,7 @@ export function stopCollabSession() {
   typingTimer = null
   typing = false
   initialSyncDone = false
+  isNoteSession = false
   for (const stop of stopWatchers) {
     stop()
   }
@@ -376,6 +403,34 @@ function markTyping() {
     typing = false
     provider?.awareness.setLocalStateField('typing', false)
   }, TYPING_IDLE)
+}
+
+/**
+ * Tell the live note store who made a change to the note.
+ *
+ * This author for a change made here. For one that arrived, whoever's Yjs client wrote it: a
+ * transaction advances the clock of every client whose operations it applied, and a participant's
+ * awareness state is keyed by that same client id. A change from a client no longer in the room — an
+ * offline edit merged on reconnect by somebody who has since left — names nobody, and changes nothing.
+ */
+function noteEditedIn(transaction) {
+  const liveNoteStore = useLiveNoteStore()
+  if (transaction.local) {
+    const userStore = useUserStore()
+    liveNoteStore.markEdited({ id: userStore.id, name: userStore.name })
+    return
+  }
+  const states = provider?.awareness.getStates()
+  for (const [clientId, clock] of transaction.afterState) {
+    if ((transaction.beforeState.get(clientId) ?? 0) >= clock) {
+      continue
+    }
+    const user = states?.get(clientId)?.user
+    if (user?.id) {
+      liveNoteStore.markEdited({ id: user.id, name: user.name })
+      return
+    }
+  }
 }
 
 /** This browser's header fields into the room, whatever they are. See the call in the sync handler. */

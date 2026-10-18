@@ -15,6 +15,7 @@ import { hooks } from './hooks.ts'
 import { icons } from './icons.ts'
 import { importer } from './import.ts'
 import { jobs } from './jobs.ts'
+import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
 import { mail } from './mail.ts'
 import { metrics } from './metrics.ts'
@@ -61,6 +62,7 @@ export default {
   icons,
   importer,
   jobs,
+  liveNotes,
   locales,
   mail,
   metrics,

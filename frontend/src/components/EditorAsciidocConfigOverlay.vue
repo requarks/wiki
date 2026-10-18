@@ -71,6 +71,22 @@
                 :aria-label="t(`admin.editors.asciidoc.math`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon icon="right-navigation-toolbar" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.editors.asciidoc.minimap`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.asciidoc.minimapHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.minimap"
+                color="primary"
+                checked-icon="la:check"
+                unchecked-icon="la:times"
+                :aria-label="t(`admin.editors.asciidoc.minimap`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <w-inner-loading :showing="state.loading > 0">
           <w-spinner color="accent" size="lg" />
@@ -98,7 +114,8 @@ import { toMerged } from 'es-toolkit/object'
  *
  * Only what AsciiDoc does not decide for itself: its text replacements and autolinking are part of
  * the language rather than options, and most of the rest is spelled per block. What is left is which
- * block draws a `latexmath` or `stem` formula -- see `AsciidocRenderer`.
+ * block draws a `latexmath` or `stem` formula -- see `AsciidocRenderer` -- and, about the editor rather
+ * than the language, whether it shows a minimap.
  */
 
 // STORES
@@ -119,7 +136,8 @@ const { t } = useI18n()
  */
 function defaultConfig() {
   return {
-    math: 'katex'
+    math: 'katex',
+    minimap: false
   }
 }
 

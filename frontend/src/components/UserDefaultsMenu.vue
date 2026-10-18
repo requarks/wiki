@@ -73,7 +73,7 @@
           class="acrylic-btn"
           flat
           :label="t(`common.actions.cancel`)"
-          color="grey"
+          color="cancel"
           padding="xs md"
           @click="menuRef.hide()" />
         <w-btn

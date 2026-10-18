@@ -55,7 +55,7 @@
             color="blue-4"
             aria-label="Create New Page">
             <w-tooltip>Create New Page</w-tooltip>
-            <new-menu />
+            <new-menu offer-live-note />
           </w-btn>
           <!-- -> Shown to everyone: Tags and the Glossary are for readers, and the menu holds back its
                   File Manager row by itself; see `HeaderLibraryMenu` -->

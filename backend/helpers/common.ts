@@ -80,9 +80,10 @@ export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitema
  *
  * Everything the app mounts for itself sits under `/_…`, which is what makes `isPageUrl` a prefix
  * test rather than a list to keep in step. These are the exceptions, and each is an address a reader
- * is HANDED rather than a screen they browse to: the sign-in form, and the two short links that name
+ * is HANDED rather than a screen they browse to: the sign-in form, the two short links that name
  * a page by something other than its path — `/a/<alias>` and `/i/<id>` — each of which looks its
- * target up and sends the reader on to it.
+ * target up and sends the reader on to it, and a live note's `/n/<key>`, which is not a page at all
+ * (`models/liveNotes.ts`).
  *
  * Mistaking one for a page is not cosmetic. A page URL is locale-prefixed on a site that forces
  * prefixes, so `/login` was answered with a redirect to `/en/login` — a path no route matches, which
@@ -92,7 +93,51 @@ export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitema
  *
  * Mirrored in the frontend's `helpers/pagePaths.js`, which asks the same question of the same URLs.
  */
-export const RESERVED_ROOT_PATHS = new Set(['login', 'a', 'i'])
+export const RESERVED_ROOT_PATHS = new Set(['login', 'a', 'i', 'n'])
+
+/**
+ * The root folder the images pasted into live notes are uploaded into: `/_files/n/<uuid>.<ext>`.
+ *
+ * A folder of the tree like any other as far as storage is concerned, so that the images reach every
+ * target that holds images and are served from wherever the site says. Everything ELSE about it is
+ * set apart, and it is this one test that sets it:
+ *
+ * - **It is invisible.** `groups.checkAccess` answers no for every page permission under it, for
+ *   everybody, `manage:system` included, so it is absent from every listing and every route that
+ *   addresses a path. An image's name is what lets somebody load it, and a folder of every note's
+ *   images listed in the File Manager would hand each one to anybody who can browse.
+ * - **Nothing else can be put there.** Creating or moving a folder, a page or a file into it is
+ *   refused by the same `checkAccess` answer, asked of the destination; renaming a folder to it, which
+ *   no route asks about, by {@link refuseNoteImagesPath}. Only `liveNotes.addImage` writes into it. An
+ *   import from a storage target is not held to that, since what it finds there is the images
+ *   themselves.
+ * - **`/_files/` serves it to anybody signed in**, rather than by page rules nobody writes for it.
+ *
+ * An installation that had a root `n` of its own before this existed keeps it, unmoved — and hidden
+ * along with the images.
+ */
+export const NOTE_IMAGES_FOLDER = 'n'
+
+/** Whether a slash-separated path is the live notes' image folder or anything inside it. */
+export function isNoteImagesPath(path: string | null | undefined): boolean {
+  const firstSegment = (path ?? '').replace(/^\/+/, '').split('/')[0].toLowerCase()
+  return firstSegment === NOTE_IMAGES_FOLDER
+}
+
+/**
+ * Refuse a path in the live notes' image folder as where a folder, a page or a file is going.
+ *
+ * @param path The slash-separated path of the thing itself, not of the folder it goes into.
+ */
+export function refuseNoteImagesPath(path: string | null | undefined): void {
+  if (isNoteImagesPath(path)) {
+    throw new CustomError(
+      'treeReservedPath',
+      `The name "${NOTE_IMAGES_FOLDER}" at the root of the site is reserved for live note images.`,
+      400
+    )
+  }
+}
 
 /**
  * Whether a URL addresses the page tree rather than the server itself.

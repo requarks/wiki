@@ -16,6 +16,7 @@ import {
   normalizeFolderPath,
   normalizeNewPagePath,
   normalizePagePath,
+  refuseNoteImagesPath,
   treeLabelSql
 } from '../helpers/common.ts'
 import type { PageActor } from './pages.ts'
@@ -1006,6 +1007,11 @@ class Tree {
       normalizePagePath(pathName) === folder.fileName ? folder.fileName : folderNameFrom(pathName)
     if (!reTitle.test(title)) {
       throw new CustomError('treeInvalidTitle', 'The folder title contains invalid characters.')
+    }
+    // -> The one way into the live notes' image folder that the route cannot see coming: it asks about
+    //    the folder being renamed, and the name it is renamed to is only known here
+    if (name !== folder.fileName) {
+      refuseNoteImagesPath([decodeTreePath(folder.folderPath), name].filter(Boolean).join('/'))
     }
 
     if (name === folder.fileName) {

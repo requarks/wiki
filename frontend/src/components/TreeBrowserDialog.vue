@@ -185,7 +185,7 @@
           class="acrylic-btn"
           icon="la:times"
           :label="t(`common.actions.cancel`)"
-          color="grey-7"
+          color="cancel"
           padding="xs md"
           flat
           @click="onDialogCancel" />

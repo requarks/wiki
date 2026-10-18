@@ -5,7 +5,11 @@
  * normalizing it when the Sharp extension is available.
  */
 
+import * as cheerio from 'cheerio'
+
 import { CustomError } from './common.ts'
+
+import type { AnyNode, Element } from 'domhandler'
 
 /** The image formats an upload may use. */
 export const imageMimeTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const
@@ -29,6 +33,387 @@ export const svgMimeType = 'image/svg+xml'
  */
 export function detectSvg(data: Buffer): boolean {
   return /<svg[\s>]/i.test(data.subarray(0, 1024).toString('utf8'))
+}
+
+/**
+ * The elements a sanitized SVG may keep: everything that draws, and nothing that runs.
+ *
+ * Left out on purpose: `script`; `foreignObject`, which embeds arbitrary HTML; `iframe` and the other
+ * HTML that a browser will happily parse inside one; and `metadata`, which carries nothing a picture
+ * needs. Animation is kept, since a spinner is a legitimate SVG — but see `animate` in
+ * {@link sanitizeSvg}, which is how an attribute is rewritten to a script URL after the fact.
+ *
+ * Case-sensitive, as SVG is: `clipPath` and `clippath` are different elements, and only one of them
+ * draws.
+ */
+const SVG_ELEMENTS = new Set([
+  'a',
+  'animate',
+  'animateMotion',
+  'animateTransform',
+  'circle',
+  'clipPath',
+  'defs',
+  'desc',
+  'ellipse',
+  'feBlend',
+  'feColorMatrix',
+  'feComponentTransfer',
+  'feComposite',
+  'feConvolveMatrix',
+  'feDiffuseLighting',
+  'feDisplacementMap',
+  'feDistantLight',
+  'feDropShadow',
+  'feFlood',
+  'feFuncA',
+  'feFuncB',
+  'feFuncG',
+  'feFuncR',
+  'feGaussianBlur',
+  'feImage',
+  'feMerge',
+  'feMergeNode',
+  'feMorphology',
+  'feOffset',
+  'fePointLight',
+  'feSpecularLighting',
+  'feSpotLight',
+  'feTile',
+  'feTurbulence',
+  'filter',
+  'g',
+  'image',
+  'line',
+  'linearGradient',
+  'marker',
+  'mask',
+  'mpath',
+  'path',
+  'pattern',
+  'polygon',
+  'polyline',
+  'radialGradient',
+  'rect',
+  'set',
+  'stop',
+  'style',
+  'svg',
+  'switch',
+  'symbol',
+  'text',
+  'textPath',
+  'title',
+  'tspan',
+  'use',
+  'view'
+])
+
+/**
+ * The attributes a sanitized SVG may keep. Every one of them names a length, a colour, a keyword, a
+ * reference to another element or a number — except the two that carry a URL, `href` and
+ * `xlink:href`, which {@link isSafeSvgUrl} decides separately. No `on*` handler is in the list, which
+ * is the point of having a list rather than a set of things to remove.
+ *
+ * `style`, and the `<style>` element, are kept: drawing tools style by class, and an SVG stripped of
+ * its stylesheet is a black silhouette. A stylesheet cannot run script in any browser that matters.
+ */
+const SVG_ATTRIBUTES = new Set([
+  'accumulate',
+  'additive',
+  'alignment-baseline',
+  'amplitude',
+  'attributeName',
+  'attributeType',
+  'azimuth',
+  'baseFrequency',
+  'baseline-shift',
+  'baseProfile',
+  'begin',
+  'bias',
+  'by',
+  'calcMode',
+  'class',
+  'clip',
+  'clip-path',
+  'clip-rule',
+  'clipPathUnits',
+  'color',
+  'color-interpolation',
+  'color-interpolation-filters',
+  'cx',
+  'cy',
+  'd',
+  'diffuseConstant',
+  'direction',
+  'display',
+  'divisor',
+  'dominant-baseline',
+  'dur',
+  'dx',
+  'dy',
+  'edgeMode',
+  'elevation',
+  'end',
+  'exponent',
+  'fill',
+  'fill-opacity',
+  'fill-rule',
+  'filter',
+  'filterUnits',
+  'flood-color',
+  'flood-opacity',
+  'font-family',
+  'font-size',
+  'font-size-adjust',
+  'font-stretch',
+  'font-style',
+  'font-variant',
+  'font-weight',
+  'fr',
+  'from',
+  'fx',
+  'fy',
+  'gradientTransform',
+  'gradientUnits',
+  'height',
+  'href',
+  'id',
+  'image-rendering',
+  'in',
+  'in2',
+  'intercept',
+  'isolation',
+  'k1',
+  'k2',
+  'k3',
+  'k4',
+  'kernelMatrix',
+  'kernelUnitLength',
+  'keyPoints',
+  'keySplines',
+  'keyTimes',
+  'lang',
+  'lengthAdjust',
+  'letter-spacing',
+  'lighting-color',
+  'limitingConeAngle',
+  'marker-end',
+  'marker-mid',
+  'marker-start',
+  'markerHeight',
+  'markerUnits',
+  'markerWidth',
+  'mask',
+  'maskContentUnits',
+  'maskUnits',
+  'max',
+  'media',
+  'method',
+  'min',
+  'mix-blend-mode',
+  'mode',
+  'numOctaves',
+  'offset',
+  'opacity',
+  'operator',
+  'order',
+  'orient',
+  'overflow',
+  'paint-order',
+  'path',
+  'pathLength',
+  'patternContentUnits',
+  'patternTransform',
+  'patternUnits',
+  'points',
+  'pointsAtX',
+  'pointsAtY',
+  'pointsAtZ',
+  'preserveAlpha',
+  'preserveAspectRatio',
+  'primitiveUnits',
+  'r',
+  'radius',
+  'refX',
+  'refY',
+  'repeatCount',
+  'repeatDur',
+  'restart',
+  'result',
+  'role',
+  'rotate',
+  'rx',
+  'ry',
+  'scale',
+  'seed',
+  'shape-rendering',
+  'side',
+  'slope',
+  'spacing',
+  'specularConstant',
+  'specularExponent',
+  'spreadMethod',
+  'startOffset',
+  'stdDeviation',
+  'stitchTiles',
+  'stop-color',
+  'stop-opacity',
+  'stroke',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'stroke-miterlimit',
+  'stroke-opacity',
+  'stroke-width',
+  'style',
+  'surfaceScale',
+  'systemLanguage',
+  'tableValues',
+  'target',
+  'targetX',
+  'targetY',
+  'text-anchor',
+  'text-decoration',
+  'text-rendering',
+  'textLength',
+  'to',
+  'transform',
+  'transform-origin',
+  'type',
+  'unicode-bidi',
+  'values',
+  'vector-effect',
+  'version',
+  'viewBox',
+  'visibility',
+  'width',
+  'word-spacing',
+  'writing-mode',
+  'x',
+  'x1',
+  'x2',
+  'xChannelSelector',
+  'xlink:href',
+  'xlink:title',
+  'xml:lang',
+  'xml:space',
+  'xmlns',
+  'xmlns:xlink',
+  'y',
+  'y1',
+  'y2',
+  'yChannelSelector',
+  'z',
+  'zoomAndPan'
+])
+
+/**
+ * What kind of node this is, as a string: domhandler types it with an enum from a package this
+ * workspace does not depend on directly, and in XML mode every element is a `tag` — never the
+ * `script` and `style` kinds an HTML parse gives those two.
+ */
+function nodeType(node: AnyNode): string {
+  return node.type as string
+}
+
+function isElement(node: AnyNode): node is Element {
+  return nodeType(node) === 'tag'
+}
+
+/** The bitmap formats an `image` or `feImage` may carry inline as a `data:` URL. */
+const SVG_INLINE_BITMAP = /^data:image\/(?:png|jpeg|gif|webp)[;,]/
+
+/**
+ * Whether a URL in an SVG may stay: a reference to an element in the same document, a relative or web
+ * address, a `mailto:` on a link, and an inline bitmap on an image. Nothing else — `javascript:` above
+ * all, and a `data:` document, which is a second SVG that was never looked at.
+ *
+ * Read the way a browser reads it, which drops whitespace and control characters before it decides
+ * what the scheme is: `java&#9;script:` is `javascript:` by then. The parser has already decoded the
+ * entity, so what is left to undo is the characters it stood for.
+ */
+function isSafeSvgUrl(value: string, element: string): boolean {
+  // oxlint-disable-next-line no-control-regex
+  const url = value.replaceAll(/[\u0000- \u007f]/g, '').toLowerCase()
+  const scheme = /^([a-z][a-z0-9+.-]*):/.exec(url)?.[1]
+  if (!scheme) {
+    return true
+  }
+  if (scheme === 'http' || scheme === 'https') {
+    return true
+  }
+  if (scheme === 'mailto') {
+    return element === 'a'
+  }
+  return (element === 'image' || element === 'feImage') && SVG_INLINE_BITMAP.test(url)
+}
+
+/**
+ * An uploaded SVG with everything that could run taken out, or null if it is not an SVG at all.
+ *
+ * What the security settings' **Scan and Sanitize SVG Uploads** (`uploadScanSVG`) does to an upload.
+ * An SVG is a document: shown through an `<img>` it is inert, but opened at its own URL a browser
+ * runs whatever scripts it holds, in this origin, as whoever is signed in. So this keeps what draws
+ * and drops the rest, against lists of what is allowed rather than of what is known to be dangerous —
+ * an element, an attribute or a URL scheme nobody thought of is dropped by default.
+ *
+ * Parsed as XML and written back out by the same serializer, which escapes every text node it writes.
+ * That is the reason this is a walk over a parsed document rather than a pass through `sanitize-html`:
+ * that library writes the contents of a `<style>` out exactly as it found them, so a `]]>` inside a
+ * CDATA section in one can close the element and open a `<script>`.
+ *
+ * Everything outside the root element goes — an XML declaration, a doctype (whose internal subset the
+ * parser does not understand, and leaves behind as stray text that would make the file invalid),
+ * comments and processing instructions. The root must be an `svg`.
+ */
+export function sanitizeSvg(data: Buffer): Buffer | null {
+  const $ = cheerio.load(data.toString('utf8'), { xml: true })
+  const root = $.root()
+    .contents()
+    .filter((_, node) => isElement(node) && node.name === 'svg')
+  if (root.length !== 1) {
+    return null
+  }
+  $.root().contents().not(root).remove()
+
+  /** Keep what draws and drop the rest, in an element already allowed, and everything below it. */
+  const clean = (element: Element) => {
+    for (const [name, value] of Object.entries(element.attribs)) {
+      const allowed =
+        name === 'href' || name === 'xlink:href'
+          ? isSafeSvgUrl(value, element.name)
+          : SVG_ATTRIBUTES.has(name) || name.startsWith('aria-')
+      if (!allowed) {
+        delete element.attribs[name]
+      }
+    }
+    // -> A copy, since removing a node takes it out of the array being walked
+    for (const node of element.children.slice()) {
+      if (nodeType(node) === 'text' || nodeType(node) === 'cdata') {
+        continue
+      }
+      /*
+        An animation sets an attribute of its target to a value of its own, and an attribute it sets
+        is one nothing here ever looked at: `<animate attributeName="href" to="javascript:…">` on a
+        link is a script URL put back after the link was cleaned. Nothing legitimate animates a URL.
+      */
+      if (
+        !isElement(node) ||
+        !SVG_ELEMENTS.has(node.name) ||
+        ((node.name === 'animate' || node.name === 'set') &&
+          /href/i.test(node.attribs.attributeName ?? ''))
+      ) {
+        $(node).remove()
+        continue
+      }
+      clean(node)
+    }
+  }
+  clean(root[0] as Element)
+
+  return Buffer.from($.xml(), 'utf8')
 }
 
 /**

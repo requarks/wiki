@@ -853,7 +853,7 @@ onMounted(async () => {
   }
   > .w-dialog-viewport {
     // -> Equal margins all round until 1600px, where the sides can afford to be wider. Same rule and
-    //    same reasoning as `.main-overlay` in `MainLayout`, which the admin overlays match.
+    //    same reasoning as `.main-overlay` in `MainOverlayDialog`, which the admin overlays match.
     padding: 24px;
 
     @media (min-width: 1600px) {

@@ -78,6 +78,17 @@
 }
 
 /*
+  `cancel` -- see the theme below -- in the dark theme: lighter there, because the light theme's grey
+  would sink into a dark action bar. Overridden on <body> rather than mixed from another variable at
+  :root, since a custom property holding `var()` is resolved where it is declared, and a body-level
+  override of what it refers to would never reach it. The button's own `var(--color-cancel)` inherits
+  this instead; dialogs are teleported into <body>, so they are inside it.
+*/
+body.body--dark {
+  --color-cancel: #bdbdbd;
+}
+
+/*
   `static` (rather than a plain `@theme`) forces every variable below into the output even when no
   utility references it. That is load-bearing: the shared components take a `color` prop and resolve
   it at runtime as `var(--color-<name>)` in a style binding, rather than as a `bg-<name>` class.
@@ -134,6 +145,14 @@
   */
   --color-white: #fff;
   --color-black: #000;
+
+  /*
+    The Cancel button in a dialog's action bar: dark grey on the light bar, and a light one on the dark
+    bar (`body.body--dark` above). It used to be plain `grey`, which is what reads as disabled on the
+    light bar -- the label at about 2.5:1 against it. A name of its own rather than a step of the grey
+    ramp, because no single step is right in both themes.
+  */
+  --color-cancel: #616161;
 
   /* -- Wiki.js dark surface ramp (from the old css/_theme.scss) ------------ */
   --color-dark: #0d1117;

@@ -168,14 +168,14 @@ export function splitLocalePath(urlPath, prefixes) {
  *
  * Mirrors `RESERVED_ROOT_FILES` and `RESERVED_ROOT_PATHS` in the backend's `helpers/common.ts`.
  */
-const RESERVED_ROOT = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml', 'login', 'a', 'i'])
+const RESERVED_ROOT = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml', 'login', 'a', 'i', 'n'])
 
 /**
  * Whether a URL addresses the page tree rather than the application itself.
  *
  * Everything the app mounts for itself sits under `/_…`, which is what makes this a prefix test
- * rather than a list — except for the sign-in form and the two short links to a page, `/a/<alias>`
- * and `/i/<id>`, which predate that convention.
+ * rather than a list — except for the sign-in form, the two short links to a page, `/a/<alias>`
+ * and `/i/<id>`, which predate that convention, and a live note's `/n/<key>`.
  *
  * Mirrors `isPageUrl` in the backend's `helpers/common.ts`, and has to: the two answer the same
  * question about the same URL, one for a request that reaches the server and one for a link the

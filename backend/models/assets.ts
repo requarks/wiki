@@ -14,7 +14,8 @@ import {
   makeImageThumbnail,
   readImageDimensions,
   resizableFormats,
-  resizeImage
+  resizeImage,
+  sanitizeSvg
 } from '../helpers/images.ts'
 import type { ImageDimensions } from '../helpers/images.ts'
 import type { Readable } from 'node:stream'
@@ -389,7 +390,7 @@ class Assets {
     folderPath,
     fileName,
     mimeType,
-    data,
+    data: received,
     authorId
   }: {
     siteId: string
@@ -406,6 +407,8 @@ class Assets {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
     const fileExt = extensionOf(safeName)
+    // -> By the name it will be served under, since that is what makes a browser treat it as an SVG
+    const data = fileExt === 'svg' ? this.scanSvg(received) : received
     await this.guardAgainstPageCollision({
       siteId,
       locale,
@@ -554,6 +557,24 @@ class Assets {
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt
     }
+  }
+
+  /**
+   * An uploaded SVG as it is to be stored: sanitized when the security settings say to scan SVG
+   * uploads (`uploadScanSVG`, on by default), and as it came in when they do not.
+   *
+   * Refused when it is not an SVG at all — a file that only claims to be one by its name is no more
+   * use to anybody stored than sanitized.
+   */
+  private scanSvg(data: Buffer): Buffer {
+    if (!WIKI.config.security?.uploadScanSVG) {
+      return data
+    }
+    const sanitized = sanitizeSvg(data)
+    if (!sanitized) {
+      throw new CustomError('assetInvalidSvg', 'This file is not a valid SVG image.')
+    }
+    return sanitized
   }
 
   /**

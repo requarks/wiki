@@ -1,7 +1,7 @@
 <template>
   <w-layout class="page-history" view="hHh lpR fFf" container>
     <w-header class="card-header px-4 py-2">
-      <w-icon name="la:history" left size="md" />
+      <w-icon name="img:/_assets/icons/fluent-history.svg" left size="md" />
       <span>{{ t('history.title') }}</span>
       <!--
         Centred on the header itself rather than on the space left between the two groups of

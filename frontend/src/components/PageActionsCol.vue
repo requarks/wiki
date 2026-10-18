@@ -513,7 +513,8 @@ $sidebar-overlay-max: 1199.98px;
 $action-btn-height: 3rem;
 
 .page-actions {
-  flex: 0 0 56px;
+  // -> The editors' insert rail is the same width; see `$rail-width` in `css/_theme.scss`
+  flex: 0 0 $rail-width;
 
   /*
     Room at the foot of the rail for the button in the corner of the window -- scroll-to-top, or the
@@ -577,7 +578,8 @@ $action-btn-height: 3rem;
   &-mode {
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    padding: 1.75rem 1rem 1.75rem 0;
+    // -> Centred across the rail: a line of this text is 24px, with half of what is left either side
+    padding: 1.75rem calc(($rail-width - 24px) / 2) 1.75rem 0;
     color: $deep-orange-3;
     font-weight: 500;
   }

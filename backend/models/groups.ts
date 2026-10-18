@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid'
 import { and, count, eq, ilike, ne, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
-import { CustomError } from '../helpers/common.ts'
+import { CustomError, isNoteImagesPath } from '../helpers/common.ts'
 import { resolveLocaleRule, resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
 import type { FastifyRequest } from 'fastify'
@@ -346,9 +346,17 @@ class Groups {
    * the session's permission list, because that list says what a group was granted GLOBALLY and page
    * permissions are not granted that way — see `helpers/pageRules.ts` for how a rule is chosen.
    *
+   * Never for anything in the live notes' image folder (`NOTE_IMAGES_FOLDER`), whoever asks — not even
+   * `manage:system`. That folder is not content anybody browses, reorganises or writes into by path,
+   * and answering no here is what keeps it out of every listing and every route at once rather than
+   * one filter at a time. `/_files/` serves those images by a rule of its own.
+   *
    * @param permission A single page permission, e.g. `read:pages` or `read:history`
    */
   checkAccess(actor: AccessActor, permission: string, page: RulePageRef): boolean {
+    if (!LOCALE_PERMISSIONS.includes(permission) && isNoteImagesPath(page.path)) {
+      return false
+    }
     // -> Above the rules entirely: an administrator is not something a rule can lock out, and a
     //    wiki whose only administrator had denied themselves would have nobody left to fix it
     if (actor.permissions.includes('manage:system')) {

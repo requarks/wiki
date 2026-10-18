@@ -1330,6 +1330,42 @@ menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glos
 - **A page move with `updateLinks` takes the terms it documents along** (`glossary.relinkDocumentation`,
   from `relinkMovedPage`): rewritten in the same locale, cleared when the page leaves it.
 
+### Live notes
+
+A markdown scratch document written together in real time at `/n/<key>` (HedgeDoc-style), by anybody
+signed in who holds the URL. `models/liveNotes.ts`, `api/liveNotes.ts`, the note room in
+`core/collab.ts`; on the frontend `pages/LiveNote.vue`, `stores/liveNote.js`, and `EditorMarkdown.vue`
+under its `noteKey` prop. The site switch is `features.liveNotes`, which also needs
+`collaborativeEditing`.
+
+- **Not a page.** No tree entry, no page rules, no render, no save. The 24-character key (~143 bits,
+  `crypto`) is the credential, so it never goes in a listing, a log or an audit entry: record
+  `noteId`. Beyond the key, `liveNotes.rightsFor` is the only thing that decides access. Owners (the
+  creator, plus `manage:system`) can always do everything, and everybody else gets what `access`
+  allows (`editable` / `locked` / `private`). Every route and the socket ask it; nothing works it out
+  for itself.
+- **The collaboration room is the storage.** A note room (id `note:<noteId>`) persists its Yjs
+  document through `liveNotes.persist`: 2s after the last edit, at least every 10s while typing goes
+  on, and once more when it closes. It writes under the row lock and merges into what is stored,
+  because several instances may each hold the note open. `state` is the Yjs document itself, never
+  re-seeded from text, so a client that reconnects with offline edits merges into the same document
+  instead of duplicating it. `content` and `title` are derived from `state` on every write.
+  `titleOf` (backend) and `noteTitleOf` (`stores/liveNote.js`) must agree.
+- **Revisions** are whole copies, taken at most every `REVISION_INTERVAL_MS` (5 min) and when the last
+  participant leaves, and only when the content changed.
+- **Deleting a note or changing its access doesn't reach open rooms by itself.** The route calls
+  `collab.noteDeleted` / `collab.noteAccessChanged`, which disconnect people on every instance.
+- **Images** are uploaded the moment they are pasted, dropped or picked (`liveNotes.addImage`): into
+  the root folder `NOTE_IMAGES_FOLDER` (`n`) as `/_files/n/<uuid>.<ext>`, as ordinary assets, so
+  every storage target gets them. The type is read from the bytes (PNG, JPEG, GIF, WebP, SVG) and SVG
+  goes through `uploadScanSVG`. `groups.checkAccess` says no to every page permission under `n/` for
+  everybody, which is what hides it from the File Manager and every API. `/_files/` serves it to
+  anybody signed in instead, and the tree refuses `n` as a new root name. `liveNoteImages` lists each
+  note's images, and `liveNotes.delete` removes them with the note. The images are kept until then,
+  even after the text stops showing them, because a revision may still use them.
+- **Converting a note into a page is not built yet.** `content` is the source it would hand over, and
+  its images would have to move out of `n/`.
+
 ### Comments
 
 Two things wearing one name, and `models/comments.ts` is the seam between them. **Only one provider

@@ -1,4 +1,6 @@
-import { attachmentDisposition } from '../helpers/common.ts'
+import { attachmentDisposition, isNoteImagesPath } from '../helpers/common.ts'
+import { svgMimeType } from '../helpers/images.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
 import type { FastifyInstance } from 'fastify'
 
@@ -22,6 +24,14 @@ const FILE_CACHE = 'private, max-age=600, must-revalidate'
 function directAccessCacheSeconds(expiresInSeconds: number): number {
   return Math.max(1, Math.min(600, Math.floor(expiresInSeconds / 2)))
 }
+
+/**
+ * What an SVG from a live note is served with, scanned or not: nothing it might load or run. Opened at
+ * its own URL an SVG is a document, run in this origin, and anybody holding a note's key can add one.
+ * The policy `/_site` serves a site's SVG logo with, plus the inline bitmaps the scan lets an `image`
+ * element keep.
+ */
+const NOTE_SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
 
 /**
  * _files Routes
@@ -49,14 +59,22 @@ async function routes(app: FastifyInstance) {
     }
 
     const asset = await WIKI.models.assets.resolveAssetPath(site.id, req.params['*'] ?? '')
+    /*
+      A live note's image is not judged by page rules, which nobody writes for its folder and which
+      answer no there whatever they say (`checkAccess`). It is the note's own footing instead: anybody
+      signed in who holds the URL, its random name being what nobody can guess.
+    */
+    const isNoteImage = Boolean(asset && isNoteImagesPath(asset.folderPath))
     // -> Not readable is answered as not there, so the URL cannot be used to probe for files
     if (
       !asset ||
-      !WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), 'read:assets', {
-        siteId: site.id,
-        path: asset.folderPath ? `${asset.folderPath}/${asset.fileName}` : asset.fileName,
-        locale: asset.locale
-      })
+      (isNoteImage
+        ? !requestUserId(req)
+        : !WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), 'read:assets', {
+            siteId: site.id,
+            path: asset.folderPath ? `${asset.folderPath}/${asset.fileName}` : asset.fileName,
+            locale: asset.locale
+          }))
     ) {
       return reply.notFound('File not found')
     }
@@ -96,6 +114,9 @@ async function routes(app: FastifyInstance) {
     // -> The bytes came from a user, so the browser must take the type at its word rather than
     //    looking for something more interesting in them
     reply.header('X-Content-Type-Options', 'nosniff')
+    if (isNoteImage && asset.mimeType === svgMimeType) {
+      reply.header('Content-Security-Policy', NOTE_SVG_CSP)
+    }
     if (req.headers['if-none-match'] === etag) {
       return reply.code(304).send()
     }

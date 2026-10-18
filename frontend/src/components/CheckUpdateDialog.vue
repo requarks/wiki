@@ -54,7 +54,7 @@
           class="acrylic-btn"
           flat
           :label="state.isLoading ? t(`common.actions.cancel`) : t(`common.actions.close`)"
-          color="grey"
+          color="cancel"
           padding="xs md"
           @click="onDialogCancel" />
         <w-btn

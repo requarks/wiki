@@ -474,52 +474,6 @@ body.body--dark {
   background-color: $dark-6;
 }
 
-// -> Ported from the Quasar dialog internals onto WDialog's own structure:
-//    .q-dialog__backdrop -> .w-dialog-backdrop, .q-dialog__inner -> .w-dialog-viewport,
-//    .q-layout-container -> .w-dialog-panel
-.main-overlay {
-  > .w-dialog-backdrop {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px) saturate(180%);
-  }
-  > .w-dialog-viewport {
-    /*
-      Equal margins all round, until there is width to spare for more.
-
-      64px down each side is pitched for a wide desktop; on a 1280 or 1440 window it is an eighth of
-      the screen taken off a panel that is a file listing or a table, and the overlay ends up narrower
-      than the page it was opened from. Below 1600 the sides come in to match the 24px above and below,
-      which is the clearance that says "over the page" -- more than that is decoration.
-
-      1600 is this rule's own number, not one of the app's `--breakpoint-*`: it is where an overlay is
-      wide enough that 128px of it can go to margins without the content noticing.
-    */
-    padding: 24px;
-
-    @media (min-width: 1600px) {
-      padding: 24px 64px;
-    }
-
-    // -> Last of the three, so it still wins on a phone: all three have the same specificity
-    @media (max-width: $breakpoint-sm-max) {
-      padding: 0;
-    }
-
-    // -> The radius is WDialog's, and the panel clips to it there; this only adds the depth and the
-    //    title-bar strip an overlay wants on top of it
-    > .w-dialog-panel {
-      box-shadow: 0 0 30px 0 rgba(0, 0, 0, 0.3);
-
-      @at-root .body--light & {
-        background-image: linear-gradient(to bottom, $dark-5 10px, $grey-3 11px, $grey-4);
-      }
-      @at-root .body--dark & {
-        background-image: linear-gradient(to bottom, $dark-4 10px, $dark-4 11px, $dark-3);
-      }
-    }
-  }
-}
-
 // -> The `.q-footer .q-bar` rule that used to sit here never matched: FooterNav renders
 //    `.site-footer`, never a q-bar. Its colours live in FooterNav's own scoped style.
 

@@ -124,7 +124,7 @@
           flat
           icon="la:times"
           :label="t(`common.actions.cancel`)"
-          color="grey-7"
+          color="cancel"
           padding="xs md"
           @click="onDialogCancel" />
         <w-btn

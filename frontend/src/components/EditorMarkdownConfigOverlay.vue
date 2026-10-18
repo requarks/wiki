@@ -154,6 +154,22 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
+            <blueprint-icon icon="right-navigation-toolbar" />
+            <w-item-section>
+              <w-item-label>{{t(`admin.editors.markdown.minimap`)}}</w-item-label>
+              <w-item-label caption>{{t(`admin.editors.markdown.minimapHint`)}}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.minimap"
+                color="primary"
+                checked-icon="la:check"
+                unchecked-icon="la:times"
+                :aria-label="t(`admin.editors.markdown.minimap`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
             <blueprint-icon icon="asterisk" />
             <w-item-section>
               <w-item-label>{{t(`admin.editors.markdown.typographer`)}}</w-item-label>
@@ -269,6 +285,7 @@ function defaultConfig() {
     quotes: 'english',
     underline: true,
     tabWidth: 2,
+    minimap: false,
     multimdTable: true,
     wikiLinks: true,
     inlineMath: 'katex'

@@ -54,7 +54,7 @@
           <w-item-section side>
             <w-icon name="la:angle-right" />
           </w-item-section>
-          <page-new-menu hide-asset-btn @new-page="close" />
+          <page-new-menu hide-asset-btn offer-live-note @new-page="close" />
         </w-item>
         <!-- -> A submenu for the same reason as New Page above: the wide header's folder button is a menu
                 too, and this opens the same one. Everybody's, since only its File Manager row is gated -->

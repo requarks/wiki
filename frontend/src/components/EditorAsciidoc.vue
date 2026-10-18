@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-asciidoc">
+  <div class="editor-asciidoc" :class="{ 'has-contents': contentsLaidOut }">
     <div class="editor-asciidoc-main">
       <div class="editor-asciidoc-sidebar">
         <!-- ------------------------------------------------------- -->
@@ -223,16 +223,28 @@
               t('editor.markup.keyboardKey')
             }}</w-tooltip>
           </w-btn>
-          <!-- -> The only way back once the preview is closed: its own toggle goes with it -->
-          <template v-if="!state.previewShown">
+          <!-- -> The only way back once a pane is closed: its own toggle goes with it. One spacer
+                  for both, so that with both closed they sit together at the right end -->
+          <template v-if="!panes.previewShown || contentsClosed">
             <w-space />
             <w-btn
+              v-if="!panes.previewShown"
               icon="mdi:view-split-vertical"
               padding="xs sm"
               flat
-              @click="state.previewShown = true">
+              @click="panes.previewShown = true">
               <w-tooltip anchor="top middle" self="bottom middle">{{
                 t('editor.togglePreviewPane')
+              }}</w-tooltip>
+            </w-btn>
+            <w-btn
+              v-if="contentsClosed"
+              icon="mdi:table-of-contents"
+              padding="xs sm"
+              flat
+              @click="panes.contentsOpen = true">
+              <w-tooltip anchor="top middle" self="bottom middle">{{
+                t('editor.contents.toggle')
               }}</w-tooltip>
             </w-btn>
           </template>
@@ -243,29 +255,45 @@
         <div class="editor-asciidoc-editor"><div ref="monacoRef" /></div>
       </div>
       <transition name="editor-asciidoc-preview">
-        <div class="editor-asciidoc-preview" v-if="state.previewShown">
-          <div class="editor-asciidoc-preview-toolbar">
+        <div class="editor-asciidoc-preview" v-if="panes.previewShown">
+          <!-- -> No brickwork into the actions rail while the Contents pane stands between them -->
+          <div class="editor-asciidoc-preview-toolbar" :class="{ 'is-railless': contentsLaidOut }">
             <strong class="editor-asciidoc-preview-label"
               ><em>{{ t('editor.renderPreview') }}</em></strong
             >
-            <w-separator class="ml-4 mr-2" vertical inset dark />
+            <w-space />
             <w-btn
-              icon="mdi:arrow-vertical-lock"
+              icon="mdi:dots-horizontal"
               padding="xs sm"
               flat
-              @click="state.previewScrollSync = !state.previewScrollSync"
-              :color="state.previewScrollSync ? `secondary` : null">
+              :aria-label="t(`editor.previewMenu`)"
+              @click="state.previewMenuShown = !state.previewMenuShown">
+              <!--
+                -> Held open rather than `auto-close`, so flipping Scroll Sync leaves the menu up to
+                   show it took. Hiding the pane closes it by hand: the button stays mounted for the
+                   length of the pane's slide out, and the menu with it
+              -->
+              <w-menu v-model="state.previewMenuShown" anchor="bottom right" self="top right">
+                <w-list dense padding>
+                  <w-item tag="label">
+                    <w-item-section side><w-icon name="mdi:arrow-vertical-lock" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('editor.previewScrollSync') }}</w-item-label>
+                    </w-item-section>
+                    <w-item-section side>
+                      <w-toggle v-model="panes.previewScrollSync" dense />
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="hidePreview">
+                    <w-item-section side><w-icon name="mdi:eye-off-outline" /></w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('editor.hidePreviewPane') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                </w-list>
+              </w-menu>
               <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.toggleScrollSync')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:eye-off-outline"
-              padding="xs sm"
-              flat
-              @click="state.previewShown = false">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.togglePreviewPane')
+                t('editor.previewMenu')
               }}</w-tooltip>
             </w-btn>
           </div>
@@ -283,6 +311,19 @@
             v-html="pageStore.render" />
         </div>
       </transition>
+      <!-- ------------------------------------------------------- -->
+      <!-- CONTENTS -->
+      <!-- ------------------------------------------------------- -->
+      <!-- -> Slides out to the right and back as the preview does; see `contentsLaidOut` for the rest -->
+      <transition name="editor-contents" @after-leave="contentsLeft">
+        <editor-contents-pane
+          v-if="contentsShown"
+          :headings="headings"
+          :cursor-line="cursorLine"
+          @go-to-line="goToLine"
+          @go-to-end="goToEnd"
+          @hide="panes.contentsOpen = false" />
+      </transition>
     </div>
   </div>
 </template>
@@ -293,6 +334,7 @@ import {
   defineAsyncComponent,
   reactive,
   ref,
+  shallowRef,
   nextTick,
   onMounted,
   watch,
@@ -308,9 +350,9 @@ import {
   stopCollabSession
 } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
+import { useEditorPanes } from '@/composables/editorPanes'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
-import { useMinWidth } from '@/composables/screen'
 import { isVisible } from '@/helpers/anchors'
 import { assetPath } from '@/helpers/assets'
 import { blockAsciidoc } from '@/helpers/blocks'
@@ -329,6 +371,7 @@ import { findImages, imageValues, writeImage } from '@/helpers/asciidocImages'
 import { ASCIIDOC_LANGUAGE_ID, registerAsciidocLanguage } from '@/helpers/monacoAsciidoc'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
+import EditorContentsPane from '@/components/EditorContentsPane.vue'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 
@@ -439,12 +482,6 @@ const HEADER_ICONS = [
  */
 const PREVIEW_CONTEXT_ABOVE = 0.2
 
-/**
- * Whether the window is wide enough to open the preview beside the source. 1024 is the app's `md`
- * breakpoint (`css/tailwind.css`).
- */
-const isAtLeastMd = useMinWidth(1024)
-
 /** The "Image Properties" lens, over every image in the source. See `useImagePropertiesLens`. */
 const imageLens = useImagePropertiesLens({
   getEditor: () => editor,
@@ -468,12 +505,21 @@ const blockCompletions = useBlockCompletions({
   blockSnippet
 })
 
+/** The preview and the Contents pane, remembered per browser. See `useEditorPanes`. */
+const { panes, contentsShown, contentsLaidOut, contentsLeft, contentsClosed } = useEditorPanes()
+
 const state = reactive({
-  // -> Read once, as a DEFAULT rather than a binding: past this the pane is the author's to open and
-  //    close, and a bound one would slam it shut the moment a window was dragged narrower mid-edit
-  previewShown: isAtLeastMd.value,
-  previewScrollSync: true
+  previewMenuShown: false
 })
+
+/**
+ * The document's headings, as the last render found them -- see `renderWithHeadings` in
+ * `renderers/asciidoc.js`. Replaced wholesale on each render rather than mutated.
+ */
+const headings = shallowRef([])
+
+/** The line the caret is on, for marking which section of the Contents pane is being written in. */
+const cursorLine = ref(1)
 
 /**
  * The render in flight, so a slow one cannot land on top of a newer one.
@@ -485,6 +531,32 @@ const state = reactive({
 let renderTicket = 0
 
 // METHODS
+
+/** The preview menu's Hide item -- closing the menu first, which would otherwise ride the pane out. */
+function hidePreview() {
+  state.previewMenuShown = false
+  panes.previewShown = false
+}
+
+/**
+ * Take the editor to a line: scrolled to near the top, with the caret at its start. Moving the caret
+ * is also what brings the preview along, when it is following the source -- see the cursor handler.
+ */
+function goToLine(line) {
+  // -> Focus first: focusing reveals the caret at once, which cancels a smooth scroll already under way
+  editor.focus()
+  editor.setPosition({ lineNumber: line, column: 1 })
+  editor.revealLineNearTop(line, monaco.editor.ScrollType.Smooth)
+}
+
+/** The end of the document, with the caret after its last character, ready to carry on writing. */
+function goToEnd() {
+  const model = editor.getModel()
+  const lineNumber = model.getLineCount()
+  editor.focus()
+  editor.setPosition({ lineNumber, column: model.getLineMaxColumn(lineNumber) })
+  editor.revealLine(lineNumber, monaco.editor.ScrollType.Smooth)
+}
 
 function insertAssets() {
   siteStore.openFileManager({ insertMode: true })
@@ -1187,11 +1259,14 @@ async function processContent(newContent) {
     one. Loud rather than silent, because the preview is then showing something other than the source.
   */
   const ticket = ++renderTicket
-  let html
+  let rendered
   try {
     // -> The page's own path, because a relative image in the source is relative to the folder it
     //    sits in -- and it is being edited, so it is whatever the path field says right now
-    html = await adoc.render(newContent, { pagePath: pageStore.path, sourcemap: true })
+    rendered = await adoc.renderWithHeadings(newContent, {
+      pagePath: pageStore.path,
+      sourcemap: true
+    })
   } catch (err) {
     console.error(err)
     notify({
@@ -1224,7 +1299,8 @@ async function processContent(newContent) {
     (el) => el.active ?? 0
   )
 
-  pageStore.setRender(html)
+  pageStore.setRender(rendered.html)
+  headings.value = rendered.headings
   await nextTick()
   // -> With the preview pane closed there is no DOM to attend to. The render is stored either way, so
   //    the store still holds what a save would send
@@ -1442,6 +1518,9 @@ onMounted(async () => {
     formatOnType: true,
     language: ASCIIDOC_LANGUAGE_ID,
     lineNumbersMinChars: 4,
+    // -> The site's choice, under Admin -> Editors -> AsciiDoc. Off unless it says otherwise, which is
+    //    also what a site that has never saved the option gets
+    minimap: { enabled: editorStore.editors.asciidoc?.minimap === true },
     padding: { top: 10, bottom: 10 },
     scrollBeyondLastLine: false,
     tabSize: 2,
@@ -1575,10 +1654,15 @@ onMounted(async () => {
   // -> Handle content change
   editor.onDidChangeModelContent(syncContentToStore)
 
+  // -> Which section of the Contents pane the caret is in. Not debounced: it is one number
+  editor.onDidChangeCursorPosition((ev) => {
+    cursorLine.value = ev.position.lineNumber
+  })
+
   // -> Handle cursor movement
   editor.onDidChangeCursorPosition(
     debounce(async () => {
-      if (!state.previewScrollSync || !state.previewShown) {
+      if (!panes.previewScrollSync || !panes.previewShown) {
         return
       }
       /*
@@ -1744,6 +1828,14 @@ $editor-height: calc(100vh - 64px - 96px);
 $editor-preview-height: calc(100vh - 64px - 96px - 32px);
 
 .editor-asciidoc {
+  /*
+    The Contents pane's width, and what of it the preview's measure has to allow for -- as in
+    `EditorMarkdown.vue`, which sets out why there are two.
+  */
+  --editor-contents-size: 200px;
+  &.has-contents {
+    --editor-contents-width: var(--editor-contents-size);
+  }
   &-main {
     display: flex;
     width: 100%;
@@ -1818,6 +1910,15 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       color: $grey-6;
 
       @include brick-transition($dark-2);
+
+      // -> The menu at the right end kept clear of the brickwork, as in the markdown editor
+      padding-right: calc(var(--brick) * 6 + 0.5rem);
+
+      // -> With the Contents pane beside it, the bar that meets the rail is that pane's
+      &.is-railless {
+        background-image: none;
+        padding-right: 1rem;
+      }
     }
 
     &-label {
@@ -1827,7 +1928,8 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       height: $editor-preview-height;
       overflow-y: scroll;
       padding: 1rem;
-      max-width: calc(50vw - 57px);
+      // -> Half the window, less half of each rail -- which, the two being the same width, is one of them
+      max-width: calc(50vw - #{$rail-width} - 1px - var(--editor-contents-width, 0px) / 2);
 
       /*
         The site theme's Centered content width, so the preview wraps where the page will. The pane is
@@ -1839,7 +1941,16 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       */
       &.is-centered {
         --content-bleed: 0px;
-        padding-inline: max(1rem, calc((min(100%, 50vw - 57px) - $content-centered-max-width) / 2));
+        padding-inline: max(
+          1rem,
+          calc(
+            (
+                min(100%, 50vw - #{$rail-width} - 1px - var(--editor-contents-width, 0px) / 2) -
+                  $content-centered-max-width
+              ) /
+              2
+          )
+        );
       }
 
       > div {
@@ -1910,7 +2021,13 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
     background-color: $dark-4;
     border-top: 32px solid color.adjust($primary, $lightness: -10%);
     color: #fff;
-    width: 56px;
+    /*
+      The actions rail's width (`$rail-width`), and held to it: as a flex item this could otherwise
+      shrink, and did -- the source and the preview take half the row each, so with the Contents pane
+      beside them the row overflows and every item gave up its share, this one included.
+    */
+    flex: 0 0 $rail-width;
+    width: $rail-width;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
