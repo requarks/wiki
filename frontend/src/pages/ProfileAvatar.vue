@@ -56,9 +56,12 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 
+import { dialog } from '@/composables/dialog'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { computed, reactive } from 'vue'
+
+import AvatarCropDialog from '@/components/AvatarCropDialog.vue'
 
 import { useAuthConfigStore } from '@/stores/authConfig'
 import { useUserStore } from '@/stores/user'
@@ -97,7 +100,7 @@ async function uploadImage() {
   input.type = 'file'
   input.accept = acceptedTypes.join(',')
 
-  input.onchange = async (e) => {
+  input.onchange = (e) => {
     const file = e.target.files?.[0]
     if (!file) {
       return
@@ -112,37 +115,45 @@ async function uploadImage() {
       })
       return
     }
-    state.loading++
-    try {
-      // -> The image is the request body itself: the endpoint takes the raw file, not a form
-      const resp = await API_CLIENT.put('users/profile/avatar', {
-        body: file,
-        headers: {
-          'content-type': file.type
-        }
-      }).json()
-      if (!resp?.ok) {
-        throw new Error(resp?.message || 'An unexpected error occured.')
-      }
-      notify({
-        type: 'positive',
-        message: t('profile.avatarUploadSuccess')
-      })
-      state.assetTimestamp = new Date().toISOString()
-      userStore.$patch({
-        hasAvatar: true
-      })
-    } catch (err) {
-      notify({
-        type: 'negative',
-        message: t('profile.avatarUploadFailed'),
-        caption: err.message
-      })
-    }
-    state.loading--
+    // -> What is uploaded is the crop, never the file itself
+    dialog({
+      component: AvatarCropDialog,
+      componentProps: { file }
+    }).onOk(saveImage)
   }
 
   input.click()
+}
+
+async function saveImage(image) {
+  state.loading++
+  try {
+    // -> The image is the request body itself: the endpoint takes the raw file, not a form
+    const resp = await API_CLIENT.put('users/profile/avatar', {
+      body: image,
+      headers: {
+        'content-type': image.type
+      }
+    }).json()
+    if (!resp?.ok) {
+      throw new Error(resp?.message || 'An unexpected error occured.')
+    }
+    notify({
+      type: 'positive',
+      message: t('profile.avatarUploadSuccess')
+    })
+    state.assetTimestamp = new Date().toISOString()
+    userStore.$patch({
+      hasAvatar: true
+    })
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('profile.avatarUploadFailed'),
+      caption: err.message
+    })
+  }
+  state.loading--
 }
 
 async function clearImage() {
