@@ -19,7 +19,7 @@
  */
 
 /** Attributes the renderer stamps for the preview pane, which `models/rendering.ts` strips on save. */
-const PREVIEW_ARTIFACTS = /\s*data-line="\d+"/g
+const PREVIEW_ARTIFACTS = /\s*data-line(?:-end)?="\d+"/g
 
 /**
  * A render reduced to what it actually says.
@@ -30,12 +30,7 @@ const PREVIEW_ARTIFACTS = /\s*data-line="\d+"/g
  * word of the page.
  */
 function meaningOf(html) {
-  return html
-    .replace(PREVIEW_ARTIFACTS, '')
-    .replace(/\bclass="line"/g, '')
-    .replace(/\bline\b ?/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return html.replace(PREVIEW_ARTIFACTS, '').replace(/\s+/g, ' ').trim()
 }
 
 /**

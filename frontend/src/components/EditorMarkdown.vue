@@ -424,12 +424,12 @@ import {
 } from '@/composables/collab'
 import { dialog } from '@/composables/dialog'
 import { useEditorPanes } from '@/composables/editorPanes'
+import { usePreviewScrollSync } from '@/composables/previewScrollSync'
 import { useFenceCompletions } from '@/composables/fenceCompletions'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { useTableCellNavigation } from '@/composables/tableCellNavigation'
 import { useTagCompletions } from '@/composables/tagCompletions'
-import { isVisible } from '@/helpers/anchors'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown } from '@/helpers/blocks'
@@ -445,7 +445,6 @@ import {
 } from '@/helpers/markdownBlocks'
 import { findImages, imageValues, writeImage } from '@/helpers/markdownImages'
 import { findEditableTables, tableRowToAdd, tableWithColumnAdded } from '@/helpers/markdownTable'
-import { scrollBehavior } from '@/helpers/motion'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorContentsPane from '@/components/EditorContentsPane.vue'
@@ -604,29 +603,6 @@ const HEADER_ICONS = [
   'mdi:format-header-6'
 ]
 
-/*
-  How the preview follows the caret: the line being edited is put a SHORT WAY down the pane.
-
-  Not at its top, which is what this replaces. The top is exact, and that is the problem with it -- it
-  scrolls away everything written just above the caret, which is the paragraph the next one is being
-  written against, so the author is left editing at the edge of a pane with no context on one side of
-  it. Expressed as a fraction of the pane rather than a fixed inset so that a preview half the height
-  gives up half as much of itself to the lines already written.
-
-  `nearest` is not the answer either, at any offset: it leaves a line alone as long as it is visible
-  anywhere, so a line sitting on the last row of the pane stays there, with what is being written pinned
-  to the bottom edge and nothing after it in view. The position is computed and applied on every caret
-  move, and costs nothing when the caret stays put -- the arithmetic lands on the offset the pane is
-  already scrolled to and nothing moves. What used to make this thrash was the pane losing its scroll
-  position to the re-render -- see `processContent` -- and animating up from the top of the document each
-  time, not the alignment asked for here.
-
-  Scrolling the container rather than asking an element to bring itself into view also means a wide block
-  -- a table, a diagram -- is never scrolled sideways as a side effect of following the caret down the
-  page.
-*/
-const PREVIEW_CONTEXT_ABOVE = 0.2
-
 /** The "Image Properties" lens, over every image in the source. See `useImagePropertiesLens`. */
 const imageLens = useImagePropertiesLens({
   getEditor: () => editor,
@@ -664,6 +640,15 @@ const tableCellNavigation = useTableCellNavigation({
 
 /** The preview and the Contents pane, remembered per browser. See `useEditorPanes`. */
 const { panes, contentsShown, contentsLaidOut, contentsLeft, contentsClosed } = useEditorPanes()
+
+/** The preview following the source as either is scrolled. See `usePreviewScrollSync`. */
+const previewScrollSync = usePreviewScrollSync({
+  getEditor: () => editor,
+  previewRef: editorPreviewContainerRef,
+  isEnabled: () => panes.previewScrollSync && panes.previewShown,
+  // -> The panel the caret is written in has to be open before there is anything of it to show
+  beforeReveal: () => syncPreviewTabs()
+})
 
 const state = reactive({
   previewMenuShown: false
@@ -723,8 +708,8 @@ function hidePreview() {
 }
 
 /**
- * Take the editor to a line: scrolled to near the top, with the caret at its start. Moving the caret
- * is also what brings the preview along, when it is following the source -- see the cursor handler.
+ * Take the editor to a line: scrolled to near the top, with the caret at its start. The scroll is
+ * what brings the preview along, when it is following the source -- see `usePreviewScrollSync`.
  */
 function goToLine(line) {
   // -> Focus first: focusing reveals the caret at once, which cancels a smooth scroll already under way
@@ -1623,67 +1608,6 @@ function syncPreviewTabs() {
   return Promise.all(drawn)
 }
 
-/**
- * The element in the preview to scroll to for a source line.
- *
- * Read off the DOM rather than from a map collected during the render, because what matters is what
- * was actually drawn and where it ended up: a token can be parsed and then not rendered (a tight
- * list's paragraphs), and a footnote's definition is rendered at the foot of the page rather than on
- * the line it was written on. Lines are compared as numbers for the same reason -- the greatest line
- * at or before the caret, wherever in the page its element happens to sit.
- *
- * Two things narrow the search, and both are about tabs:
- *
- * - **Scoped to the panel the line is in**, where it is in one. Every panel of a tabset covers the
- *   same lines of the preview, and the panels that are closed hold most of the page's lines -- so a
- *   search across the whole preview would answer a line inside a panel with an element outside the
- *   tabset entirely, and scrolling there is what took the author away from what they were writing.
- * - **Only what has a box.** A closed panel's content is stamped with its lines like everything else
- *   and cannot be scrolled to; picking it would mean scrolling nowhere at all, having passed over the
- *   element that could have been reached.
- *
- * The panel itself stands in when nothing inside it carries a line -- a lone paragraph, a table, a
- * list -- which puts the top of the tabset in view, and is as close as there is to get.
- */
-function previewAnchorFor(container, line) {
-  // -> The last of the chain is the panel the line is written in; the ones before it are its ancestors,
-  //    which `syncPreviewTabs` has already opened
-  const at = md.getTabsAtLine(line).at(-1)
-  const tabset = at ? container.querySelectorAll('block-tabs')[at.tabset] : null
-  const panel = tabset?.querySelectorAll(':scope > block-tab')[at.tab] ?? null
-
-  let best = null
-  let bestLine = 0
-  for (const el of (panel ?? container).querySelectorAll('[data-line]')) {
-    const elLine = Number(el.dataset.line)
-    // -> Strictly greater, so that of two elements starting on the same line -- a blockquote and the
-    //    paragraph opening it -- the outer one wins, which is the one whose top is the section's top
-    if (elLine <= line && elLine > bestLine && isVisible(el)) {
-      best = el
-      bestLine = elLine
-    }
-  }
-  return best ?? panel
-}
-
-/**
- * Scroll the preview so that `el` sits `PREVIEW_CONTEXT_ABOVE` of the way down the pane.
- *
- * Measured through `getBoundingClientRect` rather than `offsetTop`, because what is wanted is the
- * distance to the SCROLL container and `offsetTop` answers to the nearest positioned ancestor -- which
- * inside rendered page content is whatever a block happened to put around it.
- *
- * A negative result is clamped by `scrollTo`, so an anchor near the top of the document puts the
- * document's own top in view rather than leaving a gap above it.
- */
-function scrollPreviewTo(container, el) {
-  const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top
-  container.scrollTo({
-    top: container.scrollTop + offset - container.clientHeight * PREVIEW_CONTEXT_ABOVE,
-    behavior: scrollBehavior()
-  })
-}
-
 function processContent(newContent) {
   /*
     A render that throws must not become a render that is empty.
@@ -1714,9 +1638,8 @@ function processContent(newContent) {
     it throws every child away and builds them again, on every keystroke.
 
     Where the reader had scrolled to is the first. An emptied box has nowhere to be scrolled to, so its
-    `scrollTop` is clamped to zero; the cursor handler then animated back down from the top of the
-    document to the line being typed, over and over, which is what made the preview appear to fly about
-    while typing in a long page.
+    `scrollTop` is clamped to zero, which threw the preview back to the top of the document on every
+    keystroke -- and the scroll sync, whatever its rules, would then have to bring it back from there.
 
     Which tab is open is the second. A block is a custom element with state of its own, and a rebuilt one
     starts again from its defaults -- so typing in the second panel of a tabset kept throwing the author
@@ -1753,10 +1676,11 @@ function processContent(newContent) {
       of a whole panel. With a rebuilt tabset showing its first panel, a position inside a taller one is
       past the end of a shorter document, so the browser clamps it -- and then scroll anchoring hands back
       a different position again as the real panel opens. Measured at 800px of drift on a short-first,
-      tall-second tabset, which the caret sync then animated back from on every keystroke.
+      tall-second tabset, which the scroll sync then had to make up on every keystroke.
     */
     await Promise.all(tabsets.map((el) => el.updateComplete ?? Promise.resolve()))
     container.scrollTop = scrollTop
+    previewScrollSync.rendered()
     const pendingTags = new Set()
     for (const block of container.querySelectorAll(':not(:defined)')) {
       const tag = block.tagName.toLowerCase()
@@ -2287,35 +2211,8 @@ onMounted(async () => {
     cursorLine.value = ev.position.lineNumber
   })
 
-  // -> Handle cursor movement
-  editor.onDidChangeCursorPosition(
-    debounce(async (ev) => {
-      if (!panes.previewScrollSync || !panes.previewShown) {
-        return
-      }
-      /*
-        Moving the caret into another panel opens it, the same as typing in one does -- and is AWAITED,
-        because until the block has drawn it the panel is still `display: none`, and everything below
-        aims at an element inside it. Scrolling to something with no box does nothing whatsoever, which
-        is what made the sync appear to ignore a caret inside a tab that was not already open.
-      */
-      await syncPreviewTabs()
-      // -> Read again rather than reused from before the await: the caret is where it is now
-      const currentLine = editor.getPosition().lineNumber
-      const container = editorPreviewContainerRef.value
-      if (!container) {
-        return
-      }
-      if (currentLine < 3) {
-        container.scrollTo({ top: 0, behavior: scrollBehavior() })
-        return
-      }
-      const anchor = previewAnchorFor(container, currentLine)
-      if (anchor) {
-        scrollPreviewTo(container, anchor)
-      }
-    }, 500)
-  )
+  // -> Preview scroll sync
+  previewScrollSync.register()
 
   /*
     Files arriving by paste or by drop.
@@ -2485,6 +2382,7 @@ onBeforeUnmount(() => {
     it gets here: the upload runs before the page goes up, not after.
   */
   editorStore.clearPendingAssets()
+  previewScrollSync.dispose()
   if (editor) {
     editor.dispose()
   }

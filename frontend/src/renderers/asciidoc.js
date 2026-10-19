@@ -395,7 +395,7 @@ ${await node.content()}
       const checked = item.hasAttribute('checked') ? ' checked' : ''
       const blocks = item.hasBlocks() ? `\n${await item.content()}` : ''
       items.push(
-        `<li class="task-list-item"><input class="task-list-item-checkbox" type="checkbox" disabled${checked}>${item.getText()}${blocks}</li>`
+        `<li class="task-list-item"${this.lineAttr(item)}><input class="task-list-item-checkbox" type="checkbox" disabled${checked}>${item.getText()}${blocks}</li>`
       )
     }
     return `${title}<ul${idAttr} class="${classes}"${this.lineAttr(node)}>\n${items.join('\n')}\n</ul>`
@@ -472,7 +472,7 @@ ${await node.content()}
           ? ` class="${item.role}"`
           : ''
       const blocks = item.hasBlocks() ? `\n${await item.content()}` : ''
-      items.push(`<li${itemAttrs}><p>${item.getText()}</p>${blocks}</li>`)
+      items.push(`<li${itemAttrs}${this.lineAttr(item)}><p>${item.getText()}</p>${blocks}</li>`)
     }
     return `${title}<${tag}${idAttr}${attrs}${this.lineAttr(node)}>\n${items.join('\n')}\n</${tag}>`
   }

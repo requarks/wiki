@@ -395,29 +395,32 @@ export class MarkdownRenderer {
     // --------------------------------
 
     /*
-      Stamped at every depth, not only on the tokens sitting at the top level of the document. The
-      editor finds the line the caret is on by this attribute and nothing else, so a token without one
-      is a line the preview cannot be scrolled to -- and everything written inside a block was such a
-      line, `::block-tab` panels most of all. What that looked like: the nearest line the editor could
-      find for a caret inside a panel was the last paragraph ABOVE the whole tabset, so the preview
-      scrolled up out of the panel being written in, however long its content was.
+      Every block that opens an element is stamped with the source lines it spans -- `data-line` the
+      first, `data-line-end` the last -- which is all the editor's scroll sync knows about where the
+      source and the preview line up (see `composables/previewScrollSync.js`).
 
-      A hidden token is skipped. A tight list's paragraphs are parsed and then not rendered, and a
-      single-paragraph block body is unwrapped the same way, so stamping one would leave the editor
-      looking for an element that was never drawn -- worse than not knowing the line, since it would
-      stop looking for something it could have scrolled to instead.
+      Every block, at every depth, rather than a chosen few. What the sync does between two stamped
+      elements is interpolate, so the further apart they are the less it knows: a long list stamped only
+      on its paragraphs had nothing to go on at all in a tight one, whose paragraphs are not drawn, and
+      put the whole list at the line it started on. A list item, a table row, a definition and a tab
+      panel each carry their own, and so does the END of each, which is what keeps a tall element -- an
+      image, a diagram -- from smearing its height across the lines that come after it.
+
+      A core rule at the end of the chain rather than a renderer rule per token type, because the plugins
+      bring block types of their own and a list of them would only ever be missing one. An element whose
+      renderer writes its own markup ignores the attributes, which costs nothing. A hidden token is
+      skipped: it is parsed and never drawn, so its lines belong to the element around it.
     */
-    const injectLineNumbers = (tokens, idx, options, env, slf) => {
-      const token = tokens[idx]
-      if (token.map && !token.hidden) {
-        token.attrJoin('class', 'line')
-        token.attrSet('data-line', String(token.map[0] + 1))
+    this.md.core.ruler.push('source_lines', (state) => {
+      for (const token of state.tokens) {
+        if (token.nesting === 1 && token.map && !token.hidden) {
+          token.attrSet('data-line', String(token.map[0] + 1))
+          // -> `map` ends exclusively and from zero, which is the last line counted from one. Never
+          //    before the first: a definition list's term comes out with an empty range
+          token.attrSet('data-line-end', String(Math.max(token.map[1], token.map[0] + 1)))
+        }
       }
-      return slf.renderToken(tokens, idx, options, env, slf)
-    }
-    this.md.renderer.rules.paragraph_open = injectLineNumbers
-    this.md.renderer.rules.heading_open = injectLineNumbers
-    this.md.renderer.rules.blockquote_open = injectLineNumbers
+    })
 
     /*
       CODE BLOCKS
@@ -441,12 +444,11 @@ export class MarkdownRenderer {
       washes the rows it names. See `codeBlock` for the last two and `parseFenceAttributes` for the
       shape of all three. A diagram fence ignores them -- it is a source for something else to draw.
 
-      The line the fence sits on is stamped into the markup rather than onto the token, since the token
-      is not what renders it. It is worth the string surgery for the case the preview's scroll sync
-      exists for: a tabset whose panels each hold one long code sample -- per language, per platform --
-      is the commonest tabset there is, and exactly the one where the caret has no anchor of its own.
-      The attribute only, without the `line` class the tokens above join, because it would have to go on
-      a tag that already carries a class and two `class` attributes on one tag is not markup.
+      The lines the fence spans are stamped into the markup rather than onto the token, since the token
+      is not what renders it -- and a fence is a leaf, so the core rule above never reaches it. It is
+      worth the string surgery for the case the preview's scroll sync exists for: a tabset whose panels
+      each hold one long code sample -- per language, per platform -- is the commonest tabset there is,
+      and exactly the one where the source has no anchor in the preview but this one.
     */
     this.md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx]
@@ -466,7 +468,9 @@ export class MarkdownRenderer {
       )
 
       const html = codeBlock(token.content, lang, attributes)
-      const line = token.map ? ` data-line="${token.map[0] + 1}"` : ''
+      const line = token.map
+        ? ` data-line="${token.map[0] + 1}" data-line-end="${token.map[1]}"`
+        : ''
       const title = (attributes.title ?? '').trim()
 
       /*

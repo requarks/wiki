@@ -420,7 +420,7 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
 const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel', 'ftp']
 
 /** Attributes the editor adds for its own preview and that mean nothing in a stored page. */
-const EDITOR_ARTIFACT_ATTRIBUTES = ['data-line']
+const EDITOR_ARTIFACT_ATTRIBUTES = ['data-line', 'data-line-end']
 
 /**
  * An icon dimension as a CSS length, or nothing when it is not one.
