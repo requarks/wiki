@@ -15,6 +15,7 @@ import mdMdc from 'markdown-it-mdc'
 import mdUnderline from './modules/markdown-it-underline'
 import mdImsize from './modules/markdown-it-imsize'
 import mdGithubAlerts from './modules/github-alerts'
+import mdBlockquoteAuthor from './modules/blockquote-author'
 import mdWikiLinks from './modules/markdown-it-wikilinks'
 import mdInlineMath from './modules/markdown-it-inline-math'
 import twemoji from '@twemoji/api'
@@ -179,6 +180,7 @@ export class MarkdownRenderer {
       .use(mdFootnote)
       .use(mdImsize)
       .use(mdGithubAlerts)
+      .use(mdBlockquoteAuthor)
 
     /*
       MDC's slot syntax, off for the same reason as inline components: it takes a line the author

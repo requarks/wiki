@@ -1251,6 +1251,52 @@
     > :last-child {
       margin-bottom: 0;
     }
+
+    /*
+      Who the quote is from -- `> [name=John Doe]`, which `renderers/modules/blockquote-author.js`
+      turns into this line at the top of the quote: a dash, a person icon and the name. Close above the
+      text it attributes rather than a paragraph's distance from it, and fainter than the quote itself,
+      all of it: a byline sits behind the words it introduces. The name keeps its weight, which is what
+      still picks it out of the line.
+
+      The icon is matched as either form it takes: the `<iconify-icon>` the renderer writes, which the
+      editor's preview draws, and the `<svg>` the server swaps it for on save -- sized the way the
+      generic icon rules below size each, the element by its `font-size` and the drawing by its box.
+
+      Sat on the BASELINE rather than centred on the line. `mdi:user` is drawn in rows 4 to 20 of its
+      24, a small head over broad shoulders, so a centred box put the shoulders below the baseline and
+      the whole icon read as sitting lower than the name beside it. Dropping the box by the sixth of
+      it that is empty below the drawing puts the shoulders on the baseline, with the head at about
+      cap height. The figure is that icon's own geometry; another icon would want its own.
+    */
+    > .blockquote-author {
+      margin-bottom: 0.35em;
+      color: var(--content-ink-faint);
+      font-size: 0.9em;
+
+      // -> Closer to the dash than to the name: the dash and the icon read as one mark
+      > iconify-icon,
+      > svg.icon {
+        margin-inline: 0.15em 0.4em;
+      }
+
+      // -> `em` in `vertical-align` is the element's own font size, which here is the icon's size
+      > iconify-icon {
+        font-size: 1.15em;
+        vertical-align: calc(-1em / 6);
+      }
+
+      // -> An `<svg>` keeps the line's font size, so the drop is worked out from the box instead
+      > svg.icon {
+        width: 1.15em;
+        height: 1.15em;
+        vertical-align: calc(-1.15em / 6);
+      }
+    }
+
+    .blockquote-author-name {
+      font-weight: 600;
+    }
   }
 
   /*

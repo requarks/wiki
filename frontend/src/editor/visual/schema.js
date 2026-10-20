@@ -1,6 +1,7 @@
 import { Schema } from 'prosemirror-model'
 import { tableNodes } from 'prosemirror-tables'
 
+import { AUTHOR_ICON } from '@/renderers/modules/blockquote-author'
 import { KINDS } from '@/renderers/modules/github-alerts'
 
 /**
@@ -170,13 +171,40 @@ export const schema = new Schema({
       toDOM: (node) => [`h${node.attrs.level}`, domAttrs(node), 0]
     },
 
+    /**
+     * `author` is who the quote is from, `> [name=John Doe]` — one line of the marker rather than part
+     * of the body, so it is an attribute and drawn above the content as the page draws it, out of the
+     * caret's reach. See `renderers/modules/blockquote-author.js`.
+     */
     blockquote: {
       content: 'block+',
       group: 'block',
       defining: true,
-      attrs: { ...mdAttrs },
-      parseDOM: [{ tag: 'blockquote' }],
-      toDOM: (node) => ['blockquote', domAttrs(node), 0]
+      attrs: { author: { default: null }, ...mdAttrs },
+      parseDOM: [
+        {
+          tag: 'blockquote',
+          contentElement: (dom) => dom.querySelector(':scope > .blockquote-body') ?? dom,
+          getAttrs: (dom) => ({ author: dom.getAttribute('data-author') || null })
+        }
+      ],
+      toDOM: (node) => {
+        if (!node.attrs.author) {
+          return ['blockquote', domAttrs(node), 0]
+        }
+        return [
+          'blockquote',
+          { ...domAttrs(node), 'data-author': node.attrs.author },
+          [
+            'p',
+            { class: 'blockquote-author', contenteditable: 'false' },
+            ['span', { class: 'blockquote-author-dash' }, '—'],
+            ['iconify-icon', { icon: AUTHOR_ICON }],
+            ['span', { class: 'blockquote-author-name' }, node.attrs.author]
+          ],
+          ['div', { class: 'blockquote-body' }, 0]
+        ]
+      }
     },
 
     /**

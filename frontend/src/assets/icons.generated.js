@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  321 icons.
+  322 icons.
 */
 export const BUNDLED_ICONS = {
   "la:adjust": {"body":"<path fill=\"currentColor\" d=\"M16 4C9.383 4 4 9.383 4 16s5.383 12 12 12s12-5.383 12-12S22.617 4 16 4m0 2v20c-5.535 0-10-4.465-10-10S10.465 6 16 6\"/>","width":32,"height":32},
@@ -328,5 +328,6 @@ export const BUNDLED_ICONS = {
   "mdi:transfer-down": {"body":"<path fill=\"currentColor\" d=\"M16 3v2H8V3zm0 4v2H8V7zm0 4v2H8v-2zM5 15h14l-7 7z\"/>","width":24,"height":24},
   "mdi:transfer-up": {"body":"<path fill=\"currentColor\" d=\"M8 21v-2h8v2zm0-4v-2h8v2zm0-4v-2h8v2zm11-4H5l7-7z\"/>","width":24,"height":24},
   "mdi:undo-variant": {"body":"<path fill=\"currentColor\" d=\"M13.5 7a6.5 6.5 0 0 1 6.5 6.5a6.5 6.5 0 0 1-6.5 6.5H10v-2h3.5c2.5 0 4.5-2 4.5-4.5S16 9 13.5 9H7.83l3.08 3.09L9.5 13.5L4 8l5.5-5.5l1.42 1.41L7.83 7zM6 18h2v2H6z\"/>","width":24,"height":24},
+  "mdi:user": {"body":"<path fill=\"currentColor\" d=\"M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4\"/>","width":24,"height":24},
   "mdi:view-split-vertical": {"body":"<path fill=\"currentColor\" d=\"M13 5h8v14h-8zM3 5h8v2H3zm0 6V9h8v2zm0 8v-2h8v2zm0-4v-2h8v2z\"/>","width":24,"height":24}
 }

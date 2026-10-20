@@ -128,8 +128,18 @@ const nodes = {
     state.closeBlock(node)
   },
 
+  /**
+   * `> [name=John Doe]` on a line of its own when the quote carries an attribution, then the body —
+   * written inside the quote for the reason the alert's marker is.
+   */
   blockquote(state, node) {
-    state.wrapBlock('> ', null, node, () => state.renderContent(node))
+    state.wrapBlock('> ', null, node, () => {
+      if (node.attrs.author) {
+        state.write(`[name=${node.attrs.author}]`)
+        state.ensureNewLine()
+      }
+      state.renderContent(node)
+    })
   },
 
   /**

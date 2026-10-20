@@ -291,6 +291,12 @@ function normalize(tokens, source, config) {
           i = alert.skipTo - 1
           continue
         }
+        // -> `> [name=…]`: the attribution is the quote's own, not a block of its body
+        if (tokens[i + 1]?.type === 'blockquote_author') {
+          out.push(retype(tok, { meta: { ...tok.meta, author: tokens[i + 1].content } }))
+          i += 1
+          continue
+        }
         out.push(tok)
         continue
       }
@@ -433,7 +439,10 @@ const tokenSpecs = {
     block: 'heading',
     getAttrs: (tok) => ({ level: Number(tok.tag.slice(1)), mdAttrs: readMdAttrs(tok) })
   },
-  blockquote: { block: 'blockquote', getAttrs: (tok) => ({ mdAttrs: readMdAttrs(tok) }) },
+  blockquote: {
+    block: 'blockquote',
+    getAttrs: (tok) => ({ author: tok.meta?.author ?? null, mdAttrs: readMdAttrs(tok) })
+  },
   md_alert: {
     block: 'alert',
     getAttrs: (tok) => ({ kind: tok.meta.kind, title: tok.meta.title })
