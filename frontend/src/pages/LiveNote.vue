@@ -46,6 +46,46 @@
           {{ editedLabel }}
         </div>
       </div>
+      <!--
+        Editor or Reader, in a notch hanging from the site header above: the one switch that is about
+        the whole screen rather than about the note, so it sits apart from the actions, centered.
+
+        Laid over the top of the bar rather than in a column of its own, so that it takes no width
+        from the title and the line under it. A title long enough to reach the middle of the bar runs
+        under it rather than being cut short where it starts.
+
+        Only for somebody who may write in the note, and not on a phone: see `canSwitchMode`.
+      -->
+      <div v-if="canSwitchMode" class="note-mode-slot">
+        <div class="note-mode-notch">
+          <w-tabs
+            :model-value="mode"
+            no-caps
+            inline-label
+            dense
+            dark
+            :aria-label="t(`liveNote.mode.title`)"
+            @update:model-value="setMode">
+            <!-- -> Icons alone below 900px, where a title is likelier to reach the middle of the bar
+                    and a narrower notch covers less of it; the name is then the tab's accessible name
+                    and its tooltip -->
+            <w-tab
+              name="editor"
+              icon="la:pen"
+              :label="isAtLeast900 ? t(`liveNote.mode.editor`) : null"
+              :aria-label="t(`liveNote.mode.editor`)">
+              <w-tooltip v-if="!isAtLeast900">{{ t('liveNote.mode.editor') }}</w-tooltip>
+            </w-tab>
+            <w-tab
+              name="reader"
+              icon="la:book-open"
+              :label="isAtLeast900 ? t(`liveNote.mode.reader`) : null"
+              :aria-label="t(`liveNote.mode.reader`)">
+              <w-tooltip v-if="!isAtLeast900">{{ t('liveNote.mode.reader') }}</w-tooltip>
+            </w-tab>
+          </w-tabs>
+        </div>
+      </div>
       <div class="page-header-actions flex-none p-4 flex items-center justify-end">
         <!--
           Only while the room is not answering. Live is the ordinary state and says nothing; anything
@@ -62,27 +102,34 @@
           otherwise see, since they can still do everything.
         -->
         <w-badge v-else-if="accessLabel" class="me-3" color="grey-7" :label="accessLabel" />
-        <collab-presence class="me-2" show-alone />
-        <w-btn
-          class="ms-2 acrylic-btn"
-          flat
-          icon="la:link"
-          color="emerald-600"
-          :aria-label="t(`liveNote.copyLink`)"
-          @click="copyLink">
-          <w-tooltip>{{ t('liveNote.copyLink') }}</w-tooltip>
-        </w-btn>
-        <!-- -> Once the room has answered: until then there is no text to publish -->
-        <w-btn
-          class="ms-2 acrylic-btn"
-          flat
-          icon="la:file-export"
-          color="blue"
-          :disabled="!collabStore.hasSynced"
-          :aria-label="t(`liveNote.publish.title`)"
-          @click="publishToPage">
-          <w-tooltip>{{ t('liveNote.publish.title') }}</w-tooltip>
-        </w-btn>
+        <!--
+          Below 900px the menu stands alone, so that the title keeps the width: who else is in the note
+          and copying its link (which the address bar does as well) are left out, and Publish to Page
+          goes into the menu.
+        -->
+        <template v-if="isAtLeast900">
+          <collab-presence class="me-2" show-alone />
+          <w-btn
+            class="ms-2 acrylic-btn"
+            flat
+            icon="la:link"
+            color="emerald-600"
+            :aria-label="t(`liveNote.copyLink`)"
+            @click="copyLink">
+            <w-tooltip>{{ t('liveNote.copyLink') }}</w-tooltip>
+          </w-btn>
+          <!-- -> Once the room has answered: until then there is no text to publish -->
+          <w-btn
+            class="ms-2 acrylic-btn"
+            flat
+            icon="la:file-export"
+            color="blue"
+            :disabled="!collabStore.hasSynced"
+            :aria-label="t(`liveNote.publish.title`)"
+            @click="publishToPage">
+            <w-tooltip>{{ t('liveNote.publish.title') }}</w-tooltip>
+          </w-btn>
+        </template>
         <w-btn
           class="ms-2 acrylic-btn"
           flat
@@ -93,6 +140,16 @@
           <!-- -> `!min-w-0 !pr-2` and literal colour classes, as the page history's version menu has them -->
           <w-menu class="translucent-menu" auto-close anchor="bottom right" self="top right">
             <w-list dense padding style="min-width: 200px">
+              <!-- -> The bar's button, below 900px where the bar has no room for it -->
+              <template v-if="!isAtLeast900">
+                <w-item clickable :disabled="!collabStore.hasSynced" @click="publishToPage">
+                  <w-item-section avatar class="!min-w-0 !pr-2">
+                    <w-icon name="la:file-export" class="text-blue-7" />
+                  </w-item-section>
+                  <w-item-section>{{ t('liveNote.publish.title') }}</w-item-section>
+                </w-item>
+                <w-separator class="my-1" />
+              </template>
               <w-item clickable @click="openRevisions">
                 <w-item-section avatar class="!min-w-0 !pr-2">
                   <w-icon name="la:history" class="text-blue-7" />
@@ -127,13 +184,14 @@
         </w-btn>
       </div>
     </div>
-    <!-- -> Keyed by the note, so that following a link from one note to another is a new editor and a
-            new room rather than the old room's document bound to the new note -->
+    <!-- -> Keyed by the note, so that following a link from one note to another is a new editor
+            rather than the old note's model bound to the new note's room -- and by which view, since
+            two branches of one `v-if` may not share a key -->
     <editor-markdown
-      v-if="state.status === `ready`"
-      :key="liveNoteStore.key"
-      :note-key="liveNoteStore.key"
-      :read-only="!liveNoteStore.canWrite" />
+      v-if="state.status === `ready` && mode === `editor`"
+      :key="`editor:${liveNoteStore.key}`"
+      :note-key="liveNoteStore.key" />
+    <live-note-reader v-else-if="state.status === `ready`" :key="`reader:${liveNoteStore.key}`" />
     <div v-else-if="state.status === `loading`" class="page-placeholder">
       <w-spinner color="primary" size="48px" />
     </div>
@@ -179,6 +237,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { fileSave } from 'browser-fs-access'
 
+import { isCollabActive, startCollabSession, stopCollabSession } from '@/composables/collab'
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { confirm, dialog } from '@/composables/dialog'
@@ -194,6 +253,7 @@ import { loginLocation } from '@/helpers/loginRedirect'
 import CollabPresence from '@/components/CollabPresence.vue'
 import LiveNoteAccessDialog from '@/components/LiveNoteAccessDialog.vue'
 import LiveNotePublishDialog from '@/components/LiveNotePublishDialog.vue'
+import LiveNoteReader from '@/components/LiveNoteReader.vue'
 import LoadingGeneric from '@/components/LoadingGeneric.vue'
 import { MarkdownRenderer } from '@/renderers/markdown'
 
@@ -211,7 +271,13 @@ import { useUserStore } from '@/stores/user'
  *
  * Everything that makes it a note rather than a page is somewhere else. The server's half is
  * `models/liveNotes.ts` and the note room in `core/collab.ts`; the editor's is its `noteKey` prop.
- * This view decides whether there is a note to show, and draws the bar above it.
+ * This view decides whether there is a note to show, draws the bar above it, and holds the note's
+ * collaboration session open while it is on screen.
+ *
+ * Shown in one of two modes: the Editor, or the Reader (`LiveNoteReader.vue`) -- the render alone,
+ * following the room live. `?mode=reader` in the URL is which one, so that a reload keeps it and a link
+ * can open straight into it. A reader of a locked note, who may not write in it, gets the Reader and
+ * no choice, and so does everybody on a phone.
  */
 
 // COMPONENTS
@@ -303,6 +369,12 @@ useMeta(() => ({
 const isAtLeastSm = useMinWidth(600)
 const isPhoneViewport = computed(() => !isAtLeastSm.value)
 const iconSize = computed(() => (isPhoneViewport.value ? '32px' : '64px'))
+/**
+ * Where the bar starts giving things up for the title: the names on the Editor / Reader tabs, which
+ * keep their icons, and everything beside the menu -- the avatars, Copy Link, and Publish to Page,
+ * which moves into the menu.
+ */
+const isAtLeast900 = useMinWidth(900)
 
 /**
  * "Created by John Doe. Last edited 5 minutes ago by Jane Doe." -- or, for a note nobody has typed into
@@ -322,8 +394,27 @@ const editedLabel = computed(() => {
   return t('liveNote.lastEdited', { when, name, creator })
 })
 
-/** The title is a field once the room has answered, for whoever may write in the note. */
-const titleEditable = computed(() => collabStore.hasSynced && liveNoteStore.canWrite)
+/**
+ * Whether this reader has the Editor to switch to: anybody who may write in the note -- except on a
+ * phone, where the note is only ever read. A two-pane code editor has no room there, and a window
+ * narrowed past this width while in the Editor lands in the Reader, the URL left as it was so that
+ * widening it again goes back.
+ */
+const canSwitchMode = computed(() => liveNoteStore.canWrite && !isPhoneViewport.value)
+
+/** `editor` or `reader`. Read off the URL, and always the Reader for somebody who may only read. */
+const mode = computed(() =>
+  canSwitchMode.value && route.query.mode !== 'reader' ? 'editor' : 'reader'
+)
+
+/**
+ * The title is a field once the room has answered, for whoever may write in the note -- and in the
+ * Editor only: the Reader is for reading, and the title is written through the editor besides (see
+ * `setNoteTitle` there).
+ */
+const titleEditable = computed(
+  () => collabStore.hasSynced && liveNoteStore.canWrite && mode.value === 'editor'
+)
 
 const accessLabel = computed(() => {
   if (!liveNoteStore.canWrite) {
@@ -412,6 +503,23 @@ watch(
 )
 
 /*
+  The note's collaboration session, held here rather than by the editor: the Reader needs it as much,
+  and switching between the two must not be a reconnect. Opened as the note is ready -- before either
+  view mounts, this watcher running ahead of the render -- and closed as it stops being, which is also
+  what a reload after a refusal goes through, and following a link to another note.
+*/
+watch(
+  () => (state.status === 'ready' ? liveNoteStore.key : ''),
+  (key) => {
+    if (key) {
+      startCollabSession({ siteId: siteStore.id, noteKey: key })
+    } else if (isCollabActive()) {
+      stopCollabSession()
+    }
+  }
+)
+
+/*
   The room refusing this reader for good -- the note deleted under them, live notes switched off, the
   session ended. Which one it was is the note's own route's answer, so the note is asked for again and
   the screen says whatever it finds in place of an editor that has nothing left to write to.
@@ -426,6 +534,17 @@ watch(
 )
 
 // METHODS
+
+/** Into the Editor or the Reader. Replaced rather than pushed: Back leaves the note, as it always did. */
+function setMode(next) {
+  const query = { ...route.query }
+  if (next === 'reader') {
+    query.mode = 'reader'
+  } else {
+    delete query.mode
+  }
+  router.replace({ path: route.path, query, hash: route.hash })
+}
 
 /**
  * Whether this reader may have live notes here, saying why not when they may not. The server asks the
@@ -798,6 +917,8 @@ function close() {
 onBeforeUnmount(() => {
   clearInterval(clockTimer)
   loadToken++
+  // -> Before the editor goes, which the binding is holding: this hook runs ahead of the children's
+  stopCollabSession()
   // -> The revisions belong to this note, and must not be left standing over whatever is next
   if (siteStore.overlay === 'LiveNoteRevisions') {
     siteStore.$patch({ overlay: '' })
@@ -807,6 +928,63 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
+/*
+  The Editor / Reader switch's place in the bar: over the middle of its top edge, out of the row the
+  title and the actions share. `.page-header` is the positioning context already (`hairline-edge` in
+  `_page-chrome.scss`). Pulled up through the bar's top border, where the hairline along it is painted
+  by a pseudo-element the notch has to sit above, so that the notch starts where the site header ends
+  with nothing between the two.
+*/
+.note-mode-slot {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+}
+
+/*
+  A notch shaped like a bathtub, coming out of the bottom of the site header: the header's own fill,
+  rounded at the bottom, and flared into the header at the top by a concave corner either side -- the
+  two pseudo-elements, each a square of the fill with a quarter circle cut out of it.
+
+  The radius is the track's inside it plus the padding between them (`rounded-lg` on `WTabs`, then
+  this box's own 4px), so the two curves at each bottom corner run parallel.
+*/
+.note-mode-notch {
+  --note-notch-radius: 12px;
+  position: relative;
+  padding: 0 4px 4px;
+  border-radius: 0 0 var(--note-notch-radius) var(--note-notch-radius);
+  background-color: var(--color-header);
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: var(--note-notch-radius);
+    height: var(--note-notch-radius);
+    pointer-events: none;
+  }
+  &::before {
+    right: 100%;
+    background: radial-gradient(
+      circle at 0 100%,
+      transparent var(--note-notch-radius),
+      var(--color-header) calc(var(--note-notch-radius) + 0.5px)
+    );
+  }
+  &::after {
+    left: 100%;
+    background: radial-gradient(
+      circle at 100% 100%,
+      transparent var(--note-notch-radius),
+      var(--color-header) calc(var(--note-notch-radius) + 0.5px)
+    );
+  }
+}
+
 /*
   The title while it is also a field: the page header's treatment (`.page-header-editable` in
   `PageHeader.vue`, whose styles are scoped to it). No border and no focus ring -- at rest it reads as

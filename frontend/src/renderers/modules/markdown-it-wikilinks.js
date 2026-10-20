@@ -2,6 +2,7 @@
 //    renderer bundle, which is built on its own
 import { glossaryHref } from '../../helpers/glossaryUrl'
 import { normalizePagePath } from '../../helpers/pagePaths'
+import { slugifyHeading } from '../../helpers/toc'
 
 /**
  * MediaWiki's link syntax: `[[Page Name]]`, `[[Page Name|shown text]]`, `[[Page Name#Section]]` and
@@ -17,8 +18,8 @@ import { normalizePagePath } from '../../helpers/pagePaths'
  * land.
  *
  * The section is spelled the way `slugifyHeading` in `backend/models/rendering.ts` spells the id it
- * gives a heading, so `[[Page#Some Heading]]` finds the heading called "Some Heading". That makes this
- * one more copy of that rule, and the two have to agree.
+ * gives a heading, so `[[Page#Some Heading]]` finds the heading called "Some Heading" -- through the
+ * browser's copy of that rule, `slugifyHeading` in `helpers/toc.js`.
  *
  * `[[Glossary:REST]]` and `[[Glossary:REST|shown text]]` are a link to a glossary TERM instead, by its
  * name or one of its aliases: `?glossary=REST`, which opens the term over the page it is written on
@@ -31,22 +32,6 @@ import { normalizePagePath } from '../../helpers/pagePaths'
  * as written is kept on the opening token's `meta.wikilink`, which is how the Visual editor knows to
  * write the link back in this form rather than as `[text](/path)`.
  */
-
-/**
- * A heading as an anchor fragment. Mirrors `slugifyHeading` in `backend/models/rendering.ts`.
- */
-function slugifySection(text) {
-  return (
-    text
-      .toLowerCase()
-      .trim()
-      .replaceAll(/[^\p{L}\p{N}\s-]/gu, '')
-      .replaceAll(/\s+/g, '-')
-      .replaceAll(/-{2,}/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 100) || 'section'
-  )
-}
 
 /** The namespace that makes a wikilink a link to a glossary term. */
 const GLOSSARY_NAMESPACE = /^glossary:/i
@@ -86,7 +71,7 @@ export function wikiLinkHref(target) {
   const hash = target.indexOf('#')
   const page = hash < 0 ? target : target.slice(0, hash)
   const section = hash < 0 ? '' : target.slice(hash + 1)
-  const fragment = section.trim() ? `#${slugifySection(section)}` : ''
+  const fragment = section.trim() ? `#${slugifyHeading(section)}` : ''
   if (!page.trim()) {
     return fragment || '/'
   }

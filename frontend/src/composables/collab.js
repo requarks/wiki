@@ -27,7 +27,9 @@ import { useUserStore } from '@/stores/user'
  *
  * A live note is the other kind of session (`noteKey` rather than `pageId`). It shares the text and
  * nothing else — a note has no header fields and no save, its room storing it as it changes — so none
- * of the page store is touched.
+ * of the page store is touched. And it is held by the note's view rather than by an editor
+ * (`pages/LiveNote.vue`): the note can be on screen with no editor at all, in its Reader view, which
+ * reads the text straight off the document. The editor binds to that session and unbinds from it.
  */
 
 /** How long to wait for the first sync before giving up and letting the author type offline. */
@@ -341,6 +343,24 @@ export async function bindCollabEditor(editor) {
   binding = new MonacoBinding(doc.getText('content'), model, new Set([editor]), provider.awareness)
 }
 
+/**
+ * Take the Monaco binding off the session, and leave the session open: a live note's editor going
+ * away while the note stays on screen in its Reader view. A page's editor stops the whole session
+ * instead.
+ */
+export function unbindCollabEditor() {
+  if (!binding) {
+    return
+  }
+  // -> A string here means the import in `bindCollabEditor` is still in flight; clearing it is what
+  //    tells that call there is no longer an editor to bind
+  binding.destroy?.()
+  binding = null
+  // -> y-monaco publishes the caret and never takes it back, so without this everyone else would go
+  //    on seeing it in the text, marking a place nobody is
+  provider?.awareness.setLocalStateField('selection', null)
+}
+
 /** Close the session and put everything back the way an ordinary editor leaves it. */
 export function stopCollabSession() {
   clearTimeout(syncTimer)
@@ -529,7 +549,7 @@ function refreshParticipants() {
       isSelf: clientId === doc.clientID
     })
   }
-  useCollabStore().participants = participants
+  useCollabStore().setParticipants(participants)
   renderCursorStyles(participants)
 }
 

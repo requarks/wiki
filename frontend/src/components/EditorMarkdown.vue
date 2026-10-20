@@ -5,94 +5,87 @@
         <!-- ------------------------------------------------------- -->
         <!-- SIDE TOOLBAR -->
         <!-- ------------------------------------------------------- -->
-        <!-- -> Nothing to insert into a note this reader may only read; see `readOnly` -->
-        <template v-if="!props.readOnly">
-          <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="insertLink">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertLink')
-            }}</w-tooltip>
-          </w-btn>
-          <!-- -> Straight to the File Manager. The menu this replaces offered two other sources: a remote
-                URL, which was never implemented, and the clipboard — see `getAssetFromClipboard`, which
-                now has no caller. In a live note, whose images are not filed in the File Manager,
-                straight to the browser's file picker instead — see `uploadNoteImages`. -->
-          <w-btn
-            v-if="props.noteKey"
-            icon="mdi:image-plus-outline"
-            padding="sm sm"
-            flat
-            @click="pickNoteImages">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('liveNote.insertImage')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn v-else icon="mdi:image-plus-outline" padding="sm sm" flat @click="insertAssets">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertAssets')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:code-json" padding="sm sm" flat>
-            <editor-code-block-menu anchor="top right" self="top left" @select="insertCodeBlock" />
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertCodeBlock')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertTable')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="insertTabset">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertTabset')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="insertBlock">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertBlock')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn
-            icon="mdi:format-list-group-plus"
-            padding="sm sm"
-            flat
-            @click="insertDefinitionList">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertDefinitionList')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
-            <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertEmoji')
-            }}</w-tooltip>
-          </w-btn>
-          <!-- -> Icons only: what goes in is a `:mdi:home:` shortcode, and the picker's other tab hands
-                back an `img:` URL, which is not something that syntax can say -->
-          <w-btn icon="mdi:seed-plus-outline" padding="sm sm" flat>
-            <w-menu anchor="top right" self="top left" content-class="shadow-7">
-              <icon-picker-dialog no-image @update:model-value="insertIcon" />
-            </w-menu>
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertIcon')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertFootnote')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:tooltip-plus-outline" padding="sm sm" flat @click="insertAbbreviation">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertAbbreviation')
-            }}</w-tooltip>
-          </w-btn>
-          <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
-            <w-tooltip anchor="center right" self="center left">{{
-              t('editor.markup.insertHorizontalBar')
-            }}</w-tooltip>
-          </w-btn>
-        </template>
+        <w-btn icon="mdi:link-variant-plus" padding="sm sm" flat @click="insertLink">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertLink')
+          }}</w-tooltip>
+        </w-btn>
+        <!-- -> Straight to the File Manager. The menu this replaces offered two other sources: a remote
+              URL, which was never implemented, and the clipboard — see `getAssetFromClipboard`, which
+              now has no caller. In a live note, whose images are not filed in the File Manager,
+              straight to the browser's file picker instead — see `uploadNoteImages`. -->
+        <w-btn
+          v-if="props.noteKey"
+          icon="mdi:image-plus-outline"
+          padding="sm sm"
+          flat
+          @click="pickNoteImages">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('liveNote.insertImage')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn v-else icon="mdi:image-plus-outline" padding="sm sm" flat @click="insertAssets">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertAssets')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:code-json" padding="sm sm" flat>
+          <editor-code-block-menu anchor="top right" self="top left" @select="insertCodeBlock" />
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertCodeBlock')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:table-large-plus" padding="sm sm" flat @click="insertTable">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertTable')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:tab-plus" padding="sm sm" flat @click="insertTabset">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertTabset')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:toy-brick-plus" padding="sm sm" flat @click="insertBlock">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertBlock')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:format-list-group-plus" padding="sm sm" flat @click="insertDefinitionList">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertDefinitionList')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:emoticon-plus-outline" padding="sm sm" flat>
+          <editor-emoji-menu anchor="top right" self="top left" @select="insertEmoji" />
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertEmoji')
+          }}</w-tooltip>
+        </w-btn>
+        <!-- -> Icons only: what goes in is a `:mdi:home:` shortcode, and the picker's other tab hands
+              back an `img:` URL, which is not something that syntax can say -->
+        <w-btn icon="mdi:seed-plus-outline" padding="sm sm" flat>
+          <w-menu anchor="top right" self="top left" content-class="shadow-7">
+            <icon-picker-dialog no-image @update:model-value="insertIcon" />
+          </w-menu>
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertIcon')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:book-plus" padding="sm sm" flat @click="insertFootnote">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertFootnote')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:tooltip-plus-outline" padding="sm sm" flat @click="insertAbbreviation">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertAbbreviation')
+          }}</w-tooltip>
+        </w-btn>
+        <w-btn icon="mdi:line-scan" padding="sm sm" flat @click="insertHorizontalBar">
+          <w-tooltip anchor="center right" self="center left">{{
+            t('editor.markup.insertHorizontalBar')
+          }}</w-tooltip>
+        </w-btn>
         <w-space />
         <span class="editor-markdown-type">Markdown</span>
       </div>
@@ -101,193 +94,185 @@
         <!-- TOP TOOLBAR -->
         <!-- ------------------------------------------------------- -->
         <div class="editor-markdown-toolbar">
-          <template v-if="!props.readOnly">
-            <w-btn
-              icon="mdi:format-bold"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `**` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.bold')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-italic"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `*` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.italic')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-strikethrough"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `~~` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.strikethrough')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-color-highlight"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `==` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.highlight')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.header')
-              }}</w-tooltip>
-              <w-menu auto-close>
-                <w-list separator>
-                  <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
-                    <w-item-section side>
-                      <w-icon :name="HEADER_ICONS[lvl - 1]" />
-                    </w-item-section>
-                    <w-item-section>{{
-                      t('editor.markup.headerLevel', { level: lvl })
-                    }}</w-item-section>
-                  </w-item>
-                </w-list>
-              </w-menu>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-subscript"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `~` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.subscript')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-superscript"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `^` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.superscript')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn icon="mdi:format-quote-close" padding="xs sm" flat>
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.blockquoteAdmonitions')
-              }}</w-tooltip>
-              <w-menu auto-close>
-                <w-list separator>
-                  <w-item clickable @click="insertBeforeEachLine({ content: `> ` })">
-                    <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
-                    <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
-                  </w-item>
-                  <w-item
-                    clickable
-                    @click="insertBeforeEachLine({ content: `> `, before: `> [!NOTE]` })">
-                    <w-item-section side>
-                      <!--
-                      A colour with a utility behind it. WIcon composes the class from this name, so
-                      Tailwind never sees it while scanning and emits only the ones written out in
-                      full somewhere in the app -- of the blues, that is this one. Asking for the 7
-                      step, as this did, left the icon the colour of the menu text.
+          <w-btn icon="mdi:format-bold" padding="xs sm" flat @click="toggleMarkup({ start: `**` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.bold')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-italic"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `*` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.italic')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-strikethrough"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `~~` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.strikethrough')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-color-highlight"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `==` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.highlight')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:format-header-pound" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.header')
+            }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item v-for="lvl in 6" clickable @click="setHeaderLine(lvl)">
+                  <w-item-section side>
+                    <w-icon :name="HEADER_ICONS[lvl - 1]" />
+                  </w-item-section>
+                  <w-item-section>{{
+                    t('editor.markup.headerLevel', { level: lvl })
+                  }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-subscript"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `~` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.subscript')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-superscript"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `^` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.superscript')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:format-quote-close" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.blockquoteAdmonitions')
+            }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item clickable @click="insertBeforeEachLine({ content: `> ` })">
+                  <w-item-section side><w-icon name="mdi:format-quote-close" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.blockquote') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!NOTE]` })">
+                  <w-item-section side>
+                    <!--
+                    A colour with a utility behind it. WIcon composes the class from this name, so
+                    Tailwind never sees it while scanning and emits only the ones written out in
+                    full somewhere in the app -- of the blues, that is this one. Asking for the 7
+                    step, as this did, left the icon the colour of the menu text.
 
-                      Nothing above may spell a class out either: the scanner reads comments too, and
-                      would generate whatever this explanation quoted.
-                    -->
-                      <w-icon name="mdi:information-box" color="blue" />
-                    </w-item-section>
-                    <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
-                  </w-item>
-                  <w-item
-                    clickable
-                    @click="insertBeforeEachLine({ content: `> `, before: `> [!TIP]` })">
-                    <w-item-section side>
-                      <w-icon name="mdi:check-circle" color="positive" />
-                    </w-item-section>
-                    <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
-                  </w-item>
-                  <!-- -> The same speech bubble the page draws an IMPORTANT admonition with -->
-                  <w-item
-                    clickable
-                    @click="insertBeforeEachLine({ content: `> `, before: `> [!IMPORTANT]` })">
-                    <w-item-section side>
-                      <w-icon name="mdi:message-alert" color="purple" />
-                    </w-item-section>
-                    <w-item-section>{{ t('editor.markup.admonitionImportant') }}</w-item-section>
-                  </w-item>
-                  <w-item
-                    clickable
-                    @click="insertBeforeEachLine({ content: `> `, before: `> [!WARNING]` })">
-                    <w-item-section side>
-                      <w-icon name="mdi:alert-box" color="orange" />
-                    </w-item-section>
-                    <w-item-section>{{ t('editor.markup.admonitionWarning') }}</w-item-section>
-                  </w-item>
-                  <w-item
-                    clickable
-                    @click="insertBeforeEachLine({ content: `> `, before: `> [!CAUTION]` })">
-                    <w-item-section side>
-                      <w-icon name="mdi:close-box" color="negative" />
-                    </w-item-section>
-                    <w-item-section>{{ t('editor.markup.admonitionDanger') }}</w-item-section>
-                  </w-item>
-                </w-list>
-              </w-menu>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-list-bulleted"
-              padding="xs sm"
-              flat
-              @click="insertBeforeEachLine({ content: `- ` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.unorderedList')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:format-list-numbered"
-              padding="xs sm"
-              flat
-              @click="insertBeforeEachLine({ content: `1. ` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.orderedList')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.taskList')
-              }}</w-tooltip>
-              <w-menu auto-close>
-                <w-list separator>
-                  <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] ` })">
-                    <w-item-section side
-                      ><w-icon name="mdi:checkbox-blank-outline"
-                    /></w-item-section>
-                    <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
-                  </w-item>
-                  <w-item clickable @click="insertBeforeEachLine({ content: `- [x] ` })">
-                    <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
-                    <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
-                  </w-item>
-                </w-list>
-              </w-menu>
-            </w-btn>
-            <w-btn icon="mdi:code-tags" padding="xs sm" flat @click="toggleMarkup({ start: '`' })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.inlineCode')
-              }}</w-tooltip>
-            </w-btn>
-            <w-btn
-              icon="mdi:keyboard-variant"
-              padding="xs sm"
-              flat
-              @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
-              <w-tooltip anchor="top middle" self="bottom middle">{{
-                t('editor.markup.keyboardKey')
-              }}</w-tooltip>
-            </w-btn>
-          </template>
+                    Nothing above may spell a class out either: the scanner reads comments too, and
+                    would generate whatever this explanation quoted.
+                  -->
+                    <w-icon name="mdi:information-box" color="blue" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionInfo') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!TIP]` })">
+                  <w-item-section side>
+                    <w-icon name="mdi:check-circle" color="positive" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionSuccess') }}</w-item-section>
+                </w-item>
+                <!-- -> The same speech bubble the page draws an IMPORTANT admonition with -->
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!IMPORTANT]` })">
+                  <w-item-section side>
+                    <w-icon name="mdi:message-alert" color="purple" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionImportant') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!WARNING]` })">
+                  <w-item-section side>
+                    <w-icon name="mdi:alert-box" color="orange" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionWarning') }}</w-item-section>
+                </w-item>
+                <w-item
+                  clickable
+                  @click="insertBeforeEachLine({ content: `> `, before: `> [!CAUTION]` })">
+                  <w-item-section side>
+                    <w-icon name="mdi:close-box" color="negative" />
+                  </w-item-section>
+                  <w-item-section>{{ t('editor.markup.admonitionDanger') }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-list-bulleted"
+            padding="xs sm"
+            flat
+            @click="insertBeforeEachLine({ content: `- ` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.unorderedList')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:format-list-numbered"
+            padding="xs sm"
+            flat
+            @click="insertBeforeEachLine({ content: `1. ` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.orderedList')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn icon="mdi:format-list-checks" padding="xs sm" flat>
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.taskList')
+            }}</w-tooltip>
+            <w-menu auto-close>
+              <w-list separator>
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [ ] ` })">
+                  <w-item-section side><w-icon name="mdi:checkbox-blank-outline" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.taskListUnchecked') }}</w-item-section>
+                </w-item>
+                <w-item clickable @click="insertBeforeEachLine({ content: `- [x] ` })">
+                  <w-item-section side><w-icon name="mdi:checkbox-outline" /></w-item-section>
+                  <w-item-section>{{ t('editor.markup.taskListChecked') }}</w-item-section>
+                </w-item>
+              </w-list>
+            </w-menu>
+          </w-btn>
+          <w-btn icon="mdi:code-tags" padding="xs sm" flat @click="toggleMarkup({ start: '`' })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.inlineCode')
+            }}</w-tooltip>
+          </w-btn>
+          <w-btn
+            icon="mdi:keyboard-variant"
+            padding="xs sm"
+            flat
+            @click="toggleMarkup({ start: `<kbd>`, end: `</kbd>` })">
+            <w-tooltip anchor="top middle" self="bottom middle">{{
+              t('editor.markup.keyboardKey')
+            }}</w-tooltip>
+          </w-btn>
           <!-- -> The only way back once a pane is closed: its own toggle goes with it. One spacer
                   for both, so that with both closed they sit together at the right end -->
           <template v-if="!panes.previewShown || contentsClosed">
@@ -419,6 +404,7 @@ import { useBlockCompletions } from '@/composables/blockCompletions'
 import {
   bindCollabEditor,
   isCollabActive,
+  unbindCollabEditor,
   startCollabSession,
   stopCollabSession
 } from '@/composables/collab'
@@ -478,22 +464,17 @@ const props = defineProps({
    * The same editor with less around it: the source and its render go to the live note store instead,
    * and everything a page has that a note does not is left out — there is no save, so no pending
    * changes and no Ctrl+S, and no File Manager, since a note's images are not filed there. The
-   * collaboration room is the note's own, and is what stores it. See `pages/LiveNote.vue`.
+   * collaboration room is the note's own, and is what stores it. See `pages/LiveNote.vue`, which also
+   * holds the room open: this editor binds to it, and leaves it open behind it for the Reader view.
+   *
+   * Only ever mounted for somebody who may write in the note -- a reader of a locked note gets the
+   * Reader view and nothing else (`LiveNoteReader.vue`).
    *
    * Fixed for the life of the component: a different note is a different mount.
    */
   noteKey: {
     type: String,
     default: ''
-  },
-  /**
-   * Show the source and its preview, and take no edits: a locked live note, to anybody but its owners.
-   * The room drops whatever such a reader sends anyway (`core/collab.ts`); this is what keeps the
-   * editor from offering edits the room is about to throw away. The toolbars go with it.
-   */
-  readOnly: {
-    type: Boolean,
-    default: false
   }
 })
 
@@ -561,6 +542,12 @@ let md
  * @type {Array<() => void>}
  */
 const collabWatchers = []
+/**
+ * Set as the editor goes, for the collaboration watcher to see after an `await`: stopping a watcher
+ * does not stop a run of it already in flight, and in a note the session outlives the editor (it is
+ * `pages/LiveNote.vue`'s), so `isCollabActive()` alone no longer says the editor is still here.
+ */
+let unmounted = false
 /** Where the paste listener ended up, so it can be taken off the same node. See the note in onMounted. */
 let pasteCaptureNode = null
 /** The "Edit Table" lens provider, which is registered against the language rather than this editor. */
@@ -1726,10 +1713,6 @@ function processContent(newContent) {
  * been taken off the browser by the time this runs, so a silent return is a paste that vanished.
  */
 function insertFilesAsAssets(files) {
-  // -> Nothing goes into a note this reader may only read, and there is nothing to say about it
-  if (props.readOnly) {
-    return
-  }
   // -> A live note has no save to upload them on, so they go up now and nowhere near the File Manager
   if (props.noteKey) {
     uploadNoteImages(files)
@@ -2245,11 +2228,14 @@ onMounted(async () => {
       author in a page they are unable to type in.
     */
     editor.updateOptions({ readOnly: true })
-    startCollabSession(
-      props.noteKey
-        ? { siteId: siteStore.id, noteKey: props.noteKey }
-        : { siteId: siteStore.id, pageId: pageStore.id }
-    )
+    /*
+      A page's session is this editor's own. A note's is already open: the note's view holds it for as
+      long as the note is on screen, so that switching to the Reader view and back is not a reconnect
+      -- which is also why the watcher below runs at once, the room having perhaps answered already.
+    */
+    if (!props.noteKey) {
+      startCollabSession({ siteId: siteStore.id, pageId: pageStore.id })
+    }
 
     /*
       Both handles are kept, and both are stopped by hand on the way out.
@@ -2287,11 +2273,17 @@ onMounted(async () => {
           if (props.noteKey && !collabStore.hasSynced) {
             return
           }
-          editor.updateOptions({ readOnly: props.readOnly })
-          if (status === 'connected') {
+          editor.updateOptions({ readOnly: false })
+          /*
+            A note binds whatever the socket is doing, once the room has answered: the document is
+            already here, and what is typed into it while the socket is down is merged when it comes
+            back. An editor mounted onto a session that had dropped, and bound only on reconnecting,
+            would have whatever was typed in between replaced by the document.
+          */
+          if (status === 'connected' || props.noteKey) {
             await bindCollabEditor(editor)
             // -> The editor was closed while the binding loaded, and is not ready for anything
-            if (!isCollabActive()) {
+            if (unmounted || !isCollabActive()) {
               return
             }
           }
@@ -2302,7 +2294,8 @@ onMounted(async () => {
           */
           syncContentToStore.flush()
           editorStore.isReady = true
-        }
+        },
+        { immediate: true }
       ),
       /*
         Somebody else saved the page. The editor state has already been put back to "nothing pending"
@@ -2348,6 +2341,9 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  unmounted = true
+  // -> A sync still waiting would read the editor after it is disposed below, which reads as empty
+  syncContentToStore.cancel()
   // -> First, because everything below is what they reach for: these are not stopped by the component
   //    going away, and one that fires afterwards finds a disposed editor
   for (const stop of collabWatchers.splice(0)) {
@@ -2372,8 +2368,13 @@ onBeforeUnmount(() => {
   tableCellNavigation.dispose()
   imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes
-  //    this author's avatar out of everyone else's header
-  stopCollabSession()
+  //    this author's avatar out of everyone else's header. A note's room is left open behind it, for
+  //    the view that holds it to close -- see `pages/LiveNote.vue`
+  if (props.noteKey) {
+    unbindCollabEditor()
+  } else {
+    stopCollabSession()
+  }
   /*
     Anything pasted but never uploaded goes with the session that held it. This hook is where an
     editing session ends, whichever way it ended -- discarded, closed, submitted as a suggestion, or

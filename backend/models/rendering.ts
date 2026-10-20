@@ -440,6 +440,10 @@ function cssLength(value: string): string {
  * Kept deliberately plain — lowercase, words joined by hyphens — because these end up in URLs that
  * people copy and share, and because an existing link should keep working when the heading around it
  * is edited in ways that do not change its words.
+ *
+ * The browser has a copy, `slugifyHeading` in `frontend/src/helpers/toc.js`, for the ids it has to spell
+ * itself -- a wikilink's section, and a live note's headings, which never pass through here. The two
+ * have to agree.
  */
 export function slugifyHeading(text: string): string {
   return (

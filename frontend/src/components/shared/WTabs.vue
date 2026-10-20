@@ -1,7 +1,8 @@
 <template>
   <div
     ref="listEl"
-    class="w-tabs flex flex-nowrap items-stretch gap-1 overflow-x-auto rounded-lg bg-grey-2 p-1 dark:bg-dark-5"
+    class="w-tabs flex flex-nowrap items-stretch gap-1 overflow-x-auto rounded-lg"
+    :class="[dense ? `p-0.5` : `p-1`, dark ? `bg-dark-5` : `bg-grey-2 dark:bg-dark-5`]"
     role="tablist"
     @keydown="onKeydown">
     <slot />
@@ -37,6 +38,23 @@ const props = defineProps({
   inlineLabel: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Smaller tabs on a thinner track, for a strip that sits in a bar rather than heading a dialog --
+   * the live note's Editor / Reader switch.
+   */
+  dense: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Drawn as in the dark theme whichever theme is on, for a strip sitting on a dark surface of its
+   * own -- the live note's switch, in a notch of the site header. The `dark:` variant answers to the
+   * body's theme class and so cannot be scoped to one component; this picks the dark classes outright.
+   */
+  dark: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -48,6 +66,8 @@ provide('wTabs', {
   current: computed(() => props.modelValue),
   noCaps: computed(() => props.noCaps),
   inlineLabel: computed(() => props.inlineLabel),
+  dense: computed(() => props.dense),
+  dark: computed(() => props.dark),
   select: (name) => emit('update:modelValue', name)
 })
 
