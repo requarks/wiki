@@ -995,7 +995,8 @@ const GUEST_ROLES = [
   'read:assets',
   'read:comments',
   'write:comments',
-  'read:glossary'
+  'read:glossary',
+  'read:notes'
 ]
 
 const rules = [
@@ -1136,12 +1137,13 @@ const rules = [
     disabled: false
   },
   /*
-    The two rule permissions that ignore the path: a glossary belongs to a site and a locale, so every
-    rule naming one that is scoped to them applies, and mode alone decides -- see `resolveLocaleRule`
-    in `helpers/pageRules.ts`. The hints say so, because a DENY written for one folder closing the
-    whole glossary is not what anybody would guess. `scope: 'locale'` is what puts them in the
-    picker's second column (`RulePermissionsDialog`), whose heading carries that warning for both,
-    and has to match `LOCALE_PERMISSIONS` in `models/groups.ts`.
+    The rule permissions that ignore the path: a glossary belongs to a site and a locale, and a live
+    note to a site (asked in its primary locale), so every rule naming one that is scoped to them
+    applies, and mode alone decides -- see `resolveLocaleRule` in `helpers/pageRules.ts`. The heading
+    says so, because a DENY written for one folder closing the whole glossary is not what anybody
+    would guess. `scope: 'locale'` is what puts them in the picker's second column
+    (`RulePermissionsDialog`), whose heading carries that warning for all of them, and has to match
+    `LOCALE_PERMISSIONS` in `models/groups.ts`.
   */
   {
     permission: 'read:glossary',
@@ -1157,6 +1159,24 @@ const rules = [
     scope: 'locale',
     title: 'Manage Glossary',
     hint: 'Can create, edit and delete glossary terms, and view them.',
+    warning: false,
+    restrictedForSystem: true,
+    disabled: false
+  },
+  {
+    permission: 'read:notes',
+    scope: 'locale',
+    title: 'Read Live Notes',
+    hint: 'Can view live notes from a shared link.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  {
+    permission: 'write:notes',
+    scope: 'locale',
+    title: 'Write Live Notes',
+    hint: 'Can create and contribute to live notes. Can delete own notes.',
     warning: false,
     restrictedForSystem: true,
     disabled: false

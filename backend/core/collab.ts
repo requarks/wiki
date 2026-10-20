@@ -108,11 +108,15 @@ interface CollabConn {
   clients: Set<number>
   /** Answered the last keepalive ping. */
   alive: boolean
-  /** Who is on the other end — what a live note records as having written into it. */
-  userId: string
   /**
-   * May read the room and not write to it: somebody other than its owners, in a locked live note. Their
-   * edits are dropped here rather than trusted to the editor to have been read-only.
+   * Who is on the other end — what a live note records as having written into it. Null for a guest
+   * reading a live note, who is always `readOnly` and so never writes anything to record.
+   */
+  userId: string | null
+  /**
+   * May read the room and not write to it: in a live note, anybody who may not write in it — a reader
+   * of a locked note, an account without `write:notes`, a guest. Their edits are dropped here rather
+   * than trusted to the editor to have been read-only.
    */
   readOnly: boolean
   /** One of a live note's owners, whom changing its access never disconnects. See `noteAccessChanged`. */
@@ -121,7 +125,7 @@ interface CollabConn {
 
 /** Who a socket joining a room is, and what they may do in it — decided by the caller. */
 export interface RoomMember {
-  userId: string
+  userId: string | null
   readOnly?: boolean
   manager?: boolean
 }

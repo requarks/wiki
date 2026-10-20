@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from 'node:crypto'
 
-import { and, count, desc, eq, ilike, inArray, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, lt, notExists, sql } from 'drizzle-orm'
 import * as Y from 'yjs'
 
 import {
@@ -12,6 +12,8 @@ import {
 import { CustomError, NOTE_IMAGES_FOLDER } from '../helpers/common.ts'
 import { detectImageMime, detectSvg, svgMimeType } from '../helpers/images.ts'
 
+import type { AccessActor } from './groups.ts'
+
 /**
  * Escape the LIKE wildcards `%` and `_` (and the escape character itself) so that a filter is matched
  * literally. The same as `models/users.ts` has.
@@ -20,10 +22,14 @@ function escapeLikePattern(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_')
 }
 
-/** What a note's URL is made of: `/n/<key>`. */
+/**
+ * What a note's URL is made of: `/n/<key>`. A generated key is {@link KEY_LENGTH} characters of the
+ * alphabet; a key somebody picks is any run of the same characters up to {@link MAX_KEY_LENGTH}.
+ */
 const KEY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-'
 export const KEY_LENGTH = 24
-const KEY_PATTERN = /^[A-Za-z0-9-]{24}$/
+export const MAX_KEY_LENGTH = 64
+export const KEY_PATTERN = /^[A-Za-z0-9-]{1,64}$/
 
 /**
  * The shortest gap between two revisions of a note while it is being written.
@@ -46,6 +52,16 @@ const IMAGE_EXTENSIONS: Record<string, string> = {
   [svgMimeType]: 'svg'
 }
 
+/**
+ * How long a note may sit empty before {@link LiveNotes.purgeUntouched} takes it: long enough that
+ * one made for a meeting tomorrow is still there for it, short enough that a mistyped URL leaves
+ * nothing behind for long.
+ */
+export const UNTOUCHED_NOTE_TTL_HOURS = 24
+
+/** How many untouched notes one sweep deletes. Whatever is left over goes on the next. */
+const PURGE_BATCH_SIZE = 500
+
 /** How many revisions the dialog is given. The newest, since that is the end it is read from. */
 const MAX_LISTED_REVISIONS = 500
 
@@ -56,7 +72,26 @@ const MAX_LISTED_REVISIONS = 500
 export const LIVE_NOTE_ACCESS = ['editable', 'locked', 'private'] as const
 export type LiveNoteAccess = (typeof LIVE_NOTE_ACCESS)[number]
 
-/** What one account may do with one note. */
+/**
+ * Who is asking about a note: the account, when there is one, and the groups and group-wide
+ * permissions it acts with -- `groups.actorForRequest`.
+ */
+export interface NoteRequester {
+  /** Null for a guest. */
+  userId: string | null
+  actor: AccessActor
+}
+
+/**
+ * What a requester may do with a site's live notes at all, before any one note is asked about:
+ * `read:notes` and `write:notes`. See {@link LiveNotes.permissionsFor}.
+ */
+export interface NotePermissions {
+  read: boolean
+  write: boolean
+}
+
+/** What one requester may do with one note. */
 export interface NoteRights {
   /** Change its access, and delete it: its creator, and `manage:system`. */
   manage: boolean
@@ -145,10 +180,24 @@ export function titleOf(content: string): string {
 /**
  * Live notes model
  *
- * A live note is a markdown document edited together in real time, reached at `/n/<key>` by anyone
- * signed in who holds the URL. It is deliberately NOT a page: it has no place in the tree, no page
- * rules, no render and no save. The URL is the whole of its access control, which is why the key is 24
- * characters drawn from a cryptographic source — about 143 bits, nothing anybody guesses.
+ * A live note is a markdown document edited together in real time, reached at `/n/<key>` by whoever
+ * holds the URL and may use live notes on the site. It is deliberately NOT a page: it has no place in
+ * the tree, no render and no save. Two permissions say who may use notes at all — `read:notes` to open
+ * one and follow it as it is written, `write:notes` to create one and write in it — and they are page
+ * rules about the site rather than any path, asked in the site's primary locale since a note has no
+ * locale of its own ({@link LiveNotes.permissionsFor}). Past that, the URL is the whole of a note's
+ * access control, which is why a generated key is 24 characters drawn from a cryptographic source —
+ * about 143 bits, nothing anybody guesses.
+ *
+ * **A guest may read, never write.** Granted `read:notes`, the guests group can open a note from its
+ * link and watch it change; `write:notes` is not among what that group may hold (`GUEST_ROLES`), and
+ * {@link LiveNotes.permissionsFor} refuses writing to a requester with no account whatever the rules
+ * say, since a note records who wrote into it.
+ *
+ * **A key may also be picked**, by visiting `/n/<key>` for one no note on the site has yet
+ * ({@link LiveNotes.create} with `key`). That trades the guarantee above for a name people can read
+ * out — `tools-update-202608` is a credential anybody can guess — and a note that needs keeping to its
+ * participants is one its creator locks or makes private.
  *
  * **The collaboration room is what writes it.** Every other room is a scratch space that empties when
  * its last participant leaves; a note's room instead persists its document as it changes, and starts
@@ -169,8 +218,8 @@ export function titleOf(content: string): string {
  * **An image added to a note is uploaded the moment it is added** ({@link LiveNotes.addImage}), since
  * there is no save to upload it on. It is an ordinary asset, stored and served wherever the site keeps
  * its images, but in the hidden `n` folder under a random name (`NOTE_IMAGES_FOLDER`): out of the File
- * Manager and every listing, and loaded by anybody signed in who has its URL — the same footing as
- * the note itself. `liveNoteImages` lists each note's, and deleting the note deletes them.
+ * Manager and every listing, and loaded by anybody who may read the site's notes and has its URL —
+ * the same footing as the note itself. `liveNoteImages` lists each note's, and deleting the note deletes them.
  *
  * Publishing a note as a page is done by the browser (`publishToPage` in `LiveNote.vue`), from
  * `content`, through the ordinary page and asset routes.
@@ -199,27 +248,48 @@ class LiveNotes {
     return key
   }
 
-  /** Create an empty note. Nothing is stored in it until somebody types. */
+  /**
+   * Create an empty note. Nothing is stored in it until somebody types.
+   *
+   * @param key The key to create it under, when its creator picked one; a key a note on the site
+   *   already has is refused with 409 `noteExists`, never answered with that note.
+   */
   async create({
     siteId,
-    creatorId
+    creatorId,
+    key
   }: {
     siteId: string
     creatorId: string
+    key?: string
   }): Promise<LiveNoteSummary> {
+    if (key !== undefined && !this.isValidKey(key)) {
+      throw new CustomError(
+        'noteKeyInvalid',
+        `A note key is 1 to ${MAX_KEY_LENGTH} letters, digits and hyphens.`,
+        400
+      )
+    }
     /*
       A collision on 143 bits does not happen, but the unique index is what would say so, and a retry
-      costs one line. 23505 is that index: the key is the only unique column being written.
+      costs one line. 23505 is that index: the key is the only unique column being written. A picked
+      key colliding is two people asking for the same name, and the second one is told so.
     */
     for (let attempt = 0; ; attempt++) {
       try {
         const [note] = await WIKI.db
           .insert(liveNotesTable)
-          .values({ siteId, key: this.generateKey(), creatorId })
+          .values({ siteId, key: key ?? this.generateKey(), creatorId })
           .returning()
         return this.summarize(note)
       } catch (err: any) {
-        if (attempt >= 2 || (err.cause ?? err).code !== '23505') {
+        if ((err.cause ?? err).code !== '23505') {
+          throw err
+        }
+        if (key !== undefined) {
+          throw new CustomError('noteExists', 'A note with this key already exists.', 409)
+        }
+        if (attempt >= 2) {
           throw err
         }
       }
@@ -296,20 +366,44 @@ class LiveNotes {
   }
 
   /**
-   * What an account may do with a note, which every route and the room ask and nothing works out for
+   * Whether a requester may read a site's live notes, and write in them: `read:notes` and
+   * `write:notes`, the second implying the first.
+   *
+   * Both are page rules whose pattern is ignored (`LOCALE_PERMISSIONS`), and a note belongs to a site
+   * rather than to a locale, so they are asked in the site's primary locale. Writing is never a
+   * guest's: the guests group cannot be granted it, and this does not take that on trust.
+   */
+  permissionsFor(requester: NoteRequester, siteId: string): NotePermissions {
+    const locale = WIKI.sites[siteId]?.config?.locales?.primary
+    const may = (permission: string) =>
+      WIKI.models.groups.checkLocaleAccess(requester.actor, permission, siteId, locale)
+    return {
+      read: may('read:notes'),
+      write: requester.userId !== null && may('write:notes')
+    }
+  }
+
+  /**
+   * What a requester may do with a note, which every route and the room ask and nothing works out for
    * itself.
    *
-   * Its owners -- whoever created it, and `manage:system`, which passes every check -- may do
-   * everything, whatever the note's access says: changing it, deleting the note, and reading and
-   * writing it when it is locked or private. Everybody else holding the key gets what `access` allows.
-   * Holding the key is what lets somebody in; it is no claim to the note itself.
+   * Its owners -- whoever created it while they still hold `write:notes`, and `manage:system`, which
+   * passes every check -- may do everything, whatever the note's access says: changing it, deleting the
+   * note, and reading and writing it when it is locked or private. Everybody else holding the key gets
+   * what `access` allows, within what their permissions allow: `read:notes` to read it, `write:notes`
+   * to write in it. Holding the key is what lets somebody in; it is no claim to the note itself.
+   *
+   * A creator who has since lost `write:notes` is no longer an owner, but can still read their own
+   * note, private or not, for as long as they may read notes at all.
    */
-  rightsFor(note: LiveNoteSummary, userId: string, permissions: string[]): NoteRights {
-    const manage = note.creatorId === userId || permissions.includes('manage:system')
+  rightsFor(note: LiveNoteSummary, requester: NoteRequester): NoteRights {
+    const may = this.permissionsFor(requester, note.siteId)
+    const isCreator = requester.userId !== null && note.creatorId === requester.userId
+    const manage = requester.actor.permissions.includes('manage:system') || (isCreator && may.write)
     return {
       manage,
-      read: manage || note.access !== 'private',
-      write: manage || note.access === 'editable'
+      read: manage || (may.read && (isCreator || note.access !== 'private')),
+      write: manage || (may.write && note.access === 'editable')
     }
   }
 
@@ -347,6 +441,79 @@ class LiveNotes {
       return images.map((image) => image.assetId)
     })
 
+    await this.deleteImages(note, assetIds, actorId)
+  }
+
+  /**
+   * Delete the notes nobody has written anything in, {@link UNTOUCHED_NOTE_TTL_HOURS} after they were
+   * made or last typed into — the ones a visit to the wrong `/n/<key>`, or a click on New Live Note
+   * that went nowhere, leaves behind. Run hourly by `tasks/simple/purge-untouched-live-notes.ts`.
+   *
+   * Empty means no content and so no title, which is derived from it, and **no revision** either: a
+   * note that was written and then cleared still has its history in the revisions dialog, and that is
+   * not what this is for. Opening a note does not count as touching it, since only typing moves
+   * `updatedAt`.
+   *
+   * The candidates are locked as they are picked, which is what makes the check hold: `persist` writes
+   * under the same row lock, so a note somebody starts typing into in the meantime is either written
+   * first and no longer empty when re-checked, or written into a row that is gone — which it copes
+   * with. Rooms still open on an emptied note are closed, on every instance, as for a delete.
+   *
+   * @returns How many notes were deleted.
+   */
+  async purgeUntouched(): Promise<number> {
+    const cutoff = new Date(
+      Temporal.Now.instant().subtract({ hours: UNTOUCHED_NOTE_TTL_HOURS }).epochMilliseconds
+    )
+    const { notes, images } = await WIKI.db.transaction(async (trx) => {
+      const notes = await trx
+        .select({ id: liveNotesTable.id, siteId: liveNotesTable.siteId })
+        .from(liveNotesTable)
+        .where(
+          and(
+            eq(liveNotesTable.content, ''),
+            lt(liveNotesTable.updatedAt, cutoff),
+            notExists(
+              trx
+                .select({ id: revisionsTable.id })
+                .from(revisionsTable)
+                .where(eq(revisionsTable.noteId, liveNotesTable.id))
+            )
+          )
+        )
+        .limit(PURGE_BATCH_SIZE)
+        .for('update', { skipLocked: true })
+      if (notes.length === 0) {
+        return { notes, images: [] }
+      }
+      const ids = notes.map((note) => note.id)
+      const images = await trx
+        .select({ assetId: imagesTable.assetId, noteId: imagesTable.noteId })
+        .from(imagesTable)
+        .where(inArray(imagesTable.noteId, ids))
+      await trx.delete(liveNotesTable).where(inArray(liveNotesTable.id, ids))
+      return { notes, images }
+    })
+
+    for (const note of notes) {
+      WIKI.collab.noteDeleted(note.id)
+      const assetIds = images
+        .filter((image) => image.noteId === note.id)
+        .map((image) => image.assetId)
+      await this.deleteImages(note, assetIds)
+    }
+    return notes.length
+  }
+
+  /**
+   * The files of a deleted note's images, outside the transaction that deleted the note, since
+   * removing one may be a round trip to a storage target.
+   */
+  private async deleteImages(
+    note: { id: string; siteId: string },
+    assetIds: string[],
+    actorId?: string
+  ): Promise<void> {
     for (const assetId of assetIds) {
       try {
         await WIKI.models.assets.deleteAsset(note.siteId, assetId, actorId)

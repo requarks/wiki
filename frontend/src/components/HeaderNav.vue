@@ -46,15 +46,15 @@
         <header-actions-menu v-if="isActionsCollapsed" />
         <template v-else>
           <w-btn
-            v-if="userStore.can(`write:pages`)"
+            v-if="canCreate"
             class="ml-4"
             flat
             round
             dense
             icon="la:plus-circle"
             color="blue-4"
-            aria-label="Create New Page">
-            <w-tooltip>Create New Page</w-tooltip>
+            :aria-label="t(`common.header.create`)">
+            <w-tooltip>{{ t('common.header.create') }}</w-tooltip>
             <new-menu offer-live-note />
           </w-btn>
           <!-- -> Shown to everyone: Tags and the Glossary are for readers, and the menu holds back its
@@ -146,6 +146,7 @@ import { splitLocalePath } from '@/helpers/pagePaths'
 
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { useNotificationsStore } from '@/stores/notifications'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -168,6 +169,7 @@ import HeaderSearch from '@/components/HeaderSearch.vue'
 
 const commonStore = useCommonStore()
 const editorStore = useEditorStore()
+const liveNoteStore = useLiveNoteStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -229,7 +231,27 @@ const inboxLabel = computed(() =>
 const isAtLeast900 = useMinWidth(900)
 const isActionsCollapsed = computed(() => !isAtLeast900.value)
 
+/**
+ * Whether the New button is shown: to somebody who may write pages somewhere, or create live notes
+ * here. A notes-only user gets a menu holding New Live Note and nothing else -- see `PageNewMenu`.
+ */
+const canCreate = computed(() => userStore.can('write:pages') || liveNoteStore.canCreate)
+
 // WATCHERS
+
+/*
+  Whether this session may create live notes, asked here rather than by the New menu: the button that
+  opens that menu is shown on the answer, so it has to be known before there is a menu to ask it. Asked
+  again whenever the answer could have changed -- see `accessKey`. The overflow menu below 900px reads
+  the same answer, and is only ever mounted inside this header.
+*/
+watch(
+  () => liveNoteStore.accessKey,
+  () => {
+    liveNoteStore.ensureAccess()
+  },
+  { immediate: true }
+)
 
 /*
   The search row closes on arriving somewhere, which is what pressing Enter in it does: the results are

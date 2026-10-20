@@ -747,8 +747,11 @@ export const liveNotes = pgTable(
     siteId: uuid()
       .notNull()
       .references(() => sites.id, { onDelete: 'cascade' }),
-    /** The 24 characters of `/n/<key>`. Case-sensitive, and the only thing a URL carries. */
-    key: varchar({ length: 24 }).notNull(),
+    /**
+     * What `/n/<key>` names the note by: 24 random characters, or whatever its creator typed into the
+     * URL. Case-sensitive, unique per site, and the only thing a URL carries.
+     */
+    key: varchar({ length: 64 }).notNull(),
     /** The first heading of the content, or empty. Derived; never written on its own. */
     title: varchar({ length: 255 }).notNull().default(''),
     /**
@@ -773,8 +776,9 @@ export const liveNotes = pgTable(
     updatedAt: timestamp().notNull().defaultNow()
   },
   (table) => [
-    uniqueIndex('liveNotes_key_key').on(table.key),
-    index('liveNotes_siteId_idx').on(table.siteId)
+    // -> Per site, since a custom key is somebody's choice and two sites may each make the same one.
+    //    Leading with the site, it also serves every lookup by site alone
+    uniqueIndex('liveNotes_siteId_key_key').on(table.siteId, table.key)
   ]
 )
 

@@ -93,19 +93,30 @@ export const PAGE_PERMISSIONS = [
   'manage:comments',
   'manage:navigation',
   'read:glossary',
-  'manage:glossary'
+  'manage:glossary',
+  'read:notes',
+  'write:notes'
 ]
 
 /**
  * The page permissions that are about a site and a locale rather than a page.
  *
  * Granted through rules like every other page permission, but a rule's `match`, `path` and `tags` say
- * nothing about them: a glossary has no path. Every rule naming one that is scoped to the site and the
+ * nothing about them: a glossary has no path, and neither does a live note. Every rule naming one that is scoped to the site and the
  * locale applies, and the modes rank as they always do — see `resolveLocaleRule` in
  * `helpers/pageRules.ts`. `checkAccess` routes them there, so a caller asking about one at a page gets
  * the locale's answer rather than one that changes from page to page.
  */
-export const LOCALE_PERMISSIONS = ['read:glossary', 'manage:glossary']
+export const LOCALE_PERMISSIONS = ['read:glossary', 'manage:glossary', 'read:notes', 'write:notes']
+
+/**
+ * The locale permissions that come with another in the same locale: managing a glossary one may not
+ * read, or writing in a note one may not read, is not a state worth supporting.
+ */
+const IMPLIED_LOCALE_PERMISSIONS: Record<string, string> = {
+  'read:glossary': 'manage:glossary',
+  'read:notes': 'write:notes'
+}
 
 /** Whether a permission list carries any of `ELEVATED_PERMISSIONS`. */
 export function isElevated(permissions: readonly string[]): boolean {
@@ -231,7 +242,8 @@ export interface AccessActor {
 /**
  * The page permissions a rule on the GUESTS group may grant.
  *
- * Reading, and saying something in a comment. Everything else — writing or deleting a page, managing
+ * Reading, and saying something in a comment. Reading a live note includes following it as it is
+ * written; writing in one never is, whoever holds the link. Everything else — writing or deleting a page, managing
  * assets or comments, reviewing suggestions — is an action attributable to somebody, and the guests
  * group is precisely the absence of a somebody.
  *
@@ -245,7 +257,8 @@ export const GUEST_ROLES = [
   'read:assets',
   'read:comments',
   'write:comments',
-  'read:glossary'
+  'read:glossary',
+  'read:notes'
 ]
 
 /**
@@ -376,9 +389,11 @@ class Groups {
    * scoped to the site and the locale counts, whatever it addresses, and mode alone decides between
    * them: a DENY anywhere closes the locale, a FORCE ALLOW anywhere reopens it.
    *
-   * `manage:glossary` implies `read:glossary` in the same locale: editing a glossary one may not read is
-   * not a state worth supporting, and the editor needs the list to pick related terms from. Each is
-   * decided on its own rules first, so a DENY on reading does not take managing with it.
+   * `manage:glossary` implies `read:glossary` in the same locale, and `write:notes` implies
+   * `read:notes` (`IMPLIED_LOCALE_PERMISSIONS`): editing a glossary one may not read is not a state
+   * worth supporting, and the editor needs the list to pick related terms from; a note is written in an
+   * editor showing it. Each is decided on its own rules first, so a DENY on reading does not take the
+   * other with it.
    *
    * @param locale Absent, rules limited to particular locales are not excluded — as for a page
    *   reference that leaves the locale out
@@ -397,7 +412,8 @@ class Groups {
       const rule = resolveLocaleRule(rules, name, { siteId, locale })
       return rule ? rule.mode !== 'DENY' : false
     }
-    return grants(permission) || (permission === 'read:glossary' && grants('manage:glossary'))
+    const implied = IMPLIED_LOCALE_PERMISSIONS[permission]
+    return grants(permission) || (implied !== undefined && grants(implied))
   }
 
   /**
@@ -442,7 +458,9 @@ class Groups {
         rules: [
           {
             // -> `write:comments` so that a wiki which turns comments on has a discussion its
-            //    accounts can join, rather than one nobody but an administrator can
+            //    accounts can join, rather than one nobody but an administrator can. `read:notes`
+            //    and not `write:notes`: a shared note opens for any account, but who may start one
+            //    is an administrator's decision
 
             id: uuid(),
             name: 'Default Rule',
@@ -451,7 +469,8 @@ class Groups {
               'read:assets',
               'read:comments',
               'write:comments',
-              'read:glossary'
+              'read:glossary',
+              'read:notes'
             ],
             match: 'START',
             mode: 'ALLOW',
@@ -478,9 +497,10 @@ class Groups {
               and what they get is the set the guests group is allowed to hold (`GUEST_ROLES`) rather
               than a public wiki whose readers still cannot say anything.
 
-              `read:glossary` is deliberately NOT named here. It ignores the path, so a DENY for it
-              anywhere outranks every ALLOW for it everywhere: named in this rule, an operator's later
-              ALLOW for guests would do nothing. Guests are denied it anyway with no rule at all.
+              `read:glossary` and `read:notes` are deliberately NOT named here. They ignore the path, so
+              a DENY for one anywhere outranks every ALLOW for it everywhere: named in this rule, an
+              operator's later ALLOW for guests would do nothing. Guests are denied them anyway with no
+              rule at all.
             */
             roles: ['read:pages', 'read:assets', 'read:comments', 'write:comments'],
             match: 'START',
@@ -543,7 +563,8 @@ class Groups {
       'read:assets',
       'read:comments',
       'write:comments',
-      'read:glossary'
+      'read:glossary',
+      'read:notes'
     ]
     const result = await WIKI.db
       .insert(groupsTable)

@@ -120,6 +120,7 @@
           </w-btn>
           <!-- -> Once the room has answered: until then there is no text to publish -->
           <w-btn
+            v-if="canPublish"
             class="ms-2 acrylic-btn"
             flat
             icon="la:file-export"
@@ -141,7 +142,7 @@
           <w-menu class="translucent-menu" auto-close anchor="bottom right" self="top right">
             <w-list dense padding style="min-width: 200px">
               <!-- -> The bar's button, below 900px where the bar has no room for it -->
-              <template v-if="!isAtLeast900">
+              <template v-if="!isAtLeast900 && canPublish">
                 <w-item clickable :disabled="!collabStore.hasSynced" @click="publishToPage">
                   <w-item-section avatar class="!min-w-0 !pr-2">
                     <w-icon name="la:file-export" class="text-blue-7" />
@@ -260,14 +261,15 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 import { useCollabStore } from '@/stores/collab'
 import { useCommonStore } from '@/stores/common'
 import { useEditorStore } from '@/stores/editor'
-import { useLiveNoteStore } from '@/stores/liveNote'
+import { NOTE_KEY_PATTERN, useLiveNoteStore } from '@/stores/liveNote'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 /**
- * A live note, at `/n/<key>`: the Markdown editor on a document that anybody signed in who holds the
- * URL is writing in at the same time, and that stores itself as it changes. `/n` alone creates one and
- * replaces itself with its URL.
+ * A live note, at `/n/<key>`: the Markdown editor on a document that whoever holds the URL is writing
+ * in at the same time, and that stores itself as it changes. `/n` alone creates one and replaces
+ * itself with its URL. Opening one takes `read:notes` -- which a guest may hold, and then only ever
+ * reads -- and writing in one or creating one `write:notes`.
  *
  * Everything that makes it a note rather than a page is somewhere else. The server's half is
  * `models/liveNotes.ts` and the note room in `core/collab.ts`; the editor's is its `noteKey` prop.
@@ -316,9 +318,12 @@ const state = reactive({
   /**
    * - `loading` — asking whether the note exists, or creating one
    * - `ready` — it does, and the editor is up
-   * - `signin` — a note is only for somebody signed in
+   * - `signin` — this reader is a guest, and guests may not do what was asked here
    * - `disabled` — the site does not have live notes
-   * - `notfound` — no note has this key
+   * - `forbidden` — this account may not open live notes here (`read:notes`)
+   * - `nocreate` — this account may not create live notes here (`write:notes`)
+   * - `notfound` — no note has this key, and none is to be created under it
+   * - `invalidkey` — the URL holds something no note could be called
    * - `private` — the note is private, and this reader is not one of its owners
    * - `createfailed` — `/n` could not create a note; `errorMessage` says why
    * - `error` — anything else; `errorMessage` says what
@@ -402,6 +407,12 @@ const editedLabel = computed(() => {
  */
 const canSwitchMode = computed(() => liveNoteStore.canWrite && !isPhoneViewport.value)
 
+/**
+ * Whether Publish to Page is offered: to anybody signed in. A guest could read the note but never
+ * create the page -- the guests group may not be granted `write:pages`.
+ */
+const canPublish = computed(() => userStore.authenticated)
+
 /** `editor` or `reader`. Read off the URL, and always the Reader for somebody who may only read. */
 const mode = computed(() =>
   canSwitchMode.value && route.query.mode !== 'reader' ? 'editor' : 'reader'
@@ -449,8 +460,14 @@ const placeholder = computed(() => {
       return { title: t('liveNote.signInRequired'), hint: t('liveNote.signInRequiredHint') }
     case 'disabled':
       return { title: t('liveNote.disabled'), hint: t('liveNote.disabledHint') }
+    case 'forbidden':
+      return { title: t('liveNote.forbidden'), hint: t('liveNote.forbiddenHint') }
+    case 'nocreate':
+      return { title: t('liveNote.noCreate'), hint: t('liveNote.noCreateHint') }
     case 'notfound':
       return { title: t('liveNote.notFound'), hint: t('liveNote.notFoundHint') }
+    case 'invalidkey':
+      return { title: t('liveNote.invalidKey'), hint: t('liveNote.invalidKeyHint') }
     case 'private':
       return { title: t('liveNote.privateTitle'), hint: t('liveNote.privateHint') }
     case 'createfailed':
@@ -494,7 +511,7 @@ watch(
       return
     }
     if (route.params.noteKey) {
-      load(route.params.noteKey)
+      load(route.params.noteKey, { createIfMissing: true })
     } else {
       create()
     }
@@ -547,16 +564,34 @@ function setMode(next) {
 }
 
 /**
- * Whether this reader may have live notes here, saying why not when they may not. The server asks the
- * same questions; asked here first so that the screen can say which it is without a round trip.
+ * Whether the site has live notes, saying so when it does not. Whether this reader may read them is
+ * the note's own route's answer -- a guest may, where the guests group holds `read:notes` -- so it is
+ * left to that.
  */
-function mayUseNotes() {
+function siteHasNotes() {
+  if (!siteStore.features.liveNotes || !siteStore.features.collaborativeEditing) {
+    state.status = 'disabled'
+    return false
+  }
+  return true
+}
+
+/**
+ * Whether this reader may create a note here, saying why not when they may not: signed in, with
+ * `write:notes`. The server asks the same; asked here first so that the screen can say which it is
+ * without a round trip.
+ */
+async function mayCreateNotes() {
+  if (!siteHasNotes()) {
+    return false
+  }
   if (!userStore.authenticated) {
     state.status = 'signin'
     return false
   }
-  if (!siteStore.features.liveNotes || !siteStore.features.collaborativeEditing) {
-    state.status = 'disabled'
+  await liveNoteStore.ensureAccess()
+  if (!liveNoteStore.canCreate) {
+    state.status = 'nocreate'
     return false
   }
   return true
@@ -573,7 +608,10 @@ async function create() {
   const token = ++loadToken
   liveNoteStore.close()
   state.status = 'loading'
-  if (!mayUseNotes()) {
+  if (!(await mayCreateNotes())) {
+    return
+  }
+  if (token !== loadToken) {
     return
   }
   try {
@@ -582,28 +620,81 @@ async function create() {
       await router.replace({ path: `/n/${key}`, hash: route.hash })
     }
   } catch (err) {
-    if (token !== loadToken) {
-      return
-    }
-    switch (err?.response?.status) {
-      case 401:
-        state.status = 'signin'
-        break
-      case 403:
-        state.status = 'disabled'
-        break
-      default:
-        state.status = 'createfailed'
-        state.errorMessage = apiErrorMessage(err)
+    if (token === loadToken) {
+      showCreateFailure(err)
     }
   }
 }
 
-async function load(key) {
+/**
+ * `/n/<key>` for a key no note on the site has yet: a new note under it, the way HedgeDoc's free URLs
+ * work. Somebody else creating it first (409) is no failure -- it is the note they both meant, and it
+ * is joined like any other.
+ */
+async function createUnder(key, token) {
+  try {
+    await liveNoteStore.create(key)
+  } catch (err) {
+    if (token !== loadToken) {
+      return
+    }
+    if (err?.response?.status !== 409) {
+      showCreateFailure(err)
+      return
+    }
+  }
+  if (token === loadToken) {
+    await load(key)
+  }
+}
+
+function showCreateFailure(err) {
+  switch (err?.response?.status) {
+    case 401:
+      state.status = 'signin'
+      break
+    case 403:
+      state.status = refusalStatus(err)
+      break
+    default:
+      state.status = 'createfailed'
+      state.errorMessage = apiErrorMessage(err)
+  }
+}
+
+/**
+ * What a 403 from the notes API is: each refusal about the reader has a code of its own, and any other
+ * 403 is notes being switched off.
+ */
+function refusalStatus(err) {
+  switch (err?.data?.error) {
+    case 'notePrivate':
+      return 'private'
+    case 'notesForbidden':
+      return 'forbidden'
+    case 'noteWriteForbidden':
+      return 'nocreate'
+    default:
+      return 'disabled'
+  }
+}
+
+/**
+ * Open the note behind a key.
+ *
+ * `createIfMissing` is for the key the reader navigated to, which creates the note when there is none
+ * -- and only for that. A note deleted while somebody is in it is reloaded without it, so that they are
+ * told it is gone rather than handed an empty one of the same name.
+ */
+async function load(key, { createIfMissing = false } = {}) {
   const token = ++loadToken
   liveNoteStore.close()
   state.status = 'loading'
-  if (!mayUseNotes()) {
+  if (!siteHasNotes()) {
+    return
+  }
+  if (!NOTE_KEY_PATTERN.test(key)) {
+    state.status = 'invalidkey'
     return
   }
   try {
@@ -624,11 +715,21 @@ async function load(key) {
         state.status = 'signin'
         break
       case 403:
-        // -> The note's own refusal has a code of its own; any other 403 is notes being switched off
-        state.status = err.data?.error === 'notePrivate' ? 'private' : 'disabled'
+        state.status = refusalStatus(err)
         break
       case 404:
-        state.status = 'notfound'
+        // -> Only for somebody who may create one: anybody else is told there is no such note
+        if (createIfMissing) {
+          await liveNoteStore.ensureAccess()
+        }
+        if (token !== loadToken) {
+          return
+        }
+        if (createIfMissing && liveNoteStore.canCreate) {
+          await createUnder(key, token)
+        } else {
+          state.status = 'notfound'
+        }
         break
       default:
         state.status = 'error'
@@ -637,7 +738,10 @@ async function load(key) {
   }
 }
 
-/** The note's URL, which is the whole of sharing it: whoever is signed in and has it can write. */
+/**
+ * The note's URL, which is the whole of sharing it: whoever has it and may use live notes here can
+ * read it, and write in it as far as its access and their `write:notes` allow.
+ */
 async function copyLink() {
   try {
     await copyToClipboard(window.location.href.split('#')[0])

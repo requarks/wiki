@@ -60,16 +60,23 @@ async function routes(app: FastifyInstance) {
 
     const asset = await WIKI.models.assets.resolveAssetPath(site.id, req.params['*'] ?? '')
     /*
-      A live note's image is not judged by page rules, which nobody writes for its folder and which
-      answer no there whatever they say (`checkAccess`). It is the note's own footing instead: anybody
-      signed in who holds the URL, its random name being what nobody can guess.
+      A live note's image is not judged by the page rules for its path, which nobody writes for its
+      folder and which answer no there whatever they say (`checkAccess`). It is the note's own footing
+      instead: anybody who may read the site's live notes -- a guest, where the guests group holds
+      `read:notes` -- and holds the URL, its random name being what nobody can guess.
     */
     const isNoteImage = Boolean(asset && isNoteImagesPath(asset.folderPath))
     // -> Not readable is answered as not there, so the URL cannot be used to probe for files
     if (
       !asset ||
       (isNoteImage
-        ? !requestUserId(req)
+        ? !WIKI.models.liveNotes.permissionsFor(
+            {
+              userId: requestUserId(req),
+              actor: WIKI.models.groups.actorForRequest(req)
+            },
+            site.id
+          ).read
         : !WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), 'read:assets', {
             siteId: site.id,
             path: asset.folderPath ? `${asset.folderPath}/${asset.fileName}` : asset.fileName,

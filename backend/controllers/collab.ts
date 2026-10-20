@@ -69,9 +69,12 @@ async function routes(app: FastifyInstance) {
   )
 
   /*
-    A live note's room, addressed by the note's key. There is no page and no page rule to ask: the
-    key and the note's own access setting are the whole of its access control (see `rightsFor` in
-    `models/liveNotes.ts`).
+    A live note's room, addressed by the note's key. There is no page to ask about: `read:notes` and
+    `write:notes`, the key, and the note's own access setting are the whole of its access control (see
+    `rightsFor` in `models/liveNotes.ts`).
+
+    The one room a guest may join, where the guests group holds `read:notes` -- as a reader, which is
+    following the note as it is written. Nothing a reader sends of the document is kept.
   */
   app.get<{ Params: { siteId: string; noteKey: string } }>(
     '/:siteId/notes/:noteKey',
@@ -88,29 +91,30 @@ async function routes(app: FastifyInstance) {
       if (!uuidValidate(siteId) || !WIKI.models.liveNotes.isValidKey(noteKey)) {
         return socket.close(4400, 'Invalid site id or note key')
       }
-      if (!req.session?.authenticated || !req.session.user?.id) {
-        return socket.close(4401, 'Authentication is required')
-      }
       if (!WIKI.models.liveNotes.isEnabled(siteId)) {
         return socket.close(4403, 'Live notes are disabled on this site')
+      }
+      const userId = req.session?.authenticated && req.session.user?.id ? req.session.user.id : null
+      const requester = { userId, actor: WIKI.models.groups.actorForRequest(req) }
+      if (!WIKI.models.liveNotes.permissionsFor(requester, siteId).read) {
+        return userId
+          ? socket.close(4403, 'You may not use live notes on this site')
+          : socket.close(4401, 'Authentication is required')
       }
 
       const note = await WIKI.models.liveNotes.getByKey(siteId, noteKey)
       if (!note) {
         return socket.close(4404, 'This note does not exist')
       }
-      const rights = WIKI.models.liveNotes.rightsFor(
-        note,
-        req.session.user.id,
-        req.session.permissions ?? []
-      )
+      const rights = WIKI.models.liveNotes.rightsFor(note, requester)
       if (!rights.read) {
         return socket.close(4403, 'This note is private')
       }
 
-      // -> A locked note's readers join as readers: the room drops what they send
+      // -> Whoever may not write joins as a reader -- of a locked note, without `write:notes`, or as
+      //    a guest: the room drops what they send
       await WIKI.collab.join(socket, { kind: 'note', id: note.id, siteId }, session, {
-        userId: req.session.user.id,
+        userId,
         readOnly: !rights.write,
         manager: rights.manage
       })

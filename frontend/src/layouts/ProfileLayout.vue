@@ -82,6 +82,7 @@ import { useMinWidth } from '@/composables/screen'
 import { loginLocation } from '@/helpers/loginRedirect'
 
 import { useFlagsStore } from '@/stores/flags'
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -92,6 +93,7 @@ import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 // STORES
 
 const flagsStore = useFlagsStore()
+const liveNoteStore = useLiveNoteStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
@@ -145,8 +147,10 @@ const sidenav = computed(() => [
     label: t('profile.groups'),
     icon: 'la:users'
   },
-  // -> Only where the site has live notes at all, which needs collaborative editing as well
-  ...(siteStore.features.liveNotes && siteStore.features.collaborativeEditing
+  // -> For anybody who may read notes here -- not only create them, so that somebody who has since
+  //    lost `write:notes` can still find their own. The access answer is false on a site without
+  //    notes at all (`liveNoteStore.ensureAccess`)
+  ...(liveNoteStore.canRead
     ? [{ key: 'notes', label: t('profile.liveNotes'), icon: 'la:sticky-note' }]
     : []),
   {
@@ -218,6 +222,15 @@ watch(
     if (!userStore.authenticated) {
       router.replace(loginLocation(route.fullPath))
     }
+  },
+  { immediate: true }
+)
+
+// -> Asked again whenever the answer could have changed: see `accessKey`
+watch(
+  () => liveNoteStore.accessKey,
+  () => {
+    liveNoteStore.ensureAccess()
   },
   { immediate: true }
 )

@@ -579,7 +579,8 @@ that is already on it needs no permission from anybody.
 **Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
 `review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
 `read:history`, `read:assets`, `write:assets`, `manage:assets`, `read:comments`, `write:comments`,
-`manage:comments`, `manage:navigation`, `read:glossary`, `manage:glossary` (`PAGE_PERMISSIONS` in `models/groups.ts`). A group grants them through **rules**:
+`manage:comments`, `manage:navigation`, `read:glossary`, `manage:glossary`, `read:notes`, `write:notes`
+(`PAGE_PERMISSIONS` in `models/groups.ts`). A group grants them through **rules**:
 each rule names some of them (`roles`) plus how it addresses pages (`match` + `path`, or tags) and
 what it does with them (`mode`: ALLOW / DENY / FORCEALLOW). Nothing is granted by default, and when
 several rules match, the most specific one wins — `helpers/pageRules.ts` documents the ordering.
@@ -617,6 +618,12 @@ Consequences worth knowing:
   `groups.checkLocaleAccess(actor, permission, siteId, locale)`; `checkAccess` routes them there too.
   `manage:glossary` in a locale implies `read:glossary` there. Neither is in the Guests group's seeded
   DENY rule, where it would outrank any ALLOW an administrator wrote for guests later.
+- **`read:notes` and `write:notes` ignore the path too**, and are asked in the site's PRIMARY locale,
+  since a live note belongs to a site and to no locale (`liveNotes.permissionsFor`). `write:notes`
+  implies `read:notes`. The Users group is seeded with `read:notes` only, so out of the box any account
+  can open a shared note and only administrators can start one. The guests group may be granted
+  `read:notes` (it is in `GUEST_ROLES`, not in the seeded DENY rule) and never `write:notes`, which
+  `permissionsFor` refuses to a requester with no account whatever the rules say.
 - **A page that is not live is its editors' alone.** Live is `published`, or `scheduled` inside its
   window (`publishStartDate` inclusive, `publishEndDate` exclusive); the dates gate nothing on a
   `published` page, where `publishStartDate` is what a blog post is dated by. Any other page is seen —
@@ -1332,19 +1339,31 @@ menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glos
 
 ### Live notes
 
-A markdown scratch document written together in real time at `/n/<key>` (HedgeDoc-style), by anybody
-signed in who holds the URL. `models/liveNotes.ts`, `api/liveNotes.ts`, the note room in
+A markdown scratch document written together in real time at `/n/<key>` (HedgeDoc-style), by whoever
+holds the URL and may use notes on the site. `models/liveNotes.ts`, `api/liveNotes.ts`, the note room in
 `core/collab.ts`; on the frontend `pages/LiveNote.vue`, `stores/liveNote.js`, and `EditorMarkdown.vue`
-under its `noteKey` prop. The site switch is `features.liveNotes`, which also needs
+under its `noteKey` prop. The site switch is `features.liveNotes` (on by default), which also needs
 `collaborativeEditing`.
 
-- **Not a page.** No tree entry, no page rules, no render, no save. The 24-character key (~143 bits,
-  `crypto`) is the credential, so it never goes in a log or an audit entry (record `noteId`), nor in
+- **Two permissions bound everything else**: `read:notes` to open a note and follow it live, and
+  `write:notes` to create one, write in one, and own one (see [Permissions](#permissions)). The
+  frontend learns them from `GET /sites/:siteId/notes/_access` (`liveNoteStore.ensureAccess`) — `_`
+  because `access` is a key somebody could pick. A guest holding `read:notes` reads through the same
+  routes and joins the room as a reader, with no awareness state of its own (every guest shares one
+  placeholder id); a guest is never handed the Editor, Publish to Page, or an image upload.
+
+- **Not a page.** No tree entry, no path for a page rule to match, no render, no save. The key is the credential: 24
+  characters from `crypto` (~143 bits) for a note made at `/n`, or whatever somebody typed — visiting
+  `/n/<key>` for a key no note on the site has yet creates one under it (1–64 of `[A-Za-z0-9-]`,
+  case-sensitive, unique per site; `KEY_PATTERN`, mirrored as `NOTE_KEY_PATTERN` in
+  `stores/liveNote.js`). Only a navigation creates, and only for somebody holding `write:notes` — anybody
+  else is told there is no such note: a note deleted under its readers reloads as gone.
+  Either way it never goes in a log or an audit entry (record `noteId`), nor in
   any listing but its creator's own: **Profile → My Live Notes** (`GET /sites/:siteId/notes`,
   `liveNotes.listByCreator`) lists only the notes the caller created, whose keys they already hold. Beyond the key, `liveNotes.rightsFor` is the only thing that decides access. Owners (the
-  creator, plus `manage:system`) can always do everything, and everybody else gets what `access`
-  allows (`editable` / `locked` / `private`). Every route and the socket ask it; nothing works it out
-  for itself.
+  creator while they hold `write:notes`, plus `manage:system`) can always do everything, and everybody
+  else gets what `access` allows (`editable` / `locked` / `private`) within their own `read:notes` /
+  `write:notes`. Every route and the socket ask it; nothing works it out for itself.
 - **The collaboration room is the storage.** A note room (id `note:<noteId>`) persists its Yjs
   document through `liveNotes.persist`: 2s after the last edit, at least every 10s while typing goes
   on, and once more when it closes. It writes under the row lock and merges into what is stored,
@@ -1352,6 +1371,10 @@ under its `noteKey` prop. The site switch is `features.liveNotes`, which also ne
   re-seeded from text, so a client that reconnects with offline edits merges into the same document
   instead of duplicating it. `content` and `title` are derived from `state` on every write.
   `titleOf` (backend) and `noteTitleOf` (`stores/liveNote.js`) must agree.
+- **An untouched note is deleted after a day** (`liveNotes.purgeUntouched`, hourly off
+  `SYSTEM_SCHEDULE`): empty content, no revision, and `updatedAt` older than
+  `UNTOUCHED_NOTE_TTL_HOURS`. Only typing moves `updatedAt`, so opening a note does not keep it, and a
+  note written and then cleared keeps its history and is not touched.
 - **Revisions** are whole copies, taken at most every `REVISION_INTERVAL_MS` (5 min) and when the last
   participant leaves, and only when the content changed.
 - **Deleting a note or changing its access doesn't reach open rooms by itself.** The route calls
@@ -1361,7 +1384,7 @@ under its `noteKey` prop. The site switch is `features.liveNotes`, which also ne
   every storage target gets them. The type is read from the bytes (PNG, JPEG, GIF, WebP, SVG) and SVG
   goes through `uploadScanSVG`. `groups.checkAccess` says no to every page permission under `n/` for
   everybody, which is what hides it from the File Manager and every API. `/_files/` serves it to
-  anybody signed in instead, and the tree refuses `n` as a new root name. `liveNoteImages` lists each
+  anybody holding `read:notes` on the site instead, guests included, and the tree refuses `n` as a new root name. `liveNoteImages` lists each
   note's images, and `liveNotes.delete` removes them with the note. The images are kept until then,
   even after the text stops showing them, because a revision may still use them.
 - **Publish to Page** (`publishToPage` in `LiveNote.vue`) makes a page of a note in the browser, with

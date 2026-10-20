@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { useSiteStore } from './site'
+import { useUserStore } from './user'
 
 /**
  * The note's title: its first heading, the way HedgeDoc names a note.
@@ -31,6 +32,13 @@ export function noteTitleOf(content) {
   }
   return ''
 }
+
+/**
+ * What a note key may be: letters, digits and hyphens, 1 to 64 of them. Mirrors `KEY_PATTERN` in the
+ * backend's `models/liveNotes.ts`. A generated key is 24 of them; a longer or shorter one is a key
+ * somebody picked by visiting `/n/<key>`.
+ */
+export const NOTE_KEY_PATTERN = /^[A-Za-z0-9-]{1,64}$/
 
 /**
  * The live note that is open, if one is.
@@ -64,12 +72,69 @@ export const useLiveNoteStore = defineStore('liveNote', {
     /** `{ id, name }` of whoever typed into it last, or null for a note nobody has typed into. */
     lastEditor: null,
     content: '',
-    render: ''
+    render: '',
+    /**
+     * What this session may do with the site's live notes at all, before any one note:
+     * `read:notes` and `write:notes`, asked once per site and session (`notes/_access`). Not part of
+     * `userStore.pagePermissions`, for the reason the glossary's is not -- the rules' path is
+     * ignored, and the New menu and the profile have to know on routes that are not a page. Kept
+     * across `close`, which is about the note that was open.
+     */
+    siteAccess: { loadedFor: null, canRead: false, canWrite: false }
   }),
   getters: {
-    title: (state) => (state.content ? noteTitleOf(state.content) : state.storedTitle)
+    title: (state) => (state.content ? noteTitleOf(state.content) : state.storedTitle),
+    /**
+     * Everything the access answer depends on: the site, who is asking, and the two switches that
+     * make up whether the site has notes. Whatever changes it is a reason to ask again.
+     */
+    accessKey() {
+      const siteStore = useSiteStore()
+      const userStore = useUserStore()
+      return [
+        siteStore.id,
+        userStore.authenticated ? userStore.id : 'guest',
+        siteStore.features.liveNotes ? 'on' : 'off',
+        siteStore.features.collaborativeEditing ? 'on' : 'off'
+      ].join(':')
+    },
+    /** Whether the site has live notes and this session may open one. */
+    canRead: (state) => state.siteAccess.canRead,
+    /** Whether the site has live notes and this session may create them and write in them. */
+    canCreate: (state) => state.siteAccess.canWrite
   },
   actions: {
+    /**
+     * Fetch the access answer, unless it is already the one for `accessKey`. A failure leaves notes
+     * unavailable rather than throwing: a missing menu row is the right answer to not knowing.
+     */
+    async ensureAccess() {
+      const siteStore = useSiteStore()
+      if (!siteStore.id) {
+        return
+      }
+      const key = this.accessKey
+      if (this.siteAccess.loadedFor === key) {
+        return
+      }
+      this.siteAccess = { loadedFor: key, canRead: false, canWrite: false }
+      if (!siteStore.features.liveNotes || !siteStore.features.collaborativeEditing) {
+        return
+      }
+      try {
+        const resp = await API_CLIENT.get(`sites/${siteStore.id}/notes/_access`).json()
+        // -> Asked again for somebody else while this was in flight: that answer is the one to keep
+        if (this.siteAccess.loadedFor === key) {
+          this.siteAccess = {
+            loadedFor: key,
+            canRead: resp.enabled && resp.canRead,
+            canWrite: resp.enabled && resp.canWrite
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch live notes access: ${err.message}`)
+      }
+    },
     /**
      * Read the note behind a key. Throws what the API threw, so the caller can tell a note that does
      * not exist (404) from a site without notes (403) and a reader who is not signed in (401).
@@ -92,10 +157,15 @@ export const useLiveNoteStore = defineStore('liveNote', {
         render: ''
       })
     },
-    /** Create an empty note, answering with its key — the 24 characters of its URL. */
-    async create() {
+    /**
+     * Create an empty note, answering with its key — what its URL is made of. Under `key` when one is
+     * given, which the server refuses with 409 if a note already has it; generated otherwise.
+     */
+    async create(key) {
       const siteStore = useSiteStore()
-      const resp = await API_CLIENT.post(`sites/${siteStore.id}/notes`).json()
+      const resp = await API_CLIENT.post(`sites/${siteStore.id}/notes`, {
+        json: key ? { key } : {}
+      }).json()
       return resp.note.key
     },
     /**
@@ -130,7 +200,9 @@ export const useLiveNoteStore = defineStore('liveNote', {
       this.render = html
     },
     close() {
+      const siteAccess = this.siteAccess
       this.$reset()
+      this.siteAccess = siteAccess
     }
   }
 })

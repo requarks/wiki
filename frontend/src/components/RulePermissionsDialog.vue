@@ -162,10 +162,16 @@ const state = reactive({
  */
 /**
  * The last permission of each run of related ones -- the page lifecycle, what may go into a page,
- * assets, comments -- which a dotted rule closes off from the next run. Only ever drawn where the
- * permission is not the last of its list, so a column never ends on a rule.
+ * assets, comments, the glossary -- which a dotted rule closes off from the next run. Only ever drawn
+ * where the permission is not the last of its list, so a column never ends on a rule.
  */
-const SECTION_ENDS = ['delete:pages', 'write:scripts', 'manage:assets', 'manage:comments']
+const SECTION_ENDS = [
+  'delete:pages',
+  'write:scripts',
+  'manage:assets',
+  'manage:comments',
+  'manage:glossary'
+]
 
 function isAttachedToPage(opt) {
   return /:(assets|comments)$/.test(opt.permission) || opt.permission === 'manage:navigation'

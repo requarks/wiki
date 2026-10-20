@@ -125,7 +125,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           liveNotes: {
             type: 'boolean',
             description:
-              'Whether signed-in users may create live notes: markdown documents written together in real time at `/n/<key>`, by anybody signed in who holds the URL, and kept with a history of revisions. Off by default. Needs `collaborativeEditing` as well, since a note is a collaboration room that keeps its contents; with that off, notes are unreachable but kept.'
+              'Whether this site has live notes: markdown documents written together in real time at `/n/<key>` by whoever holds the URL, and kept with a history of revisions. On by default. Who may open one is the `read:notes` page permission and who may create and write in one `write:notes`, both granted per site, in its primary locale; a guest may be granted the first and never the second. Needs `collaborativeEditing` as well, since a note is a collaboration room that keeps its contents; with that off, notes are unreachable but kept.'
           },
           listFolderChildren: {
             type: 'boolean',

@@ -782,7 +782,7 @@ function defaultConfig() {
       */
       collaborativeEditing: false,
       // -> False, for the reason `collaborativeEditing` is: the server reads a missing key as off
-      liveNotes: false,
+      liveNotes: true,
       ratingsMode: 'off',
       comments: true,
       glossary: true,
@@ -934,7 +934,7 @@ async function save() {
           glossaryAutoLink: state.config.features?.glossaryAutoLink ?? true,
           lastEditedBy: state.config.features?.lastEditedBy ?? true,
           listFolderChildren: state.config.features?.listFolderChildren ?? false,
-          liveNotes: state.config.features?.liveNotes ?? false,
+          liveNotes: state.config.features?.liveNotes ?? true,
           notifications: state.config.features?.notifications ?? true,
           ratingsMode: state.config.features?.ratingsMode ?? 'off',
           reasonForChange: state.config.features?.reasonForChange ?? 'required',

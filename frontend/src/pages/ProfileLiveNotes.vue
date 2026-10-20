@@ -47,7 +47,9 @@
             <div class="text-body2 mt-1 max-w-lg opacity-60">
               {{ t('profile.liveNotesNoneHint') }}
             </div>
+            <!-- -> Only for somebody who may still create one: the list is open to readers too -->
             <w-btn
+              v-if="liveNoteStore.canCreate"
               class="acrylic-btn mt-6"
               flat
               icon="la:plus"
@@ -111,12 +113,16 @@ import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
 
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 /**
  * The live notes this account created on this site, newest first -- `GET /sites/:siteId/notes`,
  * which lists nobody else's. A row opens the note.
+ *
+ * Open to `read:notes` as well as `write:notes`, so that somebody who has lost the second can still
+ * get back to what they wrote; they read it from there, as its creator, private or not.
  */
 
 const PAGE_SIZE = 20
@@ -130,6 +136,7 @@ const ACCESS_ICONS = {
 
 const dark = useDark()
 
+const liveNoteStore = useLiveNoteStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 

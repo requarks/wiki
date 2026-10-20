@@ -154,12 +154,16 @@ export function startCollabSession({ siteId, pageId, noteKey }) {
     lastSave: null
   })
 
-  provider.awareness.setLocalStateField('user', {
-    id: userStore.id,
-    name: userStore.name,
-    hasAvatar: userStore.hasAvatar,
-    color: collabUserColor(userStore.id)
-  })
+  // -> Not for a guest, who can only be reading a live note: every guest shares the one placeholder
+  //    id, so they would all draw as the same avatar. A state with no `user` is not a participant.
+  if (userStore.authenticated) {
+    provider.awareness.setLocalStateField('user', {
+      id: userStore.id,
+      name: userStore.name,
+      hasAvatar: userStore.hasAvatar,
+      color: collabUserColor(userStore.id)
+    })
+  }
 
   provider.awareness.on('change', refreshParticipants)
 

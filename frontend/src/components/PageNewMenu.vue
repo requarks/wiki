@@ -22,7 +22,7 @@
           <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
         </w-item>
       </template>
-      <template v-if="props.hideAssetBtn === false">
+      <template v-if="props.hideAssetBtn === false && !notesOnly">
         <w-separator class="my-2" inset />
         <w-item clickable @click="openFileManager">
           <blueprint-icon icon="add-image" />
@@ -134,25 +134,29 @@ const { t } = useI18n()
 
 // COMPUTED
 
+/**
+ * Whether this menu is open to somebody who may create live notes and write no page anywhere: the
+ * header's New button is shown to them for the note alone, so the editors and the upload are left out.
+ */
+const notesOnly = computed(() => props.offerLiveNote && !userStore.can('write:pages'))
+
 /** What this menu actually offers: the site's editors, narrowed by `only` where one was given. */
-const offeredEditors = computed(() =>
-  props.only.length > 0
+const offeredEditors = computed(() => {
+  if (notesOnly.value) {
+    return []
+  }
+  return props.only.length > 0
     ? siteStore.activeEditors.filter((editor) => props.only.includes(editor))
     : siteStore.activeEditors
-)
+})
 
 /**
- * Whether New Live Note is on offer: where the caller asked for it, on a site that has live notes --
- * which needs collaborative editing too -- and for somebody signed in, since a note is only ever
- * opened by a signed-in account.
+ * Whether New Live Note is on offer: where the caller asked for it, to somebody who may create notes
+ * on this site -- `write:notes`, which the access answer only reports on a site that has live notes
+ * (and collaborative editing with them), and never for a guest. The answer is fetched by the header
+ * that opens this menu (`HeaderNav`), which shows its button on it.
  */
-const offersLiveNote = computed(
-  () =>
-    props.offerLiveNote &&
-    siteStore.features.liveNotes &&
-    siteStore.features.collaborativeEditing &&
-    userStore.authenticated
-)
+const offersLiveNote = computed(() => props.offerLiveNote && liveNoteStore.canCreate)
 
 /**
  * Everything the menu lists, in order: the editors on offer, with New Live Note after New Blog.

@@ -38,7 +38,7 @@
           <w-separator class="my-2" />
         </template>
         <!--
-          A submenu, because New Page is a choice of editor rather than a single action -- the same
+          A submenu, because Create is a choice of editor rather than a single action -- the same
           choice, from the same component, as the header button on a wide screen. It anchors to this row
           because `WMenu` takes the nearest `.w-item` as its trigger.
 
@@ -46,11 +46,12 @@
           and `@new-page` closes this menu once the submenu has acted: the editor opens behind it
           otherwise, with the menu still floating over it.
         -->
-        <w-item v-if="userStore.can(`write:pages`)" clickable>
+        <!-- -> To whoever may write pages or create live notes, as the wide header's button is -->
+        <w-item v-if="userStore.can(`write:pages`) || liveNoteStore.canCreate" clickable>
           <w-item-section avatar>
             <w-icon name="la:plus-circle" class="text-blue-4" />
           </w-item-section>
-          <w-item-section>Create New Page</w-item-section>
+          <w-item-section>{{ t('common.header.create') }}</w-item-section>
           <w-item-section side>
             <w-icon name="la:angle-right" />
           </w-item-section>
@@ -120,6 +121,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useLiveNoteStore } from '@/stores/liveNote'
 import { useNotificationsStore } from '@/stores/notifications'
 import { useUserStore } from '@/stores/user'
 
@@ -136,6 +138,7 @@ import PageNewMenu from '@/components/PageNewMenu.vue'
 
 // STORES
 
+const liveNoteStore = useLiveNoteStore()
 const userStore = useUserStore()
 const notificationsStore = useNotificationsStore()
 

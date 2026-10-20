@@ -43,7 +43,7 @@ const routes = [
     }
   },
   /*
-    A live note, which is not a page: no path in the tree, no page rules, no sidebar. Reserved on both
+    A live note, which is not a page: no path in the tree, no sidebar. Reserved on both
     sides as `/a` and `/i` are -- see `RESERVED_ROOT` in `helpers/pagePaths.js` -- so nothing under it
     is taken for a page path, and its URL is never locale-prefixed. Its own layout, for the reason the
     version view has one: it is reached from a link rather than browsed to.
