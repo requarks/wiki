@@ -1,5 +1,5 @@
 import { isEqual } from 'es-toolkit/predicate'
-import { and, desc, eq, lt, notExists, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, lt, notExists, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import {
   pageHistory as pageHistoryTable,
@@ -110,6 +110,8 @@ export type PageHistoryEntry = {
   changedFields: string[]
   /** Empty when the site does not ask for a reason, or asked and was not answered. */
   reason: string
+  /** `mcp` for a version an AI assistant wrote through the MCP server; null otherwise. */
+  via: string | null
   versionDate: Date
   path: string
   title: string
@@ -166,6 +168,7 @@ async function selectVersionRow(where: SQL | undefined): Promise<any> {
       action: pageHistoryTable.action,
       changedFields: pageHistoryTable.changedFields,
       reason: pageHistoryTable.reason,
+      via: pageHistoryTable.via,
       versionDate: pageHistoryTable.versionDate,
       path: pageHistoryTable.path,
       title: pageHistoryTable.title,
@@ -190,6 +193,7 @@ function toVersion(row: any): PageHistoryVersion {
     action: row.action,
     changedFields: row.changedFields ?? [],
     reason: row.reason ?? '',
+    via: row.via ?? null,
     versionDate: row.versionDate,
     path: row.path,
     title: row.title,
@@ -227,6 +231,7 @@ class PageHistory {
    * @param changedFields Which fields the change touched. Empty for a creation or a deletion, where
    *                      the whole page is the change.
    * @param reason Why, in the author's words, when the site asks for one.
+   * @param via How the change was made, when not through the wiki's own interface — see the column
    * @returns The version's ID, or null when nothing was recorded
    */
   async record({
@@ -234,6 +239,7 @@ class PageHistory {
     pageId,
     action,
     authorId,
+    via = null,
     changedFields = [],
     reason
   }: {
@@ -241,6 +247,7 @@ class PageHistory {
     pageId: string
     action: PageHistoryAction
     authorId: string
+    via?: string | null
     changedFields?: string[]
     reason?: string | null
   }): Promise<string | null> {
@@ -265,6 +272,7 @@ class PageHistory {
           pageId,
           siteId,
           authorId,
+          via,
           action,
           changedFields,
           // -> An unanswered optional prompt sends an empty string; a version simply has no reason
@@ -298,6 +306,7 @@ class PageHistory {
         action: pageHistoryTable.action,
         changedFields: pageHistoryTable.changedFields,
         reason: pageHistoryTable.reason,
+        via: pageHistoryTable.via,
         versionDate: pageHistoryTable.versionDate,
         path: pageHistoryTable.path,
         title: pageHistoryTable.title,
@@ -315,6 +324,7 @@ class PageHistory {
       action: row.action,
       changedFields: row.changedFields ?? [],
       reason: row.reason ?? '',
+      via: row.via ?? null,
       versionDate: row.versionDate,
       path: row.path,
       title: row.title,
@@ -324,6 +334,83 @@ class PageHistory {
         name: row.authorName ?? '',
         email: row.authorEmail ?? ''
       }
+    }))
+  }
+
+  /**
+   * The newest version of a page, which is the page as it stands: `record` writes one per change,
+   * snapshotting the row as it was saved.
+   *
+   * @returns The version's ID, or null for a page that has none
+   */
+  async latestVersionId(siteId: string, pageId: string): Promise<string | null> {
+    const rows = await WIKI.db
+      .select({ id: pageHistoryTable.id })
+      .from(pageHistoryTable)
+      .where(and(eq(pageHistoryTable.siteId, siteId), eq(pageHistoryTable.pageId, pageId)))
+      .orderBy(desc(pageHistoryTable.versionDate), desc(pageHistoryTable.id))
+      .limit(1)
+    return rows[0]?.id ?? null
+  }
+
+  /**
+   * The versions made one way — `mcp` for what AI assistants wrote — on every site since a date,
+   * newest first, for the admin area's Contributions card: what agents have added lately, linking to
+   * each. Every site rather than one, because the MCP server is the instance's: each row carries its
+   * site, the page's URL there and the host to reach it on.
+   *
+   * Off `pageHistory` alone, so it costs nothing to keep and is the same on every instance. Every
+   * action counts, a move or a deletion as much as an edit, since what an agent did is the question.
+   */
+  async listByVia(
+    via: string,
+    since: Temporal.Instant,
+    limit = 50
+  ): Promise<
+    Array<{
+      id: string
+      siteId: string
+      pageId: string
+      action: string
+      locale: string
+      path: string
+      url: string
+      hostname: string | null
+      title: string
+      reason: string
+      versionDate: Date
+      authorName: string
+    }>
+  > {
+    const rows = await WIKI.db
+      .select({
+        id: pageHistoryTable.id,
+        siteId: pageHistoryTable.siteId,
+        pageId: pageHistoryTable.pageId,
+        action: pageHistoryTable.action,
+        locale: pageHistoryTable.locale,
+        path: pageHistoryTable.path,
+        title: pageHistoryTable.title,
+        reason: pageHistoryTable.reason,
+        versionDate: pageHistoryTable.versionDate,
+        authorName: usersTable.name
+      })
+      .from(pageHistoryTable)
+      .leftJoin(usersTable, eq(usersTable.id, pageHistoryTable.authorId))
+      .where(
+        and(
+          eq(pageHistoryTable.via, via),
+          gte(pageHistoryTable.versionDate, new Date(since.epochMilliseconds))
+        )
+      )
+      .orderBy(desc(pageHistoryTable.versionDate), desc(pageHistoryTable.id))
+      .limit(limit)
+    return rows.map((row: any) => ({
+      ...row,
+      url: WIKI.models.pages.urlFor(row.siteId, row.locale, row.path),
+      hostname: WIKI.models.pages.linkHostnameFor(row.siteId),
+      reason: row.reason ?? '',
+      authorName: row.authorName ?? ''
     }))
   }
 

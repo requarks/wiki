@@ -101,6 +101,8 @@ export const usePageStore = defineStore('page', {
     authorId: 0,
     authorName: '',
     authorHasAvatar: false,
+    /** `mcp` when the version that stands was written by an AI assistant on the author's behalf. */
+    editedVia: null,
     /**
      * The blog this page is a post of, as `{ path, title }`, or null for a page that is not in one.
      *

@@ -97,6 +97,21 @@ import { TOKEN_SCOPE_CATEGORIES } from '@/helpers/personalTokens'
 
 import ApiKeyCopyDialog from './ApiKeyCopyDialog.vue'
 
+// PROPS
+
+const props = defineProps({
+  /** What the form starts with, for a caller opening it for a purpose — Connect an AI Assistant. */
+  presetName: {
+    type: String,
+    default: ''
+  },
+  /** Category → level (`read` / `write`) to start from. Every other category starts at none. */
+  presetScopes: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
 // EMITS
 
 defineEmits([...dialogComponentEmits])
@@ -115,10 +130,12 @@ const { t } = useI18n()
 // DATA
 
 const state = reactive({
-  name: '',
+  name: props.presetName,
   expiration: '90d',
   // -> Nothing granted until somebody asks for it: a token is only as safe as the least it can do
-  scopes: Object.fromEntries(TOKEN_SCOPE_CATEGORIES.map((cat) => [cat.key, 'none'])),
+  scopes: Object.fromEntries(
+    TOKEN_SCOPE_CATEGORIES.map((cat) => [cat.key, props.presetScopes[cat.key] ?? 'none'])
+  ),
   loading: 0
 })
 
@@ -191,7 +208,8 @@ async function create() {
         keyValue: resp.token,
         title: t('profile.tokensCopyTitle'),
         label: t('profile.tokensToken'),
-        successMessage: t('profile.tokensCopySuccess')
+        successMessage: t('profile.tokensCopySuccess'),
+        showMcpSetup: scopes.some((scope) => scope.startsWith('mcp:'))
       }
     }).onDismiss(() => {
       onDialogOK()

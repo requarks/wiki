@@ -5,7 +5,7 @@
   never waits on (or depends on) the icon service. Regenerate with `npm run icons` after adding or
   removing an icon; `check-icons.mjs` fails the build if this drifts.
 
-  322 icons.
+  323 icons.
 */
 export const BUNDLED_ICONS = {
   "la:adjust": {"body":"<path fill=\"currentColor\" d=\"M16 4C9.383 4 4 9.383 4 16s5.383 12 12 12s12-5.383 12-12S22.617 4 16 4m0 2v20c-5.535 0-10-4.465-10-10S10.465 6 16 6\"/>","width":32,"height":32},
@@ -139,6 +139,7 @@ export const BUNDLED_ICONS = {
   "la:redo": {"body":"<path fill=\"currentColor\" d=\"M19.219 5.281L17.78 6.72L24.063 13H11c-3.844 0-7 3.156-7 7v7h2v-7c0-2.754 2.246-5 5-5h13.063l-6.282 6.281l1.438 1.438l8-8l.687-.719l-.687-.719z\"/>","width":32,"height":32},
   "la:redo-alt": {"body":"<path fill=\"currentColor\" d=\"M16 3C8.832 3 3 8.832 3 16s5.832 13 13 13s13-5.832 13-13h-2c0 6.086-4.914 11-11 11S5 22.086 5 16S9.914 5 16 5c3.875 0 7.262 1.984 9.219 5H20v2h8V4h-2v3.719C23.617 4.844 20.02 3 16 3\"/>","width":32,"height":32},
   "la:reply": {"body":"<path fill=\"currentColor\" d=\"m12.281 5.281l-8 8l-.687.719l.687.719l8 8l1.438-1.438L7.438 15H21c2.773 0 5 2.227 5 5s-2.227 5-5 5v2c3.855 0 7-3.145 7-7s-3.145-7-7-7H7.437l6.282-6.281z\"/>","width":32,"height":32},
+  "la:robot": {"body":"<path fill=\"currentColor\" d=\"M16 1a2 2 0 0 0-2 2c0 .738.402 1.371 1 1.719V7h-5c-2.75 0-5 2.25-5 5v2H2v8h3v5h22v-5h3v-8h-3v-2c0-2.75-2.25-5-5-5h-5V4.719c.598-.348 1-.98 1-1.719a2 2 0 0 0-2-2m-6 8h12c1.668 0 3 1.332 3 3v13h-2v-5H9v5H7V12c0-1.668 1.332-3 3-3m2 4a1.999 1.999 0 1 0 0 4a1.999 1.999 0 1 0 0-4m8 0a1.999 1.999 0 1 0 0 4a1.999 1.999 0 1 0 0-4M4 16h1v4H4zm23 0h1v4h-1zm-16 6h2v3h-2zm4 0h2v3h-2zm4 0h2v3h-2z\"/>","width":32,"height":32},
   "la:ruler-vertical": {"body":"<path fill=\"currentColor\" d=\"M8 0v32h16V0zm2 2h12v3h-7v2h7v2h-4v2h4v2h-7v2h7v2h-4v2h4v2h-7v2h7v2h-4v2h4v3H10z\"/>","width":32,"height":32},
   "la:search": {"body":"<path fill=\"currentColor\" d=\"M19 3C13.488 3 9 7.488 9 13c0 2.395.84 4.59 2.25 6.313L3.281 27.28l1.439 1.44l7.968-7.969A9.92 9.92 0 0 0 19 23c5.512 0 10-4.488 10-10S24.512 3 19 3m0 2c4.43 0 8 3.57 8 8s-3.57 8-8 8s-8-3.57-8-8s3.57-8 8-8\"/>","width":32,"height":32},
   "la:search-minus": {"body":"<path fill=\"currentColor\" d=\"M19 3C13.488 3 9 7.488 9 13c0 2.395.84 4.59 2.25 6.313L3.281 27.28l1.439 1.44l7.968-7.969A9.92 9.92 0 0 0 19 23c5.512 0 10-4.488 10-10S24.512 3 19 3m0 2c4.43 0 8 3.57 8 8s-3.57 8-8 8s-8-3.57-8-8s3.57-8 8-8m-4 7v2h8v-2z\"/>","width":32,"height":32},

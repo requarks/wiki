@@ -100,6 +100,8 @@ export const useSiteStore = defineStore('site', {
      * the class to its contents that colours them.
      */
     colorizeBrokenLinks: true,
+    /** Whether a version an AI assistant wrote is marked as such. Instance-wide, set on Admin → MCP. */
+    showAiBadge: true,
     /** What a page being created starts with, before its author changes anything (Admin → General). */
     defaults: {
       tocDepth: { min: 1, max: 2 }
@@ -503,6 +505,7 @@ export const useSiteStore = defineStore('site', {
         logoText: siteInfo.logoText,
         pageExtensions: siteInfo.pageExtensions ?? [],
         colorizeBrokenLinks: siteInfo.colorizeBrokenLinks ?? true,
+        showAiBadge: siteInfo.showAiBadge === true,
         defaults: {
           ...this.defaults,
           ...siteInfo.defaults

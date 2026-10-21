@@ -73,7 +73,14 @@ export function createDeferred<T = void>(): Deferred<T> {
  * what the metrics endpoint's path is checked against, since taking one of these over would break a
  * convention nothing in the admin area would explain.
  */
-export const RESERVED_ROOT_FILES = new Set(['favicon.ico', 'robots.txt', 'sitemap.xml'])
+export const RESERVED_ROOT_FILES = new Set([
+  'favicon.ico',
+  'robots.txt',
+  'sitemap.xml',
+  // -> RFC 8615. What the OAuth flow's discovery documents sit under (`controllers/oauth.ts`), and a
+  //    client asking for them must not be sent to a locale prefix
+  '.well-known'
+])
 
 /**
  * Root segments the frontend's own router owns, despite carrying no leading underscore.

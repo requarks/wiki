@@ -51,6 +51,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'Issued before the signing certificates were last regenerated, so its signature no longer verifies. Nothing about the token itself explains it, hence the flag.'
       },
+      client: {
+        type: ['object', 'null'],
+        description:
+          'The MCP client this was granted to through OAuth — a connection made on a consent screen rather than a token made by hand. Null for a token made here. Its access tokens are accepted by `/_mcp` only, and deleting it disconnects the client.',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' }
+        }
+      },
       createdAt: {
         type: 'string',
         format: 'date-time',

@@ -49,6 +49,9 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   // -> Hourly, off the hour: the cutoff is a day, so a note goes between 24 and 25 hours after it was
   //    last touched
   { task: 'purgeUntouchedLiveNotes', cron: '45 * * * *' },
+  // -> Hourly, off the hour: an OAuth code lives minutes and an unused client a day, so neither is
+  //    in anybody's way for long
+  { task: 'purgeOauth', cron: '50 * * * *' },
   // -> Daily, for the same reason as the audit log: retention is counted in days
   { task: 'purgeNotifications', cron: '30 0 * * *' },
   /*

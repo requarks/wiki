@@ -1,8 +1,6 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import TurndownService from 'turndown'
-import { gfm } from '@joplin/turndown-plugin-gfm'
 import { v5 as uuidv5 } from 'uuid'
 import { and, eq, inArray, lt, sql } from 'drizzle-orm'
 import {
@@ -30,6 +28,7 @@ import {
   normalizePagePath,
   splitLocalePath
 } from '../helpers/common.ts'
+import { htmlToMarkdown } from '../helpers/htmlToMarkdown.ts'
 import { rewriteSourceLinks, sourceLinkHrefs } from '../helpers/linkRewrite.ts'
 import { sanitizeFileName } from './assets.ts'
 import { SOURCE_SYNTAX } from './pages.ts'
@@ -205,28 +204,6 @@ const EDITOR_CHANGE_NOTES: Record<string, Record<string, string>> = {
     markdown:
       '3.x has no raw-HTML editor, so they became markdown pages holding that HTML — it renders the same and is still edited as source, as it was in 2.x.'
   }
-}
-
-/**
- * HTML → markdown, for a page 2.x wrote in an editor 3.x does not have.
- *
- * Turndown with the GitHub-flavoured rules (the Joplin fork, which is maintained where the original is not), and the plugin is not optional: a WYSIWYG page is mostly
- * tables, and plain Turndown has no rule for one — it would flatten a table to a run of loose text
- * and nobody would notice until they opened the page.
- *
- * Built once. The service holds only its rules, so the same instance converts every page of an
- * import rather than being rebuilt per record.
- */
-let turndown: TurndownService | null = null
-function htmlToMarkdown(html: string): string {
-  turndown ??= new TurndownService({
-    headingStyle: 'atx',
-    hr: '---',
-    codeBlockStyle: 'fenced',
-    bulletListMarker: '-',
-    emDelimiter: '*'
-  }).use(gfm)
-  return turndown.turndown(html)
 }
 
 /**

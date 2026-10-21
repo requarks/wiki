@@ -39,6 +39,43 @@ function sameTags(a: string[], b: string[]): boolean {
   return left.size === right.size && [...left].every((tag) => right.has(tag))
 }
 
+/**
+ * Why this requester may not give a page these tags, or null when they may — or when the tags are the
+ * ones it already has, which retags nothing (see `sameTags`).
+ *
+ * Shared by the page update route and the MCP server's `update_page`, so that the two ask the same
+ * three questions in the same order.
+ */
+export function retagRefusal(
+  req: FastifyRequest,
+  target: RulePageRef & { tags?: string[] },
+  tags: string[] | undefined
+): string | null {
+  if (tags === undefined || sameTags(tags, target.tags ?? [])) {
+    return null
+  }
+  const retagged = { siteId: target.siteId, path: target.path, locale: target.locale, tags }
+  /*
+    Assigning and unassigning tags is a permission of its own, and it is asked of the page on both
+    sides of the change the way the move route asks about both locations: a rule may address pages by
+    tag, so taking the tag that carries the rule off a page is as much a retagging as putting one on.
+    Whoever may edit a page is not therefore whoever may decide which set of rules it falls under.
+  */
+  if (!mayOnPage(req, 'write:tags', target) || !mayOnPage(req, 'write:tags', retagged)) {
+    return 'You are not allowed to change the tags on this page.'
+  }
+  /*
+    And write access to the page as the tags leave it. Retagging a page is what a move is to a path:
+    writing a page INTO a set of tags the writer has no say over is the same hole as moving one into a
+    branch they could not have created a page in — and this is the tag half of the check the move
+    route makes.
+  */
+  if (!mayOnPage(req, 'write:pages', retagged)) {
+    return 'You are not allowed to give this page those tags.'
+  }
+  return null
+}
+
 const siteIdParam = {
   type: 'object',
   properties: {
@@ -109,7 +146,7 @@ export function userRequired(req: FastifyRequest, action: string): string {
  * Site-wide rather than per page, because per-path rules are not implemented. See the FIXME on the
  * page-permissions route below.
  */
-const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
+export const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
 
 export function mayBypassPassword(req: FastifyRequest): boolean {
   const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
@@ -166,7 +203,7 @@ function mayRecoverPage(
  * the page is covered as well, since the editor loads the source in order to edit it: a rule granting
  * `write:pages` without `read:source` would otherwise be a page that cannot be edited.
  */
-const SOURCE_PERMISSIONS = ['read:source', 'write:pages', 'manage:pages']
+export const SOURCE_PERMISSIONS = ['read:source', 'write:pages', 'manage:pages']
 
 export function mayReadSource(req: FastifyRequest, page: RulePageRef): boolean {
   return SOURCE_PERMISSIONS.some((permission) => mayOnPage(req, permission, page))
@@ -1205,36 +1242,12 @@ async function routes(app: FastifyInstance) {
         return reply.forbidden('You are not allowed to edit this page.')
       }
       /*
-        Whether this save actually retags the page, which is the only thing any of the checks below
-        are about. Compared against the row rather than read off the body being present, because the
-        editor sends every field on every save — see `sameTags`.
+        Whether this save actually retags the page, and may — compared against the row rather than
+        read off the body being present, because the editor sends every field on every save.
       */
-      if (req.body.tags !== undefined && !sameTags(req.body.tags, target.tags)) {
-        const retagged = {
-          siteId: req.params.siteId,
-          path: target.path,
-          locale: target.locale,
-          tags: req.body.tags
-        }
-        /*
-          Assigning and unassigning tags is a permission of its own, and it is asked of the page on
-          both sides of the change the way the move route asks about both locations: a rule may
-          address pages by tag, so taking the tag that carries the rule off a page is as much a
-          retagging as putting one on. Whoever may edit a page is not therefore whoever may decide
-          which set of rules it falls under.
-        */
-        if (!mayOnPage(req, 'write:tags', target) || !mayOnPage(req, 'write:tags', retagged)) {
-          return reply.forbidden('You are not allowed to change the tags on this page.')
-        }
-        /*
-          And write access to the page as the tags leave it. Retagging a page is what a move is to a
-          path: writing a page INTO a set of tags the writer has no say over is the same hole as
-          moving one into a branch they could not have created a page in — and this is the tag half
-          of the check the move route makes.
-        */
-        if (!mayOnPage(req, 'write:pages', retagged)) {
-          return reply.forbidden('You are not allowed to give this page those tags.')
-        }
+      const retagRefused = retagRefusal(req, target, req.body.tags)
+      if (retagRefused) {
+        return reply.forbidden(retagRefused)
       }
       const change = await WIKI.models.pages.updatePage(
         req.params.siteId,

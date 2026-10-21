@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import {
   groups as groupsTable,
+  oauthClients as oauthClientsTable,
   personalTokens as personalTokensTable,
   userGroups,
   users as usersTable
@@ -19,6 +20,11 @@ import type { JwtClaims } from '../helpers/jwt.ts'
  * administration area, so no token reaches it whatever its owner may do there. Automating the admin
  * area is what system API keys are for, and keeping elevated permissions out of a token sitting in
  * somebody's CI configuration is the point of the split.
+ *
+ * `mcp` is the one category that names a SURFACE rather than an area: no `/_api` route declares it,
+ * and every tool on `/_mcp` requires it on top of its own category (`controllers/mcp.ts`). Without it
+ * a token is refused there outright; at `read` an agent holding the token may only call read-only
+ * tools, whatever the token's other scopes allow — the one switch that keeps an agent read-only.
  */
 export const TOKEN_SCOPE_CATEGORIES = [
   'pages',
@@ -27,7 +33,8 @@ export const TOKEN_SCOPE_CATEGORIES = [
   'glossary',
   'navigation',
   'approvals',
-  'profile'
+  'profile',
+  'mcp'
 ] as const
 export type TokenScopeCategory = (typeof TOKEN_SCOPE_CATEGORIES)[number]
 
@@ -114,6 +121,11 @@ export interface PersonalToken {
    * verifies. See `ApiKeys.getKeys`, which marks API keys the same way.
    */
   isInvalidated: boolean
+  /**
+   * The MCP client this was granted to through OAuth, for a connection rather than a token made by
+   * hand. Null for every token made under Profile → Access Tokens.
+   */
+  client: { id: string; name: string } | null
 }
 
 /** Raised by `create()` for a request the caller can correct, with a message safe to return. */
@@ -126,7 +138,9 @@ const tokenSelection = {
   scopes: personalTokensTable.scopes,
   expiration: personalTokensTable.expiration,
   lastUsedAt: personalTokensTable.lastUsedAt,
-  createdAt: personalTokensTable.createdAt
+  createdAt: personalTokensTable.createdAt,
+  clientId: personalTokensTable.clientId,
+  clientName: oauthClientsTable.name
 }
 
 /**
@@ -154,13 +168,15 @@ class PersonalTokens {
     const rows = await WIKI.db
       .select(tokenSelection)
       .from(personalTokensTable)
+      .leftJoin(oauthClientsTable, eq(oauthClientsTable.id, personalTokensTable.clientId))
       .where(eq(personalTokensTable.userId, userId))
       .orderBy(desc(personalTokensTable.createdAt))
     const generatedAt = Temporal.Instant.from(WIKI.models.apiKeys.certificatesGeneratedAt())
-    return rows.map((row: any) => ({
+    return rows.map(({ clientId, clientName, ...row }: any) => ({
       ...row,
       scopes: normalizeScopes(row.scopes ?? []),
-      isInvalidated: Temporal.Instant.compare(row.createdAt.toTemporalInstant(), generatedAt) < 0
+      isInvalidated: Temporal.Instant.compare(row.createdAt.toTemporalInstant(), generatedAt) < 0,
+      client: clientId ? { id: clientId, name: clientName ?? '' } : null
     }))
   }
 
@@ -258,6 +274,7 @@ class PersonalTokens {
         userId: personalTokensTable.userId,
         scopes: personalTokensTable.scopes,
         expiration: personalTokensTable.expiration,
+        clientId: personalTokensTable.clientId,
         email: usersTable.email,
         name: usersTable.name,
         hasAvatar: usersTable.hasAvatar,
@@ -314,7 +331,8 @@ class PersonalTokens {
         underlineLinks: prefs.underlineLinks,
         contentTextSize: prefs.contentTextSize
       },
-      scopes: normalizeScopes((row.scopes ?? []) as string[])
+      scopes: normalizeScopes((row.scopes ?? []) as string[]),
+      oauthClientId: row.clientId ?? null
     }
   }
 

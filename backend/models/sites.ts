@@ -183,6 +183,11 @@ class Sites {
           provider: 'default',
           providers: {}
         },
+        // -> The MCP server's settings that belong to a site rather than to the instance. Empty
+        //    `guidelinesPath` is no guidelines page — see `models/mcp.ts`
+        mcp: {
+          guidelinesPath: ''
+        },
         logoUrl: '',
         logoText: true,
         sitemap: true,
@@ -525,6 +530,9 @@ class Sites {
         comments: {
           provider: 'default',
           providers: {}
+        },
+        mcp: {
+          guidelinesPath: ''
         },
         logoText: true,
         sitemap: true,

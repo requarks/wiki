@@ -39,6 +39,7 @@ import { grantsScope, requiredScope } from './models/personalTokens.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
   isPageUrl,
+  originOf,
   RESERVED_ROOT_FILES,
   splitLocalePath,
   stripPageExtension
@@ -66,6 +67,8 @@ const SERVER_ROUTE_SEGMENTS = new Set([
   '_collab',
   '_files',
   '_icons',
+  '_mcp',
+  '_oauth',
   '_render',
   '_scim',
   '_site',
@@ -579,11 +582,11 @@ async function initHTTPServer() {
 
   app.addHook('onRequest', async (req, reply) => {
     /*
-      Bearer tokens authenticate API calls, the SCIM endpoint and the metrics endpoint; everything
-      else is cookie-authenticated. Neither of the latter two verifies a key of its own, so that
-      there is one place a bearer token is checked — metrics is served by a hook below, at a path
-      that is a setting, and SCIM has a prefix of its own because its errors and its media type are
-      not the API's.
+      Bearer tokens authenticate API calls, the SCIM endpoint, the MCP endpoint and the metrics
+      endpoint; everything else is cookie-authenticated. None of the latter three verifies a key of
+      its own, so that there is one place a bearer token is checked — metrics is served by a hook
+      below, at a path that is a setting, and SCIM and MCP have prefixes of their own because their
+      errors are not the API's.
 
       Note that the session is deliberately left untouched: writing to it would have
       @fastify/session persist a session row for every scraped request.
@@ -592,10 +595,13 @@ async function initHTTPServer() {
     if (!header?.startsWith('Bearer ')) {
       return
     }
+    const urlPath = req.url.split('?')[0]!
+    const isMcp = urlPath === '/_mcp' || urlPath.startsWith('/_mcp/')
     if (
       !req.url.startsWith('/_api/') &&
       !req.url.startsWith('/_scim/') &&
-      !WIKI.models.metrics.matches(req.url.split('?')[0]!)
+      !isMcp &&
+      !WIKI.models.metrics.matches(urlPath)
     ) {
       return
     }
@@ -608,6 +614,13 @@ async function initHTTPServer() {
     } catch (err: any) {
       // -> Say why: the caller holds the credential and can act on "revoked" or "expired"
       WIKI.logger.debug(`Rejected an API key: ${err.message}`)
+      if (isMcp) {
+        // -> The challenge an MCP client reads to know it has to (re)authenticate, and where to
+        reply.header(
+          'WWW-Authenticate',
+          `Bearer error="invalid_token", resource_metadata="${originOf(req)}/.well-known/oauth-protected-resource/_mcp"`
+        )
+      }
       return reply.unauthorized(err.message)
     }
 
@@ -619,10 +632,25 @@ async function initHTTPServer() {
 
       403 rather than 401: the token is valid, and asking again with the same one gets the same answer.
       SCIM and metrics take system keys only, and neither declares a route scope to begin with.
+
+      `/_mcp` is the other surface a personal token is for, and its scopes are checked there rather
+      than here: it is one route carrying many tools, each of which needs the `mcp` scope and a
+      category of its own (`mcp/tools/index.ts`), so there is no single `config.scope` to declare.
     */
     if (req.apiKey.kind === 'personal') {
+      if (isMcp) {
+        return
+      }
+      // -> RFC 8707: a token from an OAuth grant was asked for the MCP server, and reaches that alone
+      if (req.apiKey.oauthClientId) {
+        return reply.forbidden(
+          'This token was granted to an MCP client and is accepted by /_mcp only.'
+        )
+      }
       if (!req.url.startsWith('/_api/')) {
-        return reply.forbidden('Personal access tokens are accepted by the /_api endpoints only.')
+        return reply.forbidden(
+          'Personal access tokens are accepted by the /_api and /_mcp endpoints only.'
+        )
       }
       const config = req.routeOptions.config
       if (config?.publicAccess) {
@@ -789,6 +817,9 @@ async function initHTTPServer() {
   app.register(import('./controllers/files.ts'), { prefix: '/_files' })
   app.register(import('./controllers/site.ts'), { prefix: '/_site' })
   app.register(import('./controllers/icons.ts'), { prefix: '/_icons' })
+  app.register(import('./controllers/mcp.ts'), { prefix: '/_mcp' })
+  // -> At the root: two of its addresses are under `/.well-known/`, which is fixed by convention
+  app.register(import('./controllers/oauth.ts'))
   app.register(import('./controllers/render.ts'), { prefix: '/_render' })
   app.register(import('./controllers/scim.ts'), { prefix: '/_scim' })
   app.register(import('./controllers/terminal.ts'), { prefix: '/_terminal' })

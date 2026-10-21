@@ -276,6 +276,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       authorId: { type: 'string', format: 'uuid' },
       authorName: { type: 'string' },
       authorHasAvatar: { type: 'boolean' },
+      editedVia: {
+        type: ['string', 'null'],
+        description:
+          '`mcp` when the version that stands was written by an AI assistant through the MCP server, on behalf of `authorName`; null otherwise. The last-edited line marks it while the site payload says `showAiBadge`.'
+      },
       createdAt: { type: 'string', format: 'date-time' },
       updatedAt: { type: 'string', format: 'date-time' },
       blog: {
@@ -466,6 +471,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'string',
         description:
           "Why the change was made, in the author's words. Empty when the site does not ask for a reason — see the `reasonForChange` site feature — or asked and was not answered."
+      },
+      via: {
+        type: ['string', 'null'],
+        description:
+          '`mcp` for a version an AI assistant wrote through the MCP server, on behalf of its `author`; null for a change made any other way. Always recorded; whether the interface marks it is the `showAiBadge` flag on the site payload.'
       },
       versionDate: {
         type: 'string',

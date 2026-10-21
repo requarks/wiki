@@ -896,6 +896,10 @@ const permissionCards = [
       {
         permission: 'read:metrics',
         hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.'
+      },
+      {
+        permission: 'use:mcp',
+        hint: "Can connect an AI assistant to the MCP endpoint with a personal access token. The assistant can only do what the user could, within the token's scopes."
       }
     ]
   },

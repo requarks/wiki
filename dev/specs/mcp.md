@@ -1,16 +1,17 @@
 # MCP — the wiki as a Model Context Protocol server
 
-**Status:** designed, not built. Nothing of the endpoint is implemented beyond the placeholder
-admin screen; the credential it takes is — personal access tokens shipped in `206804fb` and are what
-an MCP client authenticates with ([§4](#4-identity-and-tokens)). Every name, path and payload shape
-below that does not exist yet is illustrative.
+**Status:** built. Every phase of [§9](#9-suggested-order) is in — the read-only server (goal 1),
+the screens, contributing (goal 2), assets, moving and deleting pages, and OAuth 2.1 for the remote
+connectors. [§2](#2-what-exists-today) says exactly what is, and what is left.
+The credential is the personal access token ([§4](#4-identity-and-tokens)). A name, path or payload
+shape below that does not exist yet is illustrative.
 **Covers:** what an MCP server built into Wiki.js would expose, how it authenticates and authorizes a
 client, what it costs, what it risks, and the admin screen at `/_admin/mcp`.
 
 The [Model Context Protocol](https://modelcontextprotocol.io) is how an AI client — Claude Code,
 Claude Desktop, VS Code, Cursor, claude.ai and ChatGPT connectors — is given tools and content from
 somewhere else. A wiki is an obvious thing to plug in: it is where an organisation's knowledge
-already is, and the question an agent most often cannot answer is "what does *our* documentation say
+already is, and the question an agent most often cannot answer is "what does _our_ documentation say
 about this".
 
 The constraint this document is written against: **an agent is somebody acting on a person's
@@ -93,7 +94,7 @@ found an afternoon to update it.
   risk profile entirely and neither goal needs it.
 - **Server-side rendering.** The page pipeline lives in the browser and stays there; see
   [§6.3](#63-a-page-written-without-a-browser-has-no-render).
-- **An AI feature in the wiki itself.** This makes the wiki a *source and a destination* for
+- **An AI feature in the wiki itself.** This makes the wiki a _source and a destination_ for
   somebody else's agent. It does not put a model in the wiki, and nothing here summarises, embeds or
   rewrites content on the wiki's side.
 - **Semantic search.** Goal 1 is served by the full-text search the wiki already has, made to answer
@@ -104,47 +105,110 @@ found an afternoon to update it.
 
 ## 2. What exists today
 
-| Piece | Where | State |
-| ----- | ----- | ----- |
-| The admin screen | `frontend/src/pages/AdminMcp.vue`, route `mcp` in `router/routes.js` | Placeholder: enable and "New MCP Key" buttons permanently disabled, a "not implemented" banner. The "New MCP Key" button goes: the credential is a personal access token, made from the profile ([§4](#4-identity-and-tokens)) |
-| The sidebar entry and status light | `layouts/AdminLayout.vue` | Reads `adminStore.info.isMCPEnabled`, which `GET /system/info` never sends — always red |
-| Strings | `backend/locales/en.json`, `admin.mcp.*` | `admin.mcp.notImplemented` goes once the screen is real |
-| Docs link | `siteStore.docsBase + '/dev/mcp'` | Points at a page that has to be written |
+**Built** — phases 1 and 2 of [§9](#9-suggested-order), and the admin screen of phase 3:
 
-Nothing of MCP exists on the backend: no route, no model, no settings key, no dependency — and no
-dependency is to be added for it ([§3.1](#31-transport-stateless-streamable-http-at-_mcp)).
+| Piece                                                                                                                                                                                      | Where                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The endpoint: enabled check, Origin check, site, credential, rate limit, JSON-RPC over `POST`; 405 on `GET` and `DELETE`                                                                   | `controllers/mcp.ts`, registered at `/_mcp`; `_mcp` in `SERVER_ROUTE_SEGMENTS`                                                                                                                                  |
+| The protocol: `initialize` (version negotiation, instructions), `ping`, `tools/list`, `tools/call`, `resources/list`, `resources/templates/list`, `resources/read`, batches, notifications | `mcp/protocol.ts`                                                                                                                                                                                               |
+| Who a call acts as, built from the token alone, and the page questions asked of that actor                                                                                                 | `mcp/context.ts`                                                                                                                                                                                                |
+| Resolving a page by id, URL or path; reading it as source or as rendered markdown; outline, sections, windows                                                                              | `mcp/content.ts`                                                                                                                                                                                                |
+| The tool contract, results and `ToolError`                                                                                                                                                 | `mcp/tool.ts`                                                                                                                                                                                                   |
+| The read tools: `discover`, `pages`, `history`, and `glossary`'s reads                                                                                                                     | `mcp/tools/{discover,pages,history,glossary}.ts`                                                                                                                                                                |
+| The registry: load-time checks, Ajv validation, the scope and group check shared by `tools/list` and `tools/call`                                                                          | `mcp/tools/index.ts`                                                                                                                                                                                            |
+| Settings, instance-wide                                                                                                                                                                    | `models/mcp.ts`; defaults in `base.yml` under `mcp`                                                                                                                                                             |
+| Settings API: `GET`/`PUT /system/mcp`, `GET /system/mcp/status` (API switch, token switch, renderer), all `manage:system`                                                                  | `api/mcp.ts`, `api/schemas/mcp.ts`                                                                                                                                                                              |
+| The in-memory rate limiter                                                                                                                                                                 | `helpers/tokenBucket.ts`                                                                                                                                                                                        |
+| The `use:mcp` permission                                                                                                                                                                   | `GLOBAL_PERMISSIONS` in `models/groups.ts`; offered in `GroupEditOverlay.vue`                                                                                                                                   |
+| The `mcp` token scope category                                                                                                                                                             | `TOKEN_SCOPE_CATEGORIES` in `models/personalTokens.ts` and `frontend/src/helpers/personalTokens.js`                                                                                                             |
+| The bearer hook letting a personal token through to `/_mcp`, and `WWW-Authenticate` on a refused one                                                                                       | `index.ts`                                                                                                                                                                                                      |
+| `isMCPEnabled` in `GET /system/info`, and the sidebar light (amber while the API is off)                                                                                                   | `api/system.ts`, `layouts/AdminLayout.vue`, `stores/admin.js`                                                                                                                                                   |
+| The `updateMcp` audit action                                                                                                                                                               | `models/auditLog.ts`                                                                                                                                                                                            |
+| Admin → MCP: switch, endpoint and Claude Code setup, tool groups, prerequisites, access, safety, display                                                                                   | `pages/AdminMcp.vue`                                                                                                                                                                                            |
+| Small model additions the tools needed                                                                                                                                                     | `pages.idAtPath`, `pages.searchTextOf`, `pageHistory.latestVersionId`; `resolvePagePath` exported from `helpers/appShell.ts`; `htmlToMarkdown` moved out of `models/import.ts` into `helpers/htmlToMarkdown.ts` |
 
-What it will be built from:
+Verified against a throwaway instance with a scripted client: the handshake, every read tool, the
+refusals (no token, bad token, no `mcp` scope, system key, owner without `use:mcp`, foreign Origin,
+unsupported protocol version), a tool group switched off, anonymous access, the rate limit, and that
+a signed-in session cookie without a token is treated as no credential at all.
 
-| Piece | Where | Used for |
-| ----- | ----- | -------- |
-| Personal access tokens: issue, scopes, per-request resolution of the owner | `models/personalTokens.ts`, `api/personalTokens.ts`, `db/schema.ts` `personalTokens` | The credential, [§4](#4-identity-and-tokens) |
-| Scope checking | `requiredScope`, `grantsScope` in `models/personalTokens.ts` | Which tools a token may call, [§5](#5-features) |
-| The account a request acts as | `requestUser` / `requestUserId` (`helpers/requester.ts`) | The actor every tool passes to the models |
+**Built in phases 3 and 4:**
+
+| Piece                                                           | Where                                                                                                                                                                                                                     |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The agent guidelines page: a per-site path, in its instructions | `mcp` in the site's config (migration `mcp` adds it to existing sites), `models/mcp.ts` (`guidelinesPathFor`, `setGuidelinesPath`), `GET`/`PUT /sites/:siteId/mcp` (`manage:sites`), `guidelinesFor` in `mcp/protocol.ts` |
+| The write tools: `create_page`, `update_page`                   | `mcp/tools/edit.ts`                                                                                                                                                                                                       |
+| `suggest_edit`, `list_comments`, `post_comment`                 | `mcp/tools/contribute.ts`                                                                                                                                                                                                 |
+| `define_term`, `update_term`                                    | `mcp/tools/glossary.ts`                                                                                                                                                                                                   |
+| Calling a REST route in-process, as the caller                  | `mcp/inject.ts`                                                                                                                                                                                                           |
+| The "via mcp" scope every call runs in                          | `helpers/via.ts`, opened in `controllers/mcp.ts`; read by `helpers/audit.ts` and `pageHistory.record`                                                                                                                     |
+| `pageHistory.via`                                               | `db/schema.ts`, migration `mcp`; `via` on history entries, `editedVia` on the page payload                                                                                                                                |
+| The AI badge and its switch                                     | `pages/Index.vue` (last-edited line), `components/PageHistoryOverlay.vue`; `showAiBadge` on the site payload (`api/bootstrap.ts`, `api/sites.ts`)                                                                         |
+| The tag checks a page update makes, shared with the REST route  | `retagRefusal` in `api/pages.ts`                                                                                                                                                                                          |
+| Contributions: what assistants wrote lately                     | `pageHistory.listByVia`, `GET /system/mcp/contributions` (`manage:system`), the card on Admin → MCP                                                                                                                       |
+| Profile → Access Tokens: the Connect an AI Assistant tab        | `pages/ProfileTokens.vue`, with `mcp` flags on `GET /users/profile/tokens`; the create dialog's presets (`PersonalTokenCreateDialog.vue`); the client setup in the copy dialog (`ApiKeyCopyDialog.vue`)                   |
+| Client setup for Claude Code, VS Code and Cursor                | `helpers/mcpClients.js`, `components/McpConnectSnippets.vue`, used on both screens                                                                                                                                        |
+
+Verified the same way, with a second script: the render round trip (a page written through
+`create_page` is found by `search_pages` once the renderer has been through it), stale and unmatched
+edits, the broken-link report, `via` on the history, the page and the audit entry, a human edit
+clearing `editedVia`, a reader without `write:pages` sent to `suggest_edit` and a suggestion
+reaching its reviewer, a comment with an annotation and the posting cooldown through MCP, glossary
+writes with their name clash and stale-save refusals, the guidelines page in the instructions, the
+contributions list, and `mcp:read` hiding every write tool from a token that holds `pages:write`.
+
+**Built in phases 5 and 6:**
+
+| Piece                                                                     | Where                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_assets`, `get_asset` (images as MCP image content), `upload_asset`  | `mcp/tools/assets.ts`; `ImageContent` in `mcp/tool.ts`; raw bodies through `callApi`                                                                                                                                          |
+| `move_page`, `delete_page`                                                | `mcp/tools/destructive.ts`                                                                                                                                                                                                    |
+| The OAuth authorization server: discovery, registration, authorize, token | `controllers/oauth.ts`, `models/oauth.ts`; `oauthClients` and `oauthCodes`, and `clientId` / `refreshHash` on `personalTokens` (migration `mcp`); `.well-known` in `RESERVED_ROOT_FILES`, `_oauth` in `SERVER_ROUTE_SEGMENTS` |
+| The consent screen                                                        | `pages/OAuthConsent.vue` at `/_authorize`; `GET`/`POST /oauth/authorize` in `api/oauth.ts`                                                                                                                                    |
+| Grant tokens confined to `/_mcp`                                          | `oauthClientId` on `ApiKeyIdentity`; the bearer hook in `index.ts`                                                                                                                                                            |
+| `WWW-Authenticate` naming the resource metadata                           | `controllers/mcp.ts`, `index.ts`                                                                                                                                                                                              |
+| Grants in the profile's list, as connections                              | `client` on `PersonalToken`; `PersonalTokenList.vue`                                                                                                                                                                          |
+| OAuth clients on Admin → MCP                                              | `GET /system/mcp/clients`, `DELETE /system/mcp/clients/:clientId` in `api/oauth.ts`; the card in `AdminMcp.vue`                                                                                                               |
+| Purging unused clients and expired codes                                  | `tasks/simple/purge-oauth.ts`, hourly off `SYSTEM_SCHEDULE`                                                                                                                                                                   |
+| The `grantOAuthAccess` and `deleteOAuthClient` audit actions              | `models/auditLog.ts`                                                                                                                                                                                                          |
+
+Verified with a third script: uploads (an image, a text file, a page extension refused by the route),
+listing, an image returned as an image block and a text file as text, a page moved and then deleted
+into the bin with the deletion audited `via: mcp`, the destructive switch hiding both tools; and the
+whole OAuth flow — the 401 challenge, both metadata documents, a refused and an accepted
+registration, authorize redirecting to consent, an unregistered redirect URI answered in the browser,
+missing PKCE and a foreign resource told through the redirect, consent needing a session, deny,
+approve with `state` and `iss`, a wrong verifier spending the code, single use, the grant's token
+working on `/_mcp` and refused on `/_api`, the grant listed as a connection, refresh rotation, a
+reused refresh token revoking the grant and its access token with it, and an admin deleting the
+client. The consent page was looked at in both themes, signed out (sent to login and back) and in.
+
+**Not built**:
+
+- The **Usage** card on Admin → MCP, which was optional ([§8.1](#81-admin--mcp)).
+- The **`write:scripts` / `write:styles` warning** on the profile's connect card ([§8.2](#82-profile--access-tokens)).
+- **Contributions listing suggestions**, which do not record how they were made.
+- **Writing an agent's edit into an open collaboration room**, which `update_page` refuses instead
+  ([§6.4](#64-live-editors)).
+- **CORS on the OAuth and MCP endpoints**, which only a client running in a browser would need.
+- A **note under the token dialog's MCP row** while MCP is disabled on the instance.
+- The **docs page** the admin screen links to (`siteStore.docsBase + '/dev/mcp'`).
+
+----- | ----- | -------- |
+| Asset listing, reading and upload | `models/assets.ts`, `api/assets.ts` | The `assets` tools |
+| Moving and deleting pages | `pages.movePage`, `pages.deletePage`, the routes in `api/pages.ts` | The `destructive` tools |
+| JWT signing and verification | `helpers/jwt.ts` | OAuth access tokens, [§4.3](#43-oauth-21) |
+
+----- | ----- | -------- |
 | A page actor from a request | `actorFrom` in `api/pages.ts`, which takes a token's owner since `206804fb` | Writes |
-| Signing, verification, certificate rotation | `models/apiKeys.ts` (`verify` dispatches on audience) | Verifying the token |
-| The one bearer hook | `index.ts`, "API Key Authentication" | Letting `/_mcp` through |
-| A bearer-authed controller outside `/_api` | `controllers/scim.ts` | The shape of `controllers/mcp.ts` |
-| Page access for an arbitrary actor | `groups.checkAccess(actor, permission, page)` | Every tool |
-| Full-text search taking an actor | `search.searchPages({ actor, … })` | `search_pages` |
-| Tree browsing | `tree.browse`, `tree.listPages`, `tree.getFolder` | `browse_tree` |
-| Protected-content rule | `hideProtectedContent`, `mayBypassPassword` | Locked pages, [§7](#7-security) |
-| HTML → markdown | `turndown` (+ GFM plugin), already a dependency | Reading a page without `read:source` |
-| Diffs | `diff`, already a dependency | `diff_versions` |
-| A page's absolute URL | `pages.urlFor`, as `helpers/appShell.ts` composes the canonical link | The `url` every result carries |
-| URL path decoding and normalization | `decodeUrlPath`, `normalizePagePath`, `normalizeNewPagePath` | `get_page` by URL, `create_page` |
-| A page's outline | the `toc` column, written with the render | `get_page` sections |
-| Links both ways | `pageLinks` | `get_page_links`, `get_backlinks`, the broken-link report |
+| Links both ways | `pageLinks` | The broken-link report on a write |
 | Reason for change | `pageHistory.reason`, the git target's commit message | The reason every write requires |
 | Watch notifications | `notifications.emit` from the models (`watchedPage`) | People hearing about agents' edits |
-| Glossary lookup and editing | `models/glossary.ts` (`lookup`, `create`, `update`) | The `glossary` tools |
+| Glossary editing | `models/glossary.ts` (`create`, `update`) | `define_term`, `update_term` |
 | Comments with annotations | `models/comments.ts`, `commentAnnotations` | `post_comment` |
 | Headless render queue | `pages.queueRerender`, `models/rendering.ts` (Puppeteer extension) | Pages an agent writes |
 | Approvals / suggestions | `models/approvals.ts`, `api/approvals.ts` | `suggest_edit` |
-| JSON Schema validation | Ajv, which Fastify already carries (`@fastify/ajv-compiler`), plus `ajv-formats` | Tool arguments |
 | JWT signing and verification | `helpers/jwt.ts` | OAuth access tokens, [§4.3](#43-oauth-21) |
-| Audit log | `helpers/audit.ts` (records a token's owner as the actor, with `meta.patId`) | Writes |
-| A settings blob with get/validate/update | `models/scim.ts` + `models/settings.ts` | `models/mcp.ts` |
 
 ---
 
@@ -165,8 +229,12 @@ What it will be built from:
 - **The site is the hostname's**, resolved through `WIKI.sitesMappings` as `/_blocks` and the SEO
   hook already do. Tools do not take a `siteId`; an agent connected to `docs.example.com` sees that
   site and no other.
-- **Registered before the SEO hook**, like metrics, for the same reason: nothing about `/_mcp` wants
-  a locale prefix or trailing-slash redirect.
+- **Out of the SEO hook's way**: its first segment starts with `_`, which `isPageUrl` never takes for
+  a page, so nothing about `/_mcp` gets a locale prefix or a trailing-slash redirect. And `_mcp` is
+  in `SERVER_ROUTE_SEGMENTS`, so a mistyped path under it answers as the endpoint, not as the app.
+- **The session cookie is ignored.** The session plugin still runs, but nothing a tool asks goes
+  through the request helpers in `api/pages.ts` (which fall back on the session when there is no
+  key): `mcp/context.ts` builds the actor from the token, or the public's actor when there is none.
 
 **Written by hand, not with `@modelcontextprotocol/sdk`.** The SDK would bring `zod` and, in v1,
 express and a handful of other packages into a Fastify backend, for a protocol whose stateless subset
@@ -174,24 +242,32 @@ is small: JSON-RPC 2.0 framing and batching, `initialize` (with protocol version
 server `instructions`), `ping`, `tools/list`, `tools/call`, `resources/templates/list` and
 `resources/read`, and the JSON-RPC error codes. That is an ordinary Fastify route and a dispatch
 table. Tool input schemas are plain JSON Schema — which is also what `tools/list` has to publish, so
-they are written once — validated by the Ajv that Fastify already carries. The same goes for OAuth
+they are written once — validated by Ajv, the copy Fastify already carries: `ajv` is now declared in
+`backend/package.json` at the version Fastify resolves (8.20.0), rather than imported as somebody
+else's nested dependency, so nothing new is installed. The same goes for OAuth
 ([§4.3](#43-oauth-21)): PKCE is a SHA-256 comparison and the tokens are JWTs `helpers/jwt.ts`
 already signs. The rule for the whole feature is that a dependency comes in only where writing the
 thing would be a real project of its own, and nothing here so far is.
 
 ### 3.2 Where the code lives
 
-| Path | What |
-| ---- | ---- |
-| `controllers/mcp.ts` | The endpoint: enabled check, Origin check, rate limit, then dispatch |
-| `mcp/protocol.ts` | JSON-RPC framing, `initialize`, the `tools/*` and `resources/*` methods, error codes |
-| `mcp/tools/*.ts` | Tool definitions, one file per group of [§5](#5-features). Each calls **models**, never an HTTP route |
-| `helpers/tokenBucket.ts` | The in-memory rate limiter, [§7.1](#71-performance) |
-| `controllers/oauth.ts`, `models/oauth.ts` | The OAuth 2.1 authorization server and the `/.well-known/` metadata, [§4.3](#43-oauth-21) |
-| `models/mcp.ts` | The `mcp` settings blob (`getConfig` / `validate` / `updateConfig`, as `models/scim.ts`) and the per-call check of [§5](#5-features). No token code: issuing and resolving tokens is `models/personalTokens.ts` |
-| `api/mcp.ts` | Settings only (`manage:system`). Tokens are managed by the existing routes in `api/personalTokens.ts` |
-| `base.yml`, `models/settings.ts` | The `mcp` defaults, and their seed, as `scim` has both |
-| `index.ts` | The bearer hook admits `/_mcp` and leaves a personal token's scope check there to the controller ([§4.2](#42-personal-access-tokens-are-the-credential)); the controller is registered |
+| Path                                      | What                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `controllers/mcp.ts`                      | The endpoint: enabled check, Origin check, site, credential, rate limit, then dispatch                                                                                                                                                                                                              |
+| `mcp/protocol.ts`                         | JSON-RPC framing, `initialize` and its instructions, the `tools/*` and `resources/*` methods, error codes, the result-size backstop                                                                                                                                                                 |
+| `mcp/context.ts`                          | `McpContext` — who a call acts as — and the access questions asked of it: `mayOnPage`, `mayReadSource`, `mayBypassPassword`, `unpublishedFor`, `holdsScope`                                                                                                                                         |
+| `mcp/content.ts`                          | Page resolution and reading, shared by the tools                                                                                                                                                                                                                                                    |
+| `mcp/tool.ts`                             | `McpTool`, the result helpers, `ToolError`                                                                                                                                                                                                                                                          |
+| `mcp/tools/*.ts`                          | Tool definitions — `discover`, `pages`, `history`, `glossary`, `edit`, and `contribute` (suggestions and comments) — plus `index.ts`, the registry. A tool calls the **models**, except where an action's rules live in its REST route rather than in a model, where it calls that route in-process |
+| `mcp/inject.ts`                           | That in-process call: `app.inject` with the caller's token, host and address, inside their `withVia('mcp')` scope                                                                                                                                                                                   |
+| `helpers/via.ts`                          | `withVia` / `currentVia`: the scope that marks everything a call leads to as done through MCP                                                                                                                                                                                                       |
+| `helpers/tokenBucket.ts`                  | The in-memory rate limiter, [§7.1](#71-performance)                                                                                                                                                                                                                                                 |
+| `models/mcp.ts`                           | The `mcp` settings blob (`getConfig` / `pickFields` / `validate` / `updateConfig`, as `models/scim.ts`), the group switches and the budget. No token code: issuing and resolving tokens is `models/personalTokens.ts`                                                                               |
+| `api/mcp.ts`                              | The instance settings and status under `/system/mcp`, beside SCIM and metrics; the per-site setting under `/sites/:siteId/mcp`, and the site's contributions. Tokens are managed by the existing routes in `api/personalTokens.ts`                                                                  |
+| `base.yml`                                | The `mcp` defaults. No seed row: `base.yml` is merged under the stored settings on every boot, so a fixed default needs nothing else                                                                                                                                                                |
+| `index.ts`                                | The bearer hook admits `/_mcp` and leaves a personal token's scope check there to the controller ([§4.2](#42-personal-access-tokens-are-the-credential)); the controller is registered                                                                                                              |
+| `controllers/oauth.ts`, `models/oauth.ts` | The OAuth 2.1 authorization server and the `/.well-known/` metadata, [§4.3](#43-oauth-21)                                                                                                                                                                                                           |
+| `api/oauth.ts`                            | The consent screen's two calls, and the admin area's OAuth clients                                                                                                                                                                                                                                  |
 
 ---
 
@@ -233,7 +309,7 @@ built for the API as a whole rather than for MCP alone. What MCP takes from it a
   `manage:users`, subject to `systemUserGuard`.
 - **Two switches above it.** `api.isEnabled` off refuses every bearer token, personal ones included;
   `auth.allowPersonalTokens` off (**Admin → Authentication → Configuration**) stops personal tokens
-  being created *and* used, keeping the rows so that turning it back on restores them. Neither needs
+  being created _and_ used, keeping the rows so that turning it back on restores them. Neither needs
   any permission beyond what those screens already take. Creating a token needs no permission at all.
 
 ### 4.2 Personal access tokens are the credential
@@ -245,7 +321,7 @@ Tokens** like any other.
 
 - **A token reaches `/_mcp` only if it holds the `mcp` scope.** `mcp` joins
   `TOKEN_SCOPE_CATEGORIES`, at read or write like every other, and is the one category that names a
-  *surface* rather than an area of the wiki: no `/_api` route declares it, and every tool requires it
+  _surface_ rather than an area of the wiki: no `/_api` route declares it, and every tool requires it
   on top of its own category. It is the owner's control over whether, and how far, an agent may use
   the token:
   - **none** — refused on `/_mcp` outright. A CI token pasted into an AI client's config does nothing
@@ -257,6 +333,7 @@ Tokens** like any other.
   - **`mcp:write`** — the write tools too, as far as the token's other scopes reach.
 
   So a tool call needs two scopes at the tool's level: `mcp:<level>` and `<category>:<level>`.
+
 - **Still one kind of token.** A token holding `mcp:write` and `pages:write` writes on both surfaces,
   and it is the same write on either, down to what the page may embed
   ([§6.2](#62-what-an-agent-written-page-may-embed)). There is no MCP audience and no second table;
@@ -264,19 +341,23 @@ Tokens** like any other.
   through OAuth, which is accepted on `/_mcp` alone ([§4.3](#43-oauth-21)).
 - **The `mcp` category is offered like the rest** in the create dialog (`TOKEN_SCOPE_CATEGORIES` in
   `frontend/src/helpers/personalTokens.js` with an icon, `profile.tokensScope.mcp` and its hint in
-  `en.json`), with a note under it while MCP is disabled on the instance. `TOKEN_SCOPES`, and so the
-  `PersonalTokenScope` enum the API validates against, follow from the list.
+  `en.json`). `TOKEN_SCOPES`, and so the `PersonalTokenScope` enum the API validates against, follow
+  from the list. A note under it while MCP is disabled on the instance is not built yet; the hint is
+  the same either way.
 - **A tool declares a category, as a route does.** `search_pages` is `pages`, `post_comment` is
   `comments`, `suggest_edit` is `approvals`. The level comes from the tool's `readOnlyHint` the way a
   route's comes from its method — read-only tools need `read`, the others `write`, of both `mcp` and
   the category — and `requiredScope` / `grantsScope` answer each of the two unchanged. A tool with no scope
   cannot exist; that is enforced where tools are registered, not left to review.
-- **The bearer hook lets a personal token through to `/_mcp`.** It refuses one today on anything but
-  `/_api` ("accepted by the /_api endpoints only"), and checks a route's `config.scope` in `onRequest`.
-  `/_mcp` is one route carrying many tools, so the hook admits the token there and the scope check
-  moves into the controller, per tool — at `tools/list` as well as `tools/call`, so a token is never
-  shown a tool it may not call and a client does not offer the model something that will only be
-  refused.
+- **The bearer hook lets a personal token through to `/_mcp`.** It checks a route's `config.scope` in
+  `onRequest` and refuses a personal token anywhere but `/_api` and `/_mcp`. `/_mcp` is one route
+  carrying many tools, so the hook admits the token there without a scope check, and the check
+  happens per tool in `mcp/tools/index.ts` — at `tools/list` as well as `tools/call`, so a token is
+  never shown a tool it may not call and a client does not offer the model something that will only
+  be refused. What the controller asks first, once per request: a personal token rather than a
+  system key, an owner holding `use:mcp`, and some `mcp` scope at all — each refused with a 403 that
+  says which. A token that fails verification is a 401 carrying `WWW-Authenticate`, as is a request
+  with no token while anonymous access is off.
 - **A system API key is refused on `/_mcp`.** It acts for groups and is nobody: there is no person
   for `use:mcp` to be asked of, nobody to author a write, and automating the wiki as a service is what
   `/_api` is for.
@@ -296,7 +377,10 @@ Tokens** like any other.
 Code, Cursor) use a personal access token as in §4.2. The remote connectors in claude.ai and ChatGPT
 cannot be handed a header and expect the MCP authorization flow instead: OAuth 2.1, the wiki acting as
 its own authorization server. It is the last phase ([§9](#9-suggested-order)) because the bearer path
-is complete without it, not because it is optional.
+is complete without it, not because it is optional. Built as described below; `models/oauth.ts` is
+the flow and `controllers/oauth.ts` the endpoints. Nothing of it exists unless MCP, the API and
+personal tokens are all on (`oauth.isAvailable`) — it would hand out grants nothing could use — and
+everything is in the database, so any instance of an HA set answers any step.
 
 **An OAuth grant is a personal access token made by a consent screen** instead of by the create
 dialog. Same table, same owner, same scopes, same `verifyClaims` on every call; listed under
@@ -305,38 +389,61 @@ adds:
 
 - **Discovery.** Protected-resource metadata (RFC 9728) at `/.well-known/oauth-protected-resource`,
   naming the site's own origin as the authorization server, and a 401 from `/_mcp` that carries
-  `WWW-Authenticate: Bearer resource_metadata="…"` pointing at it. Authorization-server metadata (RFC
-  8414) at `/.well-known/oauth-authorization-server`. Both per hostname, since the site is the
-  hostname's.
+  `WWW-Authenticate: Bearer resource_metadata="…"` pointing at it. Authorization-server metadata (RFC 8414) at `/.well-known/oauth-authorization-server`. Both per hostname, since the site is the
+  hostname's. `.well-known` joins `RESERVED_ROOT_FILES`, so the SEO hook never sends a client asking
+  for one to a locale prefix.
 - **Dynamic client registration** (RFC 7591) at `/_oauth/register`, which is how the connectors
   introduce themselves. A registered client is inert — it can do nothing until a person consents —
-  so registration is open, rate limited per address, and a client that no grant ever named is purged
-  after a day. Clients live in a new `oauthClients` table: name, redirect URIs, created.
+  so registration is open, rate limited per address (20 an hour, on the postgres-backed counter, since
+  registration is rare and must agree across instances), and a client that no grant ever named is
+  purged after a day (`purgeOauth`, hourly). Clients live in a new `oauthClients` table: name,
+  redirect URIs, created. Public clients only: whatever authentication method a client asks for, it
+  is registered as `none`, and PKCE is what protects the code. A redirect URI is `https`, `http` on a
+  loopback address (RFC 8252 §7.3), or a native app's own scheme — never a scheme a browser would
+  run or read from disk — with no fragment, at most ten.
 - **Authorization** at `/_oauth/authorize`: authorization code with PKCE, `S256` only, and an exact
-  match on a registered redirect URI. No session sends the person through the wiki's own login first.
-  The **consent screen** names the client and the host it will redirect to, and shows the scope grid
-  prefilled from the requested `scope` (`mcp:read pages:read`, say) — the person may narrow it, never
-  widen it — and the grant's lifetime, from the token expirations. Refused while
-  `auth.allowPersonalTokens` or MCP is off, or when the person does not hold `use:mcp`, saying which.
-- **Tokens** at `/_oauth/token`. An access token is a JWT with the personal-token audience naming the
-  grant's row, valid for an hour. A refresh token is random, stored only as a hash on the row, and
-  rotated on every use, as OAuth 2.1 requires for public clients; a refresh token presented twice
-  deletes the grant, since one of the two presenters stole it. The row's `expiration` is the grant's
-  lifetime, beyond which no refresh succeeds.
-- **Resource binding** (RFC 8707): the `resource` parameter must name this site's `/_mcp`, and a token
-  from a grant is accepted on `/_mcp` and nowhere else — the bearer hook refuses it on `/_api`. A
-  connector asked for an MCP server, and that is all it gets, whatever the scopes would reach.
+  match on a registered redirect URI. What is wrong with the client or its redirect URI is answered
+  to the person in the browser, never by redirecting to an address the request named; anything else
+  is told to the client through its redirect URI, as RFC 6749 §4.1.2.1 says. A request that checks
+  out goes on to the **consent screen**, a frontend page at `/_authorize` (under `_`, so not a page
+  path, and not under `_oauth`, which is the server's), which asks the API to check the request again
+  before it shows it — what the screen shows and what a code is made from are then the same request.
+  No session sends the person through the wiki's own login first and back. The screen names the
+  client, the host it will send the browser back to and the account it will act as, and shows the
+  scope grid prefilled from the requested `scope` — or the read-only default (`mcp:read`,
+  `pages:read`, `glossary:read`) when the client asked for none, which the connectors do. The person
+  may change any row: the client's request is where the grid starts, and the person is the one
+  granting. `mcp` is offered at read or write only, since a grant is for the MCP server and one
+  without the scope could reach nothing. Then the grant's lifetime, from the token expirations. A
+  person without `use:mcp` is told so and offered only Deny. The answer goes back with `state` and
+  `iss` (RFC 9207). The code is random, kept only as a hash, ten minutes, single use
+  (`oauthCodes`).
+- **Tokens** at `/_oauth/token`, form-encoded as RFC 6749 says, JSON accepted too. The code is
+  deleted as it is read, so it is spent once even when two exchanges race, and a failed check spends
+  it as well. The grant is created then — not at consent — as a `personalTokens` row named after the
+  client. An access token is a JWT with the personal-token audience naming the grant's row, valid for
+  an hour. A refresh token is `<grant id>.<secret>`, the secret stored only as a hash on the row and
+  rotated on every use (a compare-and-swap, so two racing refreshes cannot both succeed), as OAuth
+  2.1 requires for public clients. A refresh token whose grant exists but whose secret is not the
+  current one has been used before, so the grant is deleted — one of the two presenters stole it —
+  and with it every access token it issued. The row's `expiration` is the grant's lifetime, beyond
+  which no refresh succeeds. Errors are RFC 6749 §5.2's shape.
+- **Resource binding** (RFC 8707): the `resource` parameter, where a client sends it, must name this
+  site's `/_mcp`, and a token from a grant is accepted on `/_mcp` and nowhere else — the bearer hook
+  refuses it on `/_api` (`oauthClientId` on the verified key). A connector asked for an MCP server,
+  and that is all it gets, whatever the scopes would reach. A grant is the user's rather than a
+  site's, as every personal token is, so it works on the `/_mcp` of every site of the instance.
 - **Schema.** `personalTokens` gains a nullable `clientId` (to `oauthClients`, on delete cascade) and a
-  nullable `refreshHash`; migration `oauth-grants`. A row with no client is a token made by hand, and
+  nullable `refreshHash`; migration `mcp`. A row with no client is a token made by hand, and
   everything that exists today keeps working unchanged.
 - **Written by hand**, per [§3.1](#31-transport-stateless-streamable-http-at-_mcp): the flow is four
   endpoints, a hash comparison and the JWT signing the wiki already does.
 
 ### 4.4 One new global permission
 
-| Permission | Grants | Elevated? |
-| ---------- | ------ | --------- |
-| `use:mcp` | Using the MCP endpoint. Checked on the token's owner at every call, so taking it away stops that user's tokens on `/_mcp` on the next one, and leaves them working on `/_api` | No |
+| Permission | Grants                                                                                                                                                                        | Elevated? |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `use:mcp`  | Using the MCP endpoint. Checked on the token's owner at every call, so taking it away stops that user's tokens on `/_mcp` on the next one, and leaves them working on `/_api` | No        |
 
 - **Holding a token and being answered on `/_mcp` are separate questions.** Any signed-in user may
   hold tokens while `auth.allowPersonalTokens` is on; `use:mcp` is what it takes, at every call, for
@@ -349,13 +456,17 @@ adds:
 - **Taking a token away is the existing token routes**: the owner from their profile, `manage:users`
   from the user editor, subject to `systemUserGuard`. Nothing MCP-specific is needed, and nothing is
   marked revoked — the row is deleted.
-- **The guests group is anonymous access.** An anonymous request is the guests group everywhere
-  else, so a wiki opens `/_mcp` to the public by granting guests `use:mcp` — no token, and the
-  guests group's page rules. There is no separate switch for it: the grant is the switch. With no
-  token there are no scopes, and an anonymous caller is treated as holding `mcp:read` and **read** on
-  every category, and **write** on none — a public endpoint that writes is a spam channel, whatever the guests
-  group's rules would allow. Anonymous access does not need `api.isEnabled` or
-  `auth.allowPersonalTokens`, since no token is verified.
+- **Anonymous access is a setting, `mcp.allowAnonymous`**, off by default. With it on, a request
+  carrying no token is answered as the guests group: its page rules, no group-wide permission, and
+  no session (the cookie is ignored here as everywhere on `/_mcp`). It is not a grant of `use:mcp`
+  to the guests group, which was the first design and cannot work in this codebase: an anonymous
+  request never carries the guests group's group-wide permissions (`actorForRequest` gives it none,
+  and `actorForPublic` none on purpose), and the group editor offers the guests group no Permissions
+  tab at all. With no token there are no scopes, and an anonymous caller is treated as holding
+  `mcp:read` and **read** on every category, and **write** on none — a public endpoint that writes is
+  a spam channel, whatever the guests group's rules would allow. Anonymous access does not need
+  `api.isEnabled` or `auth.allowPersonalTokens`, since no token is verified, and it is rate limited
+  per address.
 - **Admin → API keys are untouched**: still `manage:system`, still group-bound service credentials,
   and refused on `/_mcp`.
 - **The MCP settings** — the enable switch, the tool groups on offer, limits — are one instance-wide
@@ -376,8 +487,9 @@ Four things decide whether a call goes through, and they are asked in this order
 
 1. **The group** — whether the administrator has switched this group of tools on for the instance.
    A group that is off is not listed to anybody.
-2. **`use:mcp`** — held by the token's owner, or by the guests group for an anonymous caller
-   ([§4.4](#44-one-new-global-permission)).
+2. **`use:mcp`** — held by the token's owner, or `mcp.allowAnonymous` on for a caller with no token
+   ([§4.4](#44-one-new-global-permission)). Asked once per request, in the controller, before any
+   message is dispatched.
 3. **The token's scopes** — `mcp` and the tool's category, both at `read` for a read-only tool and
    at `write` otherwise ([§4.2](#42-personal-access-tokens-are-the-credential)). An anonymous caller
    holds `mcp:read` and every category at read, and nothing at write.
@@ -385,24 +497,27 @@ Four things decide whether a call goes through, and they are asked in this order
 
 ### 5.2 The tools
 
-| Group | Tools | Scope | Page permission | Default |
-| ----- | ----- | ----- | --------------- | ------- |
-| `discover` | `search_pages`, `browse_tree`, `list_tags`, `recent_changes` | `pages:read` | `read:pages` | on |
-| `pages` | `get_page`; `get_page_links`, `get_backlinks` | `pages:read` | `read:pages`, `read:source` for the source | on |
-| `history` | `list_versions`, `get_version`, `diff_versions` | `pages:read` | `read:history` | on |
-| `glossary` | `lookup_term`, `list_terms` | `glossary:read` | `read:glossary` | on |
-| | `define_term`, `update_term` | `glossary:write` | `manage:glossary` | |
-| `comments` | `list_comments` | `comments:read` | `read:comments` | on |
-| | `post_comment`, with optional annotations | `comments:write` | `write:comments` | |
-| `suggest` | `suggest_edit` through the approvals flow | `approvals:write` | the site's approval rules | on |
-| `edit` | `create_page`, `update_page` | `pages:write` | `write:pages`, `write:tags` for tags | on |
-| `assets` | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read` | `read:assets` | off |
-| | `upload_asset` | `assets:write` | `write:assets` | |
-| `destructive` | `move_page`, `delete_page` (to the recycle bin) | `pages:write` | `manage:pages`, `delete:pages` | off |
+| Group         | Tools                                                                 | Scope             | Page permission                            | Default |
+| ------------- | --------------------------------------------------------------------- | ----------------- | ------------------------------------------ | ------- |
+| `discover`    | `search_pages`, `browse_tree`, `list_tags`, `recent_changes`          | `pages:read`      | `read:pages`                               | on      |
+| `pages`       | `get_page`; `get_page_links`, `get_backlinks`                         | `pages:read`      | `read:pages`, `read:source` for the source | on      |
+| `history`     | `list_versions`, `get_version`, `diff_versions`                       | `pages:read`      | `read:history`                             | on      |
+| `glossary`    | `lookup_term`, `list_terms`                                           | `glossary:read`   | `read:glossary`                            | on      |
+|               | `define_term`, `update_term`                                          | `glossary:write`  | `manage:glossary`                          |         |
+| `comments`    | `list_comments`                                                       | `comments:read`   | `read:comments`                            | on      |
+|               | `post_comment`, with optional annotations                             | `comments:write`  | `write:comments`                           |         |
+| `suggest`     | `suggest_edit` through the approvals flow                             | `approvals:write` | the site's approval rules                  | on      |
+| `edit`        | `create_page`, `update_page`                                          | `pages:write`     | `write:pages`, `write:tags` for tags       | on      |
+| `assets`      | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read`     | `read:assets`                              | off     |
+|               | `upload_asset`                                                        | `assets:write`    | `write:assets`                             |         |
+| `destructive` | `move_page`, `delete_page` (to the recycle bin)                       | `pages:write`     | `manage:pages`, `delete:pages`             | off     |
 
-Each tool's scope is the one the `/_api` route doing the same thing declares — history is `pages`
-there, suggestions are `approvals` — so a token reaches the same things on both surfaces. A tool's
-level and its `readOnlyHint` annotation are the same fact, and are declared once.
+Every tool needs `mcp` at the same level as well as the scope in the table, so a read tool needs
+`mcp:read` and a write tool `mcp:write`. Each tool's category is the one the `/_api` route doing the
+same thing declares — history is `pages` there, suggestions are `approvals` — so a token reaches the
+same things on both surfaces. A tool's level and its `readOnlyHint` annotation are the same fact,
+declared once (`readOnly` on `McpTool`). The registry refuses to load a tool with no category or in
+no known group, so neither can be forgotten.
 
 **Why the write groups are on by default.** Contributing is half of what this is for
 ([§1](#goal-2--an-agent-contributes-to-the-wiki)), and the instance switch is not what keeps a token
@@ -420,21 +535,39 @@ window is expensive, and an upload is the one write that is not text a person ca
 
 Across every tool:
 
-- **Every tool carries annotations** — `readOnlyHint`, `destructiveHint`, `idempotentHint` — so that
-  a client can ask before running the dangerous ones.
-- **Every page in a result is named the same way**: `id`, `title`, `locale`, `path`, the absolute
-  `url` (`pages.urlFor` on the site's hostname, as the canonical link in `helpers/appShell.ts` is
-  composed), `updatedAt` and the current `versionId`. That is what makes an answer citable and a
-  later write against it safe.
+- **Every tool carries annotations** — `readOnlyHint`, `destructiveHint`, `idempotentHint`, and
+  `openWorldHint: false`, since nothing here reaches past this wiki — so that a client can ask before
+  running the dangerous ones.
+- **Every page in a result is named the same way** (`pageFields` in `mcp/content.ts`): `id`,
+  `title`, the absolute `url` (`pages.urlFor` on the request's origin, as the canonical link in
+  `helpers/appShell.ts` is composed), `locale`, `path`, and `description`, `tags` and `updatedAt`
+  where there are any. `get_page` adds the current `versionId` — the newest `pageHistory` row, which
+  is the page as it stands — and so will every write's answer; a search result does not carry one,
+  since that would be a query per result for something only a write needs. That is what makes an
+  answer citable and a later write against it safe.
+- **Two kinds of failure.** A refusal the agent can act on — no such page, not allowed, a heading
+  that is not there — is the tool's result with `isError` set (`ToolError`), which is what the MCP
+  specification asks for: the model reads it and tries something else. A malformed call — bad
+  arguments, an unknown method — is a JSON-RPC error. A tool the caller may not call answers exactly
+  as an unknown tool does, since it is not in the list they were given. "Not there", "not live" and
+  "not yours to read" are one message, as everywhere else on the wiki.
+- **A tool not applicable to the site is not listed** (`isAvailable` on `McpTool`, asked by the same
+  `mayCall`): the glossary tools where the site's glossary is off, the comment tools unless the site
+  has comments on and uses the built-in provider.
+- **Arguments are checked** against the published schema by Ajv, defaults filled in, and an
+  undeclared argument is an error rather than silently dropped.
 - **Resources**: a `wiki://{locale}/{path}` resource template backed by `get_page`, so a client can
-  offer pages to @-mention. No resource *listing*: a large wiki is too many to enumerate.
+  offer pages to @-mention. No resource _listing_: a large wiki is too many to enumerate.
 - **Prompts**: none in the first version.
 - **Server instructions.** The `initialize` result carries `instructions`, which a client puts in front
   of the model: what this wiki is (the site's title and description), its locales, how to cite
-  (link the `url`), and how to contribute (search first, update rather than duplicate, give a
-  reason). Then the site's own conventions, from an **agent guidelines page** the administrator
-  names ([§8.1](#81-admin--mcp)) — an ordinary page, so it is written, reviewed and improved like any
+  (link the `url`), who the agent is acting as, and how to contribute (search first, update rather
+  than duplicate, give a reason). Only what the caller can act on: a line about a tool is there only
+  when the caller may call that tool, so a read-only token is never told how to write. Then the
+  site's own conventions, from an **agent guidelines page** the administrator names
+  ([§8.1](#81-admin--mcp)) — an ordinary page, so it is written, reviewed and improved like any
   other, by people and by agents. Its text is included up to a cap; the rest is a `get_page` away.
+  Built, guidelines page and contributing lines included.
 
 ### 5.3 Referring to the wiki (goal 1)
 
@@ -446,39 +579,71 @@ page without knowing the tree, read the part that matters, and say where it came
   active locale of the site when none is given, since an agent does not know which one a topic was
   written in. Each result adds a `snippet` (the `ts_headline` the search route already computes) to
   the common page fields, so the agent can tell a real match from a passing mention without opening
-  it. Paged with `offset` / `limit`, with a lower ceiling than the REST API. A result count is only
-  ever a count of pages the owner may read.
-- **`browse_tree`** answers the shape of a section: the folders and pages under a path, each with
-  title and description, to a requested depth. It is how an agent finds where things live, and,
-  for goal 2, where a new page belongs.
+  it. Paged with `offset` / `limit` (at most 25, against the REST API's larger ceiling), with a
+  `nextOffset` while there is more. A result count is only ever a count of pages the owner may read,
+  because `searchPages` filters by page rule before it pages. Without a query it lists the pages
+  matching the filters, newest first.
+- **`browse_tree`** answers the shape of a section: the folders and pages under a path, with titles
+  and URLs, `depth` levels down (at most 3, and at most 300 entries in all). `tree.browse` per level,
+  filtered by `read:pages` as the browse route filters it, and refused where the site has turned
+  browsing off (`features.browse` and `features.listFolderChildren`), since the route is. It is how an
+  agent finds where things live, and, for goal 2, where a new page belongs.
 - **`get_page`** takes an `id`, a `path` with a `locale`, or a **`url`** — an agent is usually handed
-  a link. A URL on this site's hostname is decoded (`decodeUrlPath`), stripped of its locale prefix
-  and normalized as the router would; one on any other host is refused, not followed. It answers:
-  - **metadata first**: the common fields, plus description, tags, the last editor's name, the
-    publish state, whether the page is locked, and the page's translations (its locale group), so an
-    agent can switch to the reader's language;
-  - **the outline** — the page's stored `toc`, headings with their anchors and sizes;
-  - **content**, either all of it (up to `mcp.maxResultChars`), one `section` by heading anchor, or
-    an `offset` / `length` window. With `read:source`, the source as written. Without it, the stored
-    render converted to markdown with turndown — what a reader sees, in a form a model reads well. A
-    drawing is its extracted text, the same text search indexes (`extractText`), since an SVG scene
-    means nothing to a model.
-  - A **redirection** is followed, once, within the site, and the answer says it was.
+  a link. A URL may be absolute or a path from the site root; it is read as the frontend router reads
+  one (`resolvePagePath`, exported from `helpers/appShell.ts` for this): decoded, page extension and
+  locale prefix taken off, normalized. One on any other host is refused, not followed. The page is
+  then looked up by its exact path (`pages.idAtPath`) rather than by the 53-bit hash `getPage`
+  addresses a page with, for the reason `describePage` gives. The access questions are the page
+  route's — `read:pages`, the source only with `read:source` (or a permission implying the editor),
+  a page that is not live only for whoever may edit it — asked of the token's actor. It answers in
+  two blocks:
+  - **metadata, as JSON**: the common fields, plus `versionId`, `createdAt`, the publish state, the
+    editor, the last editor's name (only where the page's own `showLastEditedBy` is on), whether the
+    page is locked, its translations with their URLs (so an agent can switch to the reader's
+    language), the **outline** — the stored `toc`, flattened, each heading with its level and anchor —
+    and where the content block starts, how long the whole is and the `nextOffset` to carry on from;
+  - **the content, as text**: all of it up to `mcp.maxResultChars`, one `section` (by anchor or by
+    heading text, read off the text itself so that it works on source and render alike, fenced code
+    skipped), or an `offset` / `length` window. With source access, the source as written — markdown
+    or AsciiDoc. Without it, the stored render converted to markdown with Turndown (`helpers/htmlToMarkdown.ts`,
+    shared with the 2.x importer). A drawing is its extracted text (`pages.searchTextOf`, the same text
+    search indexes), since an SVG scene means nothing to a model. An empty render says it may be
+    waiting for the renderer.
+  - A **redirection** is followed, once, within the site, and the answer says it was; one to an
+    outside URL, or to a page the caller may not read, is reported rather than followed.
+  - A **password-protected** page answers with its metadata and a note, and no content, unless the
+    caller may edit it.
 - **`get_page_links` / `get_backlinks`** read `pageLinks` both ways, so an agent can follow a topic
   to its neighbours — and, for goal 2, find every page that will be wrong once the one it is fixing
-  changes.
-- **`recent_changes`** lists the latest versions the owner may read, newest first, filterable by path.
-  It is what an agent asks "what changed in the runbooks this week", and what tells it a page it
-  read earlier in a long task has moved on.
+  changes. Filtered as the REST routes filter: a link to a page the caller may not read is a link to
+  nothing (`exists: false`), and a backlink from such a page is not listed. Backlinks from another
+  site of the instance are left out too, where the REST route includes them: an agent sees one site.
+  `get_backlinks` honours the site's `features.backlinks` switch.
+- **`recent_changes`** lists the pages the owner may read, most recently updated first, filterable by
+  path and locale — `searchPages` ordered by `updatedAt`, so a page excluded from search is not
+  listed. It is what an agent asks "what changed in the runbooks this week", and what tells it a
+  page it read earlier in a long task has moved on.
 - **`list_versions` / `get_version` / `diff_versions`** let an agent answer "when did this change and
-  why" from the history's own `reason` and author, and check what a page said before an edit it
-  suspects.
+  why" from the history's own `reason` and author (by name — the history route also sends an
+  email, which an agent has no use for), and check what a page said before an edit it suspects.
+  `read:history` on the page as it stands, and not past its password. `diff_versions` is a unified
+  diff (`createTwoFilesPatch`), against the current version when no `toVersionId` is given. A version
+  of a page in the recycle bin is not reachable: the bin is the file manager's.
+- **`list_assets` / `get_asset`** (the `assets` group, off by default) list a folder's files, with
+  their type, size and `/_files/` link and the sub-folders to look in next, and read one: a PNG,
+  JPEG, GIF or WebP up to 1 MB comes back as MCP image content, which a model can look at; a text type
+  (markdown, CSV, JSON, SVG and the like) up to the result cap as text; anything else as details and
+  a link. Through the models, `read:assets` on the file's own path as the asset routes ask it — not the
+  tree route, which is scoped `pages`.
 - **`lookup_term`** resolves a name or an alias in a locale (`glossary.lookup`, case rules and all) to
-  its definition, related terms and the page that documents it. A wiki's glossary is where its own
-  vocabulary is defined, which is exactly what a model gets wrong by guessing.
-- **Freshness is in the answer, not left to the agent to ask for.** `updatedAt` and the last editor
-  are on every page, and the server instructions tell the agent to say when what it is relying on is
-  old.
+  its definition, related terms and the page that documents it — that page resolved as the caller
+  may read it, since the glossary itself reports its title to whoever may read the glossary.
+  **`list_terms`** lists a locale's terms without definitions, filterable by category and by text. A
+  wiki's glossary is where its own vocabulary is defined, which is exactly what a model gets wrong by
+  guessing. `read:glossary` in the locale, and the site's glossary switch.
+- **Freshness is in the answer, not left to the agent to ask for.** `updatedAt` is on every page in
+  every result, the last editor on `get_page` where the page shows it, and the server instructions
+  tell the agent to say when what it is relying on is old.
 
 ### 5.4 Contributing to the wiki (goal 2)
 
@@ -489,16 +654,29 @@ right place, change only what it means to change, say why, and leave something p
 then update what exists or create what does not. Each tool's answer is built to make the next step
 the right one:
 
-- **`create_page`** takes a path (`normalizeNewPagePath`), a locale, a title, a description, tags and
-  markdown. A path that is already taken is refused **with the page that holds it**, so the agent
-  updates that instead of inventing `runbook-2`. It is created in the `markdown` editor and in the
-  publish state the administrator chose for agent pages ([§6.5](#65-locked-and-unpublished-pages)).
+- **`create_page`** takes a path (`normalizeNewPagePath`), a locale, a title, a description, an icon and
+  its color, tags and markdown. A path that is already taken is refused **with the page that holds it** — its URL and
+  id, where the caller may read it — so the agent updates that instead of inventing `runbook-2`. The
+  create route's checks follow: `write:pages` on the page as it is about to be, and `write:tags` for
+  any tags it arrives with. It is created in the `markdown` editor and in the publish state the
+  administrator chose for agent pages ([§6.5](#65-locked-and-unpublished-pages)), then queued for
+  rendering (`pages.queueRerender`).
+- **An icon is checked the way the icon picker stores one** (`icons.materializeIcons`), on both
+  write tools: a reference the wiki cannot show — malformed, from a set that is not enabled, unknown
+  upstream — is refused rather than saved as a blank, and one that can be shown is stored so it is
+  served without the Iconify API afterwards. The descriptions steer an agent to the `mdi` and `la`
+  sets without refusing others, and to leave `iconColor` (a `PAGE_ICON_COLORS` name) at its default
+  unless the person it works for asked for a color.
 - **`update_page`** requires the `baseVersionId` the agent read, and refuses a stale one with the
   current version rather than merging ([§6.4](#64-live-editors)) — so a correction is always made
   against what the page says now. It takes either a list of `str_replace`-style edits, each of which
   must match exactly once, or the whole content. The edits are the form to prefer: fixing an
   outdated paragraph should change that paragraph and nothing else, and the diff a person reviews
-  should be that small. Title, description and tags are separate fields.
+  should be that small. An edit whose text is not in the source, or is in it more than once, is
+  refused naming which edit it was. Title, description, icon, icon color and tags are separate fields; a change of tags
+  goes through the update route's own checks (`retagRefusal`, now shared by both). Only a change of
+  content queues a render. Refused for want of `write:pages` with a pointer to `suggest_edit` and
+  `post_comment`, and refused while the page is open in the editor ([§6.4](#64-live-editors)).
 - **Which pages can be written.** A page keeps its editor. Markdown and Visual pages (both markdown)
   and AsciiDoc pages are written as source. Drawings, redirections and blogs are refused: a scene
   document and a settings document are not prose, and an agent should not be rewriting either.
@@ -506,48 +684,91 @@ the right one:
   stored as the version's `reason` — what the history shows and what the git target uses as the
   commit message — and it is how a person deciding whether to trust an agent's correction knows what
   it thought it was correcting.
-- **The version is marked as made through MCP.** `pageHistory` gains a nullable `via` column, set to
-  `mcp` by every write tool (migration `history-via`). It is **always recorded**; whether it is
+- **The version is marked as made through MCP.** `pageHistory` gains a nullable `via` column
+  (migration `mcp`), set to `mcp` for every version a call on `/_mcp` leads to. Not passed
+  by each tool: the controller runs every call inside `withVia('mcp')` (`helpers/via.ts`, an
+  `AsyncLocalStorage` scope), and `pageHistory.record` and the audit helper read it — which is also
+  what marks the audit entry of a REST route the tools call in-process. It is **always recorded**; whether it is
   **shown** is the administrator's choice (`mcp.showAiBadge`, on by default —
   [§8.1](#81-admin--mcp)). Shown, an **AI** badge sits beside the owner's name on the version in the
-  page's history and on the page's own last-edited line when the latest version is an agent's. The
+  page's history and on the page's own last-edited line when the latest version is an agent's — the
+  page payload's `editedVia`, read from the newest history row in the query `getPage` already makes,
+  so a person's later edit clears it. The
   author is still the owner — they are the one accountable — but a reader is entitled to know which
   edits a person typed. Hidden, the column is still written, and the Contributions card and the audit
   log still read it.
-- **The answer to a write** carries the new `versionId` and `url`, whether the render is done or
-  queued ([§6.3](#63-a-page-written-without-a-browser-has-no-render)), and **the links in the new
-  content that resolve to nothing** — read off the `pageLinks` rows the save just wrote — so a broken
-  link is fixed in the same task rather than discovered by the next reader.
+- **The answer to a write** carries the new `versionId` and `url`, that the render is queued
+  ([§6.3](#63-a-page-written-without-a-browser-has-no-render)), and **the links in the new
+  content that reach no page the caller may read**, so a broken link is fixed in the same task
+  rather than discovered by the next reader. Read off the source (`sourceLinkHrefs`, as the importer
+  does) and resolved with `resolveLink`, not off the `pageLinks` rows: those are made from the
+  render, which a page written here does not have yet. Links within the site only; assets are not
+  checked.
 - **People find out.** A write is a page edit, so everything an edit does happens: the version is in
   the history and can be restored, watchers get their `watchedPage` notification, the change shows
   in recent changes, storage targets mirror it and the git target commits it. Nothing about it is
   quieter than a person's edit.
 
 **When the owner may not edit the page**, the agent still has two ways to contribute, and the tools
-offer them rather than leave it at a refusal — `update_page` refused for want of `write:pages` says
-which of these the owner may use there:
+offer them rather than leave it at a refusal — `update_page` refused for want of `write:pages` names
+both.
+
+**These go through their REST routes, in-process** (`mcp/inject.ts`), and so do the glossary writes
+below. What they enforce lives in the route rather than in a model — which approval rule takes a
+suggestion, the posting cooldown, the spam check, the webhooks and notifications a comment sends,
+the term routes' refusals — and a second copy of it in the tools would drift. `callApi` hands the
+route the caller's own token, host and client address (so the cooldown and the audit entry name the
+right person and address), never a cookie, and inside the caller's `withVia('mcp')` scope. A token
+therefore reaches exactly what it reaches on `/_api`, by construction; the route's refusal comes back
+as the tool's error, in the route's words.
 
 - **`suggest_edit`** submits the change through the approvals flow, for the page's reviewers to accept
-  or decline — the same edits-or-content input as `update_page`, plus the reason. A person reviews
-  it, and the browser that approves it renders it.
+  or decline — the same edits-or-content input as `update_page`. It reads the source to edit from
+  the "my suggestion" route, which is the caller's own open suggestion if they have one, so suggesting
+  twice builds on the first. **No reason**: a submission has nowhere to keep one, and adding it is a
+  change to approvals rather than to MCP; the description tells the agent to explain itself in a
+  comment where the change does not. The suggestion is the owner's; the version an approval writes
+  is the reviewer's, and is not marked `via`. A person reviews it, and the browser that approves it
+  renders it, so this works without the renderer.
+- **`list_comments`** reads the page's discussion, so an agent checks before flagging what is already
+  flagged.
 - **`post_comment`** flags a problem in the page's discussion — "this procedure no longer works since
-  the v3 migration" — optionally **annotating the passage** it is about (`commentAnnotations`: the
-  passage's text and its note), so the people who can fix it see exactly what is wrong. Built-in
-  comments only; on a site using a third-party provider the tool is not listed.
+  the v3 migration" — optionally **annotating the passages** it is about, so the people who can fix
+  it see exactly what is wrong. An annotation is stored as a description of the article as drawn,
+  which an agent reading markdown does not have, so the agent gives a `quote` and the tool builds the
+  anchor: the quote is found in the page's extracted text (`searchContent`, whitespace folded) and the
+  prefix, suffix and offset are taken from there, the heading left unset. A quote that is not in the
+  page as readers see it is refused. Built-in comments only; elsewhere the tools are not listed.
 
 **Also contributions**:
 
 - **`define_term` / `update_term`** add to the glossary, under its existing rules: one name means one
-  term (a clash answers 409 naming the term that holds it, which is the one to update), and an update
-  names the `updatedAt` it read (`expectedUpdatedAt`).
-- **`upload_asset`** puts an image or a file next to the page that uses it, for documentation that
-  needs a screenshot. Size-capped well below the site's upload limit. A diagram is better written as a
-  `mermaid` or `kroki` code block, which stays text a person can review — the server instructions say
-  so.
+  term (a clash is refused naming the term that holds it, which is the one to update), and an update
+  names the `updatedAt` it read (`expectedUpdatedAt`) and is refused when somebody saved since. The
+  term route replaces a whole term, so `update_term` fills in what the agent left out from what is
+  stored; related terms are given by name and resolved to ids, a name with no term refused rather
+  than dropped.
+- **`upload_asset`** puts an image or a file into a folder, for documentation that needs a
+  screenshot, and answers with the `/_files/` link to put in the page — the stored name, which the
+  site's sanitizing and conflict rules may have changed. The bytes come as `base64`, or as `text` for
+  a text file, at most 3 MB decoded, well inside the endpoint's body limit. Through the upload route
+  in-process (`callApi` sends raw bodies), which is where `write:assets` at the destination, the
+  reserved page extensions and the conflict behaviour are decided. A diagram is better written as a
+  `mermaid` or `kroki` code block, which stays text a person can review — the tool's description says
+  so, and `create_page`'s.
 
 **Moving and deleting** (`destructive`) are not contributing and stay off until an administrator
 turns them on: a reorganisation is a decision about the wiki, not knowledge added to it, and a move
-rewrites links on pages the agent never read.
+rewrites links on pages the agent never read. Both are built (`mcp/tools/destructive.ts`), annotated
+`destructiveHint`, and go through their REST routes in-process, which hold the checks
+(`manage:pages` at both ends of a move, `delete:pages` for a deletion) and the work that follows:
+
+- **`move_page`** takes a new path, optionally a new locale, and `updateLinks` (on by default): the
+  pages linking to the old address are rewritten, and those that could not be — named only where the
+  caller may read them — are listed with why.
+- **`delete_page`** sends the page to the recycle bin, from which a person holding `delete:pages`
+  restores it; its watchers are told. Both descriptions tell the agent to do it only when the person
+  it works for asked.
 
 ---
 
@@ -580,8 +801,9 @@ calling `/_api` with a hand-made token it already holds.
 
 The HTML of a page is produced by the editor's browser at save time. Without one, the only path is
 the headless render queue, which needs the **Puppeteer extension**. A page an agent creates or edits
-is therefore saved with its source and queued; until the queue reaches it, readers see an empty
-page — the same state an imported page is in today.
+is therefore saved with its source and queued; until the queue reaches it — seconds, in the tests —
+readers see an empty page if it is new, and the previous render if it was updated: the same state an
+imported page is in.
 
 **For goal 2 this is the whole question, not a detail.** `searchContent` — what full-text search
 indexes — is extracted from the render (`rendering.postProcess`), so an unrendered page is not only
@@ -592,18 +814,29 @@ without it, `create_page` and `update_page` answer that they are unavailable on 
 error naming the missing extension and pointing at `suggest_edit` — rather than save a page nobody
 can read or find. `suggest_edit`, rendered by the reviewer's browser on approval, works everywhere,
 as do the writes that need no page render: comments, glossary terms and uploads. The extension being
-installed later makes the two tools work with nothing else changed. Until a queued render
-lands, `get_page` answers a reader who holds `read:source` with the source and says the render is
-pending, rather than an empty page.
+installed later makes the two tools work with nothing else changed. An agent that may read the
+source gets the source from `get_page` either way; one that may not gets the render, and for a page
+with none yet, a note that it may be waiting for the renderer.
 
 The admin screen shows whether the extension is installed.
 
 ### 6.4 Live editors
 
 A collaboration room is not storage: saving is an explicit act by whoever is in the room. If an agent
-saves while people are editing, their next save silently replaces the agent's change. Two things
-stop that: `update_page` refuses a stale `baseVersionId`, and a save from MCP relays the room's
-existing `saved` message so the editors are told the page moved under them.
+saved while people were editing, their next save would be their room's text — which does not have
+the agent's change in it — and would silently replace it.
+
+**`update_page` therefore refuses a page that has an open room**, telling the agent to use
+`suggest_edit` or try later. Not a relay of the room's `saved` message, which the first design had:
+that message tells the editors that what they are looking at is now what is stored, which after an
+agent's save would be exactly wrong, and their unsaved-changes flag would go quiet over text that no
+longer matches the page. Writing the agent's edit into the room instead — as a collaborator typing —
+is the better answer and a project of its own.
+
+Rooms live per instance (`WIKI.collab.rooms`), so the check sees the rooms on the instance that took
+the call: complete on a single instance, which is the common case, and best-effort across an HA set,
+where a room on another instance goes unseen. `baseVersionId` is the other half: a stale one is
+refused, so an agent never writes over a version it did not read.
 
 ### 6.5 Locked and unpublished pages
 
@@ -676,11 +909,10 @@ The rest:
 - **Origin validation** is required by the MCP spec against DNS rebinding: a request carrying an
   `Origin` that is not the site's is refused. CORS is added for the MCP headers only if browser-based
   clients are to be supported.
-- **Anonymous access** is the guests group holding `use:mcp` ([§4.4](#44-one-new-global-permission)),
-  which suits a public documentation site: no token, the guests group's page rules, and — since
-  guests hold no `write:*` rule anywhere by default — in practice read-only. It is also a public
-  endpoint that runs database queries on demand, so it is always rate limited, per address. Guests
-  are not granted it by default, and the group editor warns when `use:mcp` is ticked on guests.
+- **Anonymous access** is the `mcp.allowAnonymous` setting ([§4.4](#44-one-new-global-permission)),
+  which suits a public documentation site: no token, the guests group's page rules, read tools only.
+  It is also a public endpoint that runs database queries on demand, so it is always rate limited,
+  per address. Off by default, and the admin screen warns while it is on.
 - **Audit.** Writes go through the existing `page` / `comment` actions. `audit()` already records a
   personal token's owner as the actor and adds `meta.patId`; MCP adds `meta.via: 'mcp'`, which —
   with `pageHistory.via` for page edits ([§5.4](#54-contributing-to-the-wiki-goal-2)) — is what tells
@@ -701,17 +933,21 @@ The rest:
   postgres-backed `rateLimits.consume`. An agent fans out — a dozen searches and reads in parallel is
   an ordinary turn — and a database write per call to count them would load the database with the
   very traffic it is meant to protect it from. The bucket refills continuously and allows a burst
-  (`mcp.rateLimit`: burst size and per-minute rate). The budget is per owner — `requestUserId(req)`,
-  as `limitRenders` already counts — so that a second token does not buy a second budget, and per
-  address for anonymous. Its map has a ceiling on entries and evicts the least recently used, since
-  anonymous addresses are unbounded — the same reason `SHELL_CACHE_MAX_ENTRIES` exists. The cost is
+  (`mcp.rateLimitBurst`, 60 by default, and `mcp.rateLimitPerMinute`, 300). One token per JSON-RPC
+  request, so a batch costs what its requests would separately, and notifications cost nothing. The
+  budget is per owner (`user:<id>`), so that a second token does not buy a second budget, and per
+  address for anonymous (`ip:<address>`). Its map holds at most 10 000 keys and drops the least
+  recently used, since anonymous addresses are unbounded — the same reason `SHELL_CACHE_MAX_ENTRIES`
+  exists; a dropped bucket comes back full, which errs towards letting a client through. The cost is
   that it is approximate across an HA set: each instance counts alone, so a client spread by the load
   balancer over N instances gets up to N times the budget. That is accepted: the limit is there to
   stop a runaway agent hurting the instance it is hammering, which a per-instance count does, not
-  to meter anybody exactly. A refusal is JSON-RPC error with the seconds to wait, which agents honour.
+  to meter anybody exactly. A refusal is HTTP 429 with `Retry-After` and a JSON-RPC error saying the
+  same, which clients honour.
 - **Search** already pages correctly with rule filtering, and the protected-content filter only runs
   for protected pages.
-- **Bodies.** `/_mcp` gets its own body limit, large enough for a page being written.
+- **Bodies.** `/_mcp` takes the server's body limit (5 MB unless `bodyParserLimit` says otherwise),
+  which is large enough for a page being written; a batch is capped at 50 messages.
 - **The render queue** drains one page at a time across the instance. Write tools must not be able to
   flood it; the per-owner budget covers that, and a queue depth past a threshold refuses writes
   rather than growing without bound.
@@ -724,6 +960,14 @@ The rest:
 
 `/_admin/mcp`, modelled on `AdminScim.vue`. Reaching it takes `access:admin`, as every admin screen
 does; what each part then allows is split by permission.
+
+**Built** (`pages/AdminMcp.vue`): the header, Prerequisites (the renderer included, rather than under
+Safety), Endpoint (the URL, the setup for Claude Code, VS Code and Cursor through the shared
+`McpConnectSnippets`, and a link to the administrator's own tokens), Tools (each group with the
+scopes it needs, and marked while its tools do not exist yet), Guidance, Access, Safety, Display and
+Contributions, OAuth clients. **Not built**: Usage. The routes behind it are `manage:system`, reads
+included — the guidelines page `manage:sites` — so an `access:admin` caller without them gets a load
+error rather than the read-only view described below.
 
 - **Header**: status light, docs, refresh, **Enable / Disable** (`manage:system`). No key button —
   tokens are not created here.
@@ -742,9 +986,12 @@ does; what each part then allows is split by permission.
   page path, picked from the tree, whose text goes into the server instructions
   ([§5.2](#52-the-tools)). Where new pages go, how they are named, which sections are reference and
   which are history, the house style. The one per-site MCP setting, since it is a page in that
-  site's tree, and stored in the site's config. Empty, the
-  instructions carry the generic guidance alone. The card links to the page and offers to create it
-  from a starting template.
+  site's tree, and stored in the site's config (`mcp.guidelinesPath`, in its primary locale). Empty,
+  the instructions carry the generic guidance alone. Saved with Apply; normalized as a lookup path,
+  and refused if it is not one. A path rather than a page, so it may be named before it is written:
+  the card's button opens the page, or the missing-page screen there, which offers to create it — no
+  starting template yet. Its text goes to an assistant as the assistant may read it, up to 6 000
+  characters; a page its owner may not read is simply not handed over.
 - **Safety** (`manage:system`):
   - default publish state of pages created by an agent (published, or draft —
     [§6.5](#65-locked-and-unpublished-pages));
@@ -757,15 +1004,20 @@ does; what each part then allows is split by permission.
   through MCP carry an AI badge in page history and on the page ([§5.4](#54-contributing-to-the-wiki-goal-2)).
   Off hides the badge only; which versions an agent made is recorded either way, and the
   Contributions card below reads it regardless.
-- **Access**: who may use the endpoint, read off the groups — which groups hold `use:mcp`, and
-  whether the guests group does (anonymous access, with a warning). Links to the group editor rather
-  than a second place to grant it.
-- **OAuth clients** (`manage:system`): the clients that have registered, with how many grants each
-  holds, and delete — which takes every grant made to it with it.
+- **Access**: who may use the endpoint — members of a group holding `use:mcp`, with a link to the
+  group editor rather than a second place to grant it — and the **Allow Anonymous Access** switch,
+  with a warning while it is on. Built; listing which groups hold `use:mcp` is not.
+- **OAuth clients** (`manage:system`): the clients that have registered — those holding a grant
+  first, then newest first, at most 50, since registration is open and a burst of unused clients must
+  not push the ones in use off the list — with when, how many grants each holds and the hosts it
+  returns to — what tells two clients of the same name apart — and delete, which takes every grant
+  made to it with it, after a confirmation that says how many. Built.
 - **Contributions**: what agents have added lately — page versions with `via = 'mcp'` over the last
-  week, created and updated, linking to each; suggestions waiting. Read off `pageHistory`, so it
-  costs nothing to keep and is the same on every instance. It is how an administrator sees goal 2
-  working, or notices it going wrong.
+  week on every site, newest first and at most 50, each with its site, whom it was for, what it did
+  and its reason, opening the version it made (`/_version/<id>`, on that site's own host). Read off `pageHistory` (`listByVia`), so it costs nothing
+  to keep and is the same on every instance. It is how an administrator sees goal 2 working, or
+  notices it going wrong. Suggestions waiting are not listed: a submission does not record how it
+  was made.
 - **Usage**, optional: calls in the last day by tool. Prometheus counters
   (`wiki_mcp_tool_calls_total{tool}`) cost less than a table, but are per instance.
 
@@ -777,35 +1029,44 @@ The settings are `manage:system`; `access:admin` alone sees the endpoint and the
 ### 8.2 Profile → Access Tokens
 
 No new profile page: `ProfileTokens.vue` is where an MCP client's token is made, and it gains what
-connecting one needs while MCP is enabled.
+connecting one needs while MCP is enabled and personal tokens are allowed. Built as described, but
+for the `write:scripts` warning and OAuth grants. What it needs to know comes with the token list:
+`GET /users/profile/tokens` answers `mcp: { isEnabled, mayUse, isAdministrator }`.
 
-- **Connect an AI assistant**, a card above the list: the endpoint URL for the current site and the
-  client snippets, and a button that opens the existing create dialog prefilled — a name such as
-  "AI assistant", `mcp:read` and `pages:read`, the read-only starting point. The copy dialog that shows the token
-  once also shows the snippets with it filled in, so that it is pasted once and never again.
-- **Without `use:mcp`** the card says plainly that `/_mcp` will refuse the user's tokens until an
+- **Connect an AI Assistant**, a tab beside **Tokens** under the page's introduction, offered only
+  while the MCP server is on and tokens can be made (otherwise there are no tabs at all): the client
+  setup (Claude Code, VS Code, Cursor), and a button that opens the existing create dialog
+  prefilled — "AI assistant", `mcp:read`, `pages:read` and `glossary:read`, the read-only starting
+  point (`presetName`, `presetScopes`). The copy dialog that shows the token once also shows the
+  setup with it filled in, for any token holding an `mcp` scope, so that it is pasted once and
+  never again.
+- **Without `use:mcp`** the tab says plainly that `/_mcp` will refuse the user's tokens until an
   administrator grants it, rather than offer a setup that silently does nothing.
-- **For an owner holding `manage:system`**, the card warns that a token used by an agent is above
+- **For an owner holding `manage:system`**, the tab warns that a token used by an agent is above
   every page rule. **For an owner holding `write:scripts` or `write:styles` anywhere on the site**, it
-  warns that a page the agent writes there may carry scripts and styles that every reader runs
-  ([§7](#7-security)).
+  is meant to warn that a page the agent writes there may carry scripts and styles that every reader
+  runs ([§7](#7-security)) — not built: "anywhere on the site" is a question about every page rule,
+  which nothing answers cheaply yet.
 - **The scope grid gains its MCP row** ([§4.2](#42-personal-access-tokens-are-the-credential)), with
   a hint saying that read keeps an assistant read-only whatever the other rows allow.
 - **OAuth grants are listed with the rest**, under the client's name and marked as a connection
-  rather than a token, with the same delete. There is nothing of theirs to copy.
+  ("connected through OAuth", a robot rather than a stamp) rather than a token, with the same delete,
+  which disconnects the client. There is nothing of theirs to copy. Built.
 - Otherwise the expiry, list and delete are the ones the page already has.
 
 ### 8.3 Elsewhere
 
 - **`GET /system/info`** returns `isMCPEnabled`, which lights the sidebar.
 - **The group editor** offers `use:mcp`.
-- **Page history and the page itself** show an **AI** badge beside the author of a version made
-  through MCP, off `pageHistory.via` ([§5.4](#54-contributing-to-the-wiki-goal-2)) — the history list
-  for every such version, the page's last-edited line when the latest one is — while
-  `mcp.showAiBadge` is on. The page payload and the history route carry `via` either way; the setting
-  decides whether the frontend draws it.
-- **The OAuth consent screen**, a frontend route outside the admin and profile layouts, as the login
-  screens are ([§4.3](#43-oauth-21)).
+- **Page history and the page itself** show an **AI** badge, with a tooltip saying what it means,
+  beside the author of a version made through MCP, off `pageHistory.via`
+  ([§5.4](#54-contributing-to-the-wiki-goal-2)) — the history list for every such version, the page's
+  last-edited line when the latest one is (`editedVia`) — while `mcp.showAiBadge` is on. The page
+  payload and the history route carry it either way; `showAiBadge` on the site payload decides
+  whether the frontend draws it. Built.
+- **The OAuth consent screen** at `/_authorize` (`pages/OAuthConsent.vue`), in the auth layout as
+  the login screen is but with a small layout of its own — the login screen's styles belong to its
+  own chunk and are not loaded on a visit straight here ([§4.3](#43-oauth-21)). Built.
 - **Admin → Users**, in the user editor: already lists the user's tokens and deletes one
   (`manage:users`, subject to `systemUserGuard`) — which is where an administrator looks when an
   account is compromised. It gains a line saying whether the user holds `use:mcp`, since that decides
@@ -815,26 +1076,26 @@ connecting one needs while MCP is enabled.
 
 ## 9. Suggested order
 
-1. **Foundation**: `use:mcp` in the group editor and `CLAUDE.md`; the `mcp` scope category, backend
+1. **Foundation** — _done._ `use:mcp` in the group editor and `CLAUDE.md`; the `mcp` scope category, backend
    and frontend; the instance-wide `mcp` settings blob and `models/mcp.ts`; the bearer hook admitting
    personal tokens on `/_mcp` and deferring their scope check to it; `api/mcp.ts`; the `updateMcp`
    audit action; `isMCPEnabled` in `system/info`. No token migration — the token table exists.
-2. **Goal 1, a read-only server**: `controllers/mcp.ts` with the `discover`, `pages`, `history` and
+2. **Goal 1, a read-only server** — _done._ `controllers/mcp.ts` with the `discover`, `pages`, `history` and
    `glossary` read tools over the hand-written protocol layer, the per-tool scope check at
    `tools/list` and `tools/call`, the common page fields with `url`, `get_page` by URL with outline
    and sections, result caps, the server instructions with the agent guidelines page, the token
    bucket and the Origin check. Useful on its own, and the first thing most deployments will turn on.
-3. **The screens**: the connect card on Profile → Access Tokens, then `/_admin/mcp`, with their
-   `en.json` strings.
-4. **Goal 2, contributing**: the `history-via` migration, the AI badge and its setting; then
+3. **The screens** — _done, as far as [§8](#8-the-screens) says._
+4. **Goal 2, contributing** — _done, but for the collab relay, replaced by a refusal
+   ([§6.4](#64-live-editors))._ The `pageHistory.via` column, the AI badge and its setting; then
    `suggest_edit` and `post_comment` with annotations, which work on any instance; then
    `create_page` / `update_page` — `baseVersionId`, `str_replace` edits, the required reason, the
    broken-link report, render queue integration with the owner's script and style permissions,
-   "unavailable" without the Puppeteer extension, the collab `saved` relay — and the glossary
+   "unavailable" without the Puppeteer extension, the refusal while the page is open in the editor — and the glossary
    writes. The Contributions card on `/_admin/mcp`.
-5. **Assets and `destructive`**, last of the tools.
-6. **OAuth 2.1**: the `/.well-known/` metadata, client registration, authorize with the consent
-   screen, the token endpoint with refresh rotation, the `oauth-grants` migration, and grants in the
+5. **Assets and `destructive`**, last of the tools — _done._
+6. **OAuth 2.1** — _done._ The `/.well-known/` metadata, client registration, authorize with the consent
+   screen, the token endpoint with refresh rotation, the OAuth tables, and grants in the
    profile's list. Last because the bearer path is complete without it; it is what claude.ai and
    ChatGPT need.
 

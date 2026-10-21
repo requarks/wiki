@@ -195,7 +195,7 @@ function robotsTagFor(siteId: string | undefined, indexable: boolean): string | 
  * prefix is in the site's primary locale — the request hook in `index.ts` is what redirects one that
  * should have had a prefix, and it runs before this.
  */
-function resolvePagePath(
+export function resolvePagePath(
   siteId: string | undefined,
   urlPath: string
 ): { locale: string; path: string; isRoot: boolean } {

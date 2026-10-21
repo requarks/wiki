@@ -359,7 +359,7 @@
                 </w-item-section>
                 <w-item-section>{{ t('admin.mcp.title') }}</w-item-section>
                 <w-item-section side>
-                  <status-light :color="adminStore.info.isMCPEnabled ? `positive` : `negative`" />
+                  <status-light :color="mcpLight.color" :pulse="mcpLight.pulse" />
                 </w-item-section>
               </w-item>
               <w-item to="/_admin/metrics" active-class="bg-primary text-white">
@@ -683,6 +683,19 @@ function countBadgeClass(count) {
  * moment it learns something without the sidebar having to ask again.
  */
 const storageHealthy = computed(() => adminStore.storageHealth.status === 'healthy')
+
+/**
+ * The MCP item's light, three states like SCIM's below and for the same reason: an AI client arrives
+ * holding a personal access token, and every bearer token is refused while the API is off.
+ */
+const mcpLight = computed(() => {
+  if (!adminStore.info.isMCPEnabled) {
+    return { color: 'negative', pulse: false }
+  }
+  return adminStore.info.isApiEnabled
+    ? { color: 'positive', pulse: false }
+    : { color: 'warning', pulse: true }
+})
 
 /**
  * The SCIM item's light, which has three states rather than the usual on/off.

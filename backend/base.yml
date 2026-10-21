@@ -143,6 +143,46 @@ defaults:
       # endpoint. Note that what an address means depends on `security.trustProxy` -- with it off, a
       # wiki behind a reverse proxy sees the proxy for every request.
       ipAllowList: []
+    mcp:
+      # The Model Context Protocol server at /_mcp, which lets an AI assistant search, read and (where
+      # its token allows) write the wiki as the person who made the token. Off by default. Instance
+      # wide: a token belongs to a user and users are per instance, and which sites an agent sees is
+      # decided by page rules like everything else it sees. See dev/specs/mcp.md.
+      isEnabled: false
+      # Whether /_mcp answers a request that carries no token at all, as the guests group: read-only
+      # tools, the guests group's page rules. Off by default -- a public endpoint that runs database
+      # queries on demand is something to turn on deliberately.
+      allowAnonymous: false
+      # Which groups of tools exist at all. A group that is off is listed to nobody, whatever a
+      # token's scopes say. The write groups are on because a token's scopes are what keep it from
+      # writing (a token reaches a write tool only with `mcp:write` and the category's write scope);
+      # moving and deleting pages are off because they reorganise the wiki rather than add to it.
+      tools:
+        discover: true
+        pages: true
+        history: true
+        glossary: true
+        comments: true
+        suggest: true
+        edit: true
+        assets: false
+        destructive: false
+      # The publish state of a page an agent creates: `published` or `draft`. Published, because a
+      # draft is visible only to those who may edit it, so no reader -- and no other agent -- would
+      # find what was written.
+      newPagePublishState: 'published'
+      # The most characters one tool result may carry. A longer one is cut and says how to ask for
+      # the rest, since everything here lands in a model's context window.
+      maxResultChars: 50000
+      # Per-owner (per-address for anonymous) budget, counted in memory on each instance -- see
+      # helpers/tokenBucket.ts. `rateLimitBurst` calls may be made at once; the bucket refills at
+      # `rateLimitPerMinute`. Approximate across an HA set on purpose: a database write per call
+      # would load the database with the very burst it is meant to absorb.
+      rateLimitBurst: 60
+      rateLimitPerMinute: 300
+      # Whether a version written through MCP carries an "AI" badge in page history and on the page.
+      # Which versions an agent wrote is recorded either way; this only decides what is drawn.
+      showAiBadge: true
     auth:
       autoLogin: false
       enforce2FA: false

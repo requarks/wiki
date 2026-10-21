@@ -19,6 +19,7 @@ import { liveCondition, maySeeUnpublished } from '../helpers/publishing.ts'
 import { rewriteSourceLinks } from '../helpers/linkRewrite.ts'
 import type { SourceSyntax } from '../helpers/linkRewrite.ts'
 import { relinkHref, rewriteRenderLinks } from '../helpers/pageLinks.ts'
+import { currentVia } from '../helpers/via.ts'
 import type { AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { FastifyRequest } from 'fastify'
@@ -360,6 +361,11 @@ export interface Page {
   authorName: string
   /** Whether the account that saved the version that stands has uploaded an avatar. */
   authorHasAvatar: boolean
+  /**
+   * How the version that stands was made, when not through the wiki's own interface: `mcp` for an
+   * AI assistant. Its `pageHistory.via`, which is what the last-edited line marks.
+   */
+  editedVia: string | null
   /**
    * The cached rating totals, per scale. Internal: the API answers with `rating`, the summary on the
    * site's current scale — see `pageRatings.summaryFromCache`.
@@ -954,6 +960,7 @@ class Pages {
       authorId: row.authorId,
       authorName: row.authorName ?? '',
       authorHasAvatar: row.authorHasAvatar ?? false,
+      editedVia: row.editedVia ?? null,
       ratings: row.ratings ?? {},
       createdAt: row.createdAt,
       updatedAt: row.updatedAt
@@ -1118,6 +1125,43 @@ class Pages {
       )
       .limit(1)
     return rows[0] ?? null
+  }
+
+  /**
+   * The id of the page at a path, or null when there is none.
+   *
+   * Matched on the path itself rather than on the hash `getPage` addresses a page with: the hash is
+   * 53 bits and never checked against the path it stands for, which is fine for a URL the frontend
+   * built and not for a path somebody typed or pasted — see `describePage`.
+   */
+  async idAtPath(siteId: string, locale: string, path: string): Promise<string | null> {
+    const rows = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale),
+          eq(pagesTable.path, path || 'home')
+        )
+      )
+      .limit(1)
+    return rows[0]?.id ?? null
+  }
+
+  /**
+   * A page's text as search indexes it: what `rendering.postProcess` extracted from the render.
+   *
+   * The readable form of a page whose source is not prose — a drawing's source is a scene document,
+   * and its render an SVG, but its labels are here as words.
+   */
+  async searchTextOf(id: string): Promise<string> {
+    const rows = await WIKI.db
+      .select({ text: pagesTable.searchContent })
+      .from(pagesTable)
+      .where(eq(pagesTable.id, id))
+      .limit(1)
+    return rows[0]?.text ?? ''
   }
 
   /**
@@ -1390,7 +1434,7 @@ class Pages {
       */
       isNew: row.createdAt.getTime() === row.updatedAt.getTime(),
       url: this.urlFor(row.siteId, row.locale, row.path),
-      hostname: this.dashboardHostnameFor(row.siteId),
+      hostname: this.linkHostnameFor(row.siteId),
       authorName: row.authorName
     }))
   }
@@ -1421,16 +1465,16 @@ class Pages {
     return rows.map((row) => ({
       ...row,
       url: this.urlFor(row.siteId, row.locale, row.path),
-      hostname: this.dashboardHostnameFor(row.siteId)
+      hostname: this.linkHostnameFor(row.siteId)
     }))
   }
 
   /**
-   * The host a dashboard row links to a page on, so a caller looking at one site can still reach a
-   * page on another. `*` is the catch-all rather than a host — a link to it is whatever host you are
-   * already on, hence null.
+   * The host an admin-area row links to a page on (the dashboard's, the MCP contributions'), so a
+   * caller looking at one site can still reach a page on another. `*` is the catch-all rather than a
+   * host — a link to it is whatever host you are already on, hence null.
    */
-  private dashboardHostnameFor(siteId: string): string | null {
+  linkHostnameFor(siteId: string): string | null {
     const hostname = WIKI.sites[siteId]?.hostname
     return hostname && hostname !== '*' ? hostname : null
   }
@@ -1769,6 +1813,10 @@ class Pages {
         isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         authorName: usersTable.name,
         authorHasAvatar: usersTable.hasAvatar,
+        // -> The newest version is the page as it stands; one indexed row off `pageHistory_pageId_idx`
+        editedVia: sql<
+          string | null
+        >`(SELECT h."via" FROM "pageHistory" h WHERE h."pageId" = ${pagesTable.id} ORDER BY h."versionDate" DESC, h."id" DESC LIMIT 1)`,
         navigationId: treeTable.navigationId,
         navigationMode: treeTable.navigationMode
       })
@@ -1799,6 +1847,7 @@ class Pages {
         ...row.page,
         authorName: row.authorName,
         authorHasAvatar: row.authorHasAvatar,
+        editedVia: row.editedVia,
         navigationId: row.navigationId,
         navigationMode: row.navigationMode,
         // -> A second query only for a page that is part of a set, which is a column read away
@@ -2034,6 +2083,7 @@ class Pages {
       pageId: page.id,
       action: 'created',
       authorId: actor.id,
+      via: currentVia(),
       reason: input.reasonForChange
     })
 
@@ -2238,6 +2288,7 @@ class Pages {
       pageId: id,
       action: 'updated',
       authorId: actor.id,
+      via: currentVia(),
       changedFields,
       reason: patch.reasonForChange
     })
@@ -2502,6 +2553,7 @@ class Pages {
       pageId: id,
       action: 'moved',
       authorId: actor.id,
+      via: currentVia(),
       changedFields: [
         ...(newPath !== page.path ? ['path'] : []),
         ...(newLocale !== page.locale ? ['locale'] : []),
@@ -2844,7 +2896,8 @@ class Pages {
       siteId,
       pageId: id,
       action: 'deleted',
-      authorId: actor.id
+      authorId: actor.id,
+      via: currentVia()
     })
 
     /*
@@ -3085,7 +3138,8 @@ class Pages {
       siteId,
       pageId: page.id,
       action: 'restored',
-      authorId: actor.id
+      authorId: actor.id,
+      via: currentVia()
     })
 
     const stored = this.toStoragePage(siteId, actor.id, page, page.content ?? '')
@@ -3180,7 +3234,8 @@ class Pages {
         siteId,
         pageId: entry.id,
         action: 'deleted',
-        authorId: actor.id
+        authorId: actor.id,
+        via: currentVia()
       })
     }
     // -> Read before the rows go: what a target filed each page under is decided by its content type,

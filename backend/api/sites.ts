@@ -84,7 +84,9 @@ async function routes(app: FastifyInstance) {
         hostname: s.hostname,
         isEnabled: s.isEnabled,
         // -> See the note in `api/bootstrap.ts`: the stored block is not the one that is served
-        comments: WIKI.models.comments.publicConfigFor(s.id)
+        comments: WIKI.models.comments.publicConfigFor(s.id),
+        // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
+        showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
       }))
     }
   )
@@ -154,7 +156,9 @@ async function routes(app: FastifyInstance) {
           id: site.id,
           hostname: site.hostname,
           isEnabled: site.isEnabled,
-          comments: WIKI.models.comments.publicConfigFor(site.id)
+          comments: WIKI.models.comments.publicConfigFor(site.id),
+          // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
+          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
         }
       } else {
         return reply.notFound('Site does not exist.')

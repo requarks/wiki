@@ -1,6 +1,6 @@
 <template>
   <w-dialog v-model="dialogVisible" persistent @hide="onDialogHide">
-    <w-card style="min-width: 600px">
+    <w-card style="min-width: 600px; max-width: 720px">
       <w-card-section class="card-header">
         <w-icon name="img:/_assets/icons/fluent-key-2.svg" size="sm" class="mr-2" />
         <span>{{ props.title ?? t(`admin.api.copyKeyTitle`) }}</span>
@@ -30,6 +30,15 @@
               hide-bottom-space
               :label="props.label ?? t(`admin.api.key`)"
               autofocus />
+          </w-item-section>
+        </w-item>
+        <!-- -> A token made for an AI assistant: its setup, with the token already in it, since this
+             is the one screen where the token can be put there for the person -->
+        <w-item v-if="props.showMcpSetup">
+          <blueprint-icon icon="bot" class="self-start" />
+          <w-item-section>
+            <w-item-label>{{ t('profile.mcpConnectWithToken') }}</w-item-label>
+            <mcp-connect-snippets class="mt-2" :token="props.keyValue" />
           </w-item-section>
         </w-item>
       </w-form>
@@ -65,6 +74,8 @@ import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { copyToClipboard } from '@/helpers/clipboard'
 
+import McpConnectSnippets from './McpConnectSnippets.vue'
+
 // PROPS
 
 const props = defineProps({
@@ -87,6 +98,11 @@ const props = defineProps({
   successMessage: {
     type: String,
     default: null
+  },
+  /** Show how to connect an MCP client with this token — for a personal token holding `mcp`. */
+  showMcpSetup: {
+    type: Boolean,
+    default: false
   }
 })
 

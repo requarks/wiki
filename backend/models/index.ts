@@ -18,10 +18,12 @@ import { jobs } from './jobs.ts'
 import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
 import { mail } from './mail.ts'
+import { mcp } from './mcp.ts'
 import { metrics } from './metrics.ts'
 import { navigation } from './navigation.ts'
 import { navigationAutomation } from './navigationAutomation.ts'
 import { notifications } from './notifications.ts'
+import { oauth } from './oauth.ts'
 import { pageGraph } from './pageGraph.ts'
 import { pageHistory } from './pageHistory.ts'
 import { pageLinks } from './pageLinks.ts'
@@ -65,10 +67,12 @@ export default {
   liveNotes,
   locales,
   mail,
+  mcp,
   metrics,
   navigation,
   navigationAutomation,
   notifications,
+  oauth,
   pageGraph,
   pageHistory,
   pageLinks,

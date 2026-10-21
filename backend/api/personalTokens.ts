@@ -57,6 +57,16 @@ async function routes(app: FastifyInstance) {
             type: 'object',
             properties: {
               isApiEnabled: { type: 'boolean' },
+              mcp: {
+                type: 'object',
+                description:
+                  "What the profile's Connect an AI Assistant card needs: whether the MCP server is on, whether this user may use it (`use:mcp`), and whether their tokens would carry `manage:system` — above every page rule — into an assistant.",
+                properties: {
+                  isEnabled: { type: 'boolean' },
+                  mayUse: { type: 'boolean' },
+                  isAdministrator: { type: 'boolean' }
+                }
+              },
               tokens: {
                 type: 'array',
                 items: { $ref: 'PersonalToken#' }
@@ -72,8 +82,15 @@ async function routes(app: FastifyInstance) {
       if (!userId) {
         return reply
       }
+      const permissions = req.session.permissions ?? []
+      const isAdministrator = permissions.includes('manage:system')
       return {
         isApiEnabled: WIKI.config.api.isEnabled === true,
+        mcp: {
+          isEnabled: WIKI.models.mcp.isEnabled(),
+          mayUse: isAdministrator || permissions.includes('use:mcp'),
+          isAdministrator
+        },
         tokens: await WIKI.models.personalTokens.listForUser(userId)
       }
     }

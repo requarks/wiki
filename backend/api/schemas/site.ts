@@ -58,6 +58,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           type: 'string'
         }
       },
+      showAiBadge: {
+        type: 'boolean',
+        description:
+          'Whether a page version an AI assistant wrote through the MCP server is marked with an AI badge, in page history and on the page. Instance-wide (Admin → MCP), carried here because it is drawn per page. Which versions an assistant wrote is recorded either way — see `via` on a history entry.'
+      },
       colorizeBrokenLinks: {
         type: 'boolean',
         description:

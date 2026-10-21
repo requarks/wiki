@@ -77,10 +77,69 @@ export const personalTokens = pgTable(
     expiration: timestamp().notNull(),
     // -> Written at most every few minutes per token and instance, so it is approximate by design
     lastUsedAt: timestamp(),
+    /*
+      An OAuth grant: the token a consent screen made for an MCP client, rather than one its owner
+      made by hand. Null for every token made under Profile → Access Tokens. A grant's access tokens
+      live an hour and are accepted on `/_mcp` alone; `expiration` is the grant's own lifetime, past
+      which no refresh succeeds. See `models/oauth.ts`.
+    */
+    clientId: uuid().references(() => oauthClients.id, { onDelete: 'cascade' }),
+    // -> SHA-256 of the current refresh token's secret, rotated on every use. Never the token
+    refreshHash: varchar({ length: 64 }),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow()
   },
-  (table) => [index('personalTokens_userId_idx').on(table.userId)]
+  (table) => [
+    index('personalTokens_userId_idx').on(table.userId),
+    index('personalTokens_clientId_idx').on(table.clientId)
+  ]
+)
+
+// OAUTH CLIENTS -----------------------
+/**
+ * An MCP client that registered itself (RFC 7591) to be granted access through the OAuth flow — a
+ * connector in claude.ai or ChatGPT. Inert on its own: it can do nothing until a person consents, and
+ * one no grant ever named is purged after a day. Deleting one takes every grant made to it with it.
+ * See `models/oauth.ts`.
+ */
+export const oauthClients = pgTable('oauthClients', {
+  id: uuid().primaryKey().defaultRandom(),
+  name: varchar({ length: 255 }).notNull(),
+  // -> Matched exactly at authorization: a client is sent back only to an address it registered
+  redirectUris: jsonb().notNull().default([]),
+  createdAt: timestamp().notNull().defaultNow()
+})
+
+// OAUTH CODES -------------------------
+/**
+ * An authorization code a person's consent produced, waiting to be exchanged at the token endpoint.
+ * Single use and short-lived; the row is deleted when it is exchanged. Holds what the grant is to be:
+ * who consented, to which scopes and for how long, and the PKCE challenge the exchange must answer.
+ */
+export const oauthCodes = pgTable(
+  'oauthCodes',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    // -> SHA-256 of the code. Never the code
+    codeHash: varchar({ length: 64 }).notNull(),
+    clientId: uuid()
+      .notNull()
+      .references(() => oauthClients.id, { onDelete: 'cascade' }),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    siteId: uuid()
+      .notNull()
+      .references(() => sites.id, { onDelete: 'cascade' }),
+    redirectUri: varchar({ length: 2048 }).notNull(),
+    codeChallenge: varchar({ length: 128 }).notNull(),
+    scopes: jsonb().notNull().default([]),
+    // -> The grant's lifetime, as one of `KEY_EXPIRATIONS`, chosen on the consent screen
+    grantExpiration: varchar({ length: 16 }).notNull(),
+    expiresAt: timestamp().notNull(),
+    createdAt: timestamp().notNull().defaultNow()
+  },
+  (table) => [uniqueIndex('oauthCodes_codeHash_idx').on(table.codeHash)]
 )
 
 // APPROVAL RULES ----------------------
@@ -1186,6 +1245,16 @@ export const pageHistory = pgTable(
     //    record of what happened to the page, and requiring its author to exist for ever would mean
     //    that editing a page once made an account undeletable — even after the page itself was gone.
     authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    /**
+     * How the change was made, when it was not by a person in the wiki's own interface: `mcp` for an
+     * AI assistant writing through the MCP server. Null for everything else.
+     *
+     * The author is still the person whose token the assistant held — they are the one accountable —
+     * but a reader is entitled to know which edits a person typed. Always recorded; whether the
+     * interface shows it is `mcp.showAiBadge`. A varchar rather than an enum, for the reason
+     * `action` is one: naming another way in later should not need a migration.
+     */
+    via: varchar({ length: 16 }),
     siteId: uuid()
       .notNull()
       .references(() => sites.id)

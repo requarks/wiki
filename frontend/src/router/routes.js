@@ -9,6 +9,16 @@ const routes = [
     children: [{ path: '', component: () => import('@/pages/Login.vue') }]
   },
   /*
+    The OAuth consent screen an MCP client's sign-in lands on — `/_oauth/authorize` on the server
+    checks the request and sends the browser here with it. Under `_`, so not a page path; not under
+    `_oauth`, which is the server's.
+  */
+  {
+    path: '/_authorize',
+    component: () => import('@/layouts/AuthLayout.vue'),
+    children: [{ path: '', component: () => import('@/pages/OAuthConsent.vue') }]
+  },
+  /*
     The two short links to a page, which resolve and send the reader on rather than drawing anything:
     `/a/<alias>` names it by the alias somebody chose for it, `/i/<id>` by the id it was born with.
 

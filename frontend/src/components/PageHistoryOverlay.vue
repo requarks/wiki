@@ -77,8 +77,16 @@
                 </w-badge>
               </div>
               <div class="page-history-meta">{{ humanizeDate(version.versionDate) }}</div>
-              <div class="page-history-meta">
-                {{ version.author.name || t('history.unknownAuthor') }}
+              <div class="page-history-meta flex items-center gap-1">
+                <span>{{ version.author.name || t('history.unknownAuthor') }}</span>
+                <!-- -> Written by an AI assistant on the author's behalf (`pageHistory.via`) -->
+                <w-badge
+                  v-if="version.via === `mcp` && siteStore.showAiBadge"
+                  color="purple"
+                  rounded>
+                  {{ t('common.page.aiBadge') }}
+                  <w-tooltip>{{ t('common.page.aiBadgeHint') }}</w-tooltip>
+                </w-badge>
               </div>
               <!-- Where it went, which is the whole point of telling a move apart from an edit. -->
               <div class="page-history-meta" v-if="version.action === `moved`">

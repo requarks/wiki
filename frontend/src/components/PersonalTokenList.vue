@@ -2,16 +2,21 @@
   <w-list bordered separator>
     <w-item v-for="token of props.tokens" :key="token.id">
       <w-item-section avatar>
+        <!-- -> A connection an MCP client made through OAuth draws as one, since there is no token
+             of its own to recognise it by: the client's name, and nothing to copy -->
         <w-avatar
-          :color="tokenState(token) ? `negative` : `secondary`"
+          :color="tokenState(token) ? `negative` : token.client ? `purple` : `secondary`"
           text-color="white"
-          icon="la:stamp"
+          :icon="token.client ? `la:robot` : `la:stamp`"
           rounded />
       </w-item-section>
       <w-item-section>
         <w-item-label>
           <strong>{{ token.name }}</strong>
-          <span class="text-caption text-grey ml-2">{{
+          <span v-if="token.client" class="text-caption text-grey ml-2">{{
+            t('profile.tokensConnection')
+          }}</span>
+          <span v-else class="text-caption text-grey ml-2">{{
             t('profile.tokensEndingIn', { suffix: token.keyShort })
           }}</span>
         </w-item-label>

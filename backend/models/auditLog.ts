@@ -94,12 +94,14 @@ export const AUDIT_ACTIONS = {
     'updateNotificationPrefs',
     'unsubscribeNotifications',
     'createAccessToken',
-    'deleteAccessToken'
+    'deleteAccessToken',
+    'grantOAuthAccess'
   ],
   admin: [
     'createApiKey',
     'revokeApiKey',
     'deleteUserAccessToken',
+    'deleteOAuthClient',
     'createApprovalRule',
     'updateApprovalRule',
     'deleteApprovalRule',
@@ -162,6 +164,7 @@ export const AUDIT_ACTIONS = {
     'updateMetricsState',
     'updateNotificationSettings',
     'updateScimState',
+    'updateMcp',
     'disconnectWebsockets',
     'flushCache',
     'regenerateCertificates',

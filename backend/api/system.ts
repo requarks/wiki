@@ -198,6 +198,11 @@ async function routes(app: FastifyInstance) {
                 type: 'boolean',
                 description: 'Whether the Prometheus metrics endpoint is turned on.'
               },
+              isMCPEnabled: {
+                type: 'boolean',
+                description:
+                  'Whether the Model Context Protocol server at `/_mcp` is turned on. A token is answered there only if `isApiEnabled` is also true, since an AI client arrives holding a personal access token.'
+              },
               isScimEnabled: {
                 type: 'boolean',
                 description:
@@ -272,6 +277,7 @@ async function routes(app: FastifyInstance) {
         isApiEnabled: WIKI.config.api.isEnabled === true,
         isMailConfigured: WIKI.config?.mail?.host?.length > 2,
         isMetricsEnabled: WIKI.config.metrics.isEnabled === true,
+        isMCPEnabled: WIKI.models.mcp.isEnabled(),
         isScimEnabled: WIKI.models.scim.isEnabled(),
         isSchedulerHealthy: await WIKI.models.jobs.isHealthy(),
         latestVersion: WIKI.config.update.version,

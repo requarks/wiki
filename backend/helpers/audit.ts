@@ -1,4 +1,5 @@
 import { requestUser } from './requester.ts'
+import { currentVia } from './via.ts'
 import type { FastifyRequest } from 'fastify'
 import type { AuditAction, AuditActor, AuditKind } from '../models/auditLog.ts'
 
@@ -119,6 +120,11 @@ function actorFromRequest(req: FastifyRequest): AuditActor {
  * A personal access token acts as its owner and is recorded as them, with `meta.patId` saying it was
  * the token rather than a browser — not `tokenId`, which `sanitizeMeta` would take for a secret.
  *
+ * Anything done through the MCP server adds `meta.via: 'mcp'`, which is what tells an AI assistant's
+ * action apart from a script's with the same token. Read off the `withVia` scope rather than passed
+ * by each caller, so that a REST route the MCP server calls in-process records it without knowing it
+ * was asked by an assistant.
+ *
  * @param kind Which area of the wiki the action belongs to
  * @param action What was done, as a key from `AUDIT_ACTIONS`
  * @param meta The identity of what was touched. Never a payload, and never a secret.
@@ -129,14 +135,16 @@ export async function audit(
   action: AuditAction,
   meta: Record<string, any> = {}
 ): Promise<void> {
+  const via = currentVia()
+  const withKey = !req.apiKey
+    ? meta
+    : req.apiKey.kind === 'personal'
+      ? { ...meta, patId: req.apiKey.id }
+      : { ...meta, apiKeyId: req.apiKey.id }
   await WIKI.models.auditLog.record({
     kind,
     action,
     actor: actorFromRequest(req),
-    meta: !req.apiKey
-      ? meta
-      : req.apiKey.kind === 'personal'
-        ? { ...meta, patId: req.apiKey.id }
-        : { ...meta, apiKeyId: req.apiKey.id }
+    meta: via ? { ...withKey, via } : withKey
   })
 }

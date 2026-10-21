@@ -78,7 +78,9 @@ async function routes(app: FastifyInstance) {
           isEnabled: site.isEnabled,
           // -> Never the stored `comments` block, which holds an Akismet key: what a browser is told
           //    is the selected provider and the markup to mount, and nothing else
-          comments: WIKI.models.comments.publicConfigFor(site.id)
+          comments: WIKI.models.comments.publicConfigFor(site.id),
+          // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
+          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
         },
         flags: WIKI.models.flags.getFlags(),
         auth: WIKI.models.authentication.getConfig(),

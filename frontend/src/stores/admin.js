@@ -95,6 +95,7 @@ export const useAdminStore = defineStore('admin', {
       this.info.currentVersion = resp?.currentVersion ?? 'n/a'
       this.info.latestVersion = resp?.latestVersion ?? 'n/a'
       this.info.isApiEnabled = resp?.isApiEnabled ?? false
+      this.info.isMCPEnabled = resp?.isMCPEnabled ?? false
       this.info.isMetricsEnabled = resp?.isMetricsEnabled ?? false
       this.info.isScimEnabled = resp?.isScimEnabled ?? false
       this.info.isMailConfigured = resp?.isMailConfigured ?? false

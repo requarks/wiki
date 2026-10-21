@@ -137,6 +137,11 @@ export interface ApiKeyIdentity {
    * which is limited by its groups alone.
    */
   scopes: TokenScope[] | null
+  /**
+   * The OAuth client a personal token was granted to through the consent screen, or null for one made
+   * by hand (and for a system key). A grant's token is accepted on `/_mcp` and nowhere else.
+   */
+  oauthClientId: string | null
 }
 
 /** Raised by `verify()` when a token is not usable, with a reason safe to return to the caller. */
@@ -392,7 +397,8 @@ class ApiKeys {
       groupIds,
       permissions: await this.resolvePermissions(groupIds),
       user: null,
-      scopes: null
+      scopes: null,
+      oauthClientId: null
     }
   }
 }

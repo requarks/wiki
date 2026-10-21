@@ -596,6 +596,15 @@
                   <span v-else>{{ lastEditorInitial }}</span>
                 </w-avatar>
                 <span class="ms-2">{{ pageStore.authorName }}</span>
+                <!-- -> The version that stands was written by an AI assistant on their behalf -->
+                <w-badge
+                  v-if="pageStore.editedVia === `mcp` && siteStore.showAiBadge"
+                  class="ms-2"
+                  color="purple"
+                  rounded>
+                  {{ t('common.page.aiBadge') }}
+                  <w-tooltip>{{ t('common.page.aiBadgeHint') }}</w-tooltip>
+                </w-badge>
               </router-link>
             </div>
           </template>

@@ -65,6 +65,7 @@ export const GLOBAL_PERMISSIONS = [
   'read:webhooks',
   'manage:webhooks',
   'manage:scim',
+  'use:mcp',
   SYSTEM_PERMISSION
 ] as const
 
