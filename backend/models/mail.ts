@@ -39,7 +39,8 @@ export interface MailTemplateData {
     resetUrl: string
   }
   test: {
-    baseUrl: string
+    /** Null on a wildcard site with no base URL, where the mail goes out without its link. */
+    baseUrl: string | null
   }
   /** One notification, on its own. */
   notification: MailNotificationData
@@ -414,9 +415,10 @@ class Mail {
   }
 
   /**
-   * Where links in emails point, without a trailing slash.
+   * Where links in emails point, without a trailing slash — or null when there is nowhere trustworthy
+   * for them to point.
    *
-   * Three answers, in the order they are preferred:
+   * Two answers, in the order they are preferred:
    *
    * 1. The configured base URL, which is the only one an administrator has actually vouched for. An
    *    instance behind a proxy, on a private address, or answering to several hostnames cannot be
@@ -424,35 +426,36 @@ class Mail {
    * 2. The site's own hostname, which is what the account is on — and which is not necessarily the
    *    host the request came in on: an administrator creating an account for another site is doing
    *    exactly that. Skipped for the wildcard site, which names no host.
-   * 3. What the request was addressed to, which is right often enough that a small instance never has
-   *    to configure anything.
    *
-   * @param req The request that triggered the mail, when there is one
+   * **Never the host a request was addressed to.** That is the `Host` header, which is whatever the
+   * client sent; on the wildcard site it reaches here unchecked, and a password reset requested with
+   * `Host: attacker.example` would mail the victim a link carrying their reset token to the attacker.
+   * So a wildcard site with no base URL has no address for its links, and each caller decides what
+   * not sending means for it.
+   *
    * @param siteId The site the mail is about, when it is about one
    * @param hostname That site's hostname, for a caller with no `WIKI.sites` to look it up in
+   * @param protocol The scheme the request was reached by, for the site-hostname answer, which does
+   *                 not carry one of its own. HTTPS when there is no request.
    */
   baseUrl({
-    req,
     siteId,
-    hostname: knownHostname
+    hostname: knownHostname,
+    protocol
   }: {
-    req?: { protocol: string; host: string }
     siteId?: string
     hostname?: string
-  } = {}): string {
+    protocol?: string
+  } = {}): string | null {
     const configured = this.config.defaultBaseURL?.trim()
     if (configured) {
       return configured.replace(/\/+$/, '')
     }
     const hostname = knownHostname ?? (siteId ? WIKI.sites[siteId]?.hostname : null)
     if (hostname && hostname !== '*') {
-      // -> The scheme the caller was reached by, since the hostname alone does not carry one
-      return `${req?.protocol ?? 'https'}://${hostname}`
+      return `${protocol ?? 'https'}://${hostname}`
     }
-    if (req) {
-      return `${req.protocol}://${req.host}`
-    }
-    return ''
+    return null
   }
 
   /**
@@ -537,7 +540,7 @@ class Mail {
           subject: t('mail.test.subject', { siteName }),
           title: t('mail.test.title'),
           body: [t('mail.test.body', { siteName })],
-          action: { label: t('mail.test.action'), url: d.baseUrl },
+          action: d.baseUrl ? { label: t('mail.test.action'), url: d.baseUrl } : undefined,
           footer: t('mail.test.footer')
         }
       }

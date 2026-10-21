@@ -661,7 +661,10 @@ async function routes(app: FastifyInstance) {
             email: req.body.email,
             password: req.body.password,
             ip: req.ip,
-            baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId }),
+            baseUrl: WIKI.models.mail.baseUrl({
+              siteId: req.params.siteId,
+              protocol: req.protocol
+            }),
             locale: req.body.locale
           },
           req
@@ -833,7 +836,7 @@ async function routes(app: FastifyInstance) {
           strategyId: req.body.strategyId,
           email: req.body.email,
           ip: req.ip,
-          baseUrl: WIKI.models.mail.baseUrl({ req, siteId: req.params.siteId }),
+          baseUrl: WIKI.models.mail.baseUrl({ siteId: req.params.siteId, protocol: req.protocol }),
           locale: req.body.locale
         })
         return { ok: true }

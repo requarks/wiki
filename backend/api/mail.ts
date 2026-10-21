@@ -213,7 +213,7 @@ async function routes(app: FastifyInstance) {
           template: 'test',
           locale: req.body.locale,
           data: {
-            baseUrl: WIKI.models.mail.baseUrl({ req, siteId })
+            baseUrl: WIKI.models.mail.baseUrl({ siteId, protocol: req.protocol })
           }
         })
         await audit(req, 'admin', 'sendTestEmail', {

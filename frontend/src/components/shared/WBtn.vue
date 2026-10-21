@@ -16,9 +16,11 @@
     </span>
     <span
       class="relative inline-flex flex-nowrap items-center gap-2"
-      :class="{ invisible: loading }">
+      :class="{ invisible: loading, 'min-w-0': wrap }">
       <w-icon v-if="icon" :name="icon" class="shrink-0" />
-      <span v-if="label !== null">{{ label }}</span>
+      <span v-if="label !== null" :class="{ 'min-w-0 text-center wrap-anywhere': wrap }">{{
+        label
+      }}</span>
       <slot />
     </span>
     <!-- -> A direct child of the button rather than of the content, so a full-width button can push it
@@ -128,6 +130,16 @@ const props = defineProps({
     type: String,
     default: null
   },
+  /**
+   * Lets the label run onto more lines -- breaking inside a word when one alone is wider than the
+   * space -- instead of holding the button at its full width. For a button in a row that can get
+   * narrower than its content: a phone, or a translation whose words are long and unspaced. Nothing
+   * changes while the label fits, since the button only shrinks once the row is overflowing.
+   */
+  wrap: {
+    type: Boolean,
+    default: false
+  },
   /** Leaves the label cased as written instead of upper-casing it. */
   noCaps: {
     type: Boolean,
@@ -227,6 +239,8 @@ const isSolid = computed(() => !props.flat && !props.outline)
 const classes = computed(() => [
   props.size ? 'leading-[1.715em]' : 'text-sm leading-[1.715em]',
   props.noCaps ? 'w-btn--no-caps' : '',
+  // -> A flex item will not shrink below its content otherwise, however the label is set to break
+  props.wrap ? 'min-w-0' : '',
   props.round
     ? 'rounded-full'
     : props.rounded

@@ -749,7 +749,9 @@ watch(
 watch(
   () => adminStore.currentSiteId,
   (newValue) => {
-    if (newValue && route.params.siteid !== newValue) {
+    // -> Only a route that HAS a site in its path follows the selection; on one without (the dashboard)
+    //    there is no param to rewrite, and a push would cancel whatever navigation is under way
+    if (newValue && route.params.siteid && route.params.siteid !== newValue) {
       router.push({ params: { siteid: newValue } })
     }
     // -> Storage is configured per site, so the light belongs to whichever one is selected

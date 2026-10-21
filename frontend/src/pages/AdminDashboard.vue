@@ -38,6 +38,42 @@
       </div>
     </div>
     <div class="grid grid-cols-12 px-4 gap-2">
+      <!--
+        A site on the `*` hostname answers to any Host header, so it has no address of its own to put
+        in a link, and with no base URL set its emails are not sent at all (`mail.baseUrl`).
+
+        Dark in both themes: `red-10` is the palette's deepest red, standing in on the light page for
+        what `red-9/30` comes out as over the dark admin background. The icon is `red-2` there, since
+        `negative` all but disappears against it.
+      -->
+      <w-banner
+        v-if="wildcardSites.length > 0"
+        class="col-span-12 bg-red-10 text-white dark:bg-red-9/30 dark:text-red-2"
+        inline-actions>
+        <template #avatar>
+          <w-icon name="la:exclamation-triangle" class="text-red-2 dark:text-negative" size="lg" />
+        </template>
+        <div class="font-semibold">
+          {{
+            t(
+              'admin.dashboard.wildcardHostname',
+              { sites: wildcardSiteNames },
+              wildcardSites.length
+            )
+          }}
+        </div>
+        <div class="mt-1 text-xs opacity-90">{{ t('admin.dashboard.wildcardHostnameHint') }}</div>
+        <template #action>
+          <w-btn
+            unelevated
+            :color="dark.isActive ? 'negative' : 'white'"
+            :text-color="dark.isActive ? undefined : 'red-10'"
+            icon="la:wrench"
+            :label="t('admin.dashboard.wildcardHostnameFix')"
+            :disable="!userStore.can(`manage:sites`)"
+            @click="fixWildcardHostname" />
+        </template>
+      </w-banner>
       <div class="col-span-12 sm:col-span-6 lg:col-span-3">
         <w-card>
           <w-card-section class="admin-dashboard-card">
@@ -51,6 +87,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:plus-circle"
               :label="t(`common.actions.new`)"
@@ -59,6 +96,7 @@
             <w-separator vertical />
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:sitemap"
               :label="t(`common.actions.manage`)"
@@ -80,6 +118,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:plus-circle"
               :label="t(`common.actions.new`)"
@@ -88,6 +127,7 @@
             <w-separator vertical />
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:users"
               :label="t(`common.actions.manage`)"
@@ -109,6 +149,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:user-plus"
               :label="t(`common.actions.new`)"
@@ -117,6 +158,7 @@
             <w-separator vertical />
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:user-friends"
               :label="t(`common.actions.manage`)"
@@ -162,6 +204,7 @@
             -->
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:key"
               :label="t(`common.actions.manage`)"
@@ -183,6 +226,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:history"
               :label="t(`admin.audit.title`)"
@@ -204,6 +248,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:hdd"
               :label="t(`admin.storage.title`)"
@@ -225,6 +270,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:hdd"
               :label="t(`admin.storage.title`)"
@@ -246,6 +292,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:comments"
               :label="t(`common.actions.manage`)"
@@ -276,6 +323,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:sync-alt"
               :label="t(`admin.system.checkForUpdates`)"
@@ -284,6 +332,7 @@
             <w-separator vertical />
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:info-circle"
               :label="t(`admin.system.title`)"
@@ -305,6 +354,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:tasks"
               :label="t(`admin.scheduler.title`)"
@@ -326,6 +376,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:server"
               :label="t(`common.actions.view`)"
@@ -347,6 +398,7 @@
           <w-card-actions align="right">
             <w-btn
               flat
+              wrap
               :color="actionColor"
               icon="la:bolt"
               :label="t(`common.actions.manage`)"
@@ -593,7 +645,7 @@ const router = useRouter()
 
 // I18N
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // DATA
 
@@ -635,6 +687,13 @@ const versionCard = computed(() => {
       }
   }
 })
+
+const wildcardSites = computed(() => adminStore.sites.filter((s) => s.hostname === '*'))
+const wildcardSiteNames = computed(() =>
+  new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(
+    wildcardSites.value.map((s) => s.title || s.id)
+  )
+)
 
 // META
 
@@ -746,6 +805,19 @@ async function load() {
 
 // -> The store is already filled by the layout; these panels are what this page has to ask for
 onMounted(loadPanels)
+
+/*
+  The site is selected before navigating, so General mounts already on it rather than loading the
+  previous site and then reloading.
+*/
+function fixWildcardHostname() {
+  const siteId = wildcardSites.value[0]?.id
+  if (!siteId) {
+    return
+  }
+  adminStore.$patch({ currentSiteId: siteId })
+  router.push(`/_admin/${siteId}/general`)
+}
 
 function newSite() {
   dialog({

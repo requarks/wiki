@@ -2257,7 +2257,8 @@ class Users {
    * for a strategy that enforces one. With it on the account is created unverified, the address is
    * sent a link, and `verifyEmail` is what comes back: there is nothing to log in to yet.
    *
-   * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @param baseUrl Where this wiki is reachable, for the link in the email. Null on a wildcard site
+   *                with no base URL (see `mail.baseUrl`), where no mail is sent
    * @param locale What language the wiki was being read in while the form was filled. It is kept as
    *               the account's own preference as well as used for the mail that follows: somebody
    *               who signed up reading the wiki in French has said something about which language
@@ -2282,7 +2283,7 @@ class Users {
       email: string
       password: string
       ip?: string
-      baseUrl: string
+      baseUrl: string | null
       locale?: string | null
     },
     req: any
@@ -2337,6 +2338,13 @@ class Users {
       )
       throw new Error('ERR_MAIL_NOT_CONFIGURED')
     }
+    // -> The same dead end by another road: a mail server, and no address the link can safely name
+    if (mustVerify && !baseUrl) {
+      WIKI.logger.warn(
+        `Registration refused: strategy ${strategy.id} validates email addresses, but no base URL is set under Admin → Mail and the site answers to any hostname, so there is no trusted address to link to.`
+      )
+      throw new Error('ERR_MAIL_NOT_CONFIGURED')
+    }
 
     const userId = await this.createUser({
       name: name.trim(),
@@ -2375,7 +2383,8 @@ class Users {
           locale,
           data: {
             name: name.trim(),
-            baseUrl,
+            // -> Never null here: registration was refused above when there is no address to link to
+            baseUrl: baseUrl!,
             // -> The login screen, which asks for a press before it confirms anything. Never an
             //    endpoint that would confirm on being fetched: the scanners that follow every link
             //    in a message before it is delivered would spend the token before the reader does.
@@ -2406,16 +2415,22 @@ class Users {
     // -> Best effort, and deliberately not undone on failure: unlike the verification link this is a
     //    courtesy, and the account it welcomes works whether or not it arrives
     if (WIKI.models.mail.isConfigured) {
-      try {
-        await WIKI.models.mail.send({
-          site: WIKI.models.mail.siteFor(siteId),
-          to: address,
-          template: 'welcome',
-          locale,
-          data: { name: name.trim(), baseUrl }
-        })
-      } catch (err: any) {
-        WIKI.logger.warn(`Could not send the welcome email to <${address}>: ${err.message}`)
+      if (!baseUrl) {
+        WIKI.logger.warn(
+          `Welcome email to <${address}> not sent: no base URL is set under Admin → Mail and the site answers to any hostname, so there is no trusted address to link to.`
+        )
+      } else {
+        try {
+          await WIKI.models.mail.send({
+            site: WIKI.models.mail.siteFor(siteId),
+            to: address,
+            template: 'welcome',
+            locale,
+            data: { name: name.trim(), baseUrl }
+          })
+        } catch (err: any) {
+          WIKI.logger.warn(`Could not send the welcome email to <${address}>: ${err.message}`)
+        }
       }
     }
 
@@ -2436,7 +2451,8 @@ class Users {
    *
    * @param siteId Which site to welcome them to. Defaults to whichever one the request was addressed
    *               to, since an instance with one site has no choice to make.
-   * @throws `ERR_INVALID_USER`, `ERR_MAIL_NOT_CONFIGURED`, and whatever the mail server said
+   * @throws `ERR_INVALID_USER`, `ERR_MAIL_NOT_CONFIGURED`, one saying there is no base URL to link to
+   *         (see `mail.baseUrl`), and whatever the mail server said
    */
   async sendWelcomeEmail({
     userId,
@@ -2455,6 +2471,13 @@ class Users {
       (siteId && WIKI.sites[siteId] ? siteId : null) ??
       (await WIKI.models.sites.getSiteByHostname({ hostname: req?.hostname ?? '*' }))?.id ??
       ''
+    const baseUrl = WIKI.models.mail.baseUrl({ siteId: targetSiteId, protocol: req?.protocol })
+    // -> Worded for the administrator, who reads it as the reply's `welcomeEmailError`
+    if (!baseUrl) {
+      throw new Error(
+        'The site answers to any hostname and no base URL is set under Admin → Mail, so the email would have no address to link to.'
+      )
+    }
     await WIKI.models.mail.send({
       site: WIKI.models.mail.siteFor(targetSiteId),
       to: user.email,
@@ -2463,7 +2486,7 @@ class Users {
       locale: (user.prefs as Record<string, any>)?.locale,
       data: {
         name: user.name,
-        baseUrl: WIKI.models.mail.baseUrl({ req, siteId: targetSiteId })
+        baseUrl
       }
     })
   }
@@ -2507,7 +2530,9 @@ class Users {
    * normally: a strategy that does not offer resets at all, and an instance with no mail server, are
    * both misconfigurations rather than answers about a user.
    *
-   * @param baseUrl Where this wiki is reachable, for the link in the email
+   * @param baseUrl Where this wiki is reachable, for the link in the email. Null on a wildcard site
+   *                with no base URL (see `mail.baseUrl`): nothing is sent, and the caller is answered
+   *                as for an address nobody holds
    * @param locale What language the wiki was being read in when the form was filled, which is what
    *               the mail is written in for an account whose owner has never picked one
    * @throws `ERR_INVALID_STRATEGY`, `ERR_FORGOT_PASSWORD_DISABLED`, `ERR_MAIL_NOT_CONFIGURED`
@@ -2524,7 +2549,7 @@ class Users {
     strategyId: string
     email: string
     ip?: string
-    baseUrl: string
+    baseUrl: string | null
     locale?: string | null
   }): Promise<void> {
     const strategy = await WIKI.models.authentication.getSiteStrategy(siteId, strategyId)
@@ -2539,6 +2564,17 @@ class Users {
         'A password reset was requested, but no SMTP server is configured to send it through.'
       )
       throw new Error('ERR_MAIL_NOT_CONFIGURED')
+    }
+    /*
+      Answered like any other request rather than as an error: the form is public, and this is a gap in
+      the administrator's setup, not something to report to whoever filled it in. Before the address is
+      looked up, so the log says the same thing whether or not anybody holds it.
+    */
+    if (!baseUrl) {
+      WIKI.logger.warn(
+        `A password reset was requested on site ${siteId}, but no base URL is set under Admin → Mail and the site answers to any hostname, so there is no trusted address to link to; nothing sent.`
+      )
+      return
     }
 
     const address = email.toLowerCase().trim()
