@@ -44,8 +44,8 @@
         <div class="text-subtitle2">{{ t('profile.tokensScopes') }}</div>
         <div class="text-caption text-grey">{{ t('profile.tokensScopesHint') }}</div>
       </w-card-section>
-      <w-list separator class="py-2">
-        <w-item v-for="cat of TOKEN_SCOPE_CATEGORIES" :key="cat.key">
+      <w-list separator inset-separator class="py-2">
+        <w-item v-for="cat of AREA_CATEGORIES" :key="cat.key">
           <w-item-section side>
             <w-icon :name="cat.icon" />
           </w-item-section>
@@ -65,6 +65,62 @@
           </w-item-section>
         </w-item>
       </w-list>
+      <!--
+        Not one more row of the list above: `mcp` names a door rather than an area, and caps what an
+        assistant may do in the areas granted there. Absent on a wiki with no MCP server, and offered
+        but closed to somebody without use:mcp, saying so.
+      -->
+      <w-card-section v-if="props.mcp.isEnabled" class="pt-0">
+        <div class="rounded border border-black/12 p-4 dark:border-white/15">
+          <div class="flex items-center">
+            <w-icon
+              name="mdi:robot-excited-outline"
+              size="24px"
+              class="mr-3 text-black/54 dark:text-white/70" />
+            <div class="min-w-0 flex-1">
+              <div class="text-subtitle2">{{ t('profile.tokensScope.mcp') }}</div>
+              <div class="text-caption text-grey">{{ t('profile.tokensMcpHint') }}</div>
+            </div>
+            <w-btn-toggle
+              v-model="state.scopes.mcp"
+              class="ml-3"
+              push
+              glossy
+              no-caps
+              toggle-color="secondary"
+              :disable="!props.mcp.mayUse"
+              :aria-label="t('profile.tokensScope.mcp')"
+              :options="mcpLevels" />
+          </div>
+          <w-banner
+            v-if="!props.mcp.mayUse"
+            class="mt-3"
+            rounded
+            :class="dark.isActive ? `bg-orange-9 text-white` : `bg-orange-1 text-orange-9`">
+            <template #avatar>
+              <w-icon name="la:ban" />
+            </template>
+            {{ t('profile.mcpNotAllowed') }}
+          </w-banner>
+          <template v-else-if="state.scopes.mcp !== `none`">
+            <div
+              v-if="mcpSummary.length < 1"
+              class="text-caption text-deep-orange mt-3 flex items-start">
+              <w-icon class="mr-1 mt-px" name="la:exclamation-triangle" size="xs" />
+              <span>{{ t('profile.tokensMcpNoAreas') }}</span>
+            </div>
+            <div v-if="mcpSummary.length > 0" class="mt-3 space-y-1">
+              <div v-for="line of mcpSummary" :key="line" class="text-caption">{{ line }}</div>
+            </div>
+            <div
+              v-if="props.mcp.isAdministrator"
+              class="text-caption text-deep-orange mt-2 flex items-start">
+              <w-icon class="mr-1 mt-px" name="la:exclamation-triangle" size="xs" />
+              <span>{{ t('profile.mcpAdministratorWarning') }}</span>
+            </div>
+          </template>
+        </div>
+      </w-card-section>
       <w-card-actions class="card-actions">
         <w-space />
         <w-btn
@@ -90,6 +146,7 @@
 import { useI18n } from 'vue-i18n'
 import { computed, reactive, ref } from 'vue'
 
+import { useDark } from '@/composables/dark'
 import { dialog, dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
@@ -109,8 +166,19 @@ const props = defineProps({
   presetScopes: {
     type: Object,
     default: () => ({})
+  },
+  /**
+   * The MCP server as it stands for this user — the `mcp` of `GET users/profile/tokens`. Pessimistic
+   * by default, so a caller that does not say leaves the AI Assistants section out.
+   */
+  mcp: {
+    type: Object,
+    default: () => ({ isEnabled: false, mayUse: false, isAdministrator: false })
   }
 })
+
+// -> Every category but `mcp`, which is drawn apart from them: it is not an area of its own
+const AREA_CATEGORIES = TOKEN_SCOPE_CATEGORIES.filter((cat) => cat.key !== 'mcp')
 
 // EMITS
 
@@ -123,9 +191,13 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
   autofocus: () => iptName.value
 })
 
+// COMPOSABLES
+
+const dark = useDark()
+
 // I18N
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // DATA
 
@@ -133,9 +205,12 @@ const state = reactive({
   name: props.presetName,
   expiration: '90d',
   // -> Nothing granted until somebody asks for it: a token is only as safe as the least it can do
-  scopes: Object.fromEntries(
-    TOKEN_SCOPE_CATEGORIES.map((cat) => [cat.key, props.presetScopes[cat.key] ?? 'none'])
-  ),
+  scopes: {
+    ...Object.fromEntries(
+      AREA_CATEGORIES.map((cat) => [cat.key, props.presetScopes[cat.key] ?? 'none'])
+    ),
+    mcp: (props.mcp.isEnabled && props.mcp.mayUse && props.presetScopes.mcp) || 'none'
+  },
   loading: 0
 })
 
@@ -161,6 +236,41 @@ const levels = computed(() => [
   { label: t('profile.tokensLevel.write'), value: 'write' }
 ])
 
+/*
+  `write` here grants nothing of its own: it stops blocking the writes the areas above allow, which is
+  what the label says rather than "Read & Write".
+*/
+const mcpLevels = computed(() => [
+  { label: t('profile.tokensMcpLevel.none'), value: 'none' },
+  { label: t('profile.tokensMcpLevel.read'), value: 'read' },
+  { label: t('profile.tokensMcpLevel.write'), value: 'write' }
+])
+
+/**
+ * What an assistant holding this token could do, a sentence per level: each area at the lower of its
+ * own level and the AI Assistants one, which is how `/_mcp` checks a tool (`mcp:<level>` on top of
+ * `<category>:<level>`). Empty when no area is granted, which is an assistant that can do nothing.
+ */
+const mcpSummary = computed(() => {
+  const list = new Intl.ListFormat(locale.value, { type: 'conjunction' })
+  const isReadOnly = state.scopes.mcp === 'read'
+  const granted = AREA_CATEGORIES.filter((cat) => state.scopes[cat.key] !== 'none')
+  const names = (cats) => list.format(cats.map((cat) => t(`profile.tokensScope.${cat.key}`)))
+  const writable = granted.filter((cat) => state.scopes[cat.key] === 'write')
+  const readable = isReadOnly ? granted : granted.filter((cat) => state.scopes[cat.key] === 'read')
+  const lines = []
+  if (!isReadOnly && writable.length > 0) {
+    lines.push(t('profile.tokensMcpCanWrite', { areas: names(writable) }))
+  }
+  if (readable.length > 0) {
+    lines.push(t('profile.tokensMcpCanRead', { areas: names(readable) }))
+  }
+  if (isReadOnly && writable.length > 0) {
+    lines.push(t('profile.tokensMcpWriteBlocked', { areas: names(writable) }))
+  }
+  return lines
+})
+
 // REFS
 
 const createForm = ref(null)
@@ -184,7 +294,8 @@ async function create() {
     const scopes = Object.entries(state.scopes)
       .filter(([, level]) => level !== 'none')
       .map(([category, level]) => `${category}:${level}`)
-    if (scopes.length < 1) {
+    // -> `mcp` alone opens a door to nothing, so it does not count
+    if (!scopes.some((scope) => !scope.startsWith('mcp:'))) {
       throw new Error(t('profile.tokensScopesMissing'))
     }
     const resp = await API_CLIENT.post('users/profile/tokens', {

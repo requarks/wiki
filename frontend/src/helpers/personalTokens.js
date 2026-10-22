@@ -14,7 +14,7 @@ export const TOKEN_SCOPE_CATEGORIES = [
   { key: 'navigation', icon: 'la:sitemap' },
   { key: 'approvals', icon: 'la:check-double' },
   { key: 'profile', icon: 'la:user-circle' },
-  { key: 'mcp', icon: 'la:robot' }
+  { key: 'mcp', icon: 'mdi:robot-excited-outline' }
 ]
 
 /** Whether a token has run past its expiration. */

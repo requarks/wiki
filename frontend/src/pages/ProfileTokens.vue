@@ -48,7 +48,7 @@
       -->
       <w-tabs v-if="isMcpOffered" v-model="state.tab" class="mt-4 w-fit" no-caps inline-label>
         <w-tab name="tokens" icon="la:key" :label="t('profile.tokensTabTokens')" />
-        <w-tab name="mcp" icon="la:robot" :label="t('profile.mcpConnect')" />
+        <w-tab name="mcp" icon="mdi:robot-excited-outline" :label="t('profile.mcpConnect')" />
       </w-tabs>
       <!--
         Shown to somebody without use:mcp too, saying so, rather than leave them to find out from a
@@ -208,21 +208,25 @@ async function fetchTokens() {
 
 function createToken() {
   dialog({
-    component: PersonalTokenCreateDialog
+    component: PersonalTokenCreateDialog,
+    componentProps: {
+      mcp: state.mcp
+    }
   }).onOk(fetchTokens)
 }
 
 /**
- * A token for an assistant, starting read-only: `mcp:read` keeps it from writing through `/_mcp`
- * whatever else it is given, and `pages:read` is what reading the wiki needs. The owner widens it in
- * the dialog if they mean to.
+ * A token for an assistant, starting read-only through its areas rather than through `mcp`: with
+ * `mcp:write` the AI Assistants switch defers to them, so granting an area write in the dialog is all
+ * it takes to let the assistant write there. `pages:read` is what reading the wiki needs.
  */
 function createAssistantToken() {
   dialog({
     component: PersonalTokenCreateDialog,
     componentProps: {
       presetName: t('profile.mcpTokenName'),
-      presetScopes: { mcp: 'read', pages: 'read', glossary: 'read' }
+      presetScopes: { mcp: 'write', pages: 'read', glossary: 'read' },
+      mcp: state.mcp
     }
   }).onOk(fetchTokens)
 }

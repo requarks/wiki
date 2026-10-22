@@ -503,6 +503,14 @@ These apply to **every workspace**, `frontend/` included — not just the backen
   mid-2026) and is awaited first in `main.js`. The polyfill is a lazy chunk (~21 kB gzipped) that
   browsers with native `Temporal` never download.
 
+### Wording
+
+**Write "regardless of what …", not "whatever …"**, for the "no matter what" sense: "sees every
+page, regardless of what the page rules say", not "whatever the page rules say". The shorter form
+reads as ambiguous or offhand, and "regardless of" says the condition plainly. This holds for
+locale strings, code comments and documentation alike. Fix the wording in what you are already
+editing, but don't sweep untouched strings or comments for it as a drive-by.
+
 ### Permissions
 
 There are **two kinds of permission**, granted separately and checked in different places. Which
@@ -615,7 +623,7 @@ Consequences worth knowing:
   editor knows which of its two halves to offer.
 - **`read:glossary` and `manage:glossary` ignore the path.** They are the page permissions about a
   site and a locale rather than a page (`LOCALE_PERMISSIONS` in `models/groups.ts`): every rule naming
-  one that is scoped to the site and locale applies, whatever it matches, and mode alone decides —
+  one that is scoped to the site and locale applies, regardless of what it matches, and mode alone decides —
   ALLOW < DENY < FORCE ALLOW. So a DENY written for one folder closes the whole glossary. Ask
   `groups.checkLocaleAccess(actor, permission, siteId, locale)`; `checkAccess` routes them there too.
   `manage:glossary` in a locale implies `read:glossary` there. Neither is in the Guests group's seeded
@@ -625,7 +633,7 @@ Consequences worth knowing:
   implies `read:notes`. The Users group is seeded with `read:notes` only, so out of the box any account
   can open a shared note and only administrators can start one. The guests group may be granted
   `read:notes` (it is in `GUEST_ROLES`, not in the seeded DENY rule) and never `write:notes`, which
-  `permissionsFor` refuses to a requester with no account whatever the rules say.
+  `permissionsFor` refuses to a requester with no account regardless of what the rules say.
 - **A page that is not live is its editors' alone.** Live is `published`, or `scheduled` inside its
   window (`publishStartDate` inclusive, `publishEndDate` exclusive); the dates gate nothing on a
   `published` page, where `publishStartDate` is what a blog post is dated by. Any other page is seen —
@@ -1252,7 +1260,7 @@ document is whether the client will run the app, and each has its own function:
   to answer 200 everywhere — which is what taught a crawler that every URL on the wiki exists. No
   page, an unpublished one and one the guests group's rules refuse are one answer, since the
   difference is not something to tell whoever is asking. **The site root is the exception and always
-  answers 200**: there is something to show there whatever the database says — the welcome screen of a
+  answers 200**: there is something to show there regardless of what the database says — the welcome screen of a
   wiki with no home page yet, a login form on a wiki that is not public — and a root answering 404
   would report a working instance as broken to every uptime check pointed at it. Note the consequence
   on a **private wiki**, where the guests group denies everything by default: every page path answers
@@ -1369,7 +1377,7 @@ menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glos
   (`helpers/glossaryLinker.js`, run by `pages/Index.vue`; spec §9). The first mention of each term per
   page is wrapped in a real `<a class="glossary-term" href="?glossary=…">`, matched on `Intl.Segmenter`
   word boundaries, longest name first. A link written by hand to `?glossary=` — or
-  `[[Glossary:Term]]` — is drawn the same way whatever the switches say: the term's `autoLink`, the
+  `[[Glossary:Term]]` — is drawn the same way regardless of what the switches say: the term's `autoLink`, the
   site's `features.glossaryAutoLink` and the page's `allowGlossaryLinks`. **Linking moves text into
   elements, which puts any live `Range` boundary inside a term on its edge**, so `Index.vue` bumps
   `contentRevision` and the annotation components find their passages again by text; anything new that

@@ -19,6 +19,15 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /**
+   * Insets those rules from the list's edges by the items' own padding, as `WSeparator`'s `inset`
+   * does -- for a list that is followed by something else in the same card, which an edge-to-edge
+   * rule would read as part of the last row.
+   */
+  insetSeparator: {
+    type: Boolean,
+    default: false
+  },
   /** Vertical padding around the list as a whole. */
   padding: {
     type: Boolean,
@@ -48,6 +57,7 @@ const classes = computed(() => [
   props.padding ? 'py-2' : '',
   props.bordered ? 'rounded border border-black/12 dark:border-white/15' : '',
   props.separator ? 'w-list--separator' : '',
+  props.separator && props.insetSeparator ? 'w-list--separator-inset' : '',
   props.dense ? 'w-list--dense' : '',
   props.dark ? 'w-list--dark' : ''
 ])
@@ -131,6 +141,11 @@ const classes = computed(() => [
   transform: scaleY(calc(1 / var(--w-dpr, 1)));
   transform-origin: top left;
   pointer-events: none;
+}
+
+.w-list--separator-inset :deep(> * + *)::before {
+  left: 16px;
+  right: 16px;
 }
 
 :global(body.body--dark .w-list--separator > * + *::before),

@@ -7,7 +7,7 @@
         <w-avatar
           :color="tokenState(token) ? `negative` : token.client ? `purple` : `secondary`"
           text-color="white"
-          :icon="token.client ? `la:robot` : `la:stamp`"
+          :icon="token.client ? `mdi:robot-excited-outline` : `la:stamp`"
           rounded />
       </w-item-section>
       <w-item-section>
