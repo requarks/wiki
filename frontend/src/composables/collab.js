@@ -70,6 +70,12 @@ let provider = null
  * calls arriving in the same tick from each making one — see `bindCollabEditor`.
  */
 let binding = null
+/**
+ * Where each other participant last typed, as a pair of relative positions keyed by their Yjs client
+ * id — see `noteRemoteInsert` — and the Monaco decorations that underline it.
+ */
+const recentEdits = new Map()
+let editDecorations = null
 let styleEl = null
 let syncTimer = null
 /** Whether this author is mid-edit, and the timer that decides when they have stopped. */
@@ -182,6 +188,16 @@ export function startCollabSession({ siteId, pageId, noteKey }) {
       noteEditedIn(transaction)
     }
   })
+
+  // -> Not before the first sync, whose "insert" is the whole text as the room already held it
+  ytext.observe((event, transaction) => {
+    if (!transaction.local && initialSyncDone) {
+      noteRemoteInsert(event, transaction)
+    }
+  })
+  // -> After every type's observers have run, y-monaco's included, so the model already says what the
+  //    document says by the time the underlines are measured against it
+  doc.on('afterTransaction', renderRecentEdits)
 
   provider.on('status', ({ status }) => {
     /*
@@ -345,6 +361,8 @@ export async function bindCollabEditor(editor) {
     return
   }
   binding = new MonacoBinding(doc.getText('content'), model, new Set([editor]), provider.awareness)
+  editDecorations = editor.createDecorationsCollection()
+  renderRecentEdits()
 }
 
 /**
@@ -360,6 +378,8 @@ export function unbindCollabEditor() {
   //    tells that call there is no longer an editor to bind
   binding.destroy?.()
   binding = null
+  editDecorations?.clear()
+  editDecorations = null
   // -> y-monaco publishes the caret and never takes it back, so without this everyone else would go
   //    on seeing it in the text, marking a place nobody is
   provider?.awareness.setLocalStateField('selection', null)
@@ -384,6 +404,9 @@ export function stopCollabSession() {
     binding.destroy?.()
     binding = null
   }
+  editDecorations?.clear()
+  editDecorations = null
+  recentEdits.clear()
   if (provider) {
     // -> Retracts this editor's awareness state before the socket goes, so the others see the avatar
     //    leave immediately rather than when the server notices the connection is gone
@@ -455,6 +478,107 @@ function noteEditedIn(transaction) {
       return
     }
   }
+}
+
+/**
+ * Remember where somebody else just typed, so it can be underlined in their colour.
+ *
+ * One stretch per participant, the last one they wrote: typing on from it, or anywhere inside it,
+ * grows it, and typing anywhere else moves it there. Held as relative positions so that it stays on
+ * the same characters regardless of what anybody else then writes around it — and its ends are
+ * anchored INWARDS (the first character, and the last one from the right), so text somebody else
+ * types against either edge is not taken into it.
+ *
+ * Who wrote it is whose clock the transaction advanced, as in `noteEditedIn` — not the items in
+ * `event.changes.added`, which a `Y.Text` event always leaves empty. An update holding several
+ * people's work at once — what a reconnect brings in — names nobody, and is left alone rather than
+ * credited to one of them.
+ */
+function noteRemoteInsert(event, transaction) {
+  const authors = []
+  for (const [clientId, clock] of transaction.afterState) {
+    if ((transaction.beforeState.get(clientId) ?? 0) < clock) {
+      authors.push(clientId)
+    }
+  }
+  if (authors.length !== 1) {
+    return
+  }
+  const [clientId] = authors
+  // -> The last insertion in the change, which for typing is the only one
+  let inserted = null
+  let index = 0
+  for (const op of event.delta) {
+    if (op.retain !== undefined) {
+      index += op.retain
+    } else if (op.insert !== undefined) {
+      inserted = { from: index, to: index + op.insert.length }
+      index += op.insert.length
+    }
+  }
+  if (!inserted) {
+    return
+  }
+  const current = absoluteRange(recentEdits.get(clientId))
+  if (current && inserted.from <= current.to && inserted.to >= current.from) {
+    inserted = {
+      from: Math.min(current.from, inserted.from),
+      to: Math.max(current.to, inserted.to)
+    }
+  }
+  const ytext = event.target
+  recentEdits.set(clientId, {
+    start: Y.createRelativePositionFromTypeIndex(ytext, inserted.from),
+    end: Y.createRelativePositionFromTypeIndex(ytext, inserted.to, -1)
+  })
+}
+
+/** A stretch kept by `noteRemoteInsert`, as offsets into the text as it now stands. */
+function absoluteRange(edit) {
+  if (!edit || !doc) {
+    return null
+  }
+  const start = Y.createAbsolutePositionFromRelativePosition(edit.start, doc)
+  const end = Y.createAbsolutePositionFromRelativePosition(edit.end, doc)
+  if (!start || !end || start.index >= end.index) {
+    return null
+  }
+  return { from: start.index, to: end.index }
+}
+
+/**
+ * Underline everybody's last stretch in the Monaco editor, when there is one bound.
+ *
+ * Measured afresh on every change rather than left to Monaco's own decoration tracking, which only
+ * knows about edits as they reach the model and would drift from the relative positions the stretches
+ * are actually kept as. A stretch whose text has all been deleted measures as empty and draws nothing.
+ * The colour is in the generated stylesheet — see `renderCursorStyles`.
+ */
+function renderRecentEdits() {
+  // -> Made with the binding and dropped with it, so this is also the test for there being one
+  if (!editDecorations) {
+    return
+  }
+  const model = binding.monacoModel
+  const decorations = []
+  for (const [clientId, edit] of recentEdits) {
+    const range = absoluteRange(edit)
+    if (!range) {
+      continue
+    }
+    const start = model.getPositionAt(range.from)
+    const end = model.getPositionAt(range.to)
+    decorations.push({
+      range: {
+        startLineNumber: start.lineNumber,
+        startColumn: start.column,
+        endLineNumber: end.lineNumber,
+        endColumn: end.column
+      },
+      options: { inlineClassName: `yRemoteEdit yRemoteEdit-${clientId}` }
+    })
+  }
+  editDecorations.set(decorations)
 }
 
 /** This browser's header fields into the room, whatever they are. See the call in the sync handler. */
@@ -538,8 +662,20 @@ function refreshParticipants() {
   if (!provider || !doc) {
     return
   }
+  const states = provider.awareness.getStates()
+  // -> Somebody who has left has nobody's colour to be underlined in
+  let pruned = false
+  for (const clientId of recentEdits.keys()) {
+    if (!states.has(clientId)) {
+      recentEdits.delete(clientId)
+      pruned = true
+    }
+  }
+  if (pruned) {
+    renderRecentEdits()
+  }
   const participants = []
-  for (const [clientId, state] of provider.awareness.getStates()) {
+  for (const [clientId, state] of states) {
     if (!state?.user?.id) {
       continue
     }
@@ -573,10 +709,30 @@ function ensureStyleElement() {
  * else — `yRemoteSelection-42` — leaving what it looks like entirely to CSS. So one rule per
  * participant is generated here, which is also the only way the name can appear beside the caret: it
  * is drawn as generated content, there being no element to put it in.
+ *
+ * The name is shown only while the caret is hovered: standing over the line above, it covers what
+ * somebody else is trying to read. The caret is two pixels wide, which is too narrow to aim at, so
+ * `::before` widens what the pointer can find without widening what is drawn.
  */
 function renderCursorStyles(participants) {
   ensureStyleElement()
-  styleEl.textContent = participants
+  const shared = `
+    .yRemoteSelectionHead::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -4px;
+      width: 8px;
+    }
+    .yRemoteSelectionHead::after {
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .yRemoteSelectionHead:hover::after {
+      opacity: 1;
+    }`
+  const perParticipant = participants
     .filter((participant) => !participant.isSelf)
     .map(
       (participant) => `
@@ -603,9 +759,16 @@ function renderCursorStyles(participants) {
           white-space: nowrap;
           pointer-events: none;
           user-select: none;
+        }
+        .yRemoteEdit-${participant.clientId} {
+          text-decoration: underline dotted ${participant.color};
+          text-decoration-thickness: 1px;
+          text-decoration-skip-ink: none;
+          text-underline-offset: 3px;
         }`
     )
     .join('\n')
+  styleEl.textContent = shared + perParticipant
 }
 
 /** A user-supplied name, safe to sit inside a single-quoted CSS string. */

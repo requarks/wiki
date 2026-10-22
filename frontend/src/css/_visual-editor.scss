@@ -312,6 +312,10 @@
 
   The caret is zero-width and `position: relative`, so it sits BETWEEN two characters rather than
   taking a column of its own and pushing the text along as people move about.
+
+  The name is shown only while the caret is hovered, since above it, it covers the line somebody is
+  trying to read. The caret itself takes no pointer events, so that clicking beside it lands in the
+  text; `::before` is a slightly wider strip that does, which is what the hover is found on.
 */
 .ProseMirror-yjs-cursor {
   position: relative;
@@ -323,8 +327,25 @@
   word-break: normal;
   pointer-events: none;
 
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -4px;
+    width: 8px;
+    pointer-events: auto;
+  }
+
+  &:hover > div {
+    opacity: 1;
+  }
+
   /* -> The name, above the caret and out of the flow so it never moves the line it is standing in */
   > div {
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
     position: absolute;
     top: -1.05em;
     left: -1px;
