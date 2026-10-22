@@ -1,0 +1,4 @@
+# Held back on purpose; see verifyTwemojiCoverage in vite.config.js. 17.0.3 moved to a parser that
+# no longer matches ten emoji at all. Lift this once a release fixes that and the build check passes.
+reject:
+  - '@twemoji/api'

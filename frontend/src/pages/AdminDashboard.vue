@@ -307,7 +307,7 @@
             <img :src="versionCard.icon" />
             <div>
               <strong>Wiki.js version</strong>
-              <small :class="{ pending: versionCard.pending }"
+              <small :class="{ pending: versionCard.pending, outdated: versionCard.isOutdated }"
                 >{{ versionCard.status }}
                 <i v-if="versionCard.version"
                   >({{ versionCard.version
@@ -667,7 +667,8 @@ const versionCard = computed(() => {
         status: t('admin.dashboard.versionUpToDate'),
         version: adminStore.info.currentVersion,
         latestVersion: null,
-        pending: false
+        pending: false,
+        isOutdated: false
       }
     case 'outdated':
       return {
@@ -675,7 +676,8 @@ const versionCard = computed(() => {
         status: t('admin.dashboard.versionUpdateAvailable'),
         version: adminStore.info.currentVersion,
         latestVersion: adminStore.info.latestVersion,
-        pending: false
+        pending: false,
+        isOutdated: true
       }
     default:
       return {
@@ -683,7 +685,8 @@ const versionCard = computed(() => {
         status: t('admin.dashboard.versionChecking'),
         version: null,
         latestVersion: null,
-        pending: true
+        pending: true,
+        isOutdated: false
       }
   }
 })
@@ -915,6 +918,15 @@ function checkForUpdates() {
 
         @at-root .body--dark & {
           color: var(--color-amber);
+        }
+      }
+
+      // -> An update waiting is something to act on, not the all-clear the secondary green reads as
+      &.outdated {
+        color: var(--color-rose-600);
+
+        @at-root .body--dark & {
+          color: var(--color-rose-400);
         }
       }
     }

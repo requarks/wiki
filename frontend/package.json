@@ -1,6 +1,6 @@
 {
   "name": "wiki-ux",
-  "version": "3.0.0",
+  "version": "3.0.0-dev",
   "private": true,
   "description": "The most powerful and extensible open source Wiki software",
   "author": "Nicolas Giard <nick@requarks.io>",
@@ -21,7 +21,7 @@
     "@excalidraw/excalidraw": "0.18.1",
     "@simplewebauthn/browser": "14.0.0",
     "@tailwindcss/vite": "4.3.3",
-    "@twemoji/api": "17.0.3",
+    "@twemoji/api": "17.0.2",
     "@xterm/addon-fit": "0.11.0",
     "@xterm/xterm": "6.0.0",
     "@zip.js/zip.js": "2.24.0",

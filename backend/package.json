@@ -1,6 +1,6 @@
 {
   "name": "wiki-backend",
-  "version": "3.0.0",
+  "version": "3.0.0-dev",
   "private": true,
   "description": "The most powerful and extensible open source Wiki software",
   "keywords": [

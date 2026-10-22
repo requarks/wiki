@@ -305,7 +305,25 @@ export default defineConfig(({ mode }) => {
         include: ['!/_blocks/**']
       },
       outDir: '../assets',
-      rollupOptions: {
+      rolldownOptions: {
+        /*
+          Served by the backend at runtime, so nothing is at these paths during a build. Declaring
+          them external is what tells Vite's CSS pass they are meant to stay as written, rather than
+          warning once per `url()` that names one: every Excalidraw font in the generated
+          `@font-face` sheet, and the site favicon.
+        */
+        external: [/^\/_(assets|site)\//],
+        onwarn(warning, warn) {
+          /*
+            A React Server Components marker at the top of radix-ui's and jotai's modules, which
+            Excalidraw brings in. It means nothing in a client-only bundle, which is all this is,
+            so dropping it on bundling loses nothing.
+          */
+          if (warning.code === 'MODULE_LEVEL_DIRECTIVE' && warning.message.includes('use client')) {
+            return
+          }
+          warn(warning)
+        },
         // -> A second entry alongside the app: the markdown pipeline on its own, so the backend can
         //    drive it in a headless browser to re-render a page server-side
         input: {
