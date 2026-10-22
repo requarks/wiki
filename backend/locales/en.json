@@ -448,7 +448,7 @@
   "admin.dashboard.versionUpdateAvailable": "Update available",
   "admin.dashboard.wildcardHostname": "Site {sites} is using the fallback wildcard hostname, which is not secure. | Sites {sites} are using the fallback wildcard hostname, which is not secure.",
   "admin.dashboard.wildcardHostnameFix": "Fix Now",
-  "admin.dashboard.wildcardHostnameHint": "A site on the wildcard hostname answers to whatever hostname a request claims. Unless a base URL is set under Admin → Mail, its emails (password resets, account confirmations, welcome messages and notifications) are not sent until it has a fixed hostname. Set one under General.",
+  "admin.dashboard.wildcardHostnameHint": "A site on the wildcard hostname answers to any hostname a request claims. Unless a base URL is set under Admin → Mail, its emails (password resets, account confirmations, welcome messages and notifications) are not sent until it has a fixed hostname. Set one under General.",
   "admin.editors.apiDescription": "Document your REST / GraphQL APIs.",
   "admin.editors.apiName": "API Docs Editor",
   "admin.editors.asciidoc.general": "General",
