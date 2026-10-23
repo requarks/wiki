@@ -30,7 +30,7 @@ Use the feature request board to submit new ideas and vote on which ideas should
 
 :triangular_flag_on_post: [https://feedback.js.wiki/](https://feedback.js.wiki/)
 
-*Do not use GitHub issues to submit new feature ideas, as it will closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
+*Do not use GitHub issues to submit new feature ideas, as it will be closed and you'll be asked to use the feature request board above. GitHub Issues are limited to bugs / issues / help*.
 
 ## Financial contributions
 

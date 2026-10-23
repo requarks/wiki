@@ -18,11 +18,11 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 
 https://github.com/requarks/wiki/security/advisories/new
 
-Include as much details as possible, such as:
+Include as much detail as possible, such as:
 - The version(s) of Wiki.js that are impacted
 - How to reproduce the vulnerability (step-by-step, screenshots or a video)
 - The platform / environment it occurs on (e.g. OS version, DB type + version, etc.)
 - Any potential fixes or reference code you think might be helpful in resolving the issue
 - Your GitHub username if you'd like to be included as a collaborator on the private fix branch
 
-The vulnerability will be investigated ASAP. If deemed valid, a fix will be worked on in a private branch to resolves the issue. Once a fix is available, the advisory will be published.
+The vulnerability will be investigated ASAP. If deemed valid, a fix will be worked on in a private branch to resolve the issue. Once a fix is available, the advisory will be published.
