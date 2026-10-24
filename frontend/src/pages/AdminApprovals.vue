@@ -1,5 +1,6 @@
 <template>
-  <w-page>
+  <!-- -> `relative` so the loading veil at the bottom covers this page, not the sidebar and header -->
+  <w-page class="relative">
     <div class="flex flex-wrap items-center p-4">
       <div class="flex-none">
         <img class="admin-icon animated fadeInLeft" src="/_assets/icons/fluent-inspection-animated.svg" />
