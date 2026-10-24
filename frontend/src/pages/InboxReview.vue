@@ -156,6 +156,7 @@ import { confirm } from '@/composables/dialog'
 
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 import { apiErrorMessage } from '@/helpers/apiError'
 
 // COMPOSABLES
@@ -171,6 +172,7 @@ const router = useRouter()
 
 const editorStore = useEditorStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -228,10 +230,7 @@ watch(
 // METHODS
 
 function humanizeDate(val) {
-  return Temporal.Instant.from(val).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  })
+  return userStore.formatDateTime(t, val)
 }
 
 async function load() {

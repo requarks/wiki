@@ -809,7 +809,6 @@ import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
 import { useDeletedPages } from '@/composables/deletedPages'
 
-import { useCommonStore } from '@/stores/common'
 import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
@@ -842,7 +841,6 @@ const { restoreDeletedPage } = useDeletedPages()
 
 // STORES
 
-const commonStore = useCommonStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
@@ -1366,9 +1364,7 @@ function formatDateTime(value) {
   if (!value) {
     return ''
   }
-  return Temporal.Instant.from(value)
-    .toZonedDateTimeISO(Temporal.Now.timeZoneId())
-    .toLocaleString(commonStore.locale, { dateStyle: 'medium', timeStyle: 'short' })
+  return userStore.formatDateTime(t, value)
 }
 
 function insertItem(item) {

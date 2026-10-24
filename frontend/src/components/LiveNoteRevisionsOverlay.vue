@@ -136,6 +136,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 
 import { useLiveNoteStore } from '@/stores/liveNote'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 /**
  * A live note's history: the revisions its room took as it was written (`models/liveNotes.ts`), each
@@ -150,6 +151,7 @@ import { useSiteStore } from '@/stores/site'
 
 const liveNoteStore = useLiveNoteStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -210,10 +212,7 @@ function close() {
 }
 
 function humanizeDate(val) {
-  return Temporal.Instant.from(val).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  })
+  return userStore.formatDateTime(t, val)
 }
 
 function authorsOf(revision) {

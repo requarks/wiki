@@ -88,6 +88,8 @@ import { useI18n } from 'vue-i18n'
 
 import { isTokenExpired, tokenState } from '@/helpers/personalTokens'
 
+import { useUserStore } from '@/stores/user'
+
 // PROPS
 
 const props = defineProps({
@@ -105,6 +107,10 @@ const props = defineProps({
 
 const emit = defineEmits(['delete'])
 
+// STORES
+
+const userStore = useUserStore()
+
 // I18N
 
 const { t } = useI18n()
@@ -112,11 +118,7 @@ const { t } = useI18n()
 // METHODS
 
 function formatDate(val) {
-  return Temporal.Instant.from(val).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return userStore.formatDate(val)
 }
 
 /** `pages:write` as `Pages: Read & Write`. */

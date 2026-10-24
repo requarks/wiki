@@ -189,10 +189,12 @@ import SetupTfaDialog from '@/components/SetupTfaDialog.vue'
 import PasskeyCreateDialog from '@/components/PasskeyCreateDialog.vue'
 
 import { useAuthConfigStore } from '@/stores/authConfig'
+import { useUserStore } from '@/stores/user'
 
 // STORES
 
 const authConfigStore = useAuthConfigStore()
+const userStore = useUserStore()
 
 // I18N
 
@@ -215,10 +217,7 @@ const state = reactive({
 // METHODS
 
 function humanizeDate(val) {
-  return Temporal.Instant.from(val).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  })
+  return userStore.formatDateTime(t, val)
 }
 
 async function fetchAuthMethods() {

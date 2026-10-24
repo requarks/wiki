@@ -9,6 +9,7 @@ import { renderVersionSource } from '@/helpers/pageVersions'
 
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 /**
  * Bringing a page back out of the recycle bin.
@@ -26,6 +27,7 @@ export function useDeletedPages() {
   const { t } = useI18n()
   const editorStore = useEditorStore()
   const siteStore = useSiteStore()
+  const userStore = useUserStore()
 
   async function renderFor(version, pagePath) {
     // -> Configured per site, and the configuration arrives with the editor configs
@@ -40,15 +42,7 @@ export function useDeletedPages() {
   }
 
   function deletedOn(version) {
-    return version.versionDate
-      ? Temporal.Instant.from(version.versionDate).toLocaleString(undefined, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit'
-        })
-      : ''
+    return version.versionDate ? userStore.formatDateTime(t, version.versionDate) : ''
   }
 
   /**

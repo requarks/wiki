@@ -339,6 +339,8 @@ import { avatarColorFor } from '@/helpers/avatarColors'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { renderComment } from '@/renderers/comment'
 
+import { useUserStore } from '@/stores/user'
+
 import FeedbackStatusBadge from '@/components/FeedbackStatusBadge.vue'
 import PageCommentEditor from '@/components/PageCommentEditor.vue'
 
@@ -446,6 +448,10 @@ const emit = defineEmits([
   'delete-annotation'
 ])
 
+// STORES
+
+const userStore = useUserStore()
+
 // I18N
 
 const { t } = useI18n()
@@ -460,16 +466,8 @@ const noteDraft = ref('')
 
 const rendered = computed(() => renderComment(props.comment.content, props.mentions))
 
-/**
- * The moment it was posted, in full, for the tooltip on the relative date. In the reader's own locale,
- * as the relative date beside it is (`helpers/datetime.js`), so the two read as one statement.
- */
-const fullDate = computed(() =>
-  Temporal.Instant.from(props.comment.createdAt).toLocaleString(undefined, {
-    dateStyle: 'full',
-    timeStyle: 'short'
-  })
-)
+/** The moment it was posted, in full, for the tooltip on the relative date. */
+const fullDate = computed(() => userStore.formatDateTime(t, props.comment.createdAt))
 
 const hasAnnotations = computed(() => (props.comment.annotations?.length ?? 0) > 0)
 

@@ -269,11 +269,7 @@ function categoryLabel(tag) {
 }
 
 function dateOf(value) {
-  return Temporal.Instant.from(value).toLocaleString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return userStore.formatDate(value)
 }
 
 /** Navigate to the same board with part of the selection changed, back on the first page of it. */

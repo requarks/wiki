@@ -1063,8 +1063,7 @@ const showSidebar = computed(() => {
  * something else. Not in the editor, which replaces the column the body is in.
  */
 const alignsHeader = computed(
-  () =>
-    (isFeedbackBoard.value || isCentered.value) && !editorStore.isActive && !pageStore.notFound
+  () => (isFeedbackBoard.value || isCentered.value) && !editorStore.isActive && !pageStore.notFound
 )
 
 /**
@@ -1385,17 +1384,7 @@ const relationsRight = computed(() => {
   return pageStore.relations ? pageStore.relations.filter((r) => r.position === 'right') : []
 })
 const lastModified = computed(() => {
-  return pageStore.updatedAt
-    ? // -> The fields luxon's DATETIME_MED expanded to, so the bar reads exactly as before -- and in
-      //    the interface's language, since it is set inside a sentence written in it
-      Temporal.Instant.from(pageStore.updatedAt).toLocaleString(locale.value, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-    : 'N/A'
+  return pageStore.updatedAt ? userStore.formatDateTime(t, pageStore.updatedAt) : 'N/A'
 })
 
 /** The blog this page is a post of, as a route on this site. Null-safe: the line is `v-if`'d on it. */

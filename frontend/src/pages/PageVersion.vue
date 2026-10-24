@@ -182,6 +182,7 @@ import { flattenToc } from '@/helpers/toc'
 
 import { useEditorStore } from '@/stores/editor'
 import { useSiteStore } from '@/stores/site'
+import { useUserStore } from '@/stores/user'
 
 import FooterNav from '@/components/FooterNav.vue'
 import PageToc from '@/components/PageToc.vue'
@@ -191,6 +192,7 @@ import PageVersionHeader from '@/components/PageVersionHeader.vue'
 
 const editorStore = useEditorStore()
 const siteStore = useSiteStore()
+const userStore = useUserStore()
 
 // ROUTER
 
@@ -317,18 +319,10 @@ const showToc = computed(() => {
 /**
  * When the snapshot was taken — what stands where the page view says "Last modified on".
  *
- * The same fields that view formats, so the two bars read alike.
+ * Formatted the same way that view formats it, so the two bars read alike.
  */
 const snapshotFrom = computed(() => {
-  return state.version?.versionDate
-    ? Temporal.Instant.from(state.version.versionDate).toLocaleString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      })
-    : 'N/A'
+  return state.version?.versionDate ? userStore.formatDateTime(t, state.version.versionDate) : 'N/A'
 })
 
 // WATCHERS
