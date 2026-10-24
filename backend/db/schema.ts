@@ -455,6 +455,38 @@ export const commentAnnotations = pgTable(
   (table) => [index('commentAnnotations_commentId_idx').on(table.commentId, table.position)]
 )
 
+// FEEDBACK STATUSES -------------------
+/**
+ * Where an idea on a feedback board stands: Open, Under Review, Planned, In Progress, Completed or
+ * Closed. See `models/feedback.ts`.
+ *
+ * **No row means `open`.** An idea is any page in a board's folder, and nothing is written on it to
+ * say so -- so creating one writes nothing here, and a page moved into a board is an open idea without
+ * anything having to notice. A row left behind by an idea moved out of its board is harmless: nothing
+ * reads it until the page is in a board again, and then it is that page's status.
+ *
+ * A table rather than a column or a field of `pages.config`, because a status is what the board's
+ * maintainers say about an idea rather than part of it: setting one must not make a page version,
+ * re-render, re-index or copy the page to a storage target, all of which a page write does. Its
+ * history is the audit log (`setFeedbackStatus`); only the current status is kept here.
+ */
+export const feedbackStatuses = pgTable(
+  'feedbackStatuses',
+  {
+    pageId: uuid()
+      .primaryKey()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    /** One of `FEEDBACK_STATUSES`, checked by the model rather than a postgres enum. */
+    status: varchar({ length: 32 }).notNull(),
+    /** The comment posted with the latest change, if one was. Cleared when that comment goes. */
+    commentId: uuid().references(() => comments.id, { onDelete: 'set null' }),
+    updatedAt: timestamp().notNull().defaultNow(),
+    /** Who set it. Kept as an id only, as a resolution is: a status is a state, not something said. */
+    updatedById: uuid().references(() => users.id, { onDelete: 'set null' })
+  },
+  (table) => [index('feedbackStatuses_status_idx').on(table.status)]
+)
+
 // GLOSSARY ----------------------------
 
 /**
@@ -1181,7 +1213,12 @@ export const pages = pgTable(
       see a clear path. It is also the index the link table resolves against: "is there a page at this
       address" is asked once per link on a page.
     */
-    uniqueIndex('pages_siteId_locale_path_idx').on(table.siteId, table.locale, table.path)
+    uniqueIndex('pages_siteId_locale_path_idx').on(table.siteId, table.locale, table.path),
+    // -> Every feedback board, which page access is resolved against and so is held in memory and
+    //    read again whenever one changes (`models/feedback.ts`). A handful of rows out of every page
+    index('pages_feedback_boards_idx')
+      .on(table.siteId)
+      .where(sql`"editor" = 'feedback'`)
   ]
 )
 
@@ -1466,7 +1503,12 @@ export const pageRatings = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.pageId, table.userId] }),
-    index('pageRatings_userId_idx').on(table.userId)
+    index('pageRatings_userId_idx').on(table.userId),
+    // -> A feedback board's Trending sort: the upvotes cast in the last two weeks, without reading
+    //    every vote ever cast to find them (`models/feedback.ts`)
+    index('pageRatings_recent_upvotes_idx')
+      .on(table.updatedAt)
+      .where(sql`"kind" = 'thumbs' AND "value" = 1`)
   ]
 )
 

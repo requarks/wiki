@@ -208,7 +208,7 @@ class PageProblems {
         searchVectorMissing: sql<boolean>`${pagesTable.ts} is null`,
         bodylessContent: sql<
           string | null
-        >`case when ${pagesTable.editor} in ('redirect', 'blog') then ${pagesTable.content} end`,
+        >`case when ${pagesTable.editor} in ('redirect', 'blog', 'feedback') then ${pagesTable.content} end`,
         treeId: treeTable.id,
         treeType: treeTable.type,
         treeSiteId: treeTable.siteId,
@@ -422,7 +422,7 @@ class PageProblems {
   }
 
   /**
-   * A redirection's or a blog's settings document, read the way saving it would.
+   * A redirection's, a blog's or a feedback board's settings document, read the way saving it would.
    *
    * Two checks, because they are two different breakages: a document that is not a JSON object at
    * all (what the editor opens is blank, and a blog quietly falls back to every default), and one that

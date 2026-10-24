@@ -758,8 +758,9 @@ function purgeRevokedKeys() {
  * {@link purgeSampleContent} can take them all away again — the blog and its posts included, since
  * the purge asks about the tag and nothing else.
  *
- * Three kinds of page come out of it: the markdown set under `/sample`, a blog at `/my-blog`, and
- * the posts filed under that blog. See `SAMPLE_PAGES` and `SAMPLE_BLOG` in `helpers/sampleContent`.
+ * Five kinds of page come out of it: the markdown set under `/sample`, a blog at `/my-blog` and the
+ * posts filed under it, and a feedback board at `/feedback` and the ideas filed in it. See
+ * `SAMPLE_PAGES`, `SAMPLE_BLOG` and `SAMPLE_BOARD` in `helpers/sampleContent`.
  * One of the markdown set, `SAMPLE_DISCUSSION`, then has a discussion written onto its Talk tab. And
  * where the site has no home page yet, one is written linking to all of them (`buildSampleHome`).
  *
@@ -782,9 +783,14 @@ async function generateSampleContent() {
     SAMPLE_DISCUSSION,
     SAMPLE_BLOG,
     SAMPLE_BLOG_POSTS,
+    SAMPLE_BOARD,
+    SAMPLE_IDEA_ICON,
+    SAMPLE_IDEAS,
+    SAMPLE_IDEA_DISCUSSION,
     buildSampleHome
   } = await import('@/helpers/sampleContent')
   const { serializeBlog } = await import('@/helpers/pageBlog')
+  const { serializeBoard } = await import('@/helpers/pageFeedback')
   /*
     Asked before the confirmation rather than left to the create call to refuse, so that the count it
     shows is what will be written, and so that a home page somebody wrote is not reported as a failure.
@@ -805,8 +811,9 @@ async function generateSampleContent() {
     ...SAMPLE_PAGES,
     SAMPLE_DISCUSSION.page
   ]
-  // -> The blog's own front page as well as its posts: it is a page that gets written like any other
-  const total = markdownPages.length + 1 + SAMPLE_BLOG_POSTS.length
+  // -> The blog's and the board's own front pages as well as what is under them: each is a page that
+  //    gets written like any other
+  const total = markdownPages.length + 1 + SAMPLE_BLOG_POSTS.length + 1 + SAMPLE_IDEAS.length
   confirm({
     title: t('admin.utilities.generateSample'),
     message: t('admin.utilities.generateSampleConfirm', {
@@ -842,7 +849,9 @@ async function generateSampleContent() {
         not be fetched costs a missing picture rather than a page.
       */
       const icons = new Set(
-        [SAMPLE_BLOG, ...markdownPages, ...SAMPLE_BLOG_POSTS].map((page) => page.icon)
+        [SAMPLE_BLOG, SAMPLE_BOARD, ...markdownPages, ...SAMPLE_BLOG_POSTS]
+          .map((page) => page.icon)
+          .concat(SAMPLE_IDEA_ICON)
       )
       for (const page of markdownPages) {
         for (const [, name] of page.content.matchAll(/\bicon="([a-z0-9-]+:[a-z0-9-]+)"/g)) {
@@ -884,6 +893,24 @@ async function generateSampleContent() {
           editor: 'markdown',
           render: md.render(post.content, { pagePath: post.path }),
           publishStartDate: post.publishedAt
+        })),
+        /*
+          A feedback board, the same way: a settings document for the front page, and ordinary
+          markdown pages in its folder for the ideas -- written after the board, since an idea is one
+          by having a board for a parent. Their statuses, votes and a discussion follow once they exist.
+        */
+        {
+          ...SAMPLE_BOARD,
+          editor: 'feedback',
+          content: serializeBoard(SAMPLE_BOARD.settings)
+        },
+        ...SAMPLE_IDEAS.map((idea) => ({
+          ...idea,
+          icon: SAMPLE_IDEA_ICON,
+          // -> As a submitted idea is created (`api/feedback.ts`)
+          showSidebar: false,
+          editor: 'markdown',
+          render: md.render(idea.content, { pagePath: idea.path })
         }))
       ]
 
@@ -909,6 +936,8 @@ async function generateSampleContent() {
 
       let created = 0
       let discussionPageId = null
+      /** The ideas written, by path, for their statuses and votes below. */
+      const ideaIds = new Map()
       for (const page of documents) {
         try {
           const resp = await API_CLIENT.post(`sites/${siteId}/pages`, {
@@ -921,6 +950,7 @@ async function generateSampleContent() {
               content: page.content,
               ...(page.render ? { render: page.render } : {}),
               ...(page.publishStartDate ? { publishStartDate: page.publishStartDate } : {}),
+              ...(page.showSidebar === false ? { showSidebar: false } : {}),
               // -> The tag the purge looks for, first, then whatever this page is about
               tags: [SAMPLE_CONTENT_TAG, ...page.tags],
               publishState: 'published'
@@ -931,6 +961,9 @@ async function generateSampleContent() {
           }
           if (page.path === SAMPLE_DISCUSSION.page.path) {
             discussionPageId = resp.page.id
+          }
+          if (SAMPLE_IDEAS.some((idea) => idea.path === page.path)) {
+            ideaIds.set(page.path, resp.page.id)
           }
           created++
         } catch (err) {
@@ -971,6 +1004,60 @@ async function generateSampleContent() {
           }).json()
         } catch (err) {
           failures.push(`${SAMPLE_DISCUSSION.page.path} comments — ${apiErrorMessage(err)}`)
+        }
+      }
+
+      /*
+        Where each idea stands, through the status route -- with its comment where it has one, which
+        is how a maintainer's answer gets into the discussion -- and this account's vote on a few of
+        them, so that Top has something to sort by. The board's own discussion follows, through the
+        same endpoint the page discussion above was written with.
+      */
+      for (const idea of SAMPLE_IDEAS) {
+        const pageId = ideaIds.get(idea.path)
+        if (!pageId) {
+          continue
+        }
+        try {
+          if (idea.status !== 'open') {
+            await API_CLIENT.put(`sites/${siteId}/feedback/ideas/${pageId}/status`, {
+              json: {
+                status: idea.status,
+                ...(idea.statusComment && { comment: idea.statusComment })
+              }
+            }).json()
+          }
+          if (idea.vote) {
+            await API_CLIENT.put(`sites/${siteId}/pages/${pageId}/rating`, {
+              json: { value: 1 }
+            }).json()
+          }
+        } catch (err) {
+          failures.push(`${idea.path} status — ${apiErrorMessage(err)}`)
+        }
+      }
+      const ideaDiscussionId = ideaIds.get(SAMPLE_IDEA_DISCUSSION.path)
+      if (ideaDiscussionId) {
+        const now = Temporal.Now.instant()
+        const toComment = ({ author, content, hoursAgo }) => ({
+          author,
+          content,
+          createdAt: hoursBefore(now, hoursAgo)
+        })
+        try {
+          await API_CLIENT.post('system/sample-content/comments', {
+            json: {
+              siteId,
+              pageId: ideaDiscussionId,
+              authors: SAMPLE_IDEA_DISCUSSION.authors,
+              threads: SAMPLE_IDEA_DISCUSSION.threads.map((thread) => ({
+                ...toComment(thread),
+                replies: (thread.replies ?? []).map(toComment)
+              }))
+            }
+          }).json()
+        } catch (err) {
+          failures.push(`${SAMPLE_IDEA_DISCUSSION.path} comments — ${apiErrorMessage(err)}`)
         }
       }
 

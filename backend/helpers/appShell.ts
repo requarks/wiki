@@ -6,6 +6,7 @@ import {
   decodeUrlPath,
   htmlEscape,
   isPageUrl,
+  markdownToPlainText,
   normalizePagePath,
   originOf,
   splitLocalePath
@@ -407,6 +408,47 @@ async function bodyForBlog(siteId: string, page: PageDescription): Promise<strin
 }
 
 /**
+ * A feedback board's front page, for a client that will not run the app — the blog's arrangement
+ * (`bodyForBlog`) for the board's own listing: its introduction and its first ideas as the board
+ * opens on them, each a title, a description and a URL.
+ *
+ * Only for a board the public may read, which is the only kind that gets here, and every idea on a
+ * board is ruled as the board — so the listing needs no reader of its own beyond "nobody", and only
+ * live ideas are in it.
+ */
+async function bodyForBoard(siteId: string, page: PageDescription): Promise<string> {
+  const board = WIKI.models.feedback.boardAt(siteId, page.locale, page.path)
+  if (!board) {
+    return ''
+  }
+  const { ideas } = await WIKI.models.feedback.listing({
+    board,
+    viewerId: null,
+    seeUnpublished: false
+  })
+  // -> Basic markdown, which there is nothing here to render: its words, a paragraph each
+  const intro = markdownToPlainText(board.settings.intro)
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p>${htmlEscape(paragraph)}</p>`)
+    .join('')
+  const items = ideas
+    .slice(0, BLOG_CRAWLER_POSTS)
+    .map((idea) => {
+      const href = htmlEscape(WIKI.models.pages.urlFor(siteId, page.locale, idea.path))
+      const title = htmlEscape(idea.title)
+      const description = idea.description ? ` &mdash; ${htmlEscape(idea.description)}` : ''
+      return `<li><a href="${href}">${title}</a>${description}</li>`
+    })
+    .join('')
+  if (!intro && items.length < 1) {
+    return ''
+  }
+  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${intro}<ul>${items}</ul></div>`
+}
+
+/**
  * The fragments for a client that will never run the app — a crawler, an unfurl card, a reader with
  * JavaScript off.
  *
@@ -462,8 +504,14 @@ async function fragmentsForCrawler(
 
   return {
     head: headForPage(originOf(req), siteId, siteConfig, page),
-    // -> A blog keeps its body somewhere else: in the pages under it, rather than in a column
-    body: page.editor === 'blog' ? await bodyForBlog(siteId, page) : bodyForPage(page),
+    // -> A blog and a feedback board keep their bodies somewhere else: in the pages under them,
+    //    rather than in a column
+    body:
+      page.editor === 'blog'
+        ? await bodyForBlog(siteId, page)
+        : page.editor === 'feedback'
+          ? await bodyForBoard(siteId, page)
+          : bodyForPage(page),
     status: 200,
     robots: robotsTagFor(siteId, page.isIndexable)
   }

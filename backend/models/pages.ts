@@ -35,7 +35,8 @@ const EDITOR_CONTENT_TYPES: Record<string, string> = {
   asciidoc: 'adoc',
   excalidraw: 'excalidraw',
   redirect: 'redirect',
-  blog: 'blog'
+  blog: 'blog',
+  feedback: 'feedback'
 }
 
 /**
@@ -78,7 +79,8 @@ export const PAGE_FILE_EXTENSIONS: Record<string, string> = {
   */
   excalidraw: 'excalidraw',
   redirect: 'json',
-  blog: 'json'
+  blog: 'json',
+  feedback: 'json'
 }
 
 /** For a content type added since this was written. */
@@ -154,6 +156,14 @@ const REDIRECT_EDITOR = 'redirect'
 const BLOG_EDITOR = 'blog'
 
 /**
+ * The editor whose pages are a feedback board's front page.
+ *
+ * A blog's sibling: a bodyless destination whose content column holds how the board behaves
+ * (`FeedbackBoardContent`), and whose ideas are the pages in its folder. See `models/feedback.ts`.
+ */
+export const FEEDBACK_EDITOR = 'feedback'
+
+/**
  * The editors whose pages have no body, and whose content column holds a settings document instead.
  *
  * A set rather than a flag per editor, because the same three questions get asked of each of them in
@@ -163,11 +173,16 @@ const BLOG_EDITOR = 'blog'
  * redirection is asked about *as a redirection*: staying out of the sitemap, never being indexable
  * and never being searchable are facts about a doorway, not about having no body.
  */
-const BODYLESS_EDITORS = new Set([REDIRECT_EDITOR, BLOG_EDITOR])
+const BODYLESS_EDITORS = new Set([REDIRECT_EDITOR, BLOG_EDITOR, FEEDBACK_EDITOR])
 
 /** Whether `editor` writes a settings document rather than something to read. */
 export function isBodylessEditor(editor: string): boolean {
   return BODYLESS_EDITORS.has(editor)
+}
+
+/** Every editor that writes a settings document, for a query keeping their pages out of a listing. */
+export function bodylessEditors(): string[] {
+  return [...BODYLESS_EDITORS]
 }
 
 /** Whether `editor` is one this wiki has an editor for, which is what knowing its content type is. */
@@ -188,6 +203,8 @@ export function normalizeBodylessContent(
       return normalizeRedirectContent(content)
     case BLOG_EDITOR:
       return normalizeBlogContent(content)
+    case FEEDBACK_EDITOR:
+      return normalizeFeedbackContent(content)
     default:
       return content
   }
@@ -357,6 +374,8 @@ export interface Page {
   scriptCss: string
   navigationId: string | null
   navigationMode: string
+  /** Who created the page, as against who saved the version that stands. */
+  creatorId: string
   authorId: string
   authorName: string
   /** Whether the account that saved the version that stands has uploaded an avatar. */
@@ -862,6 +881,209 @@ export function parseBlogContent(content: string | null | undefined): BlogConten
   }
 }
 
+/** The orders a feedback board's listing can be read in. The default leads. */
+export const FEEDBACK_SORTS = ['top', 'newest', 'recent', 'trending'] as const
+
+export type FeedbackSort = (typeof FEEDBACK_SORTS)[number]
+
+/** One category a board files its ideas under: a page tag, and the name it is shown under. */
+export interface FeedbackCategory {
+  tag: string
+  label: string
+}
+
+/**
+ * How a feedback board behaves, as its front page's content column holds it.
+ *
+ * Like a blog's, nothing here is a list of ideas: they are the pages in the board's folder, worked
+ * out at read time (`models/feedback.ts`). Unlike a blog's there is no depth — ideas are filed flat,
+ * by the submission form — and no statuses to start on, which follow from the sort instead
+ * (`defaultStatusesFor`).
+ */
+export interface FeedbackBoardContent {
+  /** An introduction shown above the listing, in basic markdown rendered in the reader's browser. */
+  intro: string
+  /** The tags that count as categories on this board, in the order it offers them. */
+  categories: FeedbackCategory[]
+  /** Whether the submission form offers the categories. Off, ideas arrive uncategorized. */
+  submitterCategories: boolean
+  /** The order the listing opens in. */
+  sort: FeedbackSort
+  /** How many ideas a page of the listing holds. */
+  perPage: number
+  /** Whether new ideas may be submitted from the board. */
+  acceptsIdeas: boolean
+  /** Whether its ideas may be voted on. Off freezes the counts. */
+  voting: boolean
+  /**
+   * A notice at the top of the submission form, above the title, in the introduction's markdown --
+   * where the board sends what it does not take (bugs, say, or ideas that belong to another site).
+   * Empty shows nothing.
+   */
+  submitNotice: string
+}
+
+/** What a board starts as, and what any missing field falls back to. */
+export const FEEDBACK_DEFAULTS: FeedbackBoardContent = {
+  intro: '',
+  categories: [],
+  submitterCategories: true,
+  sort: 'top',
+  perPage: 20,
+  acceptsIdeas: true,
+  voting: true,
+  submitNotice: ''
+}
+
+/** As many ideas as a page of a board's listing may hold, for the same reason a blog has one. */
+const FEEDBACK_MAX_PER_PAGE = 100
+
+/** As many categories as one board may define, which is already more than a sidebar can show. */
+const FEEDBACK_MAX_CATEGORIES = 50
+
+/** As long as a category's tag or label may be, matching what the tags column is used to holding. */
+const FEEDBACK_MAX_CATEGORY_LENGTH = 100
+
+/**
+ * A board's categories as one canonical list: each tag trimmed and lowercased, each label trimmed and
+ * defaulting to its tag, the empty ones dropped, and a tag named twice kept once where it first
+ * appeared.
+ *
+ * Lowercased because a tag is compared lowercased wherever a rule matches one (`helpers/pageRules.ts`),
+ * and a board whose `Editor` and `editor` were two categories would count one idea under both.
+ */
+function normalizeFeedbackCategories(value: unknown): FeedbackCategory[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const seen = new Set<string>()
+  const categories: FeedbackCategory[] = []
+  for (const entry of value) {
+    const tag = typeof entry?.tag === 'string' ? entry.tag.trim().toLowerCase() : ''
+    if (!tag || seen.has(tag)) {
+      continue
+    }
+    const label = typeof entry.label === 'string' && entry.label.trim() ? entry.label.trim() : tag
+    seen.add(tag)
+    categories.push({
+      tag: tag.slice(0, FEEDBACK_MAX_CATEGORY_LENGTH),
+      label: label.slice(0, FEEDBACK_MAX_CATEGORY_LENGTH)
+    })
+  }
+  return categories
+}
+
+/**
+ * Read a board's settings back out of what the editor sent.
+ *
+ * The blog's rules (`normalizeBlogContent`): every field defaulted rather than required, a number the
+ * listing cannot serve refused, and the document re-serialized so that a save changing nothing
+ * reports no change.
+ */
+function normalizeFeedbackContent(content: string | undefined): string {
+  let parsed: any
+  try {
+    parsed = JSON.parse(content ?? '')
+  } catch {
+    parsed = null
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    parsed = {}
+  }
+  const perPage = Number.parseInt(parsed.perPage, 10)
+  if (parsed.perPage !== undefined && (!Number.isFinite(perPage) || perPage < 1)) {
+    throw new CustomError(
+      'pageFeedbackInvalidPerPage',
+      'A feedback board must show at least one idea per page.'
+    )
+  }
+  const intro = typeof parsed.intro === 'string' ? parsed.intro.trim() : FEEDBACK_DEFAULTS.intro
+  if (intro.length > BLOG_MAX_INTRO) {
+    throw new CustomError(
+      'pageFeedbackIntroTooLong',
+      `A feedback board's introduction cannot be longer than ${BLOG_MAX_INTRO} characters.`
+    )
+  }
+  const submitNotice =
+    typeof parsed.submitNotice === 'string'
+      ? parsed.submitNotice.trim()
+      : FEEDBACK_DEFAULTS.submitNotice
+  if (submitNotice.length > BLOG_MAX_INTRO) {
+    throw new CustomError(
+      'pageFeedbackSubmitNoticeTooLong',
+      `A feedback board's submission notice cannot be longer than ${BLOG_MAX_INTRO} characters.`
+    )
+  }
+  const categories = normalizeFeedbackCategories(parsed.categories)
+  if (categories.length > FEEDBACK_MAX_CATEGORIES) {
+    throw new CustomError(
+      'pageFeedbackTooManyCategories',
+      `A feedback board cannot have more than ${FEEDBACK_MAX_CATEGORIES} categories.`
+    )
+  }
+  const board: FeedbackBoardContent = {
+    intro,
+    categories,
+    submitterCategories:
+      typeof parsed.submitterCategories === 'boolean'
+        ? parsed.submitterCategories
+        : FEEDBACK_DEFAULTS.submitterCategories,
+    sort: FEEDBACK_SORTS.includes(parsed.sort) ? parsed.sort : FEEDBACK_DEFAULTS.sort,
+    perPage: Number.isFinite(perPage)
+      ? Math.min(perPage, FEEDBACK_MAX_PER_PAGE)
+      : FEEDBACK_DEFAULTS.perPage,
+    acceptsIdeas:
+      typeof parsed.acceptsIdeas === 'boolean'
+        ? parsed.acceptsIdeas
+        : FEEDBACK_DEFAULTS.acceptsIdeas,
+    voting: typeof parsed.voting === 'boolean' ? parsed.voting : FEEDBACK_DEFAULTS.voting,
+    submitNotice
+  }
+  return JSON.stringify(board)
+}
+
+/**
+ * Read a stored board's settings, for a caller that has the page in hand.
+ *
+ * Never throws, for the reason `parseBlogContent` never does: a board whose content cannot be read is
+ * a board with every setting at its default. The editor's own reading of the same document is
+ * `frontend/src/helpers/pageFeedback.js`.
+ */
+export function parseFeedbackContent(content: string | null | undefined): FeedbackBoardContent {
+  let parsed: any
+  try {
+    parsed = JSON.parse(content ?? '')
+  } catch {
+    parsed = null
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ...FEEDBACK_DEFAULTS, categories: [] }
+  }
+  const perPage = Number.parseInt(parsed.perPage, 10)
+  return {
+    intro: typeof parsed.intro === 'string' ? parsed.intro : FEEDBACK_DEFAULTS.intro,
+    categories: normalizeFeedbackCategories(parsed.categories).slice(0, FEEDBACK_MAX_CATEGORIES),
+    submitterCategories:
+      typeof parsed.submitterCategories === 'boolean'
+        ? parsed.submitterCategories
+        : FEEDBACK_DEFAULTS.submitterCategories,
+    sort: FEEDBACK_SORTS.includes(parsed.sort) ? parsed.sort : FEEDBACK_DEFAULTS.sort,
+    perPage:
+      Number.isFinite(perPage) && perPage > 0
+        ? Math.min(perPage, FEEDBACK_MAX_PER_PAGE)
+        : FEEDBACK_DEFAULTS.perPage,
+    acceptsIdeas:
+      typeof parsed.acceptsIdeas === 'boolean'
+        ? parsed.acceptsIdeas
+        : FEEDBACK_DEFAULTS.acceptsIdeas,
+    voting: typeof parsed.voting === 'boolean' ? parsed.voting : FEEDBACK_DEFAULTS.voting,
+    submitNotice:
+      typeof parsed.submitNotice === 'string'
+        ? parsed.submitNotice
+        : FEEDBACK_DEFAULTS.submitNotice
+  }
+}
+
 /**
  * Pages model
  *
@@ -957,6 +1179,7 @@ class Pages {
       scriptCss: locked ? '' : (scripts.css ?? ''),
       navigationId: row.navigationId ?? null,
       navigationMode: row.navigationMode ?? 'inherit',
+      creatorId: row.creatorId ?? row.authorId,
       authorId: row.authorId,
       authorName: row.authorName ?? '',
       authorHasAvatar: row.authorHasAvatar ?? false,
@@ -2056,15 +2279,15 @@ class Pages {
     }
 
     /*
-      A blog's posts are the pages under its path, so the folder at that path is where its author is
-      about to be working — and nothing has put one there yet. Created here so that the blog has
+      A blog's posts are the pages under its path, and a feedback board's ideas the pages in its
+      folder, so the folder at that path is where its author is about to be working — and nothing has put one there yet. Created here so that the blog has
       somewhere to write its first post into rather than looking like a dead end in the file manager.
 
       Deliberately OUTSIDE the rollback above: the folder is a convenience and the blog is complete
       without it, so a folder that cannot be made must not take the page with it. `ensureFolder` never
       throws for that reason.
     */
-    if (editor === BLOG_EDITOR) {
+    if (editor === BLOG_EDITOR || editor === FEEDBACK_EDITOR) {
       await WIKI.models.blogs.ensureFolder({ siteId, locale, path, title })
     }
 
@@ -2126,6 +2349,8 @@ class Pages {
       alternates with it.
     */
     invalidateAppShellCache()
+    // -> A board's front page is what page access is resolved against: see `models/feedback.ts`
+    await WIKI.models.feedback.pageChanged(editor)
 
     return { page: (await this.getPage({ siteId, id: page.id })) as Page, versionId }
   }
@@ -2352,6 +2577,8 @@ class Pages {
       })
     }
     invalidateAppShellCache()
+    // -> A board's front page is what page access is resolved against: see `models/feedback.ts`
+    await WIKI.models.feedback.pageChanged(updated.editor)
 
     return { page: updated, versionId }
   }
@@ -2642,6 +2869,8 @@ class Pages {
       icon: page.icon
     })
     invalidateAppShellCache()
+    // -> A board's front page is what page access is resolved against: see `models/feedback.ts`
+    await WIKI.models.feedback.pageChanged(moved.editor)
     return { page: moved, versionId }
   }
 
@@ -2950,6 +3179,8 @@ class Pages {
       authorId: actor.id
     })
     invalidateAppShellCache()
+    // -> A board's front page is what page access is resolved against: see `models/feedback.ts`
+    await WIKI.models.feedback.pageChanged(page.editor)
     return { page, versionId }
   }
 
@@ -3122,7 +3353,7 @@ class Pages {
     }
 
     // -> Outside the rollback, as on a create: the folder is a convenience, see `createPage`
-    if (editor === BLOG_EDITOR) {
+    if (editor === BLOG_EDITOR || editor === FEEDBACK_EDITOR) {
       await WIKI.models.blogs.ensureFolder({ siteId, locale, path, title: page.title })
     }
 
@@ -3171,6 +3402,8 @@ class Pages {
     })
 
     invalidateAppShellCache()
+    // -> A board's front page is what page access is resolved against: see `models/feedback.ts`
+    await WIKI.models.feedback.pageChanged(editor)
 
     return { page: (await this.getPage({ siteId, id: page.id })) as Page, versionId }
   }
@@ -3317,6 +3550,8 @@ class Pages {
       })
     }
     invalidateAppShellCache()
+    // -> Any of them may have been a feedback board's front page, which access is resolved against
+    await WIKI.models.feedback.reloadBoardsEverywhere()
     WIKI.logger.debug(`Deleted ${entries.length} page(s) that went with a deleted folder.`)
   }
 

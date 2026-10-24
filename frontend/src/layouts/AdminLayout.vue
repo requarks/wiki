@@ -521,6 +521,10 @@ const overlays = {
     loader: () => import('../components/EditorMarkdownConfigOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  EditorFeedbackConfig: defineAsyncComponent({
+    loader: () => import('../components/EditorFeedbackConfigOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   GroupEditOverlay: defineAsyncComponent({
     loader: () => import('../components/GroupEditOverlay.vue'),
     loadingComponent: LoadingGeneric

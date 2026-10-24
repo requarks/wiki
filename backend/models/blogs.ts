@@ -6,7 +6,7 @@ import {
   encodeTreePath,
   normalizeNewPagePath
 } from '../helpers/common.ts'
-import { isBodylessEditor, parseBlogContent, type BlogContent } from './pages.ts'
+import { FEEDBACK_EDITOR, isBodylessEditor, parseBlogContent, type BlogContent } from './pages.ts'
 import type { AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import { liveCondition } from '../helpers/publishing.ts'
@@ -38,6 +38,14 @@ export interface BlogRef {
   locale: string
   settings: BlogContent
 }
+
+/** The editors whose pages list the pages under them: a blog, and a feedback board. */
+const LISTING_EDITORS = ['blog', FEEDBACK_EDITOR]
+
+/** The listing page a page sits under, as `listingFor` answers. */
+export type ListingRef =
+  | { kind: 'blog'; blog: BlogRef }
+  | { kind: 'feedback'; id: string; path: string; title: string }
 
 /** One post, as a listing draws it. */
 export interface BlogPost {
@@ -160,19 +168,20 @@ class Blogs {
   }
 
   /**
-   * The blog a page belongs to, or null for a page that is not in one.
+   * The listing page a page sits under — a blog or a feedback board — or null for a page in neither.
    *
    * Asked of every page view, so it is one indexed read and not a scan: the candidates are the page's
    * own ancestors, which is a handful of paths a path already names, so the lookup is an `IN` over the
    * same unique index `blogAt` uses. A page at the site root has no ancestors and costs no query at
    * all.
    *
-   * The NEAREST ancestor wins. A blog inside a blog is its own blog — its posts belong to it and not
-   * to the one above, which is also what `postsFor` implements coming the other way.
+   * The NEAREST ancestor wins, whichever kind it is. A blog inside a blog is its own blog, and so is a
+   * blog inside a board, or a board inside a blog — its posts or ideas belong to it and not to the
+   * one above, which is also what `postsFor` implements coming the other way.
    *
    * The page itself is never the answer: a blog's front page is not one of its own posts.
    */
-  async blogFor(siteId: string, locale: string, path: string): Promise<BlogRef | null> {
+  async listingFor(siteId: string, locale: string, path: string): Promise<ListingRef | null> {
     const parts = path.split('/').filter((part) => part.length > 0)
     if (parts.length < 2) {
       return null
@@ -187,14 +196,15 @@ class Blogs {
         path: pagesTable.path,
         title: pagesTable.title,
         locale: pagesTable.locale,
-        content: pagesTable.content
+        content: pagesTable.content,
+        editor: pagesTable.editor
       })
       .from(pagesTable)
       .where(
         and(
           eq(pagesTable.siteId, siteId),
           eq(pagesTable.locale, locale),
-          eq(pagesTable.editor, 'blog'),
+          inArray(pagesTable.editor, LISTING_EDITORS),
           inArray(pagesTable.path, ancestors)
         )
       )
@@ -203,7 +213,19 @@ class Blogs {
     }
     // -> The nearest one, which is the longest path: every row here is an ancestor of the same page
     const nearest = rows.reduce((best, row) => (row.path.length > best.path.length ? row : best))
-    return { ...nearest, settings: parseBlogContent(nearest.content) }
+    if (nearest.editor === FEEDBACK_EDITOR) {
+      return { kind: 'feedback', id: nearest.id, path: nearest.path, title: nearest.title }
+    }
+    return {
+      kind: 'blog',
+      blog: {
+        id: nearest.id,
+        path: nearest.path,
+        title: nearest.title,
+        locale: nearest.locale,
+        settings: parseBlogContent(nearest.content)
+      }
+    }
   }
 
   /**
@@ -394,12 +416,13 @@ class Blogs {
     })
 
     /*
-      Where this blog stops. A blog nested inside this one owns everything below it, so the outer
-      listing ends at its front page — otherwise the same post appears in two blogs, dated and
-      attributed by two sets of settings that need not agree.
+      Where this blog stops. A blog or a feedback board nested inside this one owns everything below
+      it, so the outer listing ends at its front page — otherwise the same post appears in two blogs,
+      dated and attributed by two sets of settings that need not agree, or a board's ideas turn up as
+      the posts of the blog it sits in.
     */
     const nestedRoots = candidates
-      .filter((row) => row.editor === 'blog')
+      .filter((row) => LISTING_EDITORS.includes(row.editor))
       .map((row) => `${row.path}/`)
 
     const posts = candidates.filter((row) => {

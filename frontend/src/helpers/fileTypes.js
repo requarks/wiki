@@ -28,6 +28,11 @@ export default {
   bz2: {
     icon: 'img:/_assets/icons/color-archive.svg'
   },
+  // -> Not a file extension either, like `blog`: a feedback board's front page, whose content is
+  //    the ideas filed under it
+  feedback: {
+    icon: 'img:/_assets/icons/fluent-idea.svg'
+  },
   css: {
     icon: 'img:/_assets/icons/color-css-filetype.svg'
   },

@@ -5,7 +5,7 @@ import { useSiteStore } from './site'
 import { useUserStore } from './user'
 
 /** What reading a page's content counts as having seen. */
-const CONTENT_CATEGORIES = ['watchedPage', 'pageCreated']
+const CONTENT_CATEGORIES = ['watchedPage', 'pageCreated', 'feedbackStatus']
 
 /** What reading a page's discussion counts as having seen. */
 const DISCUSSION_CATEGORIES = ['watchedPageComment', 'commentReply', 'mention']

@@ -211,6 +211,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'The passages of the article this comment is about, in the order they were picked. Only a comment that starts a thread has any.',
         items: { $ref: 'CommentAnnotation#' }
+      },
+      statusChange: {
+        type: ['object', 'null'],
+        description:
+          'The status change this comment was posted with, on a feedback board’s idea — the comment explaining why an idea moved. Null for every other comment.',
+        properties: {
+          from: { $ref: 'FeedbackStatus#' },
+          to: { $ref: 'FeedbackStatus#' }
+        }
       }
     }
   })

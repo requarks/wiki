@@ -12,7 +12,8 @@ import type { NotificationCategory } from '../types.ts'
 export const mention: NotificationCategory = {
   key: 'mention',
   section: 'discussions',
-  events: ['comment:new', 'comment:edit'],
+  // -> And the comment a feedback board's status change was posted with, which is one too
+  events: ['comment:new', 'comment:edit', 'feedback:status'],
   scope: 'site',
   origins: ['user'],
   defaults: { inApp: true, email: true },

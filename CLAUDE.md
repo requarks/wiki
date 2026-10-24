@@ -589,8 +589,8 @@ that is already on it needs no permission from anybody.
 **Page rule permissions** are bound to paths, and to locales and sites: `read:pages`, `write:pages`,
 `review:pages`, `manage:pages`, `delete:pages`, `write:styles`, `write:scripts`, `read:source`,
 `read:history`, `read:assets`, `write:assets`, `manage:assets`, `read:comments`, `write:comments`,
-`manage:comments`, `manage:navigation`, `read:glossary`, `manage:glossary`, `read:notes`, `write:notes`
-(`PAGE_PERMISSIONS` in `models/groups.ts`). A group grants them through **rules**:
+`manage:comments`, `manage:navigation`, `read:glossary`, `manage:glossary`, `read:notes`, `write:notes`,
+`write:feedback` (`PAGE_PERMISSIONS` in `models/groups.ts`). A group grants them through **rules**:
 each rule names some of them (`roles`) plus how it addresses pages (`match` + `path`, or tags) and
 what it does with them (`mode`: ALLOW / DENY / FORCEALLOW). Nothing is granted by default, and when
 several rules match, the most specific one wins — `helpers/pageRules.ts` documents the ordering.
@@ -634,6 +634,14 @@ Consequences worth knowing:
   can open a shared note and only administrators can start one. The guests group may be granted
   `read:notes` (it is in `GUEST_ROLES`, not in the seeded DENY rule) and never `write:notes`, which
   `permissionsFor` refuses to a requester with no account regardless of what the rules say.
+- **Everything on a feedback board is ruled as the board**, all or nothing: every page permission on
+  anything at or under a board's path — its ideas, sub-folders, attachments, a blog nested in it — is
+  resolved against the board's own path and tags (`feedback.ruleRefFor`, which `checkAccess` asks
+  before resolving any rule). A rule written for a path below a board, or a tag rule matching an
+  idea's own tags, is never consulted; the group editor warns about the first. `write:feedback` is
+  submitting an idea and editing or withdrawing one's own while it is open, through
+  `api/feedback.ts` only. The Users group (and a new group) starts with it, so a board's own "accepts
+  ideas" switch is what opens it; guests never hold it. See [Feedback boards](#feedback-boards).
 - **A page that is not live is its editors' alone.** Live is `published`, or `scheduled` inside its
   window (`publishStartDate` inclusive, `publishEndDate` exclusive); the dates gate nothing on a
   `published` page, where `publishStartDate` is what a blog post is dated by. Any other page is seen —
@@ -1553,6 +1561,37 @@ selected: a screen reporting "no provider in use" because the master switch is o
 back as the truth. It says so in a banner instead. `selectedProvider` still answers empty for a stored
 key whose module has been dropped from the installation, which is the one case the screen cannot
 produce and has to describe.
+
+### Feedback boards
+
+Ideas proposed, voted on and answered. A board is a page written with the `feedback` editor and its
+ideas are the pages directly in its folder — the blog's model (`models/blogs.ts`), one level deep.
+**`dev/specs/feedback-boards.md` is the design**; `models/feedback.ts`, `api/feedback.ts`; on the
+frontend `PageFeedback.vue` (the listing), `PageFeedbackIdea.vue` (an idea's head) and the
+`Feedback*.vue` dialogs.
+
+- **Access is the board's, all or nothing** — see [Permissions](#permissions). `feedback.ruleRefFor`
+  reads an in-memory list of every board (`reloadBoards`), which is why it costs `checkAccess` no
+  query. Anything that creates, moves, retags or deletes a board's front page has to reload it:
+  `pages.*` mutations call `feedback.pageChanged(editor)`, folder moves and renames call
+  `reloadBoardsEverywhere`, and `reloadFeedbackBoards` carries it across an HA set. A notification is
+  checked in a worker with no list, so `notifications.emit` puts the board's ref on the event
+  (`PageSnapshot.ruleRef`).
+- **That is also what lets the listing be SQL** — filtered, counted, sorted and paged by the
+  database, where a blog reads every post and filters in code. Don't add a per-idea access check to
+  it.
+- **No `feedbackStatuses` row means `open`.** Status is not page content: setting one writes that
+  row (and the audit log), never a page version. Changing it takes `review:pages` or `manage:pages`
+  at the board.
+- **A status change with a comment is ONE `feedback:status` event**, and posts no `comment:new`:
+  `feedbackStatus` (author and voters), `watchedPageComment` and `mention` all react to it, so the
+  fan-out can deduplicate. The comment is written by `feedback.setStatus` inside the same
+  transaction, marked with `meta.feedbackStatus`.
+- **An upvote is a page rating**: on an idea always `thumbs` and only `+1`, regardless of the site's
+  ratings mode — the board's `voting` switch stands in for it (`api/ratings.ts`). Submitting votes for
+  the author.
+- **An idea's discussion is drawn under it** (`PageTalk` with `inline`), never on a Talk tab, and
+  cannot be annotated — the comment route refuses annotations on an idea.
 
 ### Emails
 

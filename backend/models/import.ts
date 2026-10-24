@@ -242,12 +242,12 @@ const SYSTEM_GROUP_SOURCE_IDS = { administrators: 1, guests: 2 }
 /**
  * Editors whose pages have no body to render.
  *
- * A redirection is a destination and a place in the tree, and a blog is an index of other pages;
- * neither has a stored render and neither ever gets one, so telling a reader that one is "waiting to
- * be rendered" would be waiting for something that is never coming — and counting them at the end
- * would report a migration as half-finished for ever.
+ * A redirection is a destination and a place in the tree, and a blog or a feedback board is an index
+ * of other pages; none has a stored render and none ever gets one, so telling a reader that one is
+ * "waiting to be rendered" would be waiting for something that is never coming — and counting them at
+ * the end would report a migration as half-finished for ever.
  */
-const BODYLESS_EDITORS = new Set(['redirect', 'blog'])
+const BODYLESS_EDITORS = new Set(['redirect', 'blog', 'feedback'])
 
 /**
  * 2.x's way of giving a page an emblem: an image anywhere in the body carrying this class.

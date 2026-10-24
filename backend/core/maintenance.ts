@@ -61,6 +61,7 @@ export default {
     await WIKI.models.sites.reloadCache()
     await WIKI.models.groups.reloadCache()
     await WIKI.models.approvals.reloadCache()
+    await WIKI.models.feedback.reloadBoards()
 
     WIKI.logger.info('Flushed all caches [ OK ]')
   },
@@ -103,6 +104,12 @@ export default {
       } else {
         WIKI.models.storage.targetCache.clear()
       }
+    })
+    // -> The feedback boards are held per instance as well, and every page access under one is
+    //    resolved against them: an instance that missed a new board would rule its ideas by their own
+    //    paths rather than by the board's
+    WIKI.events.inbound.on('reloadFeedbackBoards', async () => {
+      await WIKI.models.feedback.reloadBoards()
     })
     WIKI.events.inbound.on('reloadBlocks', async () => {
       await WIKI.models.blocks.refreshCustomIndex()

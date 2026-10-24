@@ -8,6 +8,7 @@ import {
   COMMENT_MAX_LENGTH,
   COMMENT_MIN_LENGTH
 } from '../models/comments.ts'
+import { takesComments } from '../models/feedback.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { AnnotationInput, CommentsProviderInput } from '../models/comments.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
@@ -394,7 +395,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Post a comment on a page',
         description:
-          'Needs `write:comments` on the page. A rule may grant it to the guests group, in which case a name and an email address are required of whoever is posting — the email is stored but never served, and is what the spam check is given.\n\nA comment that starts a thread may carry `annotations`: passages of the article, each with a note about it. That needs a signed-in account — an annotation is resolved later by its author, and a guest has no session to be recognized by. With at least one annotation the comment’s own `content` may be empty.\n\nThe site’s posting cooldown applies to everybody who is not a moderator, counted per account and per address for a guest; going over it answers 429 with `Retry-After`. With an Akismet key configured, a comment Akismet calls spam is refused.',
+          'Needs `write:comments` on the page. A rule may grant it to the guests group, in which case a name and an email address are required of whoever is posting — the email is stored but never served, and is what the spam check is given.\n\nA comment that starts a thread may carry `annotations`: passages of the article, each with a note about it. That needs a signed-in account — an annotation is resolved later by its author, and a guest has no session to be recognized by. With at least one annotation the comment’s own `content` may be empty.\n\nThe site’s posting cooldown applies to everybody who is not a moderator, counted per account and per address for a guest; going over it answers 429 with `Retry-After`. With an Akismet key configured, a comment Akismet calls spam is refused.\n\nOn an idea of a feedback board that is Completed or Closed, only somebody holding `review:pages` or `manage:pages` on it may post.',
         tags: ['Comments'],
         params: pageIdParam,
         body: {
@@ -460,12 +461,32 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'write:comments', page)) {
         return reply.forbidden('You are not allowed to comment on this page.')
       }
+      /*
+        A settled idea's discussion is closed to new comments and replies, except for whoever may move
+        the idea -- the same two permissions as the status route -- who may still answer in it. What
+        is there is kept and read, and edited or deleted under the usual rules.
+      */
+      if (WIKI.models.feedback.boardOfIdea(req.params.siteId, page.locale, page.path)) {
+        const { status } = await WIKI.models.feedback.statusOf(page.id)
+        if (
+          !takesComments(status) &&
+          !mayOnPage(req, 'review:pages', page) &&
+          !mayOnPage(req, 'manage:pages', page)
+        ) {
+          return reply.forbidden('This idea is settled, and its discussion takes no new comments.')
+        }
+      }
 
       const user = requestUser(req)
       const annotations = req.body.annotations ?? []
       if (annotations.length > 0) {
         if (!user) {
           return reply.forbidden('Annotating a page needs an account.')
+        }
+        // -> A feedback board's idea is discussed under it rather than annotated: its discussion is
+        //    drawn inline, where nothing offers to pick a passage, and this keeps the API to the same
+        if (WIKI.models.feedback.boardOfIdea(req.params.siteId, page.locale, page.path)) {
+          return reply.badRequest('An idea on a feedback board cannot be annotated.')
         }
         if (req.body.parentId) {
           return reply.badRequest(

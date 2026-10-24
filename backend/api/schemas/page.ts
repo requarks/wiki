@@ -292,6 +292,60 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           title: { type: 'string' }
         }
       },
+      feedback: {
+        type: ['object', 'null'],
+        description:
+          'The feedback board this page is an idea of, and where the idea stands — or null for a page that is not one. An idea is a page directly in a board’s folder, worked out per request rather than stored. Present when a page is fetched on its own.',
+        properties: {
+          board: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'The board front page’s path within the site.' },
+              title: { type: 'string' },
+              voting: { type: 'boolean' },
+              acceptsIdeas: { type: 'boolean' },
+              submitterCategories: { type: 'boolean' },
+              categories: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: { tag: { type: 'string' }, label: { type: 'string' } }
+                }
+              }
+            }
+          },
+          status: { $ref: 'FeedbackStatus#' },
+          statusUpdatedAt: { type: ['string', 'null'], format: 'date-time' },
+          statusUpdatedBy: {
+            type: ['object', 'null'],
+            properties: { id: { type: 'string', format: 'uuid' }, name: { type: 'string' } }
+          },
+          statusCommentId: {
+            type: ['string', 'null'],
+            format: 'uuid',
+            description: 'The comment posted with the latest status change, while it exists.'
+          },
+          submittedBy: {
+            type: ['object', 'null'],
+            description:
+              'Who submitted the idea: the page’s creator. Null when there is nobody to show — the account is gone, or is a system account. The submission time is the page’s own `createdAt`.',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              hasAvatar: { type: 'boolean' }
+            }
+          },
+          canSetStatus: {
+            type: 'boolean',
+            description: 'The requester holds `review:pages` or `manage:pages` on the board.'
+          },
+          canEditOwn: {
+            type: 'boolean',
+            description:
+              'The requester submitted this idea, it is still open, and they hold `write:feedback` on the board — so they may edit or withdraw it through the feedback routes.'
+          }
+        }
+      },
       viewer: {
         type: 'object',
         description:

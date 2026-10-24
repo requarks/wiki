@@ -385,6 +385,18 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
               }
             }
           },
+          feedback: {
+            type: 'object',
+            properties: {
+              isActive: {
+                type: 'boolean'
+              },
+              config: {
+                type: 'object',
+                additionalProperties: true
+              }
+            }
+          },
           excalidraw: {
             type: 'object',
             properties: {

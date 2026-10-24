@@ -1,4 +1,5 @@
 import { commentReply } from './categories/commentReply.ts'
+import { feedbackStatus } from './categories/feedbackStatus.ts'
 import { mention } from './categories/mention.ts'
 import { pageCreated } from './categories/pageCreated.ts'
 import { pageDeleted } from './categories/pageDeleted.ts'
@@ -29,6 +30,7 @@ export const NOTIFICATION_CATEGORIES = {
   watchedPageComment,
   commentReply,
   mention,
+  feedbackStatus,
   reviewRequested,
   pageCreated,
   pageDeleted

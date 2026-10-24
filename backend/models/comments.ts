@@ -264,6 +264,11 @@ export interface CommentEntry {
   isDeleted: boolean
   /** The passages of the article it is about, in the order they were picked. Empty for most. */
   annotations: AnnotationEntry[]
+  /**
+   * The status change this comment was posted with, on a feedback board's idea: the comment that
+   * explains it (`feedback.setStatus`). Null for every other comment.
+   */
+  statusChange: { from: string; to: string } | null
 }
 
 /**
@@ -306,6 +311,8 @@ export interface CommentInput {
   authorIP: string
   /** The passages it is about. Only for a comment that starts a thread — see `create`. */
   annotations?: AnnotationInput[]
+  /** What `comments.meta` starts as. Only the feedback board's status comment writes any. */
+  meta?: Record<string, unknown>
 }
 
 /** A comment as `insertThreads` stores it: written by somebody, at a time given rather than now. */
@@ -749,6 +756,7 @@ class Comments {
         updatedAt: commentsTable.updatedAt,
         authorId: commentsTable.authorId,
         deletedAt: commentsTable.deletedAt,
+        meta: commentsTable.meta,
         storedName: commentsTable.authorName,
         userName: usersTable.name,
         userHandle: usersTable.handle,
@@ -774,7 +782,8 @@ class Comments {
       authorHandle: row.userHandle ?? null,
       isGuest: row.authorId === null && !row.deletedAt,
       isDeleted: Boolean(row.deletedAt),
-      annotations: annotations.get(row.id) ?? []
+      annotations: annotations.get(row.id) ?? [],
+      statusChange: row.deletedAt ? null : statusChangeOf(row.meta)
     }))
   }
 
@@ -930,6 +939,24 @@ class Comments {
   }
 
   /**
+   * How many comments each of several pages has, counted as `countForPage` counts. One grouped
+   * query, for a listing that shows a count per row — a feedback board's.
+   *
+   * @returns Only the pages that have any; a page missing from the map has none
+   */
+  async countForPages(pageIds: string[]): Promise<Map<string, number>> {
+    if (pageIds.length < 1) {
+      return new Map()
+    }
+    const rows = await WIKI.db
+      .select({ pageId: commentsTable.pageId, total: count() })
+      .from(commentsTable)
+      .where(and(inArray(commentsTable.pageId, pageIds), isNull(commentsTable.deletedAt)))
+      .groupBy(commentsTable.pageId)
+    return new Map(rows.map((row) => [row.pageId, Number(row.total)]))
+  }
+
+  /**
    * How many comments there are across every site, for the admin dashboard. Counted the way the Talk
    * tab's badge counts, so the placeholders of deleted comments are left out.
    */
@@ -980,11 +1007,15 @@ class Comments {
    * Annotations are only for a comment that starts a thread, and a reply carrying any is refused
    * rather than having them dropped: a reply answers the comment above it, and the passages it was
    * posted about would be shown nowhere.
+   *
+   * @param tx A transaction to write inside, for a caller whose comment must stand or fall with
+   *   something else it writes — a feedback board's status change and the comment explaining it.
    */
-  async create(input: CommentInput): Promise<CommentEntry> {
+  async create(input: CommentInput, tx?: Transaction): Promise<CommentEntry> {
+    const db = tx ?? WIKI.db
     let parentId: string | null = null
     if (input.parentId) {
-      const [parent] = await WIKI.db
+      const [parent] = await db
         .select({ id: commentsTable.id, parentId: commentsTable.parentId })
         .from(commentsTable)
         .where(and(eq(commentsTable.id, input.parentId), eq(commentsTable.pageId, input.pageId)))
@@ -999,7 +1030,7 @@ class Comments {
     }
     // -> One transaction, so that a comment never exists without the passages it was posted about
     //    -- its text may well be empty, and the annotations are then the whole of what it says
-    const row = await WIKI.db.transaction(async (tx) => {
+    const row = await db.transaction(async (tx) => {
       const [comment] = await tx
         .insert(commentsTable)
         .values({
@@ -1009,7 +1040,8 @@ class Comments {
           authorId: input.authorId,
           authorName: input.authorName,
           authorEmail: input.authorEmail,
-          authorIP: input.authorIP
+          authorIP: input.authorIP,
+          ...(input.meta && { meta: input.meta })
         })
         .returning()
       if (annotations.length > 0) {
@@ -1024,7 +1056,7 @@ class Comments {
       }
       return comment!
     })
-    return this.describe(row, (await this.annotationsFor([row.id])).get(row.id))
+    return this.describe(row, (await this.annotationsFor([row.id], db)).get(row.id))
   }
 
   /**
@@ -1104,12 +1136,15 @@ class Comments {
    * the passages a comment is about are part of what the comment IS. Who resolved each one is joined
    * live, so a rename shows through, and falls away with the account.
    */
-  async annotationsFor(commentIds: string[]): Promise<Map<string, AnnotationEntry[]>> {
+  async annotationsFor(
+    commentIds: string[],
+    db: Transaction | typeof WIKI.db = WIKI.db
+  ): Promise<Map<string, AnnotationEntry[]>> {
     const byComment = new Map<string, AnnotationEntry[]>()
     if (commentIds.length < 1) {
       return byComment
     }
-    const rows = await WIKI.db
+    const rows = await db
       .select({
         annotation: annotationsTable,
         resolvedByName: usersTable.name
@@ -1434,9 +1469,19 @@ class Comments {
       authorHandle: null,
       isGuest: row.authorId === null && !row.deletedAt,
       isDeleted: Boolean(row.deletedAt),
-      annotations
+      annotations,
+      statusChange: row.deletedAt ? null : statusChangeOf(row.meta)
     }
   }
+}
+
+/** The status change a comment's `meta` records, if it records one. See `CommentEntry`. */
+function statusChangeOf(meta: unknown): { from: string; to: string } | null {
+  const change = (meta as { feedbackStatus?: { from?: unknown; to?: unknown } } | null)
+    ?.feedbackStatus
+  return typeof change?.from === 'string' && typeof change?.to === 'string'
+    ? { from: change.from, to: change.to }
+    : null
 }
 
 /** A transaction, as `discard` is handed one. */

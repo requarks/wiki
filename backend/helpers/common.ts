@@ -774,6 +774,26 @@ export function replyWithFile(reply: FastifyReply, filePath: string): FastifyRep
   return reply.send(stream)
 }
 
+/**
+ * Basic markdown as the text it says, for somewhere that cannot render it: links reduced to their
+ * text, emphasis, code, quote and heading marks dropped, list markers taken off. Whitespace is left
+ * as it was, for the caller to fold or to split into paragraphs.
+ *
+ * The server has no markdown renderer -- a page's HTML is produced by the browser that changed it --
+ * and a feedback idea's excerpt and a board's introduction in the crawler's document only need the
+ * words.
+ */
+export function markdownToPlainText(markdown: string): string {
+  return (
+    markdown
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[`*_~>#|]/g, '')
+      // -> `[ \t]` rather than `\s` at the start of a line, which would reach back over the blank line
+      //    before a list and run it into the paragraph above
+      .replace(/^[ \t]*(?:[-+]|\d+\.)[ \t]+/gm, '')
+  )
+}
+
 export class CustomError extends Error {
   statusCode: number
 

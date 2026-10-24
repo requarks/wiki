@@ -55,7 +55,7 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
  */
 function reviewerFor(
   req: FastifyRequest<{ Params: { siteId: string } }>,
-  page?: { path: string; tags?: string[] }
+  page?: { path: string; locale?: string; tags?: string[] }
 ): ReviewerScope {
   if (!isReviewerSession(req)) {
     return { groupIds: [], reviewsAll: false }
@@ -70,6 +70,7 @@ function reviewerFor(
       WIKI.models.groups.checkAccess(actor, 'review:pages', {
         siteId: req.params.siteId,
         path: page?.path ?? '',
+        locale: page?.locale,
         tags: page?.tags
       })
   }
@@ -717,7 +718,11 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This page does not exist.')
       }
 
-      const scope = reviewerFor(req, { path: page.path, tags: page.tags ?? [] })
+      const scope = reviewerFor(req, {
+        path: page.path,
+        locale: page.locale,
+        tags: page.tags ?? []
+      })
       const canReview = await WIKI.models.approvals.canReviewPage(
         req.params.siteId,
         { path: page.path, tags: page.tags ?? [] },

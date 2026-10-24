@@ -117,6 +117,8 @@ function visibleTreeItems<T extends { type?: string; folderPath?: string; fileNa
     return WIKI.models.groups.checkAccess(actor, permission, {
       siteId: req.params.siteId,
       path,
+      // -> A rule may be limited to a locale, and a feedback board belongs to one (`ruleRefFor`)
+      locale: (item as { locale?: string }).locale,
       tags: (item as any).tags ?? []
     })
   })

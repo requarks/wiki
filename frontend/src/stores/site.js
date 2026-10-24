@@ -65,7 +65,7 @@ function describeLocales(codes, installed) {
  * have an opinion about them yet. Both plainly belong here: a discussion and a set of API docs are
  * not somebody being put in front of a blank article, which is the whole of what this divides.
  */
-const BODYLESS_EDITORS = ['blog', 'channel', 'api', 'redirect']
+const BODYLESS_EDITORS = ['blog', 'feedback', 'channel', 'api', 'redirect']
 
 export const useSiteStore = defineStore('site', {
   state: () => ({
@@ -180,6 +180,7 @@ export const useSiteStore = defineStore('site', {
       asciidoc: false,
       blog: false,
       excalidraw: false,
+      feedback: false,
       markdown: false,
       redirect: false,
       visual: false
@@ -342,7 +343,7 @@ export const useSiteStore = defineStore('site', {
      * the editor turned on (`editors`, the admin area's Editors screen), and whether it is
      * implemented at all — `channel` and `api` are names with no editor behind them yet, so both are
      * behind the experimental flag. On a wiki with the flag off that leaves Markdown, Visual,
-     * AsciiDoc, Drawing, Blog and Redirection, in that order: Markdown is what most pages are written
+     * AsciiDoc, Drawing, Blog, Feedback Board and Redirection, in that order: Markdown is what most pages are written
      * with, so it is the one offered first.
      *
      * Redirection is in the list on the same footing as the rest. It used to be unconditional, on the
@@ -376,6 +377,8 @@ export const useSiteStore = defineStore('site', {
           menu, and it is not the afterthought a redirection is.
         */
         ...(this.editors.blog ? ['blog'] : []),
+        // -> A blog's sibling, for the same reasons, and beside it
+        ...(this.editors.feedback ? ['feedback'] : []),
         ...(experimental ? ['channel', 'api'] : []),
         ...(this.editors.redirect ? ['redirect'] : [])
       ]
@@ -547,6 +550,7 @@ export const useSiteStore = defineStore('site', {
           asciidoc: siteInfo.editors.asciidoc?.isActive ?? false,
           blog: siteInfo.editors.blog?.isActive ?? false,
           excalidraw: siteInfo.editors.excalidraw?.isActive ?? false,
+          feedback: siteInfo.editors.feedback?.isActive ?? false,
           markdown: siteInfo.editors.markdown?.isActive ?? false,
           redirect: siteInfo.editors.redirect?.isActive ?? false,
           visual: siteInfo.editors.visual?.isActive ?? false

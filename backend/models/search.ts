@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { sql, type SQL } from 'drizzle-orm'
 import { uniq } from 'es-toolkit/array'
 import {
   liveCondition,
@@ -279,6 +279,31 @@ class Search {
       return sql`${sql.raw(`'${FALLBACK_DICTIONARY}'`)}::regconfig`
     }
     return sql`(CASE p.locale ${sql.join(arms, sql` `)} ELSE ${sql.raw(`'${FALLBACK_DICTIONARY}'`)} END)::regconfig`
+  }
+
+  /**
+   * A text query over the pages of ONE locale, for a caller narrowing its own SQL with it — a
+   * feedback board's search, which is a filter on a listing rather than a ranked search of the site.
+   *
+   * Parsed with the dictionary the locale's pages were indexed with, as `searchPages` does it. One
+   * locale means one dictionary, so there is no CASE to build.
+   *
+   * @param match `all` reads the terms the way the search box does (`websearch_to_tsquery`); `any`
+   *   ORs the words instead, for a query whose words need not all be there — two people rarely
+   *   describe the same idea in the same words. Quotes and a leading `-` are dropped first, since
+   *   they mean something to the websearch syntax and nothing to a list of words.
+   */
+  async tsQueryFor(locale: string, terms: string, match: 'all' | 'any' = 'all'): Promise<SQL> {
+    const dictionary = this.dictionaryForLocale(locale, await this.getAvailableDictionaries())
+    const text =
+      match === 'any'
+        ? terms
+            .replace(/["-]/g, ' ')
+            .split(/\s+/)
+            .filter((word) => word.length > 0 && word.toLowerCase() !== 'or')
+            .join(' or ')
+        : terms
+    return sql`websearch_to_tsquery(${sql.raw(`'${dictionary}'`)}::regconfig, ${text})`
   }
 
   /**

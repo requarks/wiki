@@ -96,7 +96,8 @@ export const PAGE_PERMISSIONS = [
   'read:glossary',
   'manage:glossary',
   'read:notes',
-  'write:notes'
+  'write:notes',
+  'write:feedback'
 ]
 
 /**
@@ -379,7 +380,14 @@ class Groups {
     if (LOCALE_PERMISSIONS.includes(permission)) {
       return this.checkLocaleAccess(actor, permission, page.siteId, page.locale)
     }
-    const rule = resolvePageRule(this.rulesForGroups(actor.groupIds), permission, page)
+    /*
+      Anything at or under a feedback board is ruled as the board: its path and its tags, all or
+      nothing, regardless of what a rule written further down says. Here rather than in each caller
+      so that the page view, search, the tree, the sitemap, MCP and comments cannot disagree about an
+      idea.
+    */
+    const ref = WIKI.models.feedback.ruleRefFor(page)
+    const rule = resolvePageRule(this.rulesForGroups(actor.groupIds), permission, ref)
     return rule ? rule.mode !== 'DENY' : false
   }
 
@@ -461,7 +469,9 @@ class Groups {
             // -> `write:comments` so that a wiki which turns comments on has a discussion its
             //    accounts can join, rather than one nobody but an administrator can. `read:notes`
             //    and not `write:notes`: a shared note opens for any account, but who may start one
-            //    is an administrator's decision
+            //    is an administrator's decision. `write:feedback` matches every path but only means
+            //    anything under a feedback board that accepts ideas, so the board's own switch is
+            //    what opens it to every account -- see `models/feedback.ts`
 
             id: uuid(),
             name: 'Default Rule',
@@ -471,7 +481,8 @@ class Groups {
               'read:comments',
               'write:comments',
               'read:glossary',
-              'read:notes'
+              'read:notes',
+              'write:feedback'
             ],
             match: 'START',
             mode: 'ALLOW',
@@ -565,7 +576,8 @@ class Groups {
       'read:comments',
       'write:comments',
       'read:glossary',
-      'read:notes'
+      'read:notes',
+      'write:feedback'
     ]
     const result = await WIKI.db
       .insert(groupsTable)

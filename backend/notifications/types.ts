@@ -11,7 +11,8 @@ export const NOTIFICATION_EVENT_KINDS = [
   'page:delete',
   'submission:new',
   'comment:new',
-  'comment:edit'
+  'comment:edit',
+  'feedback:status'
 ] as const
 
 export type NotificationEventKind = (typeof NOTIFICATION_EVENT_KINDS)[number]
@@ -40,6 +41,12 @@ export interface PageSnapshot {
   locale: string
   tags: string[]
   publishState: string
+  /**
+   * What page rules are matched against for this page, when that is not the page itself: a page at
+   * or under a feedback board is ruled as the board (`feedback.ruleRefFor`). Resolved when the event
+   * is written, because the worker that checks access has no board list of its own.
+   */
+  ruleRef?: { path: string; tags: string[] }
 }
 
 /**
@@ -75,6 +82,9 @@ export interface NotificationEventData {
   mentionHandles?: string[]
   /** `submission:new` */
   submissionId?: string
+  /** `feedback:status`: where the idea was, and where it is now. */
+  statusFrom?: string
+  statusTo?: string
 }
 
 /** An event as the fan-out reads it back out of the outbox. */
@@ -153,5 +163,11 @@ export function rulePageOf(event: NotificationEvent): RulePageRef | null {
   if (!page || !event.siteId) {
     return null
   }
-  return { siteId: event.siteId, path: page.path, locale: page.locale, tags: page.tags ?? [] }
+  // -> The board's own path and tags for anything under a feedback board — see `PageSnapshot.ruleRef`
+  return {
+    siteId: event.siteId,
+    path: page.ruleRef?.path ?? page.path,
+    locale: page.locale,
+    tags: page.ruleRef?.tags ?? page.tags ?? []
+  }
 }

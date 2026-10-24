@@ -65,6 +65,9 @@ import { useUserStore } from '@/stores/user'
 /** The menu's one entry that is not an editor, listed among them by this name. */
 const LIVE_NOTE = 'liveNote'
 
+/** The editors whose pages list the pages under them, which New Live Note is placed after. */
+const LISTING_EDITORS = ['blog', 'feedback']
+
 // PROPS
 
 const props = defineProps({
@@ -159,11 +162,12 @@ const offeredEditors = computed(() => {
 const offersLiveNote = computed(() => props.offerLiveNote && liveNoteStore.canCreate)
 
 /**
- * Everything the menu lists, in order: the editors on offer, with New Live Note after New Blog.
+ * Everything the menu lists, in order: the editors on offer, with New Live Note after New Blog and New
+ * Feedback Board.
  *
  * Placed by the editors around it rather than by an index, because which of them a site has on is the
- * store's answer: after every article editor and the blog, and ahead of whatever follows the blog in
- * the store's order -- a redirection, and the experimental editors.
+ * store's answer: after every article editor, the blog and the board, and ahead of whatever follows
+ * them in the store's order -- a redirection, and the experimental editors.
  */
 const entries = computed(() => {
   const editors = offeredEditors.value
@@ -171,7 +175,7 @@ const entries = computed(() => {
     return editors
   }
   const at = editors.findIndex(
-    (editor) => editor !== 'blog' && !siteStore.articleEditors.includes(editor)
+    (editor) => !LISTING_EDITORS.includes(editor) && !siteStore.articleEditors.includes(editor)
   )
   return at < 0
     ? [...editors, LIVE_NOTE]

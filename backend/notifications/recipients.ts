@@ -192,6 +192,38 @@ export async function* mentionedIn(
   )
 }
 
+/**
+ * Who submitted an idea on a feedback board, and everybody holding an upvote on it — the people a
+ * change of its status is news to.
+ *
+ * The submitter is the page's creator rather than its last editor: a maintainer tidying the wording
+ * of an idea does not make it theirs. Voters are read from the ratings themselves (`thumbs`, `+1`),
+ * not from the totals cached on the page, which are counts and name nobody.
+ */
+export function submitterAndVotersOf(
+  event: NotificationEvent,
+  after: string | null
+): AsyncIterable<string[]> {
+  const pageId = event.data.page?.id
+  if (!pageId) {
+    return fromList([], after)
+  }
+  return keyset(after, async (cursor, limit) => {
+    const result = await WIKI.db.execute(sql`
+      SELECT id FROM (
+        SELECT "creatorId" AS id FROM pages WHERE id = ${pageId}
+        UNION
+        SELECT "userId" AS id FROM "pageRatings"
+        WHERE "pageId" = ${pageId} AND kind = 'thumbs' AND value = 1
+      ) audience
+      ${cursor ? sql`WHERE id > ${cursor}::uuid` : sql``}
+      ORDER BY id
+      LIMIT ${limit}
+    `)
+    return (result.rows as { id: string }[]).map((row) => row.id)
+  })
+}
+
 /** A single id, or nobody. */
 export function only(id: string | null | undefined, after: string | null): AsyncIterable<string[]> {
   return fromList(id ? [id] : [], after)

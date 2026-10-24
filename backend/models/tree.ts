@@ -46,6 +46,8 @@ export interface TreeItem {
   fileName: string
   title: string
   tags: string[]
+  /** The locale the entry belongs to, which a page rule may be limited to. */
+  locale: string
   createdAt: Date
   updatedAt: Date
   /** Folders only — how many entries the folder holds. */
@@ -235,6 +237,7 @@ function toTreeItem(row: TreeRow, depth: number, parentPath: string): TreeItem {
     fileName: row.fileName,
     title: row.title,
     tags: row.tags ?? [],
+    locale: row.locale,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     ...(row.type === 'folder' && {
@@ -1186,6 +1189,10 @@ class Tree {
       folder.title
     )
 
+    // -> A feedback board under it has moved with it, and page access is resolved against where
+    //    each board is (`models/feedback.ts`)
+    await WIKI.models.feedback.reloadBoardsEverywhere()
+
     WIKI.logger.debug(`Renamed folder ${folder.id} successfully.`)
     return updated[0] as TreeRow
   }
@@ -1686,6 +1693,9 @@ class Tree {
       locale: folder.locale,
       path: decodeTreePath(oldPath)
     })
+
+    // -> As for a rename: any board under it is somewhere else now
+    await WIKI.models.feedback.reloadBoardsEverywhere()
 
     WIKI.logger.debug(`Moved folder ${folder.id} successfully.`)
     return updated[0] as TreeRow

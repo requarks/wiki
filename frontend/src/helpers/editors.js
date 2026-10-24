@@ -23,6 +23,7 @@ export const EDITOR_ICONS = {
   excalidraw: 'draw',
   channel: 'chat',
   blog: 'typewriter-with-paper',
+  feedback: 'light-on',
   api: 'api',
   redirect: 'advance'
 }

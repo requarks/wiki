@@ -424,6 +424,24 @@
                         :suffix="rule.match === `REGEX` ? `/` : null"
                         :disable="!canManage"
                         :aria-label="t(`admin.groups.rulePath`)" />
+                      <!--
+                        A rule written for a path inside a feedback board is never consulted there:
+                        everything on a board is ruled as the board itself (`models/feedback.ts`). Said
+                        under the field rather than refused, since the rule may well be meant for a
+                        time when the board has moved or gone.
+                      -->
+                      <div
+                        class="admin-groups-rule-board-warning"
+                        v-for="board of boardsOver(rule)"
+                        :key="`${board.siteId}:${board.locale}:${board.path}`">
+                        <w-icon name="la:exclamation-triangle" size="xs" />
+                        <span class="pl-1">{{
+                          t('admin.groups.ruleUnderBoard', {
+                            board: board.title,
+                            path: `/${board.path}`
+                          })
+                        }}</span>
+                      </div>
                     </w-card-section>
                   </w-card-section>
                 </w-card>
@@ -792,6 +810,8 @@ const state = reactive({
   /** Every tag in use on the instance, as suggestions for the tag rules. */
   tags: [],
   isLoadingTags: false,
+  /** Every feedback board on the instance, for the warning under a rule written inside one. */
+  feedbackBoards: [],
   users: [],
   isLoadingUsers: false,
   usersFilter: '',
@@ -1141,6 +1161,19 @@ const rules = [
     disabled: false
   },
   /*
+    Only means anything on a feedback board, where it is asked at the board for everything in it:
+    submitting an idea, and editing or withdrawing one's own while it is still open. Not for the guests
+    group -- an idea needs an author.
+  */
+  {
+    permission: 'write:feedback',
+    title: 'Submit Feedback',
+    hint: 'Can submit ideas to a feedback board, and edit or withdraw their own while they are open.',
+    warning: false,
+    restrictedForSystem: false,
+    disabled: false
+  },
+  /*
     The rule permissions that ignore the path: a glossary belongs to a site and a locale, and a live
     note to a site (asked in its primary locale), so every rule naming one that is scoped to them
     applies, and mode alone decides -- see `resolveLocaleRule` in `helpers/pageRules.ts`. The heading
@@ -1394,6 +1427,38 @@ async function save() {
 /** Whether a rule kind addresses pages by tag, which is what decides the field offered under it. */
 function isTagMatch(match) {
   return match === 'TAG' || match === 'TAGALL'
+}
+
+/**
+ * The feedback boards a path rule is written inside of, which it therefore says nothing about: a page
+ * rule is resolved at the board for everything under it, and a rule for a path below the board is
+ * never consulted. Only the kinds whose path says where it reaches -- a prefix, a branch, an exact
+ * page; a suffix or a pattern could match anywhere and is not guessed at. A rule limited to other
+ * sites or locales than a board's has nothing to say about it either way.
+ */
+function boardsOver(rule) {
+  if (!['START', 'SUBTREE', 'EXACT'].includes(rule.match)) {
+    return []
+  }
+  const path = (rule.path ?? '').replace(/^\/+|\/+$/g, '').toLowerCase()
+  if (!path) {
+    return []
+  }
+  return state.feedbackBoards.filter(
+    (board) =>
+      path.startsWith(`${board.path}/`) &&
+      (rule.sites.length < 1 || rule.sites.includes(board.siteId)) &&
+      (rule.locales.length < 1 || rule.locales.includes(board.locale))
+  )
+}
+
+/** Where the instance's feedback boards are. Quiet on failure: it only feeds a warning. */
+async function fetchFeedbackBoards() {
+  try {
+    state.feedbackBoards = await API_CLIENT.get('feedback/boards').json()
+  } catch (err) {
+    console.warn(err)
+  }
 }
 
 /**
@@ -1654,10 +1719,24 @@ onMounted(() => {
   checkRoute()
   fetchGroup()
   fetchTags()
+  fetchFeedbackBoards()
 })
 </script>
 
 <style lang="scss">
+.admin-groups-rule-board-warning {
+  display: flex;
+  align-items: flex-start;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: $orange-9;
+
+  @at-root .body--dark & {
+    color: $orange-3;
+  }
+}
+
 .admin-groups-rule {
   position: relative;
   padding: 10px 0 24px 40px;

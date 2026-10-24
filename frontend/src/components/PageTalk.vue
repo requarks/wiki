@@ -1,5 +1,12 @@
 <template>
-  <div class="page-talk">
+  <div class="page-talk" :class="{ 'is-inline': inline }">
+    <div class="page-talk-inline-title" v-if="inline">
+      <w-icon name="la:comments" />
+      <span class="pl-2">{{ t('common.feedback.discussion') }}</span>
+      <span class="page-talk-inline-count" v-if="pageStore.commentsCount > 0">
+        {{ pageStore.commentsCount }}
+      </span>
+    </div>
     <div class="py-6 text-center text-body2 text-grey-6" v-if="state.loading && !state.loaded">
       {{ t('common.comments.loading') }}
     </div>
@@ -91,7 +98,13 @@
       -->
       <div class="py-4" ref="composeEl">
         <w-banner v-if="!isOpen" :class="bannerClass">
-          {{ t('common.comments.closed') }}
+          {{
+            isSettledIdea
+              ? t('common.feedback.discussionClosed', {
+                  status: t(`common.feedback.statuses.${pageStore.feedback.status}`)
+                })
+              : t('common.comments.closed')
+          }}
         </w-banner>
         <w-banner v-else-if="!canWrite && !isGuest" :class="bannerClass">
           {{ t('common.comments.notAllowed') }}
@@ -137,6 +150,7 @@ import { useUserStore } from '@/stores/user'
 
 import { apiErrorMessage } from '@/helpers/apiError'
 import { indexText, locateAnchor } from '@/helpers/annotations'
+import { takesComments } from '@/helpers/pageFeedback'
 import { scrollBehavior } from '@/helpers/motion'
 
 import PageComment from '@/components/PageComment.vue'
@@ -166,6 +180,15 @@ const props = defineProps({
   contentRoot: {
     type: Object,
     default: null
+  },
+  /**
+   * Drawn under the article rather than as a view of its own — a feedback board's idea, whose
+   * discussion is read as the continuation of it. Headed with the count, since there is no tab to
+   * carry one, and with nothing to annotate from: an idea's comments are not about passages of it.
+   */
+  inline: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -235,8 +258,23 @@ const canModerate = computed(() => userStore.pagePermissions.includes('manage:co
 /** Whoever reviews the page may resolve and delete what was said about it, without moderating. */
 const canReview = computed(() => userStore.pagePermissions.includes('review:pages'))
 
-/** Whether this page takes comments at all — the switch in its own properties dialog. */
-const isOpen = computed(() => pageStore.allowComments)
+/**
+ * Whether this is an idea that is Completed or Closed, whose discussion is kept and read but closed to
+ * new comments -- for everybody but whoever may move the idea (`canSetStatus`, which is `review:pages`
+ * or `manage:pages` at the board: the server's own exception, in `api/comments.ts`).
+ */
+const isSettledIdea = computed(
+  () =>
+    Boolean(pageStore.feedback) &&
+    !takesComments(pageStore.feedback.status) &&
+    !pageStore.feedback.canSetStatus
+)
+
+/**
+ * Whether this page takes new comments: the switch in its own properties dialog, and not a settled
+ * idea. What is there is shown either way, and editing or deleting it is not affected.
+ */
+const isOpen = computed(() => pageStore.allowComments && !isSettledIdea.value)
 
 /**
  * Whether there is anything for the New Comment button beside the view to take the reader to: a box,
@@ -676,7 +714,9 @@ defineExpose({
   canStartComment,
   canStartAnnotation,
   annotationCount,
-  startNewComment
+  startNewComment,
+  // -> For a feedback idea's status change, which may have posted a comment from outside this view
+  reload: load
 })
 </script>
 
@@ -697,6 +737,43 @@ defineExpose({
 
   @at-root .body--dark & {
     color: rgba(255, 255, 255, 0.87);
+  }
+}
+
+/*
+  Under an idea's article rather than a view of its own: set off from the article by a rule and a
+  heading, the way a section of the page would be. As wide as the idea it answers, not held to the
+  Talk view's measure: the column it sits in is already the page's (`.page-measure`).
+*/
+.page-talk.is-inline {
+  max-width: none;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+
+  @at-root .body--dark & {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.page-talk-inline-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.page-talk-inline-count {
+  margin-inline-start: 8px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  background-color: rgba(0, 0, 0, 0.08);
+
+  @at-root .body--dark & {
+    background-color: rgba(255, 255, 255, 0.12);
   }
 }
 

@@ -442,9 +442,14 @@ function setSidebar(field, value) {
     background-color: $dark-6;
   }
 
-  /* -> A form, not a document: it stops widening well before the column does */
+  /*
+    A form, not a document, but held to the measure of the page it becomes (`$content-centered-max-width`)
+    rather than to a narrower one of its own: what is laid out here is drawn at that width once saved.
+    The side padding is added to it so that the fields themselves get the full measure, as the page's
+    body does inside its own padding.
+  */
   &-form {
-    max-width: 780px;
+    max-width: calc(#{$content-centered-max-width} + 32px);
     margin: 0 auto;
     padding: 24px 16px 48px;
   }

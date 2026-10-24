@@ -940,10 +940,28 @@ async function routes(app: FastifyInstance) {
         is what makes a page view one request instead of four.
       */
       const actorId = actor?.id ?? null
-      // -> Both switches: the site's ratings mode and the page's own `allowRatings`
-      const ratingMode = page.allowRatings
-        ? WIKI.models.pageRatings.modeFor(req.params.siteId)
-        : null
+      /*
+        The feedback board this page is an idea of, from the board list held in memory: an idea is a
+        page directly in a board's folder, so this costs no query.
+      */
+      const board = WIKI.models.feedback.boardOfIdea(
+        req.params.siteId,
+        page.locale,
+        page.path,
+        page.editor
+      )
+      /*
+        Both switches: the site's ratings mode and the page's own `allowRatings`. An idea is voted on
+        rather than rated, so it is always thumbs, and the board's own switch stands in for the
+        site's mode (`ratingModeFor` in `api/ratings.ts`).
+      */
+      const ratingMode = !page.allowRatings
+        ? null
+        : board
+          ? board.settings.voting
+            ? 'thumbs'
+            : null
+          : WIKI.models.pageRatings.modeFor(req.params.siteId)
       /*
         Which of the reader's notifications are about this page and still unread, so that opening it
         — or its Talk tab — can mark them read without asking first. One indexed lookup, none for a
@@ -951,37 +969,44 @@ async function routes(app: FastifyInstance) {
         runs alongside the rest.
       */
       const unreadNotifications = WIKI.models.notifications.unreadCategoriesOnPage(page.id, actorId)
-      const [approvalState, isWatching, commentsCount, blog, ownRating] = await Promise.all([
-        WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
-          id: page.id,
-          path: page.path,
-          tags: page.tags ?? [],
-          allowContributions: page.allowContributions
-        }),
-        // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
-        WIKI.models.pageWatching.isWatching(page.id, actorId),
-        /*
+      const [approvalState, isWatching, commentsCount, listing, ownRating, ideaStatus, submitter] =
+        await Promise.all([
+          WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
+            id: page.id,
+            path: page.path,
+            tags: page.tags ?? [],
+            allowContributions: page.allowContributions
+          }),
+          // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
+          WIKI.models.pageWatching.isWatching(page.id, actorId),
+          /*
           The badge on the Talk tab, which has to be there before the tab is opened — so it comes with
           the page rather than with the comments. One indexed count, and not even that for a site
           whose discussions live at a third party or that has comments turned off -- nor for a page
           still waiting for its password, whose discussion is behind it with the body.
         */
-        WIKI.models.comments.usesBuiltIn(req.params.siteId) && !page.isLocked
-          ? WIKI.models.comments.countForPage(page.id)
-          : 0,
-        /*
+          WIKI.models.comments.usesBuiltIn(req.params.siteId) && !page.isLocked
+            ? WIKI.models.comments.countForPage(page.id)
+            : 0,
+          /*
           The blog this page is a post of, so that the page view can say where the reader is and link
           back to it. Worked out rather than stored -- a post is a post because of where it sits --
           which is one lookup on the unique `(siteId, locale, path)` index over the page's own
-          ancestors, and no lookup at all for a page at the site root.
+          ancestors, and no lookup at all for a page at the site root, nor for an idea, whose nearest
+          listing page is already known to be its board.
         */
-        WIKI.models.blogs.blogFor(req.params.siteId, page.locale, page.path),
-        /*
+          board ? null : WIKI.models.blogs.listingFor(req.params.siteId, page.locale, page.path),
+          /*
           The reader's own rating, which is theirs and so cannot be cached on the page the way the
           totals are: one lookup on the primary key, and none for a guest or where ratings are off.
         */
-        ratingMode ? WIKI.models.pageRatings.valueFor(page.id, actorId, ratingMode) : 0
-      ])
+          ratingMode ? WIKI.models.pageRatings.valueFor(page.id, actorId, ratingMode) : 0,
+          // -> Where an idea stands: one primary-key read, and none for a page that is not one
+          board ? WIKI.models.feedback.statusOf(page.id) : null,
+          // -> And who submitted it, for its head: the same, on the users table
+          board ? WIKI.models.feedback.submitterOf(page.creatorId) : null
+        ])
+      const blog = listing?.kind === 'blog' ? listing.blog : null
       const { ratings, ...pageFields } = page
       return {
         ...pageFields,
@@ -994,6 +1019,34 @@ async function routes(app: FastifyInstance) {
           it is the front page that draws a listing.
         */
         blog: blog ? { path: blog.path, title: blog.title } : null,
+        feedback:
+          board && ideaStatus
+            ? {
+                board: {
+                  path: board.path,
+                  title: board.title,
+                  voting: board.settings.voting,
+                  acceptsIdeas: board.settings.acceptsIdeas,
+                  submitterCategories: board.settings.submitterCategories,
+                  categories: board.settings.categories
+                },
+                status: ideaStatus.status,
+                statusUpdatedAt: ideaStatus.updatedAt,
+                statusUpdatedBy: ideaStatus.updatedById
+                  ? { id: ideaStatus.updatedById, name: ideaStatus.updatedByName ?? '' }
+                  : null,
+                statusCommentId: ideaStatus.commentId,
+                submittedBy: submitter,
+                canSetStatus:
+                  mayOnPage(req, 'review:pages', page) || mayOnPage(req, 'manage:pages', page),
+                canEditOwn: WIKI.models.feedback.mayEditOwn(
+                  actorId,
+                  page,
+                  ideaStatus.status,
+                  (permission) => mayOnPage(req, permission, page)
+                )
+              }
+            : null,
         viewer: {
           permissions: pagePermissionsFor(req, page),
           ...approvalState,

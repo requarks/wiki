@@ -1,5 +1,6 @@
 import { audit } from '../helpers/audit.ts'
 import { actorFrom, mayOnPage, unlockedFor, unpublishedFor, userRequired } from './pages.ts'
+import { takesVotes } from '../models/feedback.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { RatingMode } from '../models/pageRatings.ts'
 import type { Page } from '../models/pages.ts'
@@ -33,19 +34,18 @@ const ratingResponse = {
  * anonymous request never gets as far as the page. Beyond that it is the same gate as reading: a page
  * somebody may not read is answered as though it were not there. Both switches have to be on, the
  * site's ratings mode and the page's own `allowRatings`.
+ *
+ * An idea on a feedback board is voted for rather than rated: always on thumbs, regardless of the
+ * site's ratings mode, with the board's `voting` switch standing in for that mode. `isIdea` tells the
+ * caller so, since a vote against an idea is not something a board records.
  */
 async function loadRateable(
   req: FastifyRequest<{ Params: { siteId: string; pageId: string } }>,
   reply: FastifyReply
-): Promise<{ userId: string; mode: RatingMode; page: Page } | null> {
+): Promise<{ userId: string; mode: RatingMode; page: Page; isIdea: boolean } | null> {
   const actor = actorFrom(req)
   if (!actor) {
     reply.unauthorized(userRequired(req, 'Rating a page'))
-    return null
-  }
-  const mode = WIKI.models.pageRatings.modeFor(req.params.siteId)
-  if (!mode) {
-    reply.forbidden('Ratings are turned off for this site.')
     return null
   }
   const page = await WIKI.models.pages.getPage({
@@ -58,11 +58,36 @@ async function loadRateable(
     reply.notFound('This page does not exist.')
     return null
   }
+  const board = WIKI.models.feedback.boardOfIdea(
+    req.params.siteId,
+    page.locale,
+    page.path,
+    page.editor
+  )
+  const mode: RatingMode | null = board
+    ? board.settings.voting
+      ? 'thumbs'
+      : null
+    : WIKI.models.pageRatings.modeFor(req.params.siteId)
+  if (!mode) {
+    reply.forbidden(
+      board ? 'Voting is turned off on this board.' : 'Ratings are turned off for this site.'
+    )
+    return null
+  }
   if (!page.allowRatings) {
     reply.forbidden('Ratings are turned off for this page.')
     return null
   }
-  return { userId: actor.id, mode, page }
+  // -> A settled idea keeps the count it was settled at: see `takesVotes`
+  if (board) {
+    const { status } = await WIKI.models.feedback.statusOf(page.id)
+    if (!takesVotes(status)) {
+      reply.forbidden('This idea is no longer taking votes.')
+      return null
+    }
+  }
+  return { userId: actor.id, mode, page, isIdea: Boolean(board) }
 }
 
 /**
@@ -87,7 +112,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Rate a page',
         description:
-          'Records the caller’s rating of the page, replacing any they gave it before. The scale is the site’s ratings mode: `1` or `-1` for thumbs, `1` to `5` for stars.\n\nNeeds a logged in user who may read the page, with ratings on for both the site and the page.',
+          'Records the caller’s rating of the page, replacing any they gave it before. The scale is the site’s ratings mode: `1` or `-1` for thumbs, `1` to `5` for stars.\n\nAn idea on a feedback board is voted for instead: always thumbs, regardless of the site’s mode, and only `1` — an upvote. The board’s own voting switch stands in for the site’s ratings mode there, and an idea that is Completed or Closed takes no more votes.\n\nNeeds a logged in user who may read the page, with ratings on for both the site and the page.',
         tags: ['Pages'],
         params: pageParams,
         body: {
@@ -105,7 +130,10 @@ async function routes(app: FastifyInstance) {
       if (!target) {
         return reply
       }
-      const { userId, mode, page } = target
+      const { userId, mode, page, isIdea } = target
+      if (isIdea && req.body.value !== 1) {
+        return reply.badRequest('An idea can only be voted for: the value is 1.')
+      }
       if (!WIKI.models.pageRatings.isValid(mode, req.body.value)) {
         return reply.badRequest(
           mode === 'thumbs'
@@ -149,7 +177,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Withdraw a rating',
         description:
-          'Forgets the caller’s rating of the page. A page they had not rated answers the same way, since the outcome asked for already holds.',
+          'Forgets the caller’s rating of the page. A page they had not rated answers the same way, since the outcome asked for already holds.\n\nRefused on an idea that is Completed or Closed, whose count is kept as it was settled.',
         tags: ['Pages'],
         params: pageParams,
         response: { 200: ratingResponse }

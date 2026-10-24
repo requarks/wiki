@@ -310,11 +310,12 @@ const isRedirect = computed(() => pageStore.editor === 'redirect')
 /**
  * Whether the page on screen holds text somebody wrote.
  *
- * False for the two editors that keep a settings document where a page keeps content: a redirection
- * holds where it points, a blog holds how it lists the posts under it. Neither has a source worth
- * showing a reader, and neither can be re-rendered — the endpoint refuses any editor but markdown.
+ * False for the editors that keep a settings document where a page keeps content: a redirection
+ * holds where it points, a blog how it lists the posts under it and a feedback board how it lists its
+ * ideas. None has a source worth showing a reader, and none can be re-rendered — the endpoint refuses
+ * any editor but markdown.
  */
-const hasBody = computed(() => !['redirect', 'blog'].includes(pageStore.editor))
+const hasBody = computed(() => !['redirect', 'blog', 'feedback'].includes(pageStore.editor))
 
 /**
  * Whether the "..." menu has anything to show.

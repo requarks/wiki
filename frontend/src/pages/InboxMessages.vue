@@ -199,6 +199,7 @@ const ICONS = {
   watchedPageComment: 'mdi:comment-text-outline',
   commentReply: 'mdi:reply-outline',
   mention: 'mdi:at',
+  feedbackStatus: 'mdi:lightbulb-on-outline',
   reviewRequested: 'mdi:clipboard-check-outline',
   pageCreated: 'mdi:file-plus-outline',
   pageDeleted: 'mdi:file-remove-outline'

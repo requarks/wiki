@@ -8,6 +8,7 @@ import { blocks } from './blocks.ts'
 import { blogs } from './blogs.ts'
 import { comments } from './comments.ts'
 import { extensions } from './extensions.ts'
+import { feedback } from './feedback.ts'
 import { flags } from './flags.ts'
 import { glossary } from './glossary.ts'
 import { groups } from './groups.ts'
@@ -57,6 +58,7 @@ export default {
   blogs,
   comments,
   extensions,
+  feedback,
   flags,
   glossary,
   groups,

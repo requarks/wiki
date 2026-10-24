@@ -64,6 +64,14 @@ const props = defineProps({
     default: false
   },
   /**
+   * Blocks dismissal via backdrop click only; Escape still closes. For a dialog holding something
+   * typed that a stray click would throw away, where the deliberate way out is still wanted.
+   */
+  noBackdropDismiss: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * `standard` centers the panel, `right` docks it to the right edge as a side panel, `bottom`
    * anchors it to the bottom of the viewport.
    */
@@ -133,7 +141,7 @@ function close() {
 }
 
 function onBackdropClick() {
-  if (!props.persistent) {
+  if (!props.persistent && !props.noBackdropDismiss) {
     close()
   }
 }

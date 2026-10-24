@@ -203,8 +203,10 @@ async function postBoot() {
   await WIKI.models.authentication.activateStrategies()
   await WIKI.models.locales.reloadCache()
   await WIKI.models.sites.reloadCache()
-  // -> Page access is decided from these on every request, so they are in memory from the start
+  // -> Page access is decided from these on every request, so they are in memory from the start --
+  //    the feedback boards included, since everything under one is ruled as the board
   await WIKI.models.groups.reloadCache()
+  await WIKI.models.feedback.reloadBoards()
   // -> Likewise: every page view asks whether the page takes suggestions and who reviews it
   await WIKI.models.approvals.reloadCache()
 

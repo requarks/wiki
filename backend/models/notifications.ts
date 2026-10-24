@@ -179,6 +179,25 @@ class Notifications {
       if (categoriesFor(kind, origin).length < 1) {
         return
       }
+      /*
+        Access is checked in a worker, which has no board list, against the page as the event
+        remembers it. Under a feedback board that is the board rather than the page (`ruleRefFor`),
+        so the event carries what to match instead.
+      */
+      if (data.page) {
+        const ref = WIKI.models.feedback.ruleRefFor({
+          siteId,
+          path: data.page.path,
+          locale: data.page.locale,
+          tags: data.page.tags
+        })
+        if (ref.path !== data.page.path) {
+          data = {
+            ...data,
+            page: { ...data.page, ruleRef: { path: ref.path, tags: ref.tags ?? [] } }
+          }
+        }
+      }
       await WIKI.db.insert(eventsTable).values({
         kind,
         origin,

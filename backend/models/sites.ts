@@ -266,6 +266,17 @@ class Sites {
             config: {}
           },
           /*
+            How a board behaves is set up on its own front page, for the blog's reason. What is set
+            here is the site's: how long an account waits between two submitted ideas
+            (`feedback.submissionIntervalFor`), a duration, `0` for no limit.
+          */
+          feedback: {
+            isActive: true,
+            config: {
+              submissionInterval: '1m'
+            }
+          },
+          /*
             No config of its own: a drawing is drawn rather than written, so there is no syntax, no
             pipeline and nothing about how it is authored to set per site. This flag is only whether
             the site offers `New Drawing` at all.
@@ -588,6 +599,17 @@ class Sites {
           blog: {
             isActive: true,
             config: {}
+          },
+          /*
+            How a board behaves is set up on its own front page, for the blog's reason. What is set
+            here is the site's: how long an account waits between two submitted ideas
+            (`feedback.submissionIntervalFor`), a duration, `0` for no limit.
+          */
+          feedback: {
+            isActive: true,
+            config: {
+              submissionInterval: '1m'
+            }
           },
           /*
             No config of its own: a drawing is drawn rather than written, so there is no syntax, no

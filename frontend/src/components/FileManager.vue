@@ -600,12 +600,13 @@
                             <w-item-section>{{ t(`common.actions.edit`) }}</w-item-section>
                           </w-item>
                           <!-- -> Nothing to render on a page whose content is not an article: a
-                                redirection has a target and a blog has the posts under it, and the
-                                endpoint behind this refuses any editor but markdown anyway -->
+                                redirection has a target, and a blog or a board has the pages under
+                                it, and the endpoint behind this refuses any editor but markdown -->
                           <w-item
                             clickable
                             v-if="
-                              item.type === `page` && ![`redirect`, `blog`].includes(item.pageType)
+                              item.type === `page` &&
+                              ![`redirect`, `blog`, `feedback`].includes(item.pageType)
                             "
                             @click="rerenderPage(item)">
                             <w-item-section side>

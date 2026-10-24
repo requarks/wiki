@@ -5,14 +5,20 @@
     and description keep the PAGE's direction on their own text, below, which in the editor need not be
     the same one: an editor is not a page path, so the interface there stays in the reader's language.
   -->
-  <!-- -> `--page-header-tint`: the hint of the page's color the bar's gradient carries, see `_page-chrome.scss` -->
+  <!-- -> `--page-header-tint`: the hint of the page's color the bar's gradient carries, see `_page-chrome.scss`.
+          `--page-header-icon-size`: what the title column gives up beside the icon where the header is
+          held to the body's width (`.page-header.is-aligned`, same file) -- nothing for a page with no
+          icon, which draws none (the editor draws a button in its place) -->
   <div
     class="page-header flex flex-wrap"
-    :style="{ '--page-header-tint': pageIconColorValue(pageStore.iconColor) }"
+    :style="{
+      '--page-header-tint': pageIconColorValue(pageStore.iconColor),
+      '--page-header-icon-size': pageStore.icon || isEditing ? iconSize : '0px'
+    }"
     :lang="commonStore.locale"
     :dir="siteStore.localeDir(commonStore.locale)">
     <!-- PAGE ICON -->
-    <div class="flex-none ps-4 flex items-center">
+    <div class="page-header-icon flex-none ps-4 flex items-center">
       <w-btn
         class="rounded"
         v-if="isEditing"
@@ -58,7 +64,9 @@
       on the text alone rather than on the column, which would push them to the far side of the icon
       they belong to.
     -->
-    <div class="min-w-0 flex-1 flex flex-col justify-center p-2 sm:p-4" :lang="pageStore.locale">
+    <div
+      class="page-header-text min-w-0 flex-1 flex flex-col justify-center p-2 sm:p-4"
+      :lang="pageStore.locale">
       <div class="text-h4 page-header-title">
         <span
           v-if="isEditing"

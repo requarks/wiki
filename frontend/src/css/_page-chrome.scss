@@ -239,6 +239,59 @@ $toc-overlay-max: 749.98px;
   }
 }
 
+/*
+  A feedback board and an idea hold their body to a measure in the middle of the article column, so
+  the header is held to the same box: the icon starts where that body does, and the title and
+  description end where it does rather than running on towards the window's edge. Both are measured,
+  not worked out here -- see `measureHeaderBounds` in `pages/Index.vue`.
+
+  The text column is what is capped, at the body's width less the icon's (whose column has padding at
+  its start only), and gives up its end padding so its words reach the body's edge and not 1rem short
+  of it. Capped, it no longer stretches to the actions, so they are pushed to the far end instead.
+
+  Narrower, a long description wraps where it used to run on, so the bar's 95px is a floor here rather
+  than a height: a second line grows the bar instead of spilling out of the bottom of it. Not on a
+  phone, which sizes the bar by its contents already (below).
+
+  `flex-shrink: 0` because the bar is an item of the page's column, beside an article row that asks
+  for all of it (`flex: 1 1 100%`). A stated `min-height` replaces the floor a flex item otherwise
+  keeps at its content's height, so without this the column squeezed the bar back to 95px and the
+  second line hung out of the bottom of it -- taking the actions down with it, since a wrapping row is
+  as tall as its content rather than as the bar.
+*/
+.page-header.is-aligned {
+  flex-shrink: 0;
+  height: auto;
+  min-height: 95px;
+
+  @media (max-width: $breakpoint-xs-max) {
+    min-height: 0;
+  }
+
+  .page-header-icon {
+    padding-inline-start: var(--page-header-inset);
+  }
+  .page-header-text {
+    max-width: calc(var(--page-header-measure) - var(--page-header-icon-size));
+    padding-inline-end: 0;
+  }
+  .page-header-actions {
+    margin-inline-start: auto;
+  }
+}
+
+/*
+  A feedback board's listing, centred and capped as a blog's is, so a wide window gets a list rather
+  than a strip. Here rather than on the board's own root (`PageFeedback.vue`) because the board is
+  loaded on demand while this frame is drawn with the page: the header lines itself up with it
+  (`.page-header.is-aligned` above), and a measure that only existed once the board had loaded drew the
+  header at the window's edge first and then jumped.
+*/
+.page-feedback-frame {
+  max-width: 960px;
+  margin-inline: auto;
+}
+
 .page-header {
   height: 95px;
   @include hairline-edge(top, --page-header-rule);
@@ -477,8 +530,15 @@ $toc-overlay-max: 749.98px;
   On the body rather than on the column, which also holds the footer: the footer is the same in
   every view and should not change colour with the tab. The selected Talk tab is drawn in the same
   value -- see the end of `PageViewTabs.vue` -- because the tab and what is under it are one surface.
+
+  A feedback board's front page stands on it too, for the same reason: its ideas are cards
+  (`PageFeedback.vue`), drawn the way the Talk view's comments are. And so does an idea, so that
+  following one from its board does not change the ground under it: its head is a card
+  (`PageFeedbackIdea.vue`) and its discussion is the Talk view's cards.
 */
-.page-article-col.is-talk .page-container-body {
+.page-article-col.is-talk .page-container-body,
+.page-article-col.is-feedback-board .page-container-body,
+.page-article-col.is-idea .page-container-body {
   @at-root .body--light & {
     background-color: $grey-1;
   }

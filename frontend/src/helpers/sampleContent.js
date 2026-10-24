@@ -1994,6 +1994,182 @@ problem this schema does not have.
 ]
 
 /**
+ * A feedback board, at `/feedback`. Written with the `feedback` editor, whose content column holds a
+ * settings document like a blog's -- see `serializeBoard` in `helpers/pageFeedback.js`.
+ *
+ * Its ideas are the pages written directly in its folder, below.
+ */
+export const SAMPLE_BOARD = {
+  path: 'feedback',
+  title: 'Product Feedback',
+  description: 'Ideas for the wiki, voted on and answered — sample content.',
+  icon: 'mdi:lightbulb-on-outline',
+  tags: [],
+  settings: {
+    intro: `Tell us what would make this wiki better, and vote for the ideas you want most.
+
+Everything here was written by Generate Sample Content, and every idea carries the \`test\` tag — Purge Sample Content takes the whole board away again.`,
+    categories: [
+      { tag: 'editor', label: 'Editor' },
+      { tag: 'search', label: 'Search' },
+      { tag: 'accessibility', label: 'Accessibility' },
+      { tag: 'integrations', label: 'Integrations' }
+    ],
+    submitterCategories: true,
+    sort: 'top',
+    perPage: 20,
+    acceptsIdeas: true,
+    voting: true
+  }
+}
+
+/**
+ * The icon every sample idea is written with: the one a submitted idea is given (`IDEA_ICON` in the
+ * backend's `models/feedback.ts`), so the sample board looks like a real one.
+ */
+export const SAMPLE_IDEA_ICON = 'mdi:lightbulb-on-outline'
+
+/**
+ * @typedef {object} SampleIdea
+ * @property {string} path Directly in the board's folder: that is what makes it an idea.
+ * @property {string} title
+ * @property {string} description Shown in the listing under the title.
+ * @property {string[]} tags The board's category tags it is filed under.
+ * @property {string} status Where it stands, set after it is written through the status route.
+ * @property {string} [statusComment] What the status change says, posted to the discussion with it.
+ * @property {boolean} [vote] Whether the account generating the content votes for it, so that the
+ *   listing has counts to sort by. One vote at most: the votes are this account's own.
+ * @property {string} content Basic markdown, as the submission form takes it.
+ */
+
+/** @type {SampleIdea[]} */
+export const SAMPLE_IDEAS = [
+  {
+    path: 'feedback/dark-mode-for-the-editor',
+    title: 'Dark mode for the editor',
+    description: 'Make the editor follow the reader’s dark theme, preview included.',
+    tags: ['editor', 'accessibility'],
+    status: 'planned',
+    statusComment:
+      'Planned for the next release. The preview pane is the hard part, so it may land a little after the editor itself.',
+    vote: true,
+    content: `The wiki already has a dark theme, but the editor's preview is always light, which is **blinding** at night.
+
+- Follow the reader's theme in the preview
+- Keep code blocks readable in both`
+  },
+  {
+    path: 'feedback/search-inside-attachments',
+    title: 'Search inside attachments',
+    description: 'Index the text of PDFs and office documents so search finds them.',
+    tags: ['search'],
+    status: 'underReview',
+    vote: true,
+    content: `Half of our knowledge lives in PDFs that were uploaded to pages. Search only sees their file names.
+
+It would be enough to index the **text** of PDF, DOCX and XLSX files.`
+  },
+  {
+    path: 'feedback/export-a-page-to-pdf',
+    title: 'Export a page to PDF',
+    description: 'A button that saves the page as a nicely formatted PDF.',
+    tags: ['integrations'],
+    status: 'completed',
+    statusComment:
+      'Shipped! Use **Print** from the page menu and choose *Save as PDF* — the print stylesheet now takes care of the layout.',
+    content: `Printing from the browser works, but the result includes the sidebar and the header.
+
+A dedicated export that keeps only the article would be great.`
+  },
+  {
+    path: 'feedback/slack-notifications',
+    title: 'Post page changes to Slack',
+    description: 'Send a message to a channel when a page in a folder changes.',
+    tags: ['integrations'],
+    status: 'inProgress',
+    vote: true,
+    content: `We'd like a channel to hear about every change under \`/operations\`, without everyone having to watch the pages one by one.`
+  },
+  {
+    path: 'feedback/larger-text-option',
+    title: 'Option for larger text',
+    description: 'A reader setting that scales up the article text.',
+    tags: ['accessibility'],
+    status: 'open',
+    vote: true,
+    content: `Browser zoom makes everything bigger, including the sidebars. A setting that only scales the **article** would help readers with low vision.`
+  },
+  {
+    path: 'feedback/keyboard-shortcut-cheat-sheet',
+    title: 'Keyboard shortcut cheat sheet',
+    description: 'Show every shortcut when pressing ?.',
+    tags: ['editor', 'accessibility'],
+    status: 'open',
+    content: `Press \`?\` anywhere and get a list of the shortcuts the wiki supports, like most web apps do.`
+  },
+  {
+    path: 'feedback/search-by-author',
+    title: 'Filter search results by author',
+    description: 'Narrow a search to pages a given person wrote.',
+    tags: ['search'],
+    status: 'open',
+    content: `Sometimes I remember *who* wrote a page but not what it was called.`
+  },
+  {
+    path: 'feedback/replace-the-wiki-with-a-spreadsheet',
+    title: 'Replace the wiki with a spreadsheet',
+    description: 'Keep all documentation in one big shared spreadsheet instead.',
+    tags: [],
+    status: 'closed',
+    statusComment:
+      'Thanks for the suggestion — but a wiki is what we want to be. Closing this one.',
+    content: `Everyone knows how to use a spreadsheet.`
+  },
+  {
+    path: 'feedback/emoji-reactions-on-comments',
+    title: 'Emoji reactions on comments',
+    description: 'React to a comment instead of replying “+1”.',
+    tags: [],
+    status: 'open',
+    content: `Discussions fill up with "+1" and "agreed". A reaction would say the same thing without the noise.`
+  },
+  {
+    path: 'feedback/table-of-contents-in-the-editor',
+    title: 'Table of contents while editing',
+    description: 'Show the outline of the page beside the editor.',
+    tags: ['editor'],
+    status: 'underReview',
+    content: `Long pages are hard to navigate in the editor. The reader view has a table of contents — the editor could too.`
+  }
+]
+
+/**
+ * A short discussion on one of the ideas, by the same people as {@link SAMPLE_DISCUSSION}, written
+ * the same way: through the sample comments endpoint, which creates them as accounts.
+ */
+export const SAMPLE_IDEA_DISCUSSION = {
+  path: 'feedback/dark-mode-for-the-editor',
+  authors: [
+    { handle: 'meilin', name: 'Mei Lin Chen' },
+    { handle: 'dbrooks', name: 'Daniel Brooks' }
+  ],
+  threads: [
+    {
+      author: 'meilin',
+      hoursAgo: 30,
+      content: `Yes please. I write most of my pages in the evening and the preview is the brightest thing on my screen.`,
+      replies: [
+        {
+          author: 'dbrooks',
+          hoursAgo: 26,
+          content: `Same. Code blocks in particular need care — some of the highlighting colours disappear on a dark background.`
+        }
+      ]
+    }
+  ]
+}
+
+/**
  * The site's home page, linking to every other page the sample content writes.
  *
  * Written only where the site has no home page yet — a home page somebody wrote is theirs, and the
@@ -2048,6 +2224,10 @@ ${SAMPLE_PAGES.filter((page) => page.path.startsWith(prefix))
 ${link(SAMPLE_BLOG)}
 
 ${posts.map(link).join('\n')}
+
+## Feedback
+
+${link(SAMPLE_BOARD)}
 `
   }
 }

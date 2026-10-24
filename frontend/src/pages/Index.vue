@@ -55,7 +55,17 @@
         </div>
       </div>
     </div>
-    <page-header v-if="!pageStore.notFound" />
+    <page-header
+      v-if="!pageStore.notFound"
+      :class="{ 'is-aligned': headerBounds !== null }"
+      :style="
+        headerBounds !== null
+          ? {
+              '--page-header-inset': `${headerBounds.inset}px`,
+              '--page-header-measure': `${headerBounds.width}px`
+            }
+          : null
+      " />
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
     <div
       class="page-container flex min-h-0 flex-nowrap items-stretch"
@@ -89,6 +99,7 @@
           :model-value="activeView"
           :talk="showTalkTab"
           :links="showLinksTab"
+          :idea="isIdea"
           @update:model-value="switchView" />
         <component :is="editorComponents[editorStore.editor]" v-if="editorStore.isActive" />
         <!--
@@ -165,6 +176,8 @@
           class="page-container-scrl page-article-col flex-1 min-h-0"
           :class="{
             'is-talk': activeView === `talk`,
+            'is-feedback-board': isFeedbackBoard,
+            'is-idea': isIdea && activeView === `article`,
             'is-annotating': isAnnotating,
             'is-picking': isAnnotating && annotator?.isPicking
           }"
@@ -172,9 +185,7 @@
           v-else>
           <!-- -> Half the padding on a phone, where 16px a side is 8% of the window spent on margin;
                   the stylesheet has `--content-bleed` to match -->
-          <div
-            class="page-container-body p-2 sm:p-4"
-            :class="{ 'is-centered': siteStore.theme.contentWidth === `centered` }">
+          <div class="page-container-body p-2 sm:p-4" :class="{ 'is-centered': isCentered }">
             <!--
               Above the article rather than above the toolbars: what an administrator raises a banner
               about is the content, and this is where a reader is already looking.
@@ -267,6 +278,25 @@
               -->
               <page-blog v-if="isBlog" />
               <!--
+                A feedback board's front page, likewise: its ideas in place of an article, for the
+                blog's reasons -- see `PageFeedback.vue`.
+
+                In a frame of this page's rather than the component's own box: the board is loaded on
+                demand, and the header lines itself up with this measure (`measureHeaderBounds`) --
+                which has to be there from the first frame, or the header is drawn at the window's
+                edge until the board arrives and then jumps.
+              -->
+              <div v-if="isFeedbackBoard" class="page-feedback-frame">
+                <page-feedback />
+              </div>
+              <!--
+                The head of an idea on a feedback board, over its article: the vote, where it stands
+                and what can be done about it. See `PageFeedbackIdea.vue`.
+              -->
+              <page-feedback-idea
+                v-if="isIdea && activeView === `article`"
+                @changed="onIdeaChanged" />
+              <!--
                 Delegated rather than bound per link: the anchors are written by `v-html`, so there is
                 nothing here to put a handler on, and they are replaced wholesale on every render.
               -->
@@ -280,7 +310,7 @@
                 :lang="pageStore.locale"
                 :dir="siteStore.localeDir(pageStore.locale)"
                 ref="pageContents"
-                v-show="activeView === `article` && !isBlog"
+                v-show="activeView === `article` && !isBlog && !isFeedbackBoard"
                 v-html="pageStore.render"
                 @click="onContentClick" />
               <!--
@@ -355,6 +385,16 @@
                 a site that uses one of them puts its comments and where a reader who uses that provider
                 elsewhere expects to find them.
               -->
+              <!--
+                An idea's discussion, under it rather than on a Talk tab: on a feedback board the
+                comments are the conversation about the idea, read as the rest of it. See
+                `showInlineTalk`.
+              -->
+              <page-talk
+                v-if="showInlineTalk"
+                ref="inlineTalk"
+                inline
+                :content-root="pageContents" />
               <page-comments-embed v-if="showCommentsEmbed" />
             </div>
           </div>
@@ -408,6 +448,8 @@
           rather than built a second time.
         -->
         <page-blog-sidebar v-if="isBlog" />
+        <!-- -> A board's, likewise: where its ideas stand and what they are about -->
+        <page-feedback-sidebar v-else-if="isFeedbackBoard" />
         <!--
           The Talk view's column: what can be started from it, in place of the contents, tags, rating
           and last editor, which are all about the article and are not what is on screen.
@@ -736,6 +778,18 @@ const PageBlog = defineAsyncComponent({
   loadingComponent: LoadingGeneric
 })
 const PageBlogSidebar = defineAsyncComponent(() => import('@/components/PageBlogSidebar.vue'))
+/*
+  A feedback board's two halves and an idea's head, on demand for the same reason: a wiki with no board
+  has no reader who needs any of them.
+*/
+const PageFeedback = defineAsyncComponent({
+  loader: () => import('@/components/PageFeedback.vue'),
+  loadingComponent: LoadingGeneric
+})
+const PageFeedbackSidebar = defineAsyncComponent(
+  () => import('@/components/PageFeedbackSidebar.vue')
+)
+const PageFeedbackIdea = defineAsyncComponent(() => import('@/components/PageFeedbackIdea.vue'))
 // -> Only on a missing page, and only where the site has it turned on
 const PageFolderChildren = defineAsyncComponent(() => import('@/components/PageFolderChildren.vue'))
 
@@ -777,6 +831,10 @@ const editorComponents = {
   }),
   blog: defineAsyncComponent({
     loader: () => import('../components/EditorBlog.vue'),
+    loadingComponent: LoadingGeneric
+  }),
+  feedback: defineAsyncComponent({
+    loader: () => import('../components/EditorFeedback.vue'),
     loadingComponent: LoadingGeneric
   })
 }
@@ -879,6 +937,8 @@ const glossaryCard = ref(null)
 const pageScroller = ref(null)
 /** The Talk view while it is on screen, for the New Comment button in the column beside it. */
 const talkView = ref(null)
+/** An idea's discussion, under its article, which a status change may have just posted into. */
+const inlineTalk = ref(null)
 /** The annotator while it is open, which knows whether leaving would throw anything away. */
 const annotator = ref(null)
 
@@ -939,6 +999,26 @@ const tocJoinsArticleEdge = computed(() => {
 const isBlog = computed(() => pageStore.editor === 'blog')
 
 /**
+ * Whether the page on screen is a feedback board's front page, drawn as its ideas rather than as an
+ * article -- see `PageFeedback.vue`. An idea on the board is an ordinary page and is not this.
+ */
+const isFeedbackBoard = computed(() => pageStore.editor === 'feedback')
+
+/**
+ * Whether the page on screen is an idea on a feedback board: an article with the board's head over it
+ * and its discussion under it. The server says so with the page, since which pages are ideas is where
+ * they sit (`feedback` on the page payload).
+ */
+const isIdea = computed(() => Boolean(pageStore.feedback) && !pageStore.notFound)
+
+/**
+ * Whether the column is held to a measure in the middle (`.is-centered`, see `_page-chrome.scss`):
+ * where the theme asks for it, and always on an idea, whose head, body and discussion read as one
+ * short piece rather than as an article running to the column's edges.
+ */
+const isCentered = computed(() => siteStore.theme.contentWidth === 'centered' || isIdea.value)
+
+/**
  * Whether the page on screen is a redirection, which is a page with nowhere to read: it takes the
  * reader on rather than showing them anything -- see `PageRedirect.vue`, which is drawn in place of
  * the article column entirely.
@@ -974,6 +1054,98 @@ const showSidebar = computed(() => {
     (!isBlog.value || blogWantsSidebar.value)
   )
 })
+
+/**
+ * Whether the header's icon is lined up with the start of the body below it rather than with the
+ * window's edge: wherever the body is held to a measure in the middle of the article column -- a
+ * feedback board, and every page that `isCentered` (an idea, or any page under the theme's Centered
+ * content width) -- so that a header starting far to the left of it would read as belonging to
+ * something else. Not in the editor, which replaces the column the body is in.
+ */
+const alignsHeader = computed(
+  () =>
+    (isFeedbackBoard.value || isCentered.value) && !editorStore.isActive && !pageStore.notFound
+)
+
+/**
+ * Where the body sits under the header, in px: how far in from the header's starting edge it starts
+ * (`inset`) and how wide it is (`width`), so that the icon starts where it does and the title and
+ * description end where it does. Null where the header is not aligned -- see `measureHeaderBounds`.
+ */
+const headerBounds = ref(null)
+let headerBoundsObserver = null
+
+/**
+ * Measured rather than worked out in CSS: the header spans the whole row -- the contents column, the
+ * actions rail -- where the body is centred in the article column alone, after its scrollbar. Each of
+ * those has a width of its own that changes with the window and the theme, and a stylesheet cannot
+ * know the scrollbar's at all.
+ *
+ * Against `.page-container` rather than the header itself, which has the same two edges: the row is a
+ * plain element, where a component's `$el` is not reliably its root.
+ */
+function measureHeaderBounds() {
+  const scroller = pageScroller.value?.$el
+  const row = scroller?.closest('.page-container')
+  const body = scroller?.querySelector(
+    isFeedbackBoard.value ? '.page-feedback-frame' : '.page-measure'
+  )
+  if (!alignsHeader.value || !row || !body) {
+    headerBounds.value = null
+    return
+  }
+  const rowRect = row.getBoundingClientRect()
+  const bodyRect = body.getBoundingClientRect()
+  // -> From the header's starting side, which is the interface's: see `PageHeader.vue`
+  const inset = Math.round(
+    siteStore.localeDir(commonStore.locale) === 'rtl'
+      ? rowRect.right - bodyRect.right
+      : bodyRect.left - rowRect.left
+  )
+  const width = Math.round(bodyRect.width)
+  // -> Only when it moved: a fresh object every time would re-render the header on every resize tick
+  if (headerBounds.value?.inset !== inset || headerBounds.value?.width !== width) {
+    headerBounds.value = { inset, width }
+  }
+}
+
+/*
+  Watching two boxes, because neither alone sees everything that moves the body. A callback runs after
+  layout and before paint, so the header never shows at the wrong inset for a frame.
+
+  - The padded box inside the scroller (`.page-container-body`), which is the column's width: the
+    window, the contents column coming and going (it does on leaving the editor), a scrollbar. The box
+    that holds the body cannot stand in for it: held to a measure, it keeps its width while the column
+    changes around it, and only MOVES -- which a ResizeObserver does not report.
+  - The box that holds the body (`.page-measure`), for the board or idea arriving: both are loaded on
+    demand, so the first measurement finds nothing there yet, and the padded box -- at least as tall as
+    the column -- does not change size when a short one turns up.
+*/
+watch(
+  // -> `null` rather than `false` when not aligning: `?.` below guards against null, not against false
+  () => (alignsHeader.value ? (pageScroller.value?.$el ?? null) : null),
+  (scroller) => {
+    headerBoundsObserver?.disconnect()
+    headerBoundsObserver = null
+    headerBounds.value = null
+    const boxes = ['.page-container-body', '.page-measure']
+      .map((selector) => scroller?.querySelector(selector))
+      .filter(Boolean)
+    if (boxes.length > 0) {
+      headerBoundsObserver = new ResizeObserver(measureHeaderBounds)
+      for (const box of boxes) {
+        headerBoundsObserver.observe(box)
+      }
+    }
+  },
+  { flush: 'post' }
+)
+
+// -> The one change that moves the body without resizing it: the contents column changing sides
+watch(tocColumnIsLeft, () => nextTick(measureHeaderBounds))
+
+onBeforeUnmount(() => headerBoundsObserver?.disconnect())
+
 /*
   Whether there is a contents SECTION, heading and separator included -- not just whether the page
   asked for one. A page with no headings, or whose depth settings leave nothing to list, would
@@ -1008,7 +1180,8 @@ const showTags = computed(() => {
   it is also what says which scale is in force, so that is what is read here.
 */
 const showRatings = computed(() => {
-  return Boolean(pageStore.rating) && pageStore.allowRatings
+  // -> Not on an idea, whose vote is in its head -- and a thumb down beside an upvote would contradict it
+  return Boolean(pageStore.rating) && pageStore.allowRatings && !isIdea.value
 })
 /*
   A logged in reader who may read the page. Only an account can rate, since one opinion per person
@@ -1107,6 +1280,10 @@ const showTalkTab = computed(
     // -> A blog's front page is a listing rather than an article: there is nothing here to discuss,
     //    and the discussion a reader wants belongs on the post they are reading
     !isBlog.value &&
+    // -> A board's likewise; and an idea's discussion is under it rather than on a tab of its own --
+    //    see `showInlineTalk`
+    !isFeedbackBoard.value &&
+    !isIdea.value &&
     /*
       Nor a redirection, for a stronger version of the same reason: it is a doorway rather than a
       page, the reader is on their way through it, and the discussion they want is about wherever it
@@ -1141,6 +1318,7 @@ const showLinksTab = computed(
     !editorStore.isActive &&
     // -> As above: the strip is gone on a blog, and a tab with no strip to sit in cannot be reached
     !isBlog.value &&
+    !isFeedbackBoard.value &&
     // -> And on a redirection, which is drawn in place of the column the tab would switch
     !isRedirect.value &&
     Boolean(pageStore.id)
@@ -1163,6 +1341,21 @@ const activeView = computed(() => {
   }
   return 'article'
 })
+
+/*
+  An idea's discussion, drawn under its article: the Talk tab's conditions, with the idea in place of
+  the tab. Nothing is offered to annotate it from -- an idea is discussed, not marked up -- and the
+  server refuses annotations on one besides.
+*/
+const showInlineTalk = computed(
+  () =>
+    isIdea.value &&
+    siteStore.comments.isBuiltIn &&
+    pageStore.allowComments &&
+    !pageStore.isLocked &&
+    !editorStore.isActive &&
+    userStore.pagePermissions.includes('read:comments')
+)
 
 /** Annotating, which is only ever done over the article. */
 const isAnnotating = computed(() => state.annotating && activeView.value === 'article')
@@ -1364,7 +1557,10 @@ onBeforeRouteUpdate(guardUnsavedEdits)
 watch(
   () => [pageStore.id, pageStore.unreadNotifications, activeView.value],
   () => {
-    notificationsStore.markSeen({ inDiscussion: activeView.value === 'talk' })
+    // -> An idea's discussion is on screen with it, so opening the idea is reading the discussion too
+    notificationsStore.markSeen({
+      inDiscussion: activeView.value === 'talk' || showInlineTalk.value
+    })
   },
   { immediate: true }
 )
@@ -1906,6 +2102,18 @@ function toggleAllAnnotations() {
   closeTocPanel()
   state.showAnnotations = true
   switchView('article')
+}
+
+/**
+ * An idea's status was changed from its head: the page has been loaded again, and the discussion under
+ * it is brought up to date too -- then shown, at the comment the change was posted with if there was
+ * one, since that is what the maintainer just said about it.
+ */
+async function onIdeaChanged({ comment }) {
+  await inlineTalk.value?.reload()
+  if (comment) {
+    scrollToAnchorWhenReady(`#comment-${comment.id}`)
+  }
 }
 
 /** From an annotation's note over the article to the comment it was posted in. */

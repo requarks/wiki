@@ -67,6 +67,11 @@ const props = defineProps({
   links: {
     type: Boolean,
     default: false
+  },
+  /** Whether the page is an idea on a feedback board, whose article is the idea itself. */
+  idea: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -90,7 +95,7 @@ const tabs = computed(() => [
   {
     name: 'article',
     icon: 'la:file-alt',
-    label: t('common.comments.tabArticle'),
+    label: props.idea ? t('common.feedback.tabIdea') : t('common.comments.tabArticle'),
     count: 0
   },
   ...(props.talk
@@ -424,8 +429,12 @@ function onKeydown(ev) {
   in `_page-chrome.scss`): the selected tab takes that grey, so it still reads as the front edge of
   what is below it. And the strip gives up its 1px gap -- it exists for a site banner, which the Talk
   view never shows, and left open it would run a line of the article's colour between tab and surface.
+
+  An idea stands on the same grey (`.is-idea`), so its tab does likewise. A banner there is drawn on
+  the grey too, inside the surface rather than against the strip, so the gap is not missed.
 */
-.page-view-tabs:has(+ .page-article-col.is-talk) {
+.page-view-tabs:has(+ .page-article-col.is-talk),
+.page-view-tabs:has(+ .page-article-col.is-idea) {
   margin-bottom: 0;
 
   .page-view-tab.is-active {

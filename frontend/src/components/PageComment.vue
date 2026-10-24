@@ -65,6 +65,20 @@
               <span v-if="wasEdited"> &middot; {{ t('common.comments.edited') }}</span>
             </span>
           </div>
+          <!--
+            The status change this comment was posted with, on a feedback board's idea: the comment
+            is the maintainer explaining it, so the change is said over the top of what they wrote.
+          -->
+          <div class="page-comment-status" v-if="comment.statusChange">
+            <i18n-t keypath="common.feedback.statusChanged" tag="span" scope="global">
+              <template #from>
+                <feedback-status-badge :status="comment.statusChange.from" size="sm" />
+              </template>
+              <template #to>
+                <feedback-status-badge :status="comment.statusChange.to" size="sm" />
+              </template>
+            </i18n-t>
+          </div>
           <page-comment-editor
             class="pt-2"
             v-if="editing"
@@ -325,6 +339,7 @@ import { avatarColorFor } from '@/helpers/avatarColors'
 import { copyToClipboard } from '@/helpers/clipboard'
 import { renderComment } from '@/renderers/comment'
 
+import FeedbackStatusBadge from '@/components/FeedbackStatusBadge.vue'
 import PageCommentEditor from '@/components/PageCommentEditor.vue'
 
 /**
@@ -706,6 +721,18 @@ watch(
 .page-comment-when {
   margin-inline-start: auto;
   white-space: nowrap;
+}
+
+/* -> The status change a feedback idea's comment came with, between the byline and the text */
+.page-comment-status {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.8rem;
+
+  .w-chip {
+    margin: 0 2px;
+  }
 }
 
 .page-comment-author {

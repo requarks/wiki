@@ -132,6 +132,7 @@ const state = reactive({
     blog: false,
     channel: false,
     excalidraw: false,
+    feedback: false,
     markdown: false,
     redirect: false,
     visual: false
@@ -162,6 +163,17 @@ const editors = reactive([
       No rendering pipeline of its own: a blog's front page has no body, and its POSTS are ordinary
       pages rendered by whichever editor wrote them. See `models/blogs.ts`.
     */
+    useRendering: false
+  },
+  {
+    id: 'feedback',
+    icon: 'light-on',
+    /*
+      No rendering pipeline of its own either: a board's front page has no body, and its IDEAS are
+      ordinary markdown pages. See `models/feedback.ts`. What it does have is a site-wide setting:
+      how long an account waits between two submitted ideas.
+    */
+    hasConfig: true,
     useRendering: false
   },
   {
@@ -222,6 +234,7 @@ async function load() {
     state.config.asciidoc = data?.asciidoc?.isActive ?? false
     state.config.blog = data?.blog?.isActive ?? false
     state.config.excalidraw = data?.excalidraw?.isActive ?? false
+    state.config.feedback = data?.feedback?.isActive ?? false
     state.config.markdown = data?.markdown?.isActive ?? false
     state.config.redirect = data?.redirect?.isActive ?? false
     state.config.visual = data?.visual?.isActive ?? false
@@ -245,6 +258,7 @@ async function save() {
           asciidoc: { isActive: state.config.asciidoc },
           blog: { isActive: state.config.blog },
           excalidraw: { isActive: state.config.excalidraw },
+          feedback: { isActive: state.config.feedback },
           markdown: { isActive: state.config.markdown },
           redirect: { isActive: state.config.redirect },
           visual: { isActive: state.config.visual }
@@ -262,6 +276,7 @@ async function save() {
           asciidoc: state.config.asciidoc,
           blog: state.config.blog,
           excalidraw: state.config.excalidraw,
+          feedback: state.config.feedback,
           markdown: state.config.markdown,
           redirect: state.config.redirect,
           visual: state.config.visual
@@ -299,6 +314,13 @@ function openConfig(editorId) {
       adminStore.$patch({
         overlayOpts: {},
         overlay: 'EditorMarkdownConfig'
+      })
+      break
+    }
+    case 'feedback': {
+      adminStore.$patch({
+        overlayOpts: {},
+        overlay: 'EditorFeedbackConfig'
       })
       break
     }

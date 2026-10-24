@@ -111,6 +111,12 @@ export const usePageStore = defineStore('page', {
      * NEAREST one, so a blog inside a blog owns its own posts.
      */
     blog: null,
+    /**
+     * The feedback board this page is an idea of, with where it stands and what this reader may do
+     * about it, or null for a page that is not one -- see `feedback` on the page payload
+     * (`api/pages.ts`). An idea is a page directly in a board's folder, which the server works out.
+     */
+    feedback: null,
     commentsCount: 0,
     content: '',
     /**
@@ -131,7 +137,12 @@ export const usePageStore = defineStore('page', {
     createdAt: '',
     description: '',
     editor: '',
-    icon: DEFAULT_PAGE_ICON,
+    /**
+     * Empty until a page is loaded rather than `DEFAULT_PAGE_ICON`: the header is drawn before the
+     * page arrives, and a default here showed as a generic document for a moment before the page's own
+     * icon replaced it. A new page and a missing one each set the default themselves.
+     */
+    icon: '',
     /** One of `PAGE_ICON_COLORS` (`helpers/pageIconColors.js`), or empty for the site's primary color. */
     iconColor: '',
     id: '',
@@ -564,6 +575,7 @@ export const usePageStore = defineStore('page', {
           rating: null,
           viewerRating: 0,
           blog: null,
+          feedback: null,
           notFound: true,
           // -> Not the previous page's: what the sidebar shows here is the folder's, or what a page here
           //    would inherit
@@ -703,12 +715,18 @@ export const usePageStore = defineStore('page', {
            mean to put inside it: a nested blog takes that part of the outer blog's posts with it.
            The reason for the exception is that a page under a blog is a post, and a blog is not one.
 
+           A feedback board is the same exception for the same reason: a page in its folder is an idea.
+           Most ideas arrive through the submission form, but somebody who may write pages there and
+           starts one from the board means it to be on the board.
+
            A caller that named a `basePath` -- the file manager, which is looking at a folder rather
            than at a page -- has already answered the question and is never second-guessed.
       */
       let newPath = path
       if (!path && path !== '') {
-        const intoBlog = this.editor === 'blog' && Boolean(this.id) && editor !== 'blog'
+        const listings = ['blog', 'feedback']
+        const intoBlog =
+          listings.includes(this.editor) && Boolean(this.id) && !listings.includes(editor)
         const siblingPath = intoBlog ? this.path : this.path.split('/').slice(0, -1).join('/')
         const parentPath = basePath || basePath === '' ? basePath : siblingPath
         newPath = parentPath ? `${parentPath}/new-page` : 'new-page'
@@ -793,6 +811,7 @@ export const usePageStore = defineStore('page', {
           answered -- which, when that page WAS a post, is the blog it belonged to.
         */
         blog: null,
+        feedback: null,
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         folderId: '',
