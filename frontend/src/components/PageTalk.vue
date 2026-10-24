@@ -118,7 +118,7 @@
             color="primary"
             icon="la:sign-in-alt"
             :label="t(`common.header.login`)"
-            :to="`/login`" />
+            :to="loginTo" />
         </div>
         <page-comment-editor
           v-else
@@ -139,6 +139,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useDark } from '@/composables/dark'
 import { confirm } from '@/composables/dialog'
@@ -150,6 +151,7 @@ import { useUserStore } from '@/stores/user'
 
 import { apiErrorMessage } from '@/helpers/apiError'
 import { indexText, locateAnchor } from '@/helpers/annotations'
+import { loginLocation } from '@/helpers/loginRedirect'
 import { takesComments } from '@/helpers/pageFeedback'
 import { scrollBehavior } from '@/helpers/motion'
 
@@ -204,6 +206,11 @@ const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
 
+// ROUTER
+
+const router = useRouter()
+const route = useRoute()
+
 // I18N
 
 const { t } = useI18n()
@@ -257,6 +264,18 @@ const canWrite = computed(() => userStore.pagePermissions.includes('write:commen
 const canModerate = computed(() => userStore.pagePermissions.includes('manage:comments'))
 /** Whoever reviews the page may resolve and delete what was said about it, without moderating. */
 const canReview = computed(() => userStore.pagePermissions.includes('review:pages'))
+
+/**
+ * Where signing in to comment comes back to: this discussion. On a Talk tab that takes `#talk`, since
+ * opening the tab does not put it in the URL and the page would otherwise reopen on its article.
+ */
+const loginTo = computed(() =>
+  loginLocation(
+    props.inline
+      ? route.fullPath
+      : router.resolve({ path: route.path, query: route.query, hash: '#talk' }).fullPath
+  )
+)
 
 /**
  * Whether this is an idea that is Completed or Closed, whose discussion is kept and read but closed to

@@ -1,19 +1,20 @@
 <template>
   <!--
-    A guest is sent to log in rather than shown a dead button: voting needs an account, and the box is
-    where they are told so. Back to this same page afterwards.
+    A guest is told to log in rather than shown a dead button: voting needs an account, and pressing
+    the box is where they find that out (`FeedbackLoginDialog.vue`).
   -->
-  <router-link
-    v-if="!userStore.authenticated && !isDisabled"
+  <button
+    v-if="offersLogin"
+    type="button"
     class="feedback-vote"
     :class="sizeClass"
-    :to="loginLocation(route.fullPath)"
-    :aria-label="t('common.feedback.voteLogin')">
+    :aria-label="t('common.feedback.voteLogin')"
+    @click.prevent.stop="askToLogin">
     <w-icon class="feedback-vote-icon" name="mdi:chevron-up" />
     <span class="feedback-vote-count">{{ count }}</span>
     <span class="feedback-vote-label">{{ t('common.feedback.votes', count) }}</span>
     <w-tooltip>{{ t('common.feedback.voteLogin') }}</w-tooltip>
-  </router-link>
+  </button>
   <button
     v-else
     type="button"
@@ -35,12 +36,13 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
-import { loginLocation } from '@/helpers/loginRedirect'
+import { dialog } from '@/composables/dialog'
 
 import { useUserStore } from '@/stores/user'
+
+import FeedbackLoginDialog from '@/components/FeedbackLoginDialog.vue'
 
 /**
  * An idea's upvote: the count, and the press that adds the reader's vote to it or takes it back.
@@ -88,10 +90,6 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle'])
 
-// ROUTER
-
-const route = useRoute()
-
 // STORES
 
 const userStore = useUserStore()
@@ -105,6 +103,14 @@ const { t } = useI18n()
 const sizeClass = computed(() => `is-${props.size}`)
 
 const isDisabled = computed(() => props.disable || props.settled)
+
+const offersLogin = computed(() => !userStore.authenticated && !isDisabled.value)
+
+// METHODS
+
+function askToLogin() {
+  dialog({ component: FeedbackLoginDialog, componentProps: { action: 'vote' } })
+}
 </script>
 
 <style lang="scss">

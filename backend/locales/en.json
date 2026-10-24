@@ -2372,6 +2372,7 @@
   "common.feedback.vote": "Vote for this idea",
   "common.feedback.voteFailed": "Your vote could not be recorded.",
   "common.feedback.voteLogin": "Log in to vote",
+  "common.feedback.voteLoginHint": "You must be logged in to upvote an idea. Log in, and you'll be brought back here to cast your vote.",
   "common.feedback.votes": "Votes | Vote | Votes",
   "common.feedback.withdraw": "Withdraw",
   "common.feedback.withdrawConfirm": "Your idea will be removed from the board, with its votes and its discussion. Somebody who manages the board can still restore it.",

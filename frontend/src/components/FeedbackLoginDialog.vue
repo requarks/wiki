@@ -3,10 +3,10 @@
     <w-card style="width: 420px; max-width: 94vw">
       <w-card-section class="card-header">
         <w-icon name="img:/_assets/icons/fluent-bulb.svg" size="sm" class="mr-2" />
-        <span>{{ t('common.feedback.submitIdea') }}</span>
+        <span>{{ title }}</span>
       </w-card-section>
       <w-card-section>
-        {{ t('common.feedback.submitLoginHint') }}
+        {{ hint }}
       </w-card-section>
       <w-card-actions class="card-actions">
         <w-space />
@@ -30,6 +30,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -38,12 +39,22 @@ import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { loginLocation } from '@/helpers/loginRedirect'
 
 /**
- * What a guest pressing Submit Idea on a feedback board is shown: that submitting takes an account,
- * and the way to log in. The button is offered to guests rather than hidden from them, since a board
- * that looks closed to everybody not yet signed in is not asking for their ideas.
+ * What a guest pressing Submit Idea on a feedback board, or an idea's vote box, is shown: that it takes
+ * an account, and the way to log in. Both are offered to guests rather than hidden from them, since a
+ * board that looks closed to everybody not yet signed in is not asking for their ideas or their votes.
  *
- * Back to the board afterwards, as from the vote box (`FeedbackVote.vue`).
+ * Back to the same page afterwards.
  */
+
+// PROPS
+
+const props = defineProps({
+  /** What the guest tried to do: `submit` an idea, or `vote` for one. */
+  action: {
+    type: String,
+    default: 'submit'
+  }
+})
 
 // EMITS
 
@@ -61,6 +72,17 @@ const router = useRouter()
 // I18N
 
 const { t } = useI18n()
+
+// COMPUTED
+
+const title = computed(() =>
+  props.action === 'vote' ? t('common.feedback.vote') : t('common.feedback.submitIdea')
+)
+const hint = computed(() =>
+  props.action === 'vote'
+    ? t('common.feedback.voteLoginHint')
+    : t('common.feedback.submitLoginHint')
+)
 
 // METHODS
 
