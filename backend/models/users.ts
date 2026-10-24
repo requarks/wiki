@@ -234,6 +234,16 @@ function escapeLikePattern(value: string): string {
 }
 
 /**
+ * The groups a strategy puts everybody it lets in into: the Users group, plus its own auto-enroll
+ * groups. The Users group is not left to the strategy's list because it is where an ordinary
+ * account's access comes from — an account outside every group is refused everything, which is not
+ * what letting somebody register means.
+ */
+function strategyEnrollGroups(strategy: AuthStrategy): string[] {
+  return uniq([WIKI.data.systemIds.usersGroupId, ...(strategy.autoEnrollGroups ?? [])])
+}
+
+/**
  * Count a wrong 2FA code against a continuation token, destroying the token once `maxTfaAttempts`
  * have been used up — the client then has nothing left to continue with and has to start over.
  *
@@ -1053,8 +1063,8 @@ class Users {
    * What the claim does NOT name is the half worth being careful about. Without `groupsExclusive` the
    * claim only ever adds, so a membership granted here survives a directory that has never heard of
    * it. With it, the provider is the authority and a group it stops naming is taken back — except the
-   * strategy's auto-enroll groups, which are granted here to everybody this strategy lets in, so a
-   * claim not mentioning them is not an opinion about them.
+   * Users group and the strategy's auto-enroll groups, which are granted to everybody this strategy
+   * lets in, so a claim not mentioning them is not an opinion about them.
    *
    * A provider whose claim is missing entirely leaves membership alone; one whose claim is an empty
    * list has said this person is in none, which under `groupsExclusive` is a removal.
@@ -1086,7 +1096,7 @@ class Users {
     )
 
     const current = await this.getUserGroupIds(userId)
-    const autoEnroll = strategy.autoEnrollGroups ?? []
+    const autoEnroll = strategyEnrollGroups(strategy)
     const wanted = profile.groupsExclusive
       ? uniq([...matched.map((grp) => grp.id), ...current.filter((id) => autoEnroll.includes(id))])
       : uniq([...current, ...matched.map((grp) => grp.id)])
@@ -1716,7 +1726,7 @@ class Users {
         email,
         // -> No password at all: this account authenticates at the provider, and the local strategy's
         //    own entry is what one would live under
-        groups: strategy.autoEnrollGroups ?? [],
+        groups: strategyEnrollGroups(strategy),
         isVerified: true
       })
       user = await this.getById(userId)
@@ -2350,7 +2360,7 @@ class Users {
       name: name.trim(),
       email: address,
       password,
-      groups: strategy.autoEnrollGroups ?? [],
+      groups: strategyEnrollGroups(strategy),
       isVerified: !mustVerify,
       strategyId: strategy.id,
       locale: locale ?? ''

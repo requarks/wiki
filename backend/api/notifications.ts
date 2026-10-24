@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { unlockedFor } from './pages.ts'
+import { NOTIFICATION_SETTINGS_FIELDS } from '../models/notifications.ts'
 import { NOTIFICATION_CATEGORY_KEYS } from '../notifications/index.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
@@ -298,7 +299,12 @@ async function routes(app: FastifyInstance) {
   /**
    * UPDATE OWN NOTIFICATION PREFERENCES
    */
-  app.put<{ Body: { preferences: Record<string, { inApp?: boolean; email?: boolean }> } }>(
+  app.put<{
+    Body: {
+      preferences: Record<string, { inApp?: boolean; email?: boolean }>
+      stopAllEmail?: boolean
+    }
+  }>(
     '/users/profile/notifications',
     {
       config: {
@@ -308,7 +314,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Update the logged in user's notification preferences",
         description:
-          'Keyed by category. A category or a channel left out is left as it is, and a category the caller is not offered is ignored.',
+          'Keyed by category. A category or a channel left out is left as it is, and a category the caller is not offered is ignored.\n\n`stopAllEmail` turns email off for every category there is — including those the caller is not shown, because the administrator has their section in-app only or switched off — so that none of them emails again when it is turned back on. It also cancels whatever email was waiting.',
         tags: ['Notifications'],
         body: {
           type: 'object',
@@ -323,7 +329,8 @@ async function routes(app: FastifyInstance) {
                   email: { type: 'boolean' }
                 }
               }
-            }
+            },
+            stopAllEmail: { type: 'boolean' }
           }
         },
         response: { 200: preferencesResponse }
@@ -336,8 +343,14 @@ async function routes(app: FastifyInstance) {
       }
       const actor = { permissions: req.apiKey?.permissions ?? req.session?.permissions ?? [] }
       const changed = await WIKI.models.notifications.setPrefs(userId, actor, req.body.preferences)
-      if (changed.length > 0) {
-        await audit(req, 'profile', 'updateNotificationPrefs', { categories: changed.sort() })
+      if (req.body.stopAllEmail) {
+        await WIKI.models.notifications.disableEmail(userId, NOTIFICATION_CATEGORY_KEYS)
+      }
+      if (changed.length > 0 || req.body.stopAllEmail) {
+        await audit(req, 'profile', 'updateNotificationPrefs', {
+          categories: changed.sort(),
+          ...(req.body.stopAllEmail && { stopAllEmail: true })
+        })
       }
       return {
         preferences: await WIKI.models.notifications.getPrefs(userId, actor),
@@ -488,7 +501,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the notification settings and delivery status',
         description:
-          'The instance-wide settings — retention, the email delay, the mail batch size — and how delivery is doing: the backlog of events still to be turned into notifications, and the emails of the last day.',
+          'The instance-wide settings — retention, the email delay, the mail batch size, what each section may deliver — and how delivery is doing: the backlog of events still to be turned into notifications, and the emails of the last day.',
         tags: ['Notifications'],
         response: {
           200: {
@@ -529,7 +542,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update the notification settings',
         description:
-          'Accepts any subset of the fields, and applies at once on every instance. A change to the email delay applies to notifications written from then on.',
+          "Accepts any subset of the fields, and of the sections within `sections`, and applies at once on every instance. A change to the email delay applies to notifications written from then on.\n\nA section turned off or made in-app only stops what it would deliver at once, emails already waiting included, without changing anybody's own choices: turned back up, they apply again.",
         tags: ['Notifications'],
         body: { $ref: 'NotificationSettings#' },
         response: {
@@ -546,7 +559,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       const patch: Record<string, any> = {}
-      for (const field of ['retentionDays', 'emailDelay', 'mailBatchSize']) {
+      for (const field of NOTIFICATION_SETTINGS_FIELDS) {
         if (req.body?.[field] !== undefined) {
           patch[field] = req.body[field]
         }

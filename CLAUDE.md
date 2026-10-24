@@ -1698,6 +1698,10 @@ it is; what follows is what is easy to get wrong.
   deliberately not `auth.secret` (which rotating the sessions replaces). A GET of the link only redirects to `/_unsubscribe`, which asks.
 - **The site switch is `features.notifications`**; the instance settings (retention, email delay, mail
   batch size) are **Admin → Notifications**, `GET`/`PUT /system/notifications`, behind `manage:system`.
+- **A section can be narrowed instance-wide** — `notifications.sections`, each `off` / `inApp` /
+  `email` — as a master switch that never touches `userNotificationPrefs`. Anything new that acts on a
+  person's choice asks `deliveryFor(section)` as well, as the Profile screen, `emit()`, the fan-out and
+  the mail drain do.
 
 ### Audit log
 

@@ -110,6 +110,14 @@ defaults:
       emailDelay: '3m'
       # How many people one run of the mail task sends to. Lower it for a relay that throttles.
       mailBatchSize: 100
+      # What each section of Profile -> Notifications may deliver: `off` (not offered, nothing sent),
+      # `inApp` (no email, whatever anyone chose) or `email` (both). A master switch over the users'
+      # own choices, which it never rewrites -- turned back up, what everybody had chosen applies again.
+      sections:
+        watching: 'email'
+        discussions: 'email'
+        reviews: 'email'
+        everything: 'email'
     scim:
       # SCIM 2.0 provisioning, served at /_scim/v2. Off by default: it is a directory's write access
       # to the wiki's user and group lists, and nothing about it is useful until an administrator has

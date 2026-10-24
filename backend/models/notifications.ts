@@ -11,7 +11,9 @@ import {
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_KEYS,
   NOTIFICATION_SECTIONS,
+  SECTION_DELIVERY_MODES,
   categoriesFor,
+  deliveryFor,
   isCategoryKey
 } from '../notifications/index.ts'
 import type { NotificationCategoryKey } from '../notifications/index.ts'
@@ -32,7 +34,8 @@ import type {
 export const NOTIFICATION_SETTINGS_FIELDS = [
   'retentionDays',
   'emailDelay',
-  'mailBatchSize'
+  'mailBatchSize',
+  'sections'
 ] as const
 
 /** How long after the first emit in a burst the fan-out is asked for, in milliseconds. */
@@ -71,6 +74,8 @@ export interface NotificationPref {
   defaults: Record<NotificationChannel, boolean>
   inApp: boolean
   email: boolean
+  /** False while the administrator has this category's section in-app only (`deliveryFor`). */
+  emailAllowed: boolean
 }
 
 /** One inbox entry, as the API answers with it. */
@@ -152,7 +157,8 @@ class Notifications {
    * the action that triggered it. Call it after the action has succeeded.
    *
    * Nothing is written for a site with notifications switched off, nor for an event no category fires
-   * for from this origin — a git pull's `page:create`, say — rather than writing it to throw away.
+   * for from this origin — a git pull's `page:create`, say — or whose every category is in a section
+   * the administrator has switched off, rather than writing it to throw away.
    *
    * @param watchersOf For a page about to be deleted: capture its watchers into the event now,
    *                   because the watch rows go with the page
@@ -176,7 +182,9 @@ class Notifications {
         return
       }
       const origin = this.originNow()
-      if (categoriesFor(kind, origin).length < 1) {
+      if (
+        !categoriesFor(kind, origin).some((category) => deliveryFor(category.section) !== 'off')
+      ) {
         return
       }
       /*
@@ -235,11 +243,17 @@ class Notifications {
 
   // == PREFERENCES ====================
 
-  /** The categories somebody is offered, in the order the Profile screen lists them. */
+  /**
+   * The categories somebody is offered, in the order the Profile screen lists them. None from a
+   * section the administrator has switched off: their stored choices are kept, just not shown.
+   */
   visibleCategories(actor: { permissions: string[] }): NotificationCategoryKey[] {
     return NOTIFICATION_CATEGORY_KEYS.filter((key) => {
       const category: NotificationCategory = NOTIFICATION_CATEGORIES[key]
-      return !category.visibleTo || category.visibleTo(actor)
+      return (
+        deliveryFor(category.section) !== 'off' &&
+        (!category.visibleTo || category.visibleTo(actor))
+      )
     }).sort(
       (a, b) =>
         NOTIFICATION_SECTIONS.indexOf(NOTIFICATION_CATEGORIES[a].section) -
@@ -249,6 +263,9 @@ class Notifications {
 
   /**
    * Somebody's choices, with the default standing in wherever they made none.
+   *
+   * `email` is the choice as stored even where `emailAllowed` is false, so that the screen has it to
+   * hand back unchanged; what is actually delivered is the fan-out's to decide.
    */
   async getPrefs(userId: string, actor: { permissions: string[] }): Promise<NotificationPref[]> {
     const stored = await WIKI.db
@@ -269,7 +286,8 @@ class Notifications {
         section: category.section,
         defaults: { ...category.defaults },
         inApp: chosen('inApp'),
-        email: chosen('email')
+        email: chosen('email'),
+        emailAllowed: deliveryFor(category.section) === 'email'
       }
     })
   }
@@ -280,7 +298,8 @@ class Notifications {
    * Only what differs from a category's default is kept: a choice set back to its default deletes its
    * row rather than writing one that says the same thing, so that a default changed later reaches
    * everybody who never chose otherwise. Categories the caller is not offered, or that the request
-   * does not mention, are left as they are.
+   * does not mention, are left as they are — and so is the email choice of a category whose section
+   * is in-app only, which the screen does not show.
    *
    * @returns The keys of the categories whose stored choice changed
    */
@@ -298,6 +317,9 @@ class Notifications {
       }
       for (const channel of ['inApp', 'email'] as const) {
         if (typeof wanted[channel] !== 'boolean' || wanted[channel] === pref[channel]) {
+          continue
+        }
+        if (channel === 'email' && !pref.emailAllowed) {
           continue
         }
         await this.storeChoice(userId, pref.key, channel, wanted[channel])
@@ -616,7 +638,11 @@ class Notifications {
     return {
       retentionDays: stored.retentionDays,
       emailDelay: stored.emailDelay,
-      mailBatchSize: stored.mailBatchSize
+      mailBatchSize: stored.mailBatchSize,
+      // -> In the order the Profile screen lists them, which is the order the admin screen shows
+      sections: Object.fromEntries(
+        NOTIFICATION_SECTIONS.map((section) => [section, deliveryFor(section)])
+      )
     }
   }
 
@@ -626,7 +652,8 @@ class Notifications {
    * @returns The reason it is invalid, or null when it is fine
    */
   validate(patch: Record<string, any>): string | null {
-    const merged = { ...this.getConfig(), ...patch }
+    const current = this.getConfig()
+    const merged = { ...current, ...patch, sections: { ...current.sections, ...patch.sections } }
     if (
       !Number.isInteger(merged.retentionDays) ||
       merged.retentionDays < 1 ||
@@ -645,11 +672,20 @@ class Notifications {
     ) {
       return 'The mail batch size must be a whole number between 1 and 1000.'
     }
+    for (const [section, mode] of Object.entries(merged.sections)) {
+      if (
+        !NOTIFICATION_SECTIONS.includes(section as NotificationSection) ||
+        !SECTION_DELIVERY_MODES.includes(mode as any)
+      ) {
+        return `A section must be one of ${NOTIFICATION_SECTIONS.join(', ')}, set to one of ${SECTION_DELIVERY_MODES.join(', ')}.`
+      }
+    }
     return null
   }
 
   /**
-   * Save a validated patch. The secret is carried over untouched, since the blob is written whole.
+   * Save a validated patch. The secret is carried over untouched, since the blob is written whole,
+   * and `sections` is merged section by section, so a patch naming one leaves the others as they are.
    *
    * @returns Whether the settings were saved
    */
@@ -660,6 +696,9 @@ class Notifications {
       if (patch[field] !== undefined) {
         picked[field] = patch[field]
       }
+    }
+    if (picked.sections) {
+      picked.sections = { ...previous.sections, ...picked.sections }
     }
     WIKI.config.notifications = { ...previous, ...picked }
     if (!(await WIKI.configSvc.saveToDb(['notifications']))) {

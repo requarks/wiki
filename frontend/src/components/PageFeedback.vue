@@ -34,7 +34,7 @@
         @update:model-value="setSort" />
       <w-space />
       <w-btn
-        v-if="canSubmit"
+        v-if="showSubmit"
         unelevated
         no-caps
         icon="la:plus"
@@ -162,6 +162,7 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
+import FeedbackLoginDialog from '@/components/FeedbackLoginDialog.vue'
 import FeedbackStatusBadge from '@/components/FeedbackStatusBadge.vue'
 import FeedbackSubmitDialog from '@/components/FeedbackSubmitDialog.vue'
 import FeedbackVote from '@/components/FeedbackVote.vue'
@@ -233,6 +234,16 @@ const canSubmit = computed(
     userStore.authenticated &&
     settings.value.acceptsIdeas &&
     userStore.pagePermissions.includes('write:feedback')
+)
+
+/**
+ * Whether Submit Idea is shown: to everybody who may submit, and to every guest of a board taking
+ * ideas, who is told to log in when they press it (`FeedbackLoginDialog.vue`) rather than never seeing
+ * that the board wants their ideas. A signed-in account without `write:feedback` is not offered it,
+ * since logging in is not what stands in its way.
+ */
+const showSubmit = computed(
+  () => canSubmit.value || (!userStore.authenticated && settings.value.acceptsIdeas)
 )
 
 /**
@@ -326,6 +337,10 @@ async function vote(idea) {
 }
 
 function openSubmit() {
+  if (!userStore.authenticated) {
+    dialog({ component: FeedbackLoginDialog })
+    return
+  }
   dialog({
     component: FeedbackSubmitDialog,
     componentProps: {

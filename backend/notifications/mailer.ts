@@ -10,7 +10,7 @@ import {
 import { locales } from '../models/locales.ts'
 import { mail } from '../models/mail.ts'
 import type { MailNotificationEntry, MailSite } from '../models/mail.ts'
-import { NOTIFICATION_CATEGORIES, isCategoryKey } from './index.ts'
+import { NOTIFICATION_CATEGORIES, deliveryFor, isCategoryKey } from './index.ts'
 import { enqueueOnce } from './queue.ts'
 import { createUnsubscribeToken } from './unsubscribe.ts'
 
@@ -193,10 +193,12 @@ async function claim(pair: { userId: string; siteId: string | null }): Promise<D
 }
 
 /**
- * The categories, among these, that the user has since turned email off for.
+ * The categories, among these, that the user — or the administrator, for the category's whole
+ * section — has since turned email off for.
  *
  * Asked again at send time rather than trusted from when the entry was written: somebody who
- * unsubscribes while a mail is waiting should not receive it.
+ * unsubscribes while a mail is waiting should not receive it, and neither should anybody once a
+ * section is made in-app only.
  */
 async function emailOffFor(userId: string, categories: string[]): Promise<Set<string>> {
   const stored = await WIKI.db
@@ -211,11 +213,10 @@ async function emailOffFor(userId: string, categories: string[]): Promise<Set<st
     )
   const off = new Set<string>()
   for (const category of categories) {
+    const known = isCategoryKey(category) ? NOTIFICATION_CATEGORIES[category] : null
     const row = stored.find((entry) => entry.category === category)
-    const enabled = row
-      ? row.enabled
-      : isCategoryKey(category) && NOTIFICATION_CATEGORIES[category].defaults.email
-    if (!enabled) {
+    const enabled = row ? row.enabled : Boolean(known?.defaults.email)
+    if (!enabled || (known && deliveryFor(known.section) !== 'email')) {
       off.add(category)
     }
   }

@@ -112,7 +112,7 @@ the thing that wakes the drain up.
 | `backend/api/notifications.ts` | Inbox, summary, preferences, unsubscribe, admin settings |
 | `backend/tasks/workers/dispatch-notifications.ts` | Fan-out ([§7](#7-fan-out)) |
 | `backend/tasks/workers/send-notification-mail.ts` | Mail drain ([§10](#10-email)) |
-| `backend/tasks/simple/purge-notifications.ts` | Retention ([§12.3](#123-purging)) |
+| `backend/tasks/simple/purge-notifications.ts` | Retention ([§12.4](#124-purging)) |
 
 `notifications/` is a new top-level backend directory rather than a directory under `modules/`:
 `refreshFromDisk` expects every directory there to hold a `definition.yml`. A category is code, not
@@ -415,7 +415,7 @@ INDEX (createdAt) WHERE processedAt IS NULL
 ```
 
 Processed events are kept for a day, which is enough to debug a notification that did not arrive.
-After that they are purged ([§12.3](#123-purging)).
+After that they are purged ([§12.4](#124-purging)).
 
 ### 8.2 `notifications` (the inbox and the email queue)
 
@@ -779,6 +779,7 @@ the per-site switch ([§11](#11-the-site-switch)).
 | `notifications.retentionDays` | 60 | Entries older than this are purged, read or not | Settings blob, edited on Admin → Notifications |
 | `notifications.emailDelay` | `3m` | The window of [§10.2](#102-cadence) | Same |
 | `notifications.mailBatchSize` | 100 | Users per mail run. Raise it for a mail server that can take more, lower it for one that throttles. The API refuses anything outside 1–1000 | Same |
+| `notifications.sections` | `email` for each of `watching`, `discussions`, `reviews`, `everything` | What each section of Profile → Notifications may deliver: `off`, `inApp` or `email`. A master switch over the users' choices, never written into them ([§12.3](#123-what-a-section-may-deliver)) | Same |
 | `notifications.unsubscribeSecret` | generated on boot when missing | Signs unsubscribe tokens ([§10.4](#104-one-click-unsubscribe-rfc-8058)) | Settings blob, never returned by the API |
 
 ### 12.2 Admin → Notifications
@@ -793,6 +794,8 @@ action `updateNotificationSettings`) with the fields that changed, as the other 
 routes are. The screen has two cards:
 
 - **Settings**: retention, the email delay and the mail batch size.
+- **Categories**: one row per section, each Off / In-App Only / In-App + Email
+  ([§12.3](#123-what-a-section-may-deliver)).
 - **Status**, read-only and answered by the same `GET`:
   - the outbox backlog (unprocessed events and the age of the oldest one), which is what shows that
     fan-out is falling behind;
@@ -804,7 +807,31 @@ routes are. The screen has two cards:
 This is also where any later instance-wide setting goes, for example turning a category off for the
 whole instance.
 
-### 12.3 Purging
+### 12.3 What a section may deliver
+
+`notifications.sections` lets an administrator narrow each section of Profile → Notifications for
+the whole instance: `off`, `inApp` or `email` (the default, `base.yml`). It is a **master switch laid
+over each person's choices, never written into them** — nothing in `userNotificationPrefs` changes,
+so a section turned off and back on finds everybody's choices where they left them, defaults
+included. `deliveryFor(section)` in `notifications/index.ts` is the one reading of it, and every place
+that acts on a choice asks it too:
+
+- **The Profile screen.** A category in an `off` section is not offered (`visibleCategories`); one in
+  an `inApp` section is offered with `emailAllowed: false`, and its Email switch is hidden. `setPrefs`
+  ignores an email choice it is sent for such a category, so the stored one survives a save.
+  **Turn off all emails** is the exception, and deliberately: it sends `stopAllEmail`, which turns
+  email off for every category there is — hidden or not offered included — so that somebody who asked
+  for no email gets none when a section is turned back on.
+- **`emit()`** writes nothing for an event whose every category is in an `off` section.
+- **The fan-out** skips a category in an `off` section — leaving the person to whichever lower
+  category of the same event reaches them, as their own choice would — and writes no email for one in
+  an `inApp` section.
+- **The mail drain** treats a category whose section is not `email` as email turned off, so an email
+  already waiting when the switch moved is skipped rather than sent.
+
+Entries already in somebody's inbox are left there; they are purged with everything else.
+
+### 12.4 Purging
 
 `tasks/simple/purge-notifications.ts` runs daily off `SYSTEM_SCHEDULE`. It deletes entries past
 retention and processed outbox events older than a day, in batches of 10,000, checking `signal`

@@ -101,6 +101,39 @@
             </w-item-section>
           </w-item>
         </w-card>
+        <!-- ----------------------- -->
+        <!-- Categories -->
+        <!-- ----------------------- -->
+        <w-card class="mt-4 pb-2">
+          <w-card-header>
+            {{ t('admin.notifications.sections') }}
+            <template #hint>{{ t('admin.notifications.sectionsHint') }}</template>
+          </w-card-header>
+          <w-item>
+            <w-item-section>
+              <w-item-label caption>{{ t('admin.notifications.sectionsInfo') }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <template v-for="section of Object.keys(state.config.sections)" :key="section">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon :icon="SECTION_ICONS[section] ?? `inbox`" />
+              <w-item-section>
+                <w-item-label>{{ t(`notifications.sections.${section}`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section class="flex-none">
+                <w-btn-toggle
+                  v-model="state.config.sections[section]"
+                  push
+                  glossy
+                  no-caps
+                  toggle-color="primary"
+                  :aria-label="t(`notifications.sections.${section}`)"
+                  :options="deliveryModes" />
+              </w-item-section>
+            </w-item>
+          </template>
+        </w-card>
       </div>
       <div class="col-span-12 lg:col-span-6">
         <!-- ----------------------- -->
@@ -201,7 +234,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { loading } from '@/composables/loading'
@@ -215,8 +248,17 @@ import { useSiteStore } from '@/stores/site'
 /**
  * Admin → Notifications: the instance-wide settings of the notification system, and how delivery is
  * doing. Whether a SITE has notifications is under its General → Features; what each person receives
- * is theirs to choose, under Profile → Notifications.
+ * is theirs to choose, under Profile → Notifications — within what the Categories card here lets each
+ * section of that screen deliver.
  */
+
+/** The picture beside each section. One that has none gets the inbox. */
+const SECTION_ICONS = {
+  watching: 'activity-feed',
+  discussions: 'comments',
+  reviews: 'todo-list',
+  everything: 'website'
+}
 
 // STORES
 
@@ -239,7 +281,8 @@ const state = reactive({
   config: {
     retentionDays: 60,
     emailDelay: '3m',
-    mailBatchSize: 100
+    mailBatchSize: 100,
+    sections: {}
   },
   status: {
     pendingEvents: 0,
@@ -251,6 +294,14 @@ const state = reactive({
     warnings: []
   }
 })
+
+// COMPUTED
+
+const deliveryModes = computed(() => [
+  { value: 'off', label: t('admin.notifications.deliveryOff') },
+  { value: 'inApp', label: t('admin.notifications.deliveryInApp') },
+  { value: 'email', label: t('admin.notifications.deliveryEmail') }
+])
 
 // METHODS
 
@@ -287,7 +338,8 @@ async function save() {
       json: {
         retentionDays: Number(state.config.retentionDays),
         emailDelay: `${state.config.emailDelay ?? ''}`.trim(),
-        mailBatchSize: Number(state.config.mailBatchSize)
+        mailBatchSize: Number(state.config.mailBatchSize),
+        sections: { ...state.config.sections }
       }
     })
     notify({

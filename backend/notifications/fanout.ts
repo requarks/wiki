@@ -12,7 +12,7 @@ import { durationToSeconds } from '../helpers/common.ts'
 import { rulesAllow } from '../helpers/pageRules.ts'
 import { mail } from '../models/mail.ts'
 import type { GroupRule } from '../models/groups.ts'
-import { categoriesFor } from './index.ts'
+import { categoriesFor, deliveryFor } from './index.ts'
 import { enqueueOnce } from './queue.ts'
 import { rulePageOf } from './types.ts'
 import type { NotificationCategory, NotificationEvent } from './types.ts'
@@ -200,7 +200,8 @@ async function recipientsAmong(event: NotificationEvent, ids: string[]): Promise
 
 /**
  * Each recipient's channels for this category: their stored choice where they made one, the
- * category's default where they did not.
+ * category's default where they did not — and no email, regardless of what they chose, while the
+ * administrator has the category's section in-app only.
  */
 async function channelsFor(
   category: NotificationCategory,
@@ -219,6 +220,11 @@ async function channelsFor(
     const entry = channels.get(row.userId)
     if (entry && (row.channel === 'inApp' || row.channel === 'email')) {
       entry[row.channel] = row.enabled
+    }
+  }
+  if (deliveryFor(category.section) !== 'email') {
+    for (const entry of channels.values()) {
+      entry.email = false
     }
   }
   return channels
@@ -428,6 +434,14 @@ async function processEvent(
   }
   for (let i = start; i < categories.length; i++) {
     const category = categories[i]!
+    /*
+      Skipped here rather than left out of the list, so that a cursor naming a category whose section
+      was switched off since is still found, and the categories after it still run. Skipping it also
+      leaves the person to whichever lower category reaches them next, as a choice of their own would.
+    */
+    if (deliveryFor(category.section) === 'off') {
+      continue
+    }
     const after = i === start ? (claimed.cursor?.after ?? null) : null
     for await (const ids of category.recipients(event, after)) {
       if (await deliverBatch(ctx, event, category, ids)) {

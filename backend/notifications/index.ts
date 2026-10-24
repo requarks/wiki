@@ -50,6 +50,26 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   'everything'
 ]
 
+/**
+ * What an administrator lets a section deliver, for the whole instance (Admin → Notifications):
+ * nothing, in-app only, or in-app and email.
+ */
+export const SECTION_DELIVERY_MODES = ['off', 'inApp', 'email'] as const
+
+export type SectionDelivery = (typeof SECTION_DELIVERY_MODES)[number]
+
+/**
+ * What a section may deliver right now — `notifications.sections` in the settings.
+ *
+ * A master switch laid over each person's choices rather than written into them: nothing a user
+ * stored is changed by it, so a section turned off and back on finds everybody's choices where they
+ * left them. Which is why every place that acts on a choice asks this as well — the Profile screen
+ * (what it offers), the fan-out (what it writes) and the mail drain (what it still sends).
+ */
+export function deliveryFor(section: NotificationSection): SectionDelivery {
+  return WIKI.config.notifications.sections[section]
+}
+
 export function isCategoryKey(key: string): key is NotificationCategoryKey {
   return Object.hasOwn(NOTIFICATION_CATEGORIES, key)
 }

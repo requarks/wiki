@@ -79,6 +79,9 @@ const state = reactive({
 /** Set by a logout on its way out, for the document it lands on to report. */
 const LOGOUT_NOTICE_KEY = 'wiki.logoutNotice'
 
+/** The router guard's latest `applyLocale`, which it does not wait on -- see `showLogoutNotice`. */
+let localeApplied = Promise.resolve()
+
 // WATCHERS
 
 watch(
@@ -433,7 +436,7 @@ router.beforeEach(async (to, from) => {
   ) {
     commonStore.setLocale(siteStore.locales.primary)
   }
-  applyLocale(commonStore.desiredLocale)
+  localeApplied = applyLocale(commonStore.desiredLocale)
 
   /*
     -> Page Permissions
@@ -474,14 +477,21 @@ EVENT_BUS.on('applyTheme', () => {
   applyTheme()
 })
 
-/** Report a logout the previous document made, if it made one. */
-function showLogoutNotice() {
+/**
+ * Report a logout the previous document made, if it made one.
+ *
+ * Runs on the first navigation of a fresh document, which is before the locale strings have arrived:
+ * the guard starts that fetch and does not wait for it. A notice takes its message as a plain string,
+ * so one translated any earlier would show the bare key for as long as it is on screen.
+ */
+async function showLogoutNotice() {
   let pending = false
   try {
     pending = sessionStorage.getItem(LOGOUT_NOTICE_KEY) === '1'
     sessionStorage.removeItem(LOGOUT_NOTICE_KEY)
   } catch {}
   if (pending) {
+    await localeApplied
     notify({
       type: 'positive',
       icon: 'mdi:logout',

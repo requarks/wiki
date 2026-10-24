@@ -73,7 +73,15 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description: 'The heading the Profile screen lists it under.'
       },
       inApp: { type: 'boolean' },
-      email: { type: 'boolean' },
+      email: {
+        type: 'boolean',
+        description: 'The choice as stored, which has no effect while `emailAllowed` is false.'
+      },
+      emailAllowed: {
+        type: 'boolean',
+        description:
+          'Whether the administrator lets this category be emailed. False while its section is in-app only; the screen hides the email choice then, and a change to it is ignored.'
+      },
       defaults: {
         type: 'object',
         properties: {
@@ -108,6 +116,18 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         minimum: 1,
         maximum: 1000,
         description: 'How many people one run of the mail task sends to.'
+      },
+      sections: {
+        type: 'object',
+        additionalProperties: false,
+        description:
+          "What each section of Profile → Notifications may deliver: `off` (not offered, nothing sent), `inApp` (no email regardless of what anybody chose) or `email` (both). A master switch over the users' own choices, which it never changes.",
+        properties: Object.fromEntries(
+          ['watching', 'discussions', 'reviews', 'everything'].map((section) => [
+            section,
+            { type: 'string', enum: ['off', 'inApp', 'email'] }
+          ])
+        )
       }
     }
   })

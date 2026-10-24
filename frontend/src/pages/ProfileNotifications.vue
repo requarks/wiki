@@ -15,7 +15,16 @@
         </w-banner>
       </w-item-section>
     </w-item>
-    <w-item v-if="!state.emailAvailable && state.loaded">
+    <w-item v-if="state.loaded && state.prefs.length < 1">
+      <w-item-section>
+        <w-banner
+          rounded
+          :class="dark.isActive ? `bg-dark-4 text-grey-4` : `bg-grey-2 text-grey-8`">
+          {{ t('profile.notificationsNoneOffered') }}
+        </w-banner>
+      </w-item-section>
+    </w-item>
+    <w-item v-else-if="!state.emailAvailable && state.loaded">
       <w-item-section>
         <w-banner
           rounded
@@ -44,10 +53,16 @@
                 dense
                 :label="t(`profile.notificationsInApp`)"
                 :aria-label="`${t(`notifications.categories.${pref.key}.title`)}: ${t(`profile.notificationsInApp`)}`" />
+              <!--
+                Hidden rather than removed while the section is in-app only, so that the In-App
+                switches stay in one column down the page. `invisible` also takes it out of the tab
+                order and the accessibility tree.
+              -->
               <w-toggle
                 v-model="pref.email"
                 dense
-                :disable="!state.emailAvailable"
+                :class="{ invisible: !pref.emailAllowed }"
+                :disable="!state.emailAvailable || !pref.emailAllowed"
                 :label="t(`profile.notificationsEmail`)"
                 :aria-label="`${t(`notifications.categories.${pref.key}.title`)}: ${t(`profile.notificationsEmail`)}`" />
             </div>
@@ -95,7 +110,9 @@ import { useSiteStore } from '@/stores/site'
  * Profile → Notifications: what this person is told about, and how.
  *
  * One row per category the server offers them, each with an In-App and an Email switch; both off is
- * how somebody says "never". The categories, their headings and their defaults all come from the
+ * how somebody says "never". What the administrator has switched off under Admin → Notifications is
+ * not offered at all, and the Email switch is hidden for a section made in-app only — the stored
+ * choice behind it is kept, and comes back if email is allowed again. The categories, their headings and their defaults all come from the
  * server (`notifications/index.ts`), so a category added there appears here without a change — what
  * this file knows of them is a picture for each, and the strings, which are keyed by category.
  *
@@ -178,13 +195,17 @@ async function load() {
   state.loading--
 }
 
-async function save() {
+async function save({ stopAllEmail = false } = {}) {
   state.loading++
   try {
     const preferences = Object.fromEntries(
       state.prefs.map((pref) => [pref.key, { inApp: pref.inApp, email: pref.email }])
     )
-    apply(await API_CLIENT.put('users/profile/notifications', { json: { preferences } }).json())
+    apply(
+      await API_CLIENT.put('users/profile/notifications', {
+        json: { preferences, ...(stopAllEmail && { stopAllEmail }) }
+      }).json()
+    )
     notify({
       type: 'positive',
       message: t('profile.notificationsSaved')
@@ -199,12 +220,16 @@ async function save() {
   state.loading--
 }
 
-/** Every email switch off, and saved — the same thing the unsubscribe page offers. */
+/**
+ * Every email switch off, and saved — the same thing the unsubscribe page offers. Including the ones
+ * this screen does not show, which `stopAllEmail` reaches on the server: a section the administrator
+ * has made in-app only or switched off must not start emailing again when it is turned back on.
+ */
 async function stopAllEmail() {
   for (const pref of state.prefs) {
     pref.email = false
   }
-  await save()
+  await save({ stopAllEmail: true })
 }
 
 // MOUNTED
