@@ -57,7 +57,7 @@ const ideaInputProperties = {
     maxItems: 50,
     items: { type: 'string', maxLength: 100 },
     description:
-      'Category tags, each one of the board’s own. Must be empty on a board that does not let submitters pick categories.'
+      'Category tags, each one of the board’s own. Must be empty on a board that does not let submitters pick categories, unless the caller holds `review:pages` or `manage:pages` on it.'
   }
 }
 
@@ -143,14 +143,19 @@ async function loadIdea(
 
 /**
  * The categories a submission asks for, checked against the board: each must be one of the board's
- * own, and none may be asked for where the board files ideas itself.
+ * own, and none may be asked for where the board files ideas itself -- unless it is a moderator of the
+ * board asking, who is who files them there.
  */
-function checkCategories(board: BoardRef, categories: string[] | undefined): string[] {
+function checkCategories(
+  board: BoardRef,
+  categories: string[] | undefined,
+  moderator: boolean
+): string[] {
   const asked = [...new Set((categories ?? []).map((tag) => tag.trim().toLowerCase()))]
   if (asked.length < 1) {
     return []
   }
-  if (!board.settings.submitterCategories) {
+  if (!board.settings.submitterCategories && !moderator) {
     throw new CustomError(
       'feedbackCategoriesNotAllowed',
       'This board files ideas into categories itself.'
@@ -462,7 +467,11 @@ async function routes(app: FastifyInstance) {
       if (req.body.content.trim().length < 1) {
         return reply.badRequest('An idea needs a description.')
       }
-      const categories = checkCategories(board, req.body.categories)
+      const categories = checkCategories(
+        board,
+        req.body.categories,
+        WIKI.models.feedback.mayModerate((permission) => mayOnPage(req, permission, board))
+      )
       const name = normalizeNewPagePath(title).split('/').join('-')
       if (!name) {
         return reply.badRequest('The title has nothing in it a page could be named after.')
@@ -531,7 +540,7 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
-   * GET ONE'S OWN IDEA, TO EDIT IT
+   * GET AN IDEA, TO EDIT IT
    */
   app.get<{ Params: { siteId: string; pageId: string } }>(
     '/sites/:siteId/feedback/ideas/:pageId',
@@ -540,9 +549,9 @@ async function routes(app: FastifyInstance) {
         scope: 'pages'
       },
       schema: {
-        summary: 'Get an idea you submitted, to edit it',
+        summary: 'Get an idea to edit it',
         description:
-          "Its title, its markdown source and its categories, for the submission form opened on it. The page route gives the source only to whoever holds `read:source` or may write the page, which the author of an idea usually does not — this is the same text, for the one person the form edits it for.\n\nFor the idea's author while it is still open; needs `write:feedback` on the board.",
+          "Its title, its markdown source and its categories, for the submission form opened on it. The page route gives the source only to whoever holds `read:source` or may write the page, which the author of an idea usually does not — this is the same text, for whoever the form edits it for.\n\nFor the idea's author while it is still open, with `write:feedback` on the board; and for whoever holds `review:pages` or `manage:pages` on the board, at any status.",
         tags: ['Pages'],
         params: ideaParams,
         response: {
@@ -571,12 +580,12 @@ async function routes(app: FastifyInstance) {
       const { page, board } = idea
       const { status } = await WIKI.models.feedback.statusOf(page.id)
       if (
-        !WIKI.models.feedback.mayEditOwn(actor.id, page, status, (permission) =>
+        !WIKI.models.feedback.mayEdit(actor.id, page, status, (permission) =>
           mayOnPage(req, permission, page)
         )
       ) {
         return reply.forbidden(
-          'Only its author may edit an idea this way, and only while it is open.'
+          'Only its author may edit an idea this way, and only while it is open, unless they moderate the board.'
         )
       }
       const boardTags = new Set(board.settings.categories.map((category) => category.tag))
@@ -590,7 +599,7 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
-   * EDIT ONE'S OWN IDEA
+   * EDIT AN IDEA
    */
   app.patch<{
     Params: { siteId: string; pageId: string }
@@ -602,9 +611,9 @@ async function routes(app: FastifyInstance) {
         scope: 'pages'
       },
       schema: {
-        summary: 'Edit an idea you submitted',
+        summary: 'Edit an idea through the submission form',
         description:
-          "For the idea's author, while it is still open, through the submission form: its title, description and categories. A change of title does not move the page — its URL is what was shared. Categories are replaced among the board's own tags only; any other tag on the page is kept.\n\nNeeds `write:feedback` on the board and to be the idea's creator. Anybody who may write the page edits it in the editor instead.",
+          "Its title, description and categories, through the submission form. A change of title does not move the page — its URL is what was shared. Categories are replaced among the board's own tags only; any other tag on the page is kept.\n\nFor the idea's creator while it is still open, with `write:feedback` on the board; and for whoever holds `review:pages` or `manage:pages` on the board, at any status — who may also set categories on a board whose submitters do not pick them. Anybody who may write the page can also edit it in the editor.",
         tags: ['Pages'],
         params: ideaParams,
         body: {
@@ -636,12 +645,12 @@ async function routes(app: FastifyInstance) {
       const { page, board } = idea
       const { status } = await WIKI.models.feedback.statusOf(page.id)
       if (
-        !WIKI.models.feedback.mayEditOwn(actor.id, page, status, (permission) =>
+        !WIKI.models.feedback.mayEdit(actor.id, page, status, (permission) =>
           mayOnPage(req, permission, page)
         )
       ) {
         return reply.forbidden(
-          'Only its author may edit an idea this way, and only while it is open.'
+          'Only its author may edit an idea this way, and only while it is open, unless they moderate the board.'
         )
       }
       const title = req.body.title?.trim()
@@ -660,7 +669,11 @@ async function routes(app: FastifyInstance) {
           ? undefined
           : [
               ...page.tags.filter((tag) => !boardTags.has(tag)),
-              ...checkCategories(board, req.body.categories)
+              ...checkCategories(
+                board,
+                req.body.categories,
+                WIKI.models.feedback.mayModerate((permission) => mayOnPage(req, permission, page))
+              )
             ]
       const change = await WIKI.models.pages.updatePage(
         req.params.siteId,

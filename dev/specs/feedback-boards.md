@@ -292,6 +292,7 @@ Every page permission on an idea is asked at its board ([§4.1](#41-access-is-th
 | **Edit / delete own idea, while Open** | **`write:feedback`** + being its creator |
 | Edit / delete / move any idea | `write:pages` / `delete:pages` / `manage:pages` |
 | **Set status (and post its comment)** | **`review:pages` or `manage:pages`** |
+| **Edit any idea and file it into categories, at any status** | **`review:pages` or `manage:pages`** |
 | Configure the board | `write:pages` |
 
 **`write:feedback` is a new page permission**, approved on 2026-10-23. Page rules have no notion of
@@ -331,6 +332,14 @@ asked at the board, for a submission and an edit alike. Adding it means:
 idea along is, and `manage:pages` is the broader authority over the page that includes it. Neither
 name implies the other, so the check asks for both explicitly. `manage:system` gets it through the
 usual bypass.
+
+**The same pair moderates the board's ideas through the submission form**: it may open the form on
+any idea, at any status, and is always offered the board's categories there, on a submission of its
+own too — regardless of `submitterCategories`, which is about what a *submitter* is asked
+(`feedback.mayModerate`, `feedback.mayEdit`). That is how an idea is filed on a board whose
+submitters do not pick categories: the properties dialog offers raw tags, with nothing to say which
+of them are the board's categories. Withdrawing stays the author's; anybody else deletes an idea
+with `delete:pages`, like any page.
 
 ### 4.1 Access is the board's
 
@@ -576,6 +585,7 @@ feedback: {
   statusCommentId: string | null,
   canSetStatus: boolean,        // review:pages or manage:pages at the board
   canEditOwn: boolean           // write:feedback here + creator + still open
+                                // Edit is offered on canEditOwn || canSetStatus, Withdraw on canEditOwn
 } | null
 ```
 
@@ -599,7 +609,8 @@ What the reader sees, from the top:
    field with a preview (`FeedbackMarkdownField.vue`, the comment box without its own submit
    button). The comment field is shown only where a status comment can be posted
    ([§3.3](#the-status-comment)). The idea's author, while `canEditOwn`, gets **Edit** and
-   **Withdraw**, which open the submission form on the idea ([§7](#7-submitting-an-idea)).
+   **Withdraw**, which open the submission form on the idea ([§7](#7-submitting-an-idea)). A
+   moderator gets **Edit** too, at any status, with the board's categories always in the form.
 3. **The body.**
 4. **The discussion, inline.** `PageTalk.vue` is mounted directly under the article instead of
    behind the Talk tab. `showTalkTab` is false for an idea, the way it is for a blog's front page.
@@ -654,7 +665,8 @@ available whether or not anything was found.
   sanitized on the server like every save, and the idea gets no script or style permission
   regardless of what the submitter holds, as for imported content.
 - **Categories**, as a multi-select of the board's labels. Shown only when the board has categories
-  and `submitterCategories` is on. None is a valid answer.
+  and `submitterCategories` is on, or the reader holds `review:pages` or `manage:pages` at the board.
+  None is a valid answer.
 
 **`POST /sites/:siteId/feedback/ideas`** `{ path (board), locale, title, content, render, categories
 }`. Needs an account and `write:feedback` at the board, and `acceptsIdeas` on.
@@ -662,7 +674,8 @@ available whether or not anything was found.
 - The server works out the idea's path: the board's path followed by `normalizeNewPagePath(title)`.
   On a collision it appends `-2`, `-3` and so on. A title that normalizes to nothing is a 400.
 - `categories` must all be on the board's list (compared lowercased), and must be empty while
-  `submitterCategories` is off. They become the page's tags.
+  `submitterCategories` is off, unless the requester holds `review:pages` or `manage:pages` at the
+  board. They become the page's tags.
 - `description`, the short field the listing shows, is the first 200 characters of the markdown
   with its punctuation taken out.
 - The page is created through `pages.createPage` as the requester, so it gets history, indexing,
@@ -690,7 +703,8 @@ available whether or not anything was found.
 
 **`PATCH /sites/:siteId/feedback/ideas/:pageId`** (`{ title, content, render, categories }`) and
 **`DELETE` on the same path** are how an author edits or withdraws their own idea, under the rule in
-[§4](#4-permissions). The edit form is step 2 of the same dialog, without step 1, filled from
+[§4](#4-permissions). A moderator of the board may `GET` and `PATCH` any idea at any status, with
+the categories offered as they are on a moderator's submission; `DELETE` stays the author's. The edit form is step 2 of the same dialog, without step 1, filled from
 **`GET` on the same path**: the page route hands a page's source only to whoever holds
 `read:source` or may write it, which an idea's author usually does not, so this hands the author
 their own idea's title, source and categories under the same rule as the edit. Both go through

@@ -351,7 +351,11 @@ function openSubmit() {
         submitterCategories: settings.value.submitterCategories,
         voting: settings.value.voting,
         submitNotice: settings.value.submitNotice
-      }
+      },
+      // -> The PAGE rules at the board, where the server asks it, as `canSubmit` does
+      moderator:
+        userStore.pagePermissions.includes('review:pages') ||
+        userStore.pagePermissions.includes('manage:pages')
     }
   })
 }

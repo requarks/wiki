@@ -185,10 +185,10 @@ const SIMILAR_MIN_LENGTH = 3
  * best outcome for a board is the reader finding their idea there already and voting for it. Continue
  * is always on offer, since only the reader can tell whether a match is really their idea. Then the
  * form: the title again, a description in basic markdown, and the board's categories where it lets a
- * submitter pick them.
+ * submitter pick them -- or always, for a moderator of the board, who is who files them otherwise.
  *
- * **An edit is the second step alone**, opened by the idea's author from the idea itself while it is
- * still open (`api/feedback.ts` holds them to that).
+ * **An edit is the second step alone**, opened from the idea itself by its author while it is still
+ * open, or by a moderator at any status (`api/feedback.ts` holds them to that).
  *
  * Not the page editor: somebody proposing an idea should not have to know about properties, paths,
  * publish states or where in the tree to save. The server works all of that out. The description is
@@ -207,6 +207,14 @@ const props = defineProps({
   idea: {
     type: Object,
     default: null
+  },
+  /**
+   * The reader holds `review:pages` or `manage:pages` on the board, and so files ideas into its
+   * categories: offered them regardless of whether the board lets submitters pick.
+   */
+  moderator: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -256,7 +264,7 @@ const submitNoticeHtml = computed(() =>
 )
 
 const offersCategories = computed(
-  () => props.board.submitterCategories && props.board.categories.length > 0
+  () => (props.board.submitterCategories || props.moderator) && props.board.categories.length > 0
 )
 
 const categoryOptions = computed(() =>

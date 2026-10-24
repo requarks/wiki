@@ -25,25 +25,26 @@
           icon="mdi:swap-horizontal"
           :label="t('common.feedback.changeStatus')"
           @click="changeStatus" />
-        <template v-if="feedback.canEditOwn">
-          <w-btn
-            class="acrylic-btn"
-            flat
-            no-caps
-            :color="actionColor"
-            icon="la:pen"
-            :label="t('common.actions.edit')"
-            :loading="state.opening"
-            @click="edit" />
-          <w-btn
-            class="acrylic-btn"
-            flat
-            no-caps
-            color="negative"
-            icon="la:undo-alt"
-            :label="t('common.feedback.withdraw')"
-            @click="withdraw" />
-        </template>
+        <!-- -> The author's while it is open, and a moderator's always: it is where they file it -->
+        <w-btn
+          v-if="feedback.canEditOwn || feedback.canSetStatus"
+          class="acrylic-btn"
+          flat
+          no-caps
+          :color="actionColor"
+          icon="la:pen"
+          :label="t('common.actions.edit')"
+          :loading="state.opening"
+          @click="edit" />
+        <w-btn
+          v-if="feedback.canEditOwn"
+          class="acrylic-btn"
+          flat
+          no-caps
+          color="negative"
+          icon="la:undo-alt"
+          :label="t('common.feedback.withdraw')"
+          @click="withdraw" />
       </div>
     </div>
     <div class="feedback-idea-head">
@@ -161,7 +162,8 @@ import FeedbackVote from '@/components/FeedbackVote.vue'
  *
  * Everything here comes with the page (`feedback` on the page payload, see `api/pages.ts`), including
  * what this reader may do — changing the status takes `review:pages` or `manage:pages` on the board,
- * editing one's own idea takes having submitted it while it is still open. The vote is the page's
+ * editing one's own idea takes having submitted it while it is still open. The same pair as the status
+ * may also edit any idea, at any status, and is always offered its categories. The vote is the page's
  * own rating, which on an idea is always a thumb up.
  *
  * Emits `changed` with the comment a status change posted, if it posted one, so that the page can
@@ -287,7 +289,8 @@ async function edit() {
           submitterCategories: feedback.value.board.submitterCategories,
           voting: feedback.value.board.voting
         },
-        idea
+        idea,
+        moderator: feedback.value.canSetStatus
       }
     })
   } catch (err) {

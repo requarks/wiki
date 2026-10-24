@@ -361,6 +361,31 @@ class Feedback {
     )
   }
 
+  /**
+   * Whether somebody moderates a board: `review:pages` or `manage:pages`, the pair that moves an idea's
+   * status. Neither implies the other, so both are asked.
+   *
+   * @param may Asks for a page permission on the board or one of its ideas
+   */
+  mayModerate(may: (permission: string) => boolean): boolean {
+    return may('review:pages') || may('manage:pages')
+  }
+
+  /**
+   * Whether somebody may edit an idea through the submission form: its author under `mayEditOwn`, or
+   * a moderator of the board at any status. A moderator is who files ideas into categories on a board
+   * whose submitters do not pick them, and the form is where that is done -- the properties dialog
+   * offers raw tags, with nothing to say which of them are the board's categories.
+   */
+  mayEdit(
+    userId: string | null,
+    page: { creatorId: string },
+    status: FeedbackStatus,
+    may: (permission: string) => boolean
+  ): boolean {
+    return this.mayEditOwn(userId, page, status, may) || this.mayModerate(may)
+  }
+
   // == SUBMISSIONS ====================
 
   /**
