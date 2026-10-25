@@ -1,5 +1,7 @@
 import path from 'node:path'
 import * as cheerio from 'cheerio'
+import type { AnyNode } from 'domhandler'
+import { load as loadYaml } from 'js-yaml'
 import {
   decodeUrlPath,
   isPageUrl,
@@ -31,6 +33,9 @@ import {
  * and it is the one settled form of a page the server holds. It is also what makes rebuilding a
  * wiki's links cost a parse per page instead of a headless browser per page.
  *
+ * Mostly anchors, plus the cards of every `block-links-grid` — links the render holds as text, since
+ * the block draws its anchors only once it runs in the reader's browser. See `linksGridHrefs`.
+ *
  * @param $ A document already loaded, for the caller that has one — `postProcess` is holding the very
  *          tree this would otherwise re-parse.
  */
@@ -40,6 +45,46 @@ export function hrefsFrom($: cheerio.CheerioAPI): string[] {
     const href = $(el).attr('href')
     if (href) {
       hrefs.push(href)
+    }
+  }
+  for (const el of $('block-links-grid')) {
+    hrefs.push(...linksGridHrefs($(el)))
+  }
+  return hrefs
+}
+
+/**
+ * The cards of one `block-links-grid`, each a link with no anchor in the render.
+ *
+ * The block's body is a YAML list of cards, each with a `url`, and the stored render carries it as
+ * the text of a code block. Read the way `connectedCallback` in
+ * `blocks/block-links-grid/component.js` reads it — the first `<pre>`'s text, or the element's own
+ * when there is none — so that what is recorded is what the reader is shown. A body that will not
+ * parse is no links, which is also what the block draws for it.
+ *
+ * Every `url` is handed on as written: whether it addresses a page is `resolveLink`'s to decide, as it
+ * is for an anchor. The block's own scheme allow-list refuses only what that discards anyway.
+ */
+function linksGridHrefs(block: cheerio.Cheerio<AnyNode>): string[] {
+  const pre = block.find('pre').first()
+  const source = (pre.length > 0 ? pre : block).text()
+  if (!source.trim()) {
+    return []
+  }
+  let cards: unknown
+  try {
+    cards = loadYaml(source)
+  } catch {
+    return []
+  }
+  if (!Array.isArray(cards)) {
+    return []
+  }
+  const hrefs: string[] = []
+  for (const card of cards) {
+    const url = card && typeof card === 'object' ? (card as { url?: unknown }).url : undefined
+    if (typeof url === 'string' && url.trim()) {
+      hrefs.push(url.trim())
     }
   }
   return hrefs
