@@ -18,11 +18,16 @@
       role="radio"
       :aria-checked="String(opt.value === modelValue)"
       :aria-label="opt.ariaLabel || undefined"
-      class="w-btn-toggle__segment w-unstyled relative cursor-pointer px-3 py-1.5 text-sm font-medium transition-[background-color,color,transform]"
+      :disabled="opt.disable || undefined"
+      class="w-btn-toggle__segment w-unstyled relative px-3 py-1.5 text-sm font-medium transition-[background-color,color,transform]"
       :class="[
         noCaps ? 'normal-case' : 'uppercase',
+        opt.disable ? 'cursor-not-allowed' : 'cursor-pointer',
         opt.value === modelValue && !toggleTextColor ? 'text-white' : '',
-        opt.value !== modelValue ? 'hover:brightness-95 dark:hover:brightness-110' : '',
+        opt.value !== modelValue && opt.disable ? 'opacity-50' : '',
+        opt.value !== modelValue && !opt.disable
+          ? 'hover:brightness-95 dark:hover:brightness-110'
+          : '',
         glossy ? 'w-glossy' : '',
         push ? pushClasses(idx) : '',
         /*
@@ -72,13 +77,17 @@ const props = defineProps({
     default: null
   },
   /**
-   * `[{ label, value, icon?, ariaLabel?, tooltip? }]`
+   * `[{ label, value, icon?, ariaLabel?, tooltip?, disable? }]`
    *
    * `ariaLabel` names a segment that has only an icon to go on -- an ascending/descending pair, say.
    * Omit it wherever the label is the name, or it would be read out in place of it.
    *
    * `tooltip` is the same idea for the pointer: a line explaining what the segment does, for a
    * control whose label is an icon or a word too short to say it. It appears on hover and on focus.
+   *
+   * `disable` takes one segment out of reach while the rest stay usable -- a choice the user may not
+   * make. A selected segment that is disabled still reads as selected; it just cannot be picked
+   * again once left. Say why somewhere visible: a disabled button shows no tooltip.
    */
   options: {
     type: Array,

@@ -110,6 +110,139 @@
             prefix="/a/" />
         </w-form>
       </w-card-section>
+      <w-card-section class="alt-card" id="refCardLifecycle" v-if="showLifecycleSection">
+        <div class="w-section-header">{{ t('editor.props.lifecycleRules') }}</div>
+        <w-list
+          class="rounded mb-2 bg-white dark:bg-black/20"
+          v-if="lifecycleRules.length > 0"
+          separator
+          bordered>
+          <w-item v-for="(rule, idx) of lifecycleRules" :key="rule.id ?? rule.key">
+            <w-item-section>
+              <w-item-label
+                ><strong>{{ rule.name }}</strong></w-item-label
+              >
+              <w-item-label caption>{{ triggerSummary(rule) }}</w-item-label>
+              <w-item-label v-if="removalSummary(rule)" caption>
+                {{ removalSummary(rule) }}
+              </w-item-label>
+              <w-item-label
+                v-if="rule.lastFiredAt"
+                caption
+                :class="{ 'text-negative': rule.lastOutcome?.status === `failed` }">
+                {{ outcomeSummary(rule) }}
+              </w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <span class="flex flex-nowrap gap-1">
+                <w-icon
+                  v-for="action of rule.actions"
+                  :key="action.kind"
+                  :name="LIFECYCLE_ACTION_ICONS[action.kind]"
+                  size="16px" />
+              </span>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn icon="la:pen" dense flat padding="none" @click="editLifecycleRule(idx)" />
+            </w-item-section>
+            <w-item-section side>
+              <w-btn icon="la:times" dense flat padding="none" @click="removeLifecycleRule(idx)" />
+            </w-item-section>
+          </w-item>
+        </w-list>
+        <w-btn
+          class="w-full"
+          :label="t(`editor.props.lifecycleRuleAdd`)"
+          icon="la:plus"
+          no-caps
+          unelevated
+          color="secondary"
+          @click="newLifecycleRule">
+          <w-tooltip>{{ t('editor.props.lifecycleRuleAddHint') }}</w-tooltip>
+        </w-btn>
+      </w-card-section>
+      <w-card-section id="refCardOwnership" v-if="showOwnershipSection">
+        <div class="w-section-header">{{ t('editor.props.ownership') }}</div>
+        <w-form class="gap-4">
+          <div>
+            <w-btn-toggle
+              :model-value="ownership.mode"
+              push
+              glossy
+              no-caps
+              toggle-color="primary"
+              :options="ownershipModes"
+              @update:model-value="updateOwnership({ mode: $event })" />
+          </div>
+          <div class="text-caption">
+            <em>{{ t(ownershipHints[ownership.mode]) }}</em>
+          </div>
+          <div class="text-caption text-black/54 dark:text-white/60" v-if="!mayListUsers">
+            {{ t('editor.props.ownershipNoListUsers') }}
+          </div>
+          <div class="text-caption text-black/54 dark:text-white/60" v-if="!mayListGroups">
+            {{ t('editor.props.ownershipNoListGroups') }}
+          </div>
+          <template v-if="ownership.mode === `users`">
+            <w-select
+              v-if="mayListUsers"
+              :model-value="ownership.users"
+              :options="state.userOptions"
+              :label="t(`editor.props.ownerUsers`)"
+              :no-options-label="t(`editor.props.ownersNoResults`)"
+              :loading="state.ownerLookups > 0"
+              option-value="id"
+              option-label="name"
+              multiple
+              use-input
+              use-chips
+              remote-filter
+              outlined
+              dense
+              @filter="lookupUsers"
+              @update:model-value="updateOwnership({ users: $event })">
+              <template #option="{ opt }">
+                <span class="flex flex-nowrap items-center gap-2">
+                  <w-avatar v-if="opt.hasAvatar" size="sm">
+                    <img :src="`/_user/${opt.id}/avatar`" alt="" />
+                  </w-avatar>
+                  <w-avatar v-else size="sm" color="primary" text-color="white" icon="la:user" />
+                  <span class="truncate">{{ opt.name }}</span>
+                  <span v-if="opt.handle" class="text-caption text-black/54 dark:text-white/60"
+                    >@{{ opt.handle }}</span
+                  >
+                </span>
+              </template>
+            </w-select>
+            <!-- -> Who owns it is still theirs to see, and to hand back to the creator -->
+            <div v-else class="flex flex-wrap gap-1">
+              <w-chip v-for="usr of ownership.users" :key="usr.id" :label="usr.name" size="sm" />
+            </div>
+          </template>
+          <template v-else-if="ownership.mode === `groups`">
+            <w-select
+              v-if="mayListGroups"
+              :model-value="ownership.groups"
+              :options="state.groupOptions"
+              :label="t(`editor.props.ownerGroups`)"
+              :no-options-label="t(`editor.props.ownersNoResults`)"
+              :loading="state.ownerLookups > 0"
+              option-value="id"
+              option-label="name"
+              multiple
+              use-input
+              use-chips
+              remote-filter
+              outlined
+              dense
+              @filter="lookupGroups"
+              @update:model-value="updateOwnership({ groups: $event })" />
+            <div v-else class="flex flex-wrap gap-1">
+              <w-chip v-for="grp of ownership.groups" :key="grp.id" :label="grp.name" size="sm" />
+            </div>
+          </template>
+        </w-form>
+      </w-card-section>
       <w-card-section class="alt-card" id="refCardPublishState">
         <div class="w-section-header">{{ t('editor.props.publishState') }}</div>
         <w-form class="gap-4">
@@ -437,6 +570,13 @@
         :edit-id="state.editRelationId"
         @close="state.showRelationDialog = false" />
     </w-dialog>
+    <w-dialog v-model="state.showLifecycleRuleDialog">
+      <page-lifecycle-rule-dialog
+        :rule="editedLifecycleRule"
+        :banner-taken="lifecycleBannerTaken"
+        @save="saveLifecycleRule"
+        @close="state.showLifecycleRuleDialog = false" />
+    </w-dialog>
     <w-dialog v-model="state.showScriptsDialog">
       <page-scripts-dialog :mode="state.pageScriptsMode" @close="state.showScriptsDialog = false" />
     </w-dialog>
@@ -446,6 +586,8 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
+import { debounce } from 'es-toolkit/function'
+import { v4 as uuid } from 'uuid'
 
 import { scrollBehavior } from '@/helpers/motion'
 import { PAGE_ICON_COLORS, pageIconColorClass } from '@/helpers/pageIconColors'
@@ -456,6 +598,7 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import IconPickerDialog from './IconPickerDialog.vue'
+import PageLifecycleRuleDialog from './PageLifecycleRuleDialog.vue'
 import PageLocaleRelationsDialog from './PageLocaleRelationsDialog.vue'
 import PageRelationDialog from './PageRelationDialog.vue'
 import PageScriptsDialog from './PageScriptsDialog.vue'
@@ -481,7 +624,12 @@ const state = reactive({
   requirePassword: false,
   editRelationId: null,
   pageScriptsMode: 'jsLoad',
-  showQuickAccess: true
+  showQuickAccess: true,
+  userOptions: [],
+  groupOptions: [],
+  ownerLookups: 0,
+  showLifecycleRuleDialog: false,
+  editLifecycleRuleIdx: null
 })
 
 // REFS
@@ -513,6 +661,71 @@ const mayWriteTags = computed(() => userStore.pagePermissions.includes('write:ta
 const showTagsSection = computed(() => mayWriteTags.value || pageStore.tags?.length > 0)
 
 /*
+  Who may name owners, per kind: the same lists `PUT …/ownership` checks (`LIST_USERS_PERMISSIONS` and
+  `LIST_GROUPS_PERMISSIONS` in `models/groups.ts`). These are GLOBAL permissions -- finding somebody
+  is not a question about a path -- so `can()` is the right question here, unlike the page rules above.
+*/
+const LIST_USERS_PERMISSIONS = ['list:users', 'read:users', 'write:users', 'manage:users']
+const LIST_GROUPS_PERMISSIONS = ['list:groups', 'read:groups', 'write:groups', 'manage:groups']
+const mayListUsers = computed(() => LIST_USERS_PERMISSIONS.some((perm) => userStore.can(perm)))
+const mayListGroups = computed(() => LIST_GROUPS_PERMISSIONS.some((perm) => userStore.can(perm)))
+
+/*
+  The owners as this panel has them: the pending edit, else what the server last said.
+
+  `pageStore.ownership` is null for a reader who may not write the page -- the server does not tell
+  them -- and there is nothing for them to edit here either. Never in suggest mode, which saves no
+  page at all.
+*/
+const showOwnershipSection = computed(
+  () => editorStore.mode !== 'suggest' && pageStore.ownership !== null
+)
+const ownership = computed(
+  () => editorStore.ownership ?? pageStore.ownership ?? { mode: 'creator', users: [], groups: [] }
+)
+const ownershipModes = computed(() => [
+  { label: t('editor.props.ownershipCreator'), value: 'creator' },
+  { label: t('editor.props.ownershipUsers'), value: 'users', disable: !mayListUsers.value },
+  { label: t('editor.props.ownershipGroups'), value: 'groups', disable: !mayListGroups.value }
+])
+const ownershipHints = {
+  creator: 'editor.props.ownershipCreatorHint',
+  users: 'editor.props.ownershipUsersHint',
+  groups: 'editor.props.ownershipGroupsHint'
+}
+
+/*
+  The lifecycle rules as this panel has them: the pending edit, else what the server last said -- on
+  the same terms as the owners above, and for the same reason held apart from the page's own fields.
+*/
+const showLifecycleSection = computed(
+  () => editorStore.mode !== 'suggest' && pageStore.lifecycleRules !== null
+)
+const lifecycleRules = computed(() => editorStore.lifecycleRules ?? pageStore.lifecycleRules ?? [])
+const editedLifecycleRule = computed(() =>
+  state.editLifecycleRuleIdx === null ? null : lifecycleRules.value[state.editLifecycleRuleIdx]
+)
+// -> One banner per page: taken when a rule OTHER than the one being edited already shows it
+const lifecycleBannerTaken = computed(() =>
+  lifecycleRules.value.some(
+    (rule, idx) =>
+      idx !== state.editLifecycleRuleIdx && rule.actions.some((action) => action.kind === 'banner')
+  )
+)
+const LIFECYCLE_ACTION_ICONS = {
+  banner: 'mdi:alert-box-outline',
+  notify: 'mdi:bell-outline',
+  move: 'mdi:folder-move-outline',
+  tags: 'mdi:tag-multiple-outline',
+  remove: 'mdi:delete-clock-outline'
+}
+const LIFECYCLE_SUMMARIES = {
+  contentAge: 'editor.lifecycle.summaryContentAge',
+  commentAge: 'editor.lifecycle.summaryCommentAge',
+  interval: 'editor.lifecycle.summaryInterval'
+}
+
+/*
   The rail of jump links down the side of the panel. A computed rather than a constant because the
   Scripts section is not always there, and a link to a section that is not rendered is a link that
   throws -- `jumpToSection` reads the element straight off the document.
@@ -520,6 +733,18 @@ const showTagsSection = computed(() => mayWriteTags.value || pageStore.tags?.len
 const quickaccess = computed(() =>
   [
     { key: 'refCardInfo', icon: 'la:info-circle', label: t('editor.props.info') },
+    {
+      key: 'refCardLifecycle',
+      icon: 'la:hourglass-half',
+      label: t('editor.props.lifecycleRules'),
+      shown: showLifecycleSection.value
+    },
+    {
+      key: 'refCardOwnership',
+      icon: 'la:user-tag',
+      label: t('editor.props.ownership'),
+      shown: showOwnershipSection.value
+    },
     { key: 'refCardPublishState', icon: 'la:power-off', label: t('editor.props.publishState') },
     { key: 'refCardRelations', icon: 'la:sun', label: t('editor.props.relations') },
     {
@@ -577,6 +802,107 @@ pageStore.$subscribe(() => {
 })
 
 // METHODS
+
+/**
+ * Change the owners, as a pending edit beside the page rather than in it -- see `editorStore.ownership`.
+ *
+ * Back to nothing pending once it matches what is stored again, so that picking someone and taking
+ * them off does not leave a save to make. Both lists are kept whichever mode is showing, so that
+ * flipping between them does not throw a selection away; only the one `mode` names is sent.
+ */
+function updateOwnership(patch) {
+  const next = { ...ownership.value, ...patch }
+  editorStore.ownership = sameOwnership(next, pageStore.ownership) ? null : next
+}
+function sameOwnership(a, b) {
+  if (!b || a.mode !== b.mode) {
+    return false
+  }
+  const ids = (o) => (o.mode === 'creator' ? [] : o[o.mode].map((owner) => owner.id).sort())
+  return ids(a).join() === ids(b).join()
+}
+
+/*
+  The two pickers search the server as the author types. Debounced, and each answer is dropped if a
+  newer search was started after it, so a slow reply cannot replace the list a later one put up.
+*/
+let lookupSeq = 0
+async function lookupOwners(kind, query) {
+  const seq = ++lookupSeq
+  state.ownerLookups++
+  try {
+    const results = await API_CLIENT.get(`${kind}/lookup`, { searchParams: { query } }).json()
+    if (seq === lookupSeq) {
+      state[kind === 'users' ? 'userOptions' : 'groupOptions'] = results
+    }
+  } catch (err) {
+    console.warn(err)
+  } finally {
+    state.ownerLookups--
+  }
+}
+const lookupUsers = debounce((query) => lookupOwners('users', query), 250)
+const lookupGroups = debounce((query) => lookupOwners('groups', query), 250)
+
+function triggerSummary(rule) {
+  return t(LIFECYCLE_SUMMARIES[rule.trigger], { days: rule.triggerDays })
+}
+// -> How many firings a rule that removes itself has left, counting the ones it has had
+function removalSummary(rule) {
+  const remove = rule.actions.find((action) => action.kind === 'remove')
+  if (!remove) {
+    return null
+  }
+  return t('editor.lifecycle.removesAfter', {
+    count: Math.max(remove.after - (rule.fireCount ?? 0), 1)
+  })
+}
+function outcomeSummary(rule) {
+  const date = userStore.formatDateTime(t, rule.lastFiredAt)
+  return rule.lastOutcome?.message
+    ? t('editor.lifecycle.lastOutcome', { date, message: rule.lastOutcome.message })
+    : t('editor.lifecycle.lastTriggered', { date })
+}
+
+/**
+ * Change the rules, as a pending edit beside the page -- see `editorStore.lifecycleRules`. Back to
+ * nothing pending once the list says what is stored again.
+ */
+function setLifecycleRules(rules) {
+  const essentials = (list) =>
+    JSON.stringify(
+      (list ?? []).map(({ id, name, trigger, triggerDays, actions }) => ({
+        id,
+        name,
+        trigger,
+        triggerDays,
+        actions
+      }))
+    )
+  editorStore.lifecycleRules =
+    essentials(rules) === essentials(pageStore.lifecycleRules) ? null : rules
+}
+function newLifecycleRule() {
+  state.editLifecycleRuleIdx = null
+  state.showLifecycleRuleDialog = true
+}
+function editLifecycleRule(idx) {
+  state.editLifecycleRuleIdx = idx
+  state.showLifecycleRuleDialog = true
+}
+function saveLifecycleRule(rule) {
+  const rules = [...lifecycleRules.value]
+  if (state.editLifecycleRuleIdx === null) {
+    // -> No id until the server gives it one; `key` only tells the list rows apart until then
+    rules.push({ ...rule, id: null, key: uuid() })
+  } else {
+    rules[state.editLifecycleRuleIdx] = rule
+  }
+  setLifecycleRules(rules)
+}
+function removeLifecycleRule(idx) {
+  setLifecycleRules(lifecycleRules.value.filter((_rule, i) => i !== idx))
+}
 
 function editScripts(mode) {
   state.pageScriptsMode = mode

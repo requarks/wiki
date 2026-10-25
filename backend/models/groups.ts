@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import { and, count, eq, ilike, ne, or, sql } from 'drizzle-orm'
+import { and, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm'
 import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError, isNoteImagesPath } from '../helpers/common.ts'
@@ -51,9 +51,11 @@ export const ELEVATED_PERMISSIONS = [
  */
 export const GLOBAL_PERMISSIONS = [
   'access:admin',
+  'list:users',
   'read:users',
   'write:users',
   'manage:users',
+  'list:groups',
   'read:groups',
   'write:groups',
   'manage:groups',
@@ -68,6 +70,29 @@ export const GLOBAL_PERMISSIONS = [
   'use:mcp',
   SYSTEM_PERMISSION
 ] as const
+
+/**
+ * What lets a caller find users by name, as a picker does: `list:users`, or any rung above it.
+ *
+ * `list:users` is the bottom rung and buys nothing but the lookup — a name, a handle and an avatar
+ * for an id, never an email or anything else about the account (`users.lookup`). It is what lets an
+ * ordinary author name a page's owners without being able to read the user list.
+ */
+export const LIST_USERS_PERMISSIONS = ['list:users', 'read:users', 'write:users', 'manage:users']
+
+/** The same for groups: a name for an id (`groups.lookup`), and nothing about what a group may do. */
+export const LIST_GROUPS_PERMISSIONS = [
+  'list:groups',
+  'read:groups',
+  'write:groups',
+  'manage:groups'
+]
+
+/** The id and the name of a group, which is all `list:groups` may see of one. */
+export interface GroupLookup {
+  id: string
+  name: string
+}
 
 /**
  * Every PAGE permission a rule may grant — bound to a path, a locale and a site.
@@ -617,6 +642,61 @@ class Groups {
       .groupBy(groupsTable.id)
       .orderBy(groupsTable.name)
     return results as GroupWithUserCount[]
+  }
+
+  /**
+   * A user as an access actor, with no request in hand: their groups and those groups' permissions,
+   * as they stand now.
+   *
+   * For work done on somebody's behalf when they are not there — a lifecycle rule acting as whoever
+   * wrote it — which is why it reads the membership afresh rather than from any session.
+   */
+  async actorForUser(userId: string): Promise<AccessActor> {
+    const rows = await WIKI.db
+      .select({ id: groupsTable.id, permissions: groupsTable.permissions })
+      .from(userGroups)
+      .innerJoin(groupsTable, eq(groupsTable.id, userGroups.groupId))
+      .where(eq(userGroups.userId, userId))
+    return {
+      groupIds: rows.map((row) => row.id),
+      permissions: [...new Set(rows.flatMap((row) => (row.permissions ?? []) as string[]))]
+    }
+  }
+
+  /**
+   * Groups whose name contains what was typed, for a picker.
+   *
+   * Only the id and the name: this is what `list:groups` answers, and that permission sees nothing
+   * about what a group may do or who is in it. The guests group is never offered — it is everybody
+   * who has not signed in, which is not a group of people anything could be handed to.
+   *
+   * @param ids Narrow to these, for resolving ids already held rather than searching
+   */
+  async lookup({
+    query = '',
+    ids,
+    limit = 10
+  }: {
+    query?: string
+    ids?: string[]
+    limit?: number
+  }): Promise<GroupLookup[]> {
+    const conditions = [ne(groupsTable.id, WIKI.data.systemIds.guestsGroupId)]
+    if (query.trim()) {
+      conditions.push(ilike(groupsTable.name, `%${escapeLikePattern(query.trim())}%`))
+    }
+    if (ids) {
+      if (ids.length < 1) {
+        return []
+      }
+      conditions.push(inArray(groupsTable.id, ids))
+    }
+    return WIKI.db
+      .select({ id: groupsTable.id, name: groupsTable.name })
+      .from(groupsTable)
+      .where(and(...conditions))
+      .orderBy(groupsTable.name)
+      .limit(limit)
   }
 
   /**

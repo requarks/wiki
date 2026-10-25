@@ -27,7 +27,9 @@ import { notifications } from './notifications.ts'
 import { oauth } from './oauth.ts'
 import { pageGraph } from './pageGraph.ts'
 import { pageHistory } from './pageHistory.ts'
+import { pageLifecycle } from './pageLifecycle.ts'
 import { pageLinks } from './pageLinks.ts'
+import { pageOwners } from './pageOwners.ts'
 import { pageProblems } from './pageProblems.ts'
 import { pageRatings } from './pageRatings.ts'
 import { pages } from './pages.ts'
@@ -77,7 +79,9 @@ export default {
   oauth,
   pageGraph,
   pageHistory,
+  pageLifecycle,
   pageLinks,
+  pageOwners,
   pageProblems,
   pageRatings,
   pages,

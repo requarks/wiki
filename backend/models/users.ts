@@ -319,6 +319,18 @@ const userSelection = {
   lastLoginAt: usersTable.lastLoginAt
 }
 
+/**
+ * A user as `list:users` may see one: what any page byline or comment already shows about them, and
+ * nothing about the account behind it.
+ */
+export interface UserLookup {
+  id: string
+  name: string
+  /** Empty for somebody who has not picked one. */
+  handle: string
+  hasAvatar: boolean
+}
+
 export interface LoginOptions {
   siteId: string
   strategyId: string
@@ -437,6 +449,53 @@ class Users {
    * @param assignableToGroupId Keep only the users that may be assigned to this group
    * @returns The page of users plus the total number matching the filter
    */
+  /**
+   * Users whose name or handle matches what was typed, for a picker.
+   *
+   * Only what `UserLookup` carries, because `list:users` is what answers this and it sees nothing
+   * else. Never matched on the email either, since a match would confirm an address the caller was
+   * never shown. Disabled accounts and the guest account are never offered: neither is somebody
+   * anything could be handed to.
+   *
+   * @param ids Narrow to these, for resolving ids already held rather than searching
+   */
+  async lookup({
+    query = '',
+    ids,
+    limit = 10
+  }: {
+    query?: string
+    ids?: string[]
+    limit?: number
+  }): Promise<UserLookup[]> {
+    const conditions = [eq(usersTable.isActive, true), eq(usersTable.isSystem, false)]
+    const term = query.trim()
+    if (term) {
+      const pattern = escapeLikePattern(term)
+      conditions.push(
+        or(ilike(usersTable.name, `%${pattern}%`), ilike(usersTable.handle, `${pattern}%`))!
+      )
+    }
+    if (ids) {
+      if (ids.length < 1) {
+        return []
+      }
+      conditions.push(inArray(usersTable.id, ids))
+    }
+    const rows = await WIKI.db
+      .select({
+        id: usersTable.id,
+        name: usersTable.name,
+        handle: usersTable.handle,
+        hasAvatar: usersTable.hasAvatar
+      })
+      .from(usersTable)
+      .where(and(...conditions))
+      .orderBy(usersTable.name)
+      .limit(limit)
+    return rows.map((row) => ({ ...row, handle: row.handle ?? '' }))
+  }
+
   async getUsers({
     filter = '',
     assignableToGroupId = '',
@@ -539,6 +598,7 @@ class Users {
       isVerified: user.isVerified,
       isProvisioned: user.isProvisioned,
       externalId: user.externalId,
+      handle: user.handle ?? '',
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       lastLoginAt: user.lastLoginAt,
@@ -681,8 +741,34 @@ class Users {
     if (typeof values.email === 'string') {
       values.email = values.email.toLowerCase()
     }
-    const result = await WIKI.db.update(usersTable).set(values).where(eq(usersTable.id, id))
-    return (result.rowCount ?? 0) > 0
+    try {
+      const result = await WIKI.db.update(usersTable).set(values).where(eq(usersTable.id, id))
+      return (result.rowCount ?? 0) > 0
+    } catch (err: any) {
+      // -> A handle somebody else already holds is the one clash here a person can fix, and the
+      //    only one worth turning into a sentence rather than a 500
+      const cause = err.cause ?? err
+      if (cause.code === '23505' && cause.constraint === 'users_handle_idx') {
+        throw new CustomError('userHandleTaken', 'That handle is already taken.', 409)
+      }
+      throw err
+    }
+  }
+
+  /**
+   * A handle as typed, as it is stored: trimmed, checked against `HANDLE_PATTERN`, and null for an
+   * empty one — which is how a handle is taken off. Null rather than '' is what the unique index
+   * needs: postgres counts nulls as distinct, so any number of users may have none.
+   */
+  handleToStore(handle: string): string | null {
+    const trimmed = handle.trim()
+    if (trimmed.length > 0 && !HANDLE_PATTERN.test(trimmed)) {
+      throw new CustomError(
+        'userHandleInvalid',
+        'A handle is 3 to 32 characters of letters, digits, hyphens and underscores.'
+      )
+    }
+    return trimmed.length > 0 ? trimmed : null
   }
 
   /**
@@ -832,28 +918,10 @@ class Users {
       values.name = patch.name
     }
     if (patch.handle !== undefined) {
-      const handle = patch.handle.trim()
-      if (handle.length > 0 && !HANDLE_PATTERN.test(handle)) {
-        throw new CustomError(
-          'userHandleInvalid',
-          'A handle is 3 to 32 characters of letters, digits, hyphens and underscores.'
-        )
-      }
-      // -> Empty is how a handle is taken off, and null rather than '' is what the unique index
-      //    needs: postgres counts nulls as distinct, so any number of users may have none
-      values.handle = handle.length > 0 ? handle : null
+      values.handle = this.handleToStore(patch.handle)
     }
 
-    try {
-      await this.updateUser(id, values)
-    } catch (err: any) {
-      // -> 23505 is the unique index on `lower(handle)`. It is the one failure here a user can fix,
-      //    and the only one worth turning into a sentence rather than a 500.
-      if (err.code === '23505') {
-        throw new CustomError('userHandleTaken', 'That handle is already taken.', 409)
-      }
-      throw err
-    }
+    await this.updateUser(id, values)
 
     return this.getProfile(id)
   }

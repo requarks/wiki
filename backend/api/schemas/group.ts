@@ -153,4 +153,17 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       }
     ]
   })
+
+  /**
+   * GROUP LOOKUP - What `list:groups` may see of a group
+   */
+  app.addSchema({
+    $id: 'GroupLookup',
+    type: 'object',
+    description: 'A group as a picker shows one: its name, and nothing about what it may do.',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      name: { type: 'string' }
+    }
+  })
 }

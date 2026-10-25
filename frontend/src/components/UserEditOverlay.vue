@@ -120,6 +120,25 @@
                       :aria-label="t(`admin.users.email`)" />
                   </w-item-section>
                 </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="rename" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.users.handle`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.users.handleHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-input
+                      outlined
+                      v-model="state.user.handle"
+                      :disable="!canManage"
+                      dense
+                      hide-bottom-space
+                      prefix="@"
+                      maxlength="32"
+                      :aria-label="t(`admin.users.handle`)" />
+                  </w-item-section>
+                </w-item>
                 <template v-if="state.user.meta">
                   <w-separator class="my-2" inset />
                   <w-item>
@@ -1076,6 +1095,7 @@ async function save(patch, { silent, keepOpen } = { silent: false, keepOpen: fal
     patch = {
       name: state.user.name,
       email: state.user.email,
+      handle: (state.user.handle ?? '').trim(),
       isVerified: state.user.isVerified,
       isActive: state.user.isActive,
       meta: state.user.meta,

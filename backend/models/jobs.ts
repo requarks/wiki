@@ -54,6 +54,8 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   { task: 'purgeOauth', cron: '50 * * * *' },
   // -> Daily, for the same reason as the audit log: retention is counted in days
   { task: 'purgeNotifications', cron: '30 0 * * *' },
+  // -> Daily, off the hour: every trigger is counted in days, so a rule is never more than a day late
+  { task: 'processLifecycleRules', cron: '35 0 * * *' },
   /*
     Safety nets, not the schedule. Both are queued the moment there is work — an event written, an
     email coming due — and each asks for its own next run; these only catch what an instance that

@@ -969,43 +969,70 @@ async function routes(app: FastifyInstance) {
         runs alongside the rest.
       */
       const unreadNotifications = WIKI.models.notifications.unreadCategoriesOnPage(page.id, actorId)
-      const [approvalState, isWatching, commentsCount, listing, ownRating, ideaStatus, submitter] =
-        await Promise.all([
-          WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
-            id: page.id,
-            path: page.path,
-            tags: page.tags ?? [],
-            allowContributions: page.allowContributions
-          }),
-          // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
-          WIKI.models.pageWatching.isWatching(page.id, actorId),
-          /*
+      const mayWrite = mayOnPage(req, 'write:pages', page)
+      const [
+        approvalState,
+        isWatching,
+        commentsCount,
+        listing,
+        ownRating,
+        ideaStatus,
+        submitter,
+        ownership,
+        lifecycleRules,
+        canMarkReviewed
+      ] = await Promise.all([
+        WIKI.models.approvals.pageViewerState(req, req.params.siteId, {
+          id: page.id,
+          path: page.path,
+          tags: page.tags ?? [],
+          allowContributions: page.allowContributions
+        }),
+        // -> One indexed lookup on (pageId, userId), and none at all for a reader with no account
+        WIKI.models.pageWatching.isWatching(page.id, actorId),
+        /*
           The badge on the Talk tab, which has to be there before the tab is opened — so it comes with
           the page rather than with the comments. One indexed count, and not even that for a site
           whose discussions live at a third party or that has comments turned off -- nor for a page
           still waiting for its password, whose discussion is behind it with the body.
         */
-          WIKI.models.comments.usesBuiltIn(req.params.siteId) && !page.isLocked
-            ? WIKI.models.comments.countForPage(page.id)
-            : 0,
-          /*
+        WIKI.models.comments.usesBuiltIn(req.params.siteId) && !page.isLocked
+          ? WIKI.models.comments.countForPage(page.id)
+          : 0,
+        /*
           The blog this page is a post of, so that the page view can say where the reader is and link
           back to it. Worked out rather than stored -- a post is a post because of where it sits --
           which is one lookup on the unique `(siteId, locale, path)` index over the page's own
           ancestors, and no lookup at all for a page at the site root, nor for an idea, whose nearest
           listing page is already known to be its board.
         */
-          board ? null : WIKI.models.blogs.listingFor(req.params.siteId, page.locale, page.path),
-          /*
+        board ? null : WIKI.models.blogs.listingFor(req.params.siteId, page.locale, page.path),
+        /*
           The reader's own rating, which is theirs and so cannot be cached on the page the way the
           totals are: one lookup on the primary key, and none for a guest or where ratings are off.
         */
-          ratingMode ? WIKI.models.pageRatings.valueFor(page.id, actorId, ratingMode) : 0,
-          // -> Where an idea stands: one primary-key read, and none for a page that is not one
-          board ? WIKI.models.feedback.statusOf(page.id) : null,
-          // -> And who submitted it, for its head: the same, on the users table
-          board ? WIKI.models.feedback.submitterOf(page.creatorId) : null
-        ])
+        ratingMode ? WIKI.models.pageRatings.valueFor(page.id, actorId, ratingMode) : 0,
+        // -> Where an idea stands: one primary-key read, and none for a page that is not one
+        board ? WIKI.models.feedback.statusOf(page.id) : null,
+        // -> And who submitted it, for its head: the same, on the users table
+        board ? WIKI.models.feedback.submitterOf(page.creatorId) : null,
+        /*
+          Who owns it, for the properties panel -- so only for whoever could open that panel and save
+          it. A label nobody else is shown yet, and the group names in it are not every reader's to see.
+        */
+        mayWrite ? WIKI.models.pageOwners.ownershipOf(page.id) : null,
+        // -> Its lifecycle rules, for the same panel and on the same terms
+        mayWrite ? WIKI.models.pageLifecycle.rulesOf(page.id) : null,
+        /*
+          Whether this reader may take the lifecycle banner down. Only asked when there is one, and
+          the owner lookup only for a reader the page rules have not already answered for.
+        */
+        page.lifecycleBanner && actorId
+          ? mayWrite ||
+            mayOnPage(req, 'manage:pages', page) ||
+            WIKI.models.pageOwners.isOwner(page, actorId)
+          : false
+      ])
       const blog = listing?.kind === 'blog' ? listing.blog : null
       const { ratings, ...pageFields } = page
       return {
@@ -1047,7 +1074,10 @@ async function routes(app: FastifyInstance) {
                 )
               }
             : null,
+        ownership,
+        lifecycleRules,
         viewer: {
+          canMarkReviewed,
           permissions: pagePermissionsFor(req, page),
           ...approvalState,
           isWatching,

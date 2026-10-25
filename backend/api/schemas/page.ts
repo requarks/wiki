@@ -346,11 +346,31 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       },
+      lifecycleBanner: {
+        anyOf: [{ type: 'null' }, { $ref: 'LifecycleBanner#' }],
+        description:
+          'The banner a lifecycle rule put over the article, shown to every reader until somebody marks the page reviewed (`PUT …/reviewed`). Null when there is none.'
+      },
+      lifecycleRules: {
+        anyOf: [{ type: 'null' }, { type: 'array', items: { $ref: 'LifecycleRule#' } }],
+        description:
+          'The page’s lifecycle rules. Only for a requester holding `write:pages` on it, who is whoever can change them; null for anybody else. Present when a page is fetched on its own. Not page content: changed with `PUT …/lifecycle-rules`, and no version records them.'
+      },
+      ownership: {
+        anyOf: [{ type: 'null' }, { $ref: 'PageOwnership#' }],
+        description:
+          'Who the page is owned by. Only for a requester holding `write:pages` on it, who is whoever can change it; null for anybody else. Present when a page is fetched on its own. Not part of the page’s content: it is changed with `PUT …/ownership`, never by a save, and no version records it.'
+      },
       viewer: {
         type: 'object',
         description:
           'Where the requester stands on this page: what they may do to it, whether they may suggest an edit, and whether they review it. Present when a page is fetched on its own — the page view draws its controls from this, rather than asking three further endpoints about a page it already has. Absent from a page returned by a save.',
         properties: {
+          canMarkReviewed: {
+            type: 'boolean',
+            description:
+              'There is a lifecycle banner, and this requester may take it down by marking the page reviewed: one of its owners, or somebody holding `write:pages` or `manage:pages` on it.'
+          },
           permissions: {
             type: 'array',
             items: { type: 'string' },
@@ -623,5 +643,116 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         }
       }
     ]
+  })
+
+  /**
+   * PAGE OWNERSHIP - Who answers for a page
+   */
+  app.addSchema({
+    $id: 'PageOwnership',
+    type: 'object',
+    description:
+      'Who a page is owned by. `creator` means the user who created it, and is what a page with no owners is; otherwise one of the two lists names the owners and the other is empty.',
+    properties: {
+      mode: { type: 'string', enum: ['creator', 'users', 'groups'] },
+      users: { type: 'array', items: { $ref: 'UserLookup#' } },
+      groups: { type: 'array', items: { $ref: 'GroupLookup#' } }
+    }
+  })
+
+  /**
+   * LIFECYCLE ACTION - One thing a lifecycle rule does
+   */
+  app.addSchema({
+    $id: 'LifecycleAction',
+    type: 'object',
+    required: ['kind'],
+    description:
+      '`banner` shows `message` (with `icon`) over the article until the page is marked reviewed. `notify` tells the page’s owners. `move` moves the page to `path`, in which `{pagePathName}` stands for the last segment of its path at the time and `{pagePath}` for the whole of it, rewriting the links to it; a path already taken is skipped. `tags` adds `tags` to the ones it has. `remove` deletes the rule itself once it has fired `after` times (counting the firing that does it), after its other actions; a rule needs at least one action besides it.',
+    properties: {
+      kind: { type: 'string', enum: ['banner', 'notify', 'move', 'tags', 'remove'] },
+      message: { type: 'string', maxLength: 500 },
+      icon: { type: 'string', maxLength: 255 },
+      path: { type: 'string', maxLength: 255 },
+      tags: { type: 'array', maxItems: 20, items: { type: 'string', maxLength: 255 } },
+      after: { type: 'integer', minimum: 1, maximum: 1000 }
+    }
+  })
+
+  /**
+   * LIFECYCLE RULE INPUT - A lifecycle rule as it is written
+   */
+  app.addSchema({
+    $id: 'LifecycleRuleInput',
+    type: 'object',
+    required: ['name', 'trigger', 'triggerDays', 'actions'],
+    properties: {
+      id: {
+        type: ['string', 'null'],
+        format: 'uuid',
+        description:
+          'The rule being kept or changed. Absent, null, or not one of this page’s: a new rule.'
+      },
+      name: { type: 'string', minLength: 1, maxLength: 255 },
+      trigger: {
+        type: 'string',
+        enum: ['contentAge', 'commentAge', 'interval'],
+        description:
+          '`contentAge`: days since the body last changed or the page was last marked reviewed. `commentAge`: days since the last comment (or the page’s creation) or the last review. `interval`: every so many days, from the rule’s creation and then from its last firing. The first two fire once each time their clock runs out.'
+      },
+      triggerDays: { type: 'integer', minimum: 1, maximum: 3650 },
+      actions: { type: 'array', minItems: 1, maxItems: 5, items: { $ref: 'LifecycleAction#' } }
+    }
+  })
+
+  /**
+   * LIFECYCLE RULE - A lifecycle rule as it is stored
+   */
+  app.addSchema({
+    $id: 'LifecycleRule',
+    type: 'object',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      name: { type: 'string' },
+      trigger: { type: 'string', enum: ['contentAge', 'commentAge', 'interval'] },
+      triggerDays: { type: 'integer' },
+      actions: { type: 'array', items: { $ref: 'LifecycleAction#' } },
+      authorId: {
+        type: ['string', 'null'],
+        format: 'uuid',
+        description: 'Who last wrote the rule, and who its actions are carried out as.'
+      },
+      authorName: { type: ['string', 'null'] },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+      lastFiredAt: { type: ['string', 'null'], format: 'date-time' },
+      fireCount: {
+        type: 'integer',
+        description: 'How many times the rule has fired, which a `remove` action counts towards.'
+      },
+      lastOutcome: {
+        type: ['object', 'null'],
+        description: 'How the last firing went.',
+        properties: {
+          status: { type: 'string', enum: ['applied', 'skipped', 'failed'] },
+          message: { type: 'string' },
+          at: { type: 'string', format: 'date-time' }
+        }
+      }
+    }
+  })
+
+  /**
+   * LIFECYCLE BANNER - What a lifecycle rule put over a page
+   */
+  app.addSchema({
+    $id: 'LifecycleBanner',
+    type: 'object',
+    properties: {
+      message: { type: 'string' },
+      icon: { type: 'string' },
+      ruleId: { type: 'string', format: 'uuid' },
+      setAt: { type: 'string', format: 'date-time' }
+    }
   })
 }

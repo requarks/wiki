@@ -1,7 +1,7 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError, isRedirectTarget } from '../helpers/common.ts'
 import { elevatedGroupGuard } from '../helpers/userGuards.ts'
-import { SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
+import { LIST_GROUPS_PERMISSIONS, SYSTEM_PERMISSION, isElevated } from '../models/groups.ts'
 import type { FastifyInstance } from 'fastify'
 import type { GroupPatch, GroupRule } from '../models/groups.ts'
 
@@ -83,6 +83,41 @@ async function routes(app: FastifyInstance) {
         ...group,
         isElevated: isElevated(group.permissions ?? [])
       }))
+    }
+  )
+
+  /**
+   * LOOK UP GROUPS
+   */
+  app.get<{ Querystring: { query?: string; limit?: number } }>(
+    '/lookup',
+    {
+      config: {
+        permissions: LIST_GROUPS_PERMISSIONS
+      },
+      schema: {
+        summary: 'Find groups by name, for a picker',
+        description:
+          'Groups whose name contains the query, each with its id and name and nothing else — not what it may do, not who is in it, not how many.\n\nThe guests group is never listed. `list:groups` is the permission for exactly this, and the group permissions above it also answer it.',
+        tags: ['Groups'],
+        querystring: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', maxLength: 255 },
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'Matching groups, by name',
+            type: 'array',
+            items: { $ref: 'GroupLookup#' }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return WIKI.models.groups.lookup({ query: req.query.query ?? '', limit: req.query.limit })
     }
   )
 

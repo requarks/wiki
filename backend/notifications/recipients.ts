@@ -224,6 +224,42 @@ export function submitterAndVotersOf(
   })
 }
 
+/**
+ * The owners of the page an event is about: the users it names, every active member of the groups it
+ * names, or its creator when it names nobody that can still own it (see `pageOwners.ownershipOf`).
+ */
+export function ownersOf(event: NotificationEvent, after: string | null): AsyncIterable<string[]> {
+  const pageId = event.data.page?.id
+  if (!pageId) {
+    return fromList([], after)
+  }
+  return keyset(after, async (cursor, limit) => {
+    const result = await WIKI.db.execute(sql`
+      SELECT u.id FROM (
+        SELECT po."userId" AS id FROM "pageOwners" po
+        WHERE po."pageId" = ${pageId} AND po."userId" IS NOT NULL
+        UNION
+        SELECT ug."userId" AS id FROM "pageOwners" po
+        JOIN "userGroups" ug ON ug."groupId" = po."groupId"
+        WHERE po."pageId" = ${pageId}
+        UNION
+        SELECT p."creatorId" AS id FROM pages p
+        WHERE p.id = ${pageId} AND NOT EXISTS (
+          SELECT 1 FROM "pageOwners" po
+          LEFT JOIN users ou ON ou.id = po."userId"
+          WHERE po."pageId" = ${pageId}
+            AND (po."groupId" IS NOT NULL OR (ou."isActive" AND NOT ou."isSystem"))
+        )
+      ) audience
+      JOIN users u ON u.id = audience.id AND u."isActive" AND NOT u."isSystem"
+      ${cursor ? sql`WHERE u.id > ${cursor}::uuid` : sql``}
+      ORDER BY u.id
+      LIMIT ${limit}
+    `)
+    return (result.rows as { id: string }[]).map((row) => row.id)
+  })
+}
+
 /** A single id, or nobody. */
 export function only(id: string | null | undefined, after: string | null): AsyncIterable<string[]> {
   return fromList(id ? [id] : [], after)

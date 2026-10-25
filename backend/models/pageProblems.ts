@@ -199,7 +199,6 @@ class PageProblems {
         tags: pagesTable.tags,
         authorId: pagesTable.authorId,
         creatorId: pagesTable.creatorId,
-        ownerId: pagesTable.ownerId,
         localeGroupId: pagesTable.localeGroupId,
         contentEmpty: sql<boolean>`coalesce(btrim(${pagesTable.content}), '') = ''`,
         renderEmpty: sql<boolean>`coalesce(btrim(${pagesTable.render}), '') = ''`,

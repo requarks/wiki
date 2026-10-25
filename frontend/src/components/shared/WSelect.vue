@@ -231,8 +231,8 @@ import WSpinner from './WSpinner.vue'
  * fields to read, and `emitValue` controls whether the model receives the option's value or the
  * whole object -- the same contract the existing markup is written against.
  *
- * Simplification: no free-text filtering or async search. Every current usage picks from a fixed,
- * short list.
+ * Typing narrows `options` in place with `useInput`. A list too long to hand over whole -- users
+ * to search on the server -- is narrowed by the caller instead, with `remoteFilter`.
  */
 const slots = useSlots()
 
@@ -361,6 +361,17 @@ const props = defineProps({
     default: false
   },
   /**
+   * With `useInput`, leave the narrowing to the caller: every change to what has been typed, and the
+   * list opening, emits `filter` with the query, and `options` is listed exactly as given.
+   *
+   * For a search answered by the server. Bind the model to whole option objects (no `emitValue`), so
+   * that a selection still has a label once a later search no longer returns it.
+   */
+  remoteFilter: {
+    type: Boolean,
+    default: false
+  },
+  /**
    * Let what has been typed become a value of its own.
    *
    * With `useInput`, Enter on a query that matches no highlighted option emits `create` with the
@@ -401,7 +412,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'create'])
+const emit = defineEmits(['update:modelValue', 'create', 'filter'])
 
 const isOpen = ref(false)
 /** Pointer-over, for the ring: the ring is an inline style, so CSS `:hover` cannot reach it. */
@@ -426,6 +437,13 @@ const input = ref(null)
 watch(isOpen, (open) => {
   if (!open) {
     query.value = ''
+  } else if (props.remoteFilter) {
+    emit('filter', query.value)
+  }
+})
+watch(query, (value) => {
+  if (props.remoteFilter && isOpen.value) {
+    emit('filter', value)
   }
 })
 
@@ -453,7 +471,7 @@ const normalizedOptions = computed(() =>
  * whole, so the popup and the keyboard cursor agree on one list either way.
  */
 const filteredOptions = computed(() => {
-  if (!props.useInput || !query.value) {
+  if (!props.useInput || !query.value || props.remoteFilter) {
     return normalizedOptions.value
   }
   const needle = query.value.toLowerCase()

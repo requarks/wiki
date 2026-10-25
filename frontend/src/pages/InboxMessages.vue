@@ -201,6 +201,7 @@ const ICONS = {
   mention: 'mdi:at',
   feedbackStatus: 'mdi:lightbulb-on-outline',
   reviewRequested: 'mdi:clipboard-check-outline',
+  pageLifecycle: 'mdi:clock-alert-outline',
   pageCreated: 'mdi:file-plus-outline',
   pageDeleted: 'mdi:file-remove-outline'
 }

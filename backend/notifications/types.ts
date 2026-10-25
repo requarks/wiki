@@ -12,7 +12,8 @@ export const NOTIFICATION_EVENT_KINDS = [
   'submission:new',
   'comment:new',
   'comment:edit',
-  'feedback:status'
+  'feedback:status',
+  'page:lifecycle'
 ] as const
 
 export type NotificationEventKind = (typeof NOTIFICATION_EVENT_KINDS)[number]
@@ -76,7 +77,7 @@ export interface NotificationEventData {
   /** `comment:new`: the thread it answers, and who started it. */
   parentId?: string | null
   parentAuthorId?: string | null
-  /** `comment:*`: the first few lines, as typed. Markdown, never HTML. */
+  /** `comment:*`: the first few lines, as typed. Markdown, never HTML. `page:lifecycle`: the rule's name. */
   excerpt?: string
   /** `comment:*`: the handles written in it, lowercased. On an edit, only the ones that are new. */
   mentionHandles?: string[]

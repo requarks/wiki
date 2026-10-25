@@ -36,6 +36,9 @@ export const AUDIT_ACTIONS = {
   page: [
     'createPage',
     'updatePage',
+    'updatePageOwnership',
+    'updateLifecycleRules',
+    'markPageReviewed',
     'convertPage',
     'movePage',
     'deletePage',

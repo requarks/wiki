@@ -326,6 +326,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       {
         type: 'object',
         properties: {
+          handle: {
+            type: 'string',
+            description:
+              'The name this user is mentioned by in a comment, without the `@`. An empty string for somebody who has not set one.'
+          },
           meta: {
             type: 'object',
             additionalProperties: true
@@ -380,5 +385,27 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         }
       }
     ]
+  })
+
+  /**
+   * USER LOOKUP - What `list:users` may see of a user
+   */
+  app.addSchema({
+    $id: 'UserLookup',
+    type: 'object',
+    description:
+      'A user as a picker shows one: what a page byline or a comment already shows, and nothing about the account behind it.',
+    properties: {
+      id: { type: 'string', format: 'uuid' },
+      name: { type: 'string' },
+      handle: {
+        type: 'string',
+        description: 'Without the `@`. An empty string for somebody who has not picked one.'
+      },
+      hasAvatar: {
+        type: 'boolean',
+        description: 'Whether `/_user/{id}/avatar` has a picture to serve.'
+      }
+    }
   })
 }

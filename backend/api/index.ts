@@ -61,6 +61,8 @@ async function routes(app: FastifyInstance) {
   app.register(import('./notifications.ts'))
   app.register(import('./oauth.ts'))
   app.register(import('./pages.ts'))
+  app.register(import('./pageLifecycle.ts'))
+  app.register(import('./pageOwners.ts'))
   app.register(import('./personalTokens.ts'))
   app.register(import('./ratings.ts'))
   app.register(import('./scheduler.ts'), { prefix: '/scheduler' })

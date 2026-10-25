@@ -3,12 +3,14 @@ import { CustomError, rethrowAsBadRequest } from '../helpers/common.ts'
 import { detectImageMime, imageMimeTypes } from '../helpers/images.ts'
 import { hasUserSession, requestUser, requestUserId } from '../helpers/requester.ts'
 import { elevatedMembershipGuard, systemUserGuard } from '../helpers/userGuards.ts'
+import { LIST_USERS_PERMISSIONS } from '../models/groups.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { UserPatch, UserProfilePatch } from '../models/users.ts'
 
 interface UserUpdateBody {
   name?: string
   email?: string
+  handle?: string
   isActive?: boolean
   isVerified?: boolean
   meta?: Record<string, any>
@@ -164,6 +166,41 @@ async function routes(app: FastifyInstance) {
         limit
       })
       return { page, limit, total, users }
+    }
+  )
+
+  /**
+   * LOOK UP USERS
+   */
+  app.get<{ Querystring: { query?: string; limit?: number } }>(
+    '/lookup',
+    {
+      config: {
+        permissions: LIST_USERS_PERMISSIONS
+      },
+      schema: {
+        summary: 'Find users by name, for a picker',
+        description:
+          'Users whose display name contains the query, or whose handle starts with it — each with its id, name, handle and whether it has an avatar, and nothing else about the account. Never matched on the email, which this does not reveal.\n\nDisabled accounts and the guest account are never listed. `list:users` is the permission for exactly this, and the user permissions above it also answer it.',
+        tags: ['Users'],
+        querystring: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', maxLength: 255 },
+            limit: { type: 'integer', minimum: 1, maximum: 50, default: 10 }
+          }
+        },
+        response: {
+          200: {
+            description: 'Matching users, by name',
+            type: 'array',
+            items: { $ref: 'UserLookup#' }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return WIKI.models.users.lookup({ query: req.query.query ?? '', limit: req.query.limit })
     }
   )
 
@@ -1688,6 +1725,13 @@ async function routes(app: FastifyInstance) {
               format: 'email',
               maxLength: 255
             },
+            handle: {
+              type: 'string',
+              maxLength: 32,
+              pattern: '^$|^[A-Za-z0-9_-]{3,32}$',
+              description:
+                'The name the user is mentioned by in comments, without the `@`. Unique across the wiki, case-insensitively; an empty string takes it off. 409 if somebody else already has it.'
+            },
             isActive: {
               type: 'boolean'
             },
@@ -1760,6 +1804,9 @@ async function routes(app: FastifyInstance) {
         if (req.body[key] !== undefined) {
           ;(patch as Record<string, any>)[key] = req.body[key]
         }
+      }
+      if (req.body.handle !== undefined) {
+        patch.handle = WIKI.models.users.handleToStore(req.body.handle)
       }
 
       if (
@@ -1858,6 +1905,10 @@ async function routes(app: FastifyInstance) {
           message: 'User updated successfully.'
         }
       } catch (err: any) {
+        // -> A handle already taken is the administrator's to fix, so it goes back as said
+        if (err instanceof CustomError) {
+          throw err
+        }
         WIKI.logger.warn(err)
         return reply.internalServerError()
       }

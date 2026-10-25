@@ -296,6 +296,8 @@
               <page-feedback-idea
                 v-if="isIdea && activeView === `article`"
                 @changed="onIdeaChanged" />
+              <!-- -> What a lifecycle rule put over the article, until somebody marks it reviewed -->
+              <page-lifecycle-banner v-if="pageStore.lifecycleBanner && activeView === `article`" />
               <!--
                 Delegated rather than bound per link: the anchors are written by `v-html`, so there is
                 nothing here to put a handler on, and they are replaced wholesale on every render.
@@ -790,6 +792,9 @@ const PageFeedbackSidebar = defineAsyncComponent(
   () => import('@/components/PageFeedbackSidebar.vue')
 )
 const PageFeedbackIdea = defineAsyncComponent(() => import('@/components/PageFeedbackIdea.vue'))
+const PageLifecycleBanner = defineAsyncComponent(
+  () => import('@/components/PageLifecycleBanner.vue')
+)
 // -> Only on a missing page, and only where the site has it turned on
 const PageFolderChildren = defineAsyncComponent(() => import('@/components/PageFolderChildren.vue'))
 
@@ -1349,6 +1354,8 @@ const activeView = computed(() => {
 const showInlineTalk = computed(
   () =>
     isIdea.value &&
+    // -> Part of the idea, so it goes with it when the reader switches to the links list
+    activeView.value === 'article' &&
     siteStore.comments.isBuiltIn &&
     pageStore.allowComments &&
     !pageStore.isLocked &&
@@ -1369,6 +1376,7 @@ const showCommentsEmbed = computed(
   () =>
     Boolean(siteStore.comments.provider) &&
     !siteStore.comments.isBuiltIn &&
+    activeView.value === 'article' &&
     pageStore.allowComments &&
     !pageStore.notFound &&
     !editorStore.isActive

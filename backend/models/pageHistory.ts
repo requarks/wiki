@@ -46,7 +46,7 @@ export type PurgeTimeframe = keyof typeof purgeTimeframes
  * being touched. The exclusions are either derived from the content (`render`, `searchContent`,
  * `ts`), fixed for the page's whole life (`id`, `siteId`, `creatorId`, `createdAt`), or bookkeeping
  * that says nothing about the version (`hash`, `updatedAt`, `authorId`, `ratings`,
- * `historyData`, `isSearchableComputed`).
+ * `historyData`, `isSearchableComputed`, and the lifecycle columns).
  *
  * `toc` is derived as well and is kept regardless, because the version view draws a contents column
  * beside the snapshot and there is nowhere else to get one: a version records the page's SOURCE, and
@@ -70,6 +70,11 @@ const EXCLUDED_FROM_META = new Set([
   'ratings',
   'historyData',
   'isSearchableComputed',
+  // -> Lifecycle bookkeeping: when the body last changed, when it was last reviewed, and the banner a
+  //    rule put up. None of it is something a version records or a restore should put back
+  'contentUpdatedAt',
+  'lastReviewedAt',
+  'lifecycleBanner',
   // -> Held in columns of their own
   'locale',
   'path',

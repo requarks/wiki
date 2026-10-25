@@ -1178,13 +1178,25 @@ export const pages = pgTable(
     historyData: jsonb().notNull().default({}),
     createdAt: timestamp().notNull().defaultNow(),
     updatedAt: timestamp().notNull().defaultNow(),
+    /**
+     * When the page's BODY last changed — unlike `updatedAt`, which a new title, a tag or a property
+     * moves as well. What a lifecycle rule counting days since the last content update counts from.
+     */
+    contentUpdatedAt: timestamp().notNull().defaultNow(),
+    /**
+     * When somebody last confirmed, from the lifecycle banner, that the page is still accurate. Counts
+     * as fresh content to every lifecycle rule counting days since something.
+     */
+    lastReviewedAt: timestamp(),
+    /**
+     * The banner a lifecycle rule put over the article, `{ message, icon, ruleId, setAt }`, until
+     * somebody marks the page reviewed. Not content: setting it records no version and moves nothing.
+     */
+    lifecycleBanner: jsonb(),
     authorId: uuid()
       .notNull()
       .references(() => users.id),
     creatorId: uuid()
-      .notNull()
-      .references(() => users.id),
-    ownerId: uuid()
       .notNull()
       .references(() => users.id),
     siteId: uuid()
@@ -1194,7 +1206,6 @@ export const pages = pgTable(
   (table) => [
     index('pages_authorId_idx').on(table.authorId),
     index('pages_creatorId_idx').on(table.creatorId),
-    index('pages_ownerId_idx').on(table.ownerId),
     index('pages_siteId_idx').on(table.siteId),
     index('pages_ts_idx').using('gin', table.ts),
     index('pages_tags_idx').using('gin', table.tags),
@@ -1472,6 +1483,78 @@ export const pageWatching = pgTable(
     // -> Watching a page twice is watching it once, so the second attempt is a no-op rather than a row
     uniqueIndex('pageWatching_page_user_idx').on(table.pageId, table.userId)
   ]
+)
+
+// PAGE OWNERS -------------------------
+/**
+ * Who answers for a page: some users, or some groups — never a mix of the two, which
+ * `PUT …/pages/:pageId/ownership` refuses.
+ *
+ * No row means the page's creator, and that is the only way a page is owned by its creator: there is
+ * no mode column to fall out of step with the rows, so a page whose every owner has since been
+ * deleted is back with its creator through the cascade alone. A label for now — nothing is granted to
+ * an owner.
+ *
+ * Not part of the page's content, which is why it is a table and not a column: `pageHistory` copies
+ * the page row into every version, and a change of owners is not a version.
+ */
+export const pageOwners = pgTable(
+  'pageOwners',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    userId: uuid().references(() => users.id, { onDelete: 'cascade' }),
+    groupId: uuid().references(() => groups.id, { onDelete: 'cascade' })
+  },
+  (table) => [
+    // -> Nulls are distinct to postgres, so each covers its own kind of row and lets the other through
+    uniqueIndex('pageOwners_page_user_idx').on(table.pageId, table.userId),
+    uniqueIndex('pageOwners_page_group_idx').on(table.pageId, table.groupId),
+    index('pageOwners_userId_idx').on(table.userId),
+    index('pageOwners_groupId_idx').on(table.groupId),
+    check('pageOwners_owner_check', sql`num_nonnulls(${table.userId}, ${table.groupId}) = 1`)
+  ]
+)
+
+// PAGE LIFECYCLE RULES ----------------
+/**
+ * What happens to a page as it ages: when (`trigger`, counted in `triggerDays`) and what (`actions`).
+ *
+ * `trigger` is `contentAge` (days since the body last changed or the page was last reviewed),
+ * `commentAge` (days since the last comment, or the page's creation, or its last review) or
+ * `interval` (every so many days, counted from the rule's creation and then from its last firing).
+ * `actions` is a list of `{ kind: 'banner', message, icon }`, `{ kind: 'notify' }`,
+ * `{ kind: 'move', path }`, `{ kind: 'tags', tags }` and `{ kind: 'remove', after }` — the rule
+ * deleting itself once it has fired `after` times — at most one of each. See
+ * `models/pageLifecycle.ts`, which runs them once a day.
+ *
+ * Not page content, like `pageOwners`: saved on its own, recorded in no version. `authorId` is who
+ * last wrote the rule, and who its actions are carried out as.
+ */
+export const pageLifecycleRules = pgTable(
+  'pageLifecycleRules',
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    pageId: uuid()
+      .notNull()
+      .references(() => pages.id, { onDelete: 'cascade' }),
+    name: varchar({ length: 255 }).notNull(),
+    trigger: varchar({ length: 32 }).notNull(),
+    triggerDays: integer().notNull(),
+    actions: jsonb().notNull().default([]),
+    authorId: uuid().references(() => users.id, { onDelete: 'set null' }),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+    /** When it last fired, which is what keeps a rule from firing again every day it is due. */
+    lastFiredAt: timestamp(),
+    /** How many times it has fired, which is what a `remove` action counts towards. */
+    fireCount: integer().notNull().default(0),
+    /** What happened when it did: `{ status: 'applied' | 'skipped' | 'failed', message, at }`. */
+    lastOutcome: jsonb()
+  },
+  (table) => [index('pageLifecycleRules_pageId_idx').on(table.pageId)]
 )
 
 // PAGE RATINGS ------------------------

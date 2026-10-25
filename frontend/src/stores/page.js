@@ -118,6 +118,23 @@ export const usePageStore = defineStore('page', {
      */
     feedback: null,
     commentsCount: 0,
+    /**
+     * Who the page is owned by, as the server last answered: `{ mode, users, groups }` (see
+     * `PageOwnership` in the API), or null for a reader who may not change it and so is not told.
+     *
+     * Not a page field. A save never carries it and no version records it, so the properties panel's
+     * edit of it is held apart, as `editorStore.ownership`, and `pageSave` sends it on its own.
+     */
+    ownership: null,
+    /**
+     * The page's lifecycle rules as the server last answered, or null for a reader who may not change
+     * them. Like `ownership`, not a page field: edited as `editorStore.lifecycleRules`.
+     */
+    lifecycleRules: null,
+    /** What a lifecycle rule put over the article, `{ message, icon, ruleId, setAt }`, or null. */
+    lifecycleBanner: null,
+    /** Whether this reader may take the banner down, by marking the page reviewed. */
+    canMarkReviewed: false,
     content: '',
     /**
      * Whether `content` above is this page's actual source, rather than just the state it starts in.
@@ -382,7 +399,10 @@ export const usePageStore = defineStore('page', {
           const curDate = Temporal.Now.instant()
           editorStore.$patch({
             lastChangeTimestamp: curDate,
-            lastSaveTimestamp: curDate
+            lastSaveTimestamp: curDate,
+            // -> An owner or rule change left pending was about the page that was in the store before
+            ownership: null,
+            lifecycleRules: null
           })
         })
       } catch (err) {
@@ -509,6 +529,7 @@ export const usePageStore = defineStore('page', {
         canSuggestEdits: viewer.canSuggestEdits === true,
         hasOpenSuggestion: viewer.hasOpenSuggestion === true,
         canReview: viewer.canReview === true,
+        canMarkReviewed: viewer.canMarkReviewed === true,
         pendingSubmissions: viewer.pendingSubmissions ?? [],
         isWatching: viewer.isWatching === true,
         unreadNotifications: viewer.unreadNotifications ?? [],
@@ -576,6 +597,10 @@ export const usePageStore = defineStore('page', {
           viewerRating: 0,
           blog: null,
           feedback: null,
+          ownership: null,
+          lifecycleRules: null,
+          lifecycleBanner: null,
+          canMarkReviewed: false,
           notFound: true,
           // -> Not the previous page's: what the sidebar shows here is the folder's, or what a page here
           //    would inherit
@@ -812,6 +837,10 @@ export const usePageStore = defineStore('page', {
         */
         blog: null,
         feedback: null,
+        // -> Its creator's, as every page starts; never carried over by a copy either
+        ownership: { mode: 'creator', users: [], groups: [] },
+        lifecycleRules: [],
+        lifecycleBanner: null,
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         folderId: '',
@@ -1102,114 +1131,24 @@ export const usePageStore = defineStore('page', {
     },
     /**
      * PAGE SAVE
+     *
+     * The page, and then its owners and its lifecycle rules if they were changed. Separate requests
+     * because neither is page content: a save of the page records a version, and they are in no
+     * version. Which is also why a save that changed nothing BUT those sends the page not at all -- it
+     * would record a version that differs from the one before it in nothing.
      */
     async pageSave() {
       const editorStore = useEditorStore()
-      const siteStore = useSiteStore()
+      const isCreate = editorStore.mode === 'create'
+      // -> Taken now: settling the editor below empties them
+      const ownership = editorStore.ownership
+      const lifecycleRules = editorStore.lifecycleRules
+      // -> What has not gone up yet, and is put back as pending if anything below fails
+      let unsent = { ownership, lifecycleRules }
       try {
-        // -> The render goes up with the content: the markdown pipeline runs here, in the editor, and
-        //    what the preview shows is what gets stored. The server post-processes it — sanitizing it
-        //    against what this author may embed, and deriving the table of contents — so the page it
-        //    returns is the authority on what was actually saved.
-        const body = {
-          ...pick(this, SAVED_PAGE_FIELDS),
-          /*
-            Not a page field: it describes the save rather than the page, and the server records it on
-            the history version this save produces. Collected by the reason-for-change dialog before
-            `pageSave` is called, and cleared below once it has gone up.
-          */
-          reasonForChange: editorStore.reasonForChange ?? ''
+        if (isCreate || (!ownership && !lifecycleRules) || editorStore.hasPendingPageChanges) {
+          await this.pageSaveFields()
         }
-
-        /*
-          Never save a source this store never received.
-
-          An editor that came up empty because the source was withheld — an expired session, a failed
-          load — is indistinguishable from an empty page by the time the payload is built, and sending
-          the empty string replaces the stored HTML's source with nothing. Dropping the key instead
-          leaves it exactly as it was: `updatePage` only writes `content` when it is not `undefined`.
-
-          Typing into an editor sets the flag, so deliberately clearing a page still works — that empty
-          string came from the author, not from a load that never happened. A page being created always
-          has it set, which is also why this cannot leave the POST short of a required field.
-        */
-        if (!this.contentLoaded) {
-          delete body.content
-          console.warn('Page source was never loaded; saving without touching the stored content.')
-        }
-
-        /*
-          And never send back a render this store did not make.
-
-          Every page load fills `render` from the server, so unless an editor has replaced it the store
-          is holding the page's own stored HTML — already sanitized, already anchored, already reduced
-          to a table of contents. Sending that up runs `postProcess` over its own output, with this
-          session's permissions and not the author's, which is how changing a tag from the page view
-          strips the `<script>` out of a page somebody else wrote. Dropping the key leaves the column
-          alone, and the only save that has nothing to say about the render is one that did not touch
-          the source.
-        */
-        if (!this.renderProduced) {
-          delete body.render
-        }
-
-        let pageData
-        if (editorStore.mode === 'create') {
-          const resp = unwrap(
-            await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
-              json: {
-                ...body,
-                locale: this.locale,
-                path: this.path,
-                editor: editorStore.editor
-              }
-            }).json()
-          )
-          pageData = resp?.page
-          if (!pageData?.id) {
-            throw new Error('ERR_CREATED_PAGE_NOT_FOUND')
-          }
-        } else {
-          const resp = unwrap(
-            await API_CLIENT.patch(`sites/${siteStore.id}/pages/${this.id}`, {
-              json: body
-            }).json()
-          )
-          pageData = resp?.page
-          if (!pageData?.id) {
-            throw new Error('ERR_PAGE_NOT_FOUND')
-          }
-        }
-
-        // Update page store
-        this.$patch({
-          ...pageData,
-          relations: (pageData.relations ?? []).map((r) =>
-            pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
-          ),
-          /*
-            What the server made of the set, not what was sent: joining another page's translations
-            brings its other members along, so the panel's own list is a request and this is the answer.
-          */
-          localeRelations: (pageData.localeRelations ?? []).map((r) =>
-            pick(r, ['locale', 'path', 'title'])
-          ),
-          tocDepth: pick(pageData.tocDepth, ['min', 'max']),
-          // -> The reply carries the stored render, as any other load does; see `renderProduced`
-          renderProduced: false,
-          // -> What was pending is now what is stored, which is the whole of what a save means here
-          storedProps: storedPropsOf(pageData)
-        })
-
-        /*
-          The site's tags are what its pages carry, so this save is what just changed them -- a tag
-          typed into the properties panel exists from here on, and one taken off the last page carrying
-          it does not. Unconditional: the tags that went up cannot be compared with the ones that were
-          on the page before, since the store held the author's edits long before the save.
-
-          Marked rather than fetched, so the cost falls on the next thing that actually wants the list.
-        */
-        siteStore.staleTags()
 
         /*
           Saved, so nothing is pending -- and said so BEFORE the navigation below rather than after it.
@@ -1219,8 +1158,19 @@ export const usePageStore = defineStore('page', {
         editorStore.settleChanges()
         editorStore.reasonForChange = ''
 
-        if (editorStore.mode === 'create') {
+        if (isCreate) {
+          // -> Before the owners: the page exists now, and saving again must not create it twice
           editorStore.$patch({ mode: 'edit' })
+        }
+        if (ownership) {
+          await this.pageSaveOwnership(ownership)
+          unsent = { ...unsent, ownership: null }
+        }
+        if (lifecycleRules) {
+          await this.pageSaveLifecycleRules(lifecycleRules)
+          unsent = { ...unsent, lifecycleRules: null }
+        }
+        if (isCreate) {
           /*
             Awaited, because the caller closes the editor the moment this resolves. An unawaited
             navigation leaves one render of the page view at the route the EDITOR was on -- which for
@@ -1230,9 +1180,184 @@ export const usePageStore = defineStore('page', {
           await this.router.replace(this.editorExitPath)
         }
       } catch (err) {
+        // -> Saving again sends whatever did not make it, the page having been saved by then or not
+        editorStore.$patch({
+          ownership: unsent.ownership ?? editorStore.ownership,
+          lifecycleRules: unsent.lifecycleRules ?? editorStore.lifecycleRules
+        })
         console.warn(err)
         throw err
       }
+    },
+    /**
+     * PAGE SAVE - FIELDS
+     *
+     * Everything the editor and the properties panel change that is the page itself: one create or
+     * update, and so one version.
+     */
+    async pageSaveFields() {
+      const editorStore = useEditorStore()
+      const siteStore = useSiteStore()
+      // -> The render goes up with the content: the markdown pipeline runs here, in the editor, and
+      //    what the preview shows is what gets stored. The server post-processes it — sanitizing it
+      //    against what this author may embed, and deriving the table of contents — so the page it
+      //    returns is the authority on what was actually saved.
+      const body = {
+        ...pick(this, SAVED_PAGE_FIELDS),
+        /*
+          Not a page field: it describes the save rather than the page, and the server records it on
+          the history version this save produces. Collected by the reason-for-change dialog before
+          `pageSave` is called, and cleared below once it has gone up.
+        */
+        reasonForChange: editorStore.reasonForChange ?? ''
+      }
+
+      /*
+        Never save a source this store never received.
+
+        An editor that came up empty because the source was withheld — an expired session, a failed
+        load — is indistinguishable from an empty page by the time the payload is built, and sending
+        the empty string replaces the stored HTML's source with nothing. Dropping the key instead
+        leaves it exactly as it was: `updatePage` only writes `content` when it is not `undefined`.
+
+        Typing into an editor sets the flag, so deliberately clearing a page still works — that empty
+        string came from the author, not from a load that never happened. A page being created always
+        has it set, which is also why this cannot leave the POST short of a required field.
+      */
+      if (!this.contentLoaded) {
+        delete body.content
+        console.warn('Page source was never loaded; saving without touching the stored content.')
+      }
+
+      /*
+        And never send back a render this store did not make.
+
+        Every page load fills `render` from the server, so unless an editor has replaced it the store
+        is holding the page's own stored HTML — already sanitized, already anchored, already reduced
+        to a table of contents. Sending that up runs `postProcess` over its own output, with this
+        session's permissions and not the author's, which is how changing a tag from the page view
+        strips the `<script>` out of a page somebody else wrote. Dropping the key leaves the column
+        alone, and the only save that has nothing to say about the render is one that did not touch
+        the source.
+      */
+      if (!this.renderProduced) {
+        delete body.render
+      }
+
+      let pageData
+      if (editorStore.mode === 'create') {
+        const resp = unwrap(
+          await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
+            json: {
+              ...body,
+              locale: this.locale,
+              path: this.path,
+              editor: editorStore.editor
+            }
+          }).json()
+        )
+        pageData = resp?.page
+        if (!pageData?.id) {
+          throw new Error('ERR_CREATED_PAGE_NOT_FOUND')
+        }
+      } else {
+        const resp = unwrap(
+          await API_CLIENT.patch(`sites/${siteStore.id}/pages/${this.id}`, {
+            json: body
+          }).json()
+        )
+        pageData = resp?.page
+        if (!pageData?.id) {
+          throw new Error('ERR_PAGE_NOT_FOUND')
+        }
+      }
+
+      // Update page store
+      this.$patch({
+        ...pageData,
+        relations: (pageData.relations ?? []).map((r) =>
+          pick(r, ['id', 'position', 'label', 'caption', 'icon', 'target'])
+        ),
+        /*
+          What the server made of the set, not what was sent: joining another page's translations
+          brings its other members along, so the panel's own list is a request and this is the answer.
+        */
+        localeRelations: (pageData.localeRelations ?? []).map((r) =>
+          pick(r, ['locale', 'path', 'title'])
+        ),
+        tocDepth: pick(pageData.tocDepth, ['min', 'max']),
+        // -> The reply carries the stored render, as any other load does; see `renderProduced`
+        renderProduced: false,
+        // -> What was pending is now what is stored, which is the whole of what a save means here
+        storedProps: storedPropsOf(pageData)
+      })
+
+      /*
+        The site's tags are what its pages carry, so this save is what just changed them -- a tag
+        typed into the properties panel exists from here on, and one taken off the last page carrying
+        it does not. Unconditional: the tags that went up cannot be compared with the ones that were
+        on the page before, since the store held the author's edits long before the save.
+
+        Marked rather than fetched, so the cost falls on the next thing that actually wants the list.
+      */
+      siteStore.staleTags()
+    },
+    /**
+     * PAGE SAVE - LIFECYCLE RULES
+     *
+     * The whole list, as the properties panel has it: the server keeps what is unchanged, rewrites
+     * what changed and drops what is missing.
+     *
+     * @param rules As `editorStore.lifecycleRules` holds them
+     */
+    async pageSaveLifecycleRules(rules) {
+      const editorStore = useEditorStore()
+      const siteStore = useSiteStore()
+      const resp = unwrap(
+        await API_CLIENT.put(`sites/${siteStore.id}/pages/${this.id}/lifecycle-rules`, {
+          json: {
+            rules: rules.map((rule) =>
+              pick(rule, ['id', 'name', 'trigger', 'triggerDays', 'actions'])
+            )
+          }
+        }).json()
+      )
+      this.$patch({ lifecycleRules: resp.rules })
+      editorStore.settleChanges()
+    },
+    /**
+     * PAGE - MARK REVIEWED
+     *
+     * The page has been looked over and is accurate: takes the lifecycle banner down for everybody,
+     * and restarts the count of every rule counting days since the content changed.
+     *
+     * @throws Whatever the request failed with, for the caller to report.
+     */
+    async pageMarkReviewed() {
+      const siteStore = useSiteStore()
+      unwrap(await API_CLIENT.put(`sites/${siteStore.id}/pages/${this.id}/reviewed`).json())
+      this.$patch({ lifecycleBanner: null, canMarkReviewed: false })
+    },
+    /**
+     * PAGE SAVE - OWNERSHIP
+     *
+     * Hands the page to the owners the properties panel picked. Left pending by `pageSave` when it
+     * fails, so that saving again sends it again -- and only it, since the page itself was saved.
+     *
+     * @param ownership `{ mode, users, groups }`, as `editorStore.ownership` holds it
+     */
+    async pageSaveOwnership(ownership) {
+      const editorStore = useEditorStore()
+      const siteStore = useSiteStore()
+      const owners = { users: ownership.users, groups: ownership.groups }[ownership.mode] ?? []
+      const resp = unwrap(
+        await API_CLIENT.put(`sites/${siteStore.id}/pages/${this.id}/ownership`, {
+          json: { mode: ownership.mode, ids: owners.map((owner) => owner.id) }
+        }).json()
+      )
+      this.$patch({ ownership: resp.ownership })
+      // -> The properties panel counts any change to this store as an edit, this one included
+      editorStore.settleChanges()
     },
     /**
      * Out of the editor: the URL first, then the state.

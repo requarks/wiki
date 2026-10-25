@@ -3,6 +3,7 @@ import { feedbackStatus } from './categories/feedbackStatus.ts'
 import { mention } from './categories/mention.ts'
 import { pageCreated } from './categories/pageCreated.ts'
 import { pageDeleted } from './categories/pageDeleted.ts'
+import { pageLifecycle } from './categories/pageLifecycle.ts'
 import { reviewRequested } from './categories/reviewRequested.ts'
 import { watchedPage } from './categories/watchedPage.ts'
 import { watchedPageComment } from './categories/watchedPageComment.ts'
@@ -32,6 +33,7 @@ export const NOTIFICATION_CATEGORIES = {
   mention,
   feedbackStatus,
   reviewRequested,
+  pageLifecycle,
   pageCreated,
   pageDeleted
 } as const satisfies Record<string, NotificationCategory>

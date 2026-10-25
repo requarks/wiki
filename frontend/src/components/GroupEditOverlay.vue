@@ -969,6 +969,10 @@ const permissionCards = [
     title: 'admin.groups.permissionsUsers',
     permissions: [
       {
+        permission: 'list:users',
+        hint: 'Can look users up by name, e.g. to pick the owners of a page. Sees their name, handle and avatar only.'
+      },
+      {
         permission: 'read:users',
         hint: 'Can view users, but not create or modify them.'
       },
@@ -979,6 +983,10 @@ const permissionCards = [
       {
         permission: 'manage:users',
         hint: 'Can create and modify users, except those in a group with manage:system. Cannot move a user in or out of a group that administers the wiki.'
+      },
+      {
+        permission: 'list:groups',
+        hint: 'Can look groups up by name, e.g. to pick the owners of a page. Sees their name only.'
       },
       {
         permission: 'read:groups',

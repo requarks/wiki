@@ -27,6 +27,7 @@ import type { RenderPermissions, TocNode } from './rendering.ts'
 import type { DeletedEntry } from './tree.ts'
 import type { StoragePageContent, StoragePageRef } from './storage.ts'
 import type { PageRatingsCache } from './pageRatings.ts'
+import type { LifecycleBanner } from './pageLifecycle.ts'
 
 /** What each editor produces, which is what the content column holds. */
 const EDITOR_CONTENT_TYPES: Record<string, string> = {
@@ -392,6 +393,11 @@ export interface Page {
   ratings: PageRatingsCache
   createdAt: Date
   updatedAt: Date
+  /** When the body last changed, which `updatedAt` is not: see `pages.contentUpdatedAt`. */
+  contentUpdatedAt: Date
+  lastReviewedAt: Date | null
+  /** Shown over the article to every reader until somebody marks the page reviewed. */
+  lifecycleBanner: LifecycleBanner | null
 }
 
 /** Everything a page can be created with. */
@@ -1078,9 +1084,7 @@ export function parseFeedbackContent(content: string | null | undefined): Feedba
         : FEEDBACK_DEFAULTS.acceptsIdeas,
     voting: typeof parsed.voting === 'boolean' ? parsed.voting : FEEDBACK_DEFAULTS.voting,
     submitNotice:
-      typeof parsed.submitNotice === 'string'
-        ? parsed.submitNotice
-        : FEEDBACK_DEFAULTS.submitNotice
+      typeof parsed.submitNotice === 'string' ? parsed.submitNotice : FEEDBACK_DEFAULTS.submitNotice
   }
 }
 
@@ -1186,7 +1190,10 @@ class Pages {
       editedVia: row.editedVia ?? null,
       ratings: row.ratings ?? {},
       createdAt: row.createdAt,
-      updatedAt: row.updatedAt
+      updatedAt: row.updatedAt,
+      contentUpdatedAt: row.contentUpdatedAt,
+      lastReviewedAt: row.lastReviewedAt ?? null,
+      lifecycleBanner: row.lifecycleBanner ?? null
     }
   }
 
@@ -2211,7 +2218,6 @@ class Pages {
         alias,
         authorId: actor.id,
         creatorId: actor.id,
-        ownerId: actor.id,
         config: this.buildConfig(input, siteId),
         content,
         contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text',
@@ -2477,12 +2483,16 @@ class Pages {
       values.scripts = this.buildScripts(patch, actor, existing.scripts as Record<string, any>)
     }
 
-    // -> The author is whoever last changed it; the creator and owner do not move
+    // -> The author is whoever last changed it; the creator does not move
     values.authorId = actor.id
 
     // -> Worked out before the write, against the row as it stands: the editor sends every field on
     //    every save, so the patch alone would report a change to all of them
     const changedFields = WIKI.models.pageHistory.changedFields(existing, values)
+    // -> The body, and only the body, is what a lifecycle rule counts content age from
+    if (changedFields.includes('content')) {
+      values.contentUpdatedAt = sql`now()`
+    }
 
     await WIKI.db.update(pagesTable).set(values).where(eq(pagesTable.id, id))
 
@@ -3266,25 +3276,24 @@ class Pages {
     }
 
     /*
-      Who made it and who owns it, as they were -- but only while those accounts exist. Both columns
-      are foreign keys, and an account deleted since the page went would otherwise make the page
-      impossible to restore at all; the restorer stands in, as they would for a page they created.
+      Who made it, as they were -- but only while that account exists. The column is a foreign key,
+      and an account deleted since the page went would otherwise make the page impossible to restore
+      at all; the restorer stands in, as they would for a page they created.
+
+      Its owners are not restored: they are not part of a version (see `pageOwners`), and went with
+      the page row. A restored page is its creator's again, which is what no owner means.
     */
     const origin = await WIKI.models.pageHistory.originOf(siteId, input.pageId)
-    const wantedUsers = [meta.ownerId, origin?.authorId].filter((id): id is string => Boolean(id))
-    const existingUsers = new Set(
-      wantedUsers.length > 0
-        ? (
-            await WIKI.db
-              .select({ id: usersTable.id })
-              .from(usersTable)
-              .where(inArray(usersTable.id, wantedUsers))
-          ).map((row) => row.id)
-        : []
-    )
-    const creatorId =
-      origin?.authorId && existingUsers.has(origin.authorId) ? origin.authorId : actor.id
-    const ownerId = meta.ownerId && existingUsers.has(meta.ownerId) ? meta.ownerId : actor.id
+    const creatorExists = origin?.authorId
+      ? (
+          await WIKI.db
+            .select({ id: usersTable.id })
+            .from(usersTable)
+            .where(eq(usersTable.id, origin.authorId))
+            .limit(1)
+        ).length > 0
+      : false
+    const creatorId = creatorExists ? origin!.authorId! : actor.id
 
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
       siteId,
@@ -3303,7 +3312,6 @@ class Pages {
         alias,
         authorId: actor.id,
         creatorId,
-        ownerId,
         config: meta.config ?? {},
         content: deletion.content,
         contentType,
@@ -4107,7 +4115,6 @@ class Pages {
       description: page.description ?? '',
       editor: page.editor,
       isBrowsable: page.isBrowsable,
-      ownerId: page.ownerId ?? page.authorId,
       publishState: page.publishState,
       publishEndDate: page.publishEndDate ?? null,
       publishStartDate: page.publishStartDate ?? null

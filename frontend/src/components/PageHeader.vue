@@ -696,7 +696,8 @@ async function discardChanges() {
 }
 
 async function saveChanges(closeAfter = false) {
-  if (siteStore.features.reasonForChange !== 'off') {
+  // -> A reason is recorded on the version a save produces, and changing only the owners produces none
+  if (siteStore.features.reasonForChange !== 'off' && editorStore.hasPendingPageChanges) {
     dialog({
       component: defineAsyncComponent(() => import('../components/PageReasonForChangeDialog.vue')),
       componentProps: {

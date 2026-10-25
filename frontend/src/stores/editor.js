@@ -36,6 +36,21 @@ export const useEditorStore = defineStore('editor', {
     ignoreRouteChange: false,
     pendingAssets: [],
     /**
+     * The page's owners as the properties panel has them, `{ mode, users, groups }`, while that
+     * differs from `pageStore.ownership`; null when nothing about them is pending.
+     *
+     * Here and not on the page store because it is not a page field: it is saved by a request of its
+     * own and recorded in no version, so a change to it must not count as an edit of the page --
+     * which every change to the page store does, through the panel's subscription. See `pageSave`.
+     */
+    ownership: null,
+    /**
+     * The page's lifecycle rules as the properties panel has them, while they differ from
+     * `pageStore.lifecycleRules`; null when nothing about them is pending. Held here for the reason
+     * `ownership` is: saved on their own and in no version. A new rule has no `id` yet.
+     */
+    lifecycleRules: null,
+    /**
      * Whether the open editor holds its document and can take an edit from outside -- mounted, and
      * past the wait for a collaborative room. Until then a document put into it is overwritten: the
      * room's binding replaces whatever the editor was holding. Set by the editor itself, since only it
@@ -45,6 +60,17 @@ export const useEditorStore = defineStore('editor', {
   }),
   getters: {
     hasPendingChanges: (state) => {
+      return (
+        (state.lastSaveTimestamp && state.lastSaveTimestamp !== state.lastChangeTimestamp) ||
+        state.ownership !== null ||
+        state.lifecycleRules !== null
+      )
+    },
+    /**
+     * `hasPendingChanges` less the owners and the lifecycle rules: whether saving would have anything to say about the page
+     * itself, and so record a version of it.
+     */
+    hasPendingPageChanges: (state) => {
       return state.lastSaveTimestamp && state.lastSaveTimestamp !== state.lastChangeTimestamp
     },
     /**
@@ -93,7 +119,12 @@ export const useEditorStore = defineStore('editor', {
      */
     settleChanges() {
       const now = Temporal.Now.instant()
-      this.$patch({ lastChangeTimestamp: now, lastSaveTimestamp: now })
+      this.$patch({
+        lastChangeTimestamp: now,
+        lastSaveTimestamp: now,
+        ownership: null,
+        lifecycleRules: null
+      })
     },
     /**
      * Take a file the author has just put into a page, to be uploaded when the page is saved.
