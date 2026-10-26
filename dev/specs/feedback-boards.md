@@ -141,16 +141,34 @@ interface FeedbackBoardContent {
   and Trending. The board's creator chooses the default sort, and the default statuses come with it.
 - **There is no `depth`, unlike a blog.** A blog is often filed by year, while a board's ideas are
   flat: the submission form puts them directly in the board's folder ([§7](#7-submitting-an-idea)),
-  and a sub-folder under a board is more likely to be somebody's attachment folder than a second
-  level of ideas.
+  and nothing else may go there at all ([§3.2](#32-membership)).
 
 ### 3.2 Membership
 
 **An idea is a page directly inside the board's folder that has a body of its own.** That excludes
-a redirection, and the front page of a blog or board nested in the board. Pages further down
-(`/feedback/some-folder/page`) are not ideas and are not listed, though they are still under the
-board's access ([§4.1](#41-access-is-the-boards)). With no depth to configure, membership is one
-equality on `tree.folderPath`.
+a redirection, and the front page of a blog or board nested in the board. With no depth to
+configure, membership is one equality on `tree.folderPath`.
+
+**A board's folder holds its ideas and nothing else.** No sub-folder, no attachment, no
+redirection, no blog or board of its own, and no page further down (`/feedback/some-folder/page`):
+anything of the kind would sit under the board's access ([§4.1](#41-access-is-the-boards)) without
+ever being listed by it. The models refuse it wherever something is put somewhere, with
+`feedbackIdeasOnly`, against the in-memory board list so that it costs no query:
+
+- **`feedback.refuseNonIdea`**, asked with the folder a thing goes INTO, by `createPage`,
+  `movePage` and `restorePage`; by `tree.createFolder` (which every folder made along the way to a
+  path goes through), `moveFolder` and `duplicateFolder`; and by `assets.upload`, `moveAsset` and
+  `adoptStoredFile` — the last skipping the file, as an import skips everything it cannot take. The
+  upload route asks it before the body is read as well. Only a page in the folder itself, written
+  with an editor that has a body, gets through.
+- **`feedback.refuseAsBoardFolder`**, for a folder renamed, moved or copied to the board's own path,
+  which would bring its contents in at once. Creating that folder empty is allowed, since that is
+  how `blogs.ensureFolder` gives a board one.
+- **`feedback.guardBoardFolder`**, for a board created, moved or restored over a folder that
+  already holds a sub-folder, a file or a bodyless page — the one check that has to query.
+
+Anything placed under a board before this rule existed is left where it is: it is still under the
+board's access and still not listed, and moving or deleting it is allowed.
 
 - **A blog has to learn about boards too.** The "nested roots" filter in `blogs.postsFor` stops at a
   nested blog today. It has to stop at a nested board as well, or a board placed inside a blog would
@@ -345,8 +363,8 @@ with `delete:pages`, like any page.
 
 **Whoever may do something on the board may do it on everything in the board, and nobody else
 may.** Page rules are resolved once, at the board, for every page, folder and asset at or under the
-board's path: ideas, any sub-folders, attachments, and a blog or board nested inside it along with
-everything that blog or board holds. A rule written for a path below the board is never consulted,
+board's path: its ideas, and anything else older data left there before the board's folder was
+held to ideas alone ([§3.2](#32-membership)). A rule written for a path below the board is never consulted,
 and neither is a tag rule matching an idea's own tags. The board's own path and tags are what rules
 are matched against, so a rule over `/feedback`, or one matching a tag carried by the board's
 front page, decides for the whole board.

@@ -143,6 +143,11 @@ async function routes(app: FastifyInstance) {
         ) {
           throw app.httpErrors.forbidden('You are not allowed to upload a file here.')
         }
+        // -> Asked again by the model, which every upload passes through; here it costs no body
+        WIKI.models.feedback.refuseNonIdea(req.params.siteId, folder?.locale ?? locale, {
+          kind: 'asset',
+          parentPath: destination
+        })
         uploadTargets.set(req, { authorId, folderPath, destination, locale })
         return payload
       },

@@ -853,6 +853,12 @@ class Tree {
       // -> A folder cannot be in a different locale than the one holding it
       effectiveLocale = parent.locale
     }
+    // -> A feedback board's folder holds ideas and nothing else. The board's folder itself is fine:
+    //    creating it empty is how a board gets one.
+    WIKI.models.feedback.refuseNonIdea(siteId, effectiveLocale, {
+      kind: 'folder',
+      parentPath: decodeTreePath(path)
+    })
 
     // -> A page here is not in the way: a folder alongside it is how `/guide` gets to be both a page
     //    and the way into `/guide/…`. An asset is, since it is served at that URL itself — the same
@@ -1014,7 +1020,9 @@ class Tree {
     // -> The one way into the live notes' image folder that the route cannot see coming: it asks about
     //    the folder being renamed, and the name it is renamed to is only known here
     if (name !== folder.fileName) {
-      refuseNoteImagesPath([decodeTreePath(folder.folderPath), name].filter(Boolean).join('/'))
+      const renamedPath = [decodeTreePath(folder.folderPath), name].filter(Boolean).join('/')
+      refuseNoteImagesPath(renamedPath)
+      WIKI.models.feedback.refuseAsBoardFolder(folder.siteId, folder.locale, renamedPath)
     }
 
     if (name === folder.fileName) {
@@ -1260,6 +1268,12 @@ class Tree {
         400
       )
     }
+    // -> Into a board is `createFolder`'s refusal below; this is the copy arriving AS a board's folder
+    WIKI.models.feedback.refuseAsBoardFolder(
+      siteId,
+      destinationLocale,
+      [requested, folderNameFrom(pathName)].filter(Boolean).join('/')
+    )
 
     /*
       Read before the copy starts, and in one go: the walk below creates folders as it goes, and a
@@ -1494,6 +1508,16 @@ class Tree {
         400
       )
     }
+    // -> Before the destination is resolved too, since resolving it may create folders on the way
+    WIKI.models.feedback.refuseNonIdea(siteId, destinationLocale, {
+      kind: 'folder',
+      parentPath: requested
+    })
+    WIKI.models.feedback.refuseAsBoardFolder(
+      siteId,
+      destinationLocale,
+      [requested, folder.fileName].filter(Boolean).join('/')
+    )
 
     const parent = requested
       ? await this.getFolder({

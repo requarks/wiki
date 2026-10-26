@@ -644,7 +644,8 @@ Consequences worth knowing:
   `read:notes` (it is in `GUEST_ROLES`, not in the seeded DENY rule) and never `write:notes`, which
   `permissionsFor` refuses to a requester with no account regardless of what the rules say.
 - **Everything on a feedback board is ruled as the board**, all or nothing: every page permission on
-  anything at or under a board's path — its ideas, sub-folders, attachments, a blog nested in it — is
+  anything at or under a board's path — its ideas, and whatever older data left there before a
+  board's folder was held to ideas alone (see [Feedback boards](#feedback-boards)) — is
   resolved against the board's own path and tags (`feedback.ruleRefFor`, which `checkAccess` asks
   before resolving any rule). A rule written for a path below a board, or a tag rule matching an
   idea's own tags, is never consulted; the group editor warns about the first. `write:feedback` is
@@ -1579,6 +1580,12 @@ ideas are the pages directly in its folder — the blog's model (`models/blogs.t
 frontend `PageFeedback.vue` (the listing), `PageFeedbackIdea.vue` (an idea's head) and the
 `Feedback*.vue` dialogs.
 
+- **A board's folder holds its ideas and nothing else** — no sub-folder, file, bodyless page or page
+  further down. `feedback.refuseNonIdea` (in memory, asked with the folder a thing goes INTO) is
+  called by every model method that places a page, folder or asset; `refuseAsBoardFolder` stops a
+  folder renamed, moved or copied onto a board's own path, and `guardBoardFolder` a board created or
+  moved over a folder already holding something else. A new way of putting something somewhere asks
+  them too.
 - **Access is the board's, all or nothing** — see [Permissions](#permissions). `feedback.ruleRefFor`
   reads an in-memory list of every board (`reloadBoards`), which is why it costs `checkAccess` no
   query. Anything that creates, moves, retags or deletes a board's front page has to reload it:

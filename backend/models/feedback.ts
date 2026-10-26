@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, notInArray, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, ne, notInArray, or, sql, type SQL } from 'drizzle-orm'
 import {
   feedbackStatuses as statusesTable,
   pageRatings as ratingsTable,
@@ -340,6 +340,115 @@ class Feedback {
       }
     }
     return paths.sort((a, b) => a.path.localeCompare(b.path) || a.locale.localeCompare(b.locale))
+  }
+
+  // == WHAT A BOARD HOLDS =============
+
+  /*
+    A board's folder holds its ideas and nothing else: no sub-folder, no attachment, no redirection,
+    no blog or board of its own, and no page further down. The listing, the access rule and the
+    submission form all assume a flat folder of ideas, and anything else put there would sit under
+    the board's access without ever being listed by it.
+
+    Asked by every model method that puts something somewhere — a page created, moved or restored, a
+    folder created, renamed, moved or copied, a file uploaded, moved or imported — against the
+    in-memory board list, so it costs the hot paths no query. Only a board itself arriving somewhere
+    has to look at what is already there (`guardBoardFolder`).
+  */
+
+  /**
+   * Refuse to put a folder, a file or a page in a board's folder, or anywhere under it, unless it is
+   * an idea: a page directly in the folder with a body of its own.
+   *
+   * @param parentPath Slash-separated path of the folder it goes INTO, not of the thing itself
+   * @param editor The page's editor, for a page
+   * @throws `feedbackIdeasOnly`
+   */
+  refuseNonIdea(
+    siteId: string,
+    locale: string,
+    {
+      kind,
+      parentPath,
+      editor
+    }: { kind: 'folder' | 'asset' | 'page'; parentPath: string | null | undefined; editor?: string }
+  ): void {
+    const parent = (parentPath ?? '').replace(/^\/+|\/+$/g, '')
+    if (!parent) {
+      return
+    }
+    // -> Outermost first, so a board left inside another by older data is still the outer one's
+    //    sub-folder and holds nothing new either
+    const board = this.#boards
+      .get(`${siteId}:${locale}`)
+      ?.find((entry) => parent === entry.path || parent.startsWith(`${entry.path}/`))
+    if (!board) {
+      return
+    }
+    if (kind === 'page' && parent === board.path && !isBodylessEditor(editor || 'markdown')) {
+      return
+    }
+    throw new CustomError(
+      'feedbackIdeasOnly',
+      kind === 'folder'
+        ? `The feedback board "${board.title}" holds ideas and nothing else, so a folder cannot be placed in it.`
+        : kind === 'asset'
+          ? `The feedback board "${board.title}" holds ideas and nothing else, so a file cannot be placed in it.`
+          : `The feedback board "${board.title}" holds ideas and nothing else: a page directly in its folder, with a body of its own.`
+    )
+  }
+
+  /**
+   * Refuse to bring a folder in as a board's own folder, which would put everything it holds in the
+   * board at once. Creating that folder empty is how a board gets one (`blogs.ensureFolder`), so
+   * this is asked only of a folder that arrives with contents — renamed, moved or copied. Where it is
+   * going INTO is `refuseNonIdea`'s question.
+   *
+   * @param path Slash-separated path the folder itself would have
+   * @throws `feedbackIdeasOnly`
+   */
+  refuseAsBoardFolder(siteId: string, locale: string, path: string): void {
+    const board = this.boardAt(siteId, locale, path.replace(/^\/+|\/+$/g, ''))
+    if (board) {
+      throw new CustomError(
+        'feedbackIdeasOnly',
+        `This is where the feedback board "${board.title}" keeps its ideas, so an existing folder cannot be placed there.`
+      )
+    }
+  }
+
+  /**
+   * Refuse to put a board where its folder already holds something that is not an idea — a
+   * sub-folder, a file, or a page with no body of its own. The board would take every one of them
+   * under its access, and could not list any of them.
+   *
+   * @param path Slash-separated path of the board's front page, which is also its folder
+   * @throws `feedbackIdeasOnly`
+   */
+  async guardBoardFolder(siteId: string, locale: string, path: string): Promise<void> {
+    const own = path.replace(/^\/+|\/+$/g, '')
+    if (!own) {
+      return
+    }
+    const occupants = await WIKI.db
+      .select({ id: treeTable.id })
+      .from(treeTable)
+      .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          eq(treeTable.folderPath, encodeTreePath(own)),
+          or(ne(treeTable.type, 'page'), inArray(pagesTable.editor, bodylessEditors()))
+        )
+      )
+      .limit(1)
+    if (occupants.length > 0) {
+      throw new CustomError(
+        'feedbackIdeasOnly',
+        `A feedback board holds ideas and nothing else, and the folder at /${own} already holds other folders, files or pages.`
+      )
+    }
   }
 
   /**

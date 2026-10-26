@@ -369,6 +369,31 @@ class Assets {
   }
 
   /**
+   * Refuse a file arriving in a feedback board's folder or anywhere under it, which holds ideas and
+   * nothing else — see `feedback.refuseNonIdea`.
+   *
+   * @throws `feedbackIdeasOnly`
+   */
+  private async refuseInFeedbackBoard(
+    siteId: string,
+    locale: string,
+    { folderId, folderPath }: { folderId?: string | null; folderPath?: string | null }
+  ): Promise<void> {
+    if (folderId) {
+      const folder = await WIKI.models.tree.getFolderById(folderId)
+      if (!folder) {
+        return
+      }
+      WIKI.models.feedback.refuseNonIdea(siteId, folder.locale, {
+        kind: 'asset',
+        parentPath: [decodeTreePath(folder.folderPath), folder.fileName].filter(Boolean).join('/')
+      })
+      return
+    }
+    WIKI.models.feedback.refuseNonIdea(siteId, locale, { kind: 'asset', parentPath: folderPath })
+  }
+
+  /**
    * Store an uploaded file.
    *
    * A file already at this name is settled per the site's conflict behavior — see
@@ -417,6 +442,7 @@ class Assets {
       fileName: safeName,
       fileExt
     })
+    await this.refuseInFeedbackBoard(siteId, locale, { folderId, folderPath })
     // -> The extension decides the type, not the request: the declared one is whatever the client felt
     //    like sending, and this value is what gets served back to a browser later
     const resolvedMime = mime.getType(safeName) ?? mimeType ?? 'application/octet-stream'
@@ -1135,6 +1161,14 @@ class Assets {
       //    walking a folder, and a file that is really a page belongs to the other half of the import
       return null
     }
+    // -> A file already here is replaced where it is; a new one is not let into a feedback board
+    if (!occupant) {
+      try {
+        await this.refuseInFeedbackBoard(siteId, locale, { folderPath })
+      } catch {
+        return null
+      }
+    }
     const mimeType = mime.getType(safeName) ?? 'application/octet-stream'
     const kind = kindOf(mimeType, fileExt)
     const preview =
@@ -1583,6 +1617,9 @@ class Assets {
       fileName: safeName,
       fileExt
     })
+    if (isRelocated) {
+      await this.refuseInFeedbackBoard(siteId, destinationLocale, { folderPath: destination })
+    }
 
     let storedName = safeName
     if (isRelocated) {

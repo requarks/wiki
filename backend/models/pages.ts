@@ -2201,6 +2201,7 @@ class Pages {
       fileName: pathParts.at(-1)!,
       contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text'
     })
+    await this.guardFeedbackBoards(siteId, locale, path, editor)
 
     const alias = await this.validateAlias(siteId, input.alias)
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
@@ -2742,6 +2743,7 @@ class Pages {
         fileName: newPath.split('/').at(-1)!,
         contentType: page.contentType
       })
+      await this.guardFeedbackBoards(siteId, newLocale, newPath, page.editor)
     }
 
     /*
@@ -3260,6 +3262,7 @@ class Pages {
       fileName: pathParts.at(-1)!,
       contentType
     })
+    await this.guardFeedbackBoards(siteId, locale, path, editor)
 
     // -> Kept only while it is still free: an alias is unique across the site, and one taken since is
     //    somebody else's now
@@ -3628,6 +3631,29 @@ class Pages {
         `A file named ${storedName} already exists here, which is where this page would be stored.`,
         409
       )
+    }
+  }
+
+  /**
+   * Refuse a page that would land in a feedback board's folder without being one of its ideas, or a
+   * board that would land on a folder already holding something else — see `feedback.refuseNonIdea`.
+   *
+   * @param path Slash-separated path the page is going to
+   * @throws `feedbackIdeasOnly`
+   */
+  private async guardFeedbackBoards(
+    siteId: string,
+    locale: string,
+    path: string,
+    editor: string
+  ): Promise<void> {
+    WIKI.models.feedback.refuseNonIdea(siteId, locale, {
+      kind: 'page',
+      parentPath: path.split('/').slice(0, -1).join('/'),
+      editor
+    })
+    if (editor === FEEDBACK_EDITOR) {
+      await WIKI.models.feedback.guardBoardFolder(siteId, locale, path)
     }
   }
 
