@@ -412,6 +412,7 @@ import { dialog } from '@/composables/dialog'
 import { useEditorPanes } from '@/composables/editorPanes'
 import { usePreviewScrollSync } from '@/composables/previewScrollSync'
 import { useFenceCompletions } from '@/composables/fenceCompletions'
+import { useLinkCompletions } from '@/composables/linkCompletions'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { useTableCellNavigation } from '@/composables/tableCellNavigation'
@@ -618,6 +619,12 @@ const fenceCompletions = useFenceCompletions({ getEditor: () => editor })
 
 // -> HTML tags such as `<kbd>` after a `<`, written with their closing tag
 const tagCompletions = useTagCompletions({ getEditor: () => editor })
+
+// -> Pages of this wiki after `](/`, by the start of their path
+const linkCompletions = useLinkCompletions({
+  getEditor: () => editor,
+  getLocale: () => docLocale.value
+})
 
 // -> Tab and Shift+Tab between a table's cells, and Tab past the last one adds a row
 const tableCellNavigation = useTableCellNavigation({
@@ -2104,6 +2111,7 @@ onMounted(async () => {
   blockCompletions.register()
   fenceCompletions.register()
   tagCompletions.register()
+  linkCompletions.register()
   tableCellNavigation.register()
 
   // -> "Image Properties" over every image in the page -- see `useImagePropertiesLens`
@@ -2365,6 +2373,7 @@ onBeforeUnmount(() => {
   blockCompletions.dispose()
   fenceCompletions.dispose()
   tagCompletions.dispose()
+  linkCompletions.dispose()
   tableCellNavigation.dispose()
   imageLens.dispose()
   // -> Before the editor goes: the binding is holding the model, and leaving the room is what takes

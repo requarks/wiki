@@ -171,6 +171,19 @@ export interface SuggestPagesParams {
   actor: AccessActor
 }
 
+export interface SuggestPagePathsParams {
+  siteId: string
+  /** The start of a page path, as typed after the slash of a link: no locale prefix, no leading slash. */
+  prefix: string
+  /** The locale whose pages are suggested. */
+  locale: string
+  limit?: number
+  /** As in `SearchPagesParams`. */
+  unpublished?: boolean
+  /** Who is typing. Required: suggestions are only ever the pages this actor could open. */
+  actor: AccessActor
+}
+
 /** Words of a suggestion query that are matched; the rest are ignored, as typing that much is a search. */
 const SUGGEST_MAX_WORDS = 8
 
@@ -608,6 +621,69 @@ class Search {
       FROM pages p
       WHERE ${sql.join(conditions, sql` AND `)}
       ORDER BY ${rank}, length(p.title), lower(p.title), p.path
+      LIMIT ${checkRules ? SUGGEST_CANDIDATES : limit}
+    `)
+
+    const suggestions: PageSuggestion[] = []
+    for (const row of (candidates.rows ?? candidates) as any[]) {
+      if (suggestions.length >= limit) {
+        break
+      }
+      if (checkRules && !this.mayList(actor, siteId, row)) {
+        continue
+      }
+      suggestions.push({
+        id: row.id as string,
+        path: row.path as string,
+        locale: row.locale as string,
+        title: row.title as string,
+        description: row.description ?? null,
+        icon: row.icon ?? null
+      })
+    }
+    return suggestions
+  }
+
+  /**
+   * Pages whose path starts with what has been typed, for completing a link as it is written.
+   *
+   * Not `suggestPages` with another query: a link is written by its path, so that is the only thing
+   * matched, and a page marked as not searchable is still a page somebody may link to — the link
+   * picker's tree lists it too. The access rules are the same, though, and so is the bounded number
+   * of candidates they are applied to.
+   *
+   * Shallowest first, so that `/guides` offers `guides` and its siblings before whatever is three
+   * folders below them.
+   */
+  async suggestPagePaths({
+    siteId,
+    prefix,
+    locale,
+    limit = 5,
+    unpublished = false,
+    actor
+  }: SuggestPagePathsParams): Promise<PageSuggestion[]> {
+    const liveNow = liveCondition({
+      publishState: sql`p."publishState"`,
+      publishStartDate: sql`p."publishStartDate"`,
+      publishEndDate: sql`p."publishEndDate"`
+    })
+    const conditions = [sql`p."siteId" = ${siteId}`, sql`p.locale = ${locale}`]
+    if (!(unpublished && maySeeUnpublishedAnywhere(actor))) {
+      conditions.push(liveNow)
+    }
+    // -> Paths are stored lowercase and NFC, so the prefix is put in the same form
+    const typed = prefix.normalize('NFC').toLowerCase()
+    if (typed) {
+      conditions.push(sql`p.path LIKE ${`${escapeLike(typed)}%`}`)
+    }
+
+    const checkRules = !actor.permissions.includes('manage:system')
+    const candidates = await WIKI.db.execute(sql`
+      SELECT p.id, p.path, p.locale, p.title, p.description, p.icon, p.tags, ${liveNow} AS "isLive"
+      FROM pages p
+      WHERE ${sql.join(conditions, sql` AND `)}
+      ORDER BY length(p.path) - length(replace(p.path, '/', '')), p.path
       LIMIT ${checkRules ? SUGGEST_CANDIDATES : limit}
     `)
 

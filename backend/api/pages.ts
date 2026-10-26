@@ -713,6 +713,84 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * SUGGEST PAGE PATHS
+   */
+  app.get<{
+    Params: { siteId: string }
+    Querystring: { prefix?: string; locale: string; limit?: number }
+  }>(
+    '/sites/:siteId/pages/suggest-path',
+    {
+      config: {
+        scope: 'pages'
+      },
+      schema: {
+        summary: 'Suggest pages by the start of their path',
+        description:
+          'Pages in `locale` whose path starts with `prefix`, shallowest first — what the markdown editor offers while a link is typed. Unlike `pages/suggest`, only the path is matched, and a page marked as not searchable is included: it can still be linked to.\n\nThe answer is exact for whoever asks, under the same rules as the suggestions: only pages the caller could open, and pages that are not live only for a session that may edit them.',
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          required: ['locale'],
+          properties: {
+            prefix: {
+              type: 'string',
+              maxLength: 2048,
+              default: '',
+              description:
+                'The start of the path, without a leading slash or a locale prefix. Empty lists the shallowest pages.'
+            },
+            locale: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 10
+            },
+            limit: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 20,
+              default: 5
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Suggested pages, shallowest first',
+            type: 'object',
+            properties: {
+              results: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    path: { type: 'string' },
+                    locale: { type: 'string' },
+                    title: { type: 'string' },
+                    icon: { type: ['string', 'null'] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const results = await WIKI.models.search.suggestPagePaths({
+        siteId: req.params.siteId,
+        prefix: req.query.prefix ?? '',
+        locale: req.query.locale,
+        limit: req.query.limit,
+        actor: WIKI.models.groups.actorForRequest(req),
+        unpublished: Boolean(actorFrom(req))
+      })
+      return { results }
+    }
+  )
+
+  /**
    * GET PAGE FOR INCLUSION
    */
   app.get<{ Params: { siteId: string }; Querystring: { path: string; locale?: string } }>(
