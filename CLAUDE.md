@@ -1269,11 +1269,18 @@ document is whether the client will run the app, and each has its own function:
   those in its render and the app runs them when it draws the page; a copy of the same markup in the
   document as the browser parses it would run them a second time, before the app exists. Not a
   sanitizer — the render was sanitized at save time — just the same markup with less in it.
+- **Two blocks are written out as the lists they draw** (`expandLinkBlocks`), because their whole
+  content is links and the stored render holds none of them: `block-index` (an empty element — its
+  pages are queried through the same `tree.listPages` the block's route uses, as the public) and
+  `block-links-grid` (YAML, read by `linksGridCards` in `helpers/pageLinks.ts`, with the block's
+  scheme allow-list applied again). A block whose output is anything else is left as it is stored.
 - **It lands in `#wiki-prerender`, which both sides know about.** `frontend/index.html` hides it and
   restyles it inside `<noscript>`, so a reader with JavaScript off gets the page as prose; `main.js`
   removes the element before Vue mounts. The `<noscript>` typography puts back the browser defaults
   Tailwind's preflight took away and is deliberately not a copy of the content styles, which belong
-  to elements the app draws.
+  to elements the app draws. Inside it, `prerenderFor` puts a `<header>` (logo and site title, linking
+  home, on a plain black bar) over a `<main>` carrying the page's `lang` and `dir` — the header is the
+  site's, not the page's, so the language goes on `<main>` alone.
 - **An anonymous request to a page path with nothing public at it answers 404**, where the shell used
   to answer 200 everywhere — which is what taught a crawler that every URL on the wiki exists. No
   page, an unpublished one and one the guests group's rules refuse are one answer, since the

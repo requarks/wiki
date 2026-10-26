@@ -19,6 +19,7 @@ import {
   refuseNoteImagesPath,
   treeLabelSql
 } from '../helpers/common.ts'
+import type { AccessActor } from './groups.ts'
 import type { PageActor } from './pages.ts'
 
 /** What a tree entry can be. Mirrors the `treeType` enum in the schema. */
@@ -432,6 +433,12 @@ class Tree {
    * second. Folders are left out entirely — the block draws a list of pages, not a file browser —
    * and so is any page the reader may not open, by the same rule the page view applies.
    *
+   * Two callers draw the same block from it, and asking the access question here is what keeps them
+   * drawing the same list: the route the block itself fetches from, as whoever is reading, and the app
+   * shell's copy of the page for a client that will not run the block, as the public.
+   *
+   * @param actor Who the list is for. Each page is still theirs to see, though it is listed inside a
+   *   page they could open.
    * @param path Slash-separated path to list. The site root when empty.
    * @param depth How many folders below the path to include. 0, the default, is the path itself.
    * @param tags Only pages carrying every one of these tags.
@@ -446,7 +453,8 @@ class Tree {
     orderBy = 'title',
     orderByDirection = 'asc',
     depth = 0,
-    unpublished = false
+    unpublished = false,
+    actor
   }: {
     siteId: string
     path?: string | null
@@ -457,6 +465,7 @@ class Tree {
     orderByDirection?: 'asc' | 'desc'
     depth?: number
     unpublished?: Unpublished
+    actor: AccessActor
   }): Promise<ListedPage[]> {
     if (limit < 1 || limit > MAX_LIMIT) {
       throw new CustomError('treeInvalidLimit', `The limit must be between 1 and ${MAX_LIMIT}.`)
@@ -508,12 +517,9 @@ class Tree {
         iconColor: row.iconColor ?? '',
         tags: row.tags ?? []
       }
-      return isListable(unpublished, row.isLive, {
-        siteId,
-        locale,
-        path: page.path,
-        tags: page.tags
-      })
+      const ref = { siteId, locale, path: page.path, tags: page.tags }
+      return isListable(unpublished, row.isLive, ref) &&
+        WIKI.models.groups.checkAccess(actor, 'read:pages', ref)
         ? [page]
         : []
     })

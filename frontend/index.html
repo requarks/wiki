@@ -81,10 +81,60 @@
         /* With no app coming, the server's copy of the page is the page. */
         #wiki-prerender {
           display: block;
+        }
+        #wiki-prerender > main {
+          display: block;
           max-width: 60rem;
           margin: 0 auto;
           padding: 2rem 1.5rem;
           line-height: 1.6;
+        }
+
+        /*
+          The site's bar: its logo, and its title where the site shows one, with the notice that this
+          is the basic version at the other end -- wrapping under them where there is no room beside.
+          Plain black rather than the site's header colour, which is a theme setting the app applies
+          once it runs.
+        */
+        #wiki-prerender > header {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: space-between;
+          gap: .5rem 1.5rem;
+          background: #000;
+          padding: .75rem 1.5rem;
+        }
+        /*
+          -> The notice's <noscript> is the flex item. Its basis is the whole sentence on one line, so
+             it stays beside the logo whenever that fits and drops under it whole when not; growing
+             is what then carries it to the far end of the bar. Balanced, so that a phone breaks it
+             into even lines rather than leaving a word on its own.
+        */
+        #wiki-prerender > header noscript {
+          display: block;
+          flex: 1 1 auto;
+        }
+        #wiki-prerender > header p {
+          margin: 0;
+          color: rgba(255, 255, 255, .7);
+          font-size: .8rem;
+          line-height: 1.4;
+          text-align: end;
+          text-wrap: balance;
+        }
+        #wiki-prerender > header a {
+          display: inline-flex;
+          align-items: center;
+          gap: .75rem;
+          color: #fff;
+          text-decoration: none;
+          font-size: 1.25rem;
+          font-weight: 500;
+        }
+        #wiki-prerender > header img {
+          height: 34px;
+          width: auto;
         }
 
         /*
@@ -93,6 +143,10 @@
           the one thing that is not going to happen here, and a second copy of them would only drift.
           What is wanted is prose that reads as prose.
         */
+        #wiki-prerender a {
+          color: revert;
+          text-decoration: revert;
+        }
         #wiki-prerender h1 { font-size: 2em; }
         #wiki-prerender h2 { font-size: 1.5em; }
         #wiki-prerender h3 { font-size: 1.17em; }

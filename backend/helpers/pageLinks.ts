@@ -54,40 +54,68 @@ export function hrefsFrom($: cheerio.CheerioAPI): string[] {
 }
 
 /**
- * The cards of one `block-links-grid`, each a link with no anchor in the render.
- *
- * The block's body is a YAML list of cards, each with a `url`, and the stored render carries it as
- * the text of a code block. Read the way `connectedCallback` in
- * `blocks/block-links-grid/component.js` reads it — the first `<pre>`'s text, or the element's own
- * when there is none — so that what is recorded is what the reader is shown. A body that will not
- * parse is no links, which is also what the block draws for it.
+ * The URLs of one `block-links-grid`'s cards, each a link with no anchor in the render.
  *
  * Every `url` is handed on as written: whether it addresses a page is `resolveLink`'s to decide, as it
  * is for an anchor. The block's own scheme allow-list refuses only what that discards anyway.
  */
 function linksGridHrefs(block: cheerio.Cheerio<AnyNode>): string[] {
+  return linksGridCards(block).map((card) => card.url)
+}
+
+/** One card of a `block-links-grid`, as far as anything but the block itself needs it. */
+export interface LinksGridCard {
+  /** As written, trimmed. Never empty: a card without one is no card. */
+  url: string
+  title: string
+  description: string
+}
+
+/**
+ * The cards of one `block-links-grid`, read out of the stored render.
+ *
+ * The block's body is a YAML list of cards, each with a `url`, and the stored render carries it as
+ * the text of a code block. Read the way `connectedCallback` in
+ * `blocks/block-links-grid/component.js` reads it — the first `<pre>`'s text, or the element's own
+ * when there is none — so that what is recorded or served is what the reader is shown. A body that
+ * will not parse is no cards, which is also what the block draws for it.
+ *
+ * The scheme is NOT checked here. The links table wants every URL as written; anything that turns a
+ * card into an anchor has to apply the block's allow-list itself.
+ */
+export function linksGridCards(block: cheerio.Cheerio<AnyNode>): LinksGridCard[] {
   const pre = block.find('pre').first()
   const source = (pre.length > 0 ? pre : block).text()
   if (!source.trim()) {
     return []
   }
-  let cards: unknown
+  let entries: unknown
   try {
-    cards = loadYaml(source)
+    entries = loadYaml(source)
   } catch {
     return []
   }
-  if (!Array.isArray(cards)) {
+  if (!Array.isArray(entries)) {
     return []
   }
-  const hrefs: string[] = []
-  for (const card of cards) {
-    const url = card && typeof card === 'object' ? (card as { url?: unknown }).url : undefined
+  const cards: LinksGridCard[] = []
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') {
+      continue
+    }
+    const { url, title, description } = entry as Record<string, unknown>
     if (typeof url === 'string' && url.trim()) {
-      hrefs.push(url.trim())
+      cards.push({ url: url.trim(), title: textOf(title), description: textOf(description) })
     }
   }
-  return hrefs
+  return cards
+}
+
+/** A YAML value as text, as the block reads one: empty for one left out, a scalar spelled out. */
+function textOf(value: unknown): string {
+  return value === undefined || value === null || typeof value === 'object'
+    ? ''
+    : String(value).trim()
 }
 
 /** The same, for a stored render with nothing loaded — which is every page but the one being saved. */

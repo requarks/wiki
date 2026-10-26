@@ -522,7 +522,7 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.sites[req.params.siteId]) {
         return reply.notFound('This site does not exist.')
       }
-      const pages = await WIKI.models.tree.listPages({
+      return WIKI.models.tree.listPages({
         siteId: req.params.siteId,
         path: req.query.path,
         locale: req.query.locale ?? defaultLocale(req.params.siteId),
@@ -531,19 +531,11 @@ async function routes(app: FastifyInstance) {
         orderBy: req.query.orderBy,
         orderByDirection: req.query.orderByDirection,
         depth: req.query.depth,
-        unpublished: unpublishedFor(req)
+        unpublished: unpublishedFor(req),
+        // -> An index block is drawn inside a page, but it lists other pages: each one still has to
+        //    be the reader's to see
+        actor: WIKI.models.groups.actorForRequest(req)
       })
-      // -> An index block is drawn inside a page, but it lists other pages: each one still has to be
-      //    the reader's to see
-      const actor = WIKI.models.groups.actorForRequest(req)
-      return pages.filter((page) =>
-        WIKI.models.groups.checkAccess(actor, 'read:pages', {
-          siteId: req.params.siteId,
-          path: page.path,
-          locale: req.query.locale ?? defaultLocale(req.params.siteId),
-          tags: page.tags
-        })
-      )
     }
   )
 

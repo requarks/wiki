@@ -1,7 +1,9 @@
 import * as cheerio from 'cheerio'
+import type { AnyNode } from 'domhandler'
 import type { FastifyRequest } from 'fastify'
 import type { AnalyticsInjections } from '../models/analytics.ts'
 import type { PageDescription } from '../models/pages.ts'
+import { TREE_ORDER_BY, type TreeOrderBy } from '../models/tree.ts'
 import {
   decodeUrlPath,
   htmlEscape,
@@ -11,6 +13,7 @@ import {
   originOf,
   splitLocalePath
 } from './common.ts'
+import { linksGridCards } from './pageLinks.ts'
 
 /**
  * What the app shell is enriched with before it is handed to a client that will not run it.
@@ -39,7 +42,8 @@ import {
  * Two further rules hold across both:
  *
  *  - **Nothing is rendered, and nothing runs.** The injected copy is the stored render with its
- *    scripts and styles taken out — see `stripActiveMarkup`.
+ *    scripts and styles taken out — see `stripActiveMarkup` — and the two blocks that are nothing
+ *    BUT links written out as the lists they draw — see `expandLinkBlocks`.
  *  - **Nothing a requester holds reaches the cache.** Only the public half is cached, keyed by origin
  *    and path with no session dimension, because there is nothing in it that varies by requester.
  */
@@ -224,8 +228,7 @@ export function resolvePagePath(
  * what its author was allowed to embed (`models/rendering.ts`), and this is that same markup with
  * less in it. What this prevents is one page being executed twice.
  */
-function stripActiveMarkup(html: string): string {
-  const $ = cheerio.load(html, null, false)
+function stripActiveMarkup($: cheerio.CheerioAPI): void {
   $('script, style, link, template').remove()
   for (const el of $('*')) {
     // -> `$('*')` only ever yields elements, but its element type is the union every node could be
@@ -235,7 +238,151 @@ function stripActiveMarkup(html: string): string {
       }
     }
   }
-  return $.html()
+}
+
+/**
+ * The schemes a links-grid card may link to: `SAFE_PROTOCOLS` in
+ * `blocks/block-links-grid/component.js`, which this has to agree with. An author who may not embed
+ * a script must not get a `javascript:` anchor into a public document by way of a card.
+ */
+const LINKS_GRID_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:'])
+
+/**
+ * Whether a card's url may be an href, judged as the block judges it.
+ *
+ * Read off the parsed URL rather than the text, since the parser drops tabs and newlines from the
+ * middle of one. The block resolves a relative url against the page; any http(s) base stands in for
+ * it here, because all that is asked of the result is its scheme.
+ */
+function isSafeCardUrl(url: string): boolean {
+  const parsed = URL.parse(url, 'https://wiki.invalid/')
+  return parsed !== null && LINKS_GRID_PROTOCOLS.has(parsed.protocol)
+}
+
+/** What `block-index` says for a listing that came back empty, unless the page says otherwise. */
+const INDEX_NO_RESULT_MSG = 'No pages matching your query.'
+
+/**
+ * One of a `block-index`'s attributes as a whole number, or its default where it is not one.
+ *
+ * Out of range is left for `listPages` to refuse, which is what the route the block fetches from
+ * does as well.
+ */
+function integerAttr(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(value ?? '', 10)
+  return Number.isNaN(parsed) ? fallback : parsed
+}
+
+/**
+ * The pages a `block-index` lists, as the public would see them, written out as a list.
+ *
+ * The same query the block makes in a browser (`GET /sites/:siteId/tree/pages`), through the same
+ * `listPages`, so the two cannot list different pages — asked as `actorForPublic()` and with nothing
+ * that is not live, like everything else in a document that is cached and handed on. The list
+ * changing as pages come and go needs nothing of its own: every page mutation already drops the cache.
+ *
+ * A listing that cannot be had says what the block says for an empty one, which is also what the
+ * block draws when its own request fails.
+ */
+async function indexBlockList(
+  block: cheerio.Cheerio<AnyNode>,
+  siteId: string,
+  locale: string
+): Promise<string> {
+  // -> The HTML parser lowercases attribute names, so `orderBy` as written is `orderby` here
+  const orderBy = block.attr('orderby') ?? ''
+  try {
+    const pages = await WIKI.models.tree.listPages({
+      siteId,
+      locale,
+      path: block.attr('path') ?? '',
+      tags: (block.attr('tags') ?? '')
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      limit: integerAttr(block.attr('limit'), 10),
+      orderBy: TREE_ORDER_BY.includes(orderBy as TreeOrderBy) ? (orderBy as TreeOrderBy) : 'title',
+      orderByDirection: block.attr('orderbydirection') === 'desc' ? 'desc' : 'asc',
+      depth: integerAttr(block.attr('depth'), 0),
+      unpublished: false,
+      actor: WIKI.models.groups.actorForPublic()
+    })
+    if (pages.length > 0) {
+      return listOfLinks(
+        pages.map((listed) => ({
+          href: WIKI.models.pages.urlFor(siteId, locale, listed.path),
+          title: listed.title,
+          description: listed.description
+        }))
+      )
+    }
+  } catch (err: any) {
+    WIKI.logger.debug(`Index block could not be listed for the app shell: ${err.message}`)
+  }
+  return `<p>${htmlEscape(block.attr('noresultmsg') || INDEX_NO_RESULT_MSG)}</p>`
+}
+
+/**
+ * A `block-links-grid`'s cards written out as a list, minus any whose url it would refuse to link.
+ *
+ * A card with no title is named by its description, and one with neither by where it goes, as the
+ * block names it to a screen reader.
+ */
+function linksGridList(block: cheerio.Cheerio<AnyNode>): string {
+  const cards = linksGridCards(block).filter((card) => isSafeCardUrl(card.url))
+  return listOfLinks(
+    cards.map((card) => ({
+      href: card.url,
+      title: card.title || card.description || card.url,
+      description: card.title ? card.description : ''
+    }))
+  )
+}
+
+/**
+ * Links as the served document lists a blog's posts and a board's ideas: the title as the link, and
+ * the description after a dash.
+ */
+function listOfLinks(links: { href: string; title: string; description: string }[]): string {
+  if (links.length < 1) {
+    return ''
+  }
+  const items = links
+    .map(({ href, title, description }) => {
+      const after = description ? ` &mdash; ${htmlEscape(description)}` : ''
+      return `<li><a href="${htmlEscape(href)}">${htmlEscape(title)}</a>${after}</li>`
+    })
+    .join('')
+  return `<ul>${items}</ul>`
+}
+
+/**
+ * The blocks whose whole content is links, written out as the lists they draw.
+ *
+ * `block-index` and `block-links-grid` are drawn entirely by their component, so the stored render
+ * holds an empty element for the first and a YAML source for the second — which, served to a client
+ * that will not run the component, is either nothing or a code listing on a page that is often little
+ * else (a home page made of index blocks is the common case). Their links are also exactly what a
+ * crawler is there to follow.
+ *
+ * The element itself is kept and its contents replaced, so that the list sits wherever the block sat,
+ * inside a tab panel or a column as the author placed it. None of this reaches a browser running the
+ * app: the whole copy is removed before Vue mounts, and the block draws itself from the real render.
+ */
+async function expandLinkBlocks(
+  $: cheerio.CheerioAPI,
+  siteId: string,
+  locale: string
+): Promise<void> {
+  for (const el of $('block-links-grid')) {
+    const block = $(el)
+    block.html(linksGridList(block))
+  }
+  // -> One after another, since each is a query and a page has a few at most
+  for (const el of $('block-index')) {
+    const block = $(el)
+    block.html(await indexBlockList(block, siteId, locale))
+  }
 }
 
 /** One `<meta>`, or nothing at all for a value the site or the page has not filled in. */
@@ -330,23 +477,68 @@ function headForSite(siteConfig: any): string {
 }
 
 /**
- * The page's own markup, for a client that will not run the app.
+ * The copy of a page served to a client that will not run the app: the site's header over the page's
+ * own body.
  *
  * Wrapped in one element with a known id, which is what lets both sides deal with it: the stylesheet
  * in `frontend/index.html` keeps it out of sight of anyone whose browser is about to draw the real
  * thing and shows it to anyone whose browser is not, and `main.js` takes it out of the document
  * before Vue mounts, so nothing the app does has to know it was ever there.
  *
+ * The header is `HeaderNav.vue`'s first half — the logo, and the site's title beside it where the
+ * site shows one, linking home — and, where the rest of that bar would be, a line saying that this is
+ * not the wiki as it is meant to be seen. Everything else on the bar is the app's own interface, and
+ * there is no app here. The page's language goes on `<main>` rather than on the wrapper, since the
+ * site's title is not written in it.
+ *
+ * The notice is in the page's language, being the only thing known about the reader of a document
+ * that is the same for everyone who asks. Its own `lang` and `dir` are the translator's, which falls
+ * back to English for a locale with no strings installed.
+ *
+ * It is in a `<noscript>` of its own, though the whole copy is only ever shown with scripting off,
+ * for the clients that read the document as text rather than as a reader would: Readability and
+ * trafilatura, which most of the tools turning a page into text for a model are built on, drop every
+ * `<noscript>`, so a sentence about the reader's browser does not end up in their version of the page.
+ *
+ * Nothing at all where there is no body, so that a page with nothing to show stays an empty document
+ * rather than becoming a header over nothing.
+ */
+async function prerenderFor(
+  siteId: string,
+  siteConfig: any,
+  locale: string,
+  content: string
+): Promise<string> {
+  if (!content) {
+    return ''
+  }
+  const translator = await WIKI.models.locales.translator(locale)
+  const notice = `<noscript><p lang="${htmlEscape(translator.locale)}" dir="${translator.isRTL ? 'rtl' : 'ltr'}">${htmlEscape(translator.t('common.header.noScriptNotice'))}</p></noscript>`
+  const siteTitle = htmlEscape(siteConfig?.title || 'Wiki.js')
+  const home = htmlEscape(WIKI.models.pages.urlFor(siteId, locale, ''))
+  // -> Where the title is not written beside the logo, the logo is the link's only name
+  const header = siteConfig?.logoText
+    ? `<img src="/_site/current/logo" alt=""><span>${siteTitle}</span>`
+    : `<img src="/_site/current/logo" alt="${siteTitle}">`
+  return `<div id="${PRERENDER_ID}"><header><a href="${home}">${header}</a>${notice}</header><main${languageAttrs(locale)}>${content}</main></div>`
+}
+
+/**
+ * The page's own markup, for a client that will not run the app.
+ *
  * The title is deliberately not repeated above the body as a heading. A page written the ordinary way
  * opens with its own `# Title`, so a synthesized one is the same words twice — and where a page has
  * no heading of its own, the title is still in `<title>` and `og:title`, which is where every client
  * that cares about it looks.
  */
-function bodyForPage(page: PageDescription): string {
+async function bodyForPage(siteId: string, page: PageDescription): Promise<string> {
   if (!page.render) {
     return ''
   }
-  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${stripActiveMarkup(page.render)}</div>`
+  const $ = cheerio.load(page.render, null, false)
+  await expandLinkBlocks($, siteId, page.locale)
+  stripActiveMarkup($)
+  return $.html()
 }
 
 /**
@@ -404,7 +596,7 @@ async function bodyForBlog(siteId: string, page: PageDescription): Promise<strin
   if (!intro && items.length < 1) {
     return ''
   }
-  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${intro}<ul>${items}</ul></div>`
+  return `${intro}<ul>${items}</ul>`
 }
 
 /**
@@ -445,7 +637,7 @@ async function bodyForBoard(siteId: string, page: PageDescription): Promise<stri
   if (!intro && items.length < 1) {
     return ''
   }
-  return `<div id="${PRERENDER_ID}"${languageAttrs(page.locale)}>${intro}<ul>${items}</ul></div>`
+  return `${intro}<ul>${items}</ul>`
 }
 
 /**
@@ -506,12 +698,16 @@ async function fragmentsForCrawler(
     head: headForPage(originOf(req), siteId, siteConfig, page),
     // -> A blog and a feedback board keep their bodies somewhere else: in the pages under them,
     //    rather than in a column
-    body:
+    body: await prerenderFor(
+      siteId,
+      siteConfig,
+      page.locale,
       page.editor === 'blog'
         ? await bodyForBlog(siteId, page)
         : page.editor === 'feedback'
           ? await bodyForBoard(siteId, page)
-          : bodyForPage(page),
+          : await bodyForPage(siteId, page)
+    ),
     status: 200,
     robots: robotsTagFor(siteId, page.isIndexable)
   }

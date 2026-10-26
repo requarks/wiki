@@ -2415,6 +2415,7 @@
   "common.header.move": "Move / Rename",
   "common.header.myWiki": "My Wiki",
   "common.header.newPage": "New Page",
+  "common.header.noScriptNotice": "You are viewing the basic non-JavaScript version. Please enable JavaScript to view this website correctly.",
   "common.header.pageActions": "Page Actions",
   "common.header.profile": "Profile",
   "common.header.search": "Search...",
