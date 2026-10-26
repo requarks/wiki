@@ -564,7 +564,10 @@
                     clickable
                     active-class="active"
                     :active="item.id === state.currentFileId"
-                    :class="{ 'is-drop-target': item.id === state.dropFolderId }"
+                    :class="{
+                      'is-drop-target': item.id === state.dropFolderId,
+                      'is-dragging': item.id === state.dragItem?.id
+                    }"
                     draggable="true"
                     @click="selectItem(item)"
                     @dblclick="doubleClickItem(item)"
@@ -2452,7 +2455,35 @@ function onItemDragStart(ev, item) {
   ev.dataTransfer.effectAllowed = 'move'
   // -> Firefox starts no drag without some data, though nothing here reads it back
   ev.dataTransfer.setData(DRAG_TYPE, item.id)
+  setDragImage(ev, item)
   state.dragItem = item
+}
+
+/**
+ * Drag a small chip -- the row's icon and name -- rather than the browser's picture of the whole row,
+ * which is as wide as the list and covered most of the tree it was being dragged into.
+ *
+ * The chip starts below and to the right of the pointer, behind a transparent margin, so that the
+ * folder under the pointer is never under the chip too. It only has to exist while the browser takes
+ * its picture, which it does before the next task runs.
+ */
+function setDragImage(ev, item) {
+  const ghost = document.createElement('div')
+  ghost.className = 'fileman-drag-ghost'
+  const chip = document.createElement('div')
+  chip.className = 'fileman-drag-ghost-chip'
+  // -> The icon the row already drew, colour and all, rather than drawing one again
+  const icon = ev.currentTarget.querySelector('.fileman-filelist-icon .w-icon')
+  if (icon) {
+    chip.append(icon.cloneNode(true))
+  }
+  const label = document.createElement('span')
+  label.textContent = usePathTitle.value ? item.fileName : item.title
+  chip.append(label)
+  ghost.append(chip)
+  document.body.append(ghost)
+  ev.dataTransfer.setDragImage(ghost, 0, 0)
+  setTimeout(() => ghost.remove())
 }
 
 /** The end of every drag, whether it was dropped, dropped somewhere that refused it, or cancelled. */
@@ -3020,6 +3051,11 @@ $fileman-bottom-row-height: 45px;
       &.is-drop-target {
         box-shadow: inset 0 0 0 2px var(--color-primary);
       }
+
+      // -> The row being dragged, faded in place while the chip stands in for it
+      &.is-dragging {
+        opacity: 0.4;
+      }
     }
 
     &.is-compact {
@@ -3123,6 +3159,55 @@ $fileman-bottom-row-height: 45px;
       align-items: center;
       overflow: hidden;
       transition: all 1s ease;
+    }
+  }
+}
+
+/*
+  What a dragged row looks like under the pointer (`setDragImage`). Outside `.fileman`, because it is
+  appended to <body>. Off-screen rather than hidden: the browser takes its picture from the element as
+  drawn, and one that is not drawn gives it nothing. The padding is the transparent gap between the
+  pointer and the chip.
+*/
+.fileman-drag-ghost {
+  position: fixed;
+  top: -1000px;
+  left: -1000px;
+  padding: 14px 0 0 14px;
+
+  &-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 260px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    opacity: 0.85;
+
+    @at-root .body--light & {
+      background-color: #fff;
+      color: $grey-9;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    @at-root .body--dark & {
+      background-color: $dark-3;
+      color: #fff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    // -> The row's own icon, cloned at whichever size the list drew it -- compact or not
+    > .w-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+    }
+
+    > span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 }
