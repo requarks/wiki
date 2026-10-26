@@ -174,15 +174,3 @@ export async function* inBatches(iterable, { maxRecords, maxBytes }) {
     yield batch
   }
 }
-
-/**
- * The SHA-256 of some bytes, as lowercase hex.
- *
- * Used to check a blob against the name it is filed under before it is uploaded: the name being the
- * checksum is the whole of what content addressing buys, and a reader that took it on trust would be
- * uploading whatever the file happened to hold under a digest the server would then reject.
- */
-export async function sha256Hex(bytes) {
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}

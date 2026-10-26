@@ -122,7 +122,9 @@ time without buffering the archive, and must be individually retryable when one 
 - **De-duplication.** The same logo embedded in forty pages is stored once — common enough in a real
   wiki to matter, and it holds across sites too, which is why `blobs/` is at the root rather than
   under each site.
-- **Integrity.** The name *is* the checksum; a reader verifies without the manifest listing digests.
+- **Integrity.** The name *is* the checksum; the importing server verifies each blob without the
+  manifest listing digests — not the browser, where `crypto.subtle` is missing on a wiki served over
+  plain HTTP.
 - **Resume.** "Have I already uploaded this blob?" is answerable without any bookkeeping.
 
 A page's content lives inline in its NDJSON line, and so does its render in a `wikijs3` package —

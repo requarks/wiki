@@ -1,4 +1,4 @@
-import { inBatches, openPackage, readBytes, readJson, readRecords, sha256Hex } from './wkbackup'
+import { inBatches, openPackage, readBytes, readJson, readRecords } from './wkbackup'
 
 /**
  * Driving an import of a `.wkbackup` package from the browser.
@@ -40,6 +40,9 @@ const BATCH_BYTES = 4 * 1024 * 1024
   under it. Nothing on this side gives up on one, since the server does not.
 */
 const LONG_REQUEST = { timeout: false }
+
+/** What a blob is named by — the route's own pattern, since a record's digest is interpolated into its URL. */
+const DIGEST_PATTERN = /^[0-9a-f]{64}$/
 
 /**
  * The order the streams are walked in, and it is load-bearing.
@@ -380,7 +383,9 @@ async function stageBlobsFor({ pkg, session, batch, staged, log }) {
   const wanted = new Set()
   for (const record of batch) {
     for (const digest of [record?.blob, record?.contentBlob]) {
-      if (typeof digest === 'string' && digest && !staged.has(digest)) {
+      // -> A name that is not a digest is never looked up, let alone put in a URL: the record then
+      //    points at nothing staged, and the server skips it and says so
+      if (typeof digest === 'string' && DIGEST_PATTERN.test(digest) && !staged.has(digest)) {
         wanted.add(digest)
       }
     }
@@ -394,21 +399,23 @@ async function stageBlobsFor({ pkg, session, batch, staged, log }) {
       staged.add(digest)
       continue
     }
-    const bytes = await readBytes(entry)
-    const actual = await sha256Hex(bytes)
-    if (actual !== digest) {
+    // -> Not hashed here: the server verifies every blob against its name on arrival, and
+    //    `crypto.subtle` exists only in a secure context, so a wiki served over plain HTTP could not
+    try {
+      await API_CLIENT.post(`import/sessions/${session.id}/blobs/${digest}`, {
+        ...LONG_REQUEST,
+        body: await readBytes(entry),
+        headers: { 'content-type': 'application/octet-stream' }
+      })
+    } catch (err) {
+      if (err.data?.error !== 'importBlobChecksum') {
+        throw err
+      }
       log(
         'warn',
         `A file in the package does not match its checksum (${digest.slice(0, 12)}…) and was not imported.`
       )
-      staged.add(digest)
-      continue
     }
-    await API_CLIENT.post(`import/sessions/${session.id}/blobs/${digest}`, {
-      ...LONG_REQUEST,
-      body: bytes,
-      headers: { 'content-type': 'application/octet-stream' }
-    })
     staged.add(digest)
   }
 }
