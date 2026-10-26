@@ -6,7 +6,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, onMounted, provide, reactive, toRef } from 'vue'
+import { computed, onMounted, provide, reactive, toRef, watch } from 'vue'
 import { findKey } from 'es-toolkit/object'
 
 import TreeLevel from './TreeLevel.vue'
@@ -37,12 +37,30 @@ const props = defineProps({
   displayMode: {
     type: String,
     default: 'title'
+  },
+  /**
+   * Whether something the parent cares about is being dragged right now. The tree cannot tell on its
+   * own: a drag is started elsewhere (the File Manager's list), and one from outside the page -- a
+   * file off the desktop -- must not open folders or light rows up.
+   */
+  dragActive: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether the item being dragged may be dropped on a node (`null` for the root). Leaving it unset
+   * is what keeps the tree a plain picker: nothing is ever a drop target, which is how every dialog
+   * that browses folders uses it.
+   */
+  canDrop: {
+    type: Function,
+    default: null
   }
 })
 
 // EMITS
 
-const emit = defineEmits(['update:selected', 'lazyLoad', 'contextAction'])
+const emit = defineEmits(['update:selected', 'lazyLoad', 'contextAction', 'dropItem'])
 
 // I18N
 
@@ -107,7 +125,12 @@ provide(
 
 const state = reactive({
   loaded: {},
-  opened: {}
+  opened: {},
+  /**
+   * The node a drag is over, droppable or not -- the folder the item already sits in still opens on a
+   * hover, so that the folders under it can be reached. `null` is the root, so nothing is `undefined`.
+   */
+  dragOverId: undefined
 })
 
 // COMPUTED
@@ -130,6 +153,59 @@ function emitLazyLoad(nodeId, isCurrent, clb) {
     clb.done()
   }
 }
+
+/*
+  One set of handlers for every row, the root included, keyed by node. The drag is tracked from
+  `dragover` rather than from `dragenter` / `dragleave` pairs: those fire for every child element a
+  pointer crosses, and a row that missed one would stay lit. `dragover` keeps firing while the pointer
+  is anywhere over the row, so a wrong guess is corrected a moment later.
+*/
+function acceptsDrop(nodeId) {
+  return props.dragActive && Boolean(props.canDrop?.(nodeId))
+}
+
+const dropTarget = {
+  isOver: (nodeId) => props.dragActive && state.dragOverId === nodeId,
+  accepts: acceptsDrop,
+  over(ev, nodeId) {
+    if (!props.dragActive || !props.canDrop) {
+      return
+    }
+    state.dragOverId = nodeId
+    // -> Cancelling the event is what makes the row a drop target at all
+    if (acceptsDrop(nodeId)) {
+      ev.preventDefault()
+      ev.dataTransfer.dropEffect = 'move'
+    }
+  },
+  leave(ev, nodeId) {
+    // -> Moving onto the row's own icon or label is not leaving it
+    if (ev.currentTarget.contains(ev.relatedTarget)) {
+      return
+    }
+    if (state.dragOverId === nodeId) {
+      state.dragOverId = undefined
+    }
+  },
+  drop(ev, nodeId) {
+    state.dragOverId = undefined
+    if (!acceptsDrop(nodeId)) {
+      return
+    }
+    ev.preventDefault()
+    emit('dropItem', nodeId)
+  }
+}
+
+// -> A drag cancelled with Escape, or dropped anywhere else, ends here too
+watch(
+  () => props.dragActive,
+  (active) => {
+    if (!active) {
+      state.dragOverId = undefined
+    }
+  }
+)
 
 function setOpened(nodeId) {
   state.opened[nodeId] = true
@@ -159,6 +235,7 @@ provide('opened', state.opened)
 provide('displayMode', toRef(props, 'displayMode'))
 provide('selection', selection)
 provide('emitLazyLoad', emitLazyLoad)
+provide('dropTarget', dropTarget)
 
 // EXPOSE
 
@@ -237,6 +314,12 @@ onMounted(() => {
       @at-root .body--dark & {
         background-color: rgba(255, 255, 255, 0.1);
       }
+    }
+
+    // -> Where a dragged item would land. Outlined rather than filled, so it reads over the selected
+    //    row's fill as well as over a plain one
+    &.is-drop-target {
+      box-shadow: inset 0 0 0 2px var(--color-primary);
     }
 
     > .w-icon {

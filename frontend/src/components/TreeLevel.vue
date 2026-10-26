@@ -2,7 +2,14 @@
   <ul class="treeview-level">
     <!-- ROOT NODE -->
     <li class="treeview-node" v-if="!props.parentId">
-      <div class="treeview-label" @click="setRoot" :class="{ active: !selection }">
+      <div
+        class="treeview-label"
+        @click="setRoot"
+        :class="{ active: !selection, 'is-drop-target': isDropTarget }"
+        @dragenter="dropTarget.over($event, null)"
+        @dragover="dropTarget.over($event, null)"
+        @dragleave="dropTarget.leave($event, null)"
+        @drop="dropTarget.drop($event, null)">
         <w-icon name="img:/_assets/icons/fluent-ftp.svg" size="sm" />
         <div class="treeview-label-text" :class="dark.isActive ? `text-purple-4` : `text-purple`">
           root
@@ -74,6 +81,7 @@ const nodes = inject('nodes')
 const selection = inject('selection')
 // -> A computed, not a plain array: see the note where `TreeNav` provides it
 const contextActionList = inject('contextActionList')
+const dropTarget = inject('dropTarget')
 
 // COMPOSABLES
 
@@ -87,6 +95,8 @@ const rootContextActionList = computed(() => {
   }
   return contextActionList.value.filter((c) => c.key === 'newFolder')
 })
+
+const isDropTarget = computed(() => dropTarget.isOver(null) && dropTarget.accepts(null))
 
 const level = computed(() => {
   const items = []

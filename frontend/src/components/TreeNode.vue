@@ -1,7 +1,14 @@
 <template>
   <li class="treeview-node">
     <!-- NODE -->
-    <div class="treeview-label" @click="openNode" :class="{ active: isActive }">
+    <div
+      class="treeview-label"
+      @click="openNode"
+      :class="{ active: isActive, 'is-drop-target': isDropTarget }"
+      @dragenter="dropTarget.over($event, node.id)"
+      @dragover="dropTarget.over($event, node.id)"
+      @dragleave="dropTarget.leave($event, node.id)"
+      @drop="dropTarget.drop($event, node.id)">
       <w-icon :name="icon" size="sm" :style="hueFilter" @click.stop="toggleNode()" />
       <div class="treeview-label-text">
         {{ displayMode === 'path' ? node.fileName : node.title }}
@@ -50,7 +57,7 @@
 </template>
 
 <script setup>
-import { computed, inject, reactive } from 'vue'
+import { computed, inject, onBeforeUnmount, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { folderIconStyle } from '@/helpers/folderColors'
@@ -84,6 +91,10 @@ const emitLazyLoad = inject('emitLazyLoad')
 // -> A computed, not a plain array: see the note where `TreeNav` provides it. Unwrapped by the
 //    template, which is the only place it is read here.
 const contextActionList = inject('contextActionList')
+const dropTarget = inject('dropTarget')
+
+/** How long a drag has to rest on a closed folder before it opens, to reach the folders inside. */
+const DRAG_EXPAND_DELAY_MS = 700
 
 // DATA
 
@@ -121,6 +132,30 @@ const isOpened = computed(() => {
 })
 const isActive = computed(() => {
   return state.isContextMenuShown || selection.value === props.node.id
+})
+const isDragOver = computed(() => dropTarget.isOver(props.node.id))
+const isDropTarget = computed(() => isDragOver.value && dropTarget.accepts(props.node.id))
+
+// WATCHERS
+
+/*
+  Opens a closed folder a drag is resting on, droppable or not: the folder an item already sits in
+  cannot take it, but a folder inside it can. Never closes one -- a drag passing over an open folder
+  is on its way somewhere in it.
+*/
+let dragExpandTimer = null
+watch(isDragOver, (over) => {
+  clearTimeout(dragExpandTimer)
+  if (over && !isOpened.value) {
+    dragExpandTimer = setTimeout(() => {
+      if (isDragOver.value && !isOpened.value) {
+        toggleNode()
+      }
+    }, DRAG_EXPAND_DELAY_MS)
+  }
+})
+onBeforeUnmount(() => {
+  clearTimeout(dragExpandTimer)
 })
 
 // METHODS

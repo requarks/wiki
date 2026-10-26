@@ -130,7 +130,10 @@
               @lazy-load="treeLazyLoad"
               :use-lazy-load="true"
               @context-action="treeContextAction"
-              :display-mode="state.displayMode" />
+              :display-mode="state.displayMode"
+              :drag-active="state.dragItem !== null"
+              :can-drop="canDropOn"
+              @drop-item="dropOnFolder" />
           </div>
         </w-scroll-area>
         <!--
@@ -550,6 +553,10 @@
                   <img src="/_assets/icons/carbon-copy-empty-box.svg" />
                   <span>This folder is empty.</span>
                 </div>
+                <!--
+                  Every row can be dragged onto a folder -- a folder row here, or any folder in the tree,
+                  root included -- to move it there. Only folder rows take a drop.
+                -->
                 <w-list class="fileman-filelist" v-else :class="state.isCompact && `is-compact`">
                   <w-item
                     v-for="item of files"
@@ -557,8 +564,16 @@
                     clickable
                     active-class="active"
                     :active="item.id === state.currentFileId"
+                    :class="{ 'is-drop-target': item.id === state.dropFolderId }"
+                    draggable="true"
                     @click="selectItem(item)"
-                    @dblclick="doubleClickItem(item)">
+                    @dblclick="doubleClickItem(item)"
+                    @dragstart="onItemDragStart($event, item)"
+                    @dragend="onItemDragEnd"
+                    @dragenter="onListDragOver($event, item)"
+                    @dragover="onListDragOver($event, item)"
+                    @dragleave="onListDragLeave($event, item)"
+                    @drop="onListDrop($event, item)">
                     <w-item-section class="fileman-filelist-icon" avatar>
                       <w-icon
                         :name="item.icon"
@@ -945,7 +960,11 @@ const state = reactive({
    * Whether the graph view covers the manager. Independent of `isRecycleBin`: it goes over whichever
    * of the two was showing, and closing it comes back to that.
    */
-  isGraph: false
+  isGraph: false,
+  /** The listing entry being dragged, from its `dragstart` to its `dragend`. */
+  dragItem: null,
+  /** The folder row in the listing a drag would drop into, which is what lights it up. */
+  dropFolderId: null
 })
 
 // -> Over the defaults just above, which is what the view falls back to on a first visit
@@ -1638,18 +1657,10 @@ function moveFolder(folderId) {
       caption: t('fileman.folderMovingHint')
     })
     try {
-      const resp = await API_CLIENT.put(`sites/${siteStore.id}/tree/folders/${folderId}/path`, {
-        json: {
-          folderPath: opts.folderPath,
-          locale: opts.locale
-        },
-        // -> Nothing on this side gives up on it, since the server does not either
-        timeout: false
-      }).json()
-      // -> The API client does not throw on 400, so a refused destination comes back as a parsed error
-      if (resp?.ok === false) {
-        throw new Error(resp.message || 'An unexpected error occured.')
-      }
+      const resp = await requestFolderMove(folderId, {
+        folderPath: opts.folderPath,
+        locale: opts.locale
+      })
       notify({
         type: 'positive',
         message: resp.message
@@ -1667,6 +1678,25 @@ function moveFolder(folderId) {
       loading.hide()
     }
   })
+}
+
+/**
+ * The request behind every folder move, answering with the folder where it now is.
+ *
+ * @param folderPath The new parent's path, empty for the root.
+ * @param locale The locale to move it to; it stays in its own when absent.
+ */
+async function requestFolderMove(folderId, { folderPath, locale }) {
+  const resp = await API_CLIENT.put(`sites/${siteStore.id}/tree/folders/${folderId}/path`, {
+    json: { folderPath, locale },
+    // -> Nothing on this side gives up on it, since the server does not either
+    timeout: false
+  }).json()
+  // -> The API client does not throw on 400, so a refused destination comes back as a parsed error
+  if (resp?.ok === false) {
+    throw new Error(resp.message || 'An unexpected error occured.')
+  }
+  return resp
 }
 
 /**
@@ -1986,19 +2016,13 @@ function renameMoveAsset(item) {
     }
   }).onOk(async (opts) => {
     try {
-      const resp = await API_CLIENT.patch(`sites/${siteStore.id}/assets/${item.id}`, {
-        json: {
-          fileName: opts.fileName,
-          folderPath: opts.folderPath,
-          // -> The destination is a locale as well as a folder, as it is for a page: the same folder
-          //    in another locale is somewhere else
-          locale: opts.locale
-        }
-      }).json()
-      // -> The API client does not throw on 400, so a refused name comes back as a parsed error
-      if (resp?.ok === false) {
-        throw new Error(resp.message || 'An unexpected error occured.')
-      }
+      const resp = await requestAssetMove(item.id, {
+        fileName: opts.fileName,
+        folderPath: opts.folderPath,
+        // -> The destination is a locale as well as a folder, as it is for a page: the same folder
+        //    in another locale is somewhere else
+        locale: opts.locale
+      })
       notify({
         type: 'positive',
         message: resp.message
@@ -2013,6 +2037,21 @@ function renameMoveAsset(item) {
       })
     }
   })
+}
+
+/**
+ * The request behind every file rename and move. Each of the three is optional, and one left out
+ * stays as it is.
+ */
+async function requestAssetMove(assetId, { fileName, folderPath, locale }) {
+  const resp = await API_CLIENT.patch(`sites/${siteStore.id}/assets/${assetId}`, {
+    json: { fileName, folderPath, locale }
+  }).json()
+  // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+  if (resp?.ok === false) {
+    throw new Error(resp.message || 'An unexpected error occured.')
+  }
+  return resp
 }
 
 /**
@@ -2361,6 +2400,211 @@ function delItem(item) {
       break
     }
   }
+}
+
+// --------------------------------------
+// DRAG AND DROP
+// --------------------------------------
+
+/**
+ * The type a listing row is dragged as. Its own rather than `text/plain`, so that nothing outside the
+ * manager -- an editor's text area, another tab -- takes a dragged row for something to paste.
+ */
+const DRAG_TYPE = 'application/x-wiki-fileman-item'
+
+/** A loaded folder's own path, as the move endpoints address a destination. */
+function treeNodePath(node) {
+  return node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName
+}
+
+/**
+ * Whether the row being dragged may be dropped into a folder (`null` for the root). Asked by the
+ * listing's folder rows and by every row of the tree.
+ *
+ * Every row in the listing sits in the folder being listed, so that one is never a destination. Nor,
+ * for a folder, is the folder itself or anything under it.
+ */
+function canDropOn(folderId) {
+  const item = state.dragItem
+  if (!item || folderId === state.currentFolderId) {
+    return false
+  }
+  const target = folderId ? state.treeNodes[folderId] : null
+  if (folderId && !target) {
+    return false
+  }
+  if (item.type === 'folder') {
+    if (folderId === item.id) {
+      return false
+    }
+    const source = state.treeNodes[item.id]
+    if (!source) {
+      return false
+    }
+    if (target && treeNodePath(target).startsWith(`${treeNodePath(source)}/`)) {
+      return false
+    }
+  }
+  return true
+}
+
+function onItemDragStart(ev, item) {
+  ev.dataTransfer.effectAllowed = 'move'
+  // -> Firefox starts no drag without some data, though nothing here reads it back
+  ev.dataTransfer.setData(DRAG_TYPE, item.id)
+  state.dragItem = item
+}
+
+/** The end of every drag, whether it was dropped, dropped somewhere that refused it, or cancelled. */
+function onItemDragEnd() {
+  state.dragItem = null
+  state.dropFolderId = null
+}
+
+/*
+  The listing's half of the drop target, which the tree does for itself (see `TreeNav`). Driven from
+  `dragover` for the same reason: it keeps firing while the pointer is over the row, so the highlight
+  cannot be left behind by a `dragleave` fired on one of the row's children.
+*/
+function onListDragOver(ev, item) {
+  if (item.type !== 'folder' || !canDropOn(item.id)) {
+    return
+  }
+  ev.preventDefault()
+  ev.dataTransfer.dropEffect = 'move'
+  state.dropFolderId = item.id
+}
+
+function onListDragLeave(ev, item) {
+  if (ev.currentTarget.contains(ev.relatedTarget)) {
+    return
+  }
+  if (state.dropFolderId === item.id) {
+    state.dropFolderId = null
+  }
+}
+
+function onListDrop(ev, item) {
+  state.dropFolderId = null
+  if (item.type !== 'folder' || !canDropOn(item.id)) {
+    return
+  }
+  ev.preventDefault()
+  dropOnFolder(item.id)
+}
+
+/**
+ * A row dropped onto a folder: asked about first, then moved.
+ *
+ * The item is captured here, because `dragend` clears it as soon as this returns -- long before the
+ * dialog is answered.
+ */
+function dropOnFolder(folderId) {
+  const item = state.dragItem
+  if (!item || !canDropOn(folderId)) {
+    return
+  }
+  const target = folderId ? state.treeNodes[folderId] : null
+  const folderPath = target ? treeNodePath(target) : ''
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/FileManagerMoveDialog.vue')),
+    componentProps: {
+      itemType: item.type,
+      itemTitle: item.title,
+      folderTitle: target?.title ?? null,
+      folderPath
+    }
+  }).onOk((opts) => {
+    moveItemInto(item, folderId, folderPath, opts)
+  })
+}
+
+/**
+ * Move a listing entry into another folder of the same locale, keeping its name.
+ *
+ * The view stays where it is, unlike the Move To actions: a drop is a quick gesture, often one of
+ * several in a row, and following each item away would mean finding the way back every time.
+ */
+async function moveItemInto(item, folderId, folderPath, { updateLinks = false } = {}) {
+  try {
+    switch (item.type) {
+      case 'page': {
+        const relinked = await pageStore.pageMove({
+          id: item.id,
+          path: folderPath ? `${folderPath}/${item.fileName}` : item.fileName,
+          locale: state.locale,
+          updateLinks
+        })
+        notify({
+          type: 'positive',
+          message: t('fileman.dropMove.pageSuccess')
+        })
+        notifyRelinked(relinked, t)
+        break
+      }
+      case 'asset': {
+        const resp = await requestAssetMove(item.id, { folderPath })
+        notify({
+          type: 'positive',
+          message: resp.message
+        })
+        break
+      }
+      case 'folder': {
+        // -> Blocking, as Move To is, and for its reason: see `moveFolder`
+        loading.show({
+          message: t('fileman.folderMoving'),
+          caption: t('fileman.folderMovingHint')
+        })
+        try {
+          const resp = await requestFolderMove(item.id, { folderPath })
+          notify({
+            type: 'positive',
+            message: resp.message
+          })
+          await relocateTreeBranch(item.id, folderId)
+        } finally {
+          loading.hide()
+        }
+        break
+      }
+    }
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('fileman.dropMove.failed'),
+      caption: apiErrorMessage(err, 'An unexpected error occured.')
+    })
+  }
+  // -> Whatever happened, the listing is fetched again: the row has gone, or a folder beside it now
+  //    holds one more thing -- and a failure may have been a conflict the listing is out of date about
+  await loadTree({ parentId: state.currentFolderId })
+}
+
+/**
+ * Put a moved folder where it now is in the tree, without starting the tree over.
+ *
+ * The folder and everything cached under it is forgotten -- all of it has a new path -- and the
+ * destination's folders are fetched again, which brings the folder back under its new parent. What
+ * was under it is fetched again when it is next opened.
+ */
+async function relocateTreeBranch(folderId, destinationId) {
+  const node = state.treeNodes[folderId]
+  if (node) {
+    const branchPath = treeNodePath(node)
+    for (const [id, other] of Object.entries(state.treeNodes)) {
+      if (id === folderId || treeNodePath(other).startsWith(`${branchPath}/`)) {
+        delete state.treeNodes[id]
+        treeComp.value?.setLoaded(id, false)
+      }
+    }
+  }
+  for (const other of Object.values(state.treeNodes)) {
+    other.children = other.children.filter((c) => c !== folderId)
+  }
+  state.treeRoots = state.treeRoots.filter((c) => c !== folderId)
+  // -> Never the folder being listed, which cannot be a destination: this fetch touches the tree alone
+  await loadTree({ parentId: destinationId, types: ['folder'] })
 }
 
 /**
@@ -2770,6 +3014,11 @@ $fileman-bottom-row-height: 45px;
         .fileman-filelist-side .text-caption {
           color: rgba(255, 255, 255, 0.7);
         }
+      }
+
+      // -> The folder a dragged item would land in, outlined the way the tree outlines one
+      &.is-drop-target {
+        box-shadow: inset 0 0 0 2px var(--color-primary);
       }
     }
 
