@@ -266,6 +266,9 @@ export class BlockMapElement extends LitElement {
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      // -> OSM's tile policy refuses a request with no Referer, and the wiki's own Referrer-Policy
+      //    (same-origin or no-referrer) sends none cross-origin. The origin alone, never the page path.
+      referrerPolicy: 'strict-origin',
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(this._map)
 
