@@ -1,5 +1,8 @@
+import { X509Certificate } from 'node:crypto'
 import { SAML, ValidateInResponseTo } from '@node-saml/node-saml'
 import type { SamlConfig } from '@node-saml/node-saml'
+import * as cheerio from 'cheerio'
+import type { AnyNode, Element } from 'domhandler'
 import { missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import { CustomError } from '../../../helpers/common.ts'
 import type {
@@ -19,6 +22,48 @@ const META_MAPPINGS: Record<ProviderProfileMetaKey, string> = {
 
 /** The longest a provider's signing key list may be, so a pasted mistake cannot become a loop. */
 const MAX_CERTS = 10
+
+/** The Certificate setting as the list of certificates it holds, joined by `|`. */
+function splitCerts(cert: unknown): string[] {
+  return String(cert ?? '')
+    .split('|')
+    .map((one) => one.trim())
+    .filter((one) => one.length > 0)
+    .slice(0, MAX_CERTS)
+}
+
+/**
+ * A certificate's SHA-1 thumbprint, in the form AD FS and the Windows certificate dialog show it —
+ * which is what an administrator has in front of them to compare against. Identification only:
+ * nothing is verified by it. Takes PEM or bare base64, as the Certificate setting does.
+ */
+function thumbprintOf(cert: string): string | null {
+  try {
+    const der = Buffer.from(cert.replace(/-----[^-]+-----/g, '').replace(/\s+/g, ''), 'base64')
+    return new X509Certificate(der).fingerprint.replaceAll(':', '')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * What kind of node this is, as a string: domhandler types it with an enum from a package this
+ * workspace does not depend on directly, and in XML mode every element is a `tag`.
+ */
+function isElement(node: AnyNode): node is Element {
+  return (node.type as string) === 'tag'
+}
+
+/** The children of an element with a local name, regardless of what prefix the provider gave them. */
+function childrenNamed(el: Element | undefined, name: string): Element[] {
+  return (el?.children ?? []).filter(
+    (node): node is Element => isElement(node) && node.name.split(':').pop() === name
+  )
+}
+
+function childNamed(el: Element | undefined, name: string): Element | undefined {
+  return childrenNamed(el, name)[0]
+}
 
 /**
  * SAML 2.0
@@ -66,11 +111,7 @@ export default class SamlAuthentication {
       )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
-    const idpCert = String(cert)
-      .split('|')
-      .map((one) => one.trim())
-      .filter((one) => one.length > 0)
-      .slice(0, MAX_CERTS)
+    const idpCert = splitCerts(cert)
     if (idpCert.length < 1) {
       strategyDebug(
         this,
@@ -92,6 +133,9 @@ export default class SamlAuthentication {
       signatureAlgorithm: this.conf.signatureAlgorithm || 'sha256',
       digestAlgorithm: this.conf.digestAlgorithm || 'sha256',
       wantAssertionsSigned: this.conf.wantAssertionsSigned !== false,
+      // -> The library's own default is true, which refuses AD FS out of the box: it signs only the
+      //    assertion unless its relying party trust is told otherwise
+      wantAuthnResponseSigned: this.conf.wantAuthnResponseSigned === true,
       acceptedClockSkewMs: Number.parseInt(this.conf.acceptedClockSkewMs, 10) || 0,
       disableRequestedAuthnContext: this.conf.disableRequestedAuthnContext === true,
       authnContext: String(this.conf.authnContext || '')
@@ -167,6 +211,11 @@ export default class SamlAuthentication {
         it passes.
       */
       WIKI.logger.warn(`SAML strategy ${this.strategyId} rejected an assertion: ${err.message}`)
+      if (WIKI.models.flags.isEnabled('authDebug')) {
+        for (const line of this.describeResponse(body.SAMLResponse)) {
+          strategyDebug(this, line)
+        }
+      }
       throw new Error('ERR_LOGIN_FAILED')
     }
     if (!profile) {
@@ -222,6 +271,115 @@ export default class SamlAuthentication {
           }
         : {})
     }
+  }
+
+  /**
+   * What a response the library refused is made of, for the log.
+   *
+   * The library's reason is one line — `Invalid document signature` — which does not say which of the
+   * handful of things behind it is the case: a response the provider signed only inside, a certificate
+   * other than the configured one, an audience or a validity window that does not line up. Each of
+   * those is in the document, so this reads it again for its shape: which parts are signed, with
+   * what and by which certificate, who issued it, for whom and for how long. Never an attribute and
+   * never the NameID, which are the person's.
+   *
+   * A description and nothing more. Elements are matched by local name with no namespace resolved,
+   * which a verifier must never do and a description can afford, since nothing here decides anything.
+   */
+  private describeResponse(samlResponse: unknown): string[] {
+    const $ = cheerio.load(Buffer.from(String(samlResponse), 'base64').toString('utf8'), {
+      xml: true
+    })
+    const textOf = (el: Element | undefined): string => (el ? $(el).text().trim() : '')
+    const root = $.root().children().get()[0]
+    if (root?.name.split(':').pop() !== 'Response') {
+      return [
+        `the posted SAMLResponse is not a SAML Response${root ? ` but a <${root.name}>` : ', or not XML at all'}`
+      ]
+    }
+    const lines: string[] = []
+
+    const configured = splitCerts(this.conf.cert).map(thumbprintOf)
+    configured.forEach((thumbprint, index) => {
+      if (!thumbprint) {
+        lines.push(`configured certificate ${index + 1} cannot be read as an X.509 certificate`)
+      }
+    })
+    const signedBy = (el: Element, what: string): string => {
+      const signature = childNamed(el, 'Signature')
+      if (!signature) {
+        return `${what} is not signed`
+      }
+      const signedInfo = childNamed(signature, 'SignedInfo')
+      const algorithm =
+        childNamed(signedInfo, 'SignatureMethod')?.attribs.Algorithm?.split('#').pop() ??
+        'no named algorithm'
+      const reference = childNamed(signedInfo, 'Reference')?.attribs.URI
+      const scope =
+        reference === `#${el.attribs.ID}`
+          ? ''
+          : `, over ${reference ? `\`${reference}\`` : 'no reference'} rather than its own ID \`${el.attribs.ID}\``
+      const keyCert = textOf(
+        childNamed(childNamed(childNamed(signature, 'KeyInfo'), 'X509Data'), 'X509Certificate')
+      )
+      if (!keyCert) {
+        return `${what} is signed (${algorithm})${scope}, naming no certificate`
+      }
+      const thumbprint = thumbprintOf(keyCert)
+      if (!thumbprint) {
+        return `${what} is signed (${algorithm})${scope}, naming a certificate that cannot be read`
+      }
+      const match = configured.indexOf(thumbprint)
+      return `${what} is signed (${algorithm})${scope} by certificate ${thumbprint}, which ${match >= 0 ? `is configured certificate ${match + 1}` : `is none of the ${configured.length} configured`}`
+    }
+
+    lines.push(signedBy(root, 'the response'))
+    if (!childNamed(root, 'Signature') && this.conf.wantAuthnResponseSigned === true) {
+      lines.push(
+        'Require Signed Response is on, which refuses a response not signed as a whole before its assertion is looked at. A provider signing only the assertion — AD FS unless its relying party trust says SamlResponseSignature MessageAndAssertion — has to be told to sign the response too, or the setting turned off'
+      )
+    }
+    const assertions = childrenNamed(root, 'Assertion')
+    const encrypted = childrenNamed(root, 'EncryptedAssertion')
+    if (assertions.length + encrypted.length > 1) {
+      lines.push(
+        `it carries ${assertions.length + encrypted.length} assertions, where only one is ever accepted`
+      )
+    }
+    if (encrypted.length > 0) {
+      lines.push(
+        `its assertion is encrypted, and this strategy has ${this.conf.decryptionPvk ? 'a' : 'no'} Decryption Private Key to read it with`
+      )
+    }
+    const assertion = assertions[0]
+    if (assertion) {
+      lines.push(signedBy(assertion, 'its assertion'))
+    } else if (encrypted.length < 1) {
+      lines.push('it carries no assertion')
+    }
+
+    const issuer = textOf(childNamed(root, 'Issuer')) || textOf(childNamed(assertion, 'Issuer'))
+    const statusCode = childNamed(childNamed(root, 'Status'), 'StatusCode')
+    const status = [statusCode, childNamed(statusCode, 'StatusCode')]
+      .map((el) => el?.attribs.Value?.split(':').pop())
+      .filter(Boolean)
+      .join('/')
+    const statusMessage = textOf(childNamed(childNamed(root, 'Status'), 'StatusMessage'))
+    const destination = root.attribs.Destination
+    lines.push(
+      `it was issued by ${issuer ? `\`${issuer}\`` : 'nobody it names'} to ${destination ? `\`${destination}\`` : 'no destination'}, with status ${status || 'none'}${statusMessage ? ` (${statusMessage})` : ''}`
+    )
+
+    if (assertion) {
+      const conditions = childNamed(assertion, 'Conditions')
+      const audiences = childrenNamed(conditions, 'AudienceRestriction')
+        .flatMap((restriction) => childrenNamed(restriction, 'Audience'))
+        .map((el) => `\`${textOf(el)}\``)
+      lines.push(
+        `its assertion is for ${audiences.join(', ') || 'no audience in particular'} where \`${this.conf.audience || this.conf.issuer}\` is expected, valid from ${conditions?.attribs.NotBefore ?? 'any time'} until ${conditions?.attribs.NotOnOrAfter ?? 'any time'} by the provider's clock, and this server's reads ${Temporal.Now.instant().toString({ smallestUnit: 'second' })}`
+      )
+    }
+    return lines
   }
 
   /**

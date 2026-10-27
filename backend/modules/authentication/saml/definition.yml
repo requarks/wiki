@@ -101,27 +101,34 @@ props:
     icon: secure
     default: true
     order: 21
+  wantAuthnResponseSigned:
+    type: Boolean
+    title: Require Signed Response
+    hint: Also refuse a response that is not signed as a whole. Most providers sign only the assertion unless told otherwise — AD FS among them — and a signed assertion is checked regardless of this setting, so turn it on only for a provider configured to sign the response too.
+    icon: validation
+    default: false
+    order: 22
   acceptedClockSkewMs:
     type: Number
     title: Accepted Clock Skew (ms)
     hint: How far this server's clock may differ from the provider's before an assertion is judged not yet valid or expired. Set to -1 to stop checking those timestamps entirely, which throws away the assertion's own expiry.
     icon: timer
     default: 0
-    order: 22
+    order: 23
   disableRequestedAuthnContext:
     type: Boolean
     title: Disable Requested Auth Context
     hint: Ask for no particular authentication method, rather than the one below. Known to be what AD FS wants.
     icon: rules
     default: false
-    order: 23
+    order: 24
   authnContext:
     type: String
     title: Auth Context
     hint: Which authentication method the request asks for. Join several with the | pipe symbol.
     icon: rules
     default: 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
-    order: 24
+    order: 25
     if:
       - { key: 'disableRequestedAuthnContext', eq: false }
   racComparison:
@@ -135,7 +142,7 @@ props:
       - minimum
       - maximum
       - better
-    order: 25
+    order: 26
     if:
       - { key: 'disableRequestedAuthnContext', eq: false }
   forceAuthn:
@@ -144,21 +151,21 @@ props:
     hint: Ask the provider to authenticate the person again even if they already have a session there.
     icon: renew
     default: false
-    order: 26
+    order: 27
   passive:
     type: Boolean
     title: Passive
     hint: Ask the provider not to interact with the person at all — so an existing session signs them in and no session sends them straight back.
     icon: do-not-touch
     default: false
-    order: 27
+    order: 28
   providerName:
     type: String
     title: Provider Name
     hint: (optional) A human-readable name for this wiki, which a provider may show to the person being asked to log in.
     icon: website
     default: Wiki.js
-    order: 28
+    order: 29
   authnRequestBinding:
     type: String
     title: Request Binding
@@ -168,14 +175,14 @@ props:
     enum:
       - HTTP-Redirect|Redirect
       - HTTP-POST|POST
-    order: 29
+    order: 30
   skipRequestCompression:
     type: Boolean
     title: Skip Request Compression
     hint: Send the authentication request uncompressed. The Redirect binding requires it to be deflated, so this is for a provider that wants otherwise.
     icon: downloads
     default: false
-    order: 30
+    order: 31
   mappingUID:
     type: String
     title: Unique ID Field Mapping
