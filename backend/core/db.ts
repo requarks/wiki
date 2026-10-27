@@ -162,7 +162,7 @@ export default {
       application_name: `Wiki.js - ${WIKI.INSTANCE_ID}:${workerMode ? 'WORKER' : 'MAIN'}`,
       ...this.config,
       ...(workerMode ? { min: 0, max: 1 } : WIKI.config.pool),
-      options: `-c search_path=${WIKI.config.db.schema}`
+      options: `-c search_path=${WIKI.config.db.schema} -c timezone=UTC`
     })
 
     const db = createDb(this.pool)
