@@ -92,6 +92,7 @@ export default class SamlAuthentication {
       signatureAlgorithm: this.conf.signatureAlgorithm || 'sha256',
       digestAlgorithm: this.conf.digestAlgorithm || 'sha256',
       wantAssertionsSigned: this.conf.wantAssertionsSigned !== false,
+      wantAuthnResponseSigned: this.conf.wantAuthnResponseSigned !== false,
       acceptedClockSkewMs: Number.parseInt(this.conf.acceptedClockSkewMs, 10) || 0,
       disableRequestedAuthnContext: this.conf.disableRequestedAuthnContext === true,
       authnContext: String(this.conf.authnContext || '')
