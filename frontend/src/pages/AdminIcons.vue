@@ -168,13 +168,14 @@
     <!-- ----------------------- -->
     <w-dialog v-model="state.addSetDialog">
       <w-card style="width: 700px; max-width: 90vw">
-        <w-card-section class="flex flex-wrap items-center pb-0">
-          <div class="text-h6">{{ t('admin.icons.addSet') }}</div>
-          <w-space />
-          <w-btn icon="la:times" flat round dense @click="state.addSetDialog = false" />
+        <w-card-section class="card-header">
+          <w-icon name="img:/_assets/icons/fluent-spring.svg" size="sm" class="mr-2" />
+          <span>{{ t('admin.icons.addSet') }}</span>
         </w-card-section>
         <w-card-section>
-          <div class="text-body2 text-grey">{{ t('admin.icons.addSetHint') }}</div>
+          <div class="text-body2 text-grey-8 dark:text-grey-4">
+            {{ t('admin.icons.addSetHint') }}
+          </div>
           <w-input
             class="mt-4"
             v-model="state.availableFilter"
@@ -188,29 +189,12 @@
         </w-card-section>
         <w-separator />
         <w-card-section class="p-0" style="height: 50vh; overflow-y: auto">
-          <w-inner-loading :showing="state.loadingAvailable">
-            <w-spinner color="primary" size="md" />
-          </w-inner-loading>
+          <w-inner-loading :showing="state.loadingAvailable" />
           <w-banner class="m-4 bg-negative text-white" v-if="state.availableError">{{
             state.availableError
           }}</w-banner>
           <w-list separator>
-            <w-item
-              v-for="set of filteredAvailableSets"
-              :key="set.prefix"
-              clickable
-              :disable="set.isAdded"
-              @click="addSet(set)">
-              <w-item-section side>
-                <div class="admin-icons-samples">
-                  <w-icon
-                    class="admin-icons-sample"
-                    v-for="sample of set.samples.slice(0, 3)"
-                    :key="sample"
-                    :name="`${set.prefix}:${sample}`"
-                    size="24px" />
-                </div>
-              </w-item-section>
+            <w-item v-for="set of filteredAvailableSets" :key="set.prefix">
               <w-item-section>
                 <w-item-label>
                   <strong>{{ set.name }}</strong>
@@ -219,6 +203,19 @@
                   }}</w-chip>
                 </w-item-label>
                 <w-item-label caption>{{ availableCaption(set) }}</w-item-label>
+              </w-item-section>
+              <w-item-section side>
+                <w-btn
+                  icon="mdi:print-preview"
+                  flat
+                  round
+                  dense
+                  color="grey"
+                  :aria-label="t(`common.actions.preview`)"
+                  :href="referenceUrl(set)"
+                  target="_blank">
+                  <w-tooltip>{{ t('admin.icons.previewSetHint') }}</w-tooltip>
+                </w-btn>
               </w-item-section>
               <w-item-section side>
                 <w-chip
@@ -230,11 +227,31 @@
                   icon="la:check"
                   >{{ t('admin.icons.added') }}</w-chip
                 >
-                <w-icon v-else name="la:plus-circle" color="primary" size="sm" />
+                <w-btn
+                  v-else
+                  icon="la:plus-circle"
+                  flat
+                  round
+                  dense
+                  color="primary"
+                  :aria-label="t(`admin.icons.addSet`)"
+                  @click="addSet(set)">
+                  <w-tooltip>{{ t('admin.icons.addSet') }}</w-tooltip>
+                </w-btn>
               </w-item-section>
             </w-item>
           </w-list>
         </w-card-section>
+        <w-card-actions class="card-actions">
+          <w-space />
+          <w-btn
+            class="acrylic-btn"
+            flat
+            :label="t(`common.actions.close`)"
+            color="cancel"
+            padding="xs md"
+            @click="state.addSetDialog = false" />
+        </w-card-actions>
       </w-card>
     </w-dialog>
   </w-page>
@@ -531,20 +548,6 @@ onMounted(async () => {
     animation:
       fadeInLeft 0.6s forwards,
       flower-rotate 30s linear infinite;
-  }
-
-  &-samples {
-    display: flex;
-    gap: 4px;
-    width: 84px;
-  }
-
-  &-sample {
-    color: $blue-8;
-
-    body.body--dark & {
-      color: $blue-3;
-    }
   }
 }
 

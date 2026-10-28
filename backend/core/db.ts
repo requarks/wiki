@@ -162,6 +162,11 @@ export default {
       application_name: `Wiki.js - ${WIKI.INSTANCE_ID}:${workerMode ? 'WORKER' : 'MAIN'}`,
       ...this.config,
       ...(workerMode ? { min: 0, max: 1 } : WIKI.config.pool),
+      // -> timezone=UTC because every timestamp column is zoneless and read back as UTC. A value
+      //    written from a JS Date is UTC already, but one Postgres fills in itself (`now()`,
+      //    `defaultNow()`) is the session's wall time, and so is `now()` wherever it is compared to a
+      //    stored value. Left to the server's own `timezone` setting, a Postgres outside UTC shifts
+      //    those by its offset: a login reads hours old, an API key outlives its expiry.
       options: `-c search_path=${WIKI.config.db.schema} -c timezone=UTC`
     })
 

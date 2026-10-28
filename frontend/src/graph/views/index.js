@@ -28,7 +28,7 @@ export const GRAPH_VIEWS = [tree, radial, relational]
  * What the graph opens in until somebody picks another view. Named rather than taken from the order
  * above, which is the order the switcher reads in and a separate question.
  */
-export const DEFAULT_GRAPH_VIEW = radial
+export const DEFAULT_GRAPH_VIEW = tree
 
 /** The view with this key, or the default for a key that is not one -- absent, or no longer a view. */
 export function graphView(key) {

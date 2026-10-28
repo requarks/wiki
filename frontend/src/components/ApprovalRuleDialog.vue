@@ -197,6 +197,7 @@ const isTagMatch = computed(() => ['TAG', 'TAGALL'].includes(state.match))
 const matchOptions = computed(() => [
   { label: t('admin.approval.matchStart'), value: 'START' },
   { label: t('admin.approval.matchExact'), value: 'EXACT' },
+  { label: t('admin.approval.matchSubtree'), value: 'SUBTREE' },
   { label: t('admin.approval.matchEnd'), value: 'END' },
   { label: t('admin.approval.matchRegex'), value: 'REGEX' },
   { label: t('admin.approval.matchTag'), value: 'TAG' },

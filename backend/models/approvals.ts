@@ -14,7 +14,15 @@ import {
  * How a rule decides which pages it covers. The same set group page rules use, so an administrator
  * writing one has learnt the other.
  */
-export const approvalMatchModes = ['START', 'EXACT', 'END', 'REGEX', 'TAG', 'TAGALL'] as const
+export const approvalMatchModes = [
+  'START',
+  'EXACT',
+  'SUBTREE',
+  'END',
+  'REGEX',
+  'TAG',
+  'TAGALL'
+] as const
 
 export type ApprovalMatchMode = (typeof approvalMatchModes)[number]
 
@@ -303,6 +311,12 @@ class Approvals {
         return pagePath.startsWith(rulePath)
       case 'EXACT':
         return pagePath === rulePath
+      case 'SUBTREE': {
+        // -> A page and everything filed under it, as `ruleMatchesPage` reads it for group rules: a
+        //    prefix of `foo/bar` would also take in `foo/barometer`
+        const branch = rulePath.replace(/\/+$/, '')
+        return branch.length < 1 || pagePath === branch || pagePath.startsWith(`${branch}/`)
+      }
       case 'END':
         return pagePath.endsWith(rulePath)
       case 'REGEX':

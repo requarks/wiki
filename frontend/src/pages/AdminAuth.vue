@@ -378,6 +378,23 @@
                 {{ t('admin.auth.configReference') }}
                 <template #hint>{{ t('admin.auth.configReferenceSubtitle') }}</template>
               </w-card-header>
+              <!-- -> A strategy that redirects to its provider is handed back to a callback URL
+                   the server builds from the request, which behind a proxy is the proxy's own
+                   unless the forwarded headers are trusted. -->
+              <w-card-section v-if="!state.trustProxy && strategyModule?.useForm === false">
+                <w-banner
+                  class="items-center"
+                  :class="
+                    dark.isActive
+                      ? `bg-orange-6/10 text-orange-4`
+                      : `bg-orange-1 text-deep-orange-10`
+                  ">
+                  <template #avatar>
+                    <w-icon name="la:exclamation-triangle" size="sm" />
+                  </template>
+                  {{ t('admin.auth.proxyCallbackWarning') }}
+                </w-banner>
+              </w-card-section>
               <w-item v-for="strRef of strategyRefs" :key="strRef.key">
                 <blueprint-icon :icon="strRef.icon" :hue-rotate="-45" />
                 <w-item-section>
@@ -551,7 +568,10 @@ const state = reactive({
     allowPasskeys: true,
     allowProfileEditing: true,
     allowPersonalTokens: true
-  }
+  },
+  // -> Read only, and only to warn: with the proxy headers untrusted, a redirect strategy's
+  //    callback URL carries the proxy's protocol and host rather than the wiki's
+  trustProxy: true
 })
 
 // COMPUTED
@@ -565,11 +585,14 @@ const availableStrategies = computed(() => {
 const selectedGroupName = computed(() => {
   return state.groups.filter((g) => g.id === state.strategy?.autoEnrollGroups?.[0])[0]?.name
 })
+const strategyModule = computed(() => {
+  return state.strategies.find((s) => s.key === state.strategy?.strategy?.key)
+})
 const strategyRefs = computed(() => {
   if (!state.selectedStrategy) {
     return []
   }
-  const str = state.strategies.find((s) => s.key === state.strategy?.strategy?.key)
+  const str = strategyModule.value
   if (!str?.refs) {
     return []
   }
@@ -667,13 +690,15 @@ async function load() {
   state.loadingGroups = true
   loading.show()
   try {
-    const [modules, strategies, config, groups] = await Promise.all([
+    const [modules, strategies, config, groups, security] = await Promise.all([
       API_CLIENT.get('authentication/modules').json(),
       API_CLIENT.get('authentication/strategies').json(),
       API_CLIENT.get('authentication/config').json(),
-      API_CLIENT.get('groups').json()
+      API_CLIENT.get('groups').json(),
+      API_CLIENT.get('system/security').json()
     ])
     state.strategies = modules ?? []
+    state.trustProxy = security?.trustProxy === true
     state.config = { ...state.config, ...config }
     /*
       The running app holds these from `bootstrap`, which answered before this screen touched them —

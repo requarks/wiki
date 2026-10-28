@@ -2,7 +2,7 @@
   <w-layout view="hHh lpR fFf" container>
     <w-header class="card-header px-4 py-2">
       <w-icon name="img:/_assets/icons/ultraviolet-markdown.svg" left size="md" />
-      <span>{{t(`admin.editors.markdownName`)}}</span>
+      <span>{{ t(`admin.editors.markdownName`) }}</span>
       <w-space />
       <w-btn
         class="mr-2"
@@ -23,7 +23,9 @@
           icon="la:redo-alt"
           @click="load"
           :loading="state.loading > 0">
-          <w-tooltip anchor="center left" self="center right">{{t(`common.actions.refresh`)}}</w-tooltip>
+          <w-tooltip anchor="center left" self="center right">{{
+            t(`common.actions.refresh`)
+          }}</w-tooltip>
         </w-btn>
         <w-btn
           push
@@ -45,16 +47,16 @@
       </w-btn-group>
     </w-header>
     <w-page-container>
-      <w-page class="p-4" style="max-width: 1200px; margin: 0 auto;">
+      <w-page class="p-4" style="max-width: 1200px; margin: 0 auto">
         <w-card class="shadow-1 pb-2">
           <w-card-section>
-            <div class="text-subtitle1">{{t('admin.editors.markdown.general')}}</div>
+            <div class="text-subtitle1">{{ t('admin.editors.markdown.general') }}</div>
           </w-card-section>
           <w-item tag="label">
             <blueprint-icon icon="html" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.allowHTML`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.allowHTMLHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.allowHTML`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.allowHTMLHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -69,8 +71,8 @@
           <w-item tag="label">
             <blueprint-icon icon="link" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.linkify`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.linkifyHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.linkify`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.linkifyHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -85,8 +87,8 @@
           <w-item tag="label">
             <blueprint-icon icon="enter-key" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.lineBreaks`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.lineBreaksHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.lineBreaks`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.lineBreaksHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -101,15 +103,15 @@
           <w-item>
             <blueprint-icon icon="width" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.tabWidth`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.tabWidthHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.tabWidth`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.tabWidthHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section side>
               <w-input
                 type="number"
                 min="1"
                 max="8"
-                style="width: 100px;"
+                style="width: 100px"
                 outlined
                 v-model="state.config.tabWidth"
                 dense
@@ -120,12 +122,12 @@
           <w-item>
             <blueprint-icon icon="math" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.inlineMath`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.inlineMathHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.inlineMath`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.inlineMathHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-select
-                style="width: 200px;"
+                style="width: 200px"
                 outlined
                 v-model="state.config.inlineMath"
                 :options="inlineMathEngines"
@@ -140,8 +142,10 @@
           <w-item>
             <blueprint-icon icon="data-sheet" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.multimdTable`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.multimdTableHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.multimdTable`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.editors.markdown.multimdTableHint`)
+              }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -156,8 +160,8 @@
           <w-item tag="label">
             <blueprint-icon icon="right-navigation-toolbar" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.minimap`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.minimapHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.minimap`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.minimapHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -172,8 +176,8 @@
           <w-item tag="label">
             <blueprint-icon icon="asterisk" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.typographer`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.typographerHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.typographer`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.typographerHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -189,12 +193,12 @@
             <w-item tag="label">
               <blueprint-icon icon="quote-left" />
               <w-item-section>
-                <w-item-label>{{t(`admin.editors.markdown.quotes`)}}</w-item-label>
-                <w-item-label caption>{{t(`admin.editors.markdown.quotesHint`)}}</w-item-label>
+                <w-item-label>{{ t(`admin.editors.markdown.quotes`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.editors.markdown.quotesHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section avatar>
                 <w-select
-                  style="width: 200px;"
+                  style="width: 200px"
                   outlined
                   v-model="state.config.quotes"
                   :options="quoteStyles"
@@ -210,8 +214,8 @@
           <w-item tag="label">
             <blueprint-icon icon="underline" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.underline`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.underlineHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.underline`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.underlineHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -226,8 +230,8 @@
           <w-item tag="label">
             <blueprint-icon icon="tree-structure" />
             <w-item-section>
-              <w-item-label>{{t(`admin.editors.markdown.wikiLinks`)}}</w-item-label>
-              <w-item-label caption>{{t(`admin.editors.markdown.wikiLinksHint`)}}</w-item-label>
+              <w-item-label>{{ t(`admin.editors.markdown.wikiLinks`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.editors.markdown.wikiLinksHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -239,9 +243,7 @@
             </w-item-section>
           </w-item>
         </w-card>
-        <w-inner-loading :showing="state.loading > 0">
-          <w-spinner color="accent" size="lg" />
-        </w-inner-loading>
+        <w-inner-loading :showing="state.loading > 0" spinner-class="text-accent" />
       </w-page>
     </w-page-container>
   </w-layout>

@@ -62,9 +62,7 @@
             </w-item-section>
           </w-item>
         </w-card>
-        <w-inner-loading :showing="state.loading > 0">
-          <w-spinner color="accent" size="lg" />
-        </w-inner-loading>
+        <w-inner-loading :showing="state.loading > 0" spinner-class="text-accent" />
       </w-page>
     </w-page-container>
   </w-layout>

@@ -2,7 +2,7 @@
   <w-layout view="hHh lpR fFf" container>
     <w-header class="card-header px-4 py-2">
       <w-icon name="img:/_assets/icons/ultraviolet-markdown.svg" left size="md" />
-      <span>{{t('editor.settings.markdown')}}</span>
+      <span>{{ t('editor.settings.markdown') }}</span>
       <w-space />
       <w-btn
         class="mr-2"
@@ -23,7 +23,9 @@
           icon="la:redo-alt"
           @click="load"
           :loading="state.loading > 0">
-          <w-tooltip anchor="center left" self="center right">{{t(`common.actions.refresh`)}}</w-tooltip>
+          <w-tooltip anchor="center left" self="center right">{{
+            t(`common.actions.refresh`)
+          }}</w-tooltip>
         </w-btn>
         <w-btn
           push
@@ -45,13 +47,15 @@
       </w-btn-group>
     </w-header>
     <w-page-container>
-      <w-page class="p-4" style="max-width: 1200px; margin: 0 auto;">
+      <w-page class="p-4" style="max-width: 1200px; margin: 0 auto">
         <w-card class="shadow-1 py-2">
           <w-item tag="label">
             <blueprint-icon icon="enter-key" />
             <w-item-section>
-              <w-item-label>{{t(`editor.settings.markdownPreviewShown`)}}</w-item-label>
-              <w-item-label caption>{{t(`editor.settings.markdownPreviewShownHint`)}}</w-item-label>
+              <w-item-label>{{ t(`editor.settings.markdownPreviewShown`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`editor.settings.markdownPreviewShownHint`)
+              }}</w-item-label>
             </w-item-section>
             <w-item-section avatar>
               <w-toggle
@@ -66,15 +70,15 @@
           <w-item>
             <blueprint-icon icon="width" />
             <w-item-section>
-              <w-item-label>{{t(`editor.settings.markdownFontSize`)}}</w-item-label>
-              <w-item-label caption>{{t(`editor.settings.markdownFontSizeHint`)}}</w-item-label>
+              <w-item-label>{{ t(`editor.settings.markdownFontSize`) }}</w-item-label>
+              <w-item-label caption>{{ t(`editor.settings.markdownFontSizeHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section side>
               <w-input
                 type="number"
                 min="10"
                 max="32"
-                style="width: 100px;"
+                style="width: 100px"
                 outlined
                 v-model="state.config.fontSize"
                 dense
@@ -82,9 +86,7 @@
             </w-item-section>
           </w-item>
         </w-card>
-        <w-inner-loading :showing="state.loading > 0">
-          <w-spinner color="accent" size="lg" />
-        </w-inner-loading>
+        <w-inner-loading :showing="state.loading > 0" spinner-class="text-accent" />
       </w-page>
     </w-page-container>
   </w-layout>
