@@ -127,8 +127,7 @@ path in silence.
   served for it (see [The app shell and SEO](#the-app-shell-and-seo)).
 - `types/` — ambient declarations: `global.d.ts` (the `WIKI` global) and `fastify.d.ts` (session +
   route-permission augmentations).
-- `locales/` — `en.json` source strings (CrowdIn-managed) + `metadata.js` language table (the one
-  remaining JavaScript file; typed by its sibling `metadata.d.ts`).
+- `locales/` — `en.json` source strings (CrowdIn-managed).
 
 ### `frontend/`
 
@@ -399,8 +398,7 @@ Consequences of type stripping, all enforced by `backend/tsconfig.json`:
   to load a value that doesn't exist. (`verbatimModuleSyntax`)
 
 `allowJs` is **off** — the backend is fully TypeScript, so a stray `.js` file would silently escape
-type checking rather than be quietly tolerated. `locales/metadata.js` is the sole exception and is
-resolved through its sibling `metadata.d.ts`.
+type checking rather than be quietly tolerated.
 
 `backend/types/global.d.ts` declares the ambient `WIKI` global as the `WikiGlobal` interface, wired
 to the real module types (`WIKI.db` is the Drizzle instance, `WIKI.models` is `models/index.ts`, and
@@ -1844,20 +1842,3 @@ every instance; nothing here is captured at boot.
 - **Runtime metrics are this instance's; wiki metrics are the cluster's.** In an HA set a scrape lands
   on whichever instance answered, which is what `wiki_info`'s `instance` label and
   `wiki_start_time_seconds` are for.
-
-### GraphQL is being removed
-
-An earlier iteration of 3.x used GraphQL/Apollo. **All of it is deprecated** — there is no GraphQL
-server left in `backend/`, and `APOLLO_CLIENT` is not defined as a global, so any call still going
-through it throws.
-
-**Nothing calls it any more.** The last one was `pages/AdminNavigation.vue`, an admin screen that was
-already experimental, disabled in the nav and broken twice over (its `save()` went through
-`APOLLO_CLIENT.mutate`, and it called `this.$store.commit(...)` nine times in a `<script setup>` file
-with no Vuex store anywhere in the app). It was deleted along with its route when `manage:navigation`
-became a page rule — navigation is edited from the sidebar of the page it belongs to, through
-`api/navigation.ts`. `grep APOLLO_CLIENT frontend/src` now finds nothing.
-
-If you find yourself wanting a GraphQL endpoint, add a REST one under `backend/api/` following the
-schema + permissions conventions above instead — `sites/:siteId/images/:kind`, which replaced the logo
-and favicon upload mutations in `AdminGeneral.vue`, is an example of doing exactly that.

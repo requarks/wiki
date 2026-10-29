@@ -173,10 +173,6 @@ const routes = [
     path: '/_error/:action?',
     component: () => import('@/pages/ErrorGeneric.vue')
   },
-  // {
-  //   path: '/_unknown-site',
-  //   component: () => import('../pages/UnknownSite.vue')
-  // },
 
   // --------------------------------
   // CREATE

@@ -1751,8 +1751,6 @@
   "admin.utilities.generateSampleHint": "Fill this site with pages covering every kind of formatting and every block, in a folder tree several levels deep, a page with a busy discussion on it, plus a blog at /my-blog with 25 posts under it, and a home page linking to all of it if the site has none. Mostly for development / debugging purposes.",
   "admin.utilities.generateSamplePartial": "No sample pages could be written. | Wrote 1 sample page; the rest could not be written. | Wrote {count} sample pages; the rest could not be written.",
   "admin.utilities.generateSampleSuccess": "No sample pages were written. | Wrote 1 sample page. | Wrote {count} sample pages.",
-  "admin.utilities.graphEndpointSubtitle": "Change the GraphQL endpoint for Wiki.js",
-  "admin.utilities.graphEndpointTitle": "GraphQL Endpoint",
   "admin.utilities.groupAuthentication": "Authentication",
   "admin.utilities.groupMaintenance": "Maintenance",
   "admin.utilities.groupMigration": "Migration / Backup",
