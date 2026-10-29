@@ -1,10 +1,15 @@
 import { mergeWith, toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
 import {
+  approvalRules as approvalRulesTable,
   blocks as blocksTable,
+  navigation as navigationTable,
+  pageHistory as pageHistoryTable,
+  pageLinks as pageLinksTable,
   siteAssets as siteAssetsTable,
   sites as sitesTable,
-  storage as storageTable
+  storage as storageTable,
+  tags as tagsTable
 } from '../db/schema.ts'
 import { and, eq } from 'drizzle-orm'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
@@ -476,15 +481,35 @@ class Sites {
   }
 
   async deleteSite(id: string): Promise<boolean> {
-    // -> Block, storage and uploaded image rows belong to the site rather than to its content, and
-    //    their FK has no cascade, so they would otherwise block the delete. Content tables (pages,
-    //    assets, ...) deliberately still do — see the conflict handling in the route.
-    await WIKI.db.delete(blocksTable).where(eq(blocksTable.siteId, id))
-    await WIKI.db.delete(storageTable).where(eq(storageTable.siteId, id))
-    await WIKI.db.delete(siteAssetsTable).where(eq(siteAssetsTable.siteId, id))
-
-    const deletedResult = await WIKI.db.delete(sitesTable).where(eq(sitesTable.id, id))
-    if ((deletedResult.rowCount ?? 0) < 1) {
+    // -> Block, storage, uploaded image, navigation, approval rule and tag rows belong to the site
+    //    rather than to its content, and their FK has no cascade, so they would otherwise block the
+    //    delete — `createSite` itself writes the site's menu, so not even an empty site could go.
+    //    Content tables (pages, assets, the tree) deliberately still do — see the conflict handling
+    //    in the route — and one transaction is what keeps a refused delete from having already wiped
+    //    the site's configuration, or its deleted pages' history, on its way to the refusal.
+    const deleted = await WIKI.db.transaction(async (tx) => {
+      await tx.delete(blocksTable).where(eq(blocksTable.siteId, id))
+      await tx.delete(storageTable).where(eq(storageTable.siteId, id))
+      await tx.delete(siteAssetsTable).where(eq(siteAssetsTable.siteId, id))
+      // -> A site's own menus, and whatever menus of tree entries are left once the tree is empty
+      //    (`navigation.deleteOrphanedMenus` off). Any entry still standing refuses the delete below
+      await tx.delete(navigationTable).where(eq(navigationTable.siteId, id))
+      await tx.delete(approvalRulesTable).where(eq(approvalRulesTable.siteId, id))
+      // -> The tag list a page's tags are picked from. Pages hold their tags as text, so nothing
+      //    references these rows, and nothing deletes one when the last page using it goes
+      await tx.delete(tagsTable).where(eq(tagsTable.siteId, id))
+      // -> The versions of pages already deleted, which outlive them so that they can be restored —
+      //    into this site, which is going. A live page's versions go only if the page does, and a
+      //    live page refuses the delete below
+      await tx.delete(pageHistoryTable).where(eq(pageHistoryTable.siteId, id))
+      // -> Links written on another site's pages into this one. Once it is gone they lead out of the
+      //    wiki, and a link that does is not recorded at all — so this is what a re-save of the page
+      //    would leave too, rather than this site staying undeletable while anybody links to it
+      await tx.delete(pageLinksTable).where(eq(pageLinksTable.targetSiteId, id))
+      const result = await tx.delete(sitesTable).where(eq(sitesTable.id, id))
+      return (result.rowCount ?? 0) > 0
+    })
+    if (!deleted) {
       return false
     }
 

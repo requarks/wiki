@@ -828,8 +828,8 @@ async function routes(app: FastifyInstance) {
           reply.badRequest('Site does not exist.')
         }
       } catch (err: any) {
-        // -> Pages, assets, navigation, tags and the page tree all reference the site without a
-        //    cascade, so a site still holding content cannot be removed. That is a conflict to
+        // -> Pages, assets and the page tree all reference the site without a cascade, so a site
+        //    still holding content cannot be removed. That is a conflict to
         //    report, not a server fault.
         if (err.cause?.code === '23503' || err.code === '23503') {
           return reply.conflict(
