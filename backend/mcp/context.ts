@@ -87,8 +87,8 @@ export function mayReadSource(ctx: McpContext, page: RulePageRef): boolean {
  * session to record the unlock on, and a password is not something to hand to a model — so this is
  * the only way past one.
  */
-export function mayBypassPassword(ctx: McpContext): boolean {
-  return PASSWORD_BYPASS.some((permission) => ctx.actor.permissions.includes(permission))
+export function mayBypassPassword(ctx: McpContext, page: RulePageRef): boolean {
+  return PASSWORD_BYPASS.some((permission) => mayOnPage(ctx, permission, page))
 }
 
 /**

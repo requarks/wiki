@@ -78,10 +78,7 @@ export default {
         console.info(chalk.blue('DB_PASS_FILE is defined. Will use secret from file.'))
       }
       try {
-        // FIXME: pre-existing bug — `.trim()` is called on the Promise rather than on the resolved
-        // string, so this always throws and DB_PASS_FILE never works. Preserved as-is to keep the
-        // TypeScript migration behavior-neutral; the fix is `(await fs.readFile(...)).trim()`.
-        appconfig.db.pass = await (fs.readFile(process.env.DB_PASS_FILE, 'utf8') as any).trim()
+        appconfig.db.pass = (await fs.readFile(process.env.DB_PASS_FILE, 'utf8')).trim()
       } catch (err: any) {
         console.error(
           chalk.red.bold(

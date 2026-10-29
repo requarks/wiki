@@ -52,7 +52,7 @@ async function loadRateable(
     siteId: req.params.siteId,
     id: req.params.pageId,
     unpublished: unpublishedFor(req),
-    unlocked: (id: string) => unlockedFor(req, id)
+    unlocked: (target) => unlockedFor(req, target)
   })
   if (!page || !mayOnPage(req, 'read:pages', page)) {
     reply.notFound('This page does not exist.')

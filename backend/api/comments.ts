@@ -366,7 +366,7 @@ async function routes(app: FastifyInstance) {
         authorId: req.params.userId,
         actor: WIKI.models.groups.actorForRequest(req),
         unpublished: unpublishedFor(req),
-        unlocked: (pageId) => unlockedFor(req, pageId),
+        unlocked: (target) => unlockedFor(req, target),
         offset: req.query.offset,
         limit: req.query.limit
       })
@@ -1127,7 +1127,7 @@ async function requireBuiltInPage(
     reply.notFound('This page does not exist.')
     return null
   }
-  if (!passwordSatisfied(req, reply, { id: ref.id, isProtected })) {
+  if (!passwordSatisfied(req, reply, { ...ref, isProtected })) {
     return null
   }
   return ref
@@ -1147,9 +1147,9 @@ async function requireBuiltInPage(
 function passwordSatisfied(
   req: FastifyRequest,
   reply: FastifyReply,
-  page: { id: string; isProtected: boolean }
+  page: RulePageRef & { id: string; isProtected: boolean }
 ): boolean {
-  if (page.isProtected && !unlockedFor(req, page.id)) {
+  if (page.isProtected && !unlockedFor(req, page)) {
     reply.forbidden('This page is password protected.')
     return false
   }
@@ -1182,14 +1182,20 @@ async function requireWritableComment(
     reply.notFound('This comment does not exist.')
     return null
   }
-  if (!passwordSatisfied(req, reply, { id: comment.pageId, isProtected: comment.isProtected })) {
-    return null
-  }
   const page = {
     siteId: req.params.siteId,
     path: comment.path,
     locale: comment.locale,
     tags: comment.tags ?? []
+  }
+  if (
+    !passwordSatisfied(req, reply, {
+      ...page,
+      id: comment.pageId,
+      isProtected: comment.isProtected
+    })
+  ) {
+    return null
   }
   if (mayOnPage(req, 'manage:comments', page)) {
     return comment
@@ -1229,16 +1235,20 @@ async function requireAnnotation(
     reply.notFound('This annotation does not exist.')
     return null
   }
-  if (
-    !passwordSatisfied(req, reply, { id: annotation.pageId, isProtected: annotation.isProtected })
-  ) {
-    return null
-  }
   const page = {
     siteId: req.params.siteId,
     path: annotation.path,
     locale: annotation.locale,
     tags: annotation.tags ?? []
+  }
+  if (
+    !passwordSatisfied(req, reply, {
+      ...page,
+      id: annotation.pageId,
+      isProtected: annotation.isProtected
+    })
+  ) {
+    return null
   }
   if (
     mayOnPage(req, 'manage:comments', page) ||

@@ -138,12 +138,6 @@ export interface SearchPagesParams {
    * expression or on a page's tags, neither of which a `WHERE` clause here could express.
    */
   actor?: AccessActor
-  /**
-   * Keep a password-protected page's *body* out of the results, for a searcher who would have to enter
-   * the password to read it. The page itself still appears — its title and description are not what
-   * the password covers — but it can only be matched on those, and comes back with no excerpt.
-   */
-  hideProtectedContent?: boolean
 }
 
 export interface PageSuggestion {
@@ -344,7 +338,6 @@ class Search {
     offset = 0,
     limit = 25,
     unpublished = false,
-    hideProtectedContent = true,
     actor
   }: SearchPagesParams): Promise<SearchPagesResult> {
     const terms = query.trim()
@@ -384,9 +377,11 @@ class Search {
     if (!checkUnpublished) {
       conditions.push(liveNow)
     }
-    if (hideProtectedContent && hasQuery) {
+    if (hasQuery) {
       /*
-        A protected page is findable by name, not by what it says.
+        A protected page is findable by name, not by what it says — for every searcher, including
+        whoever could open it without the password: a search result is not the page, and one rule for
+        everybody is what keeps the results from depending on who is asking.
 
         `indexPage` stores the three parts of a page under distinct weights — title `A`, description
         `B`, body `C` — so `ts_filter` can drop the body and ask whether the query still matches. A
@@ -450,19 +445,24 @@ class Search {
     const headline = sql`ts_headline(${dict}, coalesce(p."searchContent", ''), ${tsQuery},
       ${`StartSel=${HL_START},StopSel=${HL_STOP},MaxWords=25,MinWords=10,MaxFragments=1`})`
     /*
-      The excerpt is cut from the page's own text, so a protected page has none to give a searcher who
-      would be shown a lock screen on the page itself. `CASE` rather than a filter on the rows: the page
-      still belongs in the results, it just arrives without the part the password covers.
+      The excerpt is cut from the page's own text, which is what the password covers, so a protected
+      page never has one. `CASE` rather than a filter on the rows: the page still belongs in the
+      results, it just arrives without the part the password covers.
     */
     const highlight =
       !hasQuery || !termHighlighting
         ? sql`NULL`
-        : hideProtectedContent
-          ? sql`CASE WHEN p.password IS NULL THEN ${headline} ELSE NULL END`
-          : headline
+        : sql`CASE WHEN p.password IS NULL THEN ${headline} ELSE NULL END`
 
     const where = sql.join(conditions, sql` AND `)
-    const relevancy = hasQuery ? sql`ts_rank(p.ts, ${tsQuery})` : sql`0`
+    /*
+      A protected page is ranked on its title and description alone, for the reason it is only matched
+      on them: a rank lifted by a term in its body would say the term is in there. Decided per row, so
+      a page with no password is ranked on everything, as before.
+    */
+    const relevancy = hasQuery
+      ? sql`ts_rank(CASE WHEN p.password IS NULL THEN p.ts ELSE ts_filter(p.ts, '{a,b}') END, ${tsQuery})`
+      : sql`0`
 
     /*
       Which pages this searcher may read is decided BEFORE the results are paged, never after.

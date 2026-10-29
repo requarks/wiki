@@ -136,18 +136,14 @@ async function routes(app: FastifyInstance) {
       if (req.params.siteIdorHostname === 'current' && req.hostname) {
         site = await WIKI.models.sites.getSiteByHostname({
           hostname: req.hostname,
-          // FIXME: see the note below — `req.querystring` is not a Fastify property.
-          strict: (req as any).querystring?.strict ?? false
+          strict: req.query.strict
         })
       } else if (uuidValidate(req.params.siteIdorHostname)) {
         site = await WIKI.models.sites.getSiteById({ id: req.params.siteIdorHostname })
       } else {
         site = await WIKI.models.sites.getSiteByHostname({
           hostname: req.params.siteIdorHostname,
-          // FIXME: pre-existing bug — Fastify exposes the parsed query string as `req.query`, not
-          // `req.querystring`, so `strict` is always undefined here and the lookup is never strict.
-          // Preserved as-is to keep the migration behavior-neutral; the fix is `req.query.strict`.
-          strict: (req as any).querystring?.strict ?? false
+          strict: req.query.strict
         })
       }
       if (site) {

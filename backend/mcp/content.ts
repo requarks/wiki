@@ -120,7 +120,7 @@ export async function loadReadablePage(
     id,
     withContent: withContent ? (target) => mayReadSource(ctx, target) : false,
     unpublished: unpublishedFor(ctx),
-    unlocked: mayBypassPassword(ctx),
+    unlocked: (target) => mayBypassPassword(ctx, target),
     withPassword: false
   })
   if (!page || !mayOnPage(ctx, 'read:pages', page)) {

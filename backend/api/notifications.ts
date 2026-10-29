@@ -109,7 +109,7 @@ async function routes(app: FastifyInstance) {
       }
       return WIKI.models.notifications.list(userId, siteId, {
         ...req.query,
-        unlocked: (pageId) => unlockedFor(req, pageId)
+        unlocked: (target) => unlockedFor(req, target)
       })
     }
   )

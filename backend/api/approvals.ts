@@ -19,8 +19,8 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
     id: pageId,
     withContent: true,
     unpublished: unpublishedFor(req),
-    unlocked: (id: string) => unlockedFor(req, id),
-    withPassword: mayBypassPassword(req)
+    unlocked: (target) => unlockedFor(req, target),
+    withPassword: (target) => mayBypassPassword(req, target)
   })
   /*
     Reading the page comes first, for suggesting an edit to it and for reviewing one alike: neither is

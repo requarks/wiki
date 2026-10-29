@@ -1616,11 +1616,13 @@ class Pages {
    * are exactly two: the `GET` route, and `unlockPage` below.
    *
    * @param unlocked Whether the password has been satisfied for this requester. Route-level concern:
-   *                 see `unlockedFor` in `api/pages.ts`. A function is called with the page's id once
-   *                 the row is in hand, which is what lets a caller answer per page even though it
-   *                 asked for the page by path hash.
+   *                 see `unlockedFor` in `api/pages.ts`. A function is called with the page once the
+   *                 row is in hand, which is what lets a caller answer per page even though it asked
+   *                 for the page by path hash — and answer by page rule, since whoever may edit the
+   *                 page is not asked for its password.
    * @param withPassword Whether to include the password value. For whoever may edit the page — not for
-   *                     a reader who just entered it, who needs it no more after that.
+   *                     a reader who just entered it, who needs it no more after that. A function is
+   *                     asked of the page, as `unlocked` is.
    */
   /**
    * The pages touched most recently, newest first — what the admin dashboard's panel is built from.
@@ -2018,8 +2020,8 @@ class Pages {
      * reader passes one.
      */
     unpublished?: boolean | ((page: RulePageRef) => boolean)
-    unlocked?: boolean | ((pageId: string) => boolean)
-    withPassword?: boolean
+    unlocked?: boolean | ((page: RulePageRef & { id: string }) => boolean)
+    withPassword?: boolean | ((page: RulePageRef) => boolean)
   }): Promise<Page | null> {
     const conditions = [eq(pagesTable.siteId, siteId)]
     if (unpublished === false) {
@@ -2070,8 +2072,10 @@ class Pages {
     if (!row.isLive && typeof unpublished === 'function' && !unpublished(ref)) {
       return null
     }
-    const isUnlocked = typeof unlocked === 'function' ? unlocked(row.page.id) : unlocked
+    const isUnlocked =
+      typeof unlocked === 'function' ? unlocked({ ...ref, id: row.page.id }) : unlocked
     const includeContent = typeof withContent === 'function' ? withContent(ref) : withContent
+    const includePassword = typeof withPassword === 'function' ? withPassword(ref) : withPassword
     return this.toPage(
       {
         ...row.page,
@@ -2089,7 +2093,7 @@ class Pages {
       },
       {
         withContent: includeContent,
-        withPassword,
+        withPassword: includePassword,
         locked: Boolean(row.page.password) && !isUnlocked
       }
     )

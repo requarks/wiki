@@ -53,8 +53,9 @@ Full-text search is `searchPages` in `backend/models/search.ts`, served at
 - Access is checked **per row, before paging**: the query ranks every match while reading only the
   columns a rule looks at, filters them through `groups.checkAccess(actor, 'read:pages', …)` and the
   unpublished rule, and only then pages. `manage:system` skips the rules and gets database paging.
-- A password-protected page can only be matched on its title and description (`ts_filter(ts, '{a,b}')`)
-  and comes back with no excerpt.
+- A password-protected page can only be matched on its title and description (`ts_filter(ts, '{a,b}')`),
+  is ranked on them alone, and comes back with no excerpt — for every searcher, including whoever
+  could open it without the password. A page with no password is ranked on its whole index.
 - `isSearchable = false` keeps a page out of the results for everyone.
 
 `pg_trgm` was already in `REQUIRED_EXTENSIONS` (`core/db.ts`), with nothing using it.

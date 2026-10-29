@@ -841,7 +841,8 @@ refused, so an agent never writes over a version it did not read.
 ### 6.5 Locked and unpublished pages
 
 - **Password-protected pages** cannot be unlocked by an agent. `get_page` answers "locked" unless the
-  actor holds the bypass permissions; search uses `hideProtectedContent` as the search route does.
+  actor may edit the page; search matches a protected page on its title and description only, for
+  every caller, as the search route does.
 - **Pages that are not live** follow `helpers/publishing.ts`, through `unpublishedFor(req)` as every
   reader-facing route does. A personal token is its owner for that rule, so an agent sees a draft
   exactly where its owner holds `write:pages` or `manage:pages` — and an anonymous caller never does.

@@ -122,7 +122,7 @@ async function loadIdea(
     id: req.params.pageId,
     withContent: true,
     unpublished: unpublishedFor(req),
-    unlocked: (id: string) => unlockedFor(req, id)
+    unlocked: (target) => unlockedFor(req, target)
   })
   if (!page || !mayOnPage(req, 'read:pages', page)) {
     reply.notFound('This idea does not exist.')

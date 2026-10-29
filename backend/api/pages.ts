@@ -143,14 +143,14 @@ export function userRequired(req: FastifyRequest, action: string): string {
  * altogether, so asking them for it protects nothing. Everybody else — including a logged in reader —
  * has to enter it.
  *
- * Site-wide rather than per page, because per-path rules are not implemented. See the FIXME on the
- * page-permissions route below.
+ * `write:pages` and `manage:pages` are page permissions, so they are asked of the page itself
+ * (`mayBypassPassword`), never looked for in the group-wide list, which does not hold them.
  */
 export const PASSWORD_BYPASS = ['write:pages', 'manage:pages', 'manage:system']
 
-export function mayBypassPassword(req: FastifyRequest): boolean {
-  const permissions = req.apiKey?.permissions ?? req.session?.permissions ?? []
-  return PASSWORD_BYPASS.some((permission) => permissions.includes(permission))
+/** Whether this page's password is no barrier to this requester. */
+export function mayBypassPassword(req: FastifyRequest, page: RulePageRef): boolean {
+  return PASSWORD_BYPASS.some((permission) => mayOnPage(req, permission, page))
 }
 
 /**
@@ -159,8 +159,8 @@ export function mayBypassPassword(req: FastifyRequest): boolean {
  * The unlock is recorded on the session — server side, by page id — so that reading a page the reader
  * unlocked a moment ago does not ask again, and so that nothing the browser can set decides this.
  */
-export function unlockedFor(req: FastifyRequest, pageId: string): boolean {
-  return mayBypassPassword(req) || Boolean(req.session?.unlockedPages?.includes(pageId))
+export function unlockedFor(req: FastifyRequest, page: RulePageRef & { id: string }): boolean {
+  return mayBypassPassword(req, page) || Boolean(req.session?.unlockedPages?.includes(page.id))
 }
 
 /**
@@ -267,7 +267,7 @@ async function loadReadablePage(req: FastifyRequest, siteId: string, pageId: str
     siteId,
     id: pageId,
     unpublished: unpublishedFor(req),
-    unlocked: (id: string) => unlockedFor(req, id)
+    unlocked: (target) => unlockedFor(req, target)
   })
   // -> Not readable is indistinguishable from not there, for anything hanging off the page
   if (!page || !mayOnPage(req, 'read:pages', page)) {
@@ -486,7 +486,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Search pages',
         description:
-          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\nA password-protected page is listed like any other — its title and description are not what the password covers — but for a searcher who would have to enter that password it can only be matched on those two, never on the text behind the lock, and it comes back with no `highlight`.\n\n`creatorId` and `authorId` narrow the results to the pages of one person — who wrote a page and who touched it last are two different questions, and a public user profile asks both. They are a filter like any other, so a page marked as not searchable stays out of them too.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
+          'Postgres full-text search over the pages of a site, ranked by relevance. `query` may be left out, in which case the filters alone decide the results — which is what a search for nothing but tags is.\n\nReadable without a session, for the same reason reading a page is: an anonymous request only matches published pages. Drafts are included only for someone who may write pages. A page marked as not searchable never appears, whoever is asking.\n\nA password-protected page is listed like any other — its title and description are not what the password covers — but it can only be matched on those two, never on the text behind the lock, and it comes back with no `highlight` — for every searcher, including one who could open the page without the password.\n\n`creatorId` and `authorId` narrow the results to the pages of one person — who wrote a page and who touched it last are two different questions, and a public user profile asks both. They are a filter like any other, so a page marked as not searchable stays out of them too.\n\n`highlight` is an excerpt with the matched terms wrapped in `<b>`, and is the only field carrying markup — the excerpt is escaped before those are added. It is absent unless term highlighting is enabled in the search settings.',
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -622,11 +622,7 @@ async function routes(app: FastifyInstance) {
         actor: WIKI.models.groups.actorForRequest(req),
         // -> The page view's rule, asked per result: a page that is not live is only listed for
         //    whoever may edit it, and never without a session
-        unpublished: Boolean(actorFrom(req)),
-        // -> Same rule as the page view: a protected page's text is for whoever holds the password, and
-        //    a search excerpt is that text. Its title and description are not covered, so the page is
-        //    still listed — see `hideProtectedContent`.
-        hideProtectedContent: !mayBypassPassword(req)
+        unpublished: Boolean(actorFrom(req))
       })
     }
   )
@@ -835,7 +831,7 @@ async function routes(app: FastifyInstance) {
         hash: generatePathHash(path || 'home'),
         locale: req.query.locale,
         unpublished: unpublishedFor(req),
-        unlocked: (pageId) => unlockedFor(req, pageId),
+        unlocked: (target) => unlockedFor(req, target),
         withPassword: false
       })
       if (!page) {
@@ -1000,8 +996,8 @@ async function routes(app: FastifyInstance) {
         //    edit it — which is what keeps its render and its source alike from a reader
         unpublished: unpublishedFor(req),
         // -> Answered once the page is known, since a hash does not say which page it is yet
-        unlocked: (pageId) => unlockedFor(req, pageId),
-        withPassword: mayBypassPassword(req)
+        unlocked: (target) => unlockedFor(req, target),
+        withPassword: (target: RulePageRef) => mayBypassPassword(req, target)
       })
       if (!page) {
         return reply.notFound('This page does not exist.')
@@ -2251,7 +2247,15 @@ async function routes(app: FastifyInstance) {
           return reply.notFound('This version does not exist.')
         }
         // -> As for a live page: a password guarded the content, and the bin is not a way around it
-        if (deletion.meta.password && !mayBypassPassword(req)) {
+        if (
+          deletion.meta.password &&
+          !mayBypassPassword(req, {
+            siteId: req.params.siteId,
+            path: deletion.path,
+            locale: deletion.locale,
+            tags: deletion.meta.tags
+          })
+        ) {
           return reply.forbidden('This page is password protected.')
         }
         return {

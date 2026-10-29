@@ -1,5 +1,5 @@
 import { normalizePagePath } from '../../helpers/common.ts'
-import { mayBypassPassword, mayOnPage, pageUrl, unpublishedFor } from '../context.ts'
+import { mayOnPage, pageUrl, unpublishedFor } from '../context.ts'
 import { activeLocales, pageFields, primaryLocale, snippetFrom } from '../content.ts'
 import { jsonResult, ToolError } from '../tool.ts'
 import type { McpContext } from '../context.ts'
@@ -33,8 +33,7 @@ function searchAsCaller(ctx: McpContext) {
   return {
     siteId: ctx.siteId,
     actor: ctx.actor,
-    unpublished: Boolean(ctx.user),
-    hideProtectedContent: !mayBypassPassword(ctx)
+    unpublished: Boolean(ctx.user)
   }
 }
 

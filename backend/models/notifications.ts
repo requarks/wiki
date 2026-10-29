@@ -17,6 +17,7 @@ import {
   isCategoryKey
 } from '../notifications/index.ts'
 import type { NotificationCategoryKey } from '../notifications/index.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import { enqueueOnce } from '../notifications/queue.ts'
 import { readUnsubscribeToken } from '../notifications/unsubscribe.ts'
 import type { UnsubscribeClaim } from '../notifications/unsubscribe.ts'
@@ -442,7 +443,7 @@ class Notifications {
       cursor?: string
       unread?: boolean
       limit?: number
-      unlocked: (pageId: string) => boolean
+      unlocked: (page: RulePageRef & { id: string }) => boolean
     }
   ): Promise<{ entries: InboxEntry[]; next: string | null }> {
     const size = Math.min(Math.max(limit ?? INBOX_PAGE_SIZE, 1), INBOX_PAGE_MAX)
@@ -470,7 +471,11 @@ class Notifications {
         createdAt: notificationsTable.createdAt,
         updatedAt: notificationsTable.updatedAt,
         // -> Null where the page has gone, which leaves nothing behind a password
-        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean)
+        isProtected: sql<boolean>`${pagesTable.password} IS NOT NULL`.mapWith(Boolean),
+        // -> What a page rule looks at, since whoever may edit the page is not held to its password
+        pagePath: pagesTable.path,
+        pageLocale: pagesTable.locale,
+        pageTags: pagesTable.tags
       })
       .from(notificationsTable)
       .leftJoin(pagesTable, eq(pagesTable.id, notificationsTable.pageId))
@@ -481,11 +486,21 @@ class Notifications {
     const last = page[page.length - 1]
     return {
       entries: page.map((row) => {
-        const { readAt, data, isProtected, ...rest } = row
+        const { readAt, data, isProtected, pagePath, pageLocale, pageTags, ...rest } = row
         const { excerpt, ...snapshot } = (data ?? {}) as Record<string, unknown>
         // -> A comment's text only while the comment exists: deleting it takes it out of every inbox
         const quoted = Boolean(row.commentId) && excerpt !== undefined
-        const withheld = quoted && isProtected && !!row.pageId && !unlocked(row.pageId)
+        const withheld =
+          quoted &&
+          isProtected &&
+          !!row.pageId &&
+          !unlocked({
+            id: row.pageId,
+            siteId,
+            path: pagePath ?? '',
+            locale: pageLocale ?? undefined,
+            tags: pageTags ?? []
+          })
         return {
           ...rest,
           data: withheld

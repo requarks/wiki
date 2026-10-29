@@ -817,8 +817,8 @@ class Comments {
     authorId: string
     actor: AccessActor
     unpublished: false | ((page: RulePageRef) => boolean)
-    /** Whether this reader has satisfied the password of a protected page, by its id. */
-    unlocked: (pageId: string) => boolean
+    /** Whether this reader has satisfied the password of a protected page. */
+    unlocked: (page: RulePageRef & { id: string }) => boolean
     offset?: number
     limit?: number
   }): Promise<{ results: AuthoredCommentEntry[]; total: number }> {
@@ -857,7 +857,7 @@ class Comments {
           WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
           WIKI.models.groups.checkAccess(actor, 'read:comments', ref) &&
           (row.isLive || (unpublished !== false && unpublished(ref))) &&
-          (!row.isProtected || unlocked(row.pageId))
+          (!row.isProtected || unlocked({ ...ref, id: row.pageId }))
         pageVerdicts.set(row.pageId, verdict)
       }
       return verdict
