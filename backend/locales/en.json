@@ -1086,6 +1086,8 @@
   "admin.navigation.deleteOrphanedMenusHint": "Periodically delete navigation menus that are no longer used: not shown by any page or folder, and not opened by any menu item. The root navigation menu of a locale is never deleted.",
   "admin.navigation.deleteRootForbidden": "The root navigation menu of a locale cannot be deleted.",
   "admin.navigation.deleteSuccess": "Navigation menu deleted successfully.",
+  "admin.navigation.folderMenuOnFolderPage": "Folder Menu on the Folder's Own Page",
+  "admin.navigation.folderMenuOnFolderPageHint": "A page sharing its path with a folder shows that folder's navigation menu in the sidebar instead of the menu of the folder above, so a section's front page lists the section's own pages. Saving this re-resolves every such page.",
   "admin.navigation.general": "General",
   "admin.navigation.generalHint": "How the navigation menus of this site are displayed.",
   "admin.navigation.includeStorageOperations": "Trigger Automations on Storage Operations",

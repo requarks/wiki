@@ -337,6 +337,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             type: 'boolean',
             description:
               'Also run the automations for what an import or a storage sync does. Off, they run for what a person does and nothing else.'
+          },
+          folderMenuOnFolderPage: {
+            type: 'boolean',
+            description:
+              "Show a folder's menu on the page sharing the folder's path, while that page inherits its sidebar — instead of the menu of the folder above both, which is what every other page in that folder shows. Saving it resolves every such page again."
           }
         }
       },
