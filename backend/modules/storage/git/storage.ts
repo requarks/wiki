@@ -768,6 +768,11 @@ interface DiffEntry {
  * matter here are exactly what that reports: whether a path arrived, went, or moved. A summary of
  * insertions and deletions cannot tell a deleted file from one emptied to nothing, and 2.x guessed at
  * that from the line counts.
+ *
+ * A path `isIgnoredPath` rules out is left out here, as it is from Import Everything: a `.vscode/`
+ * folder is not a folder the wiki can create, and a `.editorconfig` is not an asset. A rename across
+ * that line keeps only the side the wiki can see, so moving a file into an ignored folder deletes it
+ * and moving one out of it adds it.
  */
 async function changedPaths(repo: Repo, from: string, to: string): Promise<DiffEntry[]> {
   const raw = await repo.git.raw(['diff', '--name-status', '-M', '-z', from, to])
@@ -783,18 +788,27 @@ async function changedPaths(repo: Repo, from: string, to: string): Promise<DiffE
       if (!current) {
         break
       }
-      entries.push({
-        status: 'R',
-        segments: current.split('/'),
-        previousSegments: previous.split('/')
-      })
+      const segments = current.split('/')
+      const previousSegments = previous.split('/')
+      if (isIgnoredPath(previousSegments)) {
+        if (!isIgnoredPath(segments)) {
+          entries.push({ status: 'A', segments })
+        }
+      } else if (isIgnoredPath(segments)) {
+        entries.push({ status: 'D', segments: previousSegments })
+      } else {
+        entries.push({ status: 'R', segments, previousSegments })
+      }
       continue
     }
     const file = fields[i++]
     if (!file) {
       break
     }
-    entries.push({ status: status[0], segments: file.split('/') })
+    const segments = file.split('/')
+    if (!isIgnoredPath(segments)) {
+      entries.push({ status: status[0], segments })
+    }
   }
   return entries
 }

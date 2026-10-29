@@ -270,7 +270,10 @@ misconfigured one reads healthy until something is actually asked of it.
   that has never seen it. The fetch is the only network a read can cost, and only on a cold instance.
 - **The diff, not the tree.** Incoming changes come from `git diff --name-status -M -z` between the
   commit the branch was on after the replay and the one it is on after the rebase — a sync runs every few minutes and cannot read
-  every file each time. `-z` because a path may contain anything, newlines included.
+  every file each time. `-z` because a path may contain anything, newlines included. `changedPaths`
+  drops what `isIgnoredPath` rules out, as Import Everything's `ls-tree` does — a dot folder would
+  otherwise fail `folderNameFrom` and abort every sync after it, and a root dotfile would come in as
+  an asset with its dot stripped. A rename across that line keeps only the visible side.
 - **An empty commit is never made.** Most page saves do not change the stored form of the page (a
   re-publish, a tag reordered into the same order), and `commitPaths` checks `diff --cached` before
   committing so the history says what actually changed.
