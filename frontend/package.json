@@ -96,9 +96,9 @@
     "@vitejs/plugin-vue": "6.0.10",
     "js-yaml": "5.5.0",
     "npm-check-updates": "23.1.1",
-    "oxfmt": "0.74.0",
-    "oxlint": "1.89.0",
-    "sass": "1.106.1",
+    "oxfmt": "0.75.0",
+    "oxlint": "1.90.0",
+    "sass": "1.107.0",
     "unicode-emoji-json": "0.9.0",
     "vite": "8.3.5",
     "vite-plugin-vue-devtools": "8.2.1"

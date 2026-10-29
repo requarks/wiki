@@ -36,6 +36,7 @@ import logger from './core/logger.ts'
 import scheduler from './core/scheduler.ts'
 import { runStartupChecks } from './core/startupChecks.ts'
 import { grantsScope, requiredScope } from './models/personalTokens.ts'
+import { SESSION_MAX_AGE_DAYS } from './models/sessions.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
   isPageUrl,
@@ -427,7 +428,7 @@ async function initHTTPServer() {
     cookieName: 'wikiSession',
     cookie: {
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: SESSION_MAX_AGE_DAYS * 24 * 60 * 60 * 1000,
       secure: 'auto'
     },
     saveUninitialized: false,
@@ -442,6 +443,30 @@ async function initHTTPServer() {
       async set(sessionId: string, sessionData: any, clb: (err: any, result?: any) => void) {
         try {
           clb(null, await WIKI.models.sessions.set(sessionId, sessionData))
+        } catch (err: any) {
+          clb(err, null)
+        }
+      },
+      async compareAndSet(
+        sessionId: string,
+        expectedGeneration: string,
+        sessionData: any,
+        clb: (err: any, result?: any) => void
+      ) {
+        try {
+          if (
+            await WIKI.models.sessions.compareAndSet(sessionId, expectedGeneration, sessionData)
+          ) {
+            clb(null)
+          } else {
+            // -> ENOENT is what the plugin takes for "gone or replaced": it clears the cookie rather
+            //    than failing the request
+            clb(
+              Object.assign(new Error('The session does not exist or has changed'), {
+                code: 'ENOENT'
+              })
+            )
+          }
         } catch (err: any) {
           clb(err, null)
         }

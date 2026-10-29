@@ -52,6 +52,9 @@ export const SYSTEM_SCHEDULE: SystemScheduleEntry[] = [
   // -> Hourly, off the hour: an OAuth code lives minutes and an unused client a day, so neither is
   //    in anybody's way for long
   { task: 'purgeOauth', cron: '50 * * * *' },
+  // -> Hourly, off the hour: the cutoff is counted in days, so a session goes at most an hour after
+  //    it could last have been used
+  { task: 'purgeSessions', cron: '55 * * * *' },
   // -> Daily, for the same reason as the audit log: retention is counted in days
   { task: 'purgeNotifications', cron: '30 0 * * *' },
   // -> Daily, off the hour: every trigger is counted in days, so a rule is never more than a day late
