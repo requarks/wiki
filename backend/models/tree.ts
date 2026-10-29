@@ -1115,6 +1115,15 @@ class Tree {
 
     const movedPages = await this.refreshDescendantPaths(folder.siteId, folder.locale, newPath)
 
+    // -> A page sharing the folder's path keeps its own name, so the folder has left its side -- and
+    //    may have arrived beside another page, which shows its menu from now on
+    await WIKI.models.navigation.repointPagesBesideFolders(folder.siteId, folder)
+    await WIKI.models.navigation.repointPagesBesideFolders(folder.siteId, {
+      locale: folder.locale,
+      folderPath: folder.folderPath,
+      fileName: name
+    })
+
     // -> Only moved, never rewritten: none of these pages changed, so the copy a target holds is
     //    still the right contents at the wrong name
     for (const page of movedPages) {
@@ -1712,7 +1721,9 @@ class Tree {
       folderId: folder.id,
       locale: destinationLocale,
       folderPath: newParentPath,
-      fileName: folder.fileName
+      fileName: folder.fileName,
+      fromLocale: folder.locale,
+      fromFolderPath: oldParentPath
     })
 
     // -> The folder it left holds one fewer entry, and the one it arrived in holds one more
@@ -1857,6 +1868,8 @@ class Tree {
     // -> Any of them may have owned a sidebar menu keyed by its own id, the folder included
     await WIKI.models.navigation.deleteNavForEntries([...deleted.map((n) => n.id), folder.id])
     await WIKI.models.navigationAutomation.folderDeleted(folder.siteId, automatedFolder(folder))
+    // -> The page sharing its path stays, and showed the folder's menu until now
+    await WIKI.models.navigation.repointPagesBesideFolders(folder.siteId, folder)
 
     await this.countTowardsFolderAt(folder.siteId, folder.locale, folder.folderPath ?? '', -1)
 
@@ -1985,6 +1998,8 @@ class Tree {
     // -> And any may be opened by a menu item in the menu above it, as when deleted one at a time
     for (const row of deletedFolders) {
       await WIKI.models.navigationAutomation.folderDeleted(row.siteId, automatedFolder(row))
+      // -> A page sharing the folder's path is not empty, so it is still there, showing its menu
+      await WIKI.models.navigation.repointPagesBesideFolders(row.siteId, row)
     }
 
     WIKI.logger.debug(`Deleted ${deletedIds.length} empty folder(s).`)
@@ -2268,8 +2283,14 @@ class Tree {
 
     const name = await this.resolveName({ siteId, locale, path, type, fileName, onConflict })
     const fullPath = path ? `${decodeTreePath(path)}/${name}` : name
+    // -> A page beside a folder of the same name takes that folder's menu, as its own children do
     const navigationId = inheritNavigation
-      ? await WIKI.models.navigation.ancestorNavId(siteId, locale, path)
+      ? await WIKI.models.navigation.entryAncestorNavId(siteId, {
+          type,
+          locale,
+          folderPath: path,
+          fileName: name
+        })
       : undefined
 
     WIKI.logger.debug(`Adding ${type} ${fullPath} to tree...`)

@@ -221,7 +221,9 @@ class Sites {
           createFolderMenus: true,
           deleteOrphanedMenus: true,
           includeStorageOperations: true,
-          showParentLink: true
+          showParentLink: true,
+          // -> Off: a page beside a folder shows the same menu as its siblings unless asked otherwise
+          folderMenuOnFolderPage: false
         },
         assets: {
           logo: false,
@@ -576,7 +578,9 @@ class Sites {
           createFolderMenus: true,
           deleteOrphanedMenus: true,
           includeStorageOperations: true,
-          showParentLink: true
+          showParentLink: true,
+          // -> Off: a page beside a folder shows the same menu as its siblings unless asked otherwise
+          folderMenuOnFolderPage: false
         },
         assets: {
           logo: false,

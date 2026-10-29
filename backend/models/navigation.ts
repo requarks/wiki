@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql, type SQL } from 'drizzle-orm'
 import {
   navigation as navigationTable,
   pages as pagesTable,
@@ -113,6 +113,39 @@ export interface NavigationSummary {
 export interface NavigationPage {
   total: number
   menus: NavigationSummary[]
+}
+
+/**
+ * The entries of the tree, read as `tc`, that an entry sitting in `folderPath` may take its menu from:
+ * every page or folder at or above that path that overrides or hides — and, with `besideName`, the
+ * folder sharing the path of the page of that name, in any mode but `inherit`.
+ *
+ * The folder beside the page lies deeper than every other candidate, so ordering by
+ * `nlevel(tc."folderPath") DESC, (tc.tree = 'page') DESC` puts it first. Its exact modes count, unlike
+ * an ancestor's, since the page sharing its path is the one place an exact mode reaches.
+ *
+ * One condition for the single lookup (`ancestorNavId`) and for the pass over many pages at once
+ * (`repointPagesBesideFolders`), so that the two resolve alike.
+ *
+ * @param folderPath The encoded ltree path the entry sits in, as SQL: a parameter or a column
+ * @param besideName The page's own path name, as SQL, when the folder beside it is to count
+ */
+function menuSourceSql(folderPath: SQL, besideName: SQL | null): SQL {
+  const beside = besideName
+    ? sql`OR (tc.tree = 'folder' AND tc."folderPath" = ${folderPath} AND tc."fileName" = ${besideName}
+        AND tc."navigationMode" <> 'inherit')`
+    : sql``
+  return sql`tc.tree IN ('page', 'folder')
+    AND (((tc."folderPath" || ${treeLabelSql(sql`tc."fileName"`)}) @> ${folderPath}
+      AND tc."navigationMode" IN ('override', 'hide')) ${beside})`
+}
+
+/**
+ * Whether an entry is the home page at the site root, whose menu is the site-wide one of its locale
+ * rather than one of its own (see `updateNavigation`).
+ */
+function isSiteRootPage(entry: { type: string; folderPath: string | null; fileName: string }) {
+  return !entry.folderPath && entry.fileName === 'home' && entry.type === 'page'
 }
 
 /**
@@ -799,11 +832,12 @@ class Navigation {
   }
 
   /**
-   * The menu a tree entry falls back to: the nearest ancestor that overrides or hides, or the
-   * site-wide menu when nothing above it does either.
+   * The menu an entry at a place in the tree falls back to: the nearest ancestor that overrides or
+   * hides, or the site-wide menu when nothing above it does either.
    *
-   * What a page or folder is given when it is created or moved, as well as what a mode change
-   * repoints descendants to: an entry carries the menu it resolves to from the moment it exists.
+   * What a folder is given when it is created or moved, as well as what a mode change repoints
+   * descendants to: an entry carries the menu it resolves to from the moment it exists. A page asks
+   * `entryAncestorNavId` instead, which knows about the folder it may share its path with.
    *
    * A page and a folder may share a path, and both may override what is under it. The page wins the
    * tie, being the one a reader at that path sees and the one Edit Nav is offered on there — a folder's
@@ -813,20 +847,46 @@ class Navigation {
    * @param folderPath Encoded ltree path of the folder holding the entry, empty at the site root
    */
   async ancestorNavId(siteId: string, locale: string, folderPath: string): Promise<string | null> {
-    if (!folderPath) {
+    return this.resolveAncestorNavId(siteId, locale, folderPath, null)
+  }
+
+  /**
+   * The menu a given entry falls back to: `ancestorNavId` for where it sits, except that with the
+   * site's `folderMenuOnFolderPage` setting on, a page sharing its path with a folder takes that
+   * folder's menu (or none, when the folder hides) rather than the one above both of them — so that
+   * the page at a section's path shows the section's own children, as its descendants do. The home
+   * page at the site root is left out: its menu is the locale's site-wide one, whatever folder
+   * `home` holds.
+   */
+  async entryAncestorNavId(
+    siteId: string,
+    entry: { type: string; locale: string; folderPath: string | null; fileName: string }
+  ): Promise<string | null> {
+    const beside =
+      entry.type === 'page' && !isSiteRootPage(entry) && this.folderMenuOnFolderPage(siteId)
+        ? entry.fileName
+        : null
+    return this.resolveAncestorNavId(siteId, entry.locale, entry.folderPath ?? '', beside)
+  }
+
+  private async resolveAncestorNavId(
+    siteId: string,
+    locale: string,
+    folderPath: string,
+    besideName: string | null
+  ): Promise<string | null> {
+    if (!folderPath && !besideName) {
       return this.siteNavId(siteId, locale)
     }
     // -> Within the locale: the tree holds every translation side by side, so an override on the
     //    English `/guides` would otherwise decide what the French one below it shows
     const result = await WIKI.db.execute(sql`
-      SELECT "navigationId"
-      FROM tree
-      WHERE "siteId" = ${siteId}
-        AND "locale" = ${locale}
-        AND ("folderPath" || ${treeLabelSql(sql`"fileName"`)}) @> ${folderPath}::ltree
-        AND "navigationMode" IN ('override', 'hide')
-        AND tree IN ('page', 'folder')
-      ORDER BY nlevel("folderPath") DESC, (tree = 'page') DESC
+      SELECT tc."navigationId"
+      FROM tree tc
+      WHERE tc."siteId" = ${siteId}
+        AND tc."locale" = ${locale}
+        AND ${menuSourceSql(sql`${folderPath}::ltree`, besideName === null ? null : sql`${besideName}`)}
+      ORDER BY nlevel(tc."folderPath") DESC, (tc.tree = 'page') DESC
       LIMIT 1
     `)
     const rows = (result.rows ?? result) as any[]
@@ -843,8 +903,7 @@ class Navigation {
    * Null when the nearest ancestor hides the sidebar, which leaves nothing to inherit.
    */
   async inheritedNavId(siteId: string, pageId: string): Promise<string | null> {
-    const entry = await this.getEntry(siteId, pageId)
-    return this.ancestorNavId(siteId, entry.locale, entry.folderPath ?? '')
+    return this.entryAncestorNavId(siteId, await this.getEntry(siteId, pageId))
   }
 
   /**
@@ -888,7 +947,7 @@ class Navigation {
         tags: (entry.tags ?? []) as string[]
       }
     }
-    const navId = await this.ancestorNavId(siteId, entry.locale, folderPath)
+    const navId = await this.entryAncestorNavId(siteId, entry)
     if (!navId) {
       return null
     }
@@ -969,12 +1028,12 @@ class Navigation {
     const folderPath = entry.folderPath ?? ''
     // -> The home page at the root edits the site-wide menu FOR ITS LOCALE rather than one of its own,
     //    which is what makes it the menu every other page in that locale inherits
-    const isSiteRoot = folderPath === '' && entry.fileName === 'home' && entry.type === 'page'
+    const isSiteRoot = isSiteRootPage(entry)
     const ownNavId = isSiteRoot ? await this.siteNavId(siteId, entry.locale) : entry.id
     const label = encodeTreeLabel(entry.fileName)
     const fullPath = folderPath ? `${folderPath}.${label}` : label
 
-    const ancestorId = await this.ancestorNavId(siteId, entry.locale, folderPath)
+    const ancestorId = await this.entryAncestorNavId(siteId, entry)
 
     if (items) {
       /*
@@ -1071,6 +1130,17 @@ class Navigation {
       `)
     }
 
+    /*
+      The walk knows only ancestors, so a page beside a folder in this subtree is resolved again on its
+      own terms -- and so is the page beside this entry, which the walk never reaches and which an
+      exact mode changes as well, though nothing below is repointed for one.
+    */
+    await this.repointPagesBesideFolders(siteId, {
+      locale: entry.locale,
+      folderPath,
+      fileName: entry.fileName
+    })
+
     return { navigationMode: mode, navigationId: navId }
   }
 
@@ -1088,23 +1158,34 @@ class Navigation {
    *
    * Called after the rows are at their destination, since what is above them is what decides this.
    *
+   * The page sharing the folder's path does not travel with it: a move, a rename or a deletion of the
+   * folder leaves that page where it was, under its old name. It showed the folder's menu while the
+   * folder was beside it (see `entryAncestorNavId`), so the page at the old place and the one at the
+   * new place are each resolved again, as is every page beside a folder inside the subtree.
+   *
    * @param folderId The moved folder, whose own mode is considered along with its descendants'
    * @param locale The locale it now sits in
    * @param folderPath Encoded ltree path of its new parent, empty at the site root
    * @param fileName Its path name, which with `folderPath` is what its descendants sit under
+   * @param fromLocale The locale it sat in before the move
+   * @param fromFolderPath Encoded ltree path of its previous parent, empty at the site root
    */
   async repointMovedSubtree({
     siteId,
     folderId,
     locale,
     folderPath,
-    fileName
+    fileName,
+    fromLocale,
+    fromFolderPath
   }: {
     siteId: string
     folderId: string
     locale: string
     folderPath: string
     fileName: string
+    fromLocale: string
+    fromFolderPath: string
   }): Promise<void> {
     const inherited = await this.ancestorNavId(siteId, locale, folderPath)
     const label = encodeTreeLabel(fileName)
@@ -1136,6 +1217,103 @@ class Navigation {
             AND tc."navigationMode" IN ('override', 'hide')
         )
     `)
+
+    // -> The page left behind no longer has the folder beside it, the one at the destination now has,
+    //    and the walk above treated the pages beside folders inside the subtree as ordinary entries
+    await this.repointPagesBesideFolders(siteId, {
+      locale: fromLocale,
+      folderPath: fromFolderPath,
+      fileName
+    })
+    await this.repointPagesBesideFolders(siteId, { locale, folderPath, fileName })
+  }
+
+  /**
+   * Resolve again the menu of every inheriting page that shares its path with a folder: those at or
+   * under the path `under` names, or every one of the site when it names none. The page AT that path
+   * is resolved even with no folder beside it any more, which is what a deletion or a move leaves.
+   *
+   * The walks that repoint a subtree (`updateNavigation`, `repointMovedSubtree`) only know about
+   * ancestors, and a page beside a folder is not under it; a folder is moved, renamed and deleted
+   * without that page, too, so nothing that walks the folder's subtree reaches it. This puts each such
+   * page back on what `entryAncestorNavId` gives it, in one statement per locale.
+   *
+   * With `under`, nothing happens while the site's `folderMenuOnFolderPage` setting is off: such a page
+   * then resolves like its siblings, which is what the walks already gave it. Without it, the pass runs
+   * regardless of what the setting says, since that is what switching the setting calls for in either
+   * direction -- off, it gives the pages the menu of the folder above back.
+   *
+   * @param under The entry whose path, and everything under it, is to be resolved again: a folder that
+   *              changed, or the place one left or arrived at
+   */
+  async repointPagesBesideFolders(
+    siteId: string,
+    under?: { locale: string; folderPath: string | null; fileName: string }
+  ): Promise<void> {
+    const on = this.folderMenuOnFolderPage(siteId)
+    if (under && !on) {
+      return
+    }
+    const underPath = under
+      ? [under.folderPath, encodeTreeLabel(under.fileName)].filter(Boolean).join('.')
+      : null
+    const pagePath = sql`(p."folderPath" || ${treeLabelSql(sql`p."fileName"`)})`
+    const besideFolder = sql`EXISTS (
+      SELECT 1
+      FROM tree f
+      WHERE f."siteId" = p."siteId"
+        AND f."locale" = p."locale"
+        AND f.tree = 'folder'
+        AND f."folderPath" = p."folderPath"
+        AND f."fileName" = p."fileName"
+    )`
+    // -> The page at `under` itself is taken with or without a folder beside it: the folder may be
+    //    what has just gone
+    const besidePages = sql`
+      p."siteId" = ${siteId}
+        AND p.tree = 'page'
+        AND p."navigationMode" = 'inherit'
+        AND NOT (nlevel(p."folderPath") = 0 AND p."fileName" = 'home')
+        AND ${
+          underPath
+            ? sql`${pagePath} <@ ${underPath}::ltree AND (${pagePath} = ${underPath}::ltree OR ${besideFolder})`
+            : besideFolder
+        }
+    `
+    let locales = [under?.locale ?? '']
+    if (!under) {
+      const result = await WIKI.db.execute(
+        sql`SELECT DISTINCT p."locale" FROM tree p WHERE ${besidePages}`
+      )
+      locales = ((result.rows ?? result) as Array<{ locale: string }>).map((row) => row.locale)
+    }
+
+    for (const locale of locales) {
+      const siteNavId = await this.siteNavId(siteId, locale)
+      // -> No source at all is the site-wide menu; a source that hides is null, kept as such
+      await WIKI.db.execute(sql`
+        UPDATE tree t
+        SET "navigationId" = CASE WHEN src.id IS NULL THEN ${siteNavId} ELSE src."navigationId" END
+        FROM tree p
+        LEFT JOIN LATERAL (
+          SELECT tc.id, tc."navigationId"
+          FROM tree tc
+          WHERE tc."siteId" = p."siteId"
+            AND tc."locale" = p."locale"
+            AND ${menuSourceSql(sql`p."folderPath"`, on ? sql`p."fileName"` : null)}
+          ORDER BY nlevel(tc."folderPath") DESC, (tc.tree = 'page') DESC
+          LIMIT 1
+        ) src ON true
+        WHERE t.id = p.id
+          AND p."locale" = ${locale}
+          AND ${besidePages}
+      `)
+    }
+  }
+
+  /** Whether the site shows a folder's menu on the page sharing the folder's path. */
+  private folderMenuOnFolderPage(siteId: string): boolean {
+    return Boolean(WIKI.models.navigationAutomation.settingsFor(siteId).folderMenuOnFolderPage)
   }
 }
 
