@@ -1,10 +1,14 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { isEqual } from 'es-toolkit/predicate'
 import { validate as uuidValidate } from 'uuid'
 
 import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
+import { isImageEditingAvailable, NEUTRAL_ADJUST } from '../helpers/images.ts'
+import type { ImageAdjust, ImageOperation } from '../helpers/images.ts'
 import { INLINE_EXTS } from '../models/assets.ts'
+import type { Asset } from '../models/assets.ts'
 import { userRequired } from './pages.ts'
 
 const assetIdParam = {
@@ -52,6 +56,81 @@ function mayOnAsset(
     path: folder ? `${folder}/${asset.fileName}` : asset.fileName,
     locale: asset.locale
   })
+}
+
+/** A region of an image, as the edit route's operations take one. */
+const regionProperties = {
+  left: { type: 'integer', minimum: 0, maximum: 65535 },
+  top: { type: 'integer', minimum: 0, maximum: 65535 },
+  width: { type: 'integer', minimum: 1, maximum: 65535 },
+  height: { type: 'integer', minimum: 1, maximum: 65535 }
+}
+const regionRequired = ['left', 'top', 'width', 'height']
+
+/** One side of an `extend`. */
+const borderWidth = { type: 'integer', minimum: 0, maximum: 4096 }
+
+/**
+ * The part of the edit and resize routes that is the same: who may, from where to where, and the edit
+ * itself. Each route audits on its own, since the two are different actions in the log.
+ *
+ * @returns The original and the asset written, or null once a refusal has been sent on `reply`
+ */
+async function applyImageEdit(
+  req: FastifyRequest<{ Params: { siteId: string; assetId: string } }>,
+  reply: FastifyReply,
+  edit: {
+    operations: ImageOperation[]
+    adjust: ImageAdjust
+    mode: 'replace' | 'saveAs'
+    fileName?: string
+    quality: number
+    unchangedSince: Date | null
+    /** What the caller is doing, for the message refusing a request that acts as nobody. */
+    what: string
+  }
+): Promise<{ source: Asset; asset: Asset } | null> {
+  // -> Whatever is written records who wrote it, and an API key is not a who
+  const authorId = requestUserId(req)
+  if (!authorId) {
+    reply.unauthorized(userRequired(req, edit.what))
+    return null
+  }
+  const isSaveAs = edit.mode === 'saveAs'
+  if (isSaveAs && !edit.fileName) {
+    reply.badRequest('A file name is required to save the image as a new file.')
+    return null
+  }
+  const source = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
+  if (!source || !mayOnAsset(req, 'read:assets', source)) {
+    reply.notFound('This asset does not exist.')
+    return null
+  }
+  // -> Where the result lands: the file itself, or a new name beside it
+  const destination = {
+    folderPath: source.folderPath,
+    fileName: isSaveAs ? edit.fileName! : source.fileName,
+    locale: source.locale
+  }
+  if (!mayOnAsset(req, 'write:assets', destination)) {
+    reply.forbidden('You are not allowed to write a file here.')
+    return null
+  }
+  const asset = await WIKI.models.assets.editImage({
+    siteId: req.params.siteId,
+    id: req.params.assetId,
+    operations: edit.operations,
+    adjust: edit.adjust,
+    quality: edit.quality,
+    saveAs: isSaveAs ? edit.fileName : null,
+    unchangedSince: edit.unchangedSince,
+    authorId
+  })
+  if (!asset) {
+    reply.notFound('This asset does not exist.')
+    return null
+  }
+  return { source, asset }
 }
 
 /**
@@ -471,6 +550,247 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * IMAGE EDITING INFO
+   */
+  app.get<{ Params: { siteId: string; assetId: string } }>(
+    '/sites/:siteId/assets/:assetId/editing',
+    {
+      config: {
+        scope: 'assets'
+      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
+      schema: {
+        summary: 'Check whether an image can be edited',
+        description: `What the image editor asks when it opens, so that nobody edits for five minutes to be refused on save.\n\n\`imageEditing\` is false when the Sharp extension is missing, and \`frames\` is then null; otherwise \`frames\` is more than one for an animation, of which only the first frame can be edited. \`mayReplace\` is whether the caller holds \`write:assets\` on the file itself, \`maySaveAs\` whether they hold it on the name a copy is offered under by default (\`<name>-edited.<ext>\` beside it) — the name actually chosen is checked again on save. \`updatedAt\` is what to send back as \`unchangedSince\`.\n\nNeeds \`read:assets\` on the file.`,
+        tags: ['Assets'],
+        params: assetIdParam,
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              imageEditing: { type: 'boolean' },
+              frames: { type: ['integer', 'null'] },
+              mayReplace: { type: 'boolean' },
+              maySaveAs: { type: 'boolean' },
+              updatedAt: { type: 'string', format: 'date-time' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const asset = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
+      if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
+        return reply.notFound('This asset does not exist.')
+      }
+      const imageEditing = await isImageEditingAvailable()
+      const stemEnd = asset.fileName.lastIndexOf('.')
+      const copyName =
+        stemEnd > 0
+          ? `${asset.fileName.slice(0, stemEnd)}-edited${asset.fileName.slice(stemEnd)}`
+          : `${asset.fileName}-edited`
+      return {
+        imageEditing,
+        frames: imageEditing ? await WIKI.models.assets.countFrames(asset.id) : null,
+        mayReplace: mayOnAsset(req, 'write:assets', asset),
+        maySaveAs: mayOnAsset(req, 'write:assets', { ...asset, fileName: copyName }),
+        updatedAt: asset.updatedAt
+      }
+    }
+  )
+
+  /**
+   * EDIT IMAGE
+   */
+  app.post<{
+    Params: { siteId: string; assetId: string }
+    Body: {
+      operations: ImageOperation[]
+      adjust: ImageAdjust
+      mode: 'replace' | 'saveAs'
+      fileName?: string
+      quality: number
+      unchangedSince?: string
+    }
+  }>(
+    '/sites/:siteId/assets/:assetId/edit',
+    {
+      config: {
+        scope: 'assets'
+      },
+      /*
+        No route-level `permissions`: that hook reads the group-wide list, and asset permissions come
+        from a group's RULES, which address the folder the file is in. Checked below.
+      */
+      schema: {
+        summary: 'Edit an image',
+        description: `Applies \`operations\` to a PNG, JPEG, WebP or GIF image in order, each to the image as the ones before it left it, then the colour settings in \`adjust\`. Positions and sizes are in pixels of the image as a viewer sees it, after its EXIF orientation. Only the first frame of an animated GIF or WebP is read, and the result is a still image whatever it is saved as. SVG is refused.\n\n- \`rotate\` turns by \`angle\` degrees clockwise. Any angle but a multiple of 90 grows the canvas to hold the rotated picture, each side rounded to the nearest pixel, and fills the corners with \`background\` (transparent by default).\n- \`flip\` turns it upside down, \`flop\` mirrors it.\n- \`crop\` keeps a region; \`redact\` hides one, with a solid \`color\`, pixel blocks \`size\` wide, or a blur of sigma \`size\`. Either region has to lie inside the image.\n- \`resize\` scales to exactly \`width\` × \`height\`, and may not enlarge.\n- \`extend\` adds a border of \`background\`.\n\n\`replace\` writes the result over the file, which keeps its ID and its name, so every page showing it shows the new one. \`saveAs\` stores it as a new file named \`fileName\` in the same folder and locale, settled by the site's upload conflict behavior like any other upload, and encoded as whatever format that name's extension says.\n\n\`unchangedSince\` is the file's \`updatedAt\` when the caller read it: the edit is refused with 409 if the file has been written since, since its positions were worked out on another version.\n\nNeeds \`write:assets\` where the result is written, and \`read:assets\` on the original. Needs the Sharp extension, and answers 503 without it.`,
+        tags: ['Assets'],
+        params: assetIdParam,
+        body: {
+          type: 'object',
+          required: ['operations', 'mode'],
+          properties: {
+            operations: {
+              type: 'array',
+              maxItems: 100,
+              items: {
+                oneOf: [
+                  {
+                    type: 'object',
+                    required: ['op', 'angle'],
+                    properties: {
+                      op: { const: 'rotate' },
+                      angle: { type: 'number', minimum: -360, maximum: 360 },
+                      background: { type: 'string', format: 'hexcolor' }
+                    }
+                  },
+                  {
+                    type: 'object',
+                    required: ['op'],
+                    properties: { op: { enum: ['flip', 'flop'] } }
+                  },
+                  {
+                    type: 'object',
+                    required: ['op', ...regionRequired],
+                    properties: { op: { const: 'crop' }, ...regionProperties }
+                  },
+                  {
+                    type: 'object',
+                    required: ['op', 'width', 'height'],
+                    properties: {
+                      op: { const: 'resize' },
+                      width: regionProperties.width,
+                      height: regionProperties.height
+                    }
+                  },
+                  {
+                    type: 'object',
+                    required: ['op', 'top', 'right', 'bottom', 'left', 'background'],
+                    properties: {
+                      op: { const: 'extend' },
+                      top: borderWidth,
+                      right: borderWidth,
+                      bottom: borderWidth,
+                      left: borderWidth,
+                      background: { type: 'string', format: 'hexcolor' }
+                    }
+                  },
+                  {
+                    type: 'object',
+                    required: ['op', 'style', ...regionRequired],
+                    properties: {
+                      op: { const: 'redact' },
+                      ...regionProperties,
+                      style: { enum: ['fill', 'pixelate', 'blur'] },
+                      color: { type: 'string', format: 'hexcolor' },
+                      size: { type: 'integer', minimum: 1, maximum: 100 }
+                    }
+                  }
+                ]
+              }
+            },
+            adjust: {
+              type: 'object',
+              description:
+                'Each matches the CSS filter function of the same name. 1 changes nothing.',
+              properties: {
+                brightness: { type: 'number', minimum: 0, maximum: 2, default: 1 },
+                contrast: { type: 'number', minimum: 0, maximum: 2, default: 1 },
+                saturation: { type: 'number', minimum: 0, maximum: 2, default: 1 },
+                grayscale: { type: 'boolean', default: false },
+                sharpen: { type: 'boolean', default: false }
+              },
+              default: {}
+            },
+            mode: {
+              type: 'string',
+              enum: ['replace', 'saveAs']
+            },
+            fileName: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 255,
+              description:
+                'Required for `saveAs`, including the extension. Sanitized, so the stored name may differ from the one sent.'
+            },
+            quality: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 100,
+              default: 85,
+              description: 'Only applies to JPEG and WebP. PNG and GIF are lossless and ignore it.'
+            },
+            unchangedSince: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Image edited successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              },
+              asset: { $ref: 'Asset#' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const { operations, adjust } = req.body
+      if (operations.length === 0 && isEqual({ ...NEUTRAL_ADJUST, ...adjust }, NEUTRAL_ADJUST)) {
+        return reply.badRequest('There are no changes to save.')
+      }
+      const result = await applyImageEdit(req, reply, {
+        operations,
+        adjust,
+        mode: req.body.mode,
+        fileName: req.body.fileName,
+        quality: req.body.quality,
+        unchangedSince: req.body.unchangedSince ? new Date(req.body.unchangedSince) : null,
+        what: 'Editing an image'
+      })
+      if (!result) {
+        return reply
+      }
+      const { source, asset } = result
+
+      await audit(req, 'asset', 'editAsset', {
+        assetId: asset.id,
+        sourceAssetId: source.id,
+        siteId: req.params.siteId,
+        locale: source.locale,
+        folderPath: source.folderPath,
+        fileName: asset.fileName,
+        mode: req.body.mode,
+        operations,
+        adjust,
+        width: asset.width,
+        height: asset.height,
+        previousWidth: source.width,
+        previousHeight: source.height
+      })
+
+      return {
+        ok: true,
+        message: 'Image edited successfully.',
+        asset
+      }
+    }
+  )
+
+  /**
    * RESIZE IMAGE
    */
   app.post<{
@@ -494,7 +814,7 @@ async function routes(app: FastifyInstance) {
       */
       schema: {
         summary: 'Resize an image',
-        description: `Resizes a PNG, JPEG, WebP or GIF image to exactly \`width\` × \`height\` — sending a pair that does not keep the original ratio stretches it. Neither may exceed the original: an image can be made smaller, not larger. An animated GIF or WebP keeps its frames when saved as GIF or WebP, and is reduced to its first frame otherwise. SVG is refused, having no pixel size to change.\n\n\`replace\` writes the result over the file, which keeps its ID and its name, so every page showing it shows the new one. \`saveAs\` stores it as a new file named \`fileName\` in the same folder and locale, settled by the site's upload conflict behavior like any other upload, and encoded as whatever format that name's extension says.\n\nNeeds \`write:assets\` where the result is written, and \`read:assets\` on the original. Needs the Sharp extension, and answers 503 without it.`,
+        description: `Resizes a PNG, JPEG, WebP or GIF image to exactly \`width\` × \`height\` — sending a pair that does not keep the original ratio stretches it. Neither may exceed the original: an image can be made smaller, not larger. Only the first frame of an animated GIF or WebP is read, and the result is a still image whatever it is saved as. SVG is refused, having no pixel size to change.\n\n\`replace\` writes the result over the file, which keeps its ID and its name, so every page showing it shows the new one. \`saveAs\` stores it as a new file named \`fileName\` in the same folder and locale, settled by the site's upload conflict behavior like any other upload, and encoded as whatever format that name's extension says.\n\nThe same as \`/edit\` with a single \`resize\` operation.\n\nNeeds \`write:assets\` where the result is written, and \`read:assets\` on the original. Needs the Sharp extension, and answers 503 without it.`,
         tags: ['Assets'],
         params: assetIdParam,
         body: {
@@ -549,40 +869,19 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      // -> Whatever is written records who wrote it, and an API key is not a who
-      const authorId = requestUserId(req)
-      if (!authorId) {
-        return reply.unauthorized(userRequired(req, 'Resizing an image'))
-      }
-      const isSaveAs = req.body.mode === 'saveAs'
-      if (isSaveAs && !req.body.fileName) {
-        return reply.badRequest('A file name is required to save the resized image as a new file.')
-      }
-      const source = await WIKI.models.assets.getAsset(req.params.siteId, req.params.assetId)
-      if (!source || !mayOnAsset(req, 'read:assets', source)) {
-        return reply.notFound('This asset does not exist.')
-      }
-      // -> Where the result lands: the file itself, or a new name beside it
-      const destination = {
-        folderPath: source.folderPath,
-        fileName: isSaveAs ? req.body.fileName! : source.fileName,
-        locale: source.locale
-      }
-      if (!mayOnAsset(req, 'write:assets', destination)) {
-        return reply.forbidden('You are not allowed to write a file here.')
-      }
-      const asset = await WIKI.models.assets.resizeImage({
-        siteId: req.params.siteId,
-        id: req.params.assetId,
-        width: req.body.width,
-        height: req.body.height,
+      const result = await applyImageEdit(req, reply, {
+        operations: [{ op: 'resize', width: req.body.width, height: req.body.height }],
+        adjust: NEUTRAL_ADJUST,
+        mode: req.body.mode,
+        fileName: req.body.fileName,
         quality: req.body.quality ?? 80,
-        saveAs: isSaveAs ? req.body.fileName : null,
-        authorId
+        unchangedSince: null,
+        what: 'Resizing an image'
       })
-      if (!asset) {
-        return reply.notFound('This asset does not exist.')
+      if (!result) {
+        return reply
       }
+      const { source, asset } = result
 
       await audit(req, 'asset', 'resizeAsset', {
         assetId: asset.id,

@@ -62,7 +62,8 @@
   color: color-mix(in srgb, var(--color-primary) 80%, var(--color-white));
 }
 
-:global(body.body--dark .w-card-header__hint) {
+:global(body.body--dark .w-card-header__hint),
+:global(.w-dark-surface .w-card-header__hint) {
   color: color-mix(in srgb, var(--color-primary) 55%, var(--color-white));
 }
 
@@ -74,7 +75,8 @@
   color: initial;
 }
 
-:global(body.body--dark .w-card-header__action) {
+:global(body.body--dark .w-card-header__action),
+:global(.w-dark-surface .w-card-header__action) {
   color: #fff;
 }
 </style>

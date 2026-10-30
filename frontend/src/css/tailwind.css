@@ -56,8 +56,14 @@
   (Quasar's `$q.dark.set()` writes it). Keying Tailwind's `dark:` variant off the same class means
   Tailwind and Quasar stay in lockstep for as long as both are installed, and nothing has to change
   when Quasar is finally dropped -- `useDark()` writes the identical class.
+
+  `.w-dark-surface` is the same thing for one part of the page: everything inside it renders as it does
+  in dark mode, regardless of what the app theme is, for a panel that is dark in both themes -- the
+  image editor's sidebar, and a `WMenu` opened with `dark`. Every `body.body--dark` rule, here and in
+  the shared components, has a `.w-dark-surface` twin for that reason, and a new one needs one too:
+  without it, the control renders light on the dark panel.
 */
-@custom-variant dark (&:where(body.body--dark, body.body--dark *));
+@custom-variant dark (&:where(body.body--dark, body.body--dark *, .w-dark-surface, .w-dark-surface *));
 
 /*
   Brand colors indirect through `--q-*` custom properties rather than being literal values. The app
@@ -84,7 +90,8 @@
   override of what it refers to would never reach it. The button's own `var(--color-cancel)` inherits
   this instead; dialogs are teleported into <body>, so they are inside it.
 */
-body.body--dark {
+body.body--dark,
+.w-dark-surface {
   --color-cancel: #bdbdbd;
 }
 
@@ -453,7 +460,8 @@ body.body--dark {
     color: var(--color-black);
   }
 
-  body.body--dark .w-card {
+  body.body--dark .w-card,
+  .w-dark-surface .w-card {
     background-color: var(--color-dark-3);
     color: var(--color-white);
   }
@@ -473,7 +481,9 @@ body.body--dark {
   }
 
   body.body--dark .w-item-label--caption,
-  body.body--dark .w-item-label--header {
+  .w-dark-surface .w-item-label--caption,
+  body.body--dark .w-item-label--header,
+  .w-dark-surface .w-item-label--header {
     color: rgb(255 255 255 / 0.7);
   }
 
@@ -513,7 +523,8 @@ body.body--dark {
       background-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  body.body--dark .w-input-control {
+  body.body--dark .w-input-control,
+  .w-dark-surface .w-input-control {
     --w-input-ring: rgb(255 255 255 / 0.3);
     --w-input-ring-hover: var(--color-white);
     --w-input-inset: var(--color-dark-3);
@@ -545,7 +556,8 @@ body.body--dark {
   }
 
   /* -> Higher alpha than the light-mode value, since white over a dark fill separates less */
-  body.body--dark .w-input-control--locked {
+  body.body--dark .w-input-control--locked,
+  .w-dark-surface .w-input-control--locked {
     --w-input-stripe: rgb(255 255 255 / 0.045);
   }
 
@@ -560,7 +572,8 @@ body.body--dark {
     Chromium and Safari only; Firefox draws no indicator for these types, so there is nothing there
     for the rule to match.
   */
-  body.body--dark .w-input-control input::-webkit-calendar-picker-indicator {
+  body.body--dark .w-input-control input::-webkit-calendar-picker-indicator,
+  .w-dark-surface .w-input-control input::-webkit-calendar-picker-indicator {
     filter: invert(0.75);
   }
 
@@ -732,6 +745,7 @@ body.body--dark {
   }
 
   body.body--dark .w-hairline,
+  .w-dark-surface .w-hairline,
   .w-hairline--dark {
     --w-hairline-color: rgb(255 255 255 / 0.15);
   }
@@ -861,7 +875,8 @@ body.body--dark {
     transform-origin: top;
   }
 
-  body.body--dark .w-section-header {
+  body.body--dark .w-section-header,
+  .w-dark-surface .w-section-header {
     color: var(--color-primary-light);
   }
 
@@ -875,7 +890,8 @@ body.body--dark {
     color: var(--color-primary);
   }
 
-  body.body--dark .admin-page-title {
+  body.body--dark .admin-page-title,
+  .w-dark-surface .admin-page-title {
     color: var(--color-primary-light);
   }
 
@@ -931,7 +947,8 @@ body.body--dark {
     }
   }
 
-  body.body--dark .otp-input {
+  body.body--dark .otp-input,
+  .w-dark-surface .otp-input {
     border-color: rgba(255, 255, 255, 0.3);
   }
 

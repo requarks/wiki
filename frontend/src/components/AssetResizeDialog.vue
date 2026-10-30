@@ -5,6 +5,11 @@
         <w-icon name="img:/_assets/icons/ultraviolet-full-image.svg" size="sm" class="mr-2" />
         <span>{{ t(`fileman.resizeImage`) }}</span>
       </w-card-section>
+      <!-- -> As in the image editor: only the first frame of an animation is ever read -->
+      <div v-if="state.frames > 1" class="card-notice flex items-center gap-3">
+        <w-icon name="la:exclamation-triangle" color="warning" size="xs" class="shrink-0" />
+        <span>{{ t('fileman.imageEditorAnimated') }}</span>
+      </div>
       <w-form ref="resizeForm" class="py-2" @submit="resize">
         <!-- SIZE -->
         <w-item>
@@ -17,62 +22,62 @@
               <w-input
                 ref="iptWidth"
                 class="flex-1"
-                :model-value="state.width"
+                :model-value="size.fields.width"
                 type="number"
                 outlined
                 dense
                 suffix="px"
                 :label="t(`fileman.resizeImageWidth`)"
-                :rules="widthValidation"
+                :rules="size.widthValidation.value"
                 hide-bottom-space
                 lazy-rules="ondemand"
                 :disable="!isMeasured"
-                @update:model-value="setWidth"
+                @update:model-value="size.setWidth"
                 @keyup:enter="resize" />
               <w-btn
                 class="mt-1"
                 flat
                 round
                 dense
-                :icon="state.isRatioLocked ? `la:lock` : `la:lock-open`"
-                :color="state.isRatioLocked ? `primary` : `grey`"
-                :aria-pressed="String(state.isRatioLocked)"
+                :icon="size.fields.isRatioLocked ? `la:lock` : `la:lock-open`"
+                :color="size.fields.isRatioLocked ? `primary` : `grey`"
+                :aria-pressed="String(size.fields.isRatioLocked)"
                 :aria-label="t(`fileman.resizeImageLockRatio`)"
                 :disable="!isMeasured"
-                @click="toggleRatioLock">
+                @click="size.toggleRatioLock">
                 <w-tooltip>{{
-                  state.isRatioLocked
+                  size.fields.isRatioLocked
                     ? t(`fileman.resizeImageUnlockRatio`)
                     : t(`fileman.resizeImageLockRatio`)
                 }}</w-tooltip>
               </w-btn>
               <w-input
                 class="flex-1"
-                :model-value="state.height"
+                :model-value="size.fields.height"
                 type="number"
                 outlined
                 dense
                 suffix="px"
                 :label="t(`fileman.resizeImageHeight`)"
-                :rules="heightValidation"
+                :rules="size.heightValidation.value"
                 hide-bottom-space
                 lazy-rules="ondemand"
                 :disable="!isMeasured"
-                @update:model-value="setHeight"
+                @update:model-value="size.setHeight"
                 @keyup:enter="resize" />
               <w-input
                 class="w-28 shrink-0"
-                :model-value="state.percent"
+                :model-value="size.fields.percent"
                 type="number"
                 outlined
                 dense
                 suffix="%"
                 :label="t(`fileman.resizeImagePercent`)"
-                :rules="percentValidation"
+                :rules="size.percentValidation"
                 hide-bottom-space
                 lazy-rules="ondemand"
                 :disable="!isMeasured"
-                @update:model-value="setPercent"
+                @update:model-value="size.setPercent"
                 @keyup:enter="resize" />
             </div>
             <div class="text-caption text-grey mt-1" v-if="isMeasured">
@@ -122,7 +127,7 @@
             <w-input
               ref="iptFileName"
               class="mt-3"
-              v-model="state.fileName"
+              v-model="fileName"
               outlined
               dense
               :label="t(`fileman.resizeImageFileName`)"
@@ -164,6 +169,8 @@ import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
+import { useImageSaveFields } from '@/composables/imageSaveFields'
+import { useImageSizeFields } from '@/composables/imageSizeFields'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
 
@@ -209,32 +216,26 @@ const { t } = useI18n()
 
 // DATA
 
-/**
- * What a resized image can be saved as, by extension. The same list the server holds, since the
- * extension of the name it is stored under is what decides the format.
- */
-const RESIZABLE_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'gif']
-
-/** PNG and GIF are lossless: the server ignores a quality for them, so the slider says so. */
-const LOSSY_EXTS = new Set(['jpg', 'jpeg', 'webp'])
-
-const extIndex = props.fileName.lastIndexOf('.')
-const sourceStem = extIndex > 0 ? props.fileName.slice(0, extIndex) : props.fileName
-const sourceExt = extIndex > 0 ? props.fileName.slice(extIndex + 1).toLowerCase() : ''
-
 const state = reactive({
   isMeasuring: false,
   isSubmitting: false,
   originalWidth: 0,
   originalHeight: 0,
-  // -> Strings, as the inputs hand them back: a field being typed into is not always a number yet
-  width: '',
-  height: '',
-  percent: '100',
-  isRatioLocked: true,
   quality: 80,
   mode: 'replace',
-  fileName: `${sourceStem}-resized.${sourceExt}`
+  /** Known only for a GIF or WebP, the two formats that can be animated. */
+  frames: 1
+})
+
+const size = useImageSizeFields(() => ({
+  width: state.originalWidth,
+  height: state.originalHeight
+}))
+
+const { fileName, sourceExt, targetExt, isLossy, fileNameValidation } = useImageSaveFields({
+  sourceFileName: props.fileName,
+  suffix: '-resized',
+  isSaveAs: () => state.mode === 'saveAs'
 })
 
 // REFS
@@ -246,56 +247,6 @@ const iptFileName = ref(null)
 // COMPUTED
 
 const isMeasured = computed(() => state.originalWidth > 0 && state.originalHeight > 0)
-
-/** The extension the result is written under, which is what decides its format. */
-const targetExt = computed(() => {
-  if (state.mode !== 'saveAs') {
-    return sourceExt
-  }
-  const idx = state.fileName.lastIndexOf('.')
-  return idx > 0 ? state.fileName.slice(idx + 1).toLowerCase() : ''
-})
-
-// -> A name that is not one of the formats yet has no say: the field's own rule complains about it
-const isLossy = computed(
-  () => !RESIZABLE_EXTS.includes(targetExt.value) || LOSSY_EXTS.has(targetExt.value)
-)
-
-// VALIDATION RULES
-
-/** A whole number of pixels, at least one and no more than the original: this only makes smaller. */
-function dimensionRule(max) {
-  return (val) => {
-    const n = Number(val)
-    return (
-      (Number.isInteger(n) && n >= 1 && n <= max) ||
-      t('fileman.resizeImageDimensionInvalid', { max })
-    )
-  }
-}
-
-const widthValidation = computed(() => [dimensionRule(state.originalWidth)])
-const heightValidation = computed(() => [dimensionRule(state.originalHeight)])
-
-// -> Empty is allowed: an unlocked pair that is not the same scale both ways has no one percentage
-const percentValidation = [
-  (val) => {
-    if (val === '') {
-      return true
-    }
-    const n = Number(val)
-    return (n > 0 && n <= 100) || t('fileman.resizeImagePercentInvalid')
-  }
-]
-
-const fileNameValidation = [
-  (val) =>
-    state.mode !== 'saveAs' || val.trim().length > 0 || t('fileman.resizeImageFileNameMissing'),
-  (val) =>
-    state.mode !== 'saveAs' ||
-    RESIZABLE_EXTS.some((ext) => val.trim().toLowerCase().endsWith(`.${ext}`)) ||
-    t('fileman.resizeImageFileNameInvalid')
-]
 
 // WATCHERS
 
@@ -316,66 +267,6 @@ watch(
 )
 
 // METHODS
-
-/** A scale as the percent field shows it: at most one decimal, and no trailing `.0`. */
-function formatPercent(ratio) {
-  return String(Math.round(ratio * 1000) / 10)
-}
-
-/**
- * Bring the percent field in line with the two dimensions.
- *
- * Locked, it is simply the width's scale. Unlocked, it is only shown when both sides are at the same
- * scale -- to the same tenth of a percent, which is as fine as the field is drawn -- since a stretched
- * pair has no single number that describes it.
- */
-function syncPercent() {
-  const w = Number(state.width)
-  const h = Number(state.height)
-  if (!(w > 0) || !(h > 0)) {
-    return
-  }
-  const scaleW = formatPercent(w / state.originalWidth)
-  state.percent =
-    state.isRatioLocked || scaleW === formatPercent(h / state.originalHeight) ? scaleW : ''
-}
-
-function setWidth(val) {
-  state.width = val
-  const w = Number(val)
-  if (state.isRatioLocked && w > 0) {
-    state.height = String(Math.max(1, Math.round((w * state.originalHeight) / state.originalWidth)))
-  }
-  syncPercent()
-}
-
-function setHeight(val) {
-  state.height = val
-  const h = Number(val)
-  if (state.isRatioLocked && h > 0) {
-    state.width = String(Math.max(1, Math.round((h * state.originalWidth) / state.originalHeight)))
-  }
-  syncPercent()
-}
-
-/** A percentage scales both sides alike, whether or not the ratio is locked: that is what it means. */
-function setPercent(val) {
-  state.percent = val
-  const p = Number(val)
-  if (val === '' || !(p > 0)) {
-    return
-  }
-  state.width = String(Math.max(1, Math.round((state.originalWidth * p) / 100)))
-  state.height = String(Math.max(1, Math.round((state.originalHeight * p) / 100)))
-}
-
-/** Locking again puts the height back in proportion to the width, which is the side typed first. */
-function toggleRatioLock() {
-  state.isRatioLocked = !state.isRatioLocked
-  if (state.isRatioLocked) {
-    setWidth(state.width)
-  }
-}
 
 /**
  * Read the image's size in the browser, for a file whose size was not recorded when it arrived --
@@ -410,11 +301,11 @@ async function resize() {
     }
     const resp = await API_CLIENT.post(`sites/${siteStore.id}/assets/${props.assetId}/resize`, {
       json: {
-        width: Number(state.width),
-        height: Number(state.height),
+        width: Number(size.fields.width),
+        height: Number(size.fields.height),
         quality: state.quality,
         mode: state.mode,
-        ...(state.mode === 'saveAs' ? { fileName: state.fileName.trim() } : {})
+        ...(state.mode === 'saveAs' ? { fileName: fileName.value.trim() } : {})
       }
     }).json()
     // -> The API client does not throw on 400, so a refused resize comes back as a parsed error
@@ -437,9 +328,28 @@ async function resize() {
   state.isSubmitting = false
 }
 
+/**
+ * How many frames the image has, so that an animation can be warned about. A failure only costs the
+ * warning: the resize itself does not depend on it.
+ */
+async function countFrames() {
+  if (!['gif', 'webp'].includes(sourceExt)) {
+    return
+  }
+  try {
+    const info = await API_CLIENT.get(
+      `sites/${siteStore.id}/assets/${props.assetId}/editing`
+    ).json()
+    state.frames = info.frames ?? 1
+  } catch {
+    // -> No warning, rather than no resize
+  }
+}
+
 // MOUNTED
 
 onMounted(async () => {
+  countFrames()
   let dimensions = props.width && props.height ? { width: props.width, height: props.height } : null
   if (!dimensions) {
     state.isMeasuring = true
@@ -459,8 +369,6 @@ onMounted(async () => {
   }
   state.originalWidth = dimensions.width
   state.originalHeight = dimensions.height
-  state.width = String(dimensions.width)
-  state.height = String(dimensions.height)
-  state.percent = '100'
+  size.reset()
 })
 </script>

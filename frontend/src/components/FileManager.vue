@@ -638,17 +638,20 @@
                             </w-item-section>
                             <w-item-section>{{ t(`common.actions.view`) }}</w-item-section>
                           </w-item>
-                          <!-- -> Behind the experimental flag: it has no handler behind it yet, so on
-                                an ordinary instance it is a row that does nothing -->
+                          <!-- -> As for Resize below: `can` says write:assets is held somewhere, and
+                                the editor asks the server about this file's folder as it opens -->
                           <w-item
                             clickable
                             v-if="
-                              flagsStore.experimental && item.type === `asset` && item.imageEdit
-                            ">
+                              item.type === `asset` &&
+                              item.imageEdit &&
+                              userStore.can(`write:assets`)
+                            "
+                            @click="editImage(item)">
                             <w-item-section side>
                               <w-icon name="la:edit" color="orange" />
                             </w-item-section>
-                            <w-item-section>Edit Image...</w-item-section>
+                            <w-item-section>{{ t(`fileman.imageEditorOpen`) }}...</w-item-section>
                           </w-item>
                           <!-- -> `imageEdit` is on the raster formats only, so never an SVG. And
                                 `can` answers whether write:assets is held ANYWHERE: the rule over
@@ -827,7 +830,6 @@ import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
 import { useDeletedPages } from '@/composables/deletedPages'
 
-import { useFlagsStore } from '@/stores/flags'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -859,7 +861,6 @@ const { restoreDeletedPage } = useDeletedPages()
 
 // STORES
 
-const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -2055,6 +2056,22 @@ async function requestAssetMove(assetId, { fileName, folderPath, locale }) {
     throw new Error(resp.message || 'An unexpected error occured.')
   }
   return resp
+}
+
+/**
+ * Edit an image in the image editor. Like a resize, it either replaces the file or saves a new one
+ * beside it, so the folder is listed again either way.
+ */
+function editImage(item) {
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/AssetEditorDialog.vue')),
+    componentProps: {
+      assetId: item.id,
+      fileName: item.fileName
+    }
+  }).onOk(async () => {
+    await loadTree({ parentId: state.currentFolderId })
+  })
 }
 
 /**

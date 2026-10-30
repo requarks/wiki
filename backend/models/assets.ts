@@ -11,13 +11,15 @@ import {
   normalizeFolderPath
 } from '../helpers/common.ts'
 import {
+  countImageFrames,
+  editableFormats,
+  editImage,
   makeImageThumbnail,
+  NEUTRAL_ADJUST,
   readImageDimensions,
-  resizableFormats,
-  resizeImage,
   sanitizeSvg
 } from '../helpers/images.ts'
-import type { ImageDimensions } from '../helpers/images.ts'
+import type { ImageAdjust, ImageDimensions, ImageOperation } from '../helpers/images.ts'
 import type { Readable } from 'node:stream'
 import type { DeletedEntry } from './tree.ts'
 import type { StorageAssetRef } from './storage.ts'
@@ -716,50 +718,65 @@ class Assets {
   }
 
   /**
-   * Resize an image, either over itself or into a new file beside it.
+   * Edit an image, either over itself or into a new file beside it.
    *
    * Over itself is `replace`, the same as an upload landing on the name under the `overwrite`
    * behavior: the ID, the name and the place stay, so every page showing the image now shows the
-   * smaller one. A new file is an upload into the same folder and locale, and is settled by the site's
+   * edited one. A new file is an upload into the same folder and locale, and is settled by the site's
    * conflict behavior exactly as a file dropped there would be — so naming it after the original
    * replaces it too where the site overwrites, and is refused where it rejects.
    *
    * What the result is encoded as comes from the name it is stored under, which is how a PNG saved as
-   * `.webp` becomes one. SVG is refused outright: it is markup, and has no pixels to resize.
+   * `.webp` becomes one. SVG is refused outright: it is markup, and has no pixels to edit.
    *
-   * @param saveAs What to call the new file. Absent to resize the image in place.
-   * @returns The resized asset — for a new file, the one the upload produced — or null if there is no
+   * The resize route is this with one `resize` operation.
+   *
+   * @param saveAs What to call the new file. Absent to edit the image in place.
+   * @param unchangedSince When the caller read the file. The positions in `operations` were worked out
+   *        on that version, so if it has been written since, the edit is refused rather than applied
+   *        to contents they may no longer fit. Absent to edit whatever is there.
+   * @returns The edited asset — for a new file, the one the upload produced — or null if there is no
    *          such asset on this site
-   * @throws `imageResizeUnsupported` for a file that is not a raster image, or a name that is not one
-   *         of the formats it can be written as, plus whatever `resizeImage` and `upload` throw
+   * @throws `imageEditUnsupported` for a file that is not a raster image, or a name that is not one of
+   *         the formats it can be written as; `assetChanged` (409); plus whatever `editImage` and
+   *         `upload` throw
    */
-  async resizeImage({
+  async editImage({
     siteId,
     id,
-    width,
-    height,
+    operations,
+    adjust = NEUTRAL_ADJUST,
     quality,
     saveAs,
+    unchangedSince,
     authorId
   }: {
     siteId: string
     id: string
-    width: number
-    height: number
+    operations: ImageOperation[]
+    adjust?: ImageAdjust
     quality: number
     saveAs?: string | null
+    unchangedSince?: Date | null
     authorId: string
   }): Promise<Asset | null> {
     const source = await this.getAsset(siteId, id)
     if (!source) {
       return null
     }
-    if (!Object.hasOwn(resizableFormats, source.fileExt)) {
+    if (unchangedSince && source.updatedAt.getTime() !== unchangedSince.getTime()) {
       throw new CustomError(
-        'imageResizeUnsupported',
+        'assetChanged',
+        'This image has been changed since it was opened. Reload it to edit the current version.',
+        409
+      )
+    }
+    if (!Object.hasOwn(editableFormats, source.fileExt)) {
+      throw new CustomError(
+        'imageEditUnsupported',
         source.fileExt === 'svg'
-          ? 'An SVG is a vector image, so it has no pixel size to change.'
-          : 'Only PNG, JPEG, WebP and GIF images can be resized.'
+          ? 'An SVG is a vector image, so it has no pixels to edit.'
+          : 'Only PNG, JPEG, WebP and GIF images can be edited.'
       )
     }
     const targetName = saveAs ? sanitizeFileName(saveAs) : source.fileName
@@ -767,19 +784,19 @@ class Assets {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
     const targetExt = extensionOf(targetName)
-    const format = resizableFormats[targetExt as keyof typeof resizableFormats]
+    const format = editableFormats[targetExt as keyof typeof editableFormats]
     if (!format) {
       throw new CustomError(
-        'imageResizeUnsupported',
-        'A resized image has to be saved as .png, .jpg, .jpeg, .webp or .gif.'
+        'imageEditUnsupported',
+        'An edited image has to be saved as .png, .jpg, .jpeg, .webp or .gif.'
       )
     }
 
     const content = await this.getContent(id)
     if (!content) {
-      throw new CustomError('assetNoContent', 'This file has no content to resize.', 404)
+      throw new CustomError('assetNoContent', 'This file has no content to edit.', 404)
     }
-    const data = await resizeImage(content.data, { width, height, format, quality })
+    const edited = await editImage(content.data, { operations, adjust, format, quality })
 
     if (saveAs) {
       return this.upload({
@@ -787,7 +804,7 @@ class Assets {
         locale: source.locale,
         folderPath: source.folderPath,
         fileName: targetName,
-        data,
+        data: edited.data,
         authorId
       })
     }
@@ -803,12 +820,23 @@ class Assets {
       fileExt: targetExt,
       kind: 'image',
       mimeType,
-      data,
-      preview: await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height),
-      // -> Known rather than measured: the resize wrote exactly this, the right way up
-      dimensions: { width, height },
+      data: edited.data,
+      preview: await makeImageThumbnail(edited.data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height),
+      // -> Known rather than measured: the edit wrote exactly this, the right way up
+      dimensions: { width: edited.width, height: edited.height },
       authorId
     })
+  }
+
+  /**
+   * How many frames an image has, for the editor to know whether it is opening an animation.
+   *
+   * @returns The count, or null if there is no such asset or it has no content
+   * @throws `imageEditSharpMissing` (503) or `imageEditUnreadable` (422)
+   */
+  async countFrames(id: string): Promise<number | null> {
+    const content = await this.getContent(id)
+    return content ? countImageFrames(content.data) : null
   }
 
   /**

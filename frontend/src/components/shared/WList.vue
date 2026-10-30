@@ -149,6 +149,7 @@ const classes = computed(() => [
 }
 
 :global(body.body--dark .w-list--separator > * + *::before),
+:global(.w-dark-surface .w-list--separator > * + *::before),
 .w-list--separator.w-list--dark :deep(> * + *)::before {
   background-color: rgb(255 255 255 / 0.15);
 }

@@ -1,8 +1,8 @@
 /**
  * Image helpers
  *
- * Only what the server needs to accept an uploaded image safely: recognizing what it actually is, and
- * normalizing it when the Sharp extension is available.
+ * What the server needs to accept an uploaded image safely — recognizing what it actually is, and
+ * normalizing it when the Sharp extension is available — and to edit one when a person asks.
  */
 
 import * as cheerio from 'cheerio'
@@ -650,12 +650,12 @@ export async function readImageDimensions(data: Buffer): Promise<ImageDimensions
 }
 
 /**
- * The raster formats an image can be resized INTO, keyed by the file extension that names each one.
+ * The raster formats an edited image can be saved AS, keyed by the file extension that names each one.
  *
  * The extension decides rather than the source: a file is served as the type its name says, so a
  * `photo.png` saved as `photo.jpg` has to actually be a JPEG afterwards.
  */
-export const resizableFormats = {
+export const editableFormats = {
   png: 'png',
   jpg: 'jpeg',
   jpeg: 'jpeg',
@@ -663,104 +663,460 @@ export const resizableFormats = {
   gif: 'gif'
 } as const
 
-export type ResizableFormat = (typeof resizableFormats)[keyof typeof resizableFormats]
-
-/** The formats that can hold an animation, and so keep every frame of one. */
-const animatedFormats = new Set<ResizableFormat>(['gif', 'webp'])
+export type EditableFormat = (typeof editableFormats)[keyof typeof editableFormats]
 
 /** The formats that honour a quality setting. PNG and GIF are lossless, and ignore one. */
-const lossyFormats = new Set<ResizableFormat>(['jpeg', 'webp'])
+const lossyFormats = new Set<EditableFormat>(['jpeg', 'webp'])
 
-/** What an image is resized to, and how it is encoded afterwards. */
-export type ImageResize = {
+/** The most pixels an edit may hold at once: 400 MB as RGBA, since it is held raw while it runs. */
+const MAX_EDIT_PIXELS = 100_000_000
+
+/** The longest side an edit may produce. WebP's own limit, which is the tightest of the four formats. */
+const MAX_EDIT_SIDE = 16383
+
+/** A rectangle of an image, in its pixels. */
+export type ImageRegion = {
+  left: number
+  top: number
   width: number
   height: number
-  format: ResizableFormat
+}
+
+/**
+ * One step of an image edit. Each applies to the image as the steps before it left it.
+ *
+ * A `background` is any colour string Sharp accepts; the editor sends `#rrggbbaa`.
+ */
+export type ImageOperation =
+  | { op: 'rotate'; angle: number; background?: string }
+  | { op: 'flip' }
+  | { op: 'flop' }
+  | ({ op: 'crop' } & ImageRegion)
+  | { op: 'resize'; width: number; height: number }
+  | { op: 'extend'; top: number; right: number; bottom: number; left: number; background: string }
+  | ({
+      op: 'redact'
+      style: 'fill' | 'pixelate' | 'blur'
+      /** The fill, for `fill`. */
+      color?: string
+      /** The block size for `pixelate`, the blur's sigma for `blur`. */
+      size?: number
+    } & ImageRegion)
+
+/**
+ * The colour settings applied after every operation, in this order. Each matches the CSS filter
+ * function of the same name, which is what the editor previews them with.
+ */
+export type ImageAdjust = {
+  brightness: number
+  contrast: number
+  saturation: number
+  grayscale: boolean
+  sharpen: boolean
+}
+
+/** Settings that change nothing. */
+export const NEUTRAL_ADJUST: ImageAdjust = {
+  brightness: 1,
+  contrast: 1,
+  saturation: 1,
+  grayscale: false,
+  sharpen: false
+}
+
+/** What an image is edited with, and how it is encoded afterwards. */
+export type ImageEdit = {
+  operations: ImageOperation[]
+  adjust: ImageAdjust
+  format: EditableFormat
   /** 1 to 100. Only consulted for a lossy format. */
   quality: number
 }
 
+/** An edited image, with the size it came out at. */
+export type EditedImage = {
+  data: Buffer
+  width: number
+  height: number
+}
+
+/** The image being edited, between steps: raw RGBA, always four channels. */
+type RawImage = {
+  data: Buffer
+  width: number
+  height: number
+}
+
+const TRANSPARENT = '#00000000'
+
 /**
- * Resize an image to exactly the given size, using the Sharp extension.
- *
- * Unlike the helpers above, this is something a person asked for rather than something done on their
- * behalf, so there is no quiet fallback to the original bytes: every way it can fail is thrown as an
- * error the caller can show them. Sharp being absent is the one they can do something about, and is
- * reported apart from an image Sharp could not read.
- *
- * Both dimensions are applied as given, so a pair that does not keep the ratio stretches the image —
- * keeping it is the dialog's job, where the lock is. Neither may exceed the original, measured as a
- * viewer sees it (after EXIF orientation, which is applied here too): enlarging costs bytes to look
- * worse.
- *
- * An animated GIF or WebP keeps every frame, unless it is saved as a format that cannot animate.
- *
- * @throws `imageResizeSharpMissing` (503), `imageResizeUnreadable` (422) or `imageResizeEnlarge` (400)
+ * Whether images can be edited on this server, which is whether the Sharp extension is installed and
+ * this process has not already failed to load it.
  */
-export async function resizeImage(
-  data: Buffer,
-  { width, height, format, quality }: ImageResize
-): Promise<Buffer> {
+export async function isImageEditingAvailable(): Promise<boolean> {
+  const definition = WIKI.models.extensions.getDefinition('sharp')
+  return Boolean(
+    definition &&
+    !WIKI.models.extensions.hasLoadFailed(definition) &&
+    (await WIKI.models.extensions.isInstalled(definition))
+  )
+}
+
+/**
+ * Load Sharp for something a person asked for, where a missing Sharp is an error to show them rather
+ * than a reason to quietly keep the original bytes.
+ *
+ * @throws `imageEditSharpMissing` (503)
+ */
+async function loadSharpForEdit(): Promise<any> {
   const definition = WIKI.models.extensions.getDefinition('sharp')
   if (!definition || !(await WIKI.models.extensions.isInstalled(definition))) {
     throw new CustomError(
-      'imageResizeSharpMissing',
-      'Resizing an image needs the Sharp extension, which is not installed on this server. An administrator can install it under Administration → Extensions.',
+      'imageEditSharpMissing',
+      'Editing an image needs the Sharp extension, which is not installed on this server. An administrator can install it under Administration → Extensions.',
       503
     )
   }
   const specifier = 'sharp'
-  let sharp: any
   try {
-    ;({ default: sharp } = await import(specifier))
+    const { default: sharp } = await import(specifier)
+    return sharp
   } catch (err: any) {
     WIKI.models.extensions.noteLoadFailure(specifier)
-    WIKI.logger.warn(`Could not load Sharp to resize an image: ${err.message}`)
+    WIKI.logger.warn(`Could not load Sharp to edit an image: ${err.message}`)
     throw new CustomError(
-      'imageResizeSharpMissing',
-      'Resizing an image needs the Sharp extension, which could not be loaded on this server. An administrator can reinstall it under Administration → Extensions, then restart the server.',
+      'imageEditSharpMissing',
+      'Editing an image needs the Sharp extension, which could not be loaded on this server. An administrator can reinstall it under Administration → Extensions, then restart the server.',
       503
     )
   }
+}
 
-  // -> Every frame where the result can hold them, so that resizing an animation does not quietly
-  //    turn it into a still. PNG and JPEG cannot, and read all frames they would come out as every
-  //    frame stacked into one tall picture, so they take the first. A still reads the same either way.
-  const input = { animated: animatedFormats.has(format), autoOrient: true }
-  let original: ImageDimensions | null
+/**
+ * How many frames an image has: more than one for an animated GIF or WebP, one for anything else.
+ * Read from the header alone, for the editor to warn that only the first one is edited.
+ *
+ * @throws `imageEditSharpMissing` (503) or `imageEditUnreadable` (422)
+ */
+export async function countImageFrames(data: Buffer): Promise<number> {
+  const sharp = await loadSharpForEdit()
   try {
-    const { width: w, height: h, pageHeight, orientation } = await sharp(data, input).metadata()
-    // -> An animation is stacked frame over frame, so its height as a whole is every frame's together
-    const frameHeight = pageHeight || h
-    original =
-      w && frameHeight
-        ? orientation && orientation >= 5
-          ? { width: frameHeight, height: w }
-          : { width: w, height: frameHeight }
-        : null
+    const { pages } = await sharp(data).metadata()
+    return pages || 1
   } catch (err: any) {
-    WIKI.logger.debug(`Could not read an image to resize: ${err.message}`)
-    original = null
+    WIKI.logger.debug(`Could not read an image to count its frames: ${err.message}`)
+    throw new CustomError('imageEditUnreadable', 'This image could not be read.', 422)
   }
-  if (!original) {
-    throw new CustomError('imageResizeUnreadable', 'This image could not be read.', 422)
+}
+
+/** A pipeline over the raw image. */
+function fromRaw(sharp: any, image: RawImage): any {
+  return sharp(image.data, { raw: { width: image.width, height: image.height, channels: 4 } })
+}
+
+/** Run a pipeline to raw pixels, which is what every step hands to the next. */
+async function toRaw(pipeline: any): Promise<RawImage> {
+  const { data, info } = await pipeline.ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  return { data, width: info.width, height: info.height }
+}
+
+/**
+ * The size a rotation leaves an image at.
+ *
+ * Sharp grows the canvas to hold the rotated picture, and rounds each side to the nearest pixel — the
+ * editor predicts the same, so that a crop it works out after a rotation fits.
+ */
+function rotatedSize(
+  width: number,
+  height: number,
+  angle: number
+): { width: number; height: number } {
+  const quarterTurns = ((angle % 360) + 360) % 360
+  if (quarterTurns % 90 === 0) {
+    return quarterTurns % 180 === 0 ? { width, height } : { width: height, height: width }
   }
-  if (width > original.width || height > original.height) {
+  const rad = (angle * Math.PI) / 180
+  const cos = Math.abs(Math.cos(rad))
+  const sin = Math.abs(Math.sin(rad))
+  return {
+    width: Math.round(width * cos + height * sin),
+    height: Math.round(width * sin + height * cos)
+  }
+}
+
+/**
+ * Refuse an operation that cannot apply to an image of this size, before any pixel is touched.
+ *
+ * @param index Where the operation is in the list, which is what the message names
+ * @returns The size the operation leaves the image at
+ * @throws `imageEditInvalid` or `imageResizeEnlarge` (400), or `imageEditTooLarge` (422)
+ */
+function checkOperation(
+  op: ImageOperation,
+  index: number,
+  current: { width: number; height: number }
+): { width: number; height: number } {
+  const invalid = (message: string) =>
+    new CustomError('imageEditInvalid', `Edit ${index + 1} (${op.op}): ${message}`)
+  let next = current
+  switch (op.op) {
+    case 'crop':
+    case 'redact':
+      if (op.left + op.width > current.width || op.top + op.height > current.height) {
+        throw invalid(
+          `the region has to lie inside the image, which is ${current.width} × ${current.height} at this point.`
+        )
+      }
+      if (op.op === 'crop') {
+        next = { width: op.width, height: op.height }
+      }
+      break
+    case 'resize':
+      if (op.width > current.width || op.height > current.height) {
+        throw new CustomError(
+          'imageResizeEnlarge',
+          `An image can only be made smaller: this one is ${current.width} × ${current.height}.`
+        )
+      }
+      next = { width: op.width, height: op.height }
+      break
+    case 'rotate':
+      next = rotatedSize(current.width, current.height, op.angle)
+      break
+    case 'extend':
+      next = {
+        width: current.width + op.left + op.right,
+        height: current.height + op.top + op.bottom
+      }
+      break
+  }
+  if (
+    next.width > MAX_EDIT_SIDE ||
+    next.height > MAX_EDIT_SIDE ||
+    next.width * next.height > MAX_EDIT_PIXELS
+  ) {
     throw new CustomError(
-      'imageResizeEnlarge',
-      `An image can only be made smaller: this one is ${original.width} × ${original.height}.`
+      'imageEditTooLarge',
+      `Edit ${index + 1} (${op.op}) would make the image too large to edit.`,
+      422
     )
   }
+  return next
+}
+
+/** Apply one operation. */
+async function applyOperation(sharp: any, image: RawImage, op: ImageOperation): Promise<RawImage> {
+  switch (op.op) {
+    case 'rotate':
+      return toRaw(
+        fromRaw(sharp, image).rotate(op.angle, { background: op.background ?? TRANSPARENT })
+      )
+    case 'flip':
+      return toRaw(fromRaw(sharp, image).flip())
+    case 'flop':
+      return toRaw(fromRaw(sharp, image).flop())
+    case 'crop':
+      return toRaw(
+        fromRaw(sharp, image).extract({
+          left: op.left,
+          top: op.top,
+          width: op.width,
+          height: op.height
+        })
+      )
+    case 'resize':
+      return toRaw(fromRaw(sharp, image).resize(op.width, op.height, { fit: 'fill' }))
+    case 'extend':
+      return toRaw(
+        fromRaw(sharp, image).extend({
+          top: op.top,
+          right: op.right,
+          bottom: op.bottom,
+          left: op.left,
+          background: op.background
+        })
+      )
+    case 'redact': {
+      const region = { left: op.left, top: op.top, width: op.width, height: op.height }
+      let patch: RawImage
+      if (op.style === 'fill') {
+        patch = await toRaw(
+          sharp({
+            create: {
+              width: op.width,
+              height: op.height,
+              channels: 4,
+              background: op.color ?? '#000000'
+            }
+          })
+        )
+      } else {
+        const cut = await toRaw(fromRaw(sharp, image).extract(region))
+        if (op.style === 'pixelate') {
+          // -> Shrunk to one pixel per block, then blown back up without smoothing
+          const size = op.size ?? 16
+          const blocks = await toRaw(
+            fromRaw(sharp, cut).resize(Math.ceil(op.width / size), Math.ceil(op.height / size), {
+              fit: 'fill'
+            })
+          )
+          patch = await toRaw(
+            fromRaw(sharp, blocks).resize(op.width, op.height, { fit: 'fill', kernel: 'nearest' })
+          )
+        } else {
+          patch = await toRaw(fromRaw(sharp, cut).blur(op.size ?? 20))
+        }
+      }
+      // -> The region is punched out before the patch goes in, since a half-transparent patch laid
+      //    over the original would let what it is hiding show through. Not the `source` blend, which
+      //    would do this in one step but clears everything OUTSIDE the patch as well.
+      return toRaw(
+        fromRaw(sharp, image).composite([
+          {
+            input: {
+              create: { width: op.width, height: op.height, channels: 4, background: '#000000' }
+            },
+            left: op.left,
+            top: op.top,
+            blend: 'dest-out'
+          },
+          {
+            input: patch.data,
+            raw: { width: patch.width, height: patch.height, channels: 4 },
+            left: op.left,
+            top: op.top
+          }
+        ])
+      )
+    }
+  }
+}
+
+/**
+ * The CSS `saturate()` matrix, from the Filter Effects spec. `grayscale(1)` is its own, nearly
+ * identical, matrix there, and is kept apart so that each matches the function the editor previews it
+ * with.
+ */
+function saturateMatrix(s: number): number[][] {
+  return [
+    [0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s],
+    [0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s],
+    [0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s]
+  ]
+}
+
+const GRAYSCALE_MATRIX = [
+  [0.2126, 0.7152, 0.0722],
+  [0.2126, 0.7152, 0.0722],
+  [0.2126, 0.7152, 0.0722]
+]
+
+/**
+ * Apply the colour settings.
+ *
+ * One pass per setting rather than one pipeline: a browser clamps between filter functions, and two
+ * `linear()` calls in one Sharp pipeline would be one, the second replacing the first. `linear` and
+ * `recomb` leave the alpha channel alone.
+ */
+async function applyAdjust(sharp: any, image: RawImage, adjust: ImageAdjust): Promise<RawImage> {
+  if (adjust.brightness !== 1) {
+    image = await toRaw(fromRaw(sharp, image).linear(adjust.brightness, 0))
+  }
+  if (adjust.contrast !== 1) {
+    image = await toRaw(
+      fromRaw(sharp, image).linear(adjust.contrast, 127.5 * (1 - adjust.contrast))
+    )
+  }
+  if (adjust.saturation !== 1) {
+    image = await toRaw(fromRaw(sharp, image).recomb(saturateMatrix(adjust.saturation)))
+  }
+  if (adjust.grayscale) {
+    image = await toRaw(fromRaw(sharp, image).recomb(GRAYSCALE_MATRIX))
+  }
+  if (adjust.sharpen) {
+    image = await toRaw(fromRaw(sharp, image).sharpen())
+  }
+  return image
+}
+
+/**
+ * Edit an image, using the Sharp extension.
+ *
+ * Something a person asked for, so there is no quiet fallback to the original bytes: every way it can
+ * fail is thrown as an error the caller can show them.
+ *
+ * **Only the first frame of an animation is ever read**, and the result is a still. Editing every
+ * frame means holding every frame, and a GIF of a few thousand large frames is easily made and cheap
+ * to upload; the editor warns before anyone gets here. Read with `animated: true` Sharp would hand over
+ * the whole strip of frames anyway, and get half of these operations wrong on it — a quarter turn is
+ * refused, `flip` reverses the frames, `composite` draws on the first only.
+ *
+ * Each operation is its own pass over raw pixels, since Sharp does not apply one pipeline in the order
+ * its methods are called, and the image is only encoded at the end.
+ *
+ * Positions and sizes are in the image as a viewer sees it — after EXIF orientation, which is applied
+ * as it is decoded. Decoding also converts an embedded colour profile to sRGB, which is what the
+ * result is written in.
+ *
+ * @throws `imageEditSharpMissing` (503), `imageEditUnreadable` (422), `imageEditTooLarge` (422),
+ *         `imageEditInvalid` (400) or `imageResizeEnlarge` (400)
+ */
+export async function editImage(
+  data: Buffer,
+  { operations, adjust, format, quality }: ImageEdit
+): Promise<EditedImage> {
+  const sharp = await loadSharpForEdit()
+
+  // -> Without `animated`, the size is the first frame's, and so is everything decoded below
+  let meta: any
+  try {
+    meta = await sharp(data).metadata()
+  } catch (err: any) {
+    WIKI.logger.debug(`Could not read an image to edit: ${err.message}`)
+    throw new CustomError('imageEditUnreadable', 'This image could not be read.', 422)
+  }
+  // -> An EXIF orientation of 5 or above turns the picture a quarter turn as it is decoded
+  const size =
+    meta.orientation && meta.orientation >= 5
+      ? { width: meta.height, height: meta.width }
+      : { width: meta.width, height: meta.height }
+  if (!size.width || !size.height) {
+    throw new CustomError('imageEditUnreadable', 'This image could not be read.', 422)
+  }
+  if (size.width * size.height > MAX_EDIT_PIXELS) {
+    throw new CustomError('imageEditTooLarge', 'This image is too large to edit.', 422)
+  }
+
+  // -> Every operation is checked against the size the ones before it leave, before any pixel moves:
+  //    a list that fails at its tenth step should not cost nine steps' work to find out
+  let checked = size
+  for (const [index, op] of operations.entries()) {
+    checked = checkOperation(op, index, checked)
+  }
 
   try {
-    let pipeline = sharp(data, input).resize(width, height, { fit: 'fill' })
+    let image = await toRaw(sharp(data, { autoOrient: true }))
+    for (const op of operations) {
+      image = await applyOperation(sharp, image, op)
+    }
+    image = await applyAdjust(sharp, image, adjust)
+
+    let pipeline = fromRaw(sharp, image)
     if (format === 'jpeg') {
       // -> JPEG has no alpha channel, and dropping one leaves whatever was transparent black
       pipeline = pipeline.flatten({ background: '#ffffff' })
+    } else if ((await pipeline.clone().stats()).isOpaque) {
+      // -> Held with an alpha channel throughout; one that ended up fully opaque is not written with
+      //    it, so an opaque PNG does not come out a third larger for nothing
+      pipeline = pipeline.removeAlpha()
     }
-    return await pipeline.toFormat(format, lossyFormats.has(format) ? { quality } : {}).toBuffer()
+    return {
+      data: await pipeline.toFormat(format, lossyFormats.has(format) ? { quality } : {}).toBuffer(),
+      width: image.width,
+      height: image.height
+    }
   } catch (err: any) {
-    WIKI.logger.warn(`Could not resize an image: ${err.message}`)
-    throw new CustomError('imageResizeUnreadable', 'This image could not be resized.', 422)
+    WIKI.logger.warn(`Could not edit an image: ${err.message}`)
+    throw new CustomError('imageEditUnreadable', 'This image could not be edited.', 422)
   }
 }

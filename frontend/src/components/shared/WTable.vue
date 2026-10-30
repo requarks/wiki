@@ -216,7 +216,9 @@ thead + tbody .w-table__row:first-child :deep(td)::before {
 }
 
 :global(body.body--dark .w-table__row + .w-table__row td::before),
-:global(body.body--dark thead + tbody .w-table__row:first-child td::before) {
+:global(.w-dark-surface .w-table__row + .w-table__row td::before),
+:global(body.body--dark thead + tbody .w-table__row:first-child td::before),
+:global(.w-dark-surface thead + tbody .w-table__row:first-child td::before) {
   background-color: rgb(255 255 255 / 0.15);
 }
 </style>

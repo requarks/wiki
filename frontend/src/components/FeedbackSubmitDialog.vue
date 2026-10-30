@@ -14,7 +14,7 @@
       -->
       <div
         v-if="submitNoticeHtml && state.step === `title`"
-        class="feedback-submit-notice feedback-prose"
+        class="card-notice feedback-prose"
         v-html="submitNoticeHtml" />
       <!-- ----------------------- -->
       <!-- Step 1: the title, and what is already on the board like it -->
@@ -393,20 +393,6 @@ async function submit() {
 
 <style lang="scss">
 .feedback-submit {
-  /*
-    A band across the card, flush under the header and edge to edge, closed off from the form by a
-    rule: the board's word before the form's. Tinted in the theme's warning colour rather than the
-    similar-ideas panel's blue, so that it reads as the board asking something of the submitter, and
-    so that a re-themed site recolours it too. Its text lines up with the fields, padded as a card
-    section is.
-  */
-  &-notice {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--color-warning);
-    background-color: color-mix(in srgb, var(--color-warning) 10%, transparent);
-    font-size: 0.875rem;
-  }
-
   &-similar {
     margin-top: 16px;
     padding: 12px;

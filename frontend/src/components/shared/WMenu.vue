@@ -125,7 +125,10 @@ const props = defineProps({
     type: String,
     default: null
   },
-  /** Renders the panel dark whatever the app theme, for a menu opened from a dark surface. */
+  /**
+   * Renders the panel dark regardless of the app theme, for a menu opened from a dark surface. The
+   * panel is then a dark surface itself (`.w-dark-surface`), so what is IN it renders dark as well.
+   */
   dark: {
     type: Boolean,
     default: false
@@ -142,7 +145,7 @@ const props = defineProps({
 */
 const surfaceClass = computed(() =>
   props.dark
-    ? 'bg-[var(--color-dark-3)] text-[var(--color-white)]'
+    ? 'w-dark-surface bg-[var(--color-dark-3)] text-[var(--color-white)]'
     : 'bg-[var(--color-white)] text-[var(--color-black)] dark:bg-dark-3 dark:text-white'
 )
 

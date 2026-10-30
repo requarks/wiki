@@ -197,7 +197,8 @@ function segmentStyle(opt) {
   color: var(--color-black);
 }
 
-:global(body.body--dark .w-btn-toggle__segment[aria-checked='false']) {
+:global(body.body--dark .w-btn-toggle__segment[aria-checked='false']),
+:global(.w-dark-surface .w-btn-toggle__segment[aria-checked='false']) {
   color: var(--color-white);
 }
 
@@ -230,7 +231,8 @@ function segmentStyle(opt) {
   --w-btn-toggle-text-shadow: 0 1px 0 rgb(255 255 255 / 0.6);
 }
 
-:global(body.body--dark .w-btn-toggle) {
+:global(body.body--dark .w-btn-toggle),
+:global(.w-dark-surface .w-btn-toggle) {
   /*
     Far dimmer than the light theme's highlight. The same white that reads as a soft sheen against
     a pale surface reads as a lit edge against a dark one, so the bevel leans on its shadow half
@@ -245,7 +247,8 @@ function segmentStyle(opt) {
 .w-btn-toggle--framed {
   border: 1px solid rgb(0 0 0 / 0.12);
 }
-:global(body.body--dark .w-btn-toggle--framed) {
+:global(body.body--dark .w-btn-toggle--framed),
+:global(.w-dark-surface .w-btn-toggle--framed) {
   border-color: rgb(255 255 255 / 0.15);
 }
 </style>

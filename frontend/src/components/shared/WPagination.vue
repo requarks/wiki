@@ -163,7 +163,8 @@ function go(page) {
 .w-pagination-btn:hover:not(:disabled) {
   background-color: rgb(0 0 0 / 0.06);
 }
-:global(body.body--dark .w-pagination-btn:hover:not(:disabled)) {
+:global(body.body--dark .w-pagination-btn:hover:not(:disabled)),
+:global(.w-dark-surface .w-pagination-btn:hover:not(:disabled)) {
   background-color: rgb(255 255 255 / 0.1);
 }
 .w-pagination-btn:disabled {

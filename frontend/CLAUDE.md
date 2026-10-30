@@ -39,6 +39,13 @@ to the backend on **3000**, so the backend must be running too.
   `<w-icon>` need no import. Each one is scoped to how this app actually uses it rather than to the
   full API of the framework component it replaced; the header comment in each file says where they
   differ. Add a prop there rather than reaching around it.
+- **A panel that is dark in both themes is a `.w-dark-surface`.** Dark mode is the `body--dark` class
+  on `<body>`, and the `dark:` variant keys off it — so a dark panel in light mode (the image editor's
+  sidebar) would otherwise get light controls. Everything inside a `.w-dark-surface` renders as in dark
+  mode regardless of the app theme: the variant matches it (`tailwind.css`), and every
+  `body.body--dark` rule — there, in the shared components' `:global(...)` styles, and `.card-header`
+  in `_base.scss` — has a `.w-dark-surface` twin. **A new dark-mode rule needs its twin too**, or that control renders light on
+  the dark panel. A `WMenu` with `dark` is one, so a menu opened from such a panel passes `dark`.
 - HTTP calls go through the `ky` client, reachable as the `API_CLIENT` global (declared in the oxlint
   config, so no import needed) — e.g. `await API_CLIENT.get('sites').json()`. It handles the `/_api`
   prefix; authentication is the session cookie, sent with every request.

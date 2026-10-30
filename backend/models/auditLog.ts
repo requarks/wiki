@@ -64,7 +64,7 @@ export const AUDIT_ACTIONS = {
     'addLiveNoteImage',
     'deleteLiveNote'
   ],
-  asset: ['uploadAsset', 'updateAsset', 'resizeAsset', 'deleteAsset'],
+  asset: ['uploadAsset', 'updateAsset', 'resizeAsset', 'editAsset', 'deleteAsset'],
   comment: [
     'createComment',
     'updateComment',

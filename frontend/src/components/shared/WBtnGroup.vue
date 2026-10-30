@@ -44,7 +44,8 @@ defineProps({
   border-inline-end: 1px solid rgb(0 0 0 / 0.12);
 }
 
-:global(body.body--dark .w-btn-group > .w-btn:not(:last-child)) {
+:global(body.body--dark .w-btn-group > .w-btn:not(:last-child)),
+:global(.w-dark-surface .w-btn-group > .w-btn:not(:last-child)) {
   border-inline-end-color: rgb(255 255 255 / 0.15);
 }
 

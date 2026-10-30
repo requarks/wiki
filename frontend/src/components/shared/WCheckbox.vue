@@ -136,7 +136,8 @@ function toggle() {
   --w-checkbox-relief-blur: 5px;
 }
 
-:global(body.body--dark .w-checkbox) {
+:global(body.body--dark .w-checkbox),
+:global(.w-dark-surface .w-checkbox) {
   --w-checkbox-well: #20252e;
   --w-checkbox-rim: #39414f;
   --w-checkbox-shadow: rgb(0 0 0 / 0.7);

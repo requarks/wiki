@@ -195,6 +195,7 @@ function toggle() {
 }
 
 :global(body.body--dark .w-toggle),
+:global(.w-dark-surface .w-toggle),
 .w-toggle--dark {
   --w-toggle-track: #262c38;
   --w-toggle-rim: #39414f;

@@ -240,10 +240,24 @@ body::-webkit-scrollbar-thumb {
     border-bottom: 1px solid theme.$dark-3;
     box-shadow: 0 1px 0 0 theme.$dark-6;
   }
-  @at-root .body--dark & {
+  // -> After the light rule, so that on a dark surface in light mode (see `tailwind.css`) it wins
+  @at-root .body--dark &,
+    .w-dark-surface & {
     border-bottom: 1px solid #000;
     box-shadow: 0 1px 0 0 color.adjust(theme.$dark-3, $lightness: 2%);
   }
+}
+
+// A band across a card, flush under its `.card-header` and edge to edge, closed off from what follows
+// by a rule: something the reader is asked to know before they fill anything in. Tinted in the
+// theme's warning colour, so that a re-themed site recolours it too. Its text lines up with the
+// fields below, padded as a card section is. The Submit Idea form's board notice, and the warning
+// about an animation in the Resize Image dialog and the image editor's save dialog.
+.card-notice {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-warning);
+  background-color: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  font-size: 0.875rem;
 }
 
 .card-negative {

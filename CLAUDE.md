@@ -68,8 +68,9 @@ before working in an area — and add to it there, not here:
   `storage` (storage targets, delivery, the git sync), `comments`, `app-shell-seo`,
   `distributing-blocks` (the `.wkblock` package), `emails`, `excalidraw`, `analytics`,
   `live-notes`, `audit-log`, `notifications`, `mcp`, `page-lifecycle`, `glossary`,
-  `feedback-boards`, `metrics`, `icons`, `page-paths` (path segments, the ltree encoding) and
-  `personal-access-tokens` (`config.scope`, `requestUser(req)`).
+  `feedback-boards`, `metrics`, `icons`, `page-paths` (path segments, the ltree encoding),
+  `personal-access-tokens` (`config.scope`, `requestUser(req)`) and `image-editor` (the file
+  manager's image editor and resize).
 - **Procedures** — `.claude/skills/`: `throwaway-instance` boots, scripts and tears down a
   disposable instance.
 
