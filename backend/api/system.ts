@@ -1557,7 +1557,7 @@ async function routes(app: FastifyInstance) {
       }
       const purged = await WIKI.models.pages.deletePagesByTag(req.body.siteId, SAMPLE_CONTENT_TAG, {
         id: req.session.user!.id,
-        permissions: req.session.permissions ?? []
+        ...WIKI.models.groups.actorForRequest(req)
       })
       const count = purged.length
       const folders = await WIKI.models.tree.deleteFoldersLeftEmpty(req.body.siteId, purged)
@@ -1575,6 +1575,78 @@ async function routes(app: FastifyInstance) {
         message: `Purged ${count} page(s) tagged ${SAMPLE_CONTENT_TAG}, ${folders} folder(s) left empty and ${accounts} sample account(s).`,
         count,
         folders
+      }
+    }
+  )
+
+  /**
+   * STORE SAMPLE CONTENT ICONS
+   *
+   * The icons the sample pages use, stored before the pages are written so that the wiki can serve
+   * them without the Iconify API — what the icon picker does when an author chooses one. The same
+   * work as `POST /icons/materialize`, behind a route of its own because this one is an administrator
+   * acting and is recorded, while a pick in the editor is not.
+   */
+  app.post<{ Body: { icons: string[] } }>(
+    '/sample-content/icons',
+    {
+      config: {
+        permissions: ['manage:system']
+      },
+      schema: {
+        summary: 'Store the icons the sample content uses',
+        description:
+          "Used by the admin area's Generate Sample Content, before it writes the pages. Fetches each icon from upstream and writes it to the database, as `POST /icons/materialize` does; icons already stored are a no-op. Unlike that route, a call is recorded in the audit log.",
+        tags: ['System'],
+        body: {
+          type: 'object',
+          required: ['icons'],
+          properties: {
+            icons: {
+              type: 'array',
+              minItems: 1,
+              maxItems: 128,
+              items: {
+                type: 'string',
+                maxLength: 320,
+                description: 'An icon reference shaped `prefix:name`.'
+              }
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'Icons stored, or the ones that could not be',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              message: { type: 'string' },
+              failed: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'References that could not be stored.'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const failed = await WIKI.models.icons.materializeIcons(req.body.icons)
+
+      // -> Counts rather than the references themselves: the list is the sample set's, not a choice
+      await audit(req, 'admin', 'materializeIcons', {
+        requested: req.body.icons.length,
+        failed: failed.length
+      })
+
+      return {
+        ok: failed.length < 1,
+        message:
+          failed.length < 1
+            ? 'Icons are stored and ready to be served.'
+            : `${failed.length} of ${req.body.icons.length} icons could not be stored.`,
+        failed
       }
     }
   )

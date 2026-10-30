@@ -839,7 +839,8 @@ async function generateSampleContent() {
 
       /*
         Store the icons before the pages that use them, so the wiki can serve them without the Iconify
-        API afterwards — which is what the icon picker does when an author chooses one.
+        API afterwards — which is what the icon picker does when an author chooses one. Through a
+        route of its own rather than the picker's, because this one is recorded in the audit log.
 
         The ones written INTO the content as well as the ones on the pages: a tab's `icon` prop is an
         icon reference like any other, and materializing only the page icons left every tab in the
@@ -859,7 +860,7 @@ async function generateSampleContent() {
         }
       }
       try {
-        await API_CLIENT.post('icons/materialize', { json: { icons: [...icons] } }).json()
+        await API_CLIENT.post('system/sample-content/icons', { json: { icons: [...icons] } }).json()
       } catch (err) {
         console.warn(`Could not store the sample content icons: ${apiErrorMessage(err)}`)
       }

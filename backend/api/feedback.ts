@@ -515,7 +515,7 @@ async function routes(app: FastifyInstance) {
         },
         // -> Sanitized as nobody's: a submission form is not where scripts and styles are written,
         //    whoever is filling it in
-        { id: actor.id, permissions: [] }
+        { id: actor.id, groupIds: [], permissions: [] }
       )
       if (board.settings.voting) {
         await WIKI.models.pageRatings.rate({
@@ -687,7 +687,7 @@ async function routes(app: FastifyInstance) {
           }),
           ...(tags !== undefined && { tags })
         },
-        { id: actor.id, permissions: [] }
+        { id: actor.id, groupIds: [], permissions: [] }
       )
       if (!change) {
         return reply.notFound('This idea does not exist.')

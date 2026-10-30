@@ -858,6 +858,7 @@ async function removeFromWiki(
     }
     await WIKI.models.pages.deletePage(target.siteId, home.id, {
       id: actorId,
+      groupIds: [],
       permissions: ['manage:system']
     })
     return 'page'
@@ -876,6 +877,7 @@ async function removeFromWiki(
     ) {
       await WIKI.models.pages.deletePage(target.siteId, asPage.id, {
         id: actorId,
+        groupIds: [],
         permissions: ['manage:system']
       })
       return 'page'

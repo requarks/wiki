@@ -559,9 +559,12 @@ export interface PageDescription {
   alternates: { locale: string; path: string }[]
 }
 
-export interface PageActor {
+/**
+ * Who a page write is made as: the account it is recorded against, and the groups and group-wide
+ * permissions the page rules are asked about.
+ */
+export interface PageActor extends AccessActor {
   id: string
-  permissions: string[]
 }
 
 /** A page that links to a moved page's old address and was left alone, and why. */
@@ -614,8 +617,18 @@ export interface PageChange {
   versionId: string | null
 }
 
-function hasPermission(actor: PageActor, permission: string): boolean {
-  return actor.permissions.includes('manage:system') || actor.permissions.includes(permission)
+/**
+ * What an author may embed on a page — scripts and styles — which the page's rules decide.
+ *
+ * `write:scripts` and `write:styles` are page permissions, granted per path by a group's rules, so
+ * they are asked about the page rather than looked up in the group-wide list: that list never holds
+ * either one, and reading it answered "no" to everybody but `manage:system`.
+ */
+function renderPermissionsFor(actor: PageActor, page: RulePageRef): RenderPermissions {
+  return {
+    scripts: WIKI.models.groups.checkAccess(actor, 'write:scripts', page),
+    styles: WIKI.models.groups.checkAccess(actor, 'write:styles', page)
+  }
 }
 
 /**
@@ -2208,13 +2221,12 @@ class Pages {
     await this.guardFeedbackBoards(siteId, locale, path, editor)
 
     const alias = await this.validateAlias(siteId, input.alias)
+    // -> Against the page as it is about to be, the tags it arrives with included: there is no row yet
+    const allowed = renderPermissionsFor(actor, { siteId, locale, path, tags: input.tags ?? [] })
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
       siteId,
       input.render ?? '',
-      {
-        scripts: hasPermission(actor, 'write:scripts'),
-        styles: hasPermission(actor, 'write:styles')
-      }
+      allowed
     )
 
     const inserted = await WIKI.db
@@ -2249,7 +2261,7 @@ class Pages {
         relations: input.relations ?? [],
         render,
         searchContent: text,
-        scripts: this.buildScripts(input, actor),
+        scripts: this.buildScripts(input, allowed),
         siteId,
         tags: input.tags ?? [],
         title,
@@ -2460,16 +2472,19 @@ class Pages {
       values.tags = patch.tags
     }
 
+    /*
+      Against the page as it stands, which is also what the route's own `write:pages` check asks
+      about: a save never moves a page, and a retag it carries is its own permission (`write:tags`).
+    */
+    const allowed = renderPermissionsFor(actor, existing)
+
     // -> A render only means anything next to the content it came from, so the two move together
     let renderHrefs: string[] | undefined
     if (patch.render !== undefined) {
       const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
         siteId,
         patch.render,
-        {
-          scripts: hasPermission(actor, 'write:scripts'),
-          styles: hasPermission(actor, 'write:styles')
-        }
+        allowed
       )
       values.render = render
       values.toc = toc
@@ -2485,7 +2500,7 @@ class Pages {
       patch.scriptJsUnload !== undefined ||
       patch.scriptCss !== undefined
     ) {
-      values.scripts = this.buildScripts(patch, actor, existing.scripts as Record<string, any>)
+      values.scripts = this.buildScripts(patch, allowed, existing.scripts as Record<string, any>)
     }
 
     // -> The author is whoever last changed it; the creator does not move
@@ -3302,16 +3317,13 @@ class Pages {
       : false
     const creatorId = creatorExists ? origin!.authorId! : actor.id
 
+    const tags: string[] = Array.isArray(meta.tags) ? meta.tags : []
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
       siteId,
       input.render ?? '',
-      {
-        scripts: hasPermission(actor, 'write:scripts'),
-        styles: hasPermission(actor, 'write:styles')
-      }
+      renderPermissionsFor(actor, { siteId, locale, path, tags })
     )
 
-    const tags: string[] = Array.isArray(meta.tags) ? meta.tags : []
     const inserted = await WIKI.db
       .insert(pagesTable)
       .values({
@@ -3839,7 +3851,7 @@ class Pages {
       "restore my pages" into stored XSS for every reader. An administrator who does want scripts on
       an imported page saves it once themselves, deliberately.
     */
-    const actor = { id: authorId, permissions: [] }
+    const actor: PageActor = { id: authorId, groupIds: [], permissions: [] }
     // -> The one difference between the two directions, and deliberately the only one: a page that is
     //    there is *saved*, through the same method an editor saves through, so it gets a history entry
     //    and a re-render and a mirrored copy without any of that being reimplemented here
@@ -3943,10 +3955,7 @@ class Pages {
     await WIKI.models.rendering.queuePage({
       siteId,
       pageId: page.id,
-      permissions: {
-        scripts: hasPermission(actor, 'write:scripts'),
-        styles: hasPermission(actor, 'write:styles')
-      },
+      permissions: renderPermissionsFor(actor, page),
       requestedById: actor.id
     })
     return true
@@ -4110,24 +4119,25 @@ class Pages {
   }
 
   /**
-   * Same for the per-page scripts — which only an author holding the matching permission may set.
+   * Same for the per-page scripts — which only an author holding the matching permission on the page
+   * may set (`renderPermissionsFor`).
    *
    * Silently dropped rather than refused, as with the rest of the sanitizing: an author pasting a
    * page template that carries scripts should get their page, minus the scripts.
    */
   private buildScripts(
     input: Partial<PageInput>,
-    actor: PageActor,
+    allowed: RenderPermissions,
     existing: Record<string, any> = {}
   ): Record<string, any> {
-    const mayScript = hasPermission(actor, 'write:scripts')
-    const mayStyle = hasPermission(actor, 'write:styles')
     return {
-      jsLoad: mayScript ? (input.scriptJsLoad ?? existing.jsLoad ?? '') : (existing.jsLoad ?? ''),
-      jsUnload: mayScript
+      jsLoad: allowed.scripts
+        ? (input.scriptJsLoad ?? existing.jsLoad ?? '')
+        : (existing.jsLoad ?? ''),
+      jsUnload: allowed.scripts
         ? (input.scriptJsUnload ?? existing.jsUnload ?? '')
         : (existing.jsUnload ?? ''),
-      css: mayStyle ? (input.scriptCss ?? existing.css ?? '') : (existing.css ?? '')
+      css: allowed.styles ? (input.scriptCss ?? existing.css ?? '') : (existing.css ?? '')
     }
   }
 

@@ -114,10 +114,7 @@ export function actorFrom(req: FastifyRequest): PageActor | null {
   if (!userId) {
     return null
   }
-  return {
-    id: userId,
-    permissions: req.apiKey?.permissions ?? req.session?.permissions ?? []
-  }
+  return { id: userId, ...WIKI.models.groups.actorForRequest(req) }
 }
 
 /**

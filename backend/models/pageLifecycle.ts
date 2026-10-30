@@ -628,7 +628,7 @@ class PageLifecycle {
       return null
     }
     const access = await WIKI.models.groups.actorForUser(userId)
-    return { page: { id: userId, permissions: access.permissions }, access }
+    return { page: { id: userId, ...access }, access }
   }
 }
 

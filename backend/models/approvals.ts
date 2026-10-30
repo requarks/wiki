@@ -9,6 +9,7 @@ import {
   pages as pagesTable,
   users as usersTable
 } from '../db/schema.ts'
+import type { PageActor } from './pages.ts'
 
 /**
  * How a rule decides which pages it covers. The same set group page rules use, so an administrator
@@ -716,7 +717,7 @@ class Approvals {
     content: string
     /** The rendered HTML. Rendered here instead when the caller has none, which needs an extension. */
     render?: string
-    actor: { id: string; permissions: string[] }
+    actor: PageActor
   }): Promise<boolean> {
     const rows = await WIKI.db
       .select({ id: submissionsTable.id, pageId: submissionsTable.pageId })

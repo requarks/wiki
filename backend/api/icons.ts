@@ -1,13 +1,48 @@
 import { audit } from '../helpers/audit.ts'
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
- * Permissions for looking icons up and storing them.
+ * Who may look icons up and have them stored.
  *
- * Anyone who can put an icon somewhere — a page, a navigation item, a page relation — needs to be able
- * to search for one and have it stored, which is what makes it servable from this instance afterwards.
+ * Anyone who can put an icon somewhere — a page, a navigation item, a page relation, a live note — needs
+ * to be able to search for one and have it stored, which is what makes it servable from this instance
+ * afterwards. Two kinds of permission open it, and they are asked differently:
+ *
+ * - the GLOBAL ones, from the group-wide list;
+ * - the PAGE ones, granted by a rule anywhere (`groups.grantsAnywhere`). None of these calls names a
+ *   page, and nothing they answer is about one: where an icon may actually be put is decided by the
+ *   route that saves it.
  */
-const PICKER_PERMISSIONS = ['write:pages', 'manage:pages', 'manage:sites', 'manage:system']
+const PICKER_PERMISSIONS = ['manage:sites', 'manage:system']
+const PICKER_PAGE_PERMISSIONS = [
+  'write:pages',
+  'review:pages',
+  'manage:pages',
+  'manage:navigation',
+  'write:notes'
+]
+
+const PICKER_ACCESS =
+  '\n\nOpen to `manage:sites` or `manage:system`, or to anybody a page rule grants `write:pages`, `review:pages`, `manage:pages`, `manage:navigation` or `write:notes` anywhere.'
+
+/**
+ * Refuse a caller who may not use the picker.
+ *
+ * A hook rather than `config.permissions`, because that one reads the group-wide list alone, and a
+ * page permission named in it matches nobody — which is how this was once shut to every author whose
+ * `write:pages` came from a rule, which is every author.
+ */
+async function pickerGuard(req: FastifyRequest, reply: FastifyReply) {
+  const actor = WIKI.models.groups.actorForRequest(req)
+  const allowed =
+    PICKER_PERMISSIONS.some((permission) => actor.permissions.includes(permission)) ||
+    PICKER_PAGE_PERMISSIONS.some((permission) =>
+      WIKI.models.groups.grantsAnywhere(actor, permission)
+    )
+  if (!allowed) {
+    return reply.forbidden('You are not allowed to look up icons.')
+  }
+}
 
 /**
  * Icons API Routes
@@ -23,13 +58,15 @@ async function routes(app: FastifyInstance) {
     '/sets',
     {
       config: {
-        scope: 'pages',
-        permissions: PICKER_PERMISSIONS
+        scope: 'pages'
       },
+      // -> No route-level `permissions`: page rules open this too, see `pickerGuard`
+      preHandler: pickerGuard,
       schema: {
         summary: 'List the icon sets added to this wiki',
         description:
-          'Alphabetical. `iconCount` is how many icons of the set are stored in the database, which is what this instance can serve on its own — the disk cache is derived from those rows and may be empty.',
+          'Alphabetical. `iconCount` is how many icons of the set are stored in the database, which is what this instance can serve on its own — the disk cache is derived from those rows and may be empty.' +
+          PICKER_ACCESS,
         tags: ['Icons'],
         response: {
           200: {
@@ -323,13 +360,15 @@ async function routes(app: FastifyInstance) {
     '/search',
     {
       config: {
-        scope: 'pages',
-        permissions: PICKER_PERMISSIONS
+        scope: 'pages'
       },
+      // -> No route-level `permissions`: page rules open this too, see `pickerGuard`
+      preHandler: pickerGuard,
       schema: {
         summary: 'Search icons across the enabled icon sets',
         description:
-          'Searched upstream, then narrowed to the sets enabled here — so results are always icons that can actually be used. Returns references shaped `prefix:name`, which is what content stores.',
+          'Searched upstream, then narrowed to the sets enabled here — so results are always icons that can actually be used. Returns references shaped `prefix:name`, which is what content stores.' +
+          PICKER_ACCESS,
         tags: ['Icons'],
         querystring: {
           type: 'object',
@@ -391,13 +430,15 @@ async function routes(app: FastifyInstance) {
     '/sets/:prefix/icons',
     {
       config: {
-        scope: 'pages',
-        permissions: PICKER_PERMISSIONS
+        scope: 'pages'
       },
+      // -> No route-level `permissions`: page rules open this too, see `pickerGuard`
+      preHandler: pickerGuard,
       schema: {
         summary: 'List every icon name in an enabled set',
         description:
-          'For browsing a set with no search term. Deprecated icons are left out. Fetched from upstream and memoized for an hour.',
+          'For browsing a set with no search term. Deprecated icons are left out. Fetched from upstream and memoized for an hour.' +
+          PICKER_ACCESS,
         tags: ['Icons'],
         params: {
           type: 'object',
@@ -446,13 +487,15 @@ async function routes(app: FastifyInstance) {
     '/materialize',
     {
       config: {
-        scope: 'pages',
-        permissions: PICKER_PERMISSIONS
+        scope: 'pages'
       },
+      // -> No route-level `permissions`: page rules open this too, see `pickerGuard`
+      preHandler: pickerGuard,
       schema: {
         summary: 'Store icons so this instance can serve them',
         description:
-          'Called when an icon is chosen, while the author is online: it fetches the icon from upstream and writes it to the database, after which the wiki serves it forever without the Iconify API. Icons already stored are a no-op.',
+          'Called when an icon is chosen, while the author is online: it fetches the icon from upstream and writes it to the database, after which the wiki serves it forever without the Iconify API. Icons already stored are a no-op.' +
+          PICKER_ACCESS,
         tags: ['Icons'],
         body: {
           type: 'object',
@@ -495,14 +538,13 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
+      /*
+        Not audited: picking an icon calls this, and storing one changes nothing anybody sees -- the
+        icon was already there to be had from upstream. Whoever puts it on a page or in a menu is
+        recorded by the route that saves that. Generate Sample Content, an administrator acting, is
+        recorded through its own route (`POST /system/sample-content/icons`).
+      */
       const failed = await WIKI.models.icons.materializeIcons(req.body.icons)
-
-      // -> Counts rather than the references themselves: picking an icon calls this, so a list of
-      //    every name somebody browsed past would be noise rather than a record
-      await audit(req, 'admin', 'materializeIcons', {
-        requested: req.body.icons.length,
-        failed: failed.length
-      })
 
       return {
         ok: failed.length < 1,

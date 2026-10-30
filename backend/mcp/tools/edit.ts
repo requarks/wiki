@@ -77,16 +77,16 @@ async function assertIcon(icon: string): Promise<void> {
 }
 
 /**
- * The actor a page write is made as: the token's owner, with their group-wide permissions — which is
- * what decides whether the render may keep scripts and styles, as it does for the same token on
- * `/_api` (dev/specs/mcp.md §6.2).
+ * The actor a page write is made as: the token's owner, with their groups and group-wide permissions —
+ * whose page rules decide whether the render may keep scripts and styles, as they do for the same
+ * token on `/_api` (dev/specs/mcp.md §6.2).
  */
 function writerOf(ctx: McpContext): PageActor {
   if (!ctx.user) {
     // -> Write tools need `mcp:write`, which an anonymous caller never holds; this is the backstop
     throw new ToolError('Writing needs a personal access token.')
   }
-  return { id: ctx.user.id, permissions: ctx.actor.permissions }
+  return { id: ctx.user.id, ...ctx.actor }
 }
 
 /**
