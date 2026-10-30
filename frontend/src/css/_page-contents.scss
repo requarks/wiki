@@ -136,6 +136,13 @@
   --content-table-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 3px 10px rgba(0, 0, 0, 0.05);
 
   --content-mark: #fdf1a0;
+  /*
+    A heading flashed for having stopped short of the top (see `.is-anchor-flashed`). A tint of the
+    site's accent rather than the mark's yellow -- the theme's colour for what has to catch the eye --
+    and a tint rather than the accent itself, so the heading's own colour still reads on top of it
+    regardless of what hue an administrator picked. The same amounts as a search match's.
+  */
+  --content-flash: color-mix(in srgb, var(--color-accent) 30%, transparent);
 
   /*
     The rows of a `{.links-list}`: the wash each one sits on, and the tint it takes under the pointer.
@@ -327,6 +334,7 @@
       --content-table-head: #1e232a;
 
       --content-mark: #6b5d13;
+      --content-flash: color-mix(in srgb, var(--color-accent) 45%, transparent);
 
       /* -> Lifted off the dark page, and mixed from the lighter blue for the same reason links are */
       --content-links-row: rgba(255, 255, 255, 0.05);
@@ -2252,14 +2260,36 @@
     once an in-content fragment link began updating the URL with `router.push` -- a pushed hash sets no
     target element. Keep the name in step with `LANDED_CLASS` there.
 
-    Headings are deliberately not styled: a heading is what the reader asked for and it announces itself
-    by sitting at the top of the column, so the wash only added noise to every jump to a section.
+    Headings are not marked by it: a heading is what the reader asked for and it announces itself by
+    sitting at the top of the column, so a lasting wash only added noise to every jump to a section.
+    One that cannot get there -- too near the end of the page for the column to scroll it up -- is
+    flashed instead, below.
   */
   .footnote-item.is-anchor-landed {
     /* Drawn outside the box so it cannot shift the text it highlights */
     box-shadow: 0 0 0 0.4em var(--content-mark);
     background-color: var(--content-mark);
     border-radius: 2px;
+  }
+
+  /*
+    A heading the reader was sent to that stopped short of the top of the column, which is the only
+    case where arriving did not show them where the section starts. Held long enough to be found, then
+    faded, since the reader knows where it is by then. Keep the name in step with `FLASHED_CLASS` in
+    `helpers/anchors.js`, which only sets it on a heading, and only in that case.
+
+    Left running under reduced motion: it is a change of colour in place, not movement.
+  */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    &.is-anchor-flashed {
+      border-radius: 2px;
+      animation: content-anchor-flash 1.8s var(--ease-standard);
+    }
   }
 
   .footnote-backref {
@@ -2533,6 +2563,21 @@
   custom properties still resolve from there, so the article's own `--content-mark` serves both themes.
   A highlight can only take colours and a text decoration -- no padding, no shadow, no radius.
 */
+/* The flash colour, held, then faded -- see `.is-anchor-flashed` above */
+@keyframes content-anchor-flash {
+  0%,
+  45% {
+    /* -> Drawn outside the box as well, like a footnote's, so the text sits inside it */
+    box-shadow: 0 0 0 0.3em var(--content-flash);
+    background-color: var(--content-flash);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0.3em transparent;
+    background-color: transparent;
+  }
+}
+
 ::highlight(wiki-annotation-pending) {
   background-color: color-mix(in srgb, var(--q-warning) 32%, transparent);
 }

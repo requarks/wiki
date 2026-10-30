@@ -173,8 +173,8 @@ Conventions established during the conversion, worth following in new code:
   skip this: the secret still ends up in a browser, a cache and a screen share. Both module-prop
   surfaces do it — storage targets (`api/storage.ts`) and authentication strategies
   (`withoutSecrets` in `api/authentication.ts`) — so a new one is expected to as well.
-- **Dates use the native `Temporal` API**, not luxon (no longer a backend dependency). `Temporal` is a
-  global in Node 26 and is typed by the TS 7 lib, so it needs no import. Four things to know:
+- **Dates use the native `Temporal` API.** `Temporal` is a global in Node 26 and is typed by the TS 7
+  lib, so it needs no import. Four things to know:
   - `Temporal.Instant` accepts **exact time units only** — `add({ days: 1 })` throws. Since these are
     all UTC instants, use `{ hours: 24 }`.
   - Temporal types have no `valueOf`, so `a < b` **throws**. Compare with

@@ -42,6 +42,17 @@ const DRIFT_TOLERANCE = 4
  */
 export const LANDED_CLASS = 'is-anchor-landed'
 
+/**
+ * Left for a moment on a heading the reader was sent to that the scroll could not bring to the top of
+ * the column — one near the end of the page, where the column runs out of room first, or one on a page
+ * too short to scroll at all. Arriving at the top is what normally says "here", and the heading did
+ * not arrive, so it says so itself and then fades. Styled in `_page-contents.scss`.
+ */
+export const FLASHED_CLASS = 'is-anchor-flashed'
+
+/** What may be flashed: a footnote and a comment are marked by `LANDED_CLASS`, and a tab opens. */
+const FLASHABLE = /^H[1-6]$/
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** Mark where the reader has just been sent, and only there — the way `:target` behaved. */
@@ -50,6 +61,23 @@ function markLanded(el) {
     previous.classList.remove(LANDED_CLASS)
   }
   el.classList.add(LANDED_CLASS)
+}
+
+/** Flash the heading, from the start again if it was still fading from the last time. */
+function flash(el) {
+  for (const previous of document.querySelectorAll(`.${FLASHED_CLASS}`)) {
+    previous.classList.remove(FLASHED_CLASS)
+  }
+  // -> A reflow between the two, or the browser sees no change and the animation does not restart
+  void el.offsetWidth
+  el.classList.add(FLASHED_CLASS)
+  const done = (ev) => {
+    if (ev.target === el) {
+      el.classList.remove(FLASHED_CLASS)
+      el.removeEventListener('animationend', done)
+    }
+  }
+  el.addEventListener('animationend', done)
 }
 
 /** The heading a `#slug` refers to, or null. */
@@ -97,11 +125,30 @@ function positionOf(el, scroller) {
   return Math.round(el.getBoundingClientRect().top + scroller.scrollTop)
 }
 
-/** How far the heading is from where a scroll aiming at it would put it. */
+/**
+ * How far the heading is from where a scroll aiming at it would put it.
+ *
+ * The document's own scroller is measured from the top of the viewport: its box starts wherever the
+ * page has been scrolled to, which is not where anything is seen from.
+ */
 function driftOf(el, scroller) {
   const margin = Number.parseFloat(getComputedStyle(el).scrollMarginTop) || 0
-  const wanted = scroller.getBoundingClientRect().top + margin
-  return el.getBoundingClientRect().top - wanted
+  const top = scroller === document.scrollingElement ? 0 : scroller.getBoundingClientRect().top
+  return el.getBoundingClientRect().top - (top + margin)
+}
+
+/** How far down the scroller can go at most. */
+function furthestOf(scroller) {
+  return scroller.scrollHeight - scroller.clientHeight
+}
+
+/**
+ * Whether a scroll aimed at the heading will stop before the heading reaches the top: the column ends
+ * first. Asked before scrolling, since afterwards a heading that fell short and one that arrived and
+ * then moved look the same.
+ */
+function fallsShort(el, scroller) {
+  return scroller.scrollTop + driftOf(el, scroller) - furthestOf(scroller) > DRIFT_TOLERANCE
 }
 
 function scrollTo(el, smooth) {
@@ -146,13 +193,33 @@ function whenScrollEnded(scroller) {
   })
 }
 
-/** Mark where the reader is being sent and take them there, if it is on the page to be taken to. */
+/**
+ * Mark where the reader is being sent and take them there, if it is on the page to be taken to —
+ * flashing the heading if it will not end up at the top.
+ */
 function land(el, smooth) {
   if (!isVisible(el)) {
     return false
   }
   markLanded(el)
+
+  const scroller = scrollerOf(el)
+  const short = FLASHABLE.test(el.tagName) && fallsShort(el, scroller)
+  // -> Read before scrolling: it is how far there is to go, which afterwards is nothing
+  const travel = furthestOf(scroller) - scroller.scrollTop
   scrollTo(el, smooth)
+
+  if (short) {
+    // -> Once the column has stopped, so the reader sees the mark where it is rather than on its way
+    //    there. Nothing to wait for if there was no room left to scroll — the case this is for — or if
+    //    the scroll was a jump
+    const moving = smooth && scrollBehavior() === 'smooth' && travel > 1
+    if (moving) {
+      whenScrollEnded(scroller).then(() => flash(el))
+    } else {
+      flash(el)
+    }
+  }
   return true
 }
 
@@ -217,6 +284,7 @@ export async function scrollToAnchorWhenReady(hash, { timeout = 5000 } = {}) {
 
   const scroller = scrollerOf(target)
   await whenStill(target, scroller, deadline)
+  const short = FLASHABLE.test(target.tagName) && fallsShort(target, scroller)
   scrollTo(target, true)
 
   // -> One correction, without animation: the reader has already watched the page travel, and what
@@ -224,5 +292,8 @@ export async function scrollToAnchorWhenReady(hash, { timeout = 5000 } = {}) {
   await whenScrollEnded(scroller)
   if (Math.abs(driftOf(target, scroller)) > DRIFT_TOLERANCE && isVisible(target)) {
     scrollTo(target, false)
+  }
+  if (short) {
+    flash(target)
   }
 }

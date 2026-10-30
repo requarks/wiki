@@ -44,5 +44,4 @@ to the backend on **3000**, so the backend must be running too.
   prefix; authentication is the session cookie, sent with every request.
 - Cross-component messaging uses the `EVENT_BUS` global (mitt).
 - State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
-  [Utilities and dates](../CLAUDE.md#utilities-and-dates); the `lodash-es` and `luxon` still present in older
-  files are on their way out.
+  [Utilities and dates](../CLAUDE.md#utilities-and-dates).

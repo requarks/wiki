@@ -169,14 +169,11 @@ every `<script>` and `<style>` block in every SFC. This is not an oxfmt quirk ei
 
 These apply to **every workspace**, `frontend/` included — not just the backend.
 
-- **Use `es-toolkit`, not `lodash-es`.** Installed in both `backend/` and `frontend/`.
-- **Use the native `Temporal` API, not luxon.** See [Backend patterns](./backend/CLAUDE.md#backend-patterns) for the
-  Temporal gotchas worth knowing; they apply on the frontend too.
-- **luxon and lodash-es are being removed entirely.** The migration is gradual: when you touch a file
-  that imports either one, convert that file's usages as part of the same change — but don't sweep
-  through untouched files as a drive-by. Once the last usage is gone, both dependencies get dropped.
-- Prefer real es-toolkit subpath exports (`es-toolkit/object`, `es-toolkit/array`,
-  `es-toolkit/predicate`) over `es-toolkit/compat`. Two lodash helpers are compat-only and have direct
+- **Use `es-toolkit` for utilities.** Installed in both `backend/` and `frontend/`.
+- **Use the native `Temporal` API for dates.** See [Backend patterns](./backend/CLAUDE.md#backend-patterns) for
+  the Temporal gotchas worth knowing; they apply on the frontend too.
+- Use the real es-toolkit subpath exports (`es-toolkit/object`, `es-toolkit/array`,
+  `es-toolkit/predicate`), never `es-toolkit/compat`. Two helpers that exist only in compat have direct
   equivalents: `defaultsDeep(source, defaults)` → `toMerged(defaults, source)` (note the argument
   order flips) and `toSafeInteger(x)` → `Number.parseInt(x, 10)`.
 - On the frontend `Temporal` is a global, declared in `.oxlintrc.json`. `src/boot/temporal.js`
