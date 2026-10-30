@@ -3,7 +3,8 @@ import { replyWithFile } from '../helpers/common.ts'
 import { svgMimeType } from '../helpers/images.ts'
 import crypto from 'node:crypto'
 import path from 'node:path'
-import type { SiteAssetKind } from '../models/sites.ts'
+import { siteAssetRenditions } from '../models/sites.ts'
+import type { SiteAssetKind, SiteAssetRendition } from '../models/sites.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -29,6 +30,9 @@ const SITE_ASSET_CACHE = 'public, no-cache'
  * already allows injecting markup into every page of the site — but that is a reason to keep the
  * blast radius of a stolen admin session small, not to ignore it. Nothing legitimate in a logo needs
  * more than the markup itself, so the response allows nothing else.
+ *
+ * An SVG is also sanitized on upload while the security settings' `uploadScanSVG` is on
+ * (`sites.setAsset`); this is what stands for one stored while it was off.
  */
 const SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
 
@@ -51,9 +55,12 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Site not found')
       }
 
-      const kind = req.params.resource as SiteAssetKind
-      const fallback = SITE_ASSET_FALLBACKS[kind]
-      if (!fallback) {
+      // -> A rendition has no fallback: the default it would stand in for is the Wiki.js mark, and
+      //    whatever links to one only does so while the site's config says it exists
+      const kind = req.params.resource as SiteAssetKind | SiteAssetRendition
+      const isRendition = (siteAssetRenditions as readonly string[]).includes(kind)
+      const fallback = isRendition ? null : SITE_ASSET_FALLBACKS[kind as SiteAssetKind]
+      if (!fallback && !isRendition) {
         return reply.badRequest('Invalid Site Resource')
       }
 
@@ -63,7 +70,9 @@ async function routes(app: FastifyInstance) {
         ? await WIKI.models.sites.getAsset(site.id, kind)
         : null
       if (!asset) {
-        return replyWithFile(reply, path.join(WIKI.ROOTPATH, fallback))
+        return fallback
+          ? replyWithFile(reply, path.join(WIKI.ROOTPATH, fallback))
+          : reply.notFound('Site resource not found')
       }
 
       const etag = `"${crypto.createHash('sha1').update(asset.data).digest('hex')}"`

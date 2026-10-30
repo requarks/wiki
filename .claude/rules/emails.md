@@ -12,11 +12,11 @@ paths:
 The wiki sends a registration confirmation, a forgotten password, the admin area's test, and
 notifications (one at a time or as a digest — see [Notifications](./notifications.md)), and
 `models/mail.ts` is the only place nodemailer is used. `send()` takes a `MailSite` from its caller
-(`mail.siteFor(siteId)`) rather than a site id, because the notification mails are sent from a worker
-thread, which has no `WIKI.sites`. `MailTemplateData` is the
-closed list, held as typed literals rather than rows in a table: nothing sends a mail this wiki did
-not ask it to, so a template is part of the flow that uses it and a flow that gained one would gain
-code there anyway. A wiki with no SMTP settings is the normal case, which is why `isConfigured` is
+(`mail.siteFor(siteId, baseUrl)`) rather than a site id, because the notification mails are sent from
+a worker thread, which has no `WIKI.sites` — it builds one with `mailSiteOf` from the config it
+reads. `MailTemplateData` is the closed list, held as typed literals rather than rows in a table:
+nothing sends a mail this wiki did not ask it to, so a template is part of the flow that uses it and
+a flow that gained one would gain code there anyway. A wiki with no SMTP settings is the normal case, which is why `isConfigured` is
 a question callers ask rather than something `send()` assumes.
 
 **No mail is written in English in the code.** Every string lives in `locales/en.json` under
@@ -46,7 +46,11 @@ anything else the wiki writes for a person rather than for a machine belongs in 
 most one action, footer — and `htmlShell` and `textBody` are two renderings of it. Each template
 used to write both out by hand, and a string changed in one was a string not changed in the other.
 Everything in the description appears in both: the title is a heading in the HTML and a first line
-in the text, and a paragraph written under a heading refers to it.
+in the text, and a paragraph written under a heading refers to it. Both open with the site's name —
+beside its logo in the HTML — since the sender name alone does not tell two sites of one instance
+apart. The logo is the PNG copy made when it is uploaded (`logoMail` in `models/sites.ts`), never the
+stored WebP or SVG, which Outlook and Gmail respectively do not draw; a site with no copy, because
+nothing was uploaded or Sharp is not installed, has the name alone.
 
 **Which language a mail is written in is the caller's answer, not the model's.** `MailRequest.locale`
 is what is known about the recipient, and what is known differs at every send site: an account's own

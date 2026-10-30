@@ -348,6 +348,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           logo: {
             type: 'boolean'
           },
+          logoMail: {
+            type: 'boolean',
+            description:
+              "Whether the logo has a PNG copy for the site's emails, which is made when it is uploaded and needs the Sharp extension."
+          },
           favicon: {
             type: 'boolean'
           },

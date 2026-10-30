@@ -1,7 +1,6 @@
 # Wiki.js 3.x
 
-Next-generation open source wiki. This is the **3.x development branch** — incomplete, unstable, and
-with no upgrade path from 2.x. AGPL-3.0.
+Next-generation open source wiki. This is the **3.x development branch**. AGPL-3.0.
 
 **A database created by committed code has to be brought forward by a migration.** Anything that
 has been committed may be running somewhere, so when a change alters what is stored — a column, the

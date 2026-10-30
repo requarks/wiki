@@ -70,7 +70,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       uploadScanSVG: {
         type: 'boolean',
         description:
-          'Whether an uploaded SVG is sanitized before it is stored: scripts, event handlers, embedded HTML and script links are taken out, and only elements and attributes that draw are kept. Applies to every asset upload, the images added to live notes included.'
+          'Whether an uploaded SVG is sanitized before it is stored: scripts, event handlers, embedded HTML and script links are taken out, and only elements and attributes that draw are kept. Applies to every asset upload, the images added to live notes and the logo, favicon and login background of a site included.'
       },
       authRateLimitEnabled: {
         type: 'boolean',

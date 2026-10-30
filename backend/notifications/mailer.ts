@@ -8,8 +8,8 @@ import {
   users as usersTable
 } from '../db/schema.ts'
 import { locales } from '../models/locales.ts'
-import { mail } from '../models/mail.ts'
-import type { MailNotificationEntry, MailSite } from '../models/mail.ts'
+import { mail, mailSiteOf } from '../models/mail.ts'
+import type { MailNotificationEntry } from '../models/mail.ts'
 import { NOTIFICATION_CATEGORIES, deliveryFor, isCategoryKey } from './index.ts'
 import { enqueueOnce } from './queue.ts'
 import { createUnsubscribeToken } from './unsubscribe.ts'
@@ -46,9 +46,10 @@ const SEND_LEASE = 600
 const DEFAULT_BATCH_SIZE = 100
 
 interface SiteInfo {
+  id: string
   hostname: string
   isEnabled: boolean
-  mailSite: MailSite
+  config: Record<string, any>
 }
 
 /** A due entry, with what drawing it in a mail needs. */
@@ -79,12 +80,10 @@ async function loadSites(): Promise<Map<string, SiteInfo>> {
       return [
         row.id,
         {
+          id: row.id,
           hostname: row.hostname,
           isEnabled: config.features?.notifications !== false,
-          mailSite: {
-            name: config.title || 'Wiki.js',
-            primaryLocale: config.locales?.primary || null
-          }
+          config
         }
       ]
     })
@@ -299,7 +298,7 @@ async function sendTo(
   const token = createUnsubscribeToken({ userId: pair.userId, categories })
   try {
     await mail.send({
-      site: site.mailSite,
+      site: mailSiteOf(site.id, site.config, baseUrl),
       to: user.email,
       template: sending.length > 1 ? 'notificationDigest' : 'notification',
       locale: (user.prefs as Record<string, any>)?.locale,

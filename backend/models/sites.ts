@@ -11,9 +11,16 @@ import {
   storage as storageTable,
   tags as tagsTable
 } from '../db/schema.ts'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
-import { detectImageMime, detectSvg, normalizeImage, svgMimeType } from '../helpers/images.ts'
+import { CustomError } from '../helpers/common.ts'
+import {
+  detectImageMime,
+  detectSvg,
+  normalizeImage,
+  sanitizeSvg,
+  svgMimeType
+} from '../helpers/images.ts'
 import type { ImageNormalization } from '../helpers/images.ts'
 import type { SystemIds } from './types.ts'
 
@@ -39,6 +46,33 @@ const SITE_ASSET_NORMALIZATION: Record<SiteAssetKind, ImageNormalization> = {
   //    home screen are made of, some of it much older than the page itself
   favicon: { width: 180, height: 180, fit: 'cover', format: 'png' },
   loginBg: { width: 1920, height: 1080, fit: 'cover', format: 'webp' }
+}
+
+/**
+ * Images made from an upload rather than uploaded themselves, for somewhere the upload as stored
+ * cannot go. Each is stored, flagged in `config.assets` and served (`/_site/<siteId>/<name>`) the
+ * way an upload is, but is never uploaded on its own: it is made when its source is, from the bytes
+ * as they came in, and removed with it.
+ *
+ * Making one needs the Sharp extension. Without it there is none — no default stands in, since what
+ * the default would show is the Wiki.js mark — and whatever would have used it does without.
+ */
+export const siteAssetRenditions = ['logoMail'] as const
+
+export type SiteAssetRendition = (typeof siteAssetRenditions)[number]
+
+const SITE_ASSET_RENDITIONS: Partial<
+  Record<SiteAssetKind, { name: SiteAssetRendition; normalization: ImageNormalization }>
+> = {
+  /*
+    The logo at the top of every mail (`models/mail.ts`). PNG, because the logo as stored is a WebP
+    or an SVG: Gmail draws no SVG, and Outlook for Windows no WebP. Twice the 32 pixels it is shown
+    at, for a high-density screen, and as wide as a wordmark is likely to need.
+  */
+  logo: {
+    name: 'logoMail',
+    normalization: { width: 256, height: 64, fit: 'inside', format: 'png' }
+  }
 }
 
 /**
@@ -230,6 +264,7 @@ class Sites {
         },
         assets: {
           logo: false,
+          logoMail: false,
           favicon: false,
           loginBg: false
         },
@@ -427,7 +462,7 @@ class Sites {
    */
   async getAsset(
     siteId: string,
-    kind: SiteAssetKind
+    kind: SiteAssetKind | SiteAssetRendition
   ): Promise<{ data: Buffer; mime: string } | null> {
     const rows = await WIKI.db
       .select({ data: siteAssetsTable.data })
@@ -450,34 +485,80 @@ class Sites {
    * `SITE_ASSET_NORMALIZATION` — there is no reason to hand every visitor the multi-megabyte
    * original of an image displayed 34 pixels tall. That needs the Sharp extension, so without it the
    * uploaded bytes are stored as they came in, which is what the admin area's "requires Sharp"
-   * indicator is warning about. An SVG is stored as it came in either way: it is markup, it already
+   * indicator is warning about. An SVG is never resized or re-encoded: it is markup, it already
    * scales to any size, and rasterizing it would throw away the only reason to use one.
    *
-   * @param data The uploaded image, already known to be one of the supported formats
+   * An SVG is sanitized (`sanitizeSvg`) when the security settings say uploaded SVGs are — the same
+   * `uploadScanSVG` an asset upload follows — and stored as it came in when they do not, behind the
+   * CSP `/_site` serves one with.
+   *
+   * Its renditions (`SITE_ASSET_RENDITIONS`) are made here too, from the upload as it came in (or as
+   * sanitized) rather than from what was stored, so that a PNG is not made from a WebP that has
+   * already lost some of the detail. One that cannot be made has its previous version removed
+   * rather than kept: it would be the old logo.
+   *
+   * @param upload The uploaded image, already known to be one of the supported formats
+   * @throws `siteImageInvalidSvg` for an SVG with no `svg` root, when SVGs are sanitized
    */
-  async setAsset(siteId: string, kind: SiteAssetKind, data: Buffer): Promise<void> {
+  async setAsset(siteId: string, kind: SiteAssetKind, upload: Buffer): Promise<void> {
+    let data = upload
+    if (WIKI.config.security?.uploadScanSVG && detectSvg(upload)) {
+      const sanitized = sanitizeSvg(upload)
+      if (!sanitized) {
+        throw new CustomError('siteImageInvalidSvg', 'This file is not a valid SVG image.')
+      }
+      data = sanitized
+    }
     const normalized = detectSvg(data)
       ? data
       : ((await normalizeImage(data, SITE_ASSET_NORMALIZATION[kind])) ?? data)
-    await WIKI.db
-      .insert(siteAssetsTable)
-      .values({ siteId, kind, data: normalized })
-      .onConflictDoUpdate({
-        target: [siteAssetsTable.siteId, siteAssetsTable.kind],
-        set: { data: normalized }
-      })
-    // -> Serving reads this flag off the cached site config before it looks for any bytes
-    await WIKI.models.sites.updateSite(siteId, { config: { assets: { [kind]: true } } })
+    const rendition = SITE_ASSET_RENDITIONS[kind]
+    const rendered = rendition ? await normalizeImage(data, rendition.normalization) : null
+    await WIKI.db.transaction(async (tx) => {
+      const rows = [
+        { siteId, kind, data: normalized },
+        ...(rendition && rendered ? [{ siteId, kind: rendition.name, data: rendered }] : [])
+      ]
+      for (const row of rows) {
+        await tx
+          .insert(siteAssetsTable)
+          .values(row)
+          .onConflictDoUpdate({
+            target: [siteAssetsTable.siteId, siteAssetsTable.kind],
+            set: { data: row.data }
+          })
+      }
+      if (rendition && !rendered) {
+        await tx
+          .delete(siteAssetsTable)
+          .where(and(eq(siteAssetsTable.siteId, siteId), eq(siteAssetsTable.kind, rendition.name)))
+      }
+    })
+    // -> Serving reads these flags off the cached site config before it looks for any bytes
+    await WIKI.models.sites.updateSite(siteId, {
+      config: {
+        assets: { [kind]: true, ...(rendition && { [rendition.name]: Boolean(rendered) }) }
+      }
+    })
   }
 
   /**
-   * Remove one of a site's images, leaving the built-in default to be served again.
+   * Remove one of a site's images, and its renditions, leaving the built-in default to be served
+   * again.
    */
   async clearAsset(siteId: string, kind: SiteAssetKind): Promise<void> {
+    const rendition = SITE_ASSET_RENDITIONS[kind]?.name
     await WIKI.db
       .delete(siteAssetsTable)
-      .where(and(eq(siteAssetsTable.siteId, siteId), eq(siteAssetsTable.kind, kind)))
-    await WIKI.models.sites.updateSite(siteId, { config: { assets: { [kind]: false } } })
+      .where(
+        and(
+          eq(siteAssetsTable.siteId, siteId),
+          inArray(siteAssetsTable.kind, rendition ? [kind, rendition] : [kind])
+        )
+      )
+    await WIKI.models.sites.updateSite(siteId, {
+      config: { assets: { [kind]: false, ...(rendition && { [rendition]: false }) } }
+    })
   }
 
   async deleteSite(id: string): Promise<boolean> {
@@ -605,6 +686,7 @@ class Sites {
         },
         assets: {
           logo: false,
+          logoMail: false,
           favicon: false,
           loginBg: false
         },

@@ -504,6 +504,11 @@ export type ImageNormalization = {
  * Never enlarges: upscaling a small upload would cost bytes to look worse. So the result is at most
  * the requested size, and an image already smaller than the box is only re-encoded.
  *
+ * An SVG is rasterized, which is the one way to get it in front of a reader whose client will not
+ * draw one. It has no size of its own to stay within, so it is drawn at whatever density fills the
+ * box rather than at its nominal size — a logo written as a 24-pixel icon would otherwise come out
+ * 24 pixels wide. It is sanitized first, so that the renderer only ever sees what draws.
+ *
  * @returns The re-encoded image, or null if Sharp is not usable on this system
  */
 export async function normalizeImage(
@@ -526,7 +531,22 @@ export async function normalizeImage(
     return null
   }
   try {
-    const resized = sharp(data).resize(width, height, {
+    let input: { density?: number } = {}
+    if (detectSvg(data)) {
+      const sanitized = sanitizeSvg(data)
+      if (!sanitized) {
+        return null
+      }
+      data = sanitized
+      // -> Measured at the default 72 DPI, then drawn at the density that brings it to the box: the
+      //    smaller ratio for `inside`, the larger for `cover`, which crops the rest
+      const { width: w, height: h } = await sharp(data).metadata()
+      if (w && h) {
+        const scale = (fit === 'inside' ? Math.min : Math.max)(width / w, height / h)
+        input = { density: Math.min(Math.max(72 * scale, 1), 100000) }
+      }
+    }
+    const resized = sharp(data, input).resize(width, height, {
       fit,
       position: 'centre',
       withoutEnlargement: true

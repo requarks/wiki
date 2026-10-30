@@ -206,15 +206,14 @@ async function routes(app: FastifyInstance) {
       // -> Whichever site this admin area is being used on: all it decides is the name in the mail
       const siteId =
         (await WIKI.models.sites.getSiteByHostname({ hostname: req.hostname }))?.id ?? ''
+      const baseUrl = WIKI.models.mail.baseUrl({ siteId, protocol: req.protocol })
       try {
         await WIKI.models.mail.send({
-          site: WIKI.models.mail.siteFor(siteId),
+          site: WIKI.models.mail.siteFor(siteId, baseUrl),
           to: req.body.recipient,
           template: 'test',
           locale: req.body.locale,
-          data: {
-            baseUrl: WIKI.models.mail.baseUrl({ siteId, protocol: req.protocol })
-          }
+          data: { baseUrl }
         })
         await audit(req, 'admin', 'sendTestEmail', {
           recipient: req.body.recipient,

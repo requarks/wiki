@@ -141,6 +141,35 @@ export interface MailSite {
   name: string
   /** The language to write in when nothing is known about the recipient's. */
   primaryLocale: string | null
+  /**
+   * Where a mail client fetches the site's logo from, drawn beside the name at the top of the HTML
+   * body: the PNG rendition made when the logo was uploaded (`logoMail` in `models/sites.ts`), since
+   * the logo as stored is a WebP or an SVG, which Outlook and Gmail respectively do not draw.
+   *
+   * Null for a site that has no rendition — none uploaded, since the Wiki.js mark says nothing about
+   * which wiki the mail is from, or none could be made without the Sharp extension — and where there
+   * is no base URL to fetch it through.
+   */
+  logoUrl: string | null
+}
+
+/**
+ * Describe a site for a mail, from its config. The one place that is decided, for `siteFor` here and
+ * for the notification worker, which reads the config from the database.
+ *
+ * The logo is addressed by site id rather than `current`, because the base URL may be the one
+ * configured under Admin → Mail rather than the site's own hostname.
+ */
+export function mailSiteOf(
+  siteId: string,
+  config: Record<string, any> | null | undefined,
+  baseUrl: string | null
+): MailSite {
+  return {
+    name: config?.title || 'Wiki.js',
+    primaryLocale: config?.locales?.primary || null,
+    logoUrl: baseUrl && config?.assets?.logoMail ? `${baseUrl}/_site/${siteId}/logoMail` : null
+  }
 }
 
 /** One outgoing mail, as the models ask for it. */
@@ -220,7 +249,12 @@ function escapeHtml(str: string): string {
 }
 
 /**
- * The HTML body every mail shares: a heading, some paragraphs, at most one button.
+ * The HTML body every mail shares: the site's logo and name, a heading, some paragraphs, at most
+ * one button.
+ *
+ * The site heads every mail because the sender's name is not enough to tell two wikis apart — it may
+ * be an instance-wide one an administrator set — and somebody active on several sites of one
+ * instance gets mail from each.
  *
  * Written as a table with inline styles and no external anything, which is what a mail client will
  * actually render — the stylesheet, the web font and the background image a page would use are all
@@ -233,10 +267,20 @@ function escapeHtml(str: string): string {
  */
 function htmlShell(
   { title, body, items, action, footer, links }: MailContent,
+  site: MailSite,
   isRTL: boolean
 ): string {
   const dir = isRTL ? 'rtl' : 'ltr'
   const align = isRTL ? 'right' : 'left'
+  // -> The name is always written: it is what the header is for, and the logo alone is a picture
+  //    plenty of clients do not load until asked. Hence the empty alt, which would only repeat it
+  const header =
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;"><tr>` +
+    (site.logoUrl
+      ? `<td style="padding-${isRTL ? 'left' : 'right'}:12px;vertical-align:middle;"><img src="${escapeHtml(site.logoUrl)}" alt="" height="32" style="display:block;height:32px;width:auto;border:0;"></td>`
+      : '') +
+    `<td dir="${dir}" style="vertical-align:middle;font-size:15px;font-weight:600;line-height:1.4;color:#546e7a;text-align:${align};">${escapeHtml(site.name)}</td>` +
+    '</tr></table>'
   const paragraphs = body
     .map(
       (p) =>
@@ -270,6 +314,7 @@ function htmlShell(
     `<html dir="${dir}"><body dir="${dir}" style="margin:0;padding:24px;background:#eceff1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">`,
     '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:6px;">',
     `<tr><td dir="${dir}" style="padding:32px;text-align:${align};">`,
+    header,
     `<h1 style="margin:0 0 24px;font-size:20px;line-height:1.4;color:#263238;">${escapeHtml(title)}</h1>`,
     paragraphs,
     list,
@@ -291,17 +336,21 @@ function htmlShell(
  * The text body, which is the same description with nothing drawn around it.
  *
  * Every client that will not render HTML shows this one, and it is also what keeps a mail out of
- * the spam folder a filter puts HTML-only messages in. Every field of the description appears,
- * including the title: it is a heading in the HTML body and a first line here, and a paragraph
- * written under one refers to it — "if you are reading it" has nothing to point at in a text body
- * that opened with the sentence itself.
+ * the spam folder a filter puts HTML-only messages in. Every field of the description appears, under
+ * the site's name as the HTML body has it, including the title: it is a heading in the HTML body and
+ * a line of its own here, and a paragraph written under one refers to it — "if you are reading it"
+ * has nothing to point at in a text body that opened with the sentence itself.
  *
  * The action's URL goes after the paragraphs rather than beside whichever sentence introduces it,
  * so that the two bodies say things in the same order — the button sits after the paragraphs in
  * the HTML one for the same reason.
  */
-function textBody({ title, body, items, action, footer, links }: MailContent): string {
+function textBody(
+  { title, body, items, action, footer, links }: MailContent,
+  site: MailSite
+): string {
   return [
+    site.name,
     title,
     ...body,
     ...(items ?? []).map((item) =>
@@ -462,10 +511,11 @@ class Mail {
    * What a mail needs to know about a site, from the site configurations this process holds.
    *
    * The name is per site, since that is what the reader was looking at.
+   *
+   * @param baseUrl Where the mail's links point (`baseUrl`), which the logo is fetched through
    */
-  siteFor(siteId: string): MailSite {
-    const config = WIKI.sites[siteId]?.config
-    return { name: config?.title || 'Wiki.js', primaryLocale: config?.locales?.primary || null }
+  siteFor(siteId: string, baseUrl: string | null): MailSite {
+    return mailSiteOf(siteId, WIKI.sites[siteId]?.config, baseUrl)
   }
 
   /**
@@ -647,8 +697,8 @@ class Mail {
     const translator = await locales.translator(this.localeFor(locale, site))
     const content = this.render(translator, siteName, template, data)
     const { subject } = content
-    const text = textBody(content)
-    const html = htmlShell(content, translator.isRTL)
+    const text = textBody(content, site)
+    const html = htmlShell(content, site, translator.isRTL)
     WIKI.logger.debug(`Sending ${template} email to <${to}> in ${translator.locale}...`)
     await this.getTransporter().sendMail({
       from: {
