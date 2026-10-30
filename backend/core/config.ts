@@ -58,13 +58,29 @@ export default {
 
     // Override port
 
-    if (appconfig.port < 1) {
-      appconfig.port = process.env.PORT || 80
+    let portSource = 'the port setting in config.yml'
+    if (process.env.WIKI_PORT) {
+      appconfig.port = process.env.WIKI_PORT
+      portSource = 'the WIKI_PORT environment variable'
+    } else if (appconfig.port < 1) {
+      if (process.env.PORT) {
+        appconfig.port = process.env.PORT
+        portSource = 'the PORT environment variable'
+      } else {
+        appconfig.port = 80
+      }
     }
 
-    if (process.env.WIKI_PORT) {
-      appconfig.port = process.env.WIKI_PORT || 80
+    const port = Number(appconfig.port)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      console.error(
+        chalk.red.bold(
+          `>>> Invalid port "${appconfig.port}" from ${portSource}. Must be an integer between 1 and 65535.`
+        )
+      )
+      process.exit(1)
     }
+    appconfig.port = port
 
     // Load package info
 
