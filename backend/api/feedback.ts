@@ -214,7 +214,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "List a feedback board's ideas",
         description:
-          "One page of a board's listing, with the status and category facets beside it.\n\nAn idea is a page directly in the board's folder with a body of its own. Everything on a board is ruled by the board's own page rules, so a reader who may read the board may read every idea in it, and the listing is filtered, counted and paged by the database: `total` and every facet count are exact.\n\nThe facets are counted over every idea matching `q`, before the status and category filters, so that picking a filter never removes the control that undoes it. Without a `status` the listing shows the default for its sort: never Closed, and not Completed either under `top` and `trending`.",
+          "One page of a board's listing, with the status and category facets beside it.\n\nAn idea is a page directly in the board's folder with a body of its own. Everything on a board is ruled by the board's own page rules, so a reader who may read the board may read every idea in it, and the listing is filtered, counted and paged by the database: `total` and every facet count are exact.\n\nThe facets are counted over every idea matching `q`, before the status and category filters, so that picking a filter never removes the control that undoes it. Without a `status` the listing shows the default for its sort: never Closed, and not Completed either under `top`.",
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {

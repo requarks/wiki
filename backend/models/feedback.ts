@@ -87,13 +87,12 @@ export function takesComments(status: FeedbackStatus): boolean {
  * The statuses a listing shows when the reader has picked none, which depend on how it is sorted.
  *
  * Closed is never shown unasked: it is the board saying no, and a reader looking at a board wants
- * what is still possible. Completed is left out of Top and Trending too, which are read to see what to
- * work on next — done work at the top of those buries it — and kept in Newest and Recent Activity,
- * where something having just shipped is news.
+ * what is still possible. Completed is left out of Top too, which is read to see what to work on
+ * next — done work with years of votes at the top of it buries that — and kept in every other sort:
+ * Newest, Recent Activity and Trending, where something having just shipped is news.
  */
 export function defaultStatusesFor(sort: FeedbackSort): FeedbackStatus[] {
-  const hidden: FeedbackStatus[] =
-    sort === 'top' || sort === 'trending' ? ['completed', 'closed'] : ['closed']
+  const hidden: FeedbackStatus[] = sort === 'top' ? ['completed', 'closed'] : ['closed']
   return FEEDBACK_STATUSES.filter((status) => !hidden.includes(status))
 }
 

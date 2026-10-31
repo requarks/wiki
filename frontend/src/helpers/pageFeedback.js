@@ -81,7 +81,7 @@ export const FEEDBACK_MAX_CATEGORY_LENGTH = 100
  * Mirrors `defaultStatusesFor` on the server, which says why.
  */
 export function defaultStatusesFor(sort) {
-  const hidden = sort === 'top' || sort === 'trending' ? ['completed', 'closed'] : ['closed']
+  const hidden = sort === 'top' ? ['completed', 'closed'] : ['closed']
   return FEEDBACK_STATUSES.filter((status) => !hidden.includes(status))
 }
 
