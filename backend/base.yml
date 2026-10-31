@@ -206,6 +206,9 @@ defaults:
       # Whether users may create personal access tokens under their profile. Off, the tokens already
       # created stop working as well — they are kept, and work again the moment it is back on.
       allowPersonalTokens: true
+      # Non-public addresses (single, or CIDR) an identity provider's picture URL may be fetched
+      # from. Empty allows none: the URL comes from a claim the user may be able to edit.
+      avatarFetchAllowList: []
     security:
       corsMode: 'OFF'
       corsConfig: ''

@@ -5,6 +5,9 @@
  * about reachability, not identity: `local` is this machine, `private` is a network somebody had to
  * already be inside, and `external` is everything else — including anything unrecognisable, since
  * an address that cannot be placed must not land in the more permissive class.
+ *
+ * And the other direction: `isPublicAddress` is whether the wiki may connect somewhere a URL it did
+ * not write pointed it at.
  */
 
 import net from 'node:net'
@@ -60,6 +63,59 @@ export function classifyClientIp(ip: string | null | undefined): ClientIpClass {
   return 'external'
 }
 
+/*
+  Everything the wiki must not be talked into connecting to on somebody else's say-so: the ranges
+  IANA marks as not globally reachable, which is wider than `local` + `private` above. Those answer
+  where a CLIENT is, and a client never arrives from 0.0.0.0 or a multicast group; a URL can name
+  either.
+*/
+const nonPublic = new net.BlockList()
+// -> "This network": 0.0.0.0 is connected to as the local host on Linux
+nonPublic.addSubnet('0.0.0.0', 8)
+nonPublic.addSubnet('10.0.0.0', 8)
+// -> Carrier-grade NAT (RFC 6598), which is also where some clouds put their internal services
+nonPublic.addSubnet('100.64.0.0', 10)
+nonPublic.addSubnet('127.0.0.0', 8)
+nonPublic.addSubnet('169.254.0.0', 16)
+nonPublic.addSubnet('172.16.0.0', 12)
+nonPublic.addSubnet('192.0.0.0', 24)
+nonPublic.addSubnet('192.0.2.0', 24)
+nonPublic.addSubnet('192.168.0.0', 16)
+nonPublic.addSubnet('198.18.0.0', 15)
+nonPublic.addSubnet('198.51.100.0', 24)
+nonPublic.addSubnet('203.0.113.0', 24)
+// -> Multicast, and the reserved block above it up to and including the broadcast address
+nonPublic.addSubnet('224.0.0.0', 3)
+// -> Unspecified, loopback and the deprecated IPv4-compatible form, which embeds any IPv4 address
+nonPublic.addSubnet('::', 96, 'ipv6')
+// -> NAT64 (RFC 6052 / RFC 8215), 6to4 and Teredo: each reaches an IPv4 address it embeds, and that
+//    address can be any of the above
+nonPublic.addSubnet('64:ff9b::', 96, 'ipv6')
+nonPublic.addSubnet('64:ff9b:1::', 48, 'ipv6')
+nonPublic.addSubnet('2001::', 32, 'ipv6')
+nonPublic.addSubnet('2002::', 16, 'ipv6')
+nonPublic.addSubnet('2001:db8::', 32, 'ipv6')
+nonPublic.addSubnet('fc00::', 7, 'ipv6')
+// -> Link-local, and the site-local block it replaced (RFC 3879)
+nonPublic.addSubnet('fe80::', 9, 'ipv6')
+nonPublic.addSubnet('ff00::', 8, 'ipv6')
+
+/**
+ * Whether an address is on the public internet, and so one the wiki may connect to because a URL
+ * somebody else wrote pointed there.
+ *
+ * Anything that is not an IP address at all is not public: this is asked before connecting, so the
+ * case that cannot be placed has to be the refused one. IPv4-mapped IPv6 addresses are judged as the
+ * IPv4 address they carry.
+ */
+export function isPublicAddress(ip: string): boolean {
+  const type = net.isIPv6(ip) ? 'ipv6' : net.isIPv4(ip) ? 'ipv4' : null
+  if (!type) {
+    return false
+  }
+  return !nonPublic.check(ip, type)
+}
+
 /**
  * One entry of an operator-written address list: a single address or a CIDR subnet.
  *
@@ -108,19 +164,21 @@ export function parseIpRange(entry: string): IpRange | null {
 }
 
 /**
- * The compiled form of the last list asked about, so that a per-request check is one `check()` call.
+ * The compiled form of each list asked about, so that a per-request check is one `check()` call.
  *
- * Keyed on the entries themselves rather than invalidated by whoever writes the setting: the list
+ * Keyed on the entries themselves rather than invalidated by whoever writes the setting: a list
  * lives in a config blob that any instance may change, and a cache that has to be told is a cache
- * that will one day not be. One slot is enough — there is one such list in the wiki.
+ * that will one day not be. Emptied once it holds more than a handful — there are only a couple of
+ * such lists in the wiki, so anything past that is the old versions of lists that have since changed.
  */
-let compiledKey: string | null = null
-let compiled: net.BlockList | null = null
+const compiledLists = new Map<string, net.BlockList>()
+const MAX_COMPILED_LISTS = 8
 
 function compile(entries: readonly string[]): net.BlockList {
   const key = entries.join('\n')
-  if (compiledKey === key && compiled) {
-    return compiled
+  const cached = compiledLists.get(key)
+  if (cached) {
+    return cached
   }
   const list = new net.BlockList()
   for (const entry of entries) {
@@ -136,8 +194,10 @@ function compile(entries: readonly string[]): net.BlockList {
       list.addSubnet(range.address, range.prefix, range.family)
     }
   }
-  compiledKey = key
-  compiled = list
+  if (compiledLists.size >= MAX_COMPILED_LISTS) {
+    compiledLists.clear()
+  }
+  compiledLists.set(key, list)
   return list
 }
 

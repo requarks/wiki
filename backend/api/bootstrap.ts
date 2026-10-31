@@ -83,7 +83,7 @@ async function routes(app: FastifyInstance) {
           showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
         },
         flags: WIKI.models.flags.getFlags(),
-        auth: WIKI.models.authentication.getConfig(),
+        auth: WIKI.models.authentication.getPublicConfig(),
         user: whoAmI(req),
         locales: await WIKI.models.locales.getInstalledLocales()
       }

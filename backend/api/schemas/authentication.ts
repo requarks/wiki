@@ -116,6 +116,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description:
           'Whether users may create personal access tokens. Turned off, the tokens already created stop working too; they are kept, and work again the moment it is turned back on.'
+      },
+      avatarFetchAllowList: {
+        type: 'array',
+        maxItems: 100,
+        items: { type: 'string', maxLength: 64 },
+        description:
+          'Non-public addresses an identity provider’s picture URL may still be fetched from, as single addresses or CIDR subnets (`10.0.0.5`, `10.0.0.0/24`, `fd00::/8`). EMPTY — the default — allows none: only the public internet is reached, since the URL comes from a claim the person signing in may be able to edit. Answered to `authentication/config` only, never in `bootstrap`.'
       }
     }
   })

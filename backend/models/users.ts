@@ -17,6 +17,7 @@ import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
 import { buildTotpUri, generateTotpSecret, verifyTotpCode } from '../helpers/totp.ts'
 import { CustomError } from '../helpers/common.ts'
+import { fetchPublic } from '../helpers/publicFetch.ts'
 import { HANDLE_PATTERN } from './comments.ts'
 import type { AuthStrategy, ProviderProfile } from './authentication.ts'
 import type { SystemIds } from './types.ts'
@@ -972,10 +973,12 @@ class Users {
   /**
    * Fetch the picture an identity provider pointed at, and store it as the account's avatar.
    *
-   * Nothing about the URL is taken on trust beyond its being one. It arrived in a claim, so only
-   * http(s) is followed — a `data:` or `file:` URL is not something to go and read on a login — the
-   * download is capped and given a deadline, and the bytes have to sniff as an image exactly as an
-   * uploaded avatar's do. A provider that answers with a login page instead of a picture is a
+   * Nothing about the URL is taken on trust beyond its being one. It arrived in a claim, which at many
+   * providers the person signing in can edit, so `fetchPublic` follows only http(s), only to the
+   * public internet and only redirects that stay there — this machine, its network and a cloud's
+   * metadata service are not for a login to probe, short of a range an administrator opened under
+   * `auth.avatarFetchAllowList`. The download is capped and given a deadline, and
+   * the bytes have to sniff as an image exactly as an uploaded avatar's do. A provider that answers with a login page instead of a picture is a
    * provider whose HTML must not end up served back as somebody's avatar.
    *
    * Failure is never the login's problem: an avatar that could not be fetched is logged and the
@@ -985,29 +988,11 @@ class Users {
    */
   async setAvatarFromUrl(userId: string, url: string): Promise<boolean> {
     try {
-      const target = new URL(url)
-      if (target.protocol !== 'https:' && target.protocol !== 'http:') {
-        throw new Error(`a ${target.protocol} URL is not one to fetch a picture from`)
-      }
-      const resp = await fetch(target, { redirect: 'follow', signal: AbortSignal.timeout(10_000) })
-      if (!resp.ok) {
-        throw new Error(`the server answered ${resp.status}`)
-      }
-      if (!resp.body) {
-        throw new Error('the server answered with nothing')
-      }
-      // -> Read with a running total rather than in one go: `content-length` is the sender's claim
-      //    about the size, and this is a body from somewhere an administrator merely named
-      const chunks: Buffer[] = []
-      let size = 0
-      for await (const chunk of resp.body as unknown as AsyncIterable<Uint8Array>) {
-        size += chunk.byteLength
-        if (size > remoteAvatarLimit) {
-          throw new Error(`it is larger than ${Math.round(remoteAvatarLimit / 1024 / 1024)} MB`)
-        }
-        chunks.push(Buffer.from(chunk))
-      }
-      const data = Buffer.concat(chunks)
+      const data = await fetchPublic(url, {
+        limit: remoteAvatarLimit,
+        timeout: 10_000,
+        allow: WIKI.models.authentication.avatarFetchAllowList()
+      })
       if (!detectImageMime(data)) {
         throw new Error('what came back is not a PNG, JPEG, WebP or GIF')
       }
