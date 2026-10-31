@@ -510,6 +510,15 @@ const tokenSpecs = {
   html_inline: { node: 'raw_inline', getAttrs: (tok) => ({ source: tok.content }) },
   // -> Inline math, `` $`x^2`$ ``, kept as written until the schema has a node to draw it with
   math_inline: { node: 'raw_inline', getAttrs: (tok) => ({ source: tok.markup }) },
+  // -> An inline block, `:block-color[#ff6600]{…}`, as its name, its value and its props
+  block_inline: {
+    node: 'inline_block',
+    getAttrs: (tok) => ({
+      name: tok.tag.slice('block-'.length),
+      value: tok.content,
+      blockAttrs: attrObject(tok.attrs)
+    })
+  },
 
   image: {
     node: 'image',

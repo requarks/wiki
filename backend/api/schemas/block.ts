@@ -39,6 +39,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'True for a block that only ever appears inside another one — `block-tab` inside `block-tabs`. It has no row of its own and nothing to switch on or off, since it is available wherever its parent is, and `isEnabled` is therefore always true for one. It is listed so that an editor can build a parameters form from the props it declares; a caller offering blocks to INSERT should leave it out.'
       },
+      inline: {
+        type: 'boolean',
+        description:
+          "True for a block that sits in a line of text rather than on a line of its own — `:block-color[#ff6600]{…}` in markdown, `block-color:[#ff6600, …]` in AsciiDoc. What goes between the brackets is its value, kept as the element's text so a reader without the component still sees it; `template` is the value an editor starts it with."
+      },
       config: {
         type: 'object',
         additionalProperties: true

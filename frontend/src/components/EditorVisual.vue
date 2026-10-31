@@ -465,7 +465,7 @@ import { dialog } from '@/composables/dialog'
 import { useImagePropertiesDialog } from '@/composables/imagePropertiesDialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
-import { blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
+import { blockMarkdown, blockPropsFilled, writtenProps } from '@/helpers/blocks'
 import { classValues } from '@/helpers/markdownImages'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
@@ -900,6 +900,11 @@ function slashItems() {
  * missing one draws nothing. Cancelling leaves the block in place for its header's own button.
  */
 function insertSiteBlock(definition) {
+  // -> At the caret, as its source: the Visual editor keeps an inline block as written, with no dialog
+  if (definition.inline) {
+    insertMarkdown(blockMarkdown(definition))
+    return
+  }
   const { $from } = editor.view.state.selection
   // -> Where `insertMarkdown` puts a block: over an empty line, otherwise after the one the caret is in
   const pos =
@@ -1318,7 +1323,7 @@ function editBlockParams(node, pos) {
   dialog({
     component: defineAsyncComponent(() => import('./BlockParamsDialog.vue')),
     componentProps: { definition, values }
-  }).onOk((values) => {
+  }).onOk(({ values }) => {
     const view = editor.view
     const current = view.state.doc.nodeAt(pos)
     if (!current || current.type !== node.type) {
@@ -1328,6 +1333,51 @@ function editBlockParams(node, pos) {
       Object.entries(values).filter(([, value]) => value !== '' && value != null)
     )
     view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, blockAttrs }))
+    view.focus()
+  })
+}
+
+/**
+ * The parameters dialog over an inline block -- its value and its props together, opened by a
+ * double-click on it (see `InlineBlockView`).
+ *
+ * Unlike a block on its own line, it opens for a block the site does not list too: the value is
+ * still worth correcting, so the dialog gets a definition with nothing but the name. Only the props
+ * worth writing go back, as the picker writes them, and anything the block does not declare -- a
+ * `.class`, a prop from another version of it -- is kept as it was.
+ */
+function editInlineBlock(node, pos) {
+  const definition = blockDefinition(node.attrs.name) ?? {
+    block: node.attrs.name,
+    name: `block-${node.attrs.name}`,
+    isCustom: true,
+    props: []
+  }
+  const declared = new Set((definition.props ?? []).map((prop) => prop.name))
+  const current = node.attrs.blockAttrs ?? {}
+  const values = Object.fromEntries(
+    (definition.props ?? []).map((prop) => [prop.name, current[prop.name] ?? prop.default ?? ''])
+  )
+  dialog({
+    component: defineAsyncComponent(() => import('./BlockParamsDialog.vue')),
+    componentProps: { definition, values, content: node.attrs.value }
+  }).onOk(({ values, content }) => {
+    const view = editor.view
+    const target = view.state.doc.nodeAt(pos)
+    if (!target || target.type !== node.type) {
+      return
+    }
+    const kept = Object.entries(target.attrs.blockAttrs ?? {}).filter(
+      ([name]) => !declared.has(name)
+    )
+    const blockAttrs = { ...Object.fromEntries(kept), ...writtenProps(definition, values) }
+    view.dispatch(
+      view.state.tr.setNodeMarkup(pos, undefined, {
+        ...target.attrs,
+        value: content,
+        blockAttrs: Object.keys(blockAttrs).length > 0 ? blockAttrs : null
+      })
+    )
     view.focus()
   })
 }
@@ -1623,6 +1673,7 @@ onMounted(async () => {
       hasContentEditor,
       hasProps,
       editBlockParams,
+      editInlineBlock,
       editBlockContent,
       removeNode,
       liftNode,
@@ -1644,6 +1695,7 @@ onMounted(async () => {
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
+  EVENT_BUS.on('insertInlineBlock', insertMarkdown)
   EVENT_BUS.on('insertTable', insertTableClb)
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
@@ -1747,6 +1799,7 @@ onBeforeUnmount(() => {
   stopCollabSession()
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)
+  EVENT_BUS.off('insertInlineBlock', insertMarkdown)
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)

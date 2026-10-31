@@ -1,5 +1,6 @@
 import { MarkdownSerializer } from 'prosemirror-markdown'
 
+import { inlineMarkdownValue } from '@/helpers/blocks'
 import { KINDS } from '@/renderers/modules/github-alerts'
 import { wikiLinkText } from '@/renderers/modules/markdown-it-wikilinks'
 
@@ -44,16 +45,20 @@ function blockDepth(node) {
   return deepest
 }
 
-/** `::block-name{a="b"}`, the opening line both block nodes share. */
-function blockOpening(node, fence) {
+/** A block's props as MDC writes them, `{a="b"}`, or nothing when it has none. */
+function blockAttrSuffix(node) {
   const attrs = node.attrs.blockAttrs ?? {}
   const written = Object.entries(attrs)
     .filter(([, value]) => value !== null && value !== undefined && value !== '')
     // -> A double quote would close the attribute and MDC has no escape for it, exactly as
     //    `helpers/blocks.js` writes them
     .map(([name, value]) => `${name}="${String(value).replaceAll('"', "'")}"`)
-  const suffix = written.length > 0 ? `{${written.join(' ')}}` : ''
-  return `${fence}block-${node.attrs.name}${suffix}`
+  return written.length > 0 ? `{${written.join(' ')}}` : ''
+}
+
+/** `::block-name{a="b"}`, the opening line both block nodes share. */
+function blockOpening(node, fence) {
+  return `${fence}block-${node.attrs.name}${blockAttrSuffix(node)}`
 }
 
 /**
@@ -340,6 +345,13 @@ const nodes = {
 
   raw_inline(state, node) {
     state.write(node.attrs.source)
+  },
+
+  // -> `:block-color[#ff6600]{…}`, the value escaped the way the picker writes one
+  inline_block(state, node) {
+    state.write(
+      `:block-${node.attrs.name}[${inlineMarkdownValue(node.attrs.value)}]${blockAttrSuffix(node)}`
+    )
   },
 
   text(state, node) {

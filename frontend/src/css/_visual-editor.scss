@@ -1211,6 +1211,23 @@
   vertical-align: -0.125em;
 }
 
+/*
+  An inline block, drawn as its component (see `InlineBlockView`). A double-click opens its dialog, so
+  the pointer says it can be clicked; the outline ProseMirror draws round a selected node is given a
+  little room, since the component's own edges sit right on the text.
+*/
+.visual-inline-block {
+  cursor: pointer;
+  border-radius: 3px;
+  outline-offset: 1px;
+
+  // -> Switched off on this site: left as its value in the sentence, underlined like the source editors' preview
+  &[data-block-disabled] {
+    border-bottom: 2px solid $negative;
+    cursor: help;
+  }
+}
+
 .visual-raw-inline {
   font-family: monospace;
   font-size: 0.85em;

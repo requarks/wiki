@@ -1,4 +1,10 @@
-import { asciidocQuoteValue, blockAsciidoc, blockAttributes, snippetText } from '@/helpers/blocks'
+import {
+  asciidocQuoteValue,
+  blockAsciidoc,
+  blockAttributes,
+  inlineAsciidocValue,
+  snippetText
+} from '@/helpers/blocks'
 
 /**
  * The blocks a page written in AsciiDoc already carries, read back and rewritten.
@@ -225,14 +231,20 @@ const OPENING_NAME = /^\[block-([a-z\d-]*)/
  * @param {string} text The page source.
  * @param {number} line 1-based.
  * @param {number} column 1-based, as Monaco counts it.
- * @returns {{ prefix: string, startColumn: number, endColumn: number, bare: boolean } | null}
+ * Failing that, whether it is in an INLINE block's name, `block-col` mid-sentence -- see
+ * `inlineNameContext`.
+ *
+ * @returns {{ prefix: string, startColumn: number, endColumn: number, bare: boolean }
+ *          | { inline: true, prefix: string, markupColumn: number, startColumn: number,
+ *              endColumn: number, bare: boolean }
+ *          | null}
  */
 export function blockNameContext(text, line, column) {
   const lines = text.split('\n')
   const source = lines[line - 1] ?? ''
   const opening = OPENING_NAME.exec(source)
   if (!opening) {
-    return null
+    return isOutsideVerbatim(lines, line - 1) ? inlineNameContext(source, column) : null
   }
   const start = '[block-'.length
   const end = opening[0].length
@@ -249,6 +261,43 @@ export function blockNameContext(text, line, column) {
 }
 
 /**
+ * An inline block's name, up to the caret or past it: `block-` and whatever of the name follows.
+ *
+ * The same boundary the renderer's macro keeps (`wikiblock` in `renderers/asciidoc.js`): not glued to
+ * a word, so `xblock-` is text. Nor to a `[`, which is the attribute line of a block on its own line,
+ * or a backslash, which is the macro written out on purpose.
+ */
+const INLINE_NAME = /(?<![\p{L}\p{N}_[\\-])block-([a-z\d-]*)/gu
+
+/**
+ * Whether the caret is in an inline block's name, anywhere on the line.
+ *
+ * `bare` says no `:[` follows the name yet, so the block is being started rather than renamed: picking
+ * one then writes all of it, from the start of the name -- which is `markupColumn`, since unlike a
+ * block on its own line it does not own the line.
+ *
+ * @param {string} source The line.
+ * @param {number} column 1-based.
+ */
+function inlineNameContext(source, column) {
+  for (const match of source.matchAll(INLINE_NAME)) {
+    const start = match.index + 'block-'.length
+    const end = match.index + match[0].length
+    if (column - 1 >= start && column - 1 <= end) {
+      return {
+        inline: true,
+        prefix: 'block-',
+        markupColumn: match.index + 1,
+        startColumn: start + 1,
+        endColumn: end + 1,
+        bare: !source.startsWith(':[', end)
+      }
+    }
+  }
+  return null
+}
+
+/**
  * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
  * holds nothing else yet.
  *
@@ -256,10 +305,23 @@ export function blockNameContext(text, line, column) {
  * empty value and a tab stop in it, and the caret ends up after them, before the closing bracket --
  * where a comma opens the list of the rest.
  *
- * @param {{ block: string, props?: Array }} definition The block as the API describes it.
+ * An inline block is `block-x:[value]`, its starting value selected to be typed over, any required
+ * props after it, and the caret past the end -- where the sentence carries on.
+ *
+ * @param {{ block: string, props?: Array, template?: string, inline?: boolean }} definition The block
+ *        as the API describes it.
+ * @param {{ inline?: boolean }} [context] Where it is being typed, from `blockNameContext`.
  * @returns {string}
  */
-export function blockSnippet(definition) {
+export function blockSnippet(definition, context = {}) {
+  if (context.inline) {
+    const value = snippetText(inlineAsciidocValue(definition.template ?? ''))
+    const attributes = (definition.props ?? [])
+      .filter((prop) => prop.required)
+      .map((prop, index) => `, ${prop.name}="$${index + 2}"`)
+      .join('')
+    return `block-${definition.block}:[\${1:${value}}${attributes}]$0`
+  }
   const attributes = (definition.props ?? [])
     .filter((prop) => prop.required)
     .map((prop, index) => `, ${prop.name}="$${index + 1}"`)
@@ -273,11 +335,50 @@ export function blockSnippet(definition) {
 /** An attribute line up to the end of the block's name. */
 const OPENING_STYLE = /^\[block-([a-z\d-]+)/
 
+/** An inline block up to the bracket its value and props are written in: `block-x:[`. */
+const INLINE_BRACKET = /(?<![\p{L}\p{N}_[\\-])block-([a-z\d][a-z\d-]*):\[/gu
+
+/**
+ * The inline block on the line whose brackets open nearest before the caret, if one does.
+ *
+ * The LAST one opening before it rather than the first, since a line can hold several; whether the
+ * caret is still inside that one's brackets is the caller's question, answered as for any block.
+ */
+function inlineOpeningBefore(source, column) {
+  return [...source.matchAll(INLINE_BRACKET)]
+    .filter((match) => match.index + match[0].length <= column - 1)
+    .at(-1)
+}
+
+/**
+ * Where an attribute list ends: the first `]` not inside a quoted value, or the end of the line for
+ * one still being typed. An inline block's line goes on past it, and none of that is its attributes.
+ */
+function closingBracket(inside) {
+  let quote = null
+  for (let index = 0; index < inside.length; index++) {
+    const char = inside[index]
+    if (quote) {
+      if (char === '\\') {
+        index++
+      } else if (char === quote) {
+        quote = null
+      }
+    } else if (char === '"' || char === "'") {
+      quote = char
+    } else if (char === ']') {
+      return index
+    }
+  }
+  return inside.length
+}
+
 /**
  * Where the caret sits in a block's attribute list, for the editor to offer what can be written there.
  *
  * The same answer as the markdown side's, for `useBlockCompletions`, for AsciiDoc's spelling of it:
- * every prop follows a COMMA. So a name goes after a comma -- straight after it, in which case
+ * every prop follows a COMMA -- after the block's name on an attribute line, after the value in an
+ * inline block's `block-x:[value, …]`. So a name goes after a comma -- straight after it, in which case
  * `insertPrefix` puts the space in that `blockOpeningLine` would have written -- and a value after
  * `name=`, quoted or not. Anywhere else is null: in the name, before the first comma, past the closing
  * bracket, in a `.role` or `#id`, or after a closed value with no comma yet.
@@ -294,9 +395,12 @@ const OPENING_STYLE = /^\[block-([a-z\d-]+)/
 export function blockAttributeContext(text, line, column) {
   const lines = text.split('\n')
   const source = lines[line - 1] ?? ''
-  const opening = OPENING_STYLE.exec(source)
-  const base = opening?.[0].length
-  if (!opening || column - 1 < base || !isOutsideVerbatim(lines, line - 1)) {
+  if (!isOutsideVerbatim(lines, line - 1)) {
+    return null
+  }
+  const opening = OPENING_STYLE.exec(source) ?? inlineOpeningBefore(source, column)
+  const base = opening && opening.index + opening[0].length
+  if (!opening || column - 1 < base) {
     return null
   }
 
@@ -336,7 +440,7 @@ export function blockAttributeContext(text, line, column) {
   }
   const block = opening[1]
   const written = new Set(
-    [...inside.replace(/\][ \t]*$/, '').matchAll(ATTRIBUTE)]
+    [...inside.slice(0, closingBracket(inside)).matchAll(ATTRIBUTE)]
       .filter((match) => match[2] && match.index !== start)
       .map((match) => match[2])
   )

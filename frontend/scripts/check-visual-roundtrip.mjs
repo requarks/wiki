@@ -159,6 +159,17 @@ const CONSTRUCTS = {
     ':::block-tabs\n::block-tab{label="One"}\nFirst panel.\n::\n\n::block-tab{label="Two"}\nSecond panel.\n::\n:::',
   'deeply nested blocks':
     '::::block-tabs\n:::block-tab{label="A"}\n::block-map{lat="1"}\n::\n:::\n::::',
+  'inline block': 'The accent is :block-color[#ff6600] here.',
+  /*
+    -> A line holding nothing but an inline block, which MDC's block shorthand used to claim -- and
+       which the Visual editor then had no node for, so inserting one there threw
+  */
+  'inline block alone on a line': ':block-color[#ff6600]',
+  'inline block alone in a list item': '- :block-badge[New]{color="positive"}\n- two',
+  'inline block with props':
+    'Starts :block-timestamp[2026-11-03T14:00Z]{format="relative" length="short"}, then ends.',
+  // -> The value is taken as written: no emphasis inside it, and `\]` is a bracket of its own
+  'inline block with markup characters': 'See :block-color[a_b_c *d* \\] e] and :mdi:home: too.',
   'soft break': 'line one\nline two',
   'hard break': 'line one\\\nline two',
   'block attributes': 'Some text\n{.is-warning}',

@@ -523,6 +523,47 @@ export const schema = new Schema({
     },
 
     /**
+     * An inline block, `:block-color[#ff6600]{…}`: the block's name, the value between its brackets
+     * and its props. Drawn as the real component by its node view, and edited in the parameters
+     * dialog -- value and props together -- since neither is text a caret can be put in.
+     *
+     * The props ride along in a data attribute, which is what keeps them through a copy and paste
+     * inside the editor: ProseMirror carries a copied slice as the HTML `toDOM` writes.
+     */
+    inline_block: {
+      inline: true,
+      group: 'inline',
+      atom: true,
+      attrs: { name: {}, value: { default: '' }, blockAttrs: { default: null } },
+      parseDOM: [
+        {
+          tag: 'span[data-inline-block]',
+          getAttrs: (dom) => {
+            let blockAttrs = null
+            try {
+              blockAttrs = JSON.parse(dom.getAttribute('data-block-attrs') ?? 'null')
+            } catch {
+              /* -> Pasted from somewhere that mangled it: the block keeps its value, loses its props */
+            }
+            return {
+              name: dom.getAttribute('data-inline-block'),
+              value: dom.textContent,
+              blockAttrs
+            }
+          }
+        }
+      ],
+      toDOM: (node) => [
+        'span',
+        {
+          'data-inline-block': node.attrs.name,
+          'data-block-attrs': JSON.stringify(node.attrs.blockAttrs)
+        },
+        node.attrs.value
+      ]
+    },
+
+    /**
      * An emoji shortcode. The character is what is drawn in the editor; the shortcode is what goes
      * back into the source, because that is what the author typed and what the picker inserts.
      */

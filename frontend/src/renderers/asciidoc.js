@@ -200,6 +200,34 @@ function buildRegistry() {
         )
       })
     })
+
+    /*
+      Inline blocks, `block-color:[#ff6600]` or `block-timestamp:[2026-11-03T14:00Z, format=relative]`
+      -- the AsciiDoc spelling of markdown's `:block-color[#ff6600]{…}`, shaped like `stem:[…]`.
+
+      One processor for every block, by giving it the pattern rather than a name: a processor that is
+      NAMED matches that one macro, and this renderer has no list of blocks to name (the same reason
+      `wikiBlock` is done in the converter). The name is the target, the first positional attribute
+      is the value, and the named ones are the props. Not glued to a word, so `xblock-a:[…]` is text.
+
+      Handed to the converter as a `quoted` inline of its own type, the road `latexmath:[…]` already
+      takes, so that the markup is written in one place -- `convert_inline_quoted`.
+    */
+    this.inlineMacro(function () {
+      this.named('wikiblock')
+      this.match(
+        /\\?(?<![A-Za-z0-9])(?<target>block-[a-z0-9][a-z0-9-]*):\[(?<content>|.*?(?<!\\))\]/
+      )
+      this.positionalAttributes('value')
+      this.process(function (parent, target, attributes) {
+        const { value, ...props } = attributes
+        return this.createInline(parent, 'quoted', value ?? '', {
+          type: 'wikiblock',
+          target,
+          attributes: props
+        })
+      })
+    })
   })
 }
 
@@ -536,11 +564,29 @@ ${await node.content()}
    * a `<code>`, which is a formula nobody drew rather than one that went missing.
    */
   async convert_inline_quoted(node) {
+    if (node.type === 'wikiblock') {
+      return this.inlineWikiBlock(node)
+    }
     if (node.type !== 'latexmath' && node.type !== 'asciimath') {
       return super.convert_inline_quoted(node)
     }
     const tag = node.type === 'latexmath' ? this.wikiContext.mathTag : null
     return tag ? `<${tag} inline="true">${node.text}</${tag}>` : `<code>${node.text}</code>`
+  }
+
+  /**
+   * An inline block, `block-color:[#ff6600]`, from the `wikiblock` macro in `buildRegistry`.
+   *
+   * The element markdown's `:block-color[#ff6600]` renders to, value as its text. Both the value and
+   * the props were cut out of text that `specialcharacters` had already been through, so they arrive
+   * escaped -- only the quote that would close an attribute is left to do (as `titleAttribute`).
+   */
+  inlineWikiBlock(node) {
+    const tag = node.target
+    const attrs = blockProps(node)
+      .map(([name, value]) => ` ${name}="${String(value).replaceAll('"', '&quot;')}"`)
+      .join('')
+    return `<${tag}${attrs}>${node.text}</${tag}>`
   }
 
   /**

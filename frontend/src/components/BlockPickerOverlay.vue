@@ -39,14 +39,31 @@
         <!-- ----------------------- -->
         <!-- The blocks -->
         <!-- ----------------------- -->
-        <div class="block-picker-catalog w-2/3">
-          <w-scroll-area style="height: 100%">
+        <div class="block-picker-catalog flex w-2/3 flex-col">
+          <!-- -> Outside the scroll area, so the switch stays in reach however far the list goes -->
+          <w-tabs v-model="state.kind" class="m-4 mb-0" no-caps inline-label>
+            <w-tab
+              name="block"
+              icon="mdi:view-agenda-outline"
+              :label="t('editor.blockPicker.blocks')" />
+            <w-tab
+              name="inline"
+              icon="mdi:format-text-variant-outline"
+              :label="t('editor.blockPicker.inlineBlocks')" />
+          </w-tabs>
+          <w-scroll-area class="min-h-0 flex-1">
             <div class="p-4">
               <w-inner-loading :showing="state.isLoading" size="32px" />
               <div
                 v-if="!state.isLoading && blocks.length < 1"
                 class="text-caption p-6 text-center text-black/60 dark:text-white/70">
-                {{ t('editor.blockPicker.noBlocks') }}
+                {{
+                  t(
+                    state.kind === 'inline'
+                      ? 'editor.blockPicker.noInlineBlocks'
+                      : 'editor.blockPicker.noBlocks'
+                  )
+                }}
               </div>
               <div class="block-picker-grid">
                 <button
@@ -106,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
@@ -145,6 +162,8 @@ const { t } = useI18n()
 
 const state = reactive({
   blocks: [],
+  /** Which tab is open: `block` for the blocks on a line of their own, `inline` for the rest. */
+  kind: 'block',
   selected: null,
   /** Field values for the selected block, by prop name. */
   values: {},
@@ -162,10 +181,16 @@ const state = reactive({
  * way to the same place. A CHILD block is listed by the API for its props alone — `block-tab` is a
  * panel of a tabset and means nothing on its own — so inserting one from here would only ever produce
  * something the page cannot draw.
+ *
+ * And only those of the open tab's kind -- a block on a line of its own, or an inline one.
  */
 const blocks = computed(() =>
   state.blocks.filter(
-    (block) => block.isEnabled && !block.isChild && !TOOLBAR_BLOCKS.includes(block.block)
+    (block) =>
+      block.isEnabled &&
+      !block.isChild &&
+      !TOOLBAR_BLOCKS.includes(block.block) &&
+      (state.kind === 'inline') === Boolean(block.inline)
   )
 )
 
@@ -191,6 +216,20 @@ const canInsert = computed(
   () => Boolean(state.selected) && blockPropsFilled(state.selected, state.values)
 )
 
+// WATCHERS
+
+/*
+  -> A selection belongs to the tab it was made in: left in place, the form and the Insert button
+     would go on offering a block the list beside them no longer shows
+*/
+watch(
+  () => state.kind,
+  () => {
+    state.selected = null
+    state.values = {}
+  }
+)
+
 // METHODS
 
 function select(block) {
@@ -199,8 +238,12 @@ function select(block) {
   state.values = Object.fromEntries(block.props.map((prop) => [prop.name, prop.default ?? '']))
 }
 
+/**
+ * Hand the markup to the editor. An inline block goes in at the caret, mid-sentence if that is where
+ * it is; every other one needs a line to itself, which the editor makes room for.
+ */
 function insert() {
-  EVENT_BUS.emit('insertBlock', source.value)
+  EVENT_BUS.emit(state.selected.inline ? 'insertInlineBlock' : 'insertBlock', source.value)
   close()
 }
 

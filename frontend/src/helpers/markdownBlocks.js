@@ -1,4 +1,4 @@
-import { blockAttributes, blockFence, snippetText } from '@/helpers/blocks'
+import { blockAttributes, blockFence, inlineMarkdownValue, snippetText } from '@/helpers/blocks'
 import { FENCE, isOutsideFences, linesOutsideFences } from '@/helpers/markdownFences'
 
 /**
@@ -103,7 +103,12 @@ const OPENING_NAME = /^(:{2,})block-([a-z0-9-]*)/
  * @param {string} text The page source.
  * @param {number} line 1-based.
  * @param {number} column 1-based, as Monaco counts it.
+ * Failing that, whether it is in an INLINE block's name, `:block-col` mid-sentence -- see
+ * `inlineNameContext`.
+ *
  * @returns {{ fence: string, prefix: string, startColumn: number, endColumn: number, bare: boolean }
+ *          | { inline: true, prefix: string, markupColumn: number, startColumn: number,
+ *              endColumn: number, bare: boolean }
  *          | null}
  */
 export function blockNameContext(text, line, column) {
@@ -111,7 +116,7 @@ export function blockNameContext(text, line, column) {
   const source = lines[line - 1] ?? ''
   const opening = OPENING_NAME.exec(source)
   if (!opening) {
-    return null
+    return isOutsideFences(lines, line - 1) ? inlineNameContext(source, column) : null
   }
   const start = opening[1].length + 'block-'.length
   const end = opening[0].length
@@ -128,6 +133,42 @@ export function blockNameContext(text, line, column) {
 }
 
 /**
+ * An inline block's name, up to the caret or past it: `:block-` and whatever of the name follows.
+ *
+ * The same boundary the renderer's rule keeps (`markdown-it-inline-blocks.js`): not glued to a word
+ * or to another colon, so `a:block-` is text and `::block-` is the block on its own line above.
+ */
+const INLINE_NAME = /(?<![\p{L}\p{N}:]):block-([a-z0-9-]*)/gu
+
+/**
+ * Whether the caret is in an inline block's name, anywhere on the line.
+ *
+ * `bare` says no `[` follows the name yet, so the block is being started rather than renamed: picking
+ * one then writes all of it, from the colon -- which is `markupColumn`, since unlike a block on its own
+ * line it does not own the line.
+ *
+ * @param {string} source The line.
+ * @param {number} column 1-based.
+ */
+function inlineNameContext(source, column) {
+  for (const match of source.matchAll(INLINE_NAME)) {
+    const start = match.index + ':block-'.length
+    const end = match.index + match[0].length
+    if (column - 1 >= start && column - 1 <= end) {
+      return {
+        inline: true,
+        prefix: ':block-',
+        markupColumn: match.index + 1,
+        startColumn: start + 1,
+        endColumn: end + 1,
+        bare: source[end] !== '['
+      }
+    }
+  }
+  return null
+}
+
+/**
  * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
  * holds nothing else yet.
  *
@@ -137,11 +178,24 @@ export function blockNameContext(text, line, column) {
  * name where there are none. The fence is whichever is longer of the one typed and the one the block
  * needs, since an author who typed three colons did so to fit it inside something.
  *
- * @param {{ block: string, props?: Array, template?: string }} definition The block as the API describes it.
- * @param {{ fence: string }} context Where it is being typed, from `blockNameContext`.
+ * An inline block is `:block-x[value]`, its starting value selected to be typed over, any required
+ * props after it in braces, and the caret past the end -- where the sentence carries on.
+ *
+ * @param {{ block: string, props?: Array, template?: string, inline?: boolean }} definition The block
+ *        as the API describes it.
+ * @param {{ fence?: string, inline?: boolean }} context Where it is being typed, from
+ *        `blockNameContext`.
  * @returns {string}
  */
 export function blockSnippet(definition, context) {
+  if (context.inline) {
+    const value = snippetText(inlineMarkdownValue(definition.template ?? ''))
+    const attributes = (definition.props ?? [])
+      .filter((prop) => prop.required)
+      .map((prop, index) => `${prop.name}="$${index + 2}"`)
+      .join(' ')
+    return `:block-${definition.block}[\${1:${value}}]${attributes ? `{${attributes}}` : ''}$0`
+  }
   const attributes = (definition.props ?? [])
     .filter((prop) => prop.required)
     .map((prop, index) => `${prop.name}="$${index + 1}"`)
@@ -161,7 +215,44 @@ export function blockSnippet(definition, context) {
 const OPENING_BRACE = /^:{2,}block-([a-z0-9-]+)[ \t]*\{/
 
 /**
+ * An inline block up to the brace its props start at: `:block-x[value]{`, the value's `\]` included.
+ */
+const INLINE_BRACE = /(?<![\p{L}\p{N}:]):block-([a-z0-9][a-z0-9-]*)\[(?:\\.|[^\\\]])*\]\{/gu
+
+/**
+ * The inline block on the line whose props are open nearest before the caret, if one is.
+ *
+ * The LAST one opening before it rather than the first, since a line can hold several; whether the
+ * caret is still inside that one's braces is the caller's question, answered as for any block.
+ */
+function inlineOpeningBefore(source, column) {
+  return [...source.matchAll(INLINE_BRACE)]
+    .filter((match) => match.index + match[0].length <= column - 1)
+    .at(-1)
+}
+
+/**
+ * Where an attribute list ends: the first `}` not inside a quoted value, or the end of the line for
+ * one still being typed. An inline block's line goes on past it, and none of that is its attributes.
+ */
+function closingBrace(inside) {
+  let quote = null
+  for (let index = 0; index < inside.length; index++) {
+    const char = inside[index]
+    if (quote) {
+      quote = char === quote ? null : quote
+    } else if (char === '"' || char === "'") {
+      quote = char
+    } else if (char === '}') {
+      return index
+    }
+  }
+  return inside.length
+}
+
+/**
  * Where the caret sits in a block's attribute list, for the editor to offer what can be written there.
+ * A block on its own line or an inline one, `:block-x[value]{…}` -- the list is the same either way.
  *
  * Two places are worth answering for. Where a NAME goes — straight after the brace, or after the
  * whitespace that ends the attribute before — and inside a VALUE, after `name=`, quoted or not. Anywhere
@@ -182,13 +273,13 @@ const OPENING_BRACE = /^:{2,}block-([a-z0-9-]+)[ \t]*\{/
 export function blockAttributeContext(text, line, column) {
   const lines = text.split('\n')
   const source = lines[line - 1] ?? ''
-  const opening = OPENING_BRACE.exec(source)
-  const base = opening?.[0].length
-  if (!opening || column - 1 < base) {
-    return null
-  }
   // -> A block written inside a fenced code block is a code sample
   if (!isOutsideFences(lines, line - 1)) {
+    return null
+  }
+  const opening = OPENING_BRACE.exec(source) ?? inlineOpeningBefore(source, column)
+  const base = opening && opening.index + opening[0].length
+  if (!opening || column - 1 < base) {
     return null
   }
 
@@ -220,7 +311,7 @@ export function blockAttributeContext(text, line, column) {
 
   const block = opening[1]
   const written = new Set(
-    [...inside.replace(/\}[ \t]*$/, '').matchAll(ATTRIBUTE)]
+    [...inside.slice(0, closingBrace(inside)).matchAll(ATTRIBUTE)]
       .filter((match) => !match[1] && match.index !== tokenStart)
       .map((match) => match[2])
   )

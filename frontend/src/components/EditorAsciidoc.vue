@@ -718,6 +718,11 @@ function insertBlockClb(source) {
   }
 }
 
+/** An inline block the picker built, `block-color:[…]`, at the cursor — mid-sentence is its place. */
+function insertInlineBlockClb(source) {
+  insertAtCursor({ content: source })
+}
+
 /**
  * Select the first tab's label in a tabset that has just been inserted.
  *
@@ -766,7 +771,7 @@ function editBlock(line, name) {
   dialog({
     component: defineAsyncComponent(() => import('./BlockParamsDialog.vue')),
     componentProps: { definition, values: blockValues(found, definition) }
-  }).onOk((values) => {
+  }).onOk(({ values }) => {
     /*
       The attribute line and nothing else, so the body between the delimiters is left exactly as it
       was — which for a tabset is every tab in it. One undo takes the whole change back.
@@ -1146,12 +1151,17 @@ function markDisabledBlock(el) {
   if (el.dataset.blockDisabled !== undefined) {
     return
   }
-  el.dataset.blockDisabled = ''
-  // -> A formula in a line of text keeps to the line: the notice is its tooltip, not a paragraph
-  if (el.hasAttribute('inline')) {
+  /*
+    -> Anything in a line of text keeps to the line -- an inline formula, an inline block: the notice
+       is its tooltip, not a paragraph, and the value it was given stays where it was
+  */
+  const tag = el.tagName.toLowerCase()
+  if (el.hasAttribute('inline') || siteBlocks.some((b) => b.inline && `block-${b.block}` === tag)) {
+    el.dataset.blockDisabled = 'inline'
     el.title = t('editor.blockNotEnabled')
     return
   }
+  el.dataset.blockDisabled = ''
   const notice = document.createElement('p')
   notice.className = 'block-disabled-notice'
   notice.textContent = t('editor.blockNotEnabled')
@@ -1709,6 +1719,7 @@ onMounted(async () => {
 
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
+  EVENT_BUS.on('insertInlineBlock', insertInlineBlockClb)
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
@@ -1728,6 +1739,7 @@ onBeforeUnmount(() => {
   }
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)
+  EVENT_BUS.off('insertInlineBlock', insertInlineBlockClb)
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
@@ -1929,8 +1941,8 @@ $editor-preview-height: calc(100vh - 64px - 96px - 32px);
       [data-block-disabled] > .block-disabled-notice + * {
         margin-top: 0.5rem;
       }
-      /* -> An inline formula, left as its TeX source in the sentence, underlined rather than boxed */
-      [data-block-disabled][inline] {
+      /* -> An inline formula or block, left as its source in the sentence, underlined rather than boxed */
+      [data-block-disabled='inline'] {
         display: inline;
         margin: 0;
         padding: 0;

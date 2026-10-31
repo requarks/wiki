@@ -670,6 +670,10 @@ const cursorLine = ref(1)
  *   the `(url)`, and the text between them is plain. The bracketed half becomes `link.text`, which
  *   needs the one regex split in four rather than three, so that `]` goes with the text and `(` with
  *   the URL. A bare `[text]` (a reference, a task list box) is left alone.
+ * - A block's name has no token at all stock, while what follows it is coloured -- an inline block's
+ *   `[value]` as a link, a block's `{…}` as a target. It becomes `block.name`, in both spellings:
+ *   `::block-tabs` opening a line, and `:block-color` mid-sentence only with a `[` after it, so a
+ *   colon in a sentence is left alone. The `::` line that closes a block is coloured with it.
  *
  * Rules are found by the tokens they emit, so a Monaco upgrade that reshapes either one leaves it
  * stock rather than breaking anything.
@@ -681,14 +685,19 @@ function markdownLanguageForTheme() {
       ? [rule[0], ['white', 'keyword.heading', 'keyword.heading', 'keyword.heading']]
       : rule
   )
-  const linecontent = markdownLanguage.tokenizer.linecontent.map((rule) =>
-    tokensOf(rule) === 'string.link,,string.link'
-      ? [
-          /(!?\[)((?:[^\]\\]|@escapes)*)(\])(\([^)]+\))/,
-          ['link.text', 'link.text', 'link.text', 'string.link']
-        ]
-      : rule
-  )
+  const linecontent = [
+    [/^:{2,}block-[a-z0-9][a-z0-9-]*/, 'block.name'],
+    [/^:{2,}[ \t]*$/, 'block.name'],
+    [/:block-[a-z0-9][a-z0-9-]*(?=\[)/, 'block.name'],
+    ...markdownLanguage.tokenizer.linecontent.map((rule) =>
+      tokensOf(rule) === 'string.link,,string.link'
+        ? [
+            /(!?\[)((?:[^\]\\]|@escapes)*)(\])(\([^)]+\))/,
+            ['link.text', 'link.text', 'link.text', 'string.link']
+          ]
+        : rule
+    )
+  ]
   return {
     ...markdownLanguage,
     tokenizer: { ...markdownLanguage.tokenizer, root, linecontent }
@@ -956,6 +965,11 @@ function insertBlockClb(markdown) {
   }
 }
 
+/** An inline block the picker built, `:block-color[…]`, at the cursor — mid-sentence is its place. */
+function insertInlineBlockClb(markdown) {
+  insertAtCursor({ content: markdown })
+}
+
 /**
  * Select the first tab's label in a tabset that has just been inserted.
  *
@@ -1086,7 +1100,7 @@ function editBlock(line, name) {
   dialog({
     component: defineAsyncComponent(() => import('./BlockParamsDialog.vue')),
     componentProps: { definition, values: blockValues(found, definition) }
-  }).onOk((values) => {
+  }).onOk(({ values }) => {
     /*
       The opening line and nothing else, so the body between the fences is left exactly as it was —
       which for a tabset is every tab in it. One undo takes the whole change back, and the caret lands
@@ -1556,12 +1570,17 @@ function markDisabledBlock(el) {
   if (el.dataset.blockDisabled !== undefined) {
     return
   }
-  el.dataset.blockDisabled = ''
-  // -> A formula in a line of text keeps to the line: the notice is its tooltip, not a paragraph
-  if (el.hasAttribute('inline')) {
+  /*
+    -> Anything in a line of text keeps to the line -- an inline formula, an inline block: the notice
+       is its tooltip, not a paragraph, and the value it was given stays where it was
+  */
+  const tag = el.tagName.toLowerCase()
+  if (el.hasAttribute('inline') || siteBlocks.some((b) => b.inline && `block-${b.block}` === tag)) {
+    el.dataset.blockDisabled = 'inline'
     el.title = t('editor.blockNotEnabled')
     return
   }
+  el.dataset.blockDisabled = ''
   const notice = document.createElement('p')
   notice.className = 'block-disabled-notice'
   notice.textContent = t('editor.blockNotEnabled')
@@ -1971,7 +1990,9 @@ onMounted(async () => {
     //    background this dark
     rules: [
       { token: 'keyword.heading', foreground: 'eda15e', fontStyle: 'bold' },
-      { token: 'link.text', foreground: '8bc577' }
+      { token: 'link.text', foreground: '8bc577' },
+      // -> A block's name, `::block-tabs` or `:block-color` -- see `markdownLanguageForTheme`
+      { token: 'block.name', foreground: 'f5a9c8' }
     ],
     colors: {
       'editor.background': '#070a0d',
@@ -2334,6 +2355,7 @@ onMounted(async () => {
   EVENT_BUS.on('insertAsset', insertAssetClb)
   EVENT_BUS.on('insertTable', insertTableClb)
   EVENT_BUS.on('insertBlock', insertBlockClb)
+  EVENT_BUS.on('insertInlineBlock', insertInlineBlockClb)
   EVENT_BUS.on('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.on('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.on('restoreEditorContent', restoreEditorContent)
@@ -2360,6 +2382,7 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('insertAsset', insertAssetClb)
   EVENT_BUS.off('insertTable', insertTableClb)
   EVENT_BUS.off('insertBlock', insertBlockClb)
+  EVENT_BUS.off('insertInlineBlock', insertInlineBlockClb)
   EVENT_BUS.off('replaceBlockContent', replaceBlockContentClb)
   EVENT_BUS.off('reloadEditorContent', reloadEditorContent)
   EVENT_BUS.off('restoreEditorContent', restoreEditorContent)
@@ -2629,8 +2652,8 @@ $editor-height-mobile: calc(100vh - 112px - 16px);
       [data-block-disabled] > .block-disabled-notice + * {
         margin-top: 0.5rem;
       }
-      /* -> An inline formula, left as its TeX source in the sentence, underlined rather than boxed */
-      [data-block-disabled][inline] {
+      /* -> An inline formula or block, left as its source in the sentence, underlined rather than boxed */
+      [data-block-disabled='inline'] {
         display: inline;
         margin: 0;
         padding: 0;

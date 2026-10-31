@@ -154,7 +154,8 @@ tag — an unknown key would travel all of that way meaning nothing.
 | `description` | String, ≤ 255. Defaults to `''`. |
 | `icon` | String, ≤ 255. Defaults to `''`. |
 | `props` | Array, ≤ 64 entries. |
-| `template` | Optional string, ≤ 8192. |
+| `inline` | Kept only when exactly `true`. A block written in a line of text (`:block-xyz[value]{…}`) rather than on a line of its own. |
+| `template` | Optional string, ≤ 8192. For an inline block, the value between the brackets an editor starts it with. |
 | `asciidocTemplate` | Optional string, ≤ 8192. |
 | `contentEditor` | Optional string, ≤ 64. |
 

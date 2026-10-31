@@ -61,6 +61,19 @@ export interface BlockDefinition {
    * tag and attributes survive a page being saved.
    */
   isChild?: boolean
+  /**
+   * A block that sits in a line of text rather than on a line of its own: a timestamp, a colour.
+   *
+   * Written `:block-color[#ff6600]{…}` in markdown and `block-color:[#ff6600, …]` in AsciiDoc, and
+   * rendered as `<block-color …>#ff6600</block-color>`. What is between the brackets is the block's
+   * VALUE and stays the element's text, so a reader with no script, a search index or a block an
+   * administrator switched off (whose tag the sanitiser drops and whose text it keeps) still shows
+   * what the author wrote. An inline block has no body, so its `template` is the value an editor
+   * starts it with rather than lines between two fences.
+   *
+   * Absent means a block on its own line, which is every block that does not say otherwise.
+   */
+  inline?: boolean
   /** Body the editor writes between the opening and closing lines when inserting the block. */
   template?: string
   /**
@@ -112,6 +125,8 @@ export interface SiteBlock {
    * declares, and a caller offering blocks to INSERT is expected to skip it.
    */
   isChild: boolean
+  /** Whether this block sits in a line of text rather than on its own line — see the definition. */
+  inline: boolean
 }
 
 /**
@@ -423,7 +438,8 @@ class Blocks {
         template: definition?.template ?? '',
         asciidocTemplate: definition?.asciidocTemplate ?? '',
         contentEditor: definition?.contentEditor ?? '',
-        isChild: false
+        isChild: false,
+        inline: definition?.inline === true
       }
     })
 
@@ -453,7 +469,8 @@ class Blocks {
         template: definition.template ?? '',
         asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',
-        isChild: true
+        isChild: true,
+        inline: definition.inline === true
       }))
 
     return [...listed, ...children]

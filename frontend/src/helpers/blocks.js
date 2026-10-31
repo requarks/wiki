@@ -39,18 +39,34 @@ function mdcQuoteValue(value) {
  * @returns {string[]} The attributes, in the order the block declares its props.
  */
 export function blockAttributes(block, values = {}, quote = mdcQuoteValue) {
-  /*
-    Only what is worth writing out: anything given a value that is not already the block's own
-    default. A block reading its default from its own code does not need to be told it in every page.
-  */
-  const written = (block.props ?? []).filter((prop) => {
-    const value = values[prop.name]
-    if (value === undefined || value === null || value === '') {
-      return false
-    }
-    return String(value) !== String(prop.default ?? '')
-  })
-  return written.map((prop) => `${prop.name}=${quote(values[prop.name])}`)
+  return Object.entries(writtenProps(block, values)).map(
+    ([name, value]) => `${name}=${quote(value)}`
+  )
+}
+
+/**
+ * The props worth writing out, by name: anything given a value that is not already the block's own
+ * default. A block reading its default from its own code does not need to be told it in every page.
+ *
+ * The values as they are, for a caller that keeps attributes as an object rather than as markup --
+ * the Visual editor's nodes.
+ *
+ * @param {{ props?: Array }} block A block as the API describes it.
+ * @param {Record<string, unknown>} [values] What the author filled in, by prop name.
+ * @returns {Record<string, unknown>} In the order the block declares its props.
+ */
+export function writtenProps(block, values = {}) {
+  return Object.fromEntries(
+    (block.props ?? [])
+      .filter((prop) => {
+        const value = values[prop.name]
+        if (value === undefined || value === null || value === '') {
+          return false
+        }
+        return String(value) !== String(prop.default ?? '')
+      })
+      .map((prop) => [prop.name, values[prop.name]])
+  )
 }
 
 /**
@@ -83,6 +99,11 @@ export function snippetText(value) {
 export function blockMarkdown(block, values = {}) {
   const attributes = blockAttributes(block, values).join(' ')
   const suffix = attributes ? `{${attributes}}` : ''
+
+  // -> An inline block is one run of text, its template the value between the brackets
+  if (block.inline) {
+    return `:block-${block.block}[${inlineMarkdownValue(block.template ?? '')}]${suffix}`
+  }
 
   // -> A block that comes with a body to start from writes it between the two lines
   if (block.template) {
@@ -156,6 +177,13 @@ function asciidocTemplate(block, depth) {
  */
 export function blockAsciidoc(block, values = {}, depth = 0) {
   const attributes = blockAttributes(block, values, asciidocQuoteValue)
+
+  // -> An inline block is a macro, `block-color:[#ff6600, a="1"]`, the value its first positional
+  if (block.inline) {
+    const value = inlineAsciidocValue(block.template ?? '')
+    return `block-${block.block}:[${[value, ...attributes].join(', ')}]`
+  }
+
   const head = `[block-${block.block}${attributes.length > 0 ? `, ${attributes.join(', ')}` : ''}]`
   const delimiter = ASCIIDOC_DELIMITERS[depth] ?? ASCIIDOC_DELIMITERS.at(-1)
   const body = asciidocTemplate(block, depth)
@@ -171,6 +199,25 @@ export function blockAsciidoc(block, values = {}, depth = 0) {
  */
 export function asciidocQuoteValue(value) {
   return `"${String(value).replace(/(["\\])/g, '\\$1')}"`
+}
+
+/**
+ * An inline block's value as markdown writes it between the brackets: a `]` or a backslash of its
+ * own escaped, which is all `markdown-it-inline-blocks.js` reads specially there.
+ */
+export function inlineMarkdownValue(value) {
+  return value.replace(/[\\\]]/g, '\\$&')
+}
+
+/**
+ * An inline block's value as AsciiDoc writes it, the first positional attribute of `block-x:[…]`.
+ *
+ * Quoted only when it has to be -- a comma or an `=` would otherwise split it or make it a named
+ * attribute -- since `block-color:["#ff6600"]` is noise to everyone who reads the source. A `]` is
+ * escaped either way, quoted or not: the macro ends at the first one that is not.
+ */
+export function inlineAsciidocValue(value) {
+  return (/[,="]/.test(value) ? asciidocQuoteValue(value) : value).replace(/\]/g, '\\]')
 }
 
 /**

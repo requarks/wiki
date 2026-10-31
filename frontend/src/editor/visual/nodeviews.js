@@ -1167,6 +1167,80 @@ class EmojiView {
 }
 
 /**
+ * An inline block, `:block-color[#ff6600]{…}`, drawn as the real component in the line of text.
+ *
+ * Neither its value nor its props are text a caret can be put in, so a double-click opens the
+ * parameters dialog over both -- the inline counterpart of a block's Parameters button, which an
+ * element this small has no room for. ProseMirror's own double-click (selecting a word) is stopped
+ * here, since there is no word in it to select.
+ *
+ * The element is rebuilt whenever the node changes rather than updated in place: a block reads its
+ * value from its text once, before its first render, so a changed value needs a new element.
+ */
+class InlineBlockView {
+  constructor(node, view, getPos, context) {
+    this.node = node
+    this.getPos = getPos
+    this.context = context
+    this.dom = document.createElement('span')
+    this.dom.className = 'visual-inline-block'
+    this.dom.contentEditable = 'false'
+    this.dom.addEventListener('dblclick', (event) => {
+      event.preventDefault()
+      context.editInlineBlock(this.node, this.getPos())
+    })
+    this.render()
+  }
+
+  render() {
+    const tag = `block-${this.node.attrs.name}`
+    const element = document.createElement(tag)
+    for (const [name, value] of Object.entries(this.node.attrs.blockAttrs ?? {})) {
+      // -> As for a block on its own line: a malformed attribute name is a missing prop, not a crash
+      try {
+        element.setAttribute(name, String(value))
+      } catch {
+        /* ignored */
+      }
+    }
+    element.textContent = this.node.attrs.value
+    this.dom.replaceChildren(element)
+
+    if (this.context.isDisabled(tag)) {
+      this.dom.dataset.blockDisabled = ''
+      this.dom.title = this.context.t('editor.blockNotEnabled')
+    } else {
+      delete this.dom.dataset.blockDisabled
+      this.dom.title = this.context.t('editor.visual.inlineBlock.editHint')
+      this.context.ensureBlockLoaded(tag)
+    }
+  }
+
+  update(node) {
+    if (node.type !== this.node.type) {
+      return false
+    }
+    const changed =
+      node.attrs.name !== this.node.attrs.name ||
+      node.attrs.value !== this.node.attrs.value ||
+      JSON.stringify(node.attrs.blockAttrs) !== JSON.stringify(this.node.attrs.blockAttrs)
+    this.node = node
+    if (changed) {
+      this.render()
+    }
+    return true
+  }
+
+  stopEvent(event) {
+    return event.type === 'dblclick'
+  }
+
+  ignoreMutation() {
+    return true
+  }
+}
+
+/**
  * @param {object} context Everything the views need from the editor around them — see
  *        `EditorVisual.vue`, which is the only thing that builds one.
  */
@@ -1209,6 +1283,7 @@ export function createNodeViews(context) {
     raw_block: (node, view, getPos) => new RawBlockView(node, view, getPos, context),
     image: (node, view, getPos) => new ImageView(node, view, getPos, context),
     icon: (node) => new IconView(node),
-    emoji: (node) => new EmojiView(node)
+    emoji: (node) => new EmojiView(node),
+    inline_block: (node, view, getPos) => new InlineBlockView(node, view, getPos, context)
   }
 }

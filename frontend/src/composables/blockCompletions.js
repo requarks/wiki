@@ -14,7 +14,9 @@ import { Range } from 'monaco-editor'
  *     `{ prefix, startColumn, endColumn, bare }` or null. `prefix` is what the line holds before the
  *     name (`::block-`, `[block-`), `startColumn`/`endColumn` span the name to replace, and `bare` says
  *     the line holds nothing else yet -- in which case `endColumn` is the end of the line, since the
- *     whole line is replaced by a whole block.
+ *     whole line is replaced by a whole block. An INLINE block's name (`:block-`, `block-` mid-line)
+ *     says `inline: true`, and `markupColumn` is where its markup starts: it does not own the line,
+ *     so a whole one replaces from there rather than from column 1.
  *   - `attributeContext(text, line, column)`: whether the caret is in a block's attribute list, as
  *     `{ block, written, kind: 'name', startColumn, insertPrefix? }`,
  *     `{ block, written, kind: 'value', name, quoted, startColumn }` or null. `written` is the props
@@ -106,17 +108,23 @@ export function useBlockCompletions({
    * and only its name is replaced.
    *
    * A child block is left out, as the picker leaves it out: `block-tab` outside a tabset draws nothing,
-   * and nothing about its definition says which block it belongs inside.
+   * and nothing about its definition says which block it belongs inside. And only the blocks that are
+   * written the way this one is being: `::block-color` with a fence under it is an empty element
+   * rather than a colour, and `:block-tabs[…]` is a tabset with no tabs.
    */
   function nameSuggestions(context, position) {
     const range = new Range(
       position.lineNumber,
-      context.bare ? 1 : context.startColumn,
+      context.bare ? (context.markupColumn ?? 1) : context.startColumn,
       position.lineNumber,
       context.endColumn
     )
+    const inline = Boolean(context.inline)
     return getBlocks()
-      .filter((definition) => definition.isEnabled && !definition.isChild)
+      .filter(
+        (definition) =>
+          definition.isEnabled && !definition.isChild && Boolean(definition.inline) === inline
+      )
       .map((definition) => {
         const firstRequired = (definition.props ?? []).find((prop) => prop.required)
         return {
@@ -126,11 +134,12 @@ export function useBlockCompletions({
           documentation: definition.description,
           ...(context.bare
             ? {
-                // -> The range starts at the line, so what is typed is matched against the line
+                // -> The range starts where the markup does, so what is typed is matched from there
                 filterText: `${context.prefix}${definition.block}`,
                 insertText: blockSnippet(definition, context),
                 insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                command: firstRequired && opensValueList(firstRequired)
+                // -> An inline block's caret lands in its value first, where no prop's list belongs
+                command: inline ? undefined : firstRequired && opensValueList(firstRequired)
               }
             : { insertText: definition.block }),
           range

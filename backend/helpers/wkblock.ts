@@ -152,6 +152,9 @@ function readDefinition(raw: any, block: string): BlockDefinition {
     icon: text(raw.icon ?? '', 'icon', 255),
     props: readProps(raw.props)
   }
+  if (raw.inline === true) {
+    definition.inline = true
+  }
   if (raw.template) {
     definition.template = text(raw.template, 'template', 8192)
   }

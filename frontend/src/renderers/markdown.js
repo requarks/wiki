@@ -18,6 +18,7 @@ import mdGithubAlerts from './modules/github-alerts'
 import mdBlockquoteAuthor from './modules/blockquote-author'
 import mdWikiLinks from './modules/markdown-it-wikilinks'
 import mdInlineMath from './modules/markdown-it-inline-math'
+import mdInlineBlocks from './modules/markdown-it-inline-blocks'
 import twemoji from '@twemoji/api'
 
 // -> Relative, like this file's other in-repo imports: it is also reachable from the headless
@@ -152,7 +153,8 @@ export class MarkdownRenderer {
       html: config.allowHTML,
       breaks: config.lineBreaks,
       linkify: config.linkify,
-      typography: config.typographer,
+      // -> `typographer` is markdown-it's name for it; written `typography`, the setting did nothing
+      typographer: config.typographer,
       quotes: quoteStyles[config.quotes] ?? quoteStyles.english
     })
       /*
@@ -162,7 +164,8 @@ export class MarkdownRenderer {
         trouble of drawing them as twemoji SVGs, and the editor has a picker for them.
 
         Everything else MDC brings is untouched: block components (`::note`), inline props and inline
-        spans. Turning this back on means giving up emoji shortcodes again.
+        spans. Turning this back on means giving up emoji shortcodes again. The wiki's own blocks get
+        the inline form anyway, from a rule held to `:block-…[` -- see `mdInlineBlocks` below.
       */
       .use(mdMdc, { syntax: { inlineComponent: false } })
       .use(mdAttrs, {
@@ -281,8 +284,8 @@ export class MarkdownRenderer {
       Icons written as shortcodes, `:mdi:home:`.
 
       Registered ahead of every other inline rule so that the whole reference is claimed in one go.
-      Nothing else wants it -- MDC's inline component syntax, the only other rule that would take a
-      colon, is off above -- but the alternative is the emoji plugin's core rule, which runs over the
+      Nothing else wants it -- MDC's inline component syntax is off above, and the inline blocks rule
+      takes a colon only when `block-…[` follows it -- but the alternative is the emoji plugin's core rule, which runs over the
       TEXT of a token that by then has already been split around the colons.
     */
     this.md.inline.ruler.before('text', 'iconify_icon', iconShortcode)
@@ -306,6 +309,12 @@ export class MarkdownRenderer {
     if (MATH_ENGINES.includes(config.inlineMath)) {
       this.md.use(mdInlineMath, { tag: `block-${config.inlineMath}` })
     }
+
+    /*
+      Inline blocks, `:block-color[#ff6600]{…}` -- see the module. Its `{…}` is parsed by MDC's props
+      rule, so it is added after that rule exists.
+    */
+    this.md.use(mdInlineBlocks)
 
     /*
       MultiMarkdown tables: multi-line cells, `^^` rowspans, and a table with no header row.
