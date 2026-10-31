@@ -4057,7 +4057,7 @@ class Pages {
   /**
    * The locale a page belongs to when the request does not say.
    */
-  private defaultLocale(siteId: string): string {
+  defaultLocale(siteId: string): string {
     return WIKI.sites[siteId]?.config?.locales?.primary ?? 'en'
   }
 

@@ -831,11 +831,10 @@ async function routes(app: FastifyInstance) {
         unlocked: (target) => unlockedFor(req, target),
         withPassword: false
       })
-      if (!page) {
+      // -> A page the reader may not open answers as one that is not there: telling the two apart
+      //    would confirm, to anyone, that a guessed path exists
+      if (!page || !mayOnPage(req, 'read:pages', page)) {
         return reply.notFound('This page does not exist.')
-      }
-      if (!mayOnPage(req, 'read:pages', page)) {
-        return reply.forbidden('You are not allowed to read this page.')
       }
       return {
         path: page.path,
@@ -904,12 +903,10 @@ async function routes(app: FastifyInstance) {
         locale: req.query.locale,
         path
       })
-      if (!group) {
-        return reply.notFound('This page does not exist.')
-      }
       const siteId = req.params.siteId
-      if (!mayOnPage(req, 'read:pages', { ...group.page, siteId })) {
-        return reply.forbidden('You are not allowed to read this page.')
+      // -> As for an include: a page the asker may not read is not one to confirm the existence of
+      if (!group || !mayOnPage(req, 'read:pages', { ...group.page, siteId })) {
+        return reply.notFound('This page does not exist.')
       }
       return {
         page: { locale: group.page.locale, path: group.page.path, title: group.page.title },
@@ -927,7 +924,7 @@ async function routes(app: FastifyInstance) {
    */
   app.get<{
     Params: { siteId: string; pageIdOrHash: string }
-    Querystring: { withContent?: boolean; locale?: string }
+    Querystring: { withContent?: boolean; locale?: string; path?: string }
   }>(
     '/sites/:siteId/pages/:pageIdOrHash',
     {
@@ -937,7 +934,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a single page',
         description:
-          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in. A page that is not live — a draft, or a scheduled page outside its publishing window — answers 404 to everybody but a signed-in requester holding `write:pages` or `manage:pages` on it, its source included. `withContent` is answered against `read:source` on the page — or `write:pages`, since the editor loads the source to edit it — which a group's rules grant to whoever they name, guests included.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.",
+          "Addressed either by ID or by the hash of its path, which is how a page view asks for one. A hash only identifies a page within a locale, so `locale` picks between translations — the site's primary one when absent.\n\nReadable without a session, because a wiki is read by people who are not logged in. A page that is not live — a draft, or a scheduled page outside its publishing window — answers 404 to everybody but a signed-in requester holding `write:pages` or `manage:pages` on it, its source included. `withContent` is answered against `read:source` on the page — or `write:pages`, since the editor loads the source to edit it — which a group's rules grant to whoever they name, guests included.\n\nA password-protected page answers with its metadata and `isLocked: true`, its body withheld, until the session satisfies `POST …/unlock` — or unless the requester may edit the page, for whom the password is not a barrier.\n\nA page the requester may not read answers 404, the same as one that is not there. Give `path` — the path the hash was computed from — to have 403 instead wherever `read:pages` is refused at that path itself, regardless of whether a page is there: what a page view needs to tell a reader that signing in might help.",
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -965,6 +962,12 @@ async function routes(app: FastifyInstance) {
             locale: {
               type: 'string',
               maxLength: 10
+            },
+            path: {
+              type: 'string',
+              maxLength: 2048,
+              description:
+                'Slash-separated path being asked for. Decides between 403 and 404 for a page the requester may not read.'
             }
           }
         },
@@ -996,11 +999,26 @@ async function routes(app: FastifyInstance) {
         unlocked: (target) => unlockedFor(req, target),
         withPassword: (target: RulePageRef) => mayBypassPassword(req, target)
       })
-      if (!page) {
+      if (!page || !mayOnPage(req, 'read:pages', page)) {
+        /*
+          Refused and absent are told apart by the path the reader asked for, never by the page: a
+          hash anybody can compute from a guessed path, so an answer that turned on whether a page
+          is there would confirm the guess. Asked with no tags for the same reason -- the page's own
+          tags would say it exists. So a reader under a path closed to them is told to sign in
+          whether or not anything is written there, and anyone else hears 404.
+        */
+        if (req.query.path !== undefined) {
+          const asked = {
+            siteId: req.params.siteId,
+            path: normalizePagePath(req.query.path) || 'home',
+            locale: req.query.locale ?? WIKI.models.pages.defaultLocale(req.params.siteId),
+            tags: []
+          }
+          if (!mayOnPage(req, 'read:pages', asked)) {
+            return reply.forbidden('You are not allowed to read this page.')
+          }
+        }
         return reply.notFound('This page does not exist.')
-      }
-      if (!mayOnPage(req, 'read:pages', page)) {
-        return reply.forbidden('You are not allowed to read this page.')
       }
       /*
         The reader's own standing on this page, carried back with it.

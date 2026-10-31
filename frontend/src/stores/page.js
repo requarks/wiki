@@ -361,7 +361,10 @@ export const usePageStore = defineStore('page', {
             searchParams: {
               withContent,
               // -> Absent means the site's primary locale, which is what an unprefixed URL addresses
-              ...(locale && { locale })
+              ...(locale && { locale }),
+              // -> What lets the server answer 403 rather than 404 for a path closed to this reader,
+              //    which is what the unauthorized screen below is drawn from
+              ...(!id && { path: normalizePath(path) })
             }
           }
         ).json()
