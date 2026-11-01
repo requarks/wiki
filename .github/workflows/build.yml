@@ -39,7 +39,7 @@ jobs:
           patchAll: true
 
       - name: Set Build Variables (Release)
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch'
         run: |
           echo "REL_VERSION=${{ steps.semver.outputs.nextStrict }}" >> $GITHUB_ENV
 
