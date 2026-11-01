@@ -28,23 +28,26 @@ jobs:
       # COMPUTE VERSION
       # ---------------------------------------------------
 
-      # - name: Get Next Version
-      #   id: semver
-      #   uses: ietf-tools/semver-action@v1
-      #   with:
-      #     token: ${{ github.token }}
-      #     branch: ${{ github.ref_name }}
-      #     skipInvalidTags: true
-      #     patchAll: true
+      - name: Get Next Version
+        if: github.event_name == 'workflow_dispatch'
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.token }}
+          branch: ${{ github.ref_name }}
+          skipInvalidTags: true
+          patchAll: true
 
-      # - name: Set Build Variables
-      #   run: |
-      #     LATEST_TAG=$(git describe --tags --abbrev=0 --match '3.*')
-      #     echo "REL_VERSION=${LATEST_TAG}-dev.g${GITHUB_SHA::7}" >> $GITHUB_ENV
-
-      - name: Set Build Variables
+      - name: Set Build Variables (Release)
+        if: github.event_name != 'workflow_dispatch'
         run: |
-          echo "REL_VERSION=3.0.0-beta.$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          echo "REL_VERSION=${{ steps.semver.outputs.nextStrict }}" >> $GITHUB_ENV
+
+      - name: Set Build Variables (Dev)
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "REL_VERSION=${LATEST_TAG}-dev.g${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Set Version
         run: |
@@ -70,8 +73,10 @@ jobs:
         uses: requarks/changelog-action@v1
         with:
           token: ${{ github.token }}
-          tag: ${{ env.REL_VERSION }}
+          fromTag: ${{ env.REL_VERSION }}
+          toTag: 3.0.0-beta.705
           writeToFile: false
+      #   tag: ${{ env.REL_VERSION }}
 
       # ---------------------------------------------------
       # UPLOAD SOURCE TRANSLATIONS
@@ -114,7 +119,8 @@ jobs:
             ghcr.io/requarks/wiki
           tags: |
             type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
-            type=raw,value=3.0.0-beta,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=3,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=3.0,enable=${{ github.event_name == 'workflow_dispatch' }}
           labels: |
             org.opencontainers.image.title=Wiki.js
             org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
