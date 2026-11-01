@@ -73,10 +73,8 @@ jobs:
         uses: requarks/changelog-action@v1
         with:
           token: ${{ github.token }}
-          fromTag: ${{ env.REL_VERSION }}
-          toTag: 3.0.0-beta.705
+          tag: ${{ env.REL_VERSION }}
           writeToFile: false
-      #   tag: ${{ env.REL_VERSION }}
 
       # ---------------------------------------------------
       # UPLOAD SOURCE TRANSLATIONS
