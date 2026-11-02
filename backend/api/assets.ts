@@ -145,16 +145,21 @@ interface UploadTarget {
 }
 const uploadTargets = new WeakMap<FastifyRequest, UploadTarget>()
 
-async function routes(app: FastifyInstance) {
+/**
+ * The upload, in a plugin of its own so that its parser reaches no other route.
+ */
+async function uploadRoutes(app: FastifyInstance) {
   // -> An upload is the raw file rather than a multipart form: one file per request, with the name and
-  //    the destination in the query string. The catch-all only claims content types nothing else
-  //    parses, so the JSON routes below are unaffected.
+  //    the destination in the query string. JSON and plain text are claimed by name as well as by the
+  //    catch-all, because Fastify's built-in parsers for those two win over `*` — a `.json` or `.txt`
+  //    file would otherwise arrive parsed, and be refused as no file at all. That override is why
+  //    this route is alone in its scope: the JSON routes in `routes` keep the default parser.
   //
   //    The limit is read once, here, because a route's body limit is fixed when it is registered —
   //    changing it in the admin area takes effect on the next restart, which is why that field is
   //    one of the ones the security view marks as needing one.
   app.addContentTypeParser(
-    '*',
+    ['application/json', 'text/plain', '*'],
     { parseAs: 'buffer', bodyLimit: WIKI.config.security?.uploadMaxFileSize ?? 10485760 },
     (req, body, done) => {
       done(null, body)
@@ -324,6 +329,10 @@ async function routes(app: FastifyInstance) {
       }
     }
   )
+}
+
+async function routes(app: FastifyInstance) {
+  app.register(uploadRoutes)
 
   /**
    * GET ASSET
