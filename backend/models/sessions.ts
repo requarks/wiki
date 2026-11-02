@@ -1,6 +1,8 @@
 import crypto from 'node:crypto'
-import { and, eq, lt, sql } from 'drizzle-orm'
+import { and, eq, inArray, lt, ne, sql } from 'drizzle-orm'
+import type { FastifyRequest } from 'fastify'
 import { sessions as sessionsTable } from '../db/schema.ts'
+import { hasUserSession } from '../helpers/requester.ts'
 
 /**
  * How long a session lives after the request that last used it: the session cookie's `maxAge`
@@ -133,9 +135,61 @@ class Sessions {
    * Delete all sessions from a single user
    *
    * @param userId User ID
+   * @param exceptId A session to leave alone — the one making the request, when somebody changes
+   *   their own password and the device they did it from should stay signed in
    */
-  async clearSessionsFromUser(userId: string) {
-    return WIKI.db.delete(sessionsTable).where(eq(sessionsTable.userId, userId))
+  async clearSessionsFromUser(userId: string, exceptId?: string) {
+    return this.clearSessionsFromUsers([userId], exceptId)
+  }
+
+  /**
+   * Delete all sessions from a set of users
+   *
+   * @param userIds User IDs
+   * @param exceptId A session to leave alone, as for {@link clearSessionsFromUser}
+   */
+  async clearSessionsFromUsers(userIds: string[], exceptId?: string) {
+    if (userIds.length < 1) {
+      return
+    }
+    await WIKI.db
+      .delete(sessionsTable)
+      .where(
+        and(
+          inArray(sessionsTable.userId, userIds),
+          exceptId ? ne(sessionsTable.id, exceptId) : undefined
+        )
+      )
+  }
+
+  /**
+   * Bring these users' sessions in line with a change to what they may do: the groups they are in,
+   * or the global permissions of one of those groups.
+   *
+   * A session carries a copy of both, taken at login (`users.updateSession`), and every request is
+   * judged against that copy — so without this, a user taken out of a group keeps its permissions
+   * until they log out, and one put into a group with a DENY rule goes on ignoring it. Ending the
+   * session is the answer rather than rewriting it: a request in flight saves the session back when
+   * it ends, and would put the old copy back over a rewritten row, where a deleted one makes that save
+   * fail and the cookie go with it (`compareAndSet`).
+   *
+   * The request making the change keeps its own session, refreshed in place where it belongs to one
+   * of these users: an administrator taking themselves out of a group is shown the result rather
+   * than the login screen.
+   *
+   * @param req The request making the change. Absent for one acting as nobody's session.
+   */
+  async refreshAccess(userIds: string[], req?: FastifyRequest): Promise<void> {
+    const ownUserId =
+      req && hasUserSession(req) && userIds.includes(req.session.user!.id)
+        ? req.session.user!.id
+        : null
+    await this.clearSessionsFromUsers(userIds, ownUserId ? req!.session.sessionStoreId : undefined)
+    if (ownUserId) {
+      const actor = await WIKI.models.groups.actorForUser(ownUserId)
+      req!.session.groups = actor.groupIds
+      req!.session.permissions = actor.permissions
+    }
   }
 
   /**

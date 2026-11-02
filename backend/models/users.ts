@@ -21,6 +21,7 @@ import { fetchPublic } from '../helpers/publicFetch.ts'
 import { HANDLE_PATTERN } from './comments.ts'
 import type { AuthStrategy, ProviderProfile } from './authentication.ts'
 import type { SystemIds } from './types.ts'
+import type { FastifyRequest } from 'fastify'
 
 /** The essential user fields, mirroring the `UserCore` API schema. */
 export interface UserCore {
@@ -1068,8 +1069,13 @@ class Users {
    * reached from creating a user, editing one, and enrolling one that an identity provider has just
    * sent. Dropping what may not be granted keeps all three honest without any of them having to know
    * about the guests group.
+   *
+   * A membership that comes out different ends the user's sessions — see `sessions.refreshAccess`.
+   * The user editor sends the groups back on every save, so an unchanged set is left alone.
+   *
+   * @param req The request making the change, whose own session is kept
    */
-  async setUserGroups(userId: string, groupIds: string[]): Promise<void> {
+  async setUserGroups(userId: string, groupIds: string[], req?: FastifyRequest): Promise<void> {
     const user = await this.getById(userId)
     const allowed = groupIds.filter(
       (groupId) => !WIKI.models.groups.guestMembershipViolation(groupId, user)
@@ -1096,12 +1102,17 @@ class Users {
             .where(inArray(groupsTable.id, allowed))
         : []
     const wantedIds = wanted.map((g: any) => g.id)
+    const current = await this.getUserGroupIds(userId)
 
     await WIKI.db.delete(userGroups).where(eq(userGroups.userId, userId))
     if (wantedIds.length > 0) {
       await WIKI.db
         .insert(userGroups)
         .values(wantedIds.map((groupId: string) => ({ userId, groupId })))
+    }
+
+    if (wantedIds.length !== current.length || wantedIds.some((id) => !current.includes(id))) {
+      await WIKI.models.sessions.refreshAccess([userId], req)
     }
   }
 
@@ -1121,11 +1132,15 @@ class Users {
    *
    * A provider whose claim is missing entirely leaves membership alone; one whose claim is an empty
    * list has said this person is in none, which under `groupsExclusive` is a removal.
+   *
+   * @param req The login request, whose session is the one about to be signed in rather than one of
+   *   the stale ones a changed membership ends
    */
   async applyProviderGroups(
     userId: string,
     profile: ProviderProfile,
-    strategy: AuthStrategy
+    strategy: AuthStrategy,
+    req?: FastifyRequest
   ): Promise<void> {
     if (!profile.groups) {
       return
@@ -1159,7 +1174,7 @@ class Users {
     if (wanted.length === current.length && wanted.every((id) => current.includes(id))) {
       return
     }
-    await this.setUserGroups(userId, wanted)
+    await this.setUserGroups(userId, wanted, req)
     WIKI.models.flags.authDebug(
       `Set user ${userId} to ${wanted.length} group(s) from strategy ${strategy.id}'s group claim`
     )
@@ -1203,16 +1218,22 @@ class Users {
   /**
    * Set a user's local-strategy password, leaving any other linked provider untouched.
    *
+   * Every session the user holds is ended: an administrator replaces a password because the old one
+   * is not to be trusted, and neither is anything signed in with it.
+   *
+   * @param keepSessionId A session to leave alone — the administrator's own, when the account is theirs
    * @returns False if the user does not exist
    */
   async setUserPassword({
     id,
     newPassword,
-    mustChangePassword = false
+    mustChangePassword = false,
+    keepSessionId
   }: {
     id: string
     newPassword: string
     mustChangePassword?: boolean
+    keepSessionId?: string
   }): Promise<boolean> {
     const user = await this.getById(id)
     if (!user) {
@@ -1231,6 +1252,7 @@ class Users {
       .update(usersTable)
       .set({ auth, updatedAt: sql`now()` })
       .where(eq(usersTable.id, id))
+    await WIKI.models.sessions.clearSessionsFromUser(id, keepSessionId)
     return true
   }
 
@@ -1290,6 +1312,10 @@ class Users {
    * know. This also clears `mustChangePwd`: a user who has just chosen a password satisfies the
    * requirement to choose one.
    *
+   * Every other session the user holds is ended. Changing a password is what somebody does when they
+   * think someone else has it, and that someone may already be signed in with it.
+   *
+   * @param keepSessionId The session making the change, which stays signed in
    * @throws `ERR_INVALID_USER`, `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT` or
    *         `ERR_INCORRECT_CURRENT_PASSWORD`
    */
@@ -1297,12 +1323,14 @@ class Users {
     userId,
     strategyId,
     currentPassword,
-    newPassword
+    newPassword,
+    keepSessionId
   }: {
     userId: string
     strategyId: string
     currentPassword: string
     newPassword: string
+    keepSessionId: string
   }): Promise<void> {
     const user = await this.getById(userId)
     if (!user) {
@@ -1334,6 +1362,7 @@ class Users {
       .update(usersTable)
       .set({ auth, updatedAt: sql`now()` })
       .where(eq(usersTable.id, userId))
+    await WIKI.models.sessions.clearSessionsFromUser(userId, keepSessionId)
   }
 
   /**
@@ -1853,7 +1882,7 @@ class Users {
 
     // -> After the account exists and before `afterLoginChecks`, which reads the memberships back out
     //    to resolve this session's permissions and its redirect
-    await this.applyProviderGroups(user.id, profile, strategy)
+    await this.applyProviderGroups(user.id, profile, strategy, req)
 
     /*
       Neither 2FA nor a password change is asked for: both are the local strategy's, and this user has
@@ -1887,6 +1916,7 @@ class Users {
     // Get user groups
     const account = await WIKI.db.query.users.findFirst({
       columns: {
+        isActive: true,
         lastLoginAt: true
       },
       where: {
@@ -1903,7 +1933,15 @@ class Users {
         }
       }
     })
-    user.groups = account?.groups ?? []
+    /*
+      Every strategy refuses an inactive account up front, but the 2FA and password-change
+      continuations finish a login up to a day after it started, from a token issued before any
+      deactivation. Read fresh here, the one place every login ends, so nothing finishes for one.
+    */
+    if (!account?.isActive) {
+      throw new Error('ERR_INACTIVE_USER')
+    }
+    user.groups = account.groups ?? []
 
     /*
       Where the login lands when it was not on its way anywhere: a reader who was sent here from a
@@ -2279,9 +2317,15 @@ class Users {
     }
 
     if (user) {
+      // -> The token outlives the login that issued it by a day, which a deactivation can fall into
+      if (!user.isActive) {
+        throw new Error('ERR_INACTIVE_USER')
+      }
       user.auth[strategyId].password = await bcrypt.hash(newPassword, 12)
       user.auth[strategyId].mustChangePwd = false
       await WIKI.db.update(usersTable).set({ auth: user.auth }).where(eq(usersTable.id, user.id))
+      // -> As for any other new password, except that the one being signed in here is kept
+      await WIKI.models.sessions.clearSessionsFromUser(user.id, req?.session?.sessionStoreId)
 
       // -> Recorded separately from the `login` the call below writes: two things happened, and a
       //    password that a login insisted be changed is the one worth being able to find on its own
@@ -2696,7 +2740,8 @@ class Users {
    * the whole of what verification asks — and without this, somebody who registered, never got the
    * confirmation and then reset their password would still not be able to sign in.
    *
-   * Nobody is signed in by it: the new password is what does that, on the login screen.
+   * Nobody is signed in by it: the new password is what does that, on the login screen. Everybody
+   * already signed in is signed out — a reset is how somebody takes back an account.
    *
    * @throws `ERR_INVALID_VALIDATION_TOKEN`, `ERR_EXPIRED_VALIDATION_TOKEN`, `ERR_INVALID_USER`,
    *         `ERR_INACTIVE_USER`, `ERR_INVALID_STRATEGY`, `ERR_PASSWORD_TOO_SHORT`
@@ -2735,6 +2780,7 @@ class Users {
       .update(usersTable)
       .set({ auth, isVerified: true, updatedAt: sql`now()` })
       .where(eq(usersTable.id, user.id))
+    await WIKI.models.sessions.clearSessionsFromUser(user.id)
     WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> reset their password`)
     await WIKI.models.auditLog.record({
       kind: 'auth',

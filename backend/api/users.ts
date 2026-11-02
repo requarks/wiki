@@ -36,6 +36,23 @@ function sessionUserId(req: FastifyRequest): string | null {
 }
 
 /**
+ * `sessionUserId` for the routes that change how the account signs in — its password, 2FA and
+ * passkeys — which also refuse an account that has been deactivated.
+ *
+ * Deactivating ends the account's sessions, so a session should never get here for one. This is the
+ * second lock on the door: a session that had somehow survived would otherwise be able to set a
+ * password of its own choosing, ready for the day the account is reactivated.
+ */
+async function credentialUserId(req: FastifyRequest): Promise<string | null> {
+  const userId = sessionUserId(req)
+  if (!userId) {
+    return null
+  }
+  const user = await WIKI.models.users.getById(userId)
+  return user?.isActive ? userId : null
+}
+
+/**
  * Who is asking, as the interface needs to know it: the account on the session — or the one a
  * personal access token acts as — and the group-wide permissions it holds, or nothing at all for a
  * guest.
@@ -808,7 +825,7 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -856,7 +873,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -877,7 +894,8 @@ async function routes(app: FastifyInstance) {
           userId,
           strategyId: req.body.strategyId,
           currentPassword: req.body.currentPassword,
-          newPassword: req.body.newPassword
+          newPassword: req.body.newPassword,
+          keepSessionId: req.session.sessionStoreId
         })
       } catch (err: any) {
         rethrowAsBadRequest(err)
@@ -929,7 +947,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1000,7 +1018,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1067,7 +1085,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1118,7 +1136,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1163,7 +1181,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1230,7 +1248,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1293,7 +1311,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const userId = sessionUserId(req)
+      const userId = await credentialUserId(req)
       if (!userId) {
         return reply.unauthorized()
       }
@@ -1880,7 +1898,12 @@ async function routes(app: FastifyInstance) {
           await WIKI.models.users.updateUser(req.params.userId, patch)
         }
         if (req.body.groups !== undefined) {
-          await WIKI.models.users.setUserGroups(req.params.userId, req.body.groups)
+          await WIKI.models.users.setUserGroups(req.params.userId, req.body.groups, req)
+        }
+        // -> Login refuses an inactive account, but nothing re-checks a session it already holds:
+        //    without this, deactivating somebody leaves them signed in wherever they already were
+        if (patch.isActive === false) {
+          await WIKI.models.sessions.clearSessionsFromUser(req.params.userId)
         }
         if (req.body.auth !== undefined) {
           await WIKI.models.users.setUserAuthFlags(req.params.userId, req.body.auth)
@@ -1981,7 +2004,10 @@ async function routes(app: FastifyInstance) {
       const updated = await WIKI.models.users.setUserPassword({
         id: req.params.userId,
         newPassword: req.body.newPassword,
-        mustChangePassword: req.body.mustChangePassword ?? false
+        mustChangePassword: req.body.mustChangePassword ?? false,
+        // -> Every session the account holds is ended, bar the one doing this to its own account
+        keepSessionId:
+          sessionUserId(req) === req.params.userId ? req.session.sessionStoreId : undefined
       })
       if (!updated) {
         return reply.notFound('User does not exist.')

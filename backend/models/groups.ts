@@ -719,11 +719,22 @@ class Groups {
   /**
    * Update a group
    *
+   * A change to the global permissions ends the members' sessions, which carry a copy of them — see
+   * `sessions.refreshAccess`. The rules need no such thing: they are read from `rulesCache` on every
+   * request.
+   *
    * @param id Group ID
    * @param patch Fields to change — must not be empty
+   * @param req The request making the change, whose own session is kept
    * @returns Whether a group was updated
    */
-  async updateGroup(id: string, patch: GroupPatch): Promise<boolean> {
+  async updateGroup(id: string, patch: GroupPatch, req?: FastifyRequest): Promise<boolean> {
+    const previous = patch.permissions
+      ? await WIKI.db
+          .select({ permissions: groupsTable.permissions })
+          .from(groupsTable)
+          .where(eq(groupsTable.id, id))
+      : []
     const result = await WIKI.db
       .update(groupsTable)
       .set({
@@ -733,7 +744,26 @@ class Groups {
       })
       .where(eq(groupsTable.id, id))
     await this.reloadCache()
+
+    if (patch.permissions && previous.length > 0) {
+      const before = (previous[0]!.permissions ?? []) as string[]
+      const unchanged =
+        before.length === patch.permissions.length &&
+        before.every((permission) => patch.permissions!.includes(permission))
+      if (!unchanged) {
+        await WIKI.models.sessions.refreshAccess(await this.memberIds(id), req)
+      }
+    }
     return (result.rowCount ?? 0) > 0
+  }
+
+  /** Every user in a group, the guest account included. */
+  private async memberIds(groupId: string): Promise<string[]> {
+    const rows = await WIKI.db
+      .select({ userId: userGroups.userId })
+      .from(userGroups)
+      .where(eq(userGroups.groupId, groupId))
+    return rows.map((row) => row.userId)
   }
 
   /**
@@ -793,22 +823,22 @@ class Groups {
   }
 
   /**
-   * Delete a group. Assignments in `userGroups` are removed by the FK cascade.
+   * Delete a group. Assignments in `userGroups` are removed by the FK cascade, and the members'
+   * sessions are ended, since each still carries the group's permissions — see
+   * `sessions.refreshAccess`.
    *
    * @param id Group ID
+   * @param req The request making the change, whose own session is kept
    * @returns Whether a group was deleted
    */
-  async deleteGroup(id: string): Promise<boolean> {
+  async deleteGroup(id: string, req?: FastifyRequest): Promise<boolean> {
+    const members = await this.memberIds(id)
     const result = await WIKI.db.delete(groupsTable).where(eq(groupsTable.id, id))
     await this.reloadCache()
+    await WIKI.models.sessions.refreshAccess(members, req)
     return (result.rowCount ?? 0) > 0
   }
 
-  /**
-   * Assign a user to a group. Idempotent.
-   *
-   * @returns False if the user was already a member
-   */
   /**
    * Why this user may not be a member of this group, if they may not.
    *
@@ -841,7 +871,13 @@ class Groups {
       : null
   }
 
-  async assignUserToGroup(groupId: string, userId: string): Promise<boolean> {
+  /**
+   * Assign a user to a group, ending their sessions — see `sessions.refreshAccess`. Idempotent.
+   *
+   * @param req The request making the change, whose own session is kept
+   * @returns False if the user was already a member
+   */
+  async assignUserToGroup(groupId: string, userId: string, req?: FastifyRequest): Promise<boolean> {
     const user = await WIKI.models.users.getById(userId)
     const violation = this.guestMembershipViolation(groupId, user)
     if (violation) {
@@ -851,15 +887,24 @@ class Groups {
       .insert(userGroups)
       .values({ userId, groupId })
       .onConflictDoNothing()
-    return (result.rowCount ?? 0) > 0
+    const assigned = (result.rowCount ?? 0) > 0
+    if (assigned) {
+      await WIKI.models.sessions.refreshAccess([userId], req)
+    }
+    return assigned
   }
 
   /**
-   * Remove a user from a group
+   * Remove a user from a group, ending their sessions — see `sessions.refreshAccess`.
    *
+   * @param req The request making the change, whose own session is kept
    * @returns False if the user was not a member
    */
-  async unassignUserFromGroup(groupId: string, userId: string): Promise<boolean> {
+  async unassignUserFromGroup(
+    groupId: string,
+    userId: string,
+    req?: FastifyRequest
+  ): Promise<boolean> {
     /*
       The one membership that cannot be taken apart: anonymous access resolves against the guests
       group's rules, and the guest account is what resolves it. Removed, every anonymous visitor would
@@ -877,7 +922,11 @@ class Groups {
     const result = await WIKI.db
       .delete(userGroups)
       .where(and(eq(userGroups.groupId, groupId), eq(userGroups.userId, userId)))
-    return (result.rowCount ?? 0) > 0
+    const removed = (result.rowCount ?? 0) > 0
+    if (removed) {
+      await WIKI.models.sessions.refreshAccess([userId], req)
+    }
+    return removed
   }
 
   /**

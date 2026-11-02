@@ -445,7 +445,7 @@ async function routes(app: FastifyInstance) {
       }
 
       try {
-        await WIKI.models.groups.updateGroup(group.id, patch)
+        await WIKI.models.groups.updateGroup(group.id, patch, req)
         /*
           The permissions and the rules are recorded in full rather than as "changed", because they
           ARE the answer to who may do what — and reconstructing the set somebody was granted at a
@@ -517,7 +517,7 @@ async function routes(app: FastifyInstance) {
       }
 
       try {
-        await WIKI.models.groups.deleteGroup(group.id)
+        await WIKI.models.groups.deleteGroup(group.id, req)
 
         await audit(req, 'admin', 'deleteGroup', { groupId: group.id, name: group.name })
 
@@ -672,7 +672,7 @@ async function routes(app: FastifyInstance) {
         return reply.conflict(violation)
       }
 
-      const assigned = await WIKI.models.groups.assignUserToGroup(group.id, req.params.userId)
+      const assigned = await WIKI.models.groups.assignUserToGroup(group.id, req.params.userId, req)
       if (!assigned) {
         return reply.conflict('User is already assigned to this group.')
       }
@@ -756,7 +756,7 @@ async function routes(app: FastifyInstance) {
         }
       }
 
-      await WIKI.models.groups.unassignUserFromGroup(group.id, req.params.userId)
+      await WIKI.models.groups.unassignUserFromGroup(group.id, req.params.userId, req)
 
       await audit(req, 'admin', 'unassignUserFromGroup', {
         groupId: group.id,
