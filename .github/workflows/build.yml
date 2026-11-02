@@ -47,7 +47,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           LATEST_TAG=$(git describe --tags --abbrev=0)
-          echo "REL_VERSION=${LATEST_TAG}-dev.g${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "REL_VERSION=${LATEST_TAG}-dev.${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Set Version
         run: |
