@@ -409,7 +409,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Update the security configuration',
         description:
-          'Accepts any subset of the fields. Response headers, CSP, HSTS, CORS and `uploadMaxFileSize` are read when the HTTP server starts and therefore apply after a restart; `trustProxy`, `forceAssetDownload` and the rate limit are read per request and apply at once.',
+          'Accepts any subset of the fields. Response headers, CSP, HSTS, CORS and `uploadMaxFileSize` are read when the HTTP server starts and therefore apply after a restart; `trustProxy`, `forceAssetDownload`, the rate limit and `privateFetchAllowList` are read per request and apply at once.',
         tags: ['System'],
         body: { $ref: 'SecurityConfig#' },
         response: {

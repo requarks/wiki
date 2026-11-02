@@ -1,7 +1,12 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
 import { requestUserId } from '../helpers/requester.ts'
-import { KEY_PATTERN, LIVE_NOTE_ACCESS, MAX_KEY_LENGTH } from '../models/liveNotes.ts'
+import {
+  KEY_PATTERN,
+  LIVE_NOTE_ACCESS,
+  MAX_KEY_LENGTH,
+  MAX_REF_LENGTH
+} from '../models/liveNotes.ts'
 import { userRequired } from './pages.ts'
 
 import type { FastifyReply, FastifyInstance, FastifyRequest } from 'fastify'
@@ -200,7 +205,7 @@ async function routes(app: FastifyInstance) {
    * LIVE NOTES ACCESS
    */
   // -> `_access` because `access` is a key somebody could pick, and would then name this rather than
-  //    their note. No key has an underscore in it (`KEY_PATTERN`).
+  //    their note. No key starts with an underscore (`KEY_PATTERN`).
   app.get<{ Params: { siteId: string } }>(
     '/sites/:siteId/notes/_access',
     {
@@ -251,6 +256,57 @@ async function routes(app: FastifyInstance) {
           ? WIKI.models.liveNotes.permissionsFor(requester, req.params.siteId)
           : { read: false, write: false }
       return { enabled, canRead: may.read, canWrite: may.write }
+    }
+  )
+
+  /**
+   * RESOLVE AN OLD NAME OF A NOTE
+   */
+  // -> `_resolve` for the reason `_access` is. The name is in the query rather than the path: an old
+  //    HedgeDoc alias can be longer than a path parameter may be, and can hold anything
+  app.get<{ Params: { siteId: string }; Querystring: { ref: string } }>(
+    '/sites/:siteId/notes/_resolve',
+    {
+      schema: {
+        summary: 'Find a live note by any name it answers to',
+        description:
+          'The note keyed `ref`, or failing that the imported note that was called `ref` where it came from: a HedgeDoc note’s shortid (its `/s/` and `/p/` URLs), its encoded id when it had an alias, or a name that is not a valid key. Answers as `GET /sites/:siteId/notes/:key` does, so the caller learns the note’s key and can go to `/n/<key>`.\n\nAn old name is a credential exactly as the key is — the old wiki opened the note from any of them — so the same rights apply: `read:notes`, and a private note answers 403 `notePrivate` to everybody but its owners. Nothing lists the old names.',
+        tags: ['Live Notes'],
+        params: {
+          type: 'object',
+          properties: {
+            siteId: { type: 'string', format: 'uuid' }
+          },
+          required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            ref: { type: 'string', minLength: 1, maxLength: MAX_REF_LENGTH }
+          },
+          required: ['ref']
+        },
+        response: {
+          200: noteSchema
+        }
+      }
+    },
+    async (req, reply) => {
+      const caller = noteCaller(req, reply, req.params.siteId)
+      if (!caller) {
+        return reply
+      }
+      const note =
+        (await WIKI.models.liveNotes.getByKey(req.params.siteId, req.query.ref)) ??
+        (await WIKI.models.liveNotes.getByRef(req.params.siteId, req.query.ref))
+      if (!note) {
+        return reply.notFound('This note does not exist.')
+      }
+      const rights = WIKI.models.liveNotes.rightsFor(note, caller)
+      if (!rights.read) {
+        throw new CustomError('notePrivate', 'This note is private.', 403)
+      }
+      return WIKI.models.liveNotes.describe(note, rights)
     }
   )
 
@@ -356,7 +412,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Create a live note',
         description:
-          'Creates an empty live note and answers with its key, which is what its URL, `/n/<key>`, is made of. A new note is `editable`: anybody who holds the key and `write:notes` can write in it, and anybody holding `read:notes` can read it — a guest included, where the guests group is granted it — so the key is 24 characters drawn from a cryptographic source and never listed anywhere. Its creator can lock it or make it private afterwards.\n\nA `key` in the body creates the note under that key instead — 1 to 64 letters, digits and hyphens, case-sensitive — which is what visiting `/n/<key>` for a note that does not exist yet does. A key a note on the site already has answers 409 `noteExists`. A picked key is only as hard to guess as whoever picked it made it.\n\nA note nobody writes anything in is deleted a day after it was created.\n\nNeeds a signed-in account holding `write:notes` (a page rule whose path is ignored, asked in the site’s primary locale; 403 `noteWriteForbidden` without it), and the site’s `features.liveNotes` switch, which in turn needs `features.collaborativeEditing`.',
+          'Creates an empty live note and answers with its key, which is what its URL, `/n/<key>`, is made of. A new note is `editable`: anybody who holds the key and `write:notes` can write in it, and anybody holding `read:notes` can read it — a guest included, where the guests group is granted it — so the key is 24 characters drawn from a cryptographic source and never listed anywhere. Its creator can lock it or make it private afterwards.\n\nA `key` in the body creates the note under that key instead — 1 to 64 letters, digits, hyphens and underscores, not starting with an underscore, case-sensitive — which is what visiting `/n/<key>` for a note that does not exist yet does. A key a note on the site already has, or that an imported note was called where it came from, answers 409 `noteExists`. A picked key is only as hard to guess as whoever picked it made it.\n\nA note nobody writes anything in is deleted a day after it was created.\n\nNeeds a signed-in account holding `write:notes` (a page rule whose path is ignored, asked in the site’s primary locale; 403 `noteWriteForbidden` without it), and the site’s `features.liveNotes` switch, which in turn needs `features.collaborativeEditing`.',
         tags: ['Live Notes'],
         params: {
           type: 'object',

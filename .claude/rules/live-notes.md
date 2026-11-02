@@ -9,6 +9,9 @@ paths:
   - "frontend/src/components/LiveNote*.vue"
   - "frontend/src/stores/liveNote.js"
   - "frontend/src/components/EditorMarkdown.vue"
+  - "backend/models/importHedgedoc.ts"
+  - "backend/helpers/diffMatchPatch.ts"
+  - "frontend/src/components/ImportHedgedocOverlay.vue"
 ---
 
 # Live notes
@@ -28,9 +31,10 @@ under its `noteKey` prop. The site switch is `features.liveNotes` (on by default
 
 - **Not a page.** No tree entry, no path for a page rule to match, no render, no save. The key is the credential: 24
   characters from `crypto` (~143 bits) for a note made at `/n`, or whatever somebody typed — visiting
-  `/n/<key>` for a key no note on the site has yet creates one under it (1–64 of `[A-Za-z0-9-]`,
-  case-sensitive, unique per site; `KEY_PATTERN`, mirrored as `NOTE_KEY_PATTERN` in
-  `stores/liveNote.js`). Only a navigation creates, and only for somebody holding `write:notes` — anybody
+  `/n/<key>` for a key no note on the site has yet creates one under it (1–64 of `[A-Za-z0-9_-]`,
+  never `_` first, case-sensitive, unique per site; `KEY_PATTERN`, mirrored as `NOTE_KEY_PATTERN` in
+  `stores/liveNote.js`). The underscore is there for HedgeDoc's URLs; keeping it off the first
+  character is what leaves `notes/_access` and `notes/_resolve` unambiguous, so don't relax that. Only a navigation creates, and only for somebody holding `write:notes` — anybody
   else is told there is no such note: a note deleted under its readers reloads as gone.
   Either way it never goes in a log or an audit entry (record `noteId`), nor in
   any listing but its creator's own: **Profile → My Live Notes** (`GET /sites/:siteId/notes`,
@@ -61,6 +65,27 @@ under its `noteKey` prop. The site switch is `features.liveNotes` (on by default
   anybody holding `read:notes` on the site instead, guests included, and the tree refuses `n` as a new root name. `liveNoteImages` lists each
   note's images, and `liveNotes.delete` removes them with the note. The images are kept until then,
   even after the text stops showing them, because a revision may still use them.
+- **Old names (`liveNoteLegacyRefs`)** are the other names an imported note answered to: its HedgeDoc
+  shortid, its encoded id when it is keyed by its alias, an alias that is not a valid key, an id
+  starting with `_` (keyed with a `-` in front). A ref is a credential exactly as the key is, under the
+  same rules — never logged or listed, resolved only to somebody `rightsFor` lets read the note. A key
+  wins over a ref, `liveNotes.create` refuses a key that is a ref (409, so an old URL can't be taken
+  over), and `GET …/notes/_resolve?ref=` answers by either. On the frontend `/n/s/<ref>` and
+  `/n/p/<ref>` (HedgeDoc's published and slide URLs, which the reverse proxy moves under `/n`) and any
+  `/n/<x>` that is not a key, or is no note's, try `_resolve` first and replace the URL with the note's
+  own before anything is created or called missing.
+- **The HedgeDoc import** (`models/importHedgedoc.ts`, `POST /import/hedgedoc`, Admin → Utilities)
+  reads a HedgeDoc 1.x database server-side and streams NDJSON progress (`key`s under
+  `admin.utilities.hedgedocImport.log`). Accounts are matched by address — a local account's `email`,
+  an OAuth2 one's `profile.emails[0]` or `profile.email` — and created passwordless when missing,
+  directly rather than through `createUser` (no `user:join` per account). **A HedgeDoc revision is not
+  a copy**: only the first (`lastContent`) and latest (`content`) carry text; every other has a
+  diff-match-patch `patch` and `content` = the STRING `'null'`. `replayRevisions` rebuilds them with
+  `helpers/diffMatchPatch.ts` — upstream's patch half, ported in under its Apache-2.0 header since
+  neither it nor the npm package is maintained — and checks the replay against the latest. A note's id is a UUIDv5 of the site and its HedgeDoc id, so a
+  re-run recognises its own notes. Images under the given upload prefixes are copied through
+  `addImage` (downloaded via `fetchPublic` and `security.privateFetchAllowList`) and every mention, in
+  revisions too, is rewritten. Notes are named by title in the progress log, never by key.
 - **Publish to Page** (`publishToPage` in `LiveNote.vue`) makes a page of a note in the browser, with
   no route of its own: the note's `content` minus its opening H1 (the page's title instead), its
   images COPIED out of `n/` to where a pasted image would go — the note and its revisions keep the

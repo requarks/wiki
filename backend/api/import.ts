@@ -1,5 +1,7 @@
+import { Readable } from 'node:stream'
 import type { FastifyInstance } from 'fastify'
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import {
   IMPORT_CONTENT_KINDS,
   MAX_BATCH_BYTES,
@@ -398,6 +400,113 @@ async function routes(app: FastifyInstance) {
         progress
       })
       return { ok: true }
+    }
+  )
+
+  /**
+   * IMPORT FROM HEDGEDOC
+   */
+  app.post<{
+    Body: {
+      connectionString: string
+      siteId: string
+      overwrite?: boolean
+      uploadPrefixes?: string[]
+    }
+  }>(
+    '/import/hedgedoc',
+    {
+      config: { permissions: ['manage:system'] },
+      schema: {
+        summary: 'Import a HedgeDoc instance as live notes',
+        description:
+          'Reads a HedgeDoc 1.x database directly and brings it into a site as live notes, answering with its progress as newline-delimited JSON while it runs: `{ type: "log", level, key, params }` lines — `key` under `admin.utilities.hedgedocImport.log` — `{ type: "progress", value }` from 0 to 1, and a closing `{ type: "done", summary }`. A failure is a log line of level `error` followed by `done`, never a failed request.\n\nEvery HedgeDoc account becomes an account here, matched by address (a local account’s `email`, an OAuth2 one’s first `profile.emails` or `profile.email`); one already here is used as it is, and a new one has no password. Every note becomes a live note under the key its old URL had — its alias, or its encoded id — with every other name it answered to (its shortid, its encoded id beside an alias, an alias that is not a valid key) kept as an old name `notes/_resolve` finds it by. Revisions are rebuilt from HedgeDoc’s patches into whole copies. A note empty now and in all its history is skipped.\n\nA note already on the site under the same key is skipped, or replaced with `overwrite`. Running the import again recognises the notes it brought in before, so a run that stopped is resumed by starting it again. Closing the connection stops it after the note being written.\n\nImages whose URL starts with one of `uploadPrefixes` are copied into the note they appear in, and every mention — in the note and its revisions — is pointed at the copy; one on a private address has to be in `security.privateFetchAllowList`.\n\nThe connection string is used for this request only and stored nowhere.',
+        tags: ['Import'],
+        body: {
+          type: 'object',
+          properties: {
+            connectionString: {
+              type: 'string',
+              minLength: 1,
+              maxLength: 2048,
+              description: 'e.g. `postgresql://user:password@host:5432/hedgedoc`'
+            },
+            siteId: { type: 'string', format: 'uuid' },
+            overwrite: { type: 'boolean', default: false },
+            uploadPrefixes: {
+              type: 'array',
+              maxItems: 20,
+              items: { type: 'string', pattern: '^https?://[^/\\s]+/', maxLength: 1024 },
+              description:
+                'Where HedgeDoc served its uploads from, e.g. `https://notes.example.org/uploads/`. Images under none of them are left where they are.'
+            }
+          },
+          required: ['connectionString', 'siteId']
+        },
+        response: {
+          200: {
+            description: 'The import’s progress, one JSON object per line',
+            content: {
+              'application/x-ndjson': {
+                schema: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      if (!WIKI.sites[req.body.siteId]) {
+        return reply.notFound('Site does not exist.')
+      }
+      // -> The author of the images it stores. A system API key acts as nobody, so the wiki's own
+      //    administrator stands in, as for any unattended write
+      const actorId = requestUserId(req) ?? (await WIKI.models.users.getSystemActorId())
+      if (!actorId) {
+        return reply.badRequest('There is no administrator account to record the import as.')
+      }
+
+      const options = {
+        connectionString: req.body.connectionString,
+        siteId: req.body.siteId,
+        overwrite: req.body.overwrite === true,
+        uploadPrefixes: [...new Set(req.body.uploadPrefixes ?? [])],
+        actorId
+      }
+      const controller = new AbortController()
+      reply.raw.on('close', () => {
+        if (!reply.raw.writableFinished) {
+          controller.abort()
+        }
+      })
+
+      reply.header('Content-Type', 'application/x-ndjson; charset=utf-8')
+      // -> A reverse proxy holding the lines back until the end would leave the log empty for minutes
+      reply.header('X-Accel-Buffering', 'no')
+      reply.preventCache()
+
+      const events = WIKI.models.hedgedocImporter.run(options, controller.signal)
+      return reply.send(
+        Readable.from(
+          (async function* () {
+            for await (const event of events) {
+              yield `${JSON.stringify(event)}\n`
+              /*
+                Recorded once the run is over, with what it did, since that is the moment the work
+                is done -- a stream has no earlier moment of success. Whatever was written is
+                recorded, a run cut short included. Never the connection string.
+              */
+              if (event.type === 'done') {
+                await audit(req, 'admin', 'importHedgedoc', {
+                  siteId: options.siteId,
+                  overwrite: options.overwrite,
+                  ...event.summary
+                })
+              }
+            }
+          })()
+        )
+      )
     }
   )
 }

@@ -65,6 +65,16 @@ const routes = [
     component: () => import('@/layouts/LiveNoteLayout.vue'),
     children: [{ path: '', component: () => import('@/pages/LiveNote.vue') }]
   },
+  /*
+    An imported HedgeDoc note's published (`/s/`) and slide (`/p/`) URLs, moved under `/n` by the
+    reverse proxy in front of the wiki. Both only find the note and replace the URL with its own --
+    there is no published view or slide mode of a live note to show instead.
+  */
+  {
+    path: '/n/:refKind(s|p)/:noteRef',
+    component: () => import('@/layouts/LiveNoteLayout.vue'),
+    children: [{ path: '', component: () => import('@/pages/LiveNote.vue') }]
+  },
   {
     path: '/_profile',
     component: () => import('@/layouts/ProfileLayout.vue'),

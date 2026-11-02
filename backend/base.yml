@@ -206,9 +206,6 @@ defaults:
       # Whether users may create personal access tokens under their profile. Off, the tokens already
       # created stop working as well — they are kept, and work again the moment it is back on.
       allowPersonalTokens: true
-      # Non-public addresses (single, or CIDR) an identity provider's picture URL may be fetched
-      # from. Empty allows none: the URL comes from a claim the user may be able to edit.
-      avatarFetchAllowList: []
     security:
       corsMode: 'OFF'
       corsConfig: ''
@@ -228,6 +225,10 @@ defaults:
       authRateLimitMax: 10
       authRateLimitWindow: '2m'
       authRateLimitBan: '15m'
+      # Non-public addresses (single, or CIDR) the wiki may still reach when it fetches a URL it was
+      # handed — an identity provider's picture, an image an import copies. Empty allows none, so
+      # only the public internet is reached.
+      privateFetchAllowList: []
     flags:
       experimental: false
       authDebug: false

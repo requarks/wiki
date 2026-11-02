@@ -345,6 +345,22 @@
           <w-item>
             <blueprint-icon icon="database-restore" :hue-rotate="45" />
             <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.importHedgedoc`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.importHedgedocHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="openHedgedocImport"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <blueprint-icon icon="database-restore" :hue-rotate="45" />
+            <w-item-section>
               <w-item-label>{{ t(`admin.utilities.importNotion`) }}</w-item-label>
               <w-item-label caption>{{ t(`admin.utilities.importNotionHint`) }}</w-item-label>
             </w-item-section>
@@ -497,6 +513,10 @@ const purgeHistoryTimeframes = computed(() => [
  */
 function openWikijs2Import() {
   adminStore.$patch({ overlay: 'ImportWikijs2Overlay' })
+}
+
+function openHedgedocImport() {
+  adminStore.$patch({ overlay: 'ImportHedgedocOverlay' })
 }
 
 /**

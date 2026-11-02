@@ -164,6 +164,7 @@ export const AUDIT_ACTIONS = {
     'startImport',
     'finishImport',
     'abandonImport',
+    'importHedgedoc',
     'updateApiState',
     'updateMetricsState',
     'updateNotificationSettings',

@@ -34,11 +34,11 @@ export function noteTitleOf(content) {
 }
 
 /**
- * What a note key may be: letters, digits and hyphens, 1 to 64 of them. Mirrors `KEY_PATTERN` in the
- * backend's `models/liveNotes.ts`. A generated key is 24 of them; a longer or shorter one is a key
- * somebody picked by visiting `/n/<key>`.
+ * What a note key may be: letters, digits, hyphens and underscores, 1 to 64 of them, never an
+ * underscore first. Mirrors `KEY_PATTERN` in the backend's `models/liveNotes.ts`. A generated key is
+ * 24 of them; any other is a key somebody picked by visiting `/n/<key>`, or an imported note's.
  */
-export const NOTE_KEY_PATTERN = /^[A-Za-z0-9-]{1,64}$/
+export const NOTE_KEY_PATTERN = /^[A-Za-z0-9-][A-Za-z0-9_-]{0,63}$/
 
 /**
  * The live note that is open, if one is.
@@ -156,6 +156,17 @@ export const useLiveNoteStore = defineStore('liveNote', {
         content: '',
         render: ''
       })
+    },
+    /**
+     * The key of the note a name refers to: its key, or a name an imported note had where it came
+     * from (`notes/_resolve`). Throws what the API threw, as `load` does.
+     */
+    async resolve(ref) {
+      const siteStore = useSiteStore()
+      const note = await API_CLIENT.get(`sites/${siteStore.id}/notes/_resolve`, {
+        searchParams: { ref }
+      }).json()
+      return note.key
     },
     /**
      * Create an empty note, answering with its key — what its URL is made of. Under `key` when one is

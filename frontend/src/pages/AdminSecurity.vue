@@ -413,6 +413,30 @@
             </w-item>
           </template>
         </w-card>
+        <!-- ----------------------- -->
+        <!-- OUTBOUND REQUESTS -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.security.outboundRequests') }}</w-card-header>
+          <w-item>
+            <blueprint-icon icon="firewall" top />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.security.privateFetchAllowList`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.security.privateFetchAllowListHint`)
+              }}</w-item-label>
+              <w-input
+                class="mt-2"
+                outlined
+                dense
+                type="textarea"
+                :rows="3"
+                v-model="state.privateFetchAllowListText"
+                :placeholder="t(`admin.security.privateFetchAllowListPlaceholder`)"
+                :aria-label="t(`admin.security.privateFetchAllowList`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
       </div>
     </div>
   </w-page>
@@ -420,7 +444,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
@@ -470,8 +494,20 @@ const state = reactive({
     uploadMaxFiles: 0,
     uploadScanSVG: false
   },
-  humanUploadMaxFileSize: '0'
+  humanUploadMaxFileSize: '0',
+  // -> A list in the API, one entry per line here
+  privateFetchAllowListText: ''
 })
+
+// COMPUTED
+
+/** The textarea as the API wants it: trimmed, blanks dropped, one entry per line or comma. */
+const privateFetchAllowListEntries = computed(() =>
+  state.privateFetchAllowListText
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+)
 
 const hstsDurations = [
   { value: 300, text: '5 minutes' },
@@ -495,8 +531,9 @@ async function load() {
   state.loading++
   loading.show()
   try {
-    const resp = await API_CLIENT.get('system/security').json()
+    const { privateFetchAllowList, ...resp } = await API_CLIENT.get('system/security').json()
     state.config = { ...state.config, ...resp }
+    state.privateFetchAllowListText = (privateFetchAllowList ?? []).join('\n')
     state.humanUploadMaxFileSize = filesize(state.config.uploadMaxFileSize ?? 0, {
       base: 2,
       standard: 'jedec'
@@ -528,7 +565,8 @@ async function save() {
     const resp = await API_CLIENT.put('system/security', {
       json: {
         ...state.config,
-        uploadMaxFileSize
+        uploadMaxFileSize,
+        privateFetchAllowList: privateFetchAllowListEntries.value
       }
     }).json()
     if (!resp?.ok) {

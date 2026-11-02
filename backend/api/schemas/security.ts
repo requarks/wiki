@@ -57,6 +57,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description: 'Whether to trust `X-Forwarded-*` headers.'
       },
+      privateFetchAllowList: {
+        type: 'array',
+        maxItems: 100,
+        items: { type: 'string', maxLength: 64 },
+        description:
+          'Non-public addresses the wiki may still reach when it downloads a URL it was handed — an identity provider’s picture, an image the HedgeDoc import copies — as single addresses or CIDR subnets (`10.0.0.5`, `10.0.0.0/24`, `fd00::/8`). EMPTY — the default — allows none: only the public internet is reached, since such a URL comes from a claim or content somebody else controls. Applies at once.'
+      },
       uploadMaxFileSize: {
         type: 'integer',
         minimum: 1,

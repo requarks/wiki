@@ -15,6 +15,7 @@ import { groups } from './groups.ts'
 import { hooks } from './hooks.ts'
 import { icons } from './icons.ts'
 import { importer } from './import.ts'
+import { hedgedocImporter } from './importHedgedoc.ts'
 import { jobs } from './jobs.ts'
 import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
@@ -67,6 +68,7 @@ export default {
   hooks,
   icons,
   importer,
+  hedgedocImporter,
   jobs,
   liveNotes,
   locales,

@@ -73,8 +73,7 @@ class Settings {
           guestUserId: ids.userGuestId,
           allowPasskeys: true,
           allowProfileEditing: true,
-          allowPersonalTokens: true,
-          avatarFetchAllowList: []
+          allowPersonalTokens: true
         }
       },
       {

@@ -510,7 +510,9 @@ watch(
     if (!/^\/n(\/|$)/.test(route.path)) {
       return
     }
-    if (route.params.noteKey) {
+    if (route.params.noteRef) {
+      openRef(route.params.noteRef)
+    } else if (route.params.noteKey) {
       load(route.params.noteKey, { createIfMissing: true })
     } else {
       create()
@@ -694,7 +696,12 @@ async function load(key, { createIfMissing = false } = {}) {
     return
   }
   if (!NOTE_KEY_PATTERN.test(key)) {
-    state.status = 'invalidkey'
+    // -> Not a key, but possibly what an imported note was called where it came from
+    if (!(createIfMissing && (await followRef(key, token)))) {
+      if (token === loadToken) {
+        state.status = 'invalidkey'
+      }
+    }
     return
   }
   try {
@@ -718,6 +725,10 @@ async function load(key, { createIfMissing = false } = {}) {
         state.status = refusalStatus(err)
         break
       case 404:
+        // -> An imported note's old name goes to that note rather than making a new one under it
+        if (createIfMissing && (await followRef(key, token))) {
+          return
+        }
         // -> Only for somebody who may create one: anybody else is told there is no such note
         if (createIfMissing) {
           await liveNoteStore.ensureAccess()
@@ -735,6 +746,55 @@ async function load(key, { createIfMissing = false } = {}) {
         state.status = 'error'
         state.errorMessage = apiErrorMessage(err)
     }
+  }
+}
+
+/**
+ * Go to the note an old name refers to -- a HedgeDoc shortid, alias or id the import kept, see
+ * `liveNoteLegacyRefs` -- replacing this URL with the note's own, so that the address bar shows the
+ * one to share from now on.
+ *
+ * @returns Whether it went: false when the name is no note's, leaving the caller to say what it would
+ *   have said anyway. A refusal (signed out, private, notes off) is answered here, and counts as gone.
+ */
+async function followRef(ref, token) {
+  try {
+    const key = await liveNoteStore.resolve(ref)
+    if (token === loadToken) {
+      await router.replace({ path: `/n/${key}`, query: route.query, hash: route.hash })
+    }
+    return true
+  } catch (err) {
+    if (token !== loadToken) {
+      return true
+    }
+    switch (err?.response?.status) {
+      case 404:
+        return false
+      case 401:
+        state.status = 'signin'
+        return true
+      case 403:
+        state.status = refusalStatus(err)
+        return true
+      default:
+        state.status = 'error'
+        state.errorMessage = apiErrorMessage(err)
+        return true
+    }
+  }
+}
+
+/** `/n/s/<ref>` and `/n/p/<ref>`: an imported note's published and slide URLs, which only find it. */
+async function openRef(ref) {
+  const token = ++loadToken
+  liveNoteStore.close()
+  state.status = 'loading'
+  if (!siteHasNotes()) {
+    return
+  }
+  if (!(await followRef(ref, token)) && token === loadToken) {
+    state.status = 'notfound'
   }
 }
 

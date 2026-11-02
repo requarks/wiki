@@ -1,3 +1,4 @@
+import { parseIpRange } from '../helpers/network.ts'
 import { CORS_MODES, parseCspDirectives } from '../helpers/security.ts'
 
 /** Fields stored in the `security` settings blob. */
@@ -16,6 +17,7 @@ export const SECURITY_FIELDS = [
   'enforceSameOriginReferrerPolicy',
   'forceAssetDownload',
   'hstsDuration',
+  'privateFetchAllowList',
   'trustProxy',
   'uploadMaxFileSize',
   'uploadMaxFiles',
@@ -33,7 +35,8 @@ const DURATION_PATTERN = /^\d+[smhdwy]$/
  * at the top: the response headers, CSP, HSTS and CORS are read by the `Security` section of
  * `index.ts` when the HTTP server starts, and `uploadMaxFileSize` by the upload route's body limit
  * when it is registered, so those take effect on the next restart. `trustProxy`, the rate limit
- * fields and `forceAssetDownload` are read per request and apply as soon as they are saved.
+ * fields, `forceAssetDownload` and `privateFetchAllowList` are read per request and apply as soon as
+ * they are saved.
  */
 class Security {
   /**
@@ -57,6 +60,12 @@ class Security {
       if (body[field] !== undefined) {
         patch[field] = body[field]
       }
+    }
+    if (Array.isArray(patch.privateFetchAllowList)) {
+      // -> Normalised on the way in, so what is stored is exactly what `validate` checked
+      patch.privateFetchAllowList = [
+        ...new Set(patch.privateFetchAllowList.map((entry: unknown) => String(entry).trim()))
+      ].filter(Boolean)
     }
     return patch
   }
@@ -99,6 +108,13 @@ class Security {
       }
     }
 
+    const badRange = (merged.privateFetchAllowList ?? []).find(
+      (entry: string) => !parseIpRange(entry)
+    )
+    if (badRange) {
+      return `'${badRange}' is not an IP address or CIDR range, e.g. 10.0.0.5 or 10.0.0.0/24.`
+    }
+
     if (merged.enforceHsts && !(merged.hstsDuration > 0)) {
       return 'Enforcing HSTS needs a duration greater than zero.'
     }
@@ -134,6 +150,20 @@ class Security {
       return false
     }
     return true
+  }
+
+  /**
+   * The non-public addresses a URL the wiki was handed may still be fetched from, as single
+   * addresses or CIDR ranges — `fetchPublic`'s `allow`. Empty, the default, allows none, so only the
+   * public internet is reached: such a URL comes from a claim the person signing in may be able to
+   * edit (an identity provider's picture) or from content somebody else wrote (an image an import
+   * copies). It is for a provider or an old server inside the wiki's own network.
+   */
+  privateFetchAllowList(): string[] {
+    const list = WIKI.config.security?.privateFetchAllowList
+    return Array.isArray(list)
+      ? list.filter((entry: unknown) => typeof entry === 'string' && entry.length > 0)
+      : []
   }
 }
 

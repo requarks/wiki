@@ -978,7 +978,7 @@ class Users {
    * providers the person signing in can edit, so `fetchPublic` follows only http(s), only to the
    * public internet and only redirects that stay there — this machine, its network and a cloud's
    * metadata service are not for a login to probe, short of a range an administrator opened under
-   * `auth.avatarFetchAllowList`. The download is capped and given a deadline, and
+   * `security.privateFetchAllowList`. The download is capped and given a deadline, and
    * the bytes have to sniff as an image exactly as an uploaded avatar's do. A provider that answers with a login page instead of a picture is a
    * provider whose HTML must not end up served back as somebody's avatar.
    *
@@ -992,7 +992,7 @@ class Users {
       const data = await fetchPublic(url, {
         limit: remoteAvatarLimit,
         timeout: 10_000,
-        allow: WIKI.models.authentication.avatarFetchAllowList()
+        allow: WIKI.models.security.privateFetchAllowList()
       })
       if (!detectImageMime(data)) {
         throw new Error('what came back is not a PNG, JPEG, WebP or GIF')

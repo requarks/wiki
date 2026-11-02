@@ -5,6 +5,7 @@ import * as Y from 'yjs'
 
 import {
   liveNoteImages as imagesTable,
+  liveNoteLegacyRefs as legacyRefsTable,
   liveNoteRevisions as revisionsTable,
   liveNotes as liveNotesTable,
   users as usersTable
@@ -24,12 +25,19 @@ function escapeLikePattern(value: string): string {
 
 /**
  * What a note's URL is made of: `/n/<key>`. A generated key is {@link KEY_LENGTH} characters of the
- * alphabet; a key somebody picks is any run of the same characters up to {@link MAX_KEY_LENGTH}.
+ * alphabet; a key somebody picks is up to {@link MAX_KEY_LENGTH} letters, digits, hyphens and
+ * underscores — the alphabet of a HedgeDoc note's URL, which an imported note keeps.
+ *
+ * **Never an underscore first.** That is what leaves `/sites/:siteId/notes/_access` and `_resolve`
+ * free of any note: no key can be either of them.
  */
 const KEY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-'
 export const KEY_LENGTH = 24
 export const MAX_KEY_LENGTH = 64
-export const KEY_PATTERN = /^[A-Za-z0-9-]{1,64}$/
+export const KEY_PATTERN = /^[A-Za-z0-9-][A-Za-z0-9_-]{0,63}$/
+
+/** The longest old name a note can be found under — see `liveNoteLegacyRefs`. */
+export const MAX_REF_LENGTH = 255
 
 /**
  * The shortest gap between two revisions of a note while it is being written.
@@ -266,9 +274,14 @@ class LiveNotes {
     if (key !== undefined && !this.isValidKey(key)) {
       throw new CustomError(
         'noteKeyInvalid',
-        `A note key is 1 to ${MAX_KEY_LENGTH} letters, digits and hyphens.`,
+        `A note key is 1 to ${MAX_KEY_LENGTH} letters, digits, hyphens and underscores, and does not start with an underscore.`,
         400
       )
+    }
+    // -> An old URL of an imported note is that note's, as much as its key is: a note created under
+    //    it would take the URL over, since a key is looked up before a ref
+    if (key !== undefined && (await this.getByRef(siteId, key))) {
+      throw new CustomError('noteExists', 'A note with this key already exists.', 409)
     }
     /*
       A collision on 143 bits does not happen, but the unique index is what would say so, and a retry
@@ -306,6 +319,23 @@ class LiveNotes {
       .where(and(eq(liveNotesTable.siteId, siteId), eq(liveNotesTable.key, key)))
       .limit(1)
     return note ? this.summarize(note) : null
+  }
+
+  /**
+   * The note an imported note's old name refers to — see `liveNoteLegacyRefs`. Only the refs: ask
+   * {@link LiveNotes.getByKey} first, since a key wins over a ref.
+   */
+  async getByRef(siteId: string, ref: string): Promise<LiveNoteSummary | null> {
+    if (!ref || ref.length > MAX_REF_LENGTH) {
+      return null
+    }
+    const [row] = await WIKI.db
+      .select({ note: liveNotesTable })
+      .from(legacyRefsTable)
+      .innerJoin(liveNotesTable, eq(liveNotesTable.id, legacyRefsTable.noteId))
+      .where(and(eq(legacyRefsTable.siteId, siteId), eq(legacyRefsTable.ref, ref)))
+      .limit(1)
+    return row ? this.summarize(row.note) : null
   }
 
   /**
