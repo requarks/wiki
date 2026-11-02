@@ -51,8 +51,9 @@ The wiki as a Model Context Protocol server at `/_mcp`, so that an AI assistant 
 - **OAuth 2.1 is how the remote connectors sign in** (`controllers/oauth.ts`, `models/oauth.ts`,
   consent at `/_authorize`). A grant is a `personalTokens` row with a `clientId`: listed and deleted
   like any token, but its hour-long access tokens are accepted on `/_mcp` alone (the bearer hook
-  refuses them on `/_api`), and a reused refresh token revokes the grant. It all exists only while
-  MCP, the API and personal tokens are on.
+  refuses them on `/_api`, except on a `callApi` replay of the same key — `replayedKeyId`, an
+  async-local scope no outside request can claim), and a reused refresh token revokes the grant. It
+  all exists only while MCP, the API and personal tokens are on.
 - **Written by hand, no MCP SDK.** Arguments are checked by Ajv against the schema `tools/list`
   publishes. The rate limit is an in-memory token bucket per instance (`helpers/tokenBucket.ts`), on
   purpose: agents fan out, and a database write per call would be the load it exists to stop.

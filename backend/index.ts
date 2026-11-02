@@ -37,6 +37,7 @@ import scheduler from './core/scheduler.ts'
 import { runStartupChecks } from './core/startupChecks.ts'
 import { grantsScope, requiredScope } from './models/personalTokens.ts'
 import { SESSION_MAX_AGE_DAYS } from './models/sessions.ts'
+import { replayedKeyId } from './mcp/inject.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
   isPageUrl,
@@ -669,7 +670,8 @@ async function initHTTPServer() {
         return
       }
       // -> RFC 8707: a token from an OAuth grant was asked for the MCP server, and reaches that alone
-      if (req.apiKey.oauthClientId) {
+      //    — which includes the routes `/_mcp` calls in-process as the same caller (`mcp/inject.ts`)
+      if (req.apiKey.oauthClientId && replayedKeyId() !== req.apiKey.id) {
         return reply.forbidden(
           'This token was granted to an MCP client and is accepted by /_mcp only.'
         )

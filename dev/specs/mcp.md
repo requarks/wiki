@@ -430,8 +430,9 @@ adds:
   which no refresh succeeds. Errors are RFC 6749 §5.2's shape.
 - **Resource binding** (RFC 8707): the `resource` parameter, where a client sends it, must name this
   site's `/_mcp`, and a token from a grant is accepted on `/_mcp` and nowhere else — the bearer hook
-  refuses it on `/_api` (`oauthClientId` on the verified key). A connector asked for an MCP server,
-  and that is all it gets, whatever the scopes would reach. A grant is the user's rather than a
+  refuses it on `/_api` (`oauthClientId` on the verified key), except on a route `/_mcp` calls
+  in-process for the same key (`replayedKeyId` in `mcp/inject.ts`), which is still the MCP surface.
+  A connector asked for an MCP server, and that is all it gets, whatever the scopes would reach. A grant is the user's rather than a
   site's, as every personal token is, so it works on the `/_mcp` of every site of the instance.
 - **Schema.** `personalTokens` gains a nullable `clientId` (to `oauthClients`, on delete cascade) and a
   nullable `refreshHash`; migration `mcp`. A row with no client is a token made by hand, and
@@ -719,8 +720,9 @@ suggestion, the posting cooldown, the spam check, the webhooks and notifications
 the term routes' refusals — and a second copy of it in the tools would drift. `callApi` hands the
 route the caller's own token, host and client address (so the cooldown and the audit entry name the
 right person and address), never a cookie, and inside the caller's `withVia('mcp')` scope. A token
-therefore reaches exactly what it reaches on `/_api`, by construction; the route's refusal comes back
-as the tool's error, in the route's words.
+therefore reaches exactly what it reaches on `/_api`, by construction — a token from an OAuth grant
+included, which the bearer hook lets through for the replay of that same key alone. The route's
+refusal comes back as the tool's error, in the route's words.
 
 - **`suggest_edit`** submits the change through the approvals flow, for the page's reviewers to accept
   or decline — the same edits-or-content input as `update_page`. It reads the source to edit from

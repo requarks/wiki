@@ -1,5 +1,21 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { ToolError } from './tool.ts'
 import type { McpContext } from './context.ts'
+
+const replayStore = new AsyncLocalStorage<string>()
+
+/**
+ * The ID of the key `callApi` is replaying on the request in progress, or null when it is not a
+ * replay.
+ *
+ * Read by the bearer hook in `index.ts`, which refuses a token from an OAuth grant anywhere but
+ * `/_mcp` — except here, where `/_mcp` is calling its own routes as the same caller and the token
+ * never left the MCP surface. A scope rather than a header, so that no request from outside can
+ * claim to be one.
+ */
+export function replayedKeyId(): string | null {
+  return replayStore.getStore() ?? null
+}
 
 /**
  * Call one of the wiki's own REST routes in-process, as the caller.
@@ -14,7 +30,8 @@ import type { McpContext } from './context.ts'
  * anonymous caller — the guests group, as on `/_api`), the same host, so the same site, and the same
  * client address, so a cooldown or an audit entry names the right one. Never the session cookie,
  * which `/_mcp` does not read. And it runs inside the caller's `withVia('mcp')` scope, so whatever it
- * records is marked as done through MCP.
+ * records is marked as done through MCP. A token from an OAuth grant, which `/_api` refuses, is let
+ * through for the replay alone (`replayedKeyId`).
  *
  * @param path Below `/_api/`, e.g. `sites/<id>/glossary`
  * @returns The parsed response body
@@ -36,25 +53,30 @@ export async function callApi(
     query?: Record<string, string | number | boolean>
   } = {}
 ): Promise<any> {
-  const response = await WIKI.app.inject({
-    method,
-    url: `/_api/${path}`,
-    query: query
-      ? Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)]))
-      : undefined,
-    headers: {
-      host: ctx.req.host,
-      ...(ctx.req.headers.authorization ? { authorization: ctx.req.headers.authorization } : {}),
-      ...(ctx.req.headers['user-agent'] ? { 'user-agent': ctx.req.headers['user-agent'] } : {}),
-      ...(raw
-        ? { 'content-type': raw.contentType }
-        : body === undefined
-          ? {}
-          : { 'content-type': 'application/json' })
-    },
-    payload: raw ? raw.data : body === undefined ? undefined : JSON.stringify(body),
-    remoteAddress: ctx.req.ip
-  })
+  // -> Awaited inside the scope: `inject` returns a lazy chain that dispatches on its first `then`,
+  //    and an await outside `run` would start the request outside the scope
+  const inject = async () =>
+    await WIKI.app.inject({
+      method,
+      url: `/_api/${path}`,
+      query: query
+        ? Object.fromEntries(Object.entries(query).map(([k, v]) => [k, String(v)]))
+        : undefined,
+      headers: {
+        host: ctx.req.host,
+        ...(ctx.req.headers.authorization ? { authorization: ctx.req.headers.authorization } : {}),
+        ...(ctx.req.headers['user-agent'] ? { 'user-agent': ctx.req.headers['user-agent'] } : {}),
+        ...(raw
+          ? { 'content-type': raw.contentType }
+          : body === undefined
+            ? {}
+            : { 'content-type': 'application/json' })
+      },
+      payload: raw ? raw.data : body === undefined ? undefined : JSON.stringify(body),
+      remoteAddress: ctx.req.ip
+    })
+  const keyId = ctx.req.apiKey?.id
+  const response = await (keyId ? replayStore.run(keyId, inject) : inject())
   let parsed: any = null
   try {
     parsed = response.body ? JSON.parse(response.body) : null
