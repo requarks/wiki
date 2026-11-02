@@ -220,7 +220,11 @@ export function sourceLinkHrefs(source: string, syntax: SourceSyntax): string[] 
   if (syntax === 'markdown') {
     patterns.push(
       /\]\(\s*<([^>\n]+)>/g,
-      /\]\(\s*([^\s<)][^\s)]*)/g,
+      // -> Read as markdown reads one: a backslash escapes the next character, and a parenthesis
+      //    is part of the destination as long as it is balanced -- `/images/alpha_(1).png`, which
+      //    is how 2.x named an upload called `Alpha (1).png`. One level of nesting, as the renderer
+      //    would accept more but nobody writes it
+      /\]\(\s*(?!<)((?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.)*\))+)/g,
       /^[ \t]{0,3}\[[^\]\n]+\]:[ \t]*<([^>\n]+)>/gm,
       /^[ \t]{0,3}\[[^\]\n]+\]:[ \t]*([^\s<][^\s]*)/gm
     )

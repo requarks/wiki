@@ -1668,6 +1668,7 @@ onMounted(async () => {
     config,
     context: {
       pagePath: () => pageStore.path,
+      pageExtensions: () => siteStore.pageExtensions,
       isDisabled: (tag) => disabledBlockTags.has(tag),
       ensureBlockLoaded,
       hasContentEditor,

@@ -61,13 +61,17 @@ function firstDifference(before, after) {
  * @param {(doc: object) => string} deps.serialize From `serialize`.
  * @param {{ render: (md: string, env: object) => string }} deps.renderer The site's renderer.
  * @param {string} deps.pagePath The page's path, which a relative image resolves against.
+ * @param {string[]} deps.pageExtensions The site's page extensions -- see `fileHref`.
  * @returns {{ content: string, render: string, changed: boolean, identical: boolean,
  *            difference: ?{ before: string, after: string }, error: ?string }}
  *          `identical` is the one to gate on: it says the page renders the same afterwards.
  *          `changed` only says the source text is not byte-for-byte what it was, which is expected
  *          and harmless.
  */
-export function normalizeForVisual(content, { parser, serialize, renderer, pagePath = '' }) {
+export function normalizeForVisual(
+  content,
+  { parser, serialize, renderer, pagePath = '', pageExtensions = [] }
+) {
   const source = content ?? ''
   let rewritten
   try {
@@ -86,8 +90,8 @@ export function normalizeForVisual(content, { parser, serialize, renderer, pageP
   let before
   let after
   try {
-    before = renderer.render(source, { pagePath })
-    after = renderer.render(rewritten, { pagePath })
+    before = renderer.render(source, { pagePath, pageExtensions })
+    after = renderer.render(rewritten, { pagePath, pageExtensions })
   } catch (err) {
     return {
       content: rewritten,

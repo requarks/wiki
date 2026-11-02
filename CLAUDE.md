@@ -104,6 +104,11 @@ npm run package -- block-x # compile one block → blocks/packages/block-x.wkblo
 The API is browsable via Swagger UI at `http://localhost:3000/_api` in a running instance. Default
 admin login is `admin@example.com` / `12345678`.
 
+**Don't use the `gh` CLI** to fetch GitHub issues, pull requests, comments or anything else — it is
+not installed or not authenticated in this environment. Read them over the public REST API instead
+(e.g. `https://api.github.com/repos/requarks/wiki/issues/123`, `…/pulls/123`, `…/issues/123/comments`)
+with WebFetch or `curl`.
+
 ### How far to go verifying a change
 
 Match the check to the size of the change. `npm run build`, `npx oxlint` and `npm run typecheck` are

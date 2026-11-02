@@ -26,10 +26,12 @@ import twemoji from '@twemoji/api'
 import {
   MATH_ENGINES,
   codeBlock,
+  fileHref,
   fileSrc,
   isExternalHref,
   parseFenceAttributes,
-  rewriteHtmlImages
+  rewriteHtmlImages,
+  rewriteHtmlLinks
 } from './shared'
 
 import { escape } from 'es-toolkit/string'
@@ -349,10 +351,15 @@ export class MarkdownRenderer {
       an href but not compare its host with the wiki's own, which is the whole question.
 
       The class survives being stored: `models/rendering.ts` keeps `class` on every element.
+
+      A link to a file is pointed at where the file is served from -- see `fileHref`.
     */
     this.md.renderer.rules.link_open = (tokens, idx, options, env, slf) => {
-      if (isExternalHref(tokens[idx].attrGet('href'))) {
+      const href = tokens[idx].attrGet('href')
+      if (isExternalHref(href)) {
         tokens[idx].attrJoin('class', 'is-external-link')
+      } else if (href) {
+        tokens[idx].attrSet('href', fileHref(href, env?.pagePath, env?.pageExtensions))
       }
       return slf.renderToken(tokens, idx, options, env, slf)
     }
@@ -382,7 +389,8 @@ export class MarkdownRenderer {
 
     /*
       And the same for an `<img>` the author wrote as HTML, which never becomes a token to hold an
-      attribute -- so it is the rendered text that is rewritten, after whatever rule produced it.
+      attribute -- so it is the rendered text that is rewritten, after whatever rule produced it. An
+      `<a>` to a file likewise, as `link_open` does for a markdown link.
       Raw HTML is also where a self-closed `<iconify-icon />` turns up, and it is fixed in the same
       pass for the same reason: this is the only point at which the author's own markup is still
       distinguishable from the markup the renderer produced.
@@ -391,7 +399,13 @@ export class MarkdownRenderer {
     for (const rule of ['html_block', 'html_inline']) {
       const renderHtml = this.md.renderer.rules[rule] ?? passthrough
       this.md.renderer.rules[rule] = (tokens, idx, options, env, slf) =>
-        closeIconTags(rewriteHtmlImages(renderHtml(tokens, idx, options, env, slf), env?.pagePath))
+        closeIconTags(
+          rewriteHtmlLinks(
+            rewriteHtmlImages(renderHtml(tokens, idx, options, env, slf), env?.pagePath),
+            env?.pagePath,
+            env?.pageExtensions
+          )
+        )
     }
 
     // --------------------------------
@@ -578,12 +592,14 @@ export class MarkdownRenderer {
   /**
    * @param {string} src Markdown source.
    * @param {string} [pagePath] Path of the page this source belongs to, without a leading slash. What
-   *                            a relative image resolves against -- see `fileSrc`.
+   *                            a relative image or link resolves against -- see `fileSrc`.
+   * @param {string[]} [pageExtensions] The site's page extensions, which tell a link to a page from
+   *                                    one to a file -- see `fileHref`.
    */
-  render(src, { pagePath = '' } = {}) {
+  render(src, { pagePath = '', pageExtensions = [] } = {}) {
     // -> A fresh env every time, whatever the caller passed: markdown-it keeps per-render state in it
     //    (footnotes and references), and one shared between renders would carry the last one's
-    return this.md.render(src, { pagePath })
+    return this.md.render(src, { pagePath, pageExtensions })
   }
 
   /**

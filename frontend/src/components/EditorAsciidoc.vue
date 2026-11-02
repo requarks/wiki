@@ -1234,6 +1234,7 @@ async function processContent(newContent) {
     //    sits in -- and it is being edited, so it is whatever the path field says right now
     rendered = await adoc.renderWithHeadings(newContent, {
       pagePath: pageStore.path,
+      pageExtensions: siteStore.pageExtensions,
       sourcemap: true
     })
   } catch (err) {

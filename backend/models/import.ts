@@ -1995,7 +1995,9 @@ class Import {
    *
    * Only the segments of the path itself change. A locale prefix, an anchor, a query string, a `..`
    * and a relative link's relativity are all kept as written, and a segment that was percent-encoded
-   * is encoded again.
+   * is encoded again. The one exception is a locale prefix on a link to a file, which comes off: a
+   * file is served under no locale, so that link points at nothing here even when the file kept its
+   * name.
    */
   async #linkResolverFor(siteId: string): Promise<LinkResolver> {
     const pageRows = await WIKI.db
@@ -2019,7 +2021,10 @@ class Import {
 
     return (href, from) => {
       const cut = href.search(/[?#]/)
-      const pathPart = cut < 0 ? href : href.slice(0, cut)
+      // -> Markdown escapes punctuation with a backslash, and Turndown does so for a parenthesis in a
+      //    ckeditor image's `src` -- `juliet_\(7\).png`. No path holds a backslash, so it comes off
+      //    whichever syntax the href was read from
+      const pathPart = (cut < 0 ? href : href.slice(0, cut)).replaceAll(/\\([!-/:-@[-`{-~])/g, '$1')
       // -> A URL, a protocol-relative one and a bare anchor address nothing an import renamed, and
       //    neither does a route of the app's own
       if (!pathPart || /^[a-z][a-z0-9+.-]*:/i.test(pathPart) || pathPart.startsWith('//')) {
@@ -2048,30 +2053,46 @@ class Import {
         return null
       }
       const asWritten = normalizePagePath(resolved.join('/'))
-      if (pages.has(`${locale}:${asWritten}`) || assets.has(asWritten)) {
+      if (pages.has(`${locale}:${asWritten}`)) {
+        return null
+      }
+      /*
+        A file is served under no locale, and 2.x answered `/en/images/a.png` with `images/a.png` --
+        which here is the folder `en`, so the prefix comes off a link that names a file. Unless the
+        site does have that folder, in which case the link already points at it.
+      */
+      const dropLocale =
+        split !== null && !assets.has(normalizePagePath([parts[1], ...resolved].join('/')))
+      if (assets.has(asWritten) && !dropLocale) {
         return null
       }
       const lastIndex = parts.findLastIndex(isName)
       const folders = resolved.slice(0, -1).map(segmentOf)
-      const kind = pages.has(`${locale}:${resolved.map(segmentOf).join('/')}`)
-        ? 'page'
-        : lastIndex === parts.length - 1 &&
-            assets.has([...folders, sanitizeFileName(resolved.at(-1)!)].join('/'))
-          ? 'asset'
-          : null
+      const kind = assets.has(asWritten)
+        ? 'file'
+        : pages.has(`${locale}:${resolved.map(segmentOf).join('/')}`)
+          ? 'page'
+          : lastIndex === parts.length - 1 &&
+              assets.has([...folders, sanitizeFileName(resolved.at(-1)!)].join('/'))
+            ? 'asset'
+            : null
       if (!kind) {
         return null
       }
 
       const rewritten = parts
-        .map((part, index) => {
-          if (index < first || !isName(part)) {
-            return part
+        .flatMap((part, index) => {
+          if (index === 1 && kind !== 'page' && dropLocale) {
+            return []
+          }
+          // -> A file already under its own name needs nothing but the prefix taken off
+          if (index < first || !isName(part) || kind === 'file') {
+            return [part]
           }
           const decoded = decodeUrlPath(part)
           const converted =
             kind === 'asset' && index === lastIndex ? sanitizeFileName(decoded) : segmentOf(decoded)
-          return part.includes('%') ? encodeURIComponent(converted) : converted
+          return [part.includes('%') ? encodeURIComponent(converted) : converted]
         })
         .join('/')
       const next = `${rewritten}${cut < 0 ? '' : href.slice(cut)}`

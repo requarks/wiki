@@ -21,7 +21,7 @@
  */
 import { Extensions, Html5Converter, convert as asciidoctorConvert } from '@asciidoctor/core'
 
-import { MATH_ENGINES, codeBlock, fileSrc, isExternalHref } from './shared'
+import { MATH_ENGINES, codeBlock, fileHref, fileSrc, isExternalHref } from './shared'
 
 import { escape } from 'es-toolkit/string'
 
@@ -279,7 +279,8 @@ class WikiConverter extends Html5Converter {
    * @param {string} backend The backend Asciidoctor instantiated this for.
    * @param {object} opts Asciidoctor's own converter options.
    * @param {object} context What the source cannot say about itself -- `pagePath`, which a relative
-   *                         image resolves against, `mathTag`, the block a formula is drawn by
+   *                         image resolves against, `pageExtensions`, which tell a link to a page
+   *                         from one to a file, `mathTag`, the block a formula is drawn by
    *                         (null where the site has math switched off), and `headings`, an array
    *                         the document's headings are added to as they are converted.
    */
@@ -652,7 +653,8 @@ ${await node.content()}
   }
 
   /**
-   * A link, marked when it leaves the wiki.
+   * A link, marked when it leaves the wiki, and pointed at where a file is served from when it names
+   * one (`fileHref`) -- `link:/docs/report.pdf[]`, which is what the editor writes for a picked file.
    *
    * `is-external-link` is what the content stylesheet draws the outbound arrow from, and it cannot be
    * decided in CSS: a selector can match the shape of an href but not compare its host with this
@@ -663,8 +665,15 @@ ${await node.content()}
    */
   async convert_inline_anchor(node) {
     const html = await super.convert_inline_anchor(node)
-    if (node.type !== 'link' || !html || !isExternalHref(node.target)) {
+    if (node.type !== 'link' || !html) {
       return html
+    }
+    if (!isExternalHref(node.target)) {
+      return html.replace(
+        /^(<a href=")([^"]*)(")/,
+        (_match, before, value, after) =>
+          `${before}${fileHref(value, this.wikiContext.pagePath, this.wikiContext.pageExtensions)}${after}`
+      )
     }
     return html.includes(' class="')
       ? html.replace(' class="', ' class="is-external-link ')
@@ -721,7 +730,9 @@ export class AsciidocRenderer {
    * @param {string} src AsciiDoc source.
    * @param {object} [options]
    * @param {string} [options.pagePath] Path of the page this source belongs to, without a leading
-   *                 slash. What a relative image resolves against -- see `fileSrc`.
+   *                 slash. What a relative image or link resolves against -- see `fileSrc`.
+   * @param {string[]} [options.pageExtensions] The site's page extensions, which tell a link to a page
+   *                 from one to a file -- see `fileHref`.
    * @param {boolean} [options.sourcemap] Whether to stamp `data-line` onto every block, which the
    *                 editor's preview scrolls by and a stored page has no use for. Off by default:
    *                 the attribute is stripped again before a page is stored, so a render with no
@@ -745,7 +756,7 @@ export class AsciidocRenderer {
    * @param {object} [options] As for `render`.
    * @returns {Promise<{ html: string, headings: Array<{ level: number, text: string, line: number }> }>}
    */
-  async renderWithHeadings(src, { pagePath = '', sourcemap = false } = {}) {
+  async renderWithHeadings(src, { pagePath = '', pageExtensions = [], sourcemap = false } = {}) {
     const headings = []
     const html = await asciidoctorConvert(disableIfeval(src ?? ''), {
       standalone: false,
@@ -760,7 +771,12 @@ export class AsciidocRenderer {
       extension_registry: this.registry,
       converter_factory: {
         createSync: (backend, opts) =>
-          new WikiConverter(backend, opts, { pagePath, mathTag: this.mathTag, headings })
+          new WikiConverter(backend, opts, {
+            pagePath,
+            pageExtensions,
+            mathTag: this.mathTag,
+            headings
+          })
       },
       attributes: { ...DEFAULT_ATTRIBUTES, ...LOCKED_ATTRIBUTES, ...this.config.attributes }
     })

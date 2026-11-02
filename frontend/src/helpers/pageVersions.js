@@ -107,16 +107,27 @@ export async function saveVersionSource(version) {
  * @param {string} options.pagePath The page this HTML is FOR, which is what a relative image in it
  *   resolves against. Not always the version's own `path`: content being restored onto a page that
  *   has since moved belongs to where that page is now.
+ * @param {string[]} options.pageExtensions The site's page extensions, which tell a link to a page from
+ *   one to a file -- see `fileHref`.
  * @returns {Promise<string>} The HTML, or the source unchanged for a format this does not render.
  */
-export async function renderVersionSource(version, { markdownConfig, asciidocConfig, pagePath }) {
+export async function renderVersionSource(
+  version,
+  { markdownConfig, asciidocConfig, pagePath, pageExtensions }
+) {
   const content = version?.content ?? ''
   switch (versionContentType(version)) {
     case 'markdown':
-      return new MarkdownRenderer(markdownConfig ?? {}).render(content, { pagePath })
+      return new MarkdownRenderer(markdownConfig ?? {}).render(content, {
+        pagePath,
+        pageExtensions
+      })
     case 'adoc': {
       const { AsciidocRenderer } = await import('@/renderers/asciidoc')
-      return new AsciidocRenderer(asciidocConfig ?? {}).render(content, { pagePath })
+      return new AsciidocRenderer(asciidocConfig ?? {}).render(content, {
+        pagePath,
+        pageExtensions
+      })
     }
     case 'excalidraw': {
       /*

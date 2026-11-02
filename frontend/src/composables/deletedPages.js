@@ -37,7 +37,8 @@ export function useDeletedPages() {
     return renderVersionSource(version, {
       markdownConfig: editorStore.editors.markdown,
       asciidocConfig: editorStore.editors.asciidoc,
-      pagePath
+      pagePath,
+      pageExtensions: siteStore.pageExtensions
     })
   }
 

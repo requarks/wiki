@@ -51,7 +51,11 @@ export function createVisualEditor({
   const renderer = new MarkdownRenderer(config)
   const parser = createParser(renderer, config)
 
-  const render = (markdown) => renderer.render(markdown, { pagePath: context.pagePath() })
+  const render = (markdown) =>
+    renderer.render(markdown, {
+      pagePath: context.pagePath(),
+      pageExtensions: context.pageExtensions()
+    })
 
   /*
     A block's body is rendered through the same pipeline, on its own: the block reads its source out

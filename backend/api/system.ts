@@ -2104,7 +2104,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Fetch the sources of a batch of pages to re-render',
         description:
-          'Each page comes with the site’s config for its editor, which is what to render it with, and a hash of its content to send back with the render. A page that has gone, or whose editor cannot be rendered, is left out of the reply.',
+          'Each page comes with the site’s config for its editor and its page extensions, which are what to render it with, and a hash of its content to send back with the render. A page that has gone, or whose editor cannot be rendered, is left out of the reply.',
         tags: ['System'],
         body: {
           type: 'object',
@@ -2133,7 +2133,8 @@ async function routes(app: FastifyInstance) {
                     editor: { type: 'string' },
                     content: { type: 'string' },
                     contentHash: { type: 'string' },
-                    config: { type: 'object', additionalProperties: true }
+                    config: { type: 'object', additionalProperties: true },
+                    pageExtensions: { type: 'array', items: { type: 'string' } }
                   }
                 }
               }

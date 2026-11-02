@@ -155,6 +155,8 @@ export interface RerenderSource {
   contentHash: string
   /** The site's config for that editor — see `editorConfigFor`. */
   config: Record<string, any>
+  /** The site's page extensions, which tell the renderer a link to a page from one to a file. */
+  pageExtensions: string[]
 }
 
 /** Why a render posted back by Rerender All Pages was or was not stored. */
@@ -1169,7 +1171,11 @@ class Rendering {
           const html = await renderer.render(
             page.content ?? '',
             this.editorConfigFor(entry.siteId, page.editor),
-            { pagePath: page.path, editor: page.editor }
+            {
+              pagePath: page.path,
+              pageExtensions: WIKI.sites[entry.siteId]?.config?.pageExtensions ?? [],
+              editor: page.editor
+            }
           )
           await WIKI.models.pages.storeRender(entry.siteId, page.id, html, {
             scripts: entry.allowScripts,
@@ -1261,7 +1267,8 @@ class Rendering {
         editor: row.editor,
         content: row.content ?? '',
         contentHash: hashContent(row.content),
-        config: this.editorConfigFor(row.siteId, row.editor)
+        config: this.editorConfigFor(row.siteId, row.editor),
+        pageExtensions: WIKI.sites[row.siteId]?.config?.pageExtensions ?? []
       }))
   }
 

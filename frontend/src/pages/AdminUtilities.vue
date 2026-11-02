@@ -836,6 +836,7 @@ async function generateSampleContent() {
       */
       const site = await API_CLIENT.get(`sites/${siteId}`).json()
       const md = new MarkdownRenderer(site?.editors?.markdown?.config ?? {})
+      const pageExtensions = site?.pageExtensions ?? []
 
       /*
         Store the icons before the pages that use them, so the wiki can serve them without the Iconify
@@ -882,7 +883,7 @@ async function generateSampleContent() {
         ...markdownPages.map((page) => ({
           ...page,
           editor: 'markdown',
-          render: md.render(page.content, { pagePath: page.path })
+          render: md.render(page.content, { pagePath: page.path, pageExtensions })
         })),
         {
           ...SAMPLE_BLOG,
@@ -892,7 +893,7 @@ async function generateSampleContent() {
         ...SAMPLE_BLOG_POSTS.map((post) => ({
           ...post,
           editor: 'markdown',
-          render: md.render(post.content, { pagePath: post.path }),
+          render: md.render(post.content, { pagePath: post.path, pageExtensions }),
           publishStartDate: post.publishedAt
         })),
         /*
@@ -911,7 +912,7 @@ async function generateSampleContent() {
           // -> As a submitted idea is created (`api/feedback.ts`)
           showSidebar: false,
           editor: 'markdown',
-          render: md.render(idea.content, { pagePath: idea.path })
+          render: md.render(idea.content, { pagePath: idea.path, pageExtensions })
         }))
       ]
 

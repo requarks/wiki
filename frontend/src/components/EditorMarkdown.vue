@@ -1634,7 +1634,10 @@ function processContent(newContent) {
     // -> The page's own path, because a relative image in the source is relative to the folder it
     //    sits in -- and it is being edited, so it is whatever the path field says right now. A note
     //    sits in no folder, so its relative links are relative to the root
-    html = md.render(newContent, { pagePath: props.noteKey ? '' : pageStore.path })
+    html = md.render(newContent, {
+      pagePath: props.noteKey ? '' : pageStore.path,
+      pageExtensions: siteStore.pageExtensions
+    })
   } catch (err) {
     console.error(err)
     notify({

@@ -5,8 +5,8 @@
  * page differently is not a cosmetic problem -- it is two pages. These are the four places the
  * answer belongs to the WIKI rather than to a markup language:
  *
- * - where a picture actually loads from (`fileSrc`), which is a fact about how this server serves
- *   uploads and not about how a link was spelled;
+ * - where a picture actually loads from (`fileSrc`), and where a link to a file goes (`fileHref`),
+ *   which are facts about how this server serves uploads and not about how a link was spelled;
  * - whether a link leaves the wiki (`isExternalHref`), which is a comparison against the page's own
  *   host and cannot be made in CSS;
  * - what a code block is drawn as (`codeBlock`), which carries the gutter, the highlighted rows and
@@ -26,6 +26,7 @@ import { escape } from 'es-toolkit/string'
 //    renderer bundle, which is built on its own
 import { isServerPath } from '../helpers/serverPaths'
 import { FILES_PREFIX } from '../helpers/assets'
+import { isPagePath } from '../helpers/pagePaths'
 
 /**
  * Whether a link leaves this wiki.
@@ -107,6 +108,60 @@ export function fileSrc(src, pagePath = '') {
 }
 
 /**
+ * Where a link in a page should actually go, when what it names is a file rather than a page.
+ *
+ * The editors write a file picked for a link the way they write a picture -- a path from the site
+ * root, `[report.pdf](/docs/report.pdf)` -- and a 2.x import brings every attachment link in that
+ * form. Followed as it stands, that is a page path, and the router takes it to a page that is not
+ * there. So it gets the resolution `fileSrc` gives an image, at render time, and the source keeps
+ * the path that was written.
+ *
+ * What tells the two apart is the name. No page or folder may hold a dot, so a last segment with an
+ * extension names a file -- unless the extension is one of the site's `pageExtensions`, which address
+ * the page without it (`/guides/setup.md` is the page `guides/setup`).
+ *
+ * Left alone, as by `fileSrc`: anything with a scheme of its own, a protocol-relative URL, a bare
+ * fragment or query, and every path that is not a page path -- `/_files/` itself, `/robots.txt`, a
+ * short link.
+ *
+ * @param {string} href The destination as written.
+ * @param {string} pagePath Path of the page being rendered, without a leading slash -- what a relative
+ *                          link resolves against.
+ * @param {string[]} pageExtensions The site's page extensions, lowercase and without the dot.
+ * @returns {string} The destination to render with.
+ */
+export function fileHref(href, pagePath = '', pageExtensions = []) {
+  const value = (href ?? '').trim()
+  if (
+    !value ||
+    value.startsWith('#') ||
+    value.startsWith('?') ||
+    value.startsWith('//') ||
+    /^[a-z][a-z\d+.-]*:/i.test(value)
+  ) {
+    return href
+  }
+  const folder = pagePath.split('/').slice(0, -1).join('/')
+  let url
+  try {
+    url = new URL(value, `http://page.invalid/${folder ? `${folder}/` : ''}`)
+  } catch {
+    return href
+  }
+  const name = url.pathname.slice(url.pathname.lastIndexOf('/') + 1)
+  const dot = name.lastIndexOf('.')
+  if (
+    dot < 1 ||
+    dot === name.length - 1 ||
+    !isPagePath(url.pathname) ||
+    pageExtensions.includes(name.slice(dot + 1).toLowerCase())
+  ) {
+    return href
+  }
+  return `${FILES_PREFIX}${url.pathname.replace(/^\/+/, '')}${url.search}${url.hash}`
+}
+
+/**
  * An `<img>` written as HTML rather than as markdown, matched on its `src` and nothing else.
  *
  * The whitespace before `src` is what keeps `data-src` -- and any other attribute ending in those
@@ -125,6 +180,21 @@ export function rewriteHtmlImages(html, pagePath) {
   return html.replace(HTML_IMAGE_SRC, (match, before, quoted, singleQuoted, bare) => {
     const value = quoted ?? singleQuoted ?? bare
     const resolved = fileSrc(value, pagePath)
+    return resolved === value ? match : `${before}"${resolved}"`
+  })
+}
+
+/** An `<a>` written as HTML, matched on its `href` the way `HTML_IMAGE_SRC` matches an image. */
+const HTML_LINK_HREF = /(<a\b[^>]*?\shref\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi
+
+/**
+ * The same resolution for the links an author wrote as HTML -- see `fileHref`, and
+ * `rewriteHtmlImages` for why this is a pass over text.
+ */
+export function rewriteHtmlLinks(html, pagePath, pageExtensions) {
+  return html.replace(HTML_LINK_HREF, (match, before, quoted, singleQuoted, bare) => {
+    const value = quoted ?? singleQuoted ?? bare
+    const resolved = fileHref(value, pagePath, pageExtensions)
     return resolved === value ? match : `${before}"${resolved}"`
   })
 }

@@ -752,7 +752,11 @@ page this import wrote: markdown links and images, reference definitions, HTML `
 asciidoc `link:` and `image:` macros, and a redirection's target. Any link that points at nothing as
 written, but whose converted path names a page or file the site now has, is rewritten to that path.
 A sidebar item is resolved the same way as it is imported. Only the path's own segments change: a
-locale prefix, an anchor, a query, relative form and percent-encoding are kept. Links inside code,
+locale prefix, an anchor, a query, relative form and percent-encoding are kept. The exception is a
+locale prefix on a link to a file, which is dropped even when the file kept its name: 2.x served
+`/en/images/a.png` as `images/a.png`, and a file here is served under no locale. A destination is read
+as markdown reads it, so balanced parentheses (`/images/alpha_(1).png`) and backslash escapes
+(`juliet_\(7\).png`, as a converted ckeditor image has them) are part of it. Links inside code,
 links to pages that were never imported, and pages already in the wiki that the import left alone are
 not touched. A rewritten page is saved again through `adoptStoredPage`, so it gets a second history
 version saying so, keeps its 2.x dates, and is reported as a count in the warnings. Page history rows

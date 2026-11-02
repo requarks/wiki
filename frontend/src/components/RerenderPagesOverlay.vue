@@ -326,6 +326,7 @@ async function renderPage(page, source) {
   try {
     html = await renderSource(source.content, source.config, {
       pagePath: source.path,
+      pageExtensions: source.pageExtensions,
       editor: source.editor
     })
     rendering.finish(

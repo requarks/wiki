@@ -512,7 +512,8 @@ async function renderOf(version) {
   return renderVersionSource(version, {
     markdownConfig: editorStore.editors.markdown,
     asciidocConfig: editorStore.editors.asciidoc,
-    pagePath: pageStore.path
+    pagePath: pageStore.path,
+    pageExtensions: siteStore.pageExtensions
   })
 }
 

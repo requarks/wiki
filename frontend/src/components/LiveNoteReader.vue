@@ -265,7 +265,7 @@ function render() {
 
   let html
   try {
-    html = md.render(content, { pagePath: '' })
+    html = md.render(content, { pagePath: '', pageExtensions: siteStore.pageExtensions })
   } catch (err) {
     // -> The last render that worked stays up. Said nowhere else: the reader did not write it, and a
     //    notice per keystroke of somebody else's would be noise

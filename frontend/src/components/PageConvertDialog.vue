@@ -189,7 +189,8 @@ async function selectTarget(target) {
       parser: createParser(renderer, config),
       serialize,
       renderer,
-      pagePath: pageStore.path
+      pagePath: pageStore.path,
+      pageExtensions: siteStore.pageExtensions
     })
     Object.assign(state, {
       changed: result.changed,

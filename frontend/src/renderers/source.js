@@ -19,7 +19,8 @@ import { MarkdownRenderer } from './markdown'
  * @param {object} config The site's config for that editor, so the result matches what an author
  *                        would have produced in it
  * @param {object} context What the source cannot say about itself: `pagePath`, which a relative image
- *                         in it resolves against, and `editor`, which picks the pipeline
+ *                         in it resolves against, `pageExtensions`, the site's, which tell a link to
+ *                         a page from one to a file, and `editor`, which picks the pipeline
  * @returns {Promise<string>} Rendered HTML, before the server's own post-processing
  */
 export async function renderSource(content, config = {}, context = {}) {

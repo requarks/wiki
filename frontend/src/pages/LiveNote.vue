@@ -968,7 +968,7 @@ function publishToPage() {
         assetIds = copied.assetIds
         const render = await new MarkdownRenderer(editorStore.editors.markdown ?? {}).render(
           copied.content,
-          { pagePath: path }
+          { pagePath: path, pageExtensions: siteStore.pageExtensions }
         )
         const resp = await API_CLIENT.post(`sites/${siteStore.id}/pages`, {
           json: {
