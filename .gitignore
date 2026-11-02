@@ -32,6 +32,7 @@ npm-debug.log*
 /temp
 /tmp
 *.sqlite
+*.dump
 
 # IDE exclude
 .idea

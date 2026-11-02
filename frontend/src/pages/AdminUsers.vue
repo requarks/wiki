@@ -307,7 +307,12 @@ watch(() => route.params.id, checkOverlay)
 watch(
   () => state.search,
   debounce(() => {
-    load({ page: 1 })
+    // Resetting the page triggers the currentPage watcher, which does the load
+    if (state.currentPage !== 1) {
+      state.currentPage = 1
+    } else {
+      load({ page: 1 })
+    }
   }, 400)
 )
 watch(

@@ -371,7 +371,7 @@ watch(
 watch(
   () => adminStore.currentSiteId,
   () => {
-    load({ page: 1 })
+    loadFirstPage()
     loadConfig()
   }
 )
@@ -379,7 +379,7 @@ watch(
 watch(
   () => state.search,
   debounce(() => {
-    load({ page: 1 })
+    loadFirstPage()
   }, 400)
 )
 watch(
@@ -390,6 +390,15 @@ watch(
 )
 
 // METHODS
+
+function loadFirstPage() {
+  // Resetting the page triggers the currentPage watcher, which does the load
+  if (state.currentPage !== 1) {
+    state.currentPage = 1
+  } else {
+    load({ page: 1 })
+  }
+}
 
 async function load({ page } = {}) {
   if (!adminStore.currentSiteId) {
