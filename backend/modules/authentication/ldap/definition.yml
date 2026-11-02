@@ -19,7 +19,7 @@ props:
   bindDn:
     type: String
     title: Admin Bind DN
-    hint: The distinguished name of the account this wiki searches the directory as. It needs to read the user entries and nothing more.
+    hint: The distinguished name of the account this wiki searches the directory as. It needs to read the user entries and nothing more. Leave empty to search anonymously, for a directory that allows anonymous binds.
     icon: administrator-male
     default: 'cn=readonly,dc=example,dc=com'
     order: 2

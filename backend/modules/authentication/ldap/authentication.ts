@@ -36,8 +36,8 @@ const OPERATION_TIMEOUT_MS = 10_000
  *
  * Two connections per login, not one. A bind is a property of the connection, so binding as the
  * person being authenticated would leave the search connection holding their rights: the group
- * lookup that follows is done as the wiki's own read-only account, and the password check gets a
- * connection of its own that is thrown away with it.
+ * lookup that follows is done as the wiki's own read-only account (or anonymously, when none is
+ * configured), and the password check gets a connection of its own that is thrown away with it.
  */
 export default class LdapAuthentication {
   strategyId: string
@@ -68,10 +68,11 @@ export default class LdapAuthentication {
    */
   async profile({ username, password }: FormCredential): Promise<ProviderProfile> {
     const { url, bindDn, searchBase, searchFilter } = this.conf
-    if (!url || !bindDn || !searchBase || !searchFilter) {
+    // -> No Admin Bind DN is not missing: it is an anonymous search, for a directory that allows one
+    if (!url || !searchBase || !searchFilter) {
       strategyDebug(
         this,
-        `is not configured: ${missingSettings({ 'LDAP URL': url, 'Admin Bind DN': bindDn, 'Search Base': searchBase, 'Search Filter': searchFilter })}, so no login can be attempted`
+        `is not configured: ${missingSettings({ 'LDAP URL': url, 'Search Base': searchBase, 'Search Filter': searchFilter })}, so no login can be attempted`
       )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
@@ -108,19 +109,29 @@ export default class LdapAuthentication {
       throw this.asLoginError(err)
     }
     try {
-      try {
-        await search.bind(bindDn, this.conf.bindCredentials ?? '')
-      } catch (err: any) {
-        /*
-          The wiki's own account and not the person signing in — so this refuses every login until it
-          is fixed, and it is worth saying apart from a bad password. Whether the credentials are set
-          at all is said, since an empty one is what a directory that allows anonymous search hides.
-        */
-        strategyDebug(
-          this,
-          `the directory refused the wiki's own bind as \`${bindDn}\` (Admin Bind Credentials ${this.conf.bindCredentials ? 'set' : 'empty'}): ${describeAuthError(err)}`
-        )
-        throw err
+      /*
+        A connection that is never bound is anonymous, so with no Admin Bind DN there is nothing to
+        send. The directory decides what an anonymous search may see, and says so by finding nobody
+        or by refusing the search, both of which are reported below.
+      */
+      if (!bindDn) {
+        strategyDebug(this, 'searching anonymously, as no Admin Bind DN is set')
+      } else {
+        try {
+          await search.bind(bindDn, this.conf.bindCredentials ?? '')
+        } catch (err: any) {
+          /*
+            The wiki's own account and not the person signing in — so this refuses every login until
+            it is fixed, and it is worth saying apart from a bad password. Whether the credentials are
+            set at all is said, since an empty one is what a directory that allows anonymous search
+            hides.
+          */
+          strategyDebug(
+            this,
+            `the directory refused the wiki's own bind as \`${bindDn}\` (Admin Bind Credentials ${this.conf.bindCredentials ? 'set' : 'empty'}): ${describeAuthError(err)}`
+          )
+          throw err
+        }
       }
 
       const filter = searchFilter.replaceAll('{{username}}', Filter.escape(username))
