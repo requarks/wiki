@@ -3,6 +3,28 @@ const _ = require('lodash')
 
 /* global WIKI */
 
+/**
+ * Ensure the requester is allowed to manage the target user and, optionally,
+ * to assign it to the requested groups.
+ */
+const assertCanManageTarget = async (requester, targetId, groups) => {
+  if (!(await WIKI.auth.checkManageUserTargetAccess(requester, targetId))) {
+    throw new Error('You are not authorized to manage this user.')
+  }
+
+  if (_.isArray(groups) && !(await WIKI.auth.checkAssignUserToGroupAccess(requester, groups))) {
+    throw new Error('You are not authorized to modify / assign a user from / to an administrative group.')
+  }
+}
+
+/**
+ * Invalidate all active sessions of the target user
+ */
+const revokeTargetSessions = targetId => {
+  WIKI.auth.revokeUserTokens({ id: targetId, kind: 'u' })
+  WIKI.events.outbound.emit('addAuthRevoke', { id: targetId, kind: 'u' })
+}
+
 module.exports = {
   Query: {
     async users() { return {} }
@@ -77,15 +99,16 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async delete (obj, args) {
+    async delete (obj, args, context) {
       try {
         if (args.id <= 2) {
           throw new WIKI.Error.UserDeleteProtected()
         }
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.deleteUser(args.id, args.replaceId)
 
-        WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
-        WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
+        revokeTargetSessions(args.id)
 
         return {
           responseResult: graphHelper.generateSuccess('User deleted successfully')
@@ -100,11 +123,19 @@ module.exports = {
     },
     async update (obj, args, context) {
       try {
-        if (!(await WIKI.auth.checkAssignUserToGroupAccess(context.req.user, args.groups))) {
-          throw new Error('You are not authorized to modify / assign a user from / to an administrative group.')
+        // Prevent locking out the root administrator
+        if (args.id === 1 && _.isArray(args.groups) && !args.groups.includes(1)) {
+          throw new Error('Cannot unassign the root administrator from the Administrators group.')
         }
 
-        await WIKI.models.users.updateUser(args)
+        await assertCanManageTarget(context.req.user, args.id, args.groups)
+
+        const changes = await WIKI.models.users.updateUser(args)
+
+        // Invalidate active sessions on security-sensitive changes
+        if (changes.passwordChanged || changes.groupsChanged) {
+          revokeTargetSessions(args.id)
+        }
 
         return {
           responseResult: graphHelper.generateSuccess('User updated successfully')
@@ -113,8 +144,10 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async verify (obj, args) {
+    async verify (obj, args, context) {
       try {
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.query().patch({ isVerified: true }).findById(args.id)
 
         return {
@@ -124,8 +157,10 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async activate (obj, args) {
+    async activate (obj, args, context) {
       try {
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.query().patch({ isActive: true }).findById(args.id)
 
         return {
@@ -135,15 +170,16 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async deactivate (obj, args) {
+    async deactivate (obj, args, context) {
       try {
         if (args.id <= 2) {
           throw new Error('Cannot deactivate system accounts.')
         }
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.query().patch({ isActive: false }).findById(args.id)
 
-        WIKI.auth.revokeUserTokens({ id: args.id, kind: 'u' })
-        WIKI.events.outbound.emit('addAuthRevoke', { id: args.id, kind: 'u' })
+        revokeTargetSessions(args.id)
 
         return {
           responseResult: graphHelper.generateSuccess('User deactivated successfully')
@@ -152,8 +188,10 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async enableTFA (obj, args) {
+    async enableTFA (obj, args, context) {
       try {
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.query().patch({ tfaIsActive: true, tfaSecret: null }).findById(args.id)
 
         return {
@@ -163,9 +201,13 @@ module.exports = {
         return graphHelper.generateError(err)
       }
     },
-    async disableTFA (obj, args) {
+    async disableTFA (obj, args, context) {
       try {
+        await assertCanManageTarget(context.req.user, args.id)
+
         await WIKI.models.users.query().patch({ tfaIsActive: false, tfaSecret: null }).findById(args.id)
+
+        revokeTargetSessions(args.id)
 
         return {
           responseResult: graphHelper.generateSuccess('User 2FA disabled successfully')

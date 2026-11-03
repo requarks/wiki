@@ -677,11 +677,16 @@ module.exports = class User extends Model {
    * Update an existing user
    *
    * @param {Object} param0 User ID and fields to update
+   * @returns {Object} Security-sensitive changes applied to the user
    */
   static async updateUser ({ id, email, name, newPassword, groups, location, jobTitle, timezone, dateFormat, appearance }) {
     const usr = await WIKI.models.users.query().findById(id)
     if (usr) {
       let usrData = {}
+      const changes = {
+        passwordChanged: false,
+        groupsChanged: false
+      }
       if (!_.isEmpty(email) && email !== usr.email) {
         const dupUsr = await WIKI.models.users.query().select('id').where({
           email,
@@ -700,6 +705,7 @@ module.exports = class User extends Model {
           throw new WIKI.Error.InputInvalid('Password must be at least 6 characters!')
         }
         usrData.password = newPassword
+        changes.passwordChanged = true
       }
       if (_.isArray(groups)) {
         const usrGroupsRaw = await usr.$relatedQuery('groups')
@@ -714,6 +720,7 @@ module.exports = class User extends Model {
         for (const grp of remUsrGroups) {
           await usr.$relatedQuery('groups').unrelate().where('groupId', grp)
         }
+        changes.groupsChanged = addUsrGroups.length > 0 || remUsrGroups.length > 0
       }
       if (!_.isEmpty(location) && location !== usr.location) {
         usrData.location = _.trim(location)
@@ -731,6 +738,8 @@ module.exports = class User extends Model {
         usrData.appearance = appearance
       }
       await WIKI.models.users.query().patch(usrData).findById(id)
+
+      return changes
     } else {
       throw new WIKI.Error.UserNotFound()
     }

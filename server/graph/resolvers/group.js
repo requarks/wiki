@@ -130,13 +130,19 @@ module.exports = {
     /**
      * UNASSIGN USER FROM GROUP
      */
-    async unassignUser (obj, args) {
+    async unassignUser (obj, args, { req }) {
       if (args.userId === 2) {
         throw new gql.GraphQLError('Cannot unassign Guest user')
       }
       if (args.userId === 1 && args.groupId === 1) {
         throw new gql.GraphQLError('Cannot unassign Administrator user from Administrators group.')
       }
+
+      // Check that the requester is allowed to manage the target user
+      if (!(await WIKI.auth.checkManageUserTargetAccess(req.user, args.userId))) {
+        throw new gql.GraphQLError('You are not authorized to unassign this user from a group.')
+      }
+
       const grp = await WIKI.models.groups.query().findById(args.groupId)
       if (!grp) {
         throw new gql.GraphQLError('Invalid Group ID')
