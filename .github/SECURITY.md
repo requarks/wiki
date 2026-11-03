@@ -9,8 +9,10 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 | Version | Supported          |
 | ------- | ------------------ |
 | 3.x.x   | :white_check_mark: |
-| 2.x.x   | :white_check_mark: |
+| 2.x.x   | :x:*               |
 | 1.x.x   | :x:                |
+
+*: Only vulnerabilities that are deemed critical will be patched in 2.x.
 
 ## Reporting a Vulnerability
 
