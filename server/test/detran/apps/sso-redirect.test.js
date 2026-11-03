@@ -103,7 +103,7 @@ describe('Detran-MG SSO Hub & ?returnApp= Redirection Flow (Unit & Route Handler
       handleLoginGet(req, res)
 
       expect(res.redirectUrl).toBe(
-        'https://servicedesk.detran.mg.gov.br/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
+        'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
       )
     })
 
@@ -152,7 +152,7 @@ describe('Detran-MG SSO Hub & ?returnApp= Redirection Flow (Unit & Route Handler
 
       expect(res.clearedCookies).toContain('returnApp')
       expect(res.redirectUrl).toBe(
-        'https://servicedesk.detran.mg.gov.br/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
+        'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
       )
     })
 
@@ -198,7 +198,7 @@ describe('Detran-MG SSO Hub & ?returnApp= Redirection Flow (Unit & Route Handler
       handleAppLaunch(req, res)
 
       expect(res.redirectUrl).toBe(
-        'https://servicedesk.detran.mg.gov.br/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
+        'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
       )
     })
 
@@ -237,7 +237,7 @@ describe('Detran-MG SSO Hub & ?returnApp= Redirection Flow (Unit & Route Handler
       const servicedesk = res.jsonData.apps.find(a => a.id === 'servicedesk')
       expect(servicedesk).toBeDefined()
       expect(servicedesk.resolvedSsoUrl).toBe(
-        'https://servicedesk.detran.mg.gov.br/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
+        'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start?login_hint=danilo.santana%40detran.mg.gov.br'
       )
     })
   })

@@ -12,7 +12,7 @@ const DEFAULT_APPS = [
     nome: 'Service Desk',
     icone: 'mdi-headset',
     descricao: 'Central de Chamados, Suporte de TI e Atendimento aos Servidores',
-    ssoStartUrl: 'https://servicedesk.detran.mg.gov.br/api/auth/sso/start',
+    ssoStartUrl: 'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start',
     allowedGroups: [] // Vazio = liberado para todos os utilizadores autenticados
   },
   {
