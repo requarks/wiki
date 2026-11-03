@@ -37,9 +37,10 @@ A block that must *act* on the change rather than restyle for it passes `onChang
 `inline: true` in its `static definition`, and is written `:block-color[#ff6600]{…}` in markdown
 (`renderers/modules/markdown-it-inline-blocks.js`) and `block-color:[#ff6600, …]` in AsciiDoc (the
 `wikiblock` macro in `renderers/asciidoc.js`); both render `<block-color …>#ff6600</block-color>`.
-The value between the brackets is the element's TEXT, never a prop: that is what shows before the
-component loads, in the search index, and on a site that switched the block off (the sanitiser drops
-the tag and keeps the text). So the component reads its value from `textContent` before its first
+The value between the brackets is the element's TEXT, never a prop: that is what is left if the
+component never loads (`.page-contents` hides every undefined block for a few seconds first), in the
+search index, and on a site that switched the block off (the sanitiser drops the tag and keeps the
+text). So the component reads its value from `textContent` before its first
 render (`willUpdate` with `!this.hasUpdated`), renders it in a shadow root with no `<slot>`, and is
 `display: inline`. Its `template` is the starting value an editor puts between the brackets. The
 picker sends it as `insertInlineBlock`, inserted at the caret rather than on a line of its own; the

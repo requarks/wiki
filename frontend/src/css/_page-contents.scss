@@ -1773,16 +1773,23 @@
   }
 
   /*
-    Inline math, `` $`x^2`$ ``, until its block has loaded. Its TeX is the element's text, and an
-    element the browser does not know yet is just an inline span of it, so a sentence would flash its
-    source before the formula replaces it. Hidden rather than removed, so the line does not reflow
-    twice. Only here: a reader with JavaScript off gets the prerendered copy, which is not under
-    `.page-contents`, and so is still shown the source. Nor in an editor's preview when the block is
-    switched off for the site: that one stays undefined on purpose, and shows the source saving leaves.
+    A block, until its component has loaded. An element the browser does not know yet is just its
+    contents -- the fenced source a diagram or a chart is configured with, the TeX of a formula, an
+    inline block's value -- so the page would flash that source, a dark code panel on a light page,
+    before the component replaces it. Hidden rather than removed, so the page does not reflow twice.
+
+    Only here: a reader with JavaScript off gets the prerendered copy, which is not under
+    `.page-contents`, and so is still shown the source. Nor when the block is switched off for the
+    site, which leaves it undefined on purpose to show the source saving leaves: the source editors
+    and the live note mark the element itself, the Visual editor the node wrapped round it.
+
+    And not for good. A block whose script never arrives -- a failed fetch, a tag with no component
+    behind it -- would otherwise take its contents off the page with it, so after a few seconds they
+    come back regardless of what became of the load: the source, as it always used to be shown.
   */
-  block-katex[inline]:not(:defined, [data-block-disabled]),
-  block-mathjax[inline]:not(:defined, [data-block-disabled]) {
+  :not(:defined):not([data-block-disabled], [data-block-disabled] *) {
     visibility: hidden;
+    animation: content-block-reveal 0s 4s forwards;
   }
 
   /* -- highlight.js tokens ------------------------------------------------------ */
@@ -2563,6 +2570,13 @@
   custom properties still resolve from there, so the article's own `--content-mark` serves both themes.
   A highlight can only take colours and a text decoration -- no padding, no shadow, no radius.
 */
+/* -> A block whose component never loaded, shown as its source after all -- see `:not(:defined)` above */
+@keyframes content-block-reveal {
+  to {
+    visibility: visible;
+  }
+}
+
 /* The flash colour, held, then faded -- see `.is-anchor-flashed` above */
 @keyframes content-anchor-flash {
   0%,

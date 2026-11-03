@@ -315,9 +315,12 @@ function render() {
     const pendingTags = new Set()
     for (const block of container.querySelectorAll(':not(:defined)')) {
       const tag = block.tagName.toLowerCase()
-      if (!disabledBlockTags.has(tag)) {
-        pendingTags.add(tag)
+      // -> Marked, so `.page-contents` shows its source now rather than hiding it as a block on its way
+      if (disabledBlockTags.has(tag)) {
+        block.dataset.blockDisabled = ''
+        continue
       }
+      pendingTags.add(tag)
     }
     if (pendingTags.size > 0) {
       commonStore.loadBlocks([...pendingTags])
