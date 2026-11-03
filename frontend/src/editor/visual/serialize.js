@@ -1,3 +1,4 @@
+import emoticons from 'markdown-it-emoji/lib/data/shortcuts.mjs'
 import { MarkdownSerializer } from 'prosemirror-markdown'
 
 import { inlineMarkdownValue } from '@/helpers/blocks'
@@ -484,11 +485,63 @@ function writeListAttrs(state, node) {
 
 export const serializer = new MarkdownSerializer(nodes, marks)
 
+/** Where the emoji plugin lets an emoticon start or end: not against a letter or a digit. */
+const EMOTICON_EDGE = String.raw`(?:^|$|[\p{Z}\p{P}\p{Cc}])`
+
+/**
+ * An emoticon, as the one character in it to escape: the last punctuation, which leaves no shorter
+ * emoticon on either side of the backslash. An escaped character before it counts as an edge, since
+ * markdown-it ends the text token there — and its own boundary rule is what keeps the `:/` in
+ * `https://` a URL.
+ */
+function emoticonPattern(emoticon) {
+  const at = emoticon.search(/[^\p{L}\p{N}][\p{L}\p{N}]*$/u)
+  const quote = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return (
+    String.raw`(?<=(?:${EMOTICON_EDGE}|\\[!-/:-@[-${'`'}{-~])${quote(emoticon.slice(0, at))})` +
+    `${quote(emoticon[at])}(?=${quote(emoticon.slice(at + 1))}${EMOTICON_EDGE})`
+  )
+}
+
+/**
+ * Characters in typed text that the site's renderer would read as markup, beyond what `esc()` covers,
+ * one character per match — `esc()` puts a backslash before each.
+ *
+ * Kept in step with `WIKI_MARKUP` in `backend/helpers/htmlToMarkdown.ts`, which escapes the same text
+ * the same way when a 2.x page is converted: the page it writes is edited here, and saving it must not
+ * undo what the conversion escaped. Each rule is limited to the cases that would be read as markup,
+ * so `a < b` or `10:30` is left alone rather than littering the source with backslashes, and none
+ * matches a character `esc()` has escaped already, which escaping again would leave bare.
+ */
+const ESCAPE_EXTRA = new RegExp(
+  String.raw`(?<!(?<!\\)\\(?:\\\\)*)(?:` +
+    [
+      // -> Raw HTML (`zpool replace <pool>`, `</div>`, a comment) and autolinks, which would be
+      //    rendered as such and vanish from the page
+      '<(?=[a-z0-9/!?])',
+      // -> An entity (`&copy;`), which would be shown as the character it names
+      '&(?=#?[a-z0-9]+;)',
+      // -> Every colon that opens an `:emoji:` or `:set:icon:` shortcode, since `:mdi\:home:` still
+      //    holds the `:home:` emoji — and a MAC address is a row of them
+      String.raw`:(?=[\w+-]+:)`,
+      // -> `~sub~` and `~~strike~~`, `^sup^`, `==mark==`
+      '[~^]',
+      '=(?==)',
+      // -> A `{.class}` / `{#id}` attribute block, for `markdown-it-attrs`
+      String.raw`\{(?=[^{}]*\})`,
+      // -> An MDC block (`::name`, `:::`) or a definition list's `: `, at the start of a line
+      String.raw`(?<=^\s*):(?=:|\s)`,
+      ...Object.values(emoticons).flat().map(emoticonPattern)
+    ].join('|') +
+    ')',
+  'giu'
+)
+
 /**
  * @param {import('prosemirror-model').Node} doc
  * @returns {string} The page source, with the single trailing newline a file ends on.
  */
 export function serialize(doc) {
-  const text = serializer.serialize(doc, { tightLists: true })
+  const text = serializer.serialize(doc, { tightLists: true, escapeExtraCharacters: ESCAPE_EXTRA })
   return text.endsWith('\n') ? text : `${text}\n`
 }

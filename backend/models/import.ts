@@ -28,7 +28,7 @@ import {
   normalizePagePath,
   splitLocalePath
 } from '../helpers/common.ts'
-import { htmlToMarkdown } from '../helpers/htmlToMarkdown.ts'
+import { htmlToMarkdown, type ConversionLosses } from '../helpers/htmlToMarkdown.ts'
 import { rewriteSourceLinks, sourceLinkHrefs } from '../helpers/linkRewrite.ts'
 import { sanitizeFileName } from './assets.ts'
 import { SOURCE_SYNTAX } from './pages.ts'
@@ -191,6 +191,9 @@ const EDITOR_MAP: Record<string, string> = {
  * is how it was edited in 2.x.
  */
 const V2_VISUAL_EDITOR = 'ckeditor'
+
+/** How many pages the line about formatting dropped from code names before it counts the rest. */
+const CODE_FORMATTING_LISTED = 20
 
 /** Why a page changed editor, for the one line per kind the log gets about it. */
 const EDITOR_CHANGE_NOTES: Record<string, Record<string, string>> = {
@@ -1773,6 +1776,8 @@ class Import {
     let imported = 0
     let skipped = 0
     let icons = 0
+    /** Page path → the formatting its conversion dropped from inside code. */
+    const codeFormattingLost = new Map<string, Set<string>>()
     /** Source editor → how many pages of it changed editor on the way in. */
     const converted = new Map<string, number>()
     const convertHtml = session.htmlConversion !== 'html'
@@ -1821,7 +1826,8 @@ class Import {
         corner image with a CSS class, and a class is exactly what does not survive the trip to
         markdown. Extracting first means the icon is found on the HTML that still carries it.
       */
-      const source = editor === 'visual' ? htmlToMarkdown(body) : body
+      const losses: ConversionLosses = { codeFormatting: new Set() }
+      const source = editor === 'visual' ? htmlToMarkdown(body, losses) : body
 
       try {
         const authorId = await this.#authorFor(session, record?.authorId)
@@ -1877,6 +1883,9 @@ class Import {
         await this.#remember(session.id, 'writtenPage', [
           { sourceId: record?.id, targetId: page.id }
         ])
+        if (losses.codeFormatting.size > 0) {
+          codeFormattingLost.set(pagePath, losses.codeFormatting)
+        }
         imported++
       } catch (err: any) {
         warnings.push(`"${pagePath}" could not be imported: ${err.message}`)
@@ -1888,6 +1897,21 @@ class Import {
         EDITOR_CHANGE_NOTES[sourceEditor]?.[targetEditorFor(sourceEditor, convertHtml)] ??
         '3.x does not have that editor, so they were imported as markdown.'
       warnings.push(`${count} pages were written with the 2.x "${sourceEditor}" editor. ${note}`)
+    }
+    /*
+      One line per batch, naming the pages: what was lost is formatting rather than text, so it is
+      worth a look at each of them, but a line apiece would take the log's two hundred to themselves
+      on a wiki that styled its code a lot. Only the pages: a history version converted the same way
+      lost the same kind of thing, and the page is where somebody will go to check.
+    */
+    if (codeFormattingLost.size > 0) {
+      const listed = [...codeFormattingLost]
+        .slice(0, CODE_FORMATTING_LISTED)
+        .map(([path, kinds]) => `"${path}" (${[...kinds].join(', ')})`)
+      const more = codeFormattingLost.size - listed.length
+      warnings.push(
+        `${codeFormattingLost.size} pages had formatting inside code, which markdown cannot hold there; the text was kept and the formatting dropped: ${listed.join(', ')}${more > 0 ? ` and ${more} more` : ''}.`
+      )
     }
     if (icons > 0) {
       warnings.push(
