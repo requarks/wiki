@@ -279,7 +279,8 @@ class Rendering {
       .filter((definition) => definition.isChild || siteBlocks.enabled.has(definition.block))
       .map((definition) => ({
         block: definition.block,
-        attributes: (definition.props ?? []).map((prop) => prop.name)
+        attributes: (definition.props ?? []).map((prop) => prop.name),
+        urlAttributes: (definition.props ?? []).filter((prop) => prop.url).map((prop) => prop.name)
       }))
   }
 

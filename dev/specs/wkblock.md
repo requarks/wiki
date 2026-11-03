@@ -168,6 +168,7 @@ Each prop:
 | `label`, `hint` | Optional strings, truncated to 1024 rather than refused. |
 | `required` | Kept only when exactly `true`. |
 | `internal` | Kept only when exactly `true`. An attribute the wiki writes rather than an author: allowed through the sanitiser like any other prop, never offered in a form. |
+| `url` | Kept only when exactly `true`. The value is an address: the sanitiser refuses it unless its scheme is one a link may have (`http`, `https`, `mailto`, `tel`, `ftp`) or it has none, the same check `href` and `src` get. A block still checks the address itself before loading it — this is the second line, not the first. |
 | `default` | Kept only when a string, number or boolean. |
 | `options` | Optional array, first 128 kept. A string, or coerced to `{ label, value }` with both stringified. |
 

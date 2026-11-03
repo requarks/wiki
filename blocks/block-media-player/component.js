@@ -18,6 +18,7 @@ export class BlockMediaPlayerElement extends LitElement {
       {
         name: 'src',
         type: 'string',
+        url: true,
         label: 'Source URL',
         hint: 'Path or URL of the audio or video file to play.',
         required: true

@@ -1,7 +1,6 @@
 import { attachmentDisposition, isNoteImagesPath } from '../helpers/common.ts'
-import { svgMimeType } from '../helpers/images.ts'
 import { requestUserId } from '../helpers/requester.ts'
-import { INLINE_EXTS } from '../models/assets.ts'
+import { deliveryOf } from '../models/assets.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -24,14 +23,6 @@ const FILE_CACHE = 'private, max-age=600, must-revalidate'
 function directAccessCacheSeconds(expiresInSeconds: number): number {
   return Math.max(1, Math.min(600, Math.floor(expiresInSeconds / 2)))
 }
-
-/**
- * What an SVG from a live note is served with, scanned or not: nothing it might load or run. Opened at
- * its own URL an SVG is a document, run in this origin, and anybody holding a note's key can add one.
- * The policy `/_site` serves a site's SVG logo with, plus the inline bitmaps the scan lets an `image`
- * element keep.
- */
-const NOTE_SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
 
 /**
  * _files Routes
@@ -86,9 +77,7 @@ async function routes(app: FastifyInstance) {
       return reply.notFound('File not found')
     }
 
-    const download = Boolean(
-      WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)
-    )
+    const { download, csp } = deliveryOf(asset)
 
     /*
       Hand the reader straight to the store where the site has said to, which is the whole point of
@@ -121,8 +110,9 @@ async function routes(app: FastifyInstance) {
     // -> The bytes came from a user, so the browser must take the type at its word rather than
     //    looking for something more interesting in them
     reply.header('X-Content-Type-Options', 'nosniff')
-    if (isNoteImage && asset.mimeType === svgMimeType) {
-      reply.header('Content-Security-Policy', NOTE_SVG_CSP)
+    // -> A live note's SVG included, which anybody holding the note's key can add
+    if (csp) {
+      reply.header('Content-Security-Policy', csp)
     }
     if (req.headers['if-none-match'] === etag) {
       return reply.code(304).send()

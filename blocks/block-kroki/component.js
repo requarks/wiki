@@ -148,6 +148,7 @@ digraph G {
       {
         name: 'server',
         type: 'string',
+        url: true,
         label: 'Server',
         hint: 'Kroki server to draw with. The public one when left empty.',
         default: 'https://kroki.io'

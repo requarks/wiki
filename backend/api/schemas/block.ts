@@ -69,6 +69,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           "Every attribute the block's component reads, the ones the wiki writes itself (a math block's `inline`) as well as the authorable ones in `props`. What a sanitizer lets through on the element, server and browser alike; not something to build a form from.",
         items: { type: 'string' }
       },
+      urlAttributes: {
+        type: 'array',
+        description:
+          'Those of `attributes` that hold an address. A sanitizer refuses one whose scheme a link may not have, as it does for `href` and `src`.',
+        items: { type: 'string' }
+      },
       props: {
         type: 'array',
         description:

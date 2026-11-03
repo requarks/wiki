@@ -82,6 +82,7 @@ Bob --> Alice : hi
       {
         name: 'server',
         type: 'string',
+        url: true,
         label: 'Server',
         hint: 'PlantUML server to draw with. The public one when left empty.',
         // -> Written out rather than taken from DEFAULT_SERVER above: the manifest is read out of this

@@ -193,6 +193,9 @@ function readProps(raw: any): BlockProp[] {
     if (prop.internal === true) {
       checked.internal = true
     }
+    if (prop.url === true) {
+      checked.url = true
+    }
     if (['string', 'number', 'boolean'].includes(typeof prop.default)) {
       checked.default = prop.default
     }

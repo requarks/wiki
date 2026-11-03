@@ -50,12 +50,38 @@ const SWEEP_TRIGGER_RATIO = 0.25
 const SWEEP_TARGET_RATIO = 0.8
 
 /**
- * Extensions a browser may render inline. Everything else is sent as a download.
+ * The policy every asset is served with, PDFs excepted (see `deliveryOf`): nothing it might load or
+ * run, and a sandbox, so that it is in an origin of its own and not this wiki's.
  *
- * Read by both routes that hand out an asset's bytes — the API's `/content` and the public
- * `/_files/` path — which have to agree on what a browser is allowed to open in place.
+ * What makes a file opened at its own URL harmless, whatever it is. An HTML file, or an SVG that was
+ * never scanned (`uploadScanSVG` off, or stored before it was on), is a document run in this origin
+ * with the reader's session when it is opened rather than downloaded -- and with `forceAssetDownload`
+ * off, or for an image under it, nothing else stands in the way. It changes nothing for a file shown
+ * by a page: a policy on an `<img>`'s response does not apply to the page drawing it. Inline bitmaps
+ * are allowed because the SVG scan keeps them in an `image` element.
  */
-export const INLINE_EXTS = new Set(['png', 'apng', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'])
+const ASSET_CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; sandbox"
+
+/**
+ * How an asset's bytes are handed to a browser: as a download, or to open in place -- and under what
+ * policy.
+ *
+ * Read by both routes that hand them out — the API's `/content` and the public `/_files/` path — which
+ * have to agree. A download is what the security settings' `forceAssetDownload` asks for every file but
+ * an image; with it off, a browser opens whatever it knows how to show.
+ *
+ * A PDF is served without the policy. Chromium refuses to show one in a sandboxed document at all, and
+ * the policy would buy nothing for it: a browser's PDF viewer runs no script in the page's origin.
+ */
+export function deliveryOf(asset: { kind: AssetKind; mimeType: string }): {
+  download: boolean
+  csp: string | null
+} {
+  return {
+    download: Boolean(WIKI.config.security?.forceAssetDownload) && asset.kind !== 'image',
+    csp: asset.mimeType === 'application/pdf' ? null : ASSET_CSP
+  }
+}
 
 /** What an asset is, for the sake of grouping and filtering. Mirrors the `assetKind` schema enum. */
 export type AssetKind = 'document' | 'image' | 'other'
@@ -1176,6 +1202,20 @@ class Assets {
     }
 
     const fileExt = extensionOf(safeName)
+    /*
+      An SVG is scanned on the way in, as an upload is (`scanSvg`): a file in a storage target's folder
+      or a backup was written by whoever could write there, which is not necessarily anybody this wiki
+      would let upload it. One that is not an SVG at all is passed over like every other file this
+      cannot take.
+    */
+    let stored = data
+    if (fileExt === 'svg') {
+      try {
+        stored = this.scanSvg(data)
+      } catch {
+        return null
+      }
+    }
     try {
       await this.guardAgainstPageCollision({
         siteId,
@@ -1201,9 +1241,9 @@ class Assets {
     const kind = kindOf(mimeType, fileExt)
     const preview =
       kind === 'image'
-        ? await makeImageThumbnail(data, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
+        ? await makeImageThumbnail(stored, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height)
         : null
-    const dimensions = kind === 'image' ? await readImageDimensions(data) : null
+    const dimensions = kind === 'image' ? await readImageDimensions(stored) : null
 
     if (occupant) {
       return this.replace({
@@ -1218,7 +1258,7 @@ class Assets {
         fileExt,
         kind,
         mimeType,
-        data,
+        data: stored,
         preview,
         dimensions,
         authorId
@@ -1231,7 +1271,7 @@ class Assets {
       title: safeName,
       locale,
       siteId,
-      meta: { fileSize: data.length, fileExt, mimeType, ...dimensionMeta(dimensions) }
+      meta: { fileSize: stored.length, fileExt, mimeType, ...dimensionMeta(dimensions) }
     })
     // -> Read off the row rather than from the caller: the folder may have just been created, and a
     //    name that was taken took the next free one
@@ -1245,13 +1285,15 @@ class Assets {
         fileExt,
         kind,
         mimeType,
-        fileSize: data.length,
+        fileSize: stored.length,
         meta: dimensionMeta(dimensions),
         preview,
         authorId,
         siteId
       })
-      if (dispatch) {
+      // -> A scan that changed anything has to reach the target as well: adopted where it lies, the
+      //    file there is the copy that is served, and it is still the one that was scanned
+      if (dispatch || !stored.equals(data)) {
         await WIKI.models.storage.putAsset(
           {
             id: entry.id,
@@ -1261,9 +1303,9 @@ class Assets {
             folderPath: importedFolderPath,
             fileName: entry.fileName,
             kind,
-            fileSize: data.length
+            fileSize: stored.length
           },
-          data
+          stored
         )
       }
     } catch (err) {
@@ -1279,7 +1321,7 @@ class Assets {
       folderPath: importedFolderPath,
       siteId,
       authorId,
-      metadata: { fileSize: data.length, mimeType, kind }
+      metadata: { fileSize: stored.length, mimeType, kind }
     })
 
     return {
@@ -1288,7 +1330,7 @@ class Assets {
       fileExt,
       kind,
       mimeType,
-      fileSize: data.length,
+      fileSize: stored.length,
       folderPath: importedFolderPath,
       locale,
       title: entry.title,
@@ -1649,6 +1691,22 @@ class Assets {
       await this.refuseInFeedbackBoard(siteId, destinationLocale, { folderPath: destination })
     }
 
+    /*
+      Becoming an SVG is arriving as one, so it is scanned as an upload is (`scanSvg`) -- otherwise a
+      file uploaded under any other name, where nothing scans it, is one rename away from being served
+      as an SVG that never was. Read and scanned before anything is written, so that a file which is
+      not an SVG at all is refused with the asset where it was; the scanned bytes replace the stored
+      ones once it has moved, below.
+    */
+    let rescanned: Buffer | null = null
+    if (fileExt === 'svg' && asset.fileExt !== 'svg' && WIKI.config.security?.uploadScanSVG) {
+      const content = await this.getContent(id)
+      if (!content) {
+        throw new CustomError('assetNoContent', 'This file has no content to rename.')
+      }
+      rescanned = this.scanSvg(content.data)
+    }
+
     let storedName = safeName
     if (isRelocated) {
       /*
@@ -1739,6 +1797,34 @@ class Assets {
     this.forgetPath(siteId, asset.folderPath, asset.fileName)
     this.forgetPath(siteId, destination, storedName)
     await this.dropCachedContent([id])
+
+    if (rescanned) {
+      // -> Who it is credited to is unchanged by a scan, and a request with no user has nobody else
+      const authorId =
+        actorId ??
+        (
+          await WIKI.db
+            .select({ authorId: assetsTable.authorId })
+            .from(assetsTable)
+            .where(eq(assetsTable.id, id))
+        )[0]?.authorId
+      await this.replace({
+        id,
+        siteId,
+        locale: destinationLocale,
+        folderPath: destination,
+        fileName: storedName,
+        title: storedName,
+        fileExt: storedExt,
+        kind: kindOf(resolvedMime, storedExt),
+        mimeType: resolvedMime,
+        data: rescanned,
+        // -> An SVG now, so it gets what an uploaded one gets: its thumbnail and its size
+        preview: await makeImageThumbnail(rescanned, THUMBNAIL_SIZE.width, THUMBNAIL_SIZE.height),
+        dimensions: await readImageDimensions(rescanned),
+        authorId
+      })
+    }
 
     WIKI.models.hooks.emit('asset:rename', {
       id,

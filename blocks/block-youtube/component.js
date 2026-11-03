@@ -103,6 +103,7 @@ export class BlockYoutubeElement extends LitElement {
       {
         name: 'url',
         type: 'string',
+        url: true,
         label: 'Video URL',
         hint: 'Address of the video, as YouTube gives it — a watch, youtu.be or shorts link.',
         required: true

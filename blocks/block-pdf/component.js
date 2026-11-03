@@ -9,6 +9,7 @@ import {
 } from 'pdfjs-dist/build/pdf.mjs'
 
 import { DarkMode } from '../shared/theme.js'
+import { webUrl } from '../shared/urls.js'
 
 /*
   Where the parsing happens.
@@ -115,6 +116,7 @@ export class BlockPdfElement extends LitElement {
       {
         name: 'src',
         type: 'string',
+        url: true,
         label: 'Document URL',
         hint: 'Path or URL of the PDF file to display.',
         required: true
@@ -592,10 +594,8 @@ export class BlockPdfElement extends LitElement {
       return
     }
 
-    let url
-    try {
-      url = new URL(src, window.location.href).href
-    } catch {
+    const url = webUrl(src)?.href
+    if (!url) {
       this._error = `${src} is not an address this viewer can open.`
       return
     }
@@ -1041,6 +1041,9 @@ export class BlockPdfElement extends LitElement {
   }
 
   _renderToolbar() {
+    // -> The checked address, never the prop as written: a `javascript:` URL in an `href` runs as the
+    //    reader the moment they click it, `target` and `rel` notwithstanding
+    const openUrl = webUrl(this.src)?.href
     return html`
       <div class="toolbar">
         <div class="pager">
@@ -1113,15 +1116,21 @@ export class BlockPdfElement extends LitElement {
 
         <span class="spacer"></span>
 
-        <a
-          class="tool"
-          href=${this.src}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Open in a new tab"
-          aria-label="Open in a new tab">
-          ${this._icon(ICONS.open)}
-        </a>
+        ${
+          openUrl
+            ? html`
+                <a
+                  class="tool"
+                  href=${openUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Open in a new tab"
+                  aria-label="Open in a new tab">
+                  ${this._icon(ICONS.open)}
+                </a>
+              `
+            : null
+        }
       </div>
     `
   }

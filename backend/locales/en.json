@@ -2639,6 +2639,7 @@
   "editor.assets.uploadAssetsDropZone": "Browse or Drop files here...",
   "editor.assets.uploadFailed": "File upload failed.",
   "editor.backToEditor": "Back to Editor",
+  "editor.blockContent.drawioInvalidServer": "This block's Server is not one the draw.io editor can be loaded from. It has to be an http or https address on a host other than this wiki.",
   "editor.blockContent.drawioLoading": "Loading the draw.io editor...",
   "editor.blockContent.drawioTitle": "Draw.io editor",
   "editor.blockContent.drawioUnreachable": "The draw.io editor could not be loaded. Check that this address is reachable from your browser.",

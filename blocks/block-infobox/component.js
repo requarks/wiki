@@ -158,6 +158,7 @@ Website: https://montreal.ca
       {
         name: 'image',
         type: 'string',
+        url: true,
         label: 'Image URL',
         hint: 'Path or URL of a picture to show under the heading.'
       },

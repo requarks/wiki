@@ -1,6 +1,7 @@
 <template>
   <div class="block-content-drawio">
     <iframe
+      v-if="serverUrl"
       ref="frameEl"
       class="block-content-drawio-frame"
       :src="editorUrl"
@@ -12,7 +13,12 @@
       that.
     -->
     <div v-if="!state.ready" class="block-content-drawio-veil">
-      <template v-if="state.timedOut">
+      <template v-if="!serverUrl">
+        <w-icon name="la:plug" size="42px" />
+        <div class="mt-3 text-body1">{{ t('editor.blockContent.drawioInvalidServer') }}</div>
+        <div class="text-caption mt-1 opacity-70">{{ params.server }}</div>
+      </template>
+      <template v-else-if="state.timedOut">
         <w-icon name="la:plug" size="42px" />
         <div class="mt-3 text-body1">{{ t('editor.blockContent.drawioUnreachable') }}</div>
         <div class="text-caption mt-1 opacity-70">{{ origin }}</div>
@@ -120,18 +126,36 @@ let readyTimer = null
 
 // COMPUTED
 
-const server = computed(() => String(props.params.server || '').trim() || PUBLIC_EDITOR)
-
-/** Where messages are sent, and the only place they are accepted from. */
-const origin = computed(() => {
+/**
+ * The draw.io to load, or null for a `server` no frame may be given -- the same rule as `_server` in
+ * `block-drawio`, which shows the finished drawing from the same prop.
+ *
+ * The prop is the page author's, and it becomes the frame's `src`: so an `http:` or `https:` address
+ * only (a `javascript:` one is script, run in this editor's session), and one on another host, since
+ * a frame showing this wiki's own origin runs whatever is at that address with the session -- an
+ * uploaded file included.
+ */
+const serverUrl = computed(() => {
+  const value = String(props.params.server || '').trim()
+  if (!value) {
+    return new URL(PUBLIC_EDITOR)
+  }
   try {
-    return new URL(server.value).origin
+    const url = new URL(value, window.location.href)
+    const isWeb = url.protocol === 'http:' || url.protocol === 'https:'
+    return isWeb && url.origin !== window.location.origin ? url : null
   } catch {
-    return ''
+    return null
   }
 })
 
+/** Where messages are sent, and the only place they are accepted from. */
+const origin = computed(() => serverUrl.value?.origin ?? '')
+
 const editorUrl = computed(() => {
+  if (!serverUrl.value) {
+    return ''
+  }
   /*
     `ui` is settled once, when the frame is built, and deliberately does not follow the reader
     switching theme underneath it: the parameter is read at load, so keeping the two in step would
@@ -148,7 +172,9 @@ const editorUrl = computed(() => {
     saveAndExit: '0',
     ui: dark.isActive ? 'dark' : 'kennedy'
   })
-  return `${server.value.replace(/\/+$/, '')}/?${params.toString()}`
+  // -> The query and fragment are draw.io's to set
+  const { origin: host, pathname } = serverUrl.value
+  return `${`${host}${pathname}`.replace(/\/+$/, '')}/?${params.toString()}`
 })
 
 // METHODS

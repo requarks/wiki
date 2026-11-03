@@ -7,7 +7,7 @@ import { requestUserId } from '../helpers/requester.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { isImageEditingAvailable, NEUTRAL_ADJUST } from '../helpers/images.ts'
 import type { ImageAdjust, ImageOperation } from '../helpers/images.ts'
-import { INLINE_EXTS } from '../models/assets.ts'
+import { deliveryOf } from '../models/assets.ts'
 import type { Asset } from '../models/assets.ts'
 import { userRequired } from './pages.ts'
 
@@ -383,7 +383,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Download an asset',
         description:
-          'The file itself. Anything a browser should not render inline is sent as an attachment, and the type is always the one derived from the stored file name.',
+          "The file itself. Every file but an image is sent as an attachment when the security settings' `forceAssetDownload` is on; every file but a PDF is served under a sandboxing Content-Security-Policy, so that one opened in place runs nothing in the wiki's origin. The type is always the one derived from the stored file name.",
         tags: ['Assets'],
         params: assetIdParam,
         response: {
@@ -406,9 +406,7 @@ async function routes(app: FastifyInstance) {
       if (!asset || !mayOnAsset(req, 'read:assets', asset)) {
         return reply.notFound('This asset does not exist.')
       }
-      const download = Boolean(
-        WIKI.config.security?.forceAssetDownload || !INLINE_EXTS.has(asset.fileExt)
-      )
+      const { download, csp } = deliveryOf(asset)
 
       // -> The same redirect `/_files/` makes, for the same reason: where the site has nominated a
       //    store to serve a content type directly, the bytes have no business coming through here
@@ -434,6 +432,9 @@ async function routes(app: FastifyInstance) {
       // -> The bytes came from a user, so the browser must take the type at its word rather than
       //    looking for something more interesting in them
       reply.header('X-Content-Type-Options', 'nosniff')
+      if (csp) {
+        reply.header('Content-Security-Policy', csp)
+      }
       // -> Set by hand because the body may be a stream, which Fastify would otherwise send chunked
       reply.header('Content-Length', content.size)
       return reply.type(asset.mimeType).send(content.body)

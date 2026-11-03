@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit'
 import { deflateRaw } from 'pako'
 import { DarkMode } from '../shared/theme.js'
+import { webUrl } from '../shared/urls.js'
 
 /**
  * The draw.io that answers when the block names no server.
@@ -79,6 +80,7 @@ export class BlockDrawioElement extends LitElement {
       {
         name: 'server',
         type: 'string',
+        url: true,
         label: 'Server',
         hint: 'A self-hosted draw.io to draw and display with. The public diagrams.net services when left empty.'
       },
@@ -220,13 +222,36 @@ export class BlockDrawioElement extends LitElement {
    * a copy of draw.io that has nowhere to save to, and the way to change a drawing here is the page.
    */
   _url() {
-    const server = (this.server || '').trim().replace(/\/+$/, '') || PUBLIC_VIEWER
+    const server = this._server()
+    if (!server) {
+      return null
+    }
     const params = new URLSearchParams({
       lightbox: '1',
       nav: '1',
       ui: this._darkMode.isDark ? 'dark' : 'kennedy'
     })
     return `${server}/?${params.toString()}#R${encodeURIComponent(compressForUrl(this._source))}`
+  }
+
+  /**
+   * The draw.io to load, without a trailing slash -- or null for a `server` no frame may be given.
+   *
+   * The prop is the page author's, and it becomes the frame's `src`. So it has to be an `http:` or
+   * `https:` address (a `javascript:` one is script, run as the reader), and one on ANOTHER host: a
+   * frame showing this wiki's own origin runs whatever is at that address with the reader's session,
+   * an uploaded file included. A self-hosted draw.io is a deployment of its own, on a host of its own.
+   */
+  _server() {
+    if (!(this.server || '').trim()) {
+      return PUBLIC_VIEWER
+    }
+    const url = webUrl(this.server)
+    if (!url || url.origin === window.location.origin) {
+      return null
+    }
+    // -> The query and fragment are draw.io's to set, below
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, '')
   }
 
   render() {
@@ -237,12 +262,21 @@ export class BlockDrawioElement extends LitElement {
         </div>
       `
     }
+    const url = this._url()
+    if (!url) {
+      return html`
+        <div class="error">
+          ${this.server} is not a draw.io server this diagram can be shown from. It has to be an
+          http or https address on a host other than this wiki.
+        </div>
+      `
+    }
     const height = Number(this.height) > 0 ? Number(this.height) : 420
     return html`
       <div class="diagram ${this.align === 'center' ? 'is-center' : ''}">
         <div class="frame" style="height: ${height}px">
           <iframe
-            src=${this._url()}
+            src=${url}
             title=${this.caption || 'Diagram'}
             loading="lazy"
             referrerpolicy="strict-origin-when-cross-origin"

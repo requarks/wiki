@@ -35,6 +35,8 @@ export interface SanitizableBlock {
   block: string
   /** Prop names as declared, `internal` ones included — see `BlockProp.internal`. */
   attributes: string[]
+  /** Those of them that hold an address, which are scheme-checked — see `BlockProp.url`. */
+  urlAttributes: string[]
 }
 
 /**
@@ -326,8 +328,9 @@ export function sanitizeRender(
 ): string {
   const allowedTags = [...sanitizeHtml.defaults.allowedTags, ...BASE_ALLOWED_TAGS]
   const allowedAttributes: Record<string, string[]> = { ...BASE_ALLOWED_ATTRIBUTES }
+  const urlAttributes = new Set(sanitizeHtml.defaults.allowedSchemesAppliedToAttributes)
 
-  for (const { block, attributes } of blocks) {
+  for (const { block, attributes, urlAttributes: blockUrlAttributes } of blocks) {
     const tag = `block-${block}`
     allowedTags.push(tag)
     /*
@@ -351,6 +354,16 @@ export function sanitizeRender(
     allowedAttributes[tag] = [
       ...new Set(attributes.flatMap((name) => [name, name.toLowerCase()]))
     ].filter((name) => !/^on/i.test(name))
+    /*
+      An address a block loads into a frame, or puts in a link, is a `javascript:` URL away from
+      script -- draw.io's `server` became an iframe's `src`. So it gets the check `href` and `src` get.
+      By name, because that is the only way the library applies one: harmless on any other element,
+      where an attribute of that name is either not allowed or not an address anyway.
+    */
+    for (const name of blockUrlAttributes) {
+      urlAttributes.add(name)
+      urlAttributes.add(name.toLowerCase())
+    }
   }
 
   if (permissions.styles) {
@@ -380,6 +393,7 @@ export function sanitizeRender(
     //    call, and the warning is the thing to silence, not the permission
     allowVulnerableTags: permissions.styles,
     allowedSchemes: ALLOWED_SCHEMES,
+    allowedSchemesAppliedToAttributes: [...urlAttributes],
     allowedSchemesByTag: {
       img: [...ALLOWED_SCHEMES, 'data', ...(blobImages ? ['blob'] : [])]
     },

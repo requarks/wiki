@@ -44,6 +44,13 @@ export interface BlockProp {
    * serves, so nothing that builds a form or a completion from `props` ever sees one.
    */
   internal?: boolean
+  /**
+   * Holds an address. The sanitiser scheme-checks it as it does `href` and `src`, since an attribute
+   * a block turns into a frame or a link is one a `javascript:` URL would run from
+   * (`helpers/sanitizeRender.ts`). Not a substitute for the block checking it too: a render stored
+   * before the flag was set still carries whatever was written.
+   */
+  url?: boolean
 }
 
 /** A block as declared by its component's `static definition`. */
@@ -117,6 +124,8 @@ export interface SiteBlock {
    * on the element. The browser sanitizes its previews with the same list (`helpers/sanitizeRender.ts`).
    */
   attributes: string[]
+  /** Those of `attributes` that hold an address, which the sanitizer scheme-checks — see `BlockProp.url`. */
+  urlAttributes: string[]
   template: string
   /** Empty for a block whose starter body needs no AsciiDoc spelling of its own — see the definition. */
   asciidocTemplate: string
@@ -441,6 +450,9 @@ class Blocks {
         ...row,
         props: authorableProps(definition?.props),
         attributes: (definition?.props ?? []).map((prop) => prop.name),
+        urlAttributes: (definition?.props ?? [])
+          .filter((prop) => prop.url)
+          .map((prop) => prop.name),
         template: definition?.template ?? '',
         asciidocTemplate: definition?.asciidocTemplate ?? '',
         contentEditor: definition?.contentEditor ?? '',
@@ -473,6 +485,7 @@ class Blocks {
         config: {},
         props: authorableProps(definition.props),
         attributes: (definition.props ?? []).map((prop) => prop.name),
+        urlAttributes: (definition.props ?? []).filter((prop) => prop.url).map((prop) => prop.name),
         template: definition.template ?? '',
         asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',

@@ -36,6 +36,7 @@ export class BlockAsciinemaElement extends LitElement {
       {
         name: 'src',
         type: 'string',
+        url: true,
         label: 'Recording URL',
         hint: 'Path or URL of the .cast file to play.',
         required: true

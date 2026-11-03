@@ -51,7 +51,8 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       },
       forceAssetDownload: {
         type: 'boolean',
-        description: 'Stored, but asset serving is not implemented yet.'
+        description:
+          "Whether every asset but an image is sent as a download (`Content-Disposition: attachment`) rather than opened in the browser. Either way every asset is served under a sandboxing Content-Security-Policy, PDFs excepted, so that one opened in place runs nothing in the wiki's origin."
       },
       trustProxy: {
         type: 'boolean',
@@ -77,7 +78,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       uploadScanSVG: {
         type: 'boolean',
         description:
-          'Whether an uploaded SVG is sanitized before it is stored: scripts, event handlers, embedded HTML and script links are taken out, and only elements and attributes that draw are kept. Applies to every asset upload, the images added to live notes and the logo, favicon and login background of a site included.'
+          'Whether an uploaded SVG is sanitized before it is stored: scripts, event handlers, embedded HTML and script links are taken out, and only elements and attributes that draw are kept. Applies to every asset upload, the images added to live notes and the logo, favicon and login background of a site included — and to a file renamed to `.svg`, and to one imported from a storage target or a backup.'
       },
       authRateLimitEnabled: {
         type: 'boolean',
