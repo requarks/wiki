@@ -110,6 +110,30 @@ export function seedIfEmpty(ydoc, scene) {
 }
 
 /**
+ * A copy of an element that nothing done to the original afterwards can reach.
+ *
+ * Excalidraw edits its elements where they stand -- `mutateElement` rewrites an element's own fields
+ * and bumps its `version` on it, point by point while a stroke is being drawn -- and Yjs cannot see
+ * a value change inside itself. So everything this file keeps for a later comparison, and everything
+ * it puts into the shared document, has to be a copy of its own: a diff taken against the very
+ * objects being changed would never find a change, and the document would go on holding an element
+ * that had quietly moved on. Plain fields are copied by the spread, which is the whole of what
+ * `version` is compared on; arrays are copied as well, `points` and `pressures` being where a
+ * growing stroke lives, so a copy that shared one would grow with it. What is neither is left
+ * shared on purpose: Excalidraw replaces `roundness` and the bindings wholesale, and never edits
+ * inside them.
+ */
+export function snapshotElement(element) {
+  const snapshot = { ...element }
+  for (const [key, value] of Object.entries(snapshot)) {
+    if (Array.isArray(value)) {
+      snapshot[key] = value.slice()
+    }
+  }
+  return snapshot
+}
+
+/**
  * Write what this author has just done into the shared document.
  *
  * Diffed against the last state this function was given rather than sent wholesale: Excalidraw calls
@@ -120,13 +144,16 @@ export function seedIfEmpty(ydoc, scene) {
  *
  * One transaction, so the whole of a change reaches the others as one update.
  *
+ * What is compared, written and handed back are copies rather than the elements themselves, because
+ * those go on being changed -- `snapshotElement`, above, makes all three.
+ *
  * @param {object} previous The elements by id as they were last time, which this returns the next of.
  * @returns {Map<string, object>} What to pass as `previous` next time.
  */
 export function publishScene(ydoc, scene, previous) {
   const next = new Map()
   for (const element of scene.elements ?? []) {
-    next.set(element.id, element)
+    next.set(element.id, snapshotElement(element))
   }
 
   const yElements = collabElements(ydoc)
@@ -170,12 +197,16 @@ export function publishScene(ydoc, scene, previous) {
 /**
  * The drawing as the shared document has it.
  *
+ * Each element a copy rather than the document's own value: an element put straight onto a canvas
+ * would be edited in place by Excalidraw, and the shared document would go on holding a shape it no
+ * longer gave anybody. See `snapshotElement`, above.
+ *
  * Sorted by each element's fractional index, which is what z order means here. An element with none is
  * one Excalidraw has not indexed yet; those keep the order the map gives them and are put at the back,
  * where the editor assigns them an index of their own on the next change.
  */
 export function readScene(ydoc) {
-  const elements = [...collabElements(ydoc).values()].sort((a, b) => {
+  const elements = [...collabElements(ydoc).values()].map(snapshotElement).sort((a, b) => {
     if (a.index == null || b.index == null) {
       return a.index == null ? (b.index == null ? 0 : 1) : -1
     }

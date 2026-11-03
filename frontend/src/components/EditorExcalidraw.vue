@@ -52,7 +52,8 @@ import {
   collabScene,
   publishScene,
   readScene,
-  seedIfEmpty
+  seedIfEmpty,
+  snapshotElement
 } from '@/editor/excalidraw/collab'
 
 /**
@@ -112,7 +113,13 @@ const collabWatchers = []
 /** Whether a session is live and this editor is bound to it. */
 let collaborating = false
 
-/** The elements as they were last published, which is what the next publish is diffed against. */
+/**
+ * The elements as they were last published, which is what the next publish is diffed against.
+ *
+ * Copies, never the canvas's own elements: Excalidraw edits those in place while they are being drawn
+ * on, and a diff measured against them would find nothing to send. Every assignment keeps it so --
+ * `publishScene` hands back copies, and `applyRemote` fills it from `readScene`'s.
+ */
 let published = new Map()
 
 /**
@@ -414,8 +421,16 @@ function applyRemote() {
       `NEVER` keeps a change that arrived from somebody else off this author's undo stack, which would
       otherwise offer to undo a shape they did not draw -- the same reason the Visual editor takes its
       undo from Yjs rather than from ProseMirror.
+
+      The canvas is given its OWN copies of what arrived, so that the ones `readScene` made can stay
+      as the diff base below: Excalidraw edits the elements it holds in place, and were these the
+      same objects, the next `publishScene` would be measured against elements that have moved on.
     */
-    handle.updateScene({ elements, appState, captureUpdate: CaptureUpdateAction.NEVER })
+    handle.updateScene({
+      elements: elements.map(snapshotElement),
+      appState,
+      captureUpdate: CaptureUpdateAction.NEVER
+    })
     published = new Map(elements.map((el) => [el.id, el]))
   } finally {
     applyingRemote = false
