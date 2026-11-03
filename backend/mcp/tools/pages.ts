@@ -1,4 +1,4 @@
-import { mayOnPage, pageUrl } from '../context.ts'
+import { mayOnPage, pageUrl, unpublishedFor } from '../context.ts'
 import {
   loadPageRef,
   loadReadablePage,
@@ -179,18 +179,22 @@ const getPageLinks: McpTool<PageRef> = {
       throw new ToolError('This page is password protected.')
     }
     const links = await WIKI.models.pageLinks.outboundFor(page.id)
+    const unpublished = unpublishedFor(ctx)
     return jsonResult({
       page: pageFields(ctx, page),
       links: links.map((link) => {
-        // -> As the REST route does: a page the caller may not read reads as no page at all
+        // -> As the REST route does: a page the caller may not read, or may not see while it is not
+        //    live, reads as no page at all
+        const target = {
+          siteId: link.targetSiteId,
+          locale: link.targetPageLocale ?? undefined,
+          path: link.targetPagePath ?? '',
+          tags: link.targetPageTags ?? []
+        }
         const readable =
           Boolean(link.targetPageId) &&
-          mayOnPage(ctx, 'read:pages', {
-            siteId: link.targetSiteId,
-            locale: link.targetPageLocale ?? undefined,
-            path: link.targetPagePath ?? '',
-            tags: link.targetPageTags ?? []
-          })
+          (link.targetIsLive || (unpublished && unpublished(target))) &&
+          mayOnPage(ctx, 'read:pages', target)
         return {
           href: link.href,
           exists: readable,
@@ -232,19 +236,23 @@ const getBacklinks: McpTool<PageRef> = {
       { siteId: ctx.siteId, locale: page.locale, path: page.path },
       { pageId: page.id, alias: page.alias }
     )
+    const unpublished = unpublishedFor(ctx)
     return jsonResult({
       page: pageFields(ctx, page),
       backlinks: backlinks
-        .filter(
-          (link) =>
+        .filter((link) => {
+          const ref = {
+            siteId: link.siteId,
+            locale: link.locale,
+            path: link.path,
+            tags: link.tags
+          }
+          return (
             link.siteId === ctx.siteId &&
-            mayOnPage(ctx, 'read:pages', {
-              siteId: link.siteId,
-              locale: link.locale,
-              path: link.path,
-              tags: link.tags
-            })
-        )
+            (link.isLive || (unpublished && unpublished(ref))) &&
+            mayOnPage(ctx, 'read:pages', ref)
+          )
+        })
         .map((link) => ({
           ...pageFields(ctx, {
             id: link.pageId,

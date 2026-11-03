@@ -2519,15 +2519,20 @@ async function routes(app: FastifyInstance) {
         { pageId: page.id, alias: page.alias }
       )
 
+      // -> A page that is not live is listed only for whoever may edit it, as the page view decides
+      const unpublished = unpublishedFor(req)
       return backlinks
-        .filter((link) =>
-          mayOnPage(req, 'read:pages', {
+        .filter((link) => {
+          const ref = {
             siteId: link.siteId,
             locale: link.locale,
             path: link.path,
             tags: link.tags
-          })
-        )
+          }
+          return (
+            (link.isLive || (unpublished && unpublished(ref))) && mayOnPage(req, 'read:pages', ref)
+          )
+        })
         .map((link) => ({
           id: link.pageId,
           siteId: link.siteId,
@@ -2597,33 +2602,40 @@ async function routes(app: FastifyInstance) {
       }
 
       const links = await WIKI.models.pageLinks.outboundFor(page.id)
+      const unpublished = unpublishedFor(req)
 
-      return links.map((link) => ({
-        href: link.href,
-        kind: link.kind,
-        targetSiteId: link.targetSiteId,
-        targetLocale: link.targetLocale,
-        targetPath: link.targetPath,
-        targetId: link.targetPageId,
+      return links.map((link) => {
         /*
           Only what the caller may read, for the reason the backlinks route filters: whether a page
           exists at a path is something a rule decides they may know. A link to a page they may not
-          read reads as a link to nothing, which is also what clicking it would give them.
+          read reads as a link to nothing, which is also what clicking it would give them — so its
+          id goes with its title.
 
           Judged on where the RESOLVED page sits rather than on what the link said about it — an alias
           or an id link names no address at all — and with its tags, since a rule may be written
-          against those.
+          against those. A page that is not live is held to the page view's rule as well.
         */
-        ...(link.targetPageId &&
-        !mayOnPage(req, 'read:pages', {
+        const target = {
           siteId: link.targetSiteId,
           locale: link.targetPageLocale ?? undefined,
           path: link.targetPagePath ?? '',
           tags: link.targetPageTags ?? []
-        })
-          ? { targetTitle: null, exists: false }
-          : { targetTitle: link.targetTitle, exists: Boolean(link.targetPageId) })
-      }))
+        }
+        const visible =
+          Boolean(link.targetPageId) &&
+          (link.targetIsLive || (unpublished && unpublished(target))) &&
+          mayOnPage(req, 'read:pages', target)
+        return {
+          href: link.href,
+          kind: link.kind,
+          targetSiteId: link.targetSiteId,
+          targetLocale: link.targetLocale,
+          targetPath: link.targetPath,
+          targetId: visible ? link.targetPageId : null,
+          targetTitle: visible ? link.targetTitle : null,
+          exists: visible
+        }
+      })
     }
   )
 

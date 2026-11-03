@@ -224,7 +224,11 @@ const listTags: McpTool<{ limit: number }> = {
     additionalProperties: false
   },
   async run(ctx, args) {
-    const tags = await WIKI.models.tags.getTags(ctx.siteId, { limit: args.limit, actor: ctx.actor })
+    const tags = await WIKI.models.tags.getTags(ctx.siteId, {
+      limit: args.limit,
+      actor: ctx.actor,
+      unpublished: unpublishedFor(ctx)
+    })
     return jsonResult({ tags })
   }
 }

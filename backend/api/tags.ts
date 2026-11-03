@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { unpublishedFor } from './pages.ts'
 
 /**
  * Tag API Routes
@@ -69,7 +70,8 @@ async function routes(app: FastifyInstance) {
     async (req) => {
       return WIKI.models.tags.getTags(req.params.siteId, {
         limit: req.query.limit,
-        actor: WIKI.models.groups.actorForRequest(req)
+        actor: WIKI.models.groups.actorForRequest(req),
+        unpublished: unpublishedFor(req)
       })
     }
   )

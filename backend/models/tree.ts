@@ -326,6 +326,9 @@ class Tree {
    * @param includeAncestors Also return every folder between the root and the one being listed, so a
    *                         caller opening a deep folder gets the branch it hangs off in one request.
    * @param includeRootFolders Also return every folder at the root, for the same reason.
+   * @param unpublished Whether a page that is not live may be listed. See `pageIsVisible` — but only
+   *                    its liveness half: this is the file manager's view, so a page kept out of the
+   *                    reader's tree with `isBrowsable` is still listed here.
    */
   async getTree({
     siteId,
@@ -340,7 +343,8 @@ class Tree {
     orderByDirection = 'asc',
     depth = 0,
     includeAncestors = false,
-    includeRootFolders = false
+    includeRootFolders = false,
+    unpublished = false
   }: {
     siteId: string
     parentId?: string | null
@@ -355,6 +359,7 @@ class Tree {
     depth?: number
     includeAncestors?: boolean
     includeRootFolders?: boolean
+    unpublished?: Unpublished
   }): Promise<TreeItem[]> {
     if (offset < 0) {
       throw new CustomError('treeInvalidOffset', 'The offset cannot be negative.')
@@ -410,20 +415,39 @@ class Tree {
       //    comma-separated form `inArray` needs — and `@>` wants one array-typed parameter
       conditions.push(sql`${treeTable.tags} @> ${sql.param(tags)}`)
     }
+    if (!unpublished) {
+      // -> Only pages have a publish state. A page row whose page is missing joins to nulls, which
+      //    are not live either
+      conditions.push(or(ne(treeTable.type, 'page'), liveCondition(pagesTable)))
+    }
 
     const direction = orderByDirection === 'desc' ? desc : asc
     const rows = await WIKI.db
       .select({
         row: treeTable,
-        depth: sql<number>`nlevel(${treeTable.folderPath})`.mapWith(Number)
+        depth: sql<number>`nlevel(${treeTable.folderPath})`.mapWith(Number),
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(treeTable)
+      .leftJoin(pagesTable, and(eq(treeTable.type, 'page'), eq(pagesTable.id, treeTable.id)))
       .where(and(...conditions))
       .orderBy(asc(sql`nlevel(${treeTable.folderPath})`), direction(treeTable[orderBy]))
       .limit(limit)
       .offset(offset)
 
-    return rows.map(({ row, depth: rowDepth }) => toTreeItem(row as TreeRow, rowDepth, path))
+    return rows.flatMap(({ row, depth: rowDepth, isLive }) => {
+      const item = toTreeItem(row as TreeRow, rowDepth, path)
+      if (item.type !== 'page') {
+        return [item]
+      }
+      const ref = {
+        siteId,
+        locale: item.locale,
+        path: item.folderPath ? `${item.folderPath}/${item.fileName}` : item.fileName,
+        tags: item.tags
+      }
+      return isListable(unpublished, isLive, ref) ? [item] : []
+    })
   }
 
   /**

@@ -1,4 +1,7 @@
 import { sql } from 'drizzle-orm'
+import { pages as pagesTable } from '../db/schema.ts'
+import { liveCondition } from '../helpers/publishing.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { AccessActor } from './groups.ts'
 
 export interface Tag {
@@ -26,10 +29,20 @@ class Tags {
    *              a tag is the name of something on a page, and the set of tags in use tells a
    *              reader what a wiki is about. Counted over readable pages too, so the numbers agree
    *              with what a search for the tag would return.
+   * @param unpublished Whether a page that is not live counts, as for `pages.getPage`: false, or a
+   *                    predicate asked of each such page. Only applies alongside `actor`.
    */
   async getTags(
     siteId: string,
-    { limit = 1000, actor }: { limit?: number; actor?: AccessActor } = {}
+    {
+      limit = 1000,
+      actor,
+      unpublished = false
+    }: {
+      limit?: number
+      actor?: AccessActor
+      unpublished?: false | ((page: RulePageRef) => boolean)
+    } = {}
   ): Promise<Tag[]> {
     if (!actor) {
       const result = await WIKI.db.execute(sql`
@@ -49,12 +62,15 @@ class Tags {
     /*
       Aggregated here rather than in postgres, because which pages count depends on the page rules and
       a rule can be a regular expression or a set of tags — neither of which a `GROUP BY` could take
-      into account. Only tagged pages are read, and only their path, locale and tags.
+      into account. Only tagged pages are read, and only their path, locale, tags and whether they
+      are live — a page that is not live counts only for whoever may see it, as a listing would show it.
     */
+    const isLive = liveCondition(pagesTable)
     const result = await WIKI.db.execute(sql`
-      SELECT path, locale, tags
+      SELECT path, locale, tags, ${isLive} AS "isLive"
       FROM pages
       WHERE "siteId" = ${siteId} AND array_length(tags, 1) > 0
+        ${unpublished ? sql`` : sql`AND ${isLive}`}
     `)
     const counts = new Map<string, number>()
     for (const row of (result.rows ?? result) as any[]) {
@@ -63,6 +79,9 @@ class Tags {
         path: row.path as string,
         locale: row.locale as string,
         tags: (row.tags ?? []) as string[]
+      }
+      if (!row.isLive && !(unpublished && unpublished(page))) {
+        continue
       }
       if (!WIKI.models.groups.checkAccess(actor, 'read:pages', page)) {
         continue

@@ -1,5 +1,6 @@
 import { and, eq, inArray, ne, or, sql } from 'drizzle-orm'
 import { pageLinks as pageLinksTable, pages as pagesTable } from '../db/schema.ts'
+import { liveCondition } from '../helpers/publishing.ts'
 import { linksFromRender, markBrokenLinks, resolveLink } from '../helpers/pageLinks.ts'
 import type { LinkSource, LinkTarget, PageLinkKind, ResolvedLink } from '../helpers/pageLinks.ts'
 
@@ -67,7 +68,8 @@ export interface Backlink {
   href: string
   kind: PageLinkKind
   tags: string[]
-  publishState: string
+  /** Whether the linking page is live, which decides who may be told it exists — see `helpers/publishing.ts`. */
+  isLive: boolean
   /** Where that page is, as a path on ITS OWN site — locale prefix included only where that site
       brackets its URLs by one. */
   url: string
@@ -91,6 +93,8 @@ export interface OutboundLink extends PageLinkRow {
   targetPageLocale: string | null
   targetPagePath: string | null
   targetPageTags: string[] | null
+  /** Whether the resolved page is live. False for a red link, which has no page to be live. */
+  targetIsLive: boolean
 }
 
 /**
@@ -418,7 +422,8 @@ class PageLinks {
    * would otherwise be missing from the one list anybody reads.
    *
    * Nothing here filters by what the caller may read: a backlink names a page, and which of them this
-   * reader is allowed to know about is a page rule the route resolves — see `api/pages.ts`.
+   * reader is allowed to know about is a page rule the route resolves — see `api/pages.ts`. That
+   * includes whether the linking page is live, which `isLive` is here for.
    */
   async backlinksFor(
     target: LinkTarget,
@@ -448,7 +453,7 @@ class PageLinks {
         description: pagesTable.description,
         icon: pagesTable.icon,
         tags: pagesTable.tags,
-        publishState: pagesTable.publishState
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pageLinksTable)
       .innerJoin(pagesTable, eq(pagesTable.id, pageLinksTable.pageId))
@@ -501,7 +506,8 @@ class PageLinks {
         targetTitle: pagesTable.title,
         targetPageLocale: pagesTable.locale,
         targetPagePath: pagesTable.path,
-        targetPageTags: pagesTable.tags
+        targetPageTags: pagesTable.tags,
+        targetIsLive: sql<boolean>`coalesce(${liveCondition(pagesTable)}, false)`.mapWith(Boolean)
       })
       .from(pageLinksTable)
       .leftJoin(

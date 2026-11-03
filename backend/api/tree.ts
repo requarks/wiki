@@ -272,7 +272,9 @@ async function routes(app: FastifyInstance) {
         orderByDirection: q.orderByDirection,
         depth: q.depth,
         includeAncestors: q.includeAncestors,
-        includeRootFolders: q.includeRootFolders
+        includeRootFolders: q.includeRootFolders,
+        // -> A page that is not live is listed only for whoever may edit it, as the page view decides
+        unpublished: unpublishedFor(req)
       })
       return visibleTreeItems(req, items)
     }
