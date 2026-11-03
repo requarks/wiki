@@ -205,6 +205,28 @@ export function isRedirectTarget(value: string): boolean {
 }
 
 /**
+ * Whether a value may be stored as the target of a navigation link.
+ *
+ * The sidebar draws one as an `href` on every page, for every reader, guests included, so this is
+ * the line between `manage:navigation` and every session on the wiki: a `javascript:` target is
+ * script run in the wiki's own origin by whoever clicks it. So `http(s)` and `mailto:` and
+ * anything with no scheme of its own -- a path, `#a-heading`, `//host` -- and nothing else.
+ *
+ * Asked of the URL the browser would resolve rather than of the text, because the parser strips
+ * leading spaces and every tab and newline before it reads a scheme: `java&#9;script:` is
+ * `javascript:` by the time it is followed. Resolved against a base of the parser's own so that a
+ * value without a scheme comes back as that base's, which is allowed.
+ */
+export function isNavLinkTarget(value: string): boolean {
+  try {
+    const { protocol } = new URL(value, 'http://wiki.invalid/')
+    return protocol === 'http:' || protocol === 'https:' || protocol === 'mailto:'
+  } catch {
+    return false
+  }
+}
+
+/**
  * The origin a URL this server writes into a document is built against.
  *
  * The requester's own, and deliberately not the site's configured hostname: a site may be bound to

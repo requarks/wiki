@@ -169,15 +169,19 @@ const barStyle = {
 function destination(item) {
   const address = item.target ?? '/'
   const target = item.openInNewWindow ? '_blank' : undefined
-  let routable = null
+  let url
   try {
-    routable = routableHref(
-      { href: new URL(address, globalThis.location.href).href, target },
-      globalThis.location
-    )
+    url = new URL(address, globalThis.location.href)
   } catch {
-    // -> Not a URL at all: nothing to route to, so it goes out as the author wrote it
+    // -> Not a URL at all: nothing a reader could be taken to
+    return {}
   }
+  // -> The server refuses any other scheme on save (`isNavLinkTarget`), and this is the same line
+  //    drawn where it matters: a `javascript:` href is script run in this origin by whoever clicks it
+  if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+    return {}
+  }
+  const routable = routableHref({ href: url.href, target }, globalThis.location)
   return routable ? { to: routable } : { href: address, target }
 }
 

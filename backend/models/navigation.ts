@@ -9,6 +9,7 @@ import {
   decodeTreePath,
   encodeTreeLabel,
   encodeTreePath,
+  isNavLinkTarget,
   treeLabelSql
 } from '../helpers/common.ts'
 import { liveCondition } from '../helpers/publishing.ts'
@@ -401,6 +402,10 @@ class Navigation {
   /**
    * Check the items about to be stored as a menu, refusing what the sidebar could not draw.
    *
+   * A link's target must be one `isNavLinkTarget` allows, since the sidebar puts it in an `href` in
+   * front of every reader. Checked of every item, those kept from before included, so that a menu
+   * holding a `javascript:` target cannot be saved again until it is gone.
+   *
    * A `menu` item must name a menu of the same site and locale that exists, and not the menu it sits
    * in. It may not be nested: the sidebar opens one from the top level only. The same checks whoever
    * is saving — the editor, the admin area, or an automation adding items on the wiki's behalf — so
@@ -426,6 +431,14 @@ class Navigation {
     items: NavigationItem[]
     mayPick?: MayPickMenuTarget
   }): Promise<void> {
+    const all = items.flatMap((item) => [item, ...(item.children ?? [])])
+    if (all.some((item) => item.target && !isNavLinkTarget(item.target))) {
+      throw new CustomError(
+        'navLinkTargetInvalid',
+        'A link target must be a path on this wiki, or an http://, https:// or mailto: address.',
+        400
+      )
+    }
     if (items.some((item) => item.children?.some((child) => child.type === 'menu'))) {
       throw new CustomError(
         'navMenuNested',

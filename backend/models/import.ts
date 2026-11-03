@@ -21,6 +21,7 @@ import {
   dataPathRoot,
   decodeTreePath,
   decodeUrlPath,
+  isNavLinkTarget,
   isPageUrl,
   isRedirectTarget,
   normalizeFolderPath,
@@ -2594,6 +2595,14 @@ class Import {
       const targetType = stringOf(entry?.targetType, 'page')
       const isExternal = targetType === 'external' || targetType === 'externalblank'
       const target = stringOf(entry?.target)
+      // -> 2.x stored a target verbatim, so an export may carry a `javascript:` one; see
+      //    `isNavLinkTarget` for why the sidebar must not draw it
+      if (target && !isNavLinkTarget(target)) {
+        warnings.push(
+          `The sidebar item "${stringOf(entry?.label)}" was skipped: its target is not a path or an http(s) or mailto: address.`
+        )
+        continue
+      }
       items.push({
         id: uuidv5(`nav:${stringOf(entry?.id)}`, session.namespace),
         type,
