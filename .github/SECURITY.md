@@ -6,13 +6,11 @@ If you find such vulnerability, it's important to disclose it in a quick and sec
 
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 3.x.x   | :white_check_mark: |
-| 2.x.x   | :x:*               |
-| 1.x.x   | :x:                |
-
-*: Only vulnerabilities that are deemed critical will be patched in 2.x.
+| Version | Supported          | Notes |
+| ------- | ------------------ | ----- |
+| 3.x.x   | :white_check_mark: | All severities accepted. |
+| 2.x.x   | :warning:          | Only vulnerabilities that are deemed critical will be patched in 2.x. | 
+| 1.x.x   | :x:                | Not supported. |
 
 ## Reporting a Vulnerability
 
