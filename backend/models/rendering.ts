@@ -10,8 +10,10 @@ import {
 } from '../db/schema.ts'
 import { CustomError } from '../helpers/common.ts'
 import { hrefsFrom } from '../helpers/pageLinks.ts'
+import { sanitizeRender } from '../helpers/sanitizeRender.ts'
 import type { IconifyIcon } from '@iconify/types'
 import type { RenderableBlocks } from './blocks.ts'
+import type { RenderPermissions, SanitizableBlock } from '../helpers/sanitizeRender.ts'
 import type { IconifyIconCustomisations } from '@iconify/utils'
 
 /**
@@ -25,7 +27,9 @@ import type { IconifyIconCustomisations } from '@iconify/utils'
  * client:
  *
  *  - **Sanitizing.** The HTML arrived from a browser, so it is a user input like any other. What
- *    survives depends on what the author is allowed to do — scripts and styles are permissions.
+ *    survives depends on what the author is allowed to do — embeds and styles are permissions —
+ *    and nothing that runs script in the page survives at all. The browser sanitizes its previews by
+ *    the same rules: see `helpers/sanitizeRender.ts`.
  *  - **Normalizing.** The editor leaves scaffolding in its output (line markers for preview scroll
  *    sync) that has no business being stored, and headings arrive without the anchors a table of
  *    contents needs.
@@ -126,14 +130,6 @@ interface PageRenderer {
   close(): Promise<void>
 }
 
-/** What the author is allowed to put in a page, beyond ordinary content. */
-export interface RenderPermissions {
-  /** `write:scripts` — may embed `<script>` and inline event handlers. */
-  scripts: boolean
-  /** `write:styles` — may embed `<style>` and inline `style` attributes. */
-  styles: boolean
-}
-
 /** A page the admin area's Rerender All Pages works through, as it lists them. */
 export interface RerenderablePage {
   id: string
@@ -161,265 +157,6 @@ export interface RerenderSource {
 
 /** Why a render posted back by Rerender All Pages was or was not stored. */
 export type RerenderOutcome = 'stored' | 'missing' | 'changed' | 'unsupported'
-
-/**
- * Tags and attributes a page may use whoever wrote it.
- *
- * Deliberately broad: this is a wiki, the markdown renderer is configured with `allowHTML` on by
- * default, and authors are expected to reach for raw HTML. The line being drawn is not "what looks
- * like a document" but "what can execute" — those are the permission-gated parts below.
- */
-const BASE_ALLOWED_TAGS = [
-  ...sanitizeHtml.defaults.allowedTags,
-  'abbr',
-  'audio',
-  'button',
-  'del',
-  'details',
-  'figcaption',
-  'figure',
-  /*
-    The Iconify element, so a page can carry an icon the way the interface does.
-
-    The only custom element allowed here that is not a block, and it is allowed unconditionally
-    because there is nothing to gate: it is inert markup like the rest of this list, and what draws
-    it is already on every page — `boot/iconify.js` defines the element and points it at this
-    instance's `/_icons`, so an icon in content resolves against the wiki's own store and reaches no
-    third party. A block is gated because an administrator installs and enables it; nobody installs
-    this one.
-
-    Note it is not self-closing, whatever the author writes: the parser gives `<iconify-icon … />`
-    the rest of the paragraph as children, and the element's shadow root has no slot to show them
-    with. `</iconify-icon>` belongs on the end of every one.
-  */
-  'iconify-icon',
-  'img',
-  /*
-    The checkbox of a task list, and nothing else worth having.
-
-    `BASE_ALLOWED_ATTRIBUTES` has always named the three attributes one may carry -- `type`, `checked`
-    and `disabled` -- but the tag itself was never on this list, so sanitizing dropped every one of
-    them and a task list came out as two lines of prose. Both editors draw them: `markdown-it-task-lists`
-    writes one, and `convert_checklist` in the AsciiDoc pipeline writes the same element.
-
-    It cannot do anything. An `<input>` submits nothing outside a `<form>`, which is not on this list,
-    and the renderer marks every one of these disabled; `on*` handlers are gated behind
-    `write:scripts` like everywhere else.
-  */
-  'input',
-  'ins',
-  'kbd',
-  'mark',
-  'picture',
-  'section',
-  'source',
-  'sub',
-  'summary',
-  'sup',
-  'track',
-  'u',
-  'video',
-  // -> KaTeX renders to MathML alongside its HTML fallback
-  'annotation',
-  'math',
-  'menclose',
-  'mfrac',
-  'mi',
-  'mn',
-  'mo',
-  'mover',
-  'mpadded',
-  'mphantom',
-  'mroot',
-  'mrow',
-  'mspace',
-  'msqrt',
-  'mstyle',
-  'msub',
-  'msubsup',
-  'msup',
-  'mtable',
-  'mtd',
-  'mtext',
-  'mtr',
-  'munder',
-  'munderover',
-  'semantics',
-  // -> Inline SVG, which an author may well paste in. Structure and shapes only: `script`,
-  //    `foreignObject` and the SMIL animation tags are all left out, since each of them is a way to
-  //    get script or arbitrary markup back in through a picture.
-  'svg',
-  'circle',
-  'clipPath',
-  'defs',
-  'desc',
-  'ellipse',
-  'g',
-  /*
-    A bitmap placed inside a drawing. `href` is scheme-checked like every other link here -- it is on
-    sanitize-html's `allowedSchemesAppliedToAttributes` list, so `javascript:` never survives -- and
-    what remains is a URL that fetches a picture, which `img` beside it has always been allowed to do.
-    So this grants nothing `img` did not already.
-
-    `data:` is NOT among the allowed schemes, here or on `img`, so an inline bitmap is dropped rather
-    than stored. That is the reason the Excalidraw editor puts a pasted image in the asset store and
-    refers to it -- see `pendingAssets` in `EditorExcalidraw.vue`.
-  */
-  'image',
-  'line',
-  'linearGradient',
-  'marker',
-  'mask',
-  'path',
-  'pattern',
-  'polygon',
-  'polyline',
-  'radialGradient',
-  'rect',
-  'stop',
-  'symbol',
-  'text',
-  'tspan',
-  'use'
-]
-
-/**
- * Presentation attributes shared across the SVG subset above. None of them can execute.
- *
- * The text and font half of the list is here rather than on `text` alone, where three of them used to
- * be. An Excalidraw export gives every line of every label its own `text` element carrying the family,
- * the size, the anchor, the writing direction and the baseline it was drawn with, and an attribute
- * missing from here is dropped in silence -- which is not a mangled attribute but a mangled picture,
- * in the wrong font, at the wrong size, aligned from the wrong edge. Text is also not the only element
- * that inherits a font: a `g` around a label carries one just as well, which is why these are shared
- * rather than spelled per tag.
- *
- * They are inert in the same way the shape attributes above are: each names a length, a colour, a
- * keyword or a font family, and none of them is a URL or a script.
- */
-const SVG_ATTRIBUTES = [
-  'clip-path',
-  'clip-rule',
-  'color',
-  'cx',
-  'cy',
-  'd',
-  'direction',
-  'dominant-baseline',
-  'fill',
-  'fill-opacity',
-  'fill-rule',
-  'font-family',
-  'font-size',
-  'font-style',
-  'font-variant',
-  'font-weight',
-  'height',
-  'href',
-  'letter-spacing',
-  'mask',
-  'offset',
-  'opacity',
-  'paint-order',
-  'points',
-  'preserveAspectRatio',
-  'r',
-  'rx',
-  'ry',
-  'stop-color',
-  'stop-opacity',
-  'stroke',
-  'stroke-dasharray',
-  'stroke-dashoffset',
-  'stroke-linecap',
-  'stroke-linejoin',
-  'stroke-miterlimit',
-  'stroke-opacity',
-  'stroke-width',
-  'text-anchor',
-  'text-decoration',
-  'transform',
-  'vector-effect',
-  'viewBox',
-  'width',
-  'word-spacing',
-  'writing-mode',
-  'x',
-  'x1',
-  'x2',
-  'y',
-  'y1',
-  'y2'
-]
-
-const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
-  // -> `style` is here rather than behind `write:styles` because the renderer itself produces it:
-  //    KaTeX sizes and positions every piece of a formula with inline styles, and math would come
-  //    out mangled for any author without the permission. The permission gates the `<style>` tag,
-  //    which is where a page can restyle everything around it.
-  '*': ['id', 'class', 'style', 'title', 'dir', 'lang', 'aria-*', 'role', 'data-*'],
-  a: ['href', 'name', 'target', 'rel', 'download'],
-  audio: ['controls', 'loop', 'muted', 'preload', 'src'],
-  // -> Everything the element reads except `mode`, which picks how it paints (mask/background) and
-  //    only matters to an author working around a specific icon set's colouring. Size and colour are
-  //    inherited from the surrounding text by default, which is what an icon in a sentence wants;
-  //    `inline` shifts it onto the text baseline, `width`/`height` override the 1em box.
-  'iconify-icon': ['icon', 'inline', 'width', 'height', 'rotate', 'flip'],
-  img: ['src', 'srcset', 'alt', 'width', 'height', 'loading', 'decoding'],
-  input: ['type', 'checked', 'disabled'],
-  ol: ['start', 'reversed', 'type'],
-  /*
-    Column widths, which the AsciiDoc pipeline emits for every table it draws (`[cols="1,2"]` becomes
-    a `<colgroup>` of percentages). Presentational and inert -- a width is a number and a unit, and
-    `col` is a void element with nothing in it to carry anything else.
-  */
-  col: ['width', 'span'],
-  source: ['src', 'srcset', 'type', 'media'],
-  td: ['colspan', 'rowspan', 'align'],
-  th: ['colspan', 'rowspan', 'align', 'scope'],
-  track: ['src', 'kind', 'srclang', 'label', 'default'],
-  video: ['controls', 'loop', 'muted', 'poster', 'preload', 'src', 'width', 'height'],
-  // -> MathML carries its meaning in attributes, and none of them are executable
-  math: ['xmlns', 'display'],
-  annotation: ['encoding'],
-  mo: ['stretchy', 'fence', 'separator', 'lspace', 'rspace', 'minsize', 'maxsize'],
-  mspace: ['width', 'height', 'depth'],
-  mstyle: ['scriptlevel', 'displaystyle', 'mathcolor', 'mathvariant'],
-  mpadded: ['width', 'height', 'depth', 'lspace', 'voffset'],
-  mtable: ['columnalign', 'rowspacing', 'columnspacing', 'rowlines', 'columnlines'],
-  mtd: ['columnalign', 'rowspan', 'columnspan'],
-  svg: [...SVG_ATTRIBUTES, 'xmlns', 'xmlns:xlink'],
-  circle: SVG_ATTRIBUTES,
-  clipPath: SVG_ATTRIBUTES,
-  defs: SVG_ATTRIBUTES,
-  ellipse: SVG_ATTRIBUTES,
-  g: SVG_ATTRIBUTES,
-  image: SVG_ATTRIBUTES,
-  line: SVG_ATTRIBUTES,
-  linearGradient: [...SVG_ATTRIBUTES, 'gradientUnits', 'gradientTransform'],
-  marker: [...SVG_ATTRIBUTES, 'markerWidth', 'markerHeight', 'orient', 'refX', 'refY'],
-  mask: [...SVG_ATTRIBUTES, 'maskUnits'],
-  path: SVG_ATTRIBUTES,
-  pattern: [...SVG_ATTRIBUTES, 'patternUnits'],
-  polygon: SVG_ATTRIBUTES,
-  polyline: SVG_ATTRIBUTES,
-  radialGradient: [...SVG_ATTRIBUTES, 'gradientUnits', 'gradientTransform', 'fx', 'fy'],
-  rect: SVG_ATTRIBUTES,
-  stop: SVG_ATTRIBUTES,
-  symbol: SVG_ATTRIBUTES,
-  // -> `text-anchor`, `font-size` and `font-family` were spelled here; they are in SVG_ATTRIBUTES now
-  text: [...SVG_ATTRIBUTES, 'dx', 'dy'],
-  tspan: [...SVG_ATTRIBUTES, 'dx', 'dy'],
-  use: SVG_ATTRIBUTES
-}
-
-/**
- * Which URL schemes may appear in a link or an embed.
- *
- * `javascript:` is absent, which is the point; `data:` is allowed only for images, where it is how a
- * small inline graphic is written and where it cannot script.
- */
-const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel', 'ftp']
 
 /** Attributes the editor adds for its own preview and that mean nothing in a stored page. */
 const EDITOR_ARTIFACT_ATTRIBUTES = ['data-line', 'data-line-end']
@@ -537,38 +274,13 @@ class Rendering {
    * Child blocks are exempt, having no switch of their own: a tab is part of the tabs it sits in,
    * and is gated by `unwrapOrphanedChildBlocks` once the parent's fate is known.
    */
-  private blockAllowances(siteBlocks: RenderableBlocks): {
-    tags: string[]
-    attributes: Record<string, string[]>
-  } {
-    const tags: string[] = []
-    const attributes: Record<string, string[]> = {}
-    for (const definition of [...WIKI.models.blocks.definitions, ...siteBlocks.custom]) {
-      if (!definition.isChild && !siteBlocks.enabled.has(definition.block)) {
-        continue
-      }
-      const tag = `block-${definition.block}`
-      tags.push(tag)
-      /*
-        Every prop under both spellings, because the two ends of this see different ones.
-
-        A prop is declared in camelCase (`showIcons`), which is what the renderer writes and what the
-        sanitiser is therefore asked about on the way in. But `postProcess` re-parses its own output
-        with cheerio, and an HTML parser lowercases attribute names -- so what is STORED is
-        `showicons`, and a later save that sends that render back up offers the sanitiser a name its
-        allow list has never heard of, which is dropped. A page properties change made with no editor
-        open sends exactly that, so the props of every block on the page vanished the first time
-        anybody retagged it, silently and for good: nothing renders them again until the page is
-        saved from an editor, which produces the render from the source afresh.
-
-        Matching both is what makes this pass idempotent. Nothing is lost by it either, since HTML
-        attribute names are case-insensitive and Lit observes the lowercased form regardless.
-      */
-      attributes[tag] = [
-        ...new Set((definition.props ?? []).flatMap((prop) => [prop.name, prop.name.toLowerCase()]))
-      ]
-    }
-    return { tags, attributes }
+  private blockAllowances(siteBlocks: RenderableBlocks): SanitizableBlock[] {
+    return [...WIKI.models.blocks.definitions, ...siteBlocks.custom]
+      .filter((definition) => definition.isChild || siteBlocks.enabled.has(definition.block))
+      .map((definition) => ({
+        block: definition.block,
+        attributes: (definition.props ?? []).map((prop) => prop.name)
+      }))
   }
 
   /**
@@ -604,66 +316,17 @@ class Rendering {
   }
 
   /**
-   * Strip everything the author is not allowed to embed.
+   * Strip everything the author is not allowed to embed — see `helpers/sanitizeRender.ts`, which the
+   * browser sanitizes its previews with as well.
    */
   private sanitize(
     html: string,
     permissions: RenderPermissions,
     siteBlocks: RenderableBlocks
   ): string {
-    const blocks = this.blockAllowances(siteBlocks)
-    const allowedTags = [...BASE_ALLOWED_TAGS, ...blocks.tags]
-    const allowedAttributes: Record<string, string[]> = {
-      ...BASE_ALLOWED_ATTRIBUTES,
-      ...blocks.attributes,
-      '*': [...BASE_ALLOWED_ATTRIBUTES['*']]
-    }
-
-    if (permissions.styles) {
-      allowedTags.push('style')
-    }
-    if (permissions.scripts) {
-      allowedTags.push('script')
-      // -> Inline handlers are only meaningful to someone who may also write a script tag
-      allowedAttributes['*'].push('on*')
-      allowedAttributes.script = ['src', 'type', 'async', 'defer']
-      // -> An iframe runs someone else's page inside this one, which is the same trust decision as
-      //    running a script, and it is how an author embeds a video or a live example
-      allowedTags.push('iframe')
-      allowedAttributes.iframe = [
-        'src',
-        'width',
-        'height',
-        'allow',
-        'allowfullscreen',
-        'loading',
-        'referrerpolicy',
-        'sandbox'
-      ]
-    }
-
-    return sanitizeHtml(html, {
-      allowedTags,
-      allowedAttributes,
-      // -> `script` and `style` in the allow list are what `write:scripts` and `write:styles` mean:
-      //    the library warns about them on every call, and the warning is the thing to silence, not
-      //    the permission
-      allowVulnerableTags: permissions.scripts || permissions.styles,
-      allowedSchemes: ALLOWED_SCHEMES,
-      allowedSchemesByTag: {
-        img: [...ALLOWED_SCHEMES, 'data']
-      },
-      // -> A protocol-relative URL inherits the page's scheme, which is fine and common in embeds
-      allowProtocolRelative: true,
-      // -> Applies only to tags that were dropped: without it, the body of a rejected `<script>`
-      //    would come back out as visible page text
-      nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript'],
-      parser: {
-        // -> SVG and MathML have case-sensitive attribute names (`viewBox`, `preserveAspectRatio`),
-        //    which lowercasing would quietly break. Tags stay lowercased, so `<SCRIPT>` is still
-        //    matched and dropped.
-        lowerCaseAttributeNames: false
-      }
+    return sanitizeRender(sanitizeHtml, html, {
+      permissions,
+      blocks: this.blockAllowances(siteBlocks)
     })
   }
 
@@ -1281,7 +944,7 @@ class Rendering {
    *
    * What the render may carry is the page's own say, read off the render it has now — see
    * `inheritedPermissions`. Not the permissions of whoever pressed the button, which on this route is
-   * always `manage:system`: that would bring back, on every page at once, each `<script>` the
+   * always `manage:system`: that would bring back, on every page at once, each `<iframe>` the
    * sanitizer stripped from an author who was not allowed one, and everything an import brought in.
    */
   async storeRerender(id: string, html: string, contentHash: string): Promise<RerenderOutcome> {
@@ -1318,8 +981,8 @@ class Rendering {
    * What a stored render shows its page was allowed to carry, which nothing else records.
    *
    * A save sanitizes against what its author may embed, so whatever the sanitizer only lets through
-   * with a permission being IN the render means that permission was held: a `<script>`, an `<iframe>`
-   * or an inline handler for `scripts`, a `<style>` for `styles`. Absent, it was either refused or never
+   * with a permission being IN the render means that permission was held: an `<iframe>` for
+   * `scripts`, a `<style>` for `styles`. Absent, it was either refused or never
    * written, and refusing it again is right either way. A blank render — an import, or one whose
    * render failed — therefore grants nothing, which is what an import is rendered with.
    *
@@ -1331,11 +994,7 @@ class Rendering {
       return { scripts: false, styles: false }
     }
     const $ = cheerio.load(render, null, false)
-    const scripts =
-      $('script, iframe').length > 0 ||
-      $('*')
-        .toArray()
-        .some((el) => 'attribs' in el && Object.keys(el.attribs).some((name) => /^on/i.test(name)))
+    const scripts = $('iframe').length > 0
     const styles = $('style')
       .toArray()
       .some((el) => $(el).closest('svg').length < 1)

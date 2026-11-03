@@ -1,4 +1,5 @@
 import { audit } from '../helpers/audit.ts'
+import { requestUserId } from '../helpers/requester.ts'
 import { MAX_PACKAGE_SIZE } from '../helpers/wkblock.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 
@@ -17,14 +18,19 @@ const AUTHOR_ROLES = ['write:pages', 'manage:pages']
  * Whether this caller has any business seeing which blocks a site has.
  *
  * The list is what the editor's block picker is built from, so it belongs to whoever may put a block
- * into a page. Three ways of being that person:
+ * into a page — or whoever reads something written with blocks in it, rendered in their own browser.
+ * Four ways of being that person:
  *
  *   - an administrator, from the group-wide list above;
  *   - an author, from a page rule that lets them write somewhere on this site;
  *   - anyone an enabled approval rule lets SUGGEST an edit — the guests group included, when a wiki
  *     has opened suggestions to the public. A suggestion is written in the same editor, with the same
  *     picker in it, and refusing the list there leaves the button throwing an error at a reader who
- *     was invited to use it.
+ *     was invited to use it;
+ *   - a reader of the site's live notes. A note is rendered by the browser reading it, and that
+ *     render is sanitized against this list (`helpers/sanitizeRender.ts`), so without it every
+ *     block in a note is stripped for the reader — the guests group included, where it holds
+ *     `read:notes`.
  *
  * Asked of the site rather than of a page, because that is what the answer is about: which blocks
  * exist here. Nothing in the reply is page-specific, so a rule anywhere on the site settles it — what
@@ -50,9 +56,12 @@ async function mayListBlocks(req: FastifyRequest, siteId: string): Promise<boole
   }
   const groupIds = WIKI.models.approvals.getActorGroupIds(req)
   const rules = await WIKI.models.approvals.getRules(siteId)
-  return rules.some(
-    (rule) => rule.isEnabled && rule.submitterGroups.some((id) => groupIds.includes(id))
-  )
+  if (
+    rules.some((rule) => rule.isEnabled && rule.submitterGroups.some((id) => groupIds.includes(id)))
+  ) {
+    return true
+  }
+  return WIKI.models.liveNotes.permissionsFor({ userId: requestUserId(req), actor }, siteId).read
 }
 
 /**

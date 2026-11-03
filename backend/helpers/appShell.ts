@@ -218,11 +218,12 @@ export function resolvePagePath(
 /**
  * The stored render with everything that would *run* taken out.
  *
- * A page whose author holds `write:scripts` or `write:styles` keeps its `<script>` and `<style>` in
- * the render, and the app runs them when it displays the page. The same markup sitting in the document
- * as the browser parses it would run them a second time, before the app exists and outside anything
- * that knows about the page — so what goes into the shell is the prose and nothing else. Inline
- * handlers, `<template>` and `<link>` go for the same reason.
+ * A page whose author holds `write:styles` keeps its `<style>` in the render, and the app applies it
+ * when it displays the page. The same markup sitting in the document as the browser parses it would
+ * apply it a second time, before the app exists and outside anything that knows about the page — so
+ * what goes into the shell is the prose and nothing else. `<script>`, inline handlers, `<template>`
+ * and `<link>` go for the same reason; no render saved today carries the first two, since script on
+ * a page lives in its properties (`helpers/sanitizeRender.ts`).
  *
  * Not a security boundary, and not a second sanitizer: the render was sanitized at save time against
  * what its author was allowed to embed (`models/rendering.ts`), and this is that same markup with

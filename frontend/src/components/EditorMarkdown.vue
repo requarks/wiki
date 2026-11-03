@@ -448,6 +448,7 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
+import { renderPermissionsOf, sanitizeRender } from '@/helpers/sanitizeRender'
 
 import { fileOpen } from 'browser-fs-access'
 import { debounce } from 'es-toolkit/function'
@@ -1544,10 +1545,11 @@ async function loadSiteBlocks() {
     )
   } catch (err) {
     /*
-      Left empty, which draws everything as it did before. The preview being too generous is the
-      better failure: the server strips a disabled block on save either way, so the cost is a preview
-      that flatters the page, against hiding blocks the site really does have. The lens is the other
-      way round — with no definitions to build a form from, it simply does not appear.
+      Left empty, which strips every block from the preview: it is sanitized against this list, and
+      a block nobody can vouch for is not one to put on screen. Saving in that state stores the page
+      without them, so it is said in the console at least; the source keeps them regardless, and the
+      next save from a working editor puts them back. The lens likewise -- with no definitions to
+      build a form from, it simply does not appear.
     */
     console.warn(`Could not read which blocks this site has enabled: ${err.message}`)
   }
@@ -1637,6 +1639,17 @@ function processContent(newContent) {
     html = md.render(newContent, {
       pagePath: props.noteKey ? '' : pageStore.path,
       pageExtensions: siteStore.pageExtensions
+    })
+    /*
+      Sanitized before it goes anywhere near the screen. The source is somebody's input -- the page's
+      last author, or a collaborator typing now -- and it is rendered in THIS session. Against what
+      this session may embed on the page, which is also what saving it would keep; a note's render
+      is never saved, and embeds nothing.
+    */
+    html = sanitizeRender(html, {
+      permissions: props.noteKey ? undefined : renderPermissionsOf(userStore.pagePermissions),
+      blocks: siteBlocks,
+      blobImages: true
     })
   } catch (err) {
     console.error(err)

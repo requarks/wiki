@@ -1091,7 +1091,7 @@ const rules = [
   {
     permission: 'write:scripts',
     title: 'Use JavaScript',
-    hint: 'Can insert JavaScript in pages.',
+    hint: 'Can set the JavaScript a page runs on load and unload, and embed iframes in pages.',
     warning: false,
     restrictedForSystem: true,
     disabled: false

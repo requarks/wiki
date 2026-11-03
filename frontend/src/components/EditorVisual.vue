@@ -467,6 +467,7 @@ import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
 import { blockMarkdown, blockPropsFilled, writtenProps } from '@/helpers/blocks'
 import { classValues } from '@/helpers/markdownImages'
+import { renderPermissionsOf, sanitizeRender } from '@/helpers/sanitizeRender'
 
 import EditorCodeBlockMenu from '@/components/EditorCodeBlockMenu.vue'
 import EditorEmojiMenu from '@/components/EditorEmojiMenu.vue'
@@ -1670,6 +1671,13 @@ onMounted(async () => {
       pagePath: () => pageStore.path,
       pageExtensions: () => siteStore.pageExtensions,
       isDisabled: (tag) => disabledBlockTags.has(tag),
+      // -> Against what this session may embed on the page, which is also what saving would keep
+      sanitize: (html) =>
+        sanitizeRender(html, {
+          permissions: renderPermissionsOf(userStore.pagePermissions),
+          blocks: siteBlocks,
+          blobImages: true
+        }),
       ensureBlockLoaded,
       hasContentEditor,
       hasProps,

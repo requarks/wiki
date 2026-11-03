@@ -2,6 +2,7 @@ import { TextSelection } from 'prosemirror-state'
 
 import { twemojiHtml } from '@/renderers/markdown'
 import { fileSrc } from '@/renderers/shared'
+import { sanitizeRender } from '@/helpers/sanitizeRender'
 
 import { imageClasses } from './images'
 import { schema } from './schema'
@@ -137,7 +138,14 @@ class BlockComponentView {
 
   render() {
     const tag = `block-${this.node.attrs.name}`
-    const element = document.createElement(tag)
+    /*
+      Assembled in a document of its own, which has no window: nothing put into it loads or runs. Both
+      halves of the element are the author's -- the attributes and the body -- and an `<img onerror>`
+      given to `innerHTML` here would fire even detached, so the whole of it is sanitized before any
+      of it reaches this one.
+    */
+    const scratch = document.implementation.createHTMLDocument('')
+    const element = scratch.createElement(tag)
     for (const [name, value] of Object.entries(this.node.attrs.blockAttrs ?? {})) {
       // -> An attribute name a block declares is not necessarily a valid one to set; a block with a
       //    malformed parameter should draw as a block with a missing parameter, not take the page down
@@ -150,7 +158,9 @@ class BlockComponentView {
     if (this.node.attrs.body) {
       element.innerHTML = this.context.renderMarkdown(this.node.attrs.body)
     }
-    this.preview.replaceChildren(element)
+    const template = document.createElement('template')
+    template.innerHTML = this.context.sanitize(element.outerHTML)
+    this.preview.replaceChildren(template.content)
 
     if (this.context.isDisabled(tag)) {
       this.dom.dataset.blockDisabled = ''
@@ -1144,12 +1154,16 @@ class EmojiView {
 
   apply(node) {
     /*
-      The renderer's own markup, which is one `<img>`. Safe to assign: it is built by twemoji from a
-      character this parser produced, and the only thing interpolated into it is a codepoint.
+      The renderer's own markup, which is one `<img>` -- but sanitized all the same. Both attributes
+      can arrive from somewhere other than this parser: pasted HTML (`parseDOM` reads them off the
+      clipboard's markup) or a collaborator's change to the shared document. twemoji passes anything
+      that is not an emoji through as it is, and the shortcode is text, so it is set as text.
     */
-    this.dom.innerHTML = node.attrs.char
-      ? twemojiHtml(node.attrs.char)
-      : `:${node.attrs.shortcode}:`
+    if (node.attrs.char) {
+      this.dom.innerHTML = sanitizeRender(twemojiHtml(node.attrs.char))
+    } else {
+      this.dom.textContent = `:${node.attrs.shortcode}:`
+    }
   }
 
   update(node) {

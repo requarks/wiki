@@ -383,6 +383,7 @@ import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
 import { enhanceRenderedContent } from '@/helpers/renderedContent'
+import { renderPermissionsOf, sanitizeRender } from '@/helpers/sanitizeRender'
 
 import { debounce } from 'es-toolkit/function'
 import * as monaco from 'monaco-editor'
@@ -1136,7 +1137,7 @@ async function loadSiteBlocks() {
       siteBlocks.filter((block) => !block.isEnabled).map((block) => `block-${block.block}`)
     )
   } catch (err) {
-    // -> Left empty, which draws everything as it did before; see the same note in `EditorMarkdown.vue`
+    // -> Left empty, which strips every block from the preview; see the same note in `EditorMarkdown.vue`
     console.warn(`Could not read which blocks this site has enabled: ${err.message}`)
   }
 }
@@ -1268,7 +1269,19 @@ async function processContent(newContent) {
     (el) => el.active ?? 0
   )
 
-  pageStore.setRender(rendered.html)
+  /*
+    Sanitized before it reaches the screen: Asciidoctor's secure mode refuses to read files, but a
+    passthrough (`++++`, `pass:[]`) still hands the author's HTML through untouched, and this is
+    rendered in THIS session -- see `sanitizeRender`. Against what this session may embed on the page,
+    which is also what saving it would keep.
+  */
+  pageStore.setRender(
+    sanitizeRender(rendered.html, {
+      permissions: renderPermissionsOf(userStore.pagePermissions),
+      blocks: siteBlocks,
+      blobImages: true
+    })
+  )
   headings.value = rendered.headings
   await nextTick()
   // -> With the preview pane closed there is no DOM to attend to. The render is stored either way, so

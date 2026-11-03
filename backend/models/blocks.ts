@@ -112,6 +112,11 @@ export interface SiteBlock {
   isCustom: boolean
   config: Record<string, any>
   props: BlockProp[]
+  /**
+   * Every attribute the component reads, `internal` props included — what the sanitizer lets through
+   * on the element. The browser sanitizes its previews with the same list (`helpers/sanitizeRender.ts`).
+   */
+  attributes: string[]
   template: string
   /** Empty for a block whose starter body needs no AsciiDoc spelling of its own — see the definition. */
   asciidocTemplate: string
@@ -435,6 +440,7 @@ class Blocks {
       return {
         ...row,
         props: authorableProps(definition?.props),
+        attributes: (definition?.props ?? []).map((prop) => prop.name),
         template: definition?.template ?? '',
         asciidocTemplate: definition?.asciidocTemplate ?? '',
         contentEditor: definition?.contentEditor ?? '',
@@ -466,6 +472,7 @@ class Blocks {
         isCustom: false,
         config: {},
         props: authorableProps(definition.props),
+        attributes: (definition.props ?? []).map((prop) => prop.name),
         template: definition.template ?? '',
         asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',

@@ -6,6 +6,7 @@ paths:
   - "frontend/vite.config.js"
   - "backend/core/collab.ts"
   - "backend/models/rendering.ts"
+  - "backend/helpers/sanitizeRender.ts"
 ---
 
 # Drawings (the Excalidraw editor)
@@ -60,11 +61,11 @@ is 0 and ProseMirror's is 1, and a seed reusing an id the document has seen is d
 `buildSeed` on the server skips `content` for a canvas editor (`CANVAS_EDITORS`), since a scene is
 tens of kilobytes of JSON that no client would ever bind to.
 
-**The sanitizer had to learn two things** (`models/rendering.ts`): the inert text and font attributes
-an export puts on every `text` element, and the `image` element. Neither grants anything new — `href`
-is scheme-checked like every other link, and `img` beside it could always fetch a picture. `data:` is
-not an allowed scheme, which is the other half of why images go to the asset store. `extractText`
-also puts a space after each `svg text`, because an export writes every LINE as a `text` of its own
+**The sanitizer had to learn two things** (`helpers/sanitizeRender.ts`): the inert text and font
+attributes an export puts on every `text` element, and the `image` element. Neither grants anything
+new — `href` is scheme-checked like every other link, and `img` beside it could always fetch a
+picture. `data:` is not an allowed scheme, which is the other half of why images go to the asset
+store. `extractText` in `models/rendering.ts` also puts a space after each `svg text`, because an export writes every LINE as a `text` of its own
 and a two-line label came out as one unsearchable run of letters.
 
 Ctrl+S does not save here, the same as in the Visual and Redirection editors: that shortcut is a

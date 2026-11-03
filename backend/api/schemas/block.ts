@@ -63,6 +63,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'Names an editor for the block\'s body, which the markdown editor offers as an "Edit Content" lens above the block alongside "Edit Block Parameters". A key the frontend resolves to a component, for a block whose body is a fenced source the props form cannot describe. Empty for a block that names none, which is most of them.'
       },
+      attributes: {
+        type: 'array',
+        description:
+          "Every attribute the block's component reads, the ones the wiki writes itself (a math block's `inline`) as well as the authorable ones in `props`. What a sanitizer lets through on the element, server and browser alike; not something to build a form from.",
+        items: { type: 'string' }
+      },
       props: {
         type: 'array',
         description:

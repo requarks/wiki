@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import vue from '@vitejs/plugin-vue'
 // -> A named import: js-yaml 5 ships ESM with no default export, so `import yaml from` throws
 import { load as loadYaml } from 'js-yaml'
@@ -10,6 +10,18 @@ import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 const TWEMOJI_ROUTE = '/_assets/svg/twemoji'
+
+/**
+ * The rules a page render is sanitized by, which the server and the browser share -- one file, read
+ * from the backend, rather than a copy here that could drift from it. See the top of the file itself
+ * for why it imports nothing.
+ *
+ * Imported as `@backend/sanitizeRender`, and named in `server.fs.allow` as well: it sits outside this
+ * workspace, and the dev server refuses to serve a file from there that it has not been told about.
+ */
+const SANITIZE_RULES = fileURLToPath(
+  new URL('../backend/helpers/sanitizeRender.ts', import.meta.url)
+)
 
 /**
  * Where the Excalidraw editor's own assets are served from.
@@ -374,6 +386,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@backend/sanitizeRender': SANITIZE_RULES,
         /*
           markdown-it 15 dropped its `markdown-it/lib/*` subpath exports and put the parser internals
           on the main export as static classes. `markdown-it-mdc` still imports the old path, so
@@ -398,6 +411,10 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: true,
       port: userConfig.dev?.port,
+      fs: {
+        // -> Setting `allow` replaces the default, so the workspace has to be named again
+        allow: [searchForWorkspaceRoot(process.cwd()), SANITIZE_RULES]
+      },
       proxy: [
         '/_api',
         '/_blocks',

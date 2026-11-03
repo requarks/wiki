@@ -1647,7 +1647,7 @@ export const pageRenderQueue = pgTable(
   'pageRenderQueue',
   {
     id: uuid().primaryKey().defaultRandom(),
-    /** `write:scripts` — whether this render may keep `<script>` and inline handlers. */
+    /** `write:scripts` — whether this render may keep `<iframe>` embeds. */
     allowScripts: boolean().notNull().default(false),
     /** `write:styles` — whether this render may keep `<style>` and inline `style` attributes. */
     allowStyles: boolean().notNull().default(false),

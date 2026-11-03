@@ -108,6 +108,7 @@ import { useMinWidth } from '@/composables/screen'
 import { scrollToAnchor, scrollToAnchorWhenReady } from '@/helpers/anchors'
 import { withGlossary } from '@/helpers/glossaryUrl'
 import { enhanceRenderedContent, resolveContentClick } from '@/helpers/renderedContent'
+import { sanitizeRender } from '@/helpers/sanitizeRender'
 import { anchorHeadings, flattenToc } from '@/helpers/toc'
 import { MarkdownRenderer } from '@/renderers/markdown'
 
@@ -178,6 +179,8 @@ const ytext = collabHandles()?.ydoc.getText('content') ?? null
  * choice the editor's preview makes, without its notice, which is addressed to an author.
  */
 let disabledBlockTags = new Set()
+/** The site's blocks, every one of which the render may keep — see `render`. */
+let siteBlocks = []
 
 /** Whether the URL's `#heading` has been gone to yet, which only the first render should do. */
 let arrivedAtHash = false
@@ -240,12 +243,13 @@ const isEmpty = computed(() => !liveNoteStore.content.trim())
 
 async function loadSiteBlocks() {
   try {
-    const siteBlocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
+    siteBlocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
     disabledBlockTags = new Set(
       siteBlocks.filter((block) => !block.isEnabled).map((block) => `block-${block.block}`)
     )
   } catch (err) {
-    // -> Left empty, which draws every block: the same failure the editor's preview settles for
+    // -> Left empty, which strips every block: the render is sanitized against this list, and a
+    //    note without its blocks is the failure that runs nothing
     console.warn(`Could not read which blocks this site has enabled: ${err.message}`)
   }
 }
@@ -265,7 +269,14 @@ function render() {
 
   let html
   try {
-    html = md.render(content, { pagePath: '', pageExtensions: siteStore.pageExtensions })
+    /*
+      Sanitized, with nothing to embed: a note is written by whoever holds `write:notes`, and read by
+      everybody holding `read:notes` -- guests included -- each in their own session.
+    */
+    html = sanitizeRender(
+      md.render(content, { pagePath: '', pageExtensions: siteStore.pageExtensions }),
+      { blocks: siteBlocks }
+    )
   } catch (err) {
     // -> The last render that worked stays up. Said nowhere else: the reader did not write it, and a
     //    notice per keystroke of somebody else's would be noise

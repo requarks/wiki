@@ -23,7 +23,8 @@ import { currentVia } from '../helpers/via.ts'
 import type { AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { FastifyRequest } from 'fastify'
-import type { RenderPermissions, TocNode } from './rendering.ts'
+import type { TocNode } from './rendering.ts'
+import type { RenderPermissions } from '../helpers/sanitizeRender.ts'
 import type { DeletedEntry } from './tree.ts'
 import type { StoragePageContent, StoragePageRef } from './storage.ts'
 import type { PageRatingsCache } from './pageRatings.ts'
@@ -618,7 +619,7 @@ export interface PageChange {
 }
 
 /**
- * What an author may embed on a page — scripts and styles — which the page's rules decide.
+ * What an author may embed on a page — iframes and styles — which the page's rules decide.
  *
  * `write:scripts` and `write:styles` are page permissions, granted per path by a group's rules, so
  * they are asked about the page rather than looked up in the group-wide list: that list never holds
@@ -3844,12 +3845,12 @@ class Pages {
     /*
       Imported content is rendered with NO script or style permission, whoever ran the import.
 
-      What those two allow is a `<script>` or a `<style>` surviving sanitization, and the file this
+      What those two allow is an `<iframe>` or a `<style>` surviving sanitization, and the file this
       came out of was not necessarily written by the administrator who pressed the button — the whole
       point of the feature is content arriving from somewhere else, which for a future git target
       means commits from whoever can push. Granting the importer's own privileges to it would turn
-      "restore my pages" into stored XSS for every reader. An administrator who does want scripts on
-      an imported page saves it once themselves, deliberately.
+      "restore my pages" into someone else's embeds and styles for every reader. An administrator who
+      does want them on an imported page saves it once themselves, deliberately.
     */
     const actor: PageActor = { id: authorId, groupIds: [], permissions: [] }
     // -> The one difference between the two directions, and deliberately the only one: a page that is
