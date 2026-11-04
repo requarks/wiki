@@ -70,7 +70,16 @@ export default class OidcAuthentication {
     if (this.conf.useDiscovery !== false) {
       strategyDebug(this, `reading the provider's metadata from ${issuer}`)
       try {
-        this.config = await client.discovery(new URL(issuer), clientId, clientSecret)
+        this.config = await client.discovery(
+          new URL(issuer),
+          clientId,
+          clientSecret,
+          undefined,
+          // -> Only so the discovery request itself may go over plain HTTP (see below)
+          this.conf.allowInsecureHttp === true
+            ? { execute: [client.allowInsecureRequests] }
+            : undefined
+        )
       } catch (err: any) {
         // -> The first thing to fail on a new strategy, and it fails for reasons the log has to
         //    carry: an issuer that is not a URL, one publishing no discovery document, TLS
@@ -106,6 +115,17 @@ export default class OidcAuthentication {
         clientId,
         clientSecret
       )
+    }
+    /*
+      Plain HTTP, when the strategy allows it. `openid-client` sends nothing over a connection that is
+      not TLS by default — the client secret and the tokens travel these requests — and
+      `allowInsecureHttp` is the setting that lifts it, for a provider on a network the administrator
+      trusts. Discovery carried the flag on its own request above, because that round trip happens
+      before there is a Configuration to set it on; this line covers the manual branch, and every
+      request made after either.
+    */
+    if (this.conf.allowInsecureHttp === true) {
+      client.allowInsecureRequests(this.config)
     }
     // -> After either branch: which endpoint the userinfo request goes to is what discovery answers,
     //    and how the token is presented to it is a separate question with the same answer either way
