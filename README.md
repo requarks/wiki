@@ -27,6 +27,13 @@
 - Chat with us on [Discord](https://discord.gg/rcxt9QS2jd)
 - [Translations](https://docs.js.wiki/dev/translations) *(We need your help!)*
 
+## One-Click Deploy
+
+<a href="https://repocloud.io/details/Wiki.js/"><img src="https://d16t0pc4846x52.cloudfront.net/deploylobe.svg" alt="Deploy on RepoCloud" height="42"></a>
+<a href="https://railway.com/deploy/wikijs"><img src="https://railway.com/button.svg" alt="Deploy on Railway" height="42"></a>
+<a href="https://elest.io/open-source/wikijs"><img src="https://elest.io/images/logos/deploy-to-elestio-btn.png" alt="Deploy on Elestio" height="42"></a>
+<a href="https://www.koyeb.com/deploy/wikijs"><img src="https://www.koyeb.com/static/images/deploy/button.svg" alt="Deploy on Koyeb" height="42"></a>
+
 <h2 align="center">Donate</h2>
 
 <div align="center">
