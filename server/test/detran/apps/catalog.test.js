@@ -45,7 +45,7 @@ describe('Detran-MG Apps Catalog & SSO Helper (Entra ID)', () => {
       expect(servicedesk).toBeDefined()
       expect(servicedesk.nome).toBe('Service Desk')
       expect(servicedesk.icone).toBe('mdi-headset')
-      expect(servicedesk.ssoStartUrl).toBe(process.env.SERVICE_DESK_SSO_START_URL || 'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start')
+      expect(servicedesk.ssoStartUrl).toBe('https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start')
 
       const wikijs = apps.find(a => a.id === 'wikijs')
       expect(wikijs).toBeDefined()
