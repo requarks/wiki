@@ -795,11 +795,14 @@ export default {
         Cookies.set('jwt', respObj.jwt, { expires: 365, secure: window.location.protocol === 'https:' })
         _.delay(() => {
           // -> Prioridade para retorno a aplicação satélite (?returnApp=)
-          const returnAppId = Cookies.get('returnApp')
-          if (returnAppId) {
+          const rawReturnAppId = Cookies.get('returnApp')
+          if (rawReturnAppId && /^[a-z0-9_-]+$/i.test(rawReturnAppId.trim())) {
+            const returnAppId = encodeURIComponent(rawReturnAppId.trim().toLowerCase())
             Cookies.remove('returnApp')
             window.location.replace(`/apps/${returnAppId}`)
             return
+          } else if (rawReturnAppId) {
+            Cookies.remove('returnApp')
           }
 
           const loginRedirect = Cookies.get('loginRedirect')

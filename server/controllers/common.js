@@ -1,3 +1,4 @@
+const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const router = express.Router()
@@ -16,6 +17,10 @@ const appsCatalog = require('../detran/apps/catalog')
 // Interceptor Global de Redirecionamento Satélite (?returnApp=)
 // -------------------------------------------------------------
 router.use((req, res, next) => {
+  // Evita reentrância em rotas de autenticação ou APIs
+  if (req.path === '/login' || req.path.startsWith('/login/') || req.path.startsWith('/api/')) {
+    return next()
+  }
   if (req.query && req.query.returnApp && appsCatalog.isValidAppId(req.query.returnApp)) {
     const app = appsCatalog.getApp(req.query.returnApp)
     // Se o utilizador já estiver autenticado na Intranet, redireciona imediatamente com login_hint
@@ -90,7 +95,15 @@ router.get('/api/detran/apps', (req, res) => {
  * Endpoint de CDN para o SDK Corporativo @detran/sso-client (Browser IIFE Bundle)
  */
 router.get('/detran-sso.js', (req, res) => {
-  const bundlePath = path.join(WIKI.ROOTPATH, 'packages', 'detran-sso-client', 'dist', 'detran-sso.bundle.js')
+  const localPkgBundle = path.join(WIKI.ROOTPATH, 'packages', 'detran-sso-client', 'dist', 'detran-sso.bundle.js')
+  const serverBundle = path.join(WIKI.SERVERPATH, 'detran', 'assets', 'detran-sso.bundle.js')
+  const bundlePath = fs.existsSync(serverBundle) ? serverBundle : localPkgBundle
+
+  if (!fs.existsSync(bundlePath)) {
+    return res.status(404).type('text/plain').send('/* Detran SSO client bundle not available */')
+  }
+
+  res.set('Cache-Control', 'public, max-age=3600')
   res.type('application/javascript')
   res.sendFile(bundlePath)
 })

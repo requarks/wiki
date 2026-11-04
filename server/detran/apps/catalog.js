@@ -12,7 +12,7 @@ const DEFAULT_APPS = [
     nome: 'Service Desk',
     icone: 'mdi-headset',
     descricao: 'Central de Chamados, Suporte de TI e Atendimento aos Servidores',
-    ssoStartUrl: 'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start',
+    ssoStartUrl: process.env.SERVICE_DESK_SSO_START_URL || 'https://detran-desk-epeveqghavdheva9.westus3-01.azurewebsites.net/api/auth/sso/start',
     allowedGroups: [] // Vazio = liberado para todos os utilizadores autenticados
   },
   {

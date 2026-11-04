@@ -37,6 +37,7 @@ server/views/setup.pug
 /content
 /temp
 *.sqlite
+/.trash/
 
 # IDE exclude
 .idea
