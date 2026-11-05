@@ -70,13 +70,23 @@ export default class OidcAuthentication {
     if (this.conf.useDiscovery !== false) {
       strategyDebug(this, `reading the provider's metadata from ${issuer}`)
       try {
-        this.config = await client.discovery(new URL(issuer), clientId, clientSecret)
+        this.config = await client.discovery(
+          new URL(issuer),
+          clientId,
+          clientSecret,
+          undefined,
+          // -> The discovery request is made before there is a Configuration to allow plain HTTP on,
+          //    so it is allowed here; the library carries it onto the Configuration it returns
+          this.conf.allowInsecureHttp === true
+            ? { execute: [client.allowInsecureRequests] }
+            : undefined
+        )
       } catch (err: any) {
         // -> The first thing to fail on a new strategy, and it fails for reasons the log has to
         //    carry: an issuer that is not a URL, one publishing no discovery document, TLS
         strategyDebug(
           this,
-          `could not read the provider's metadata from ${issuer}: ${describeAuthError(err)}`
+          `could not read the provider's metadata from ${issuer}: ${this.describeError(err)}`
         )
         throw err
       }
@@ -106,6 +116,15 @@ export default class OidcAuthentication {
         clientId,
         clientSecret
       )
+      if (this.conf.allowInsecureHttp === true) {
+        client.allowInsecureRequests(this.config)
+      }
+    }
+    if (this.conf.allowInsecureHttp === true) {
+      strategyDebug(
+        this,
+        'allows plain HTTP: requests to the provider, which carry the client secret and the tokens, may go unencrypted'
+      )
     }
     // -> After either branch: which endpoint the userinfo request goes to is what discovery answers,
     //    and how the token is presented to it is a separate question with the same answer either way
@@ -113,6 +132,17 @@ export default class OidcAuthentication {
       this.accessTokenInQueryString(this.config)
     }
     return this.config
+  }
+
+  /**
+   * `describeAuthError`, plus the setting to look at when the refusal is `openid-client` declining a
+   * plain-HTTP request — its own message names the rule, not the switch that lifts it.
+   */
+  private describeError(err: any): string {
+    const description = describeAuthError(err)
+    return err?.code === 'OAUTH_HTTP_REQUEST_FORBIDDEN' && this.conf.allowInsecureHttp !== true
+      ? `${description} — the provider is reached over plain HTTP, which this strategy refuses unless Allow Insecure HTTP is on`
+      : description
   }
 
   /**
@@ -200,7 +230,7 @@ export default class OidcAuthentication {
         redirect URI the provider does not have registered, a client secret that has been rotated, a
         clock that is out, and a token signed by a key the issuer does not publish.
       */
-      strategyDebug(this, `the provider's answer did not check out: ${describeAuthError(err)}`)
+      strategyDebug(this, `the provider's answer did not check out: ${this.describeError(err)}`)
       throw err
     }
     const claims = tokens.claims()
@@ -228,7 +258,7 @@ export default class OidcAuthentication {
           ...(await client.fetchUserInfo(config, tokens.access_token, claims.sub))
         }
       } catch (err: any) {
-        strategyDebug(this, `the userinfo endpoint could not be read: ${describeAuthError(err)}`)
+        strategyDebug(this, `the userinfo endpoint could not be read: ${this.describeError(err)}`)
         throw err
       }
     }
