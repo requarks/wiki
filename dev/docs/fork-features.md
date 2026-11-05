@@ -14,6 +14,7 @@ This page is the rolling, user-facing guide: what each feature does, where to tu
 |---|---|---|
 | `v2.5.314_jp` | 2026-06-13 | Clipboard image paste and drag-and-drop in both editors |
 | `v2.5.314_jp2` | 2026-09-09 | Corporate workflow (Watch, Managed pages, Review/Approve, groups everywhere), mail-failure alert, Private site, Hide "Powered by Wiki.js", Print QR code, customizable load/save animation, Git build info |
+| `v2.5.317_jp1` | 2026-11-05 | Includes upstream **2.5.316** and **2.5.317**: the **Export for Wiki.js 3.x** utility under Admin → Utilities, which produces the `.wkbackup` package the Wiki.js 3 importer reads; and the Node security updates of the 2.5.317 build |
 | `v2.5.315_jp3` | 2026-10-30 | Drafts-in-progress warning: opening the editor on a page that already has drafts shows a dialog listing them, with Review / Edit draft / Back to page / Edit live page anyway, so pending drafts can be merged before the live page is changed |
 | `v2.5.315_jp2` | 2026-10-24 | fix: the floating edit (pencil) button covered the draft actions at the bottom of the sidebar workflow card; the sidebar now scrolls far enough to clear it |
 | `v2.5.315_jp1` | 2026-10-03 | Includes upstream **2.5.315** (two security fixes: XSS through Vue directives in page content, and delegated user managers editing administrators); print view shows last editor and revision date under the title; fix: watch-digest job could freeze the whole server for minutes on large, heavily edited pages; SMTP timeouts bounded so an unreachable mail host can't stall a publish |
