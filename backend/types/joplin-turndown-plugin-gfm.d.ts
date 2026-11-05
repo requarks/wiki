@@ -5,8 +5,10 @@
  * years: same rules, kept up with Turndown and with the table shapes a real WYSIWYG page produces —
  * merged cells, a table with no header row, nested markup inside a cell.
  *
- * Only `gfm` is used, the bundle of every rule, because a page converted from 2.x needs all of them
- * — tables above all, since plain Turndown has no rule for one and would flatten it to loose text.
+ * Every rule `gfm` bundles is used, because a page converted from 2.x needs all of them — tables
+ * above all, since plain Turndown has no rule for one and would flatten it to loose text. They are
+ * applied one by one rather than through `gfm` so that `tables` can be wrapped
+ * (`withTableRowSnapshots` in `helpers/htmlToMarkdown.ts`).
  */
 declare module '@joplin/turndown-plugin-gfm' {
   import type TurndownService from 'turndown'

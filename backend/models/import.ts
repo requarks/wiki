@@ -272,8 +272,13 @@ const V2_ICON_CLASS = 'align-abstopright'
  *
  * The size suffix is `markdown-it-imsize`, which both versions use, so the URL is only the first
  * token inside the parentheses.
+ *
+ * Whatever follows the URL has to begin with whitespace. Without that the URL and the rest of the
+ * parentheses could each take the same characters, and an image NOT followed by an attribute block
+ * is retried at every split of its URL — quadratic in its length, so a base64 `data:` screenshot of
+ * a megabyte held the import for minutes on one page, and the whole server with it.
  */
-const MD_IMAGE_WITH_ATTRS = /!\[[^\]]*\]\(\s*([^)\s]+)[^)]*\)\{([^}]*)\}/
+const MD_IMAGE_WITH_ATTRS = /!\[[^\]]*\]\(\s*([^)\s]+)(?:\s[^)]*)?\)\{([^}]*)\}/
 
 /** The same thing written as HTML, which is what a 2.x ckeditor or code page holds. */
 const HTML_IMAGE = /<img\b[^>]*>/i

@@ -1,6 +1,11 @@
 import * as cheerio from 'cheerio'
 import TurndownService from 'turndown'
-import { gfm } from '@joplin/turndown-plugin-gfm'
+import {
+  highlightedCodeBlock,
+  strikethrough,
+  tables,
+  taskListItems
+} from '@joplin/turndown-plugin-gfm'
 
 import type { AnyNode } from 'domhandler'
 
@@ -61,7 +66,11 @@ export function htmlToMarkdown(html: string, report?: ConversionLosses): string 
       codeBlockStyle: 'fenced',
       bulletListMarker: '-',
       emDelimiter: '*'
-    }).use(gfm)
+    }).use([highlightedCodeBlock, strikethrough])
+    // -> `gfm` is these four in this order, which matters since a later rule wins a node. Spelled out
+    //    so that the table rules can be handed a service of their own (`withTableRowSnapshots`).
+    tables(withTableRowSnapshots(turndown))
+    turndown.use(taskListItems)
 
     /*
       Inline code, from the element's text rather than its converted children. Turndown's own rule
@@ -98,6 +107,61 @@ export function htmlToMarkdown(html: string, report?: ConversionLosses): string 
   }
   linkBareUrls($)
   return turndown.turndown($.html())
+}
+
+/** The plugin's rules that read a table's `rows`, by the key it adds them under. */
+const ROW_READING_RULES = new Set(['tableCell', 'tableRow', 'table'])
+
+/**
+ * The service as the table rules see it, with each table's rows read once rather than on every look.
+ *
+ * The rules ask a table for `rows` inside their loops — per column, to vote on its alignment, and
+ * per row inside that — and in domino, which Turndown parses with on Node, `rows` is a fresh
+ * `getElementsByTagName('tr')` that walks the whole table each time it is read. A table cost columns
+ * × rows × cells: a 3000-row table took over a minute, on the main thread, during which the server
+ * answered nothing.
+ *
+ * So before any of those rules runs, the table gets its rows as a plain array of its own, which
+ * shadows the getter. Nothing changes the tree while Turndown converts it, so the snapshot cannot go
+ * stale. Done through the plugin's `addRule` calls rather than by reaching into Turndown's rule list,
+ * which is not public.
+ */
+function withTableRowSnapshots(service: TurndownService): TurndownService {
+  return Object.create(service, {
+    addRule: {
+      value: (key: string, rule: TurndownService.Rule) => {
+        if (!ROW_READING_RULES.has(key)) {
+          return service.addRule(key, rule)
+        }
+        const replacement = rule.replacement!
+        return service.addRule(key, {
+          ...rule,
+          replacement(content, node, options) {
+            snapshotRows(node as unknown as TableTreeNode)
+            return replacement.call(this, content, node, options)
+          }
+        })
+      }
+    }
+  })
+}
+
+/** The little of a domino node `snapshotRows` reads. The backend has no DOM lib to name it from. */
+interface TableTreeNode {
+  nodeName: string
+  parentNode: TableTreeNode | null
+  rows?: ArrayLike<unknown>
+}
+
+/** Give the table a node sits in its rows as an array of its own, once. */
+function snapshotRows(node: TableTreeNode): void {
+  let table: TableTreeNode | null = node
+  while (table && table.nodeName !== 'TABLE') {
+    table = table.parentNode
+  }
+  if (table?.rows && !Object.hasOwn(table, 'rows')) {
+    Object.defineProperty(table, 'rows', { value: Array.from(table.rows) })
+  }
 }
 
 /**
