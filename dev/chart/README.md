@@ -7,13 +7,12 @@ Deploys Wiki.js 3.x, with a bundled PostgreSQL 18 or an existing PostgreSQL 17+ 
 The chart is published as an OCI artifact, so no `helm repo add` is needed:
 
 ```sh
-helm install wiki oci://ghcr.io/requarks/charts/wiki --version 3.0.0-beta.<build>
+helm install wiki oci://ghcr.io/requarks/charts/wiki
 ```
 
-Pass `--version` explicitly while the chart is a pre-release, because Helm skips pre-release
-versions unless you name one or pass `--devel`. With no values set, you get one wiki replica
-reachable inside the cluster only, backed by a bundled PostgreSQL on an 8 GiB claim. The first
-start runs the database migrations; `kubectl rollout status deployment/wiki` shows when it is done.
+With no values set, you get one wiki replica reachable inside the cluster only, backed by a bundled
+PostgreSQL on an 8 GiB claim. The first start runs the database migrations;
+`kubectl rollout status deployment/wiki` shows when it is done.
 
 Unless `admin.password` is set, the first login is `admin@example.com` / `12345678`, and it has to be
 changed.
@@ -137,11 +136,11 @@ load balancers five seconds to drop the pod first.
 
 ## Upgrading
 
-Every build of the wiki publishes a chart of the same version, `3.0.0-beta.<build>`, whose
+Every build of the wiki publishes a chart of the same version, e.g. `3.0.1`, whose
 `appVersion` is that build's image. Upgrading the wiki is therefore upgrading the chart:
 
 ```sh
-helm upgrade wiki oci://ghcr.io/requarks/charts/wiki --version 3.0.0-beta.<newer> -f my-values.yaml
+helm upgrade wiki oci://ghcr.io/requarks/charts/wiki --version 3.0.2 -f my-values.yaml
 ```
 
 `helm rollback` returns to the previous image along with everything else. Leave `image.tag` unset,
