@@ -201,6 +201,31 @@ export class MarkdownRenderer {
     this.md.block.ruler.disable('mdc_block_slots')
 
     /*
+      MDC's YAML props, held to the one place the MDC syntax puts them: the line straight after a
+      block's opening `::name`.
+
+      As shipped, the rule claims a `---` line ANYWHERE inside a block, reading everything up to the
+      next `---` as YAML. That is a thematic break everywhere else in markdown, and separating sections
+      with one is common -- pages imported from 2.x carry them inside `::block-tab` once their tabsets
+      are converted. Text between two of them that was not valid YAML took the render down
+      (`YAMLParseError`, `Unresolved alias`); text that happened to be valid YAML (`Verdict : True`)
+      was worse, swallowed as props without a word, and never shown.
+
+      The rule runs ahead of `hr`, so declining here is all it takes for the line to render as `<hr>`.
+      The innermost open block is the first of `mdcBlockTokens`, and its `map` starts at its opening
+      line.
+    */
+    const yamlRule = this.md.block.ruler.__rules__.find((rule) => rule.name === 'mdc_block_yaml')
+    const blockYaml = yamlRule.fn
+    this.md.block.ruler.at('mdc_block_yaml', (state, startLine, endLine, silent) => {
+      const block = state.env.mdcBlockTokens?.[0]
+      if (!block?.map || startLine !== block.map[0] + 1) {
+        return false
+      }
+      return blockYaml(state, startLine, endLine, silent)
+    })
+
+    /*
       MDC's inline span, `[text]{.class}`, claims every `[` it meets — including the `[^1]` of a
       footnote reference, which came out as `<span>^1</span>`. The note itself then vanished too,
       since a definition nothing refers to is dropped. Rule order settles it whatever order the
