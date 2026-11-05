@@ -1,6 +1,7 @@
 import { validate as uuidValidate } from 'uuid'
 
 import { mayOnPage } from '../api/pages.ts'
+import { VISUAL_EDITOR_SCHEMA } from '../helpers/visualEditorProtocol.ts'
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { WebSocket } from 'ws'
@@ -21,12 +22,15 @@ import type { WebSocket } from 'ws'
  * a permission taken away mid-session takes effect the next time the editor is opened.
  */
 async function routes(app: FastifyInstance) {
-  app.get<{ Params: { siteId: string; pageId: string } }>(
+  app.get<{ Params: { siteId: string; pageId: string }; Querystring: { visualSchema?: string } }>(
     '/:siteId/:pageId',
     { websocket: true, schema: { hide: true } },
     async (
       socket: WebSocket,
-      req: FastifyRequest<{ Params: { siteId: string; pageId: string } }>
+      req: FastifyRequest<{
+        Params: { siteId: string; pageId: string }
+        Querystring: { visualSchema?: string }
+      }>
     ) => {
       const { siteId, pageId } = req.params
 
@@ -60,6 +64,14 @@ async function routes(app: FastifyInstance) {
       }
       if (!mayOnPage(req, 'write:pages', page)) {
         return socket.close(4403, 'You are not allowed to edit this page')
+      }
+
+      // -> Refuse before join can send or apply any room state. Old clients stop retrying on 4xxx.
+      if (page.editor === 'visual' && req.query.visualSchema !== VISUAL_EDITOR_SCHEMA) {
+        return socket.close(
+          4406,
+          'Visual editor updated. Keep unsaved work separately, then reload.'
+        )
       }
 
       await WIKI.collab.join(socket, { kind: 'page', id: pageId, siteId }, session, {

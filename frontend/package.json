@@ -14,7 +14,8 @@
     "icons:check": "node scripts/generate-icons.mjs --check",
     "emoji": "node scripts/generate-emoji.mjs",
     "emoji:check": "node scripts/generate-emoji.mjs --check",
-    "visual:check": "node scripts/check-visual-roundtrip.mjs"
+    "visual:check": "node scripts/check-visual-roundtrip.mjs",
+    "visual:check:image-links": "node scripts/check-visual-image-links.mjs"
   },
   "dependencies": {
     "@asciidoctor/core": "4.1.1",
@@ -96,6 +97,7 @@
     "@iconify-json/mdi": "1.2.3",
     "@vitejs/plugin-vue": "6.0.10",
     "js-yaml": "5.5.0",
+    "jsdom": "29.1.1",
     "npm-check-updates": "23.1.1",
     "oxfmt": "0.75.0",
     "oxlint": "1.90.0",

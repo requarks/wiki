@@ -22,6 +22,9 @@ const TWEMOJI_ROUTE = '/_assets/svg/twemoji'
 const SANITIZE_RULES = fileURLToPath(
   new URL('../backend/helpers/sanitizeRender.ts', import.meta.url)
 )
+const VISUAL_EDITOR_PROTOCOL = fileURLToPath(
+  new URL('../backend/helpers/visualEditorProtocol.ts', import.meta.url)
+)
 
 /**
  * Where the Excalidraw editor's own assets are served from.
@@ -387,6 +390,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         '@backend/sanitizeRender': SANITIZE_RULES,
+        '@backend/visualEditorProtocol': VISUAL_EDITOR_PROTOCOL,
         /*
           markdown-it 15 dropped its `markdown-it/lib/*` subpath exports and put the parser internals
           on the main export as static classes. `markdown-it-mdc` still imports the old path, so
@@ -413,7 +417,7 @@ export default defineConfig(({ mode }) => {
       port: userConfig.dev?.port,
       fs: {
         // -> Setting `allow` replaces the default, so the workspace has to be named again
-        allow: [searchForWorkspaceRoot(process.cwd()), SANITIZE_RULES]
+        allow: [searchForWorkspaceRoot(process.cwd()), SANITIZE_RULES, VISUAL_EDITOR_PROTOCOL]
       },
       proxy: [
         '/_api',

@@ -10,6 +10,7 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 import { collabPlugins, collabRedo, collabUndo, seedIfEmpty } from './collab'
 import { buildInputRules, buildKeymap, taskCheckboxes } from './commands'
 import { imageBar } from './images'
+import { imageLinkClipboardSerializer, imageLinkStorage } from './imageLinks'
 import { linkBar } from './links'
 import { createNodeViews } from './nodeviews'
 import { createParser } from './parse'
@@ -102,6 +103,7 @@ export function createVisualEditor({
     keymap(buildKeymap({ collab: isCollab })),
     gapCursor(),
     taskCheckboxes(),
+    imageLinkStorage(),
     /*
       No `columnResizing`: a dragged width is a `colwidth` on each cell that markdown has no way to
       write down, so it was lost on save, and its handle -- a widget inside the hovered cell -- became
@@ -137,6 +139,7 @@ export function createVisualEditor({
       plugins: [...buildPlugins(false), history()]
     }),
     nodeViews: createNodeViews(context),
+    clipboardSerializer: imageLinkClipboardSerializer(schema),
     attributes: {
       class: 'visual-editor-content page-contents',
       spellcheck: 'true'

@@ -2,11 +2,12 @@ import { Plugin } from 'prosemirror-state'
 
 import { barButton } from './bar'
 import { schema } from './schema'
+import { linkOnNode } from './imageLinks'
 
 /**
  * Editing a link that is already in the page.
  *
- * A link is a MARK, not a node, so it gets none of what the block nodes get: there is no node view to
+ * A text link is a MARK, so it gets none of what the block nodes get: there is no node view to
  * hang a header bar off, and nothing about a run of marked text announces that it can be changed. An
  * author could retype the words, because those are ordinary content, but the address behind them was
  * unreachable — the only way to change it was to delete the link and write another.
@@ -37,10 +38,11 @@ export function findLink(state) {
     the very start of a link is NOT the link — so the character on either side is consulted too, and a
     caret touching a link counts as being in it.
   */
-  const mark =
-    type.isInSet($from.marks()) ||
-    (($from.nodeBefore && type.isInSet($from.nodeBefore.marks)) ?? null) ||
-    (($from.nodeAfter && type.isInSet($from.nodeAfter.marks)) ?? null)
+  const mark = state.selection.node
+    ? linkOnNode(state.selection.node)
+    : type.isInSet($from.marks()) ||
+      (($from.nodeBefore && linkOnNode($from.nodeBefore)) ?? null) ||
+      (($from.nodeAfter && linkOnNode($from.nodeAfter)) ?? null)
   if (!mark) {
     return null
   }
@@ -48,12 +50,13 @@ export function findLink(state) {
   const parent = $from.parent
   const parentStart = $from.start()
   const runs = []
+  const carriesLink = (node) => linkOnNode(node)?.eq(mark)
   parent.forEach((child, offset) => {
     runs.push({ child, from: parentStart + offset, to: parentStart + offset + child.nodeSize })
   })
 
   const index = runs.findIndex(
-    (run) => run.from <= $from.pos && $from.pos <= run.to && mark.isInSet(run.child.marks)
+    (run) => run.from <= $from.pos && $from.pos <= run.to && carriesLink(run.child)
   )
   if (index < 0) {
     return null
@@ -61,10 +64,10 @@ export function findLink(state) {
 
   let first = index
   let last = index
-  while (first > 0 && mark.isInSet(runs[first - 1].child.marks)) {
+  while (first > 0 && carriesLink(runs[first - 1].child)) {
     first--
   }
-  while (last < runs.length - 1 && mark.isInSet(runs[last + 1].child.marks)) {
+  while (last < runs.length - 1 && carriesLink(runs[last + 1].child)) {
     last++
   }
 
@@ -74,6 +77,8 @@ export function findLink(state) {
     from,
     to,
     text: state.doc.textBetween(from, to, '', ''),
+    // -> Replacing this range with text would delete the picture. Only its link may be edited.
+    hasImage: runs.slice(first, last + 1).some((run) => run.child.type === schema.nodes.image),
     href: mark.attrs.href,
     title: mark.attrs.title ?? '',
     wikilink: mark.attrs.wikilink,
@@ -113,7 +118,7 @@ export function applyLink(view, range, { text, href, title, newTab }) {
   })
   const tr = view.state.tr
 
-  if (text && text !== range.text) {
+  if (!range.hasImage && text && text !== range.text) {
     tr.replaceWith(range.from, range.to, schema.text(text, [...range.marks, mark]))
   } else {
     tr.removeMark(range.from, range.to, type)
@@ -125,7 +130,13 @@ export function applyLink(view, range, { text, href, title, newTab }) {
 
 /** Take the link off, keeping the words it was on. */
 export function removeLink(view, range) {
-  view.dispatch(view.state.tr.removeMark(range.from, range.to, schema.marks.link))
+  const tr = view.state.tr.removeMark(range.from, range.to, schema.marks.link)
+  view.state.doc.nodesBetween(range.from, range.to, (node, pos) => {
+    if (node.type === schema.nodes.image && node.attrs.imageLink) {
+      tr.setNodeAttribute(pos, 'imageLink', null)
+    }
+  })
+  view.dispatch(tr)
   view.focus()
 }
 

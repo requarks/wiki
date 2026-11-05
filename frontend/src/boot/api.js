@@ -1,4 +1,5 @@
 import ky from 'ky'
+import { VISUAL_EDITOR_SCHEMA, VISUAL_EDITOR_SCHEMA_HEADER } from '@backend/visualEditorProtocol'
 
 /** The requests that change something, as opposed to reading it. */
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -9,8 +10,9 @@ const CONTENT_ROUTE = /^\/_api\/sites\/[^/]+\/(pages|tree)(\/|$)/
 /**
  * The HTTP client every call to the API goes through, exposed as the `API_CLIENT` global.
  *
- * Nothing is attached to a request beyond the session cookie: authentication is the `wikiSession`
- * cookie the server sets, sent because of `credentials`. There used to be a `beforeRequest` hook here
+ * Authentication is the `wikiSession` cookie, sent because of `credentials`. The visual schema
+ * header lets the server refuse a stale browser's visual-page saves; it grants no permission.
+ * There used to be a `beforeRequest` hook here
  * that refreshed a JWT and set an `Authorization` header — a leftover from when 3.x authenticated
  * with tokens. The user store it read has had no token since sessions replaced them, so the hook only
  * ever set an empty header. API keys still use bearer tokens, but those belong to callers outside
@@ -20,6 +22,7 @@ export function initializeApi() {
   const client = ky.create({
     prefix: '/_api',
     credentials: 'same-origin',
+    headers: { [VISUAL_EDITOR_SCHEMA_HEADER]: VISUAL_EDITOR_SCHEMA },
     throwHttpErrors: (statusNumber) => statusNumber > 400, // Don't throw for 400
     /*
       ky retries by default, and both halves of that default are wrong for this API.

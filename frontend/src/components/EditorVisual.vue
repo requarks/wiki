@@ -1085,6 +1085,7 @@ function editLink(range) {
     component: defineAsyncComponent(() => import('./LinkEditDialog.vue')),
     componentProps: {
       text: range.text,
+      editableText: !range.hasImage,
       href: range.href,
       linkTitle: range.title,
       newTab: range.mdAttrs?.target === '_blank'

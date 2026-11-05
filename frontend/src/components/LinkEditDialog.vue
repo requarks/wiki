@@ -4,6 +4,7 @@
       <w-card-header>{{ t('editor.visual.link.title') }}</w-card-header>
       <w-card-section class="flex flex-col gap-4">
         <w-input
+          v-if="editableText"
           v-model="state.text"
           :label="t('editor.visual.link.text')"
           :hint="t('editor.visual.link.textHint')"
@@ -70,6 +71,11 @@ import LinkPickerDialog from '@/components/LinkPickerDialog.vue'
 // PROPS
 
 const props = defineProps({
+  /** Image links have no editable text; replacing a mixed range would remove its images. */
+  editableText: {
+    type: Boolean,
+    default: true
+  },
   /** The words the link is on. */
   text: {
     type: String,

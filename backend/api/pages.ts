@@ -14,6 +14,11 @@ import { requestUserId } from '../helpers/requester.ts'
 import { maySeeUnpublished, maySeeUnpublishedAnywhere } from '../helpers/publishing.ts'
 import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
+import {
+  VISUAL_EDITOR_SCHEMA_HEADER,
+  VISUAL_EDITOR_RELOAD_MESSAGE,
+  visualSaveNeedsReload
+} from '../helpers/visualEditorProtocol.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
 function splitList(value?: string): string[] {
@@ -1341,6 +1346,16 @@ async function routes(app: FastifyInstance) {
       if (incoming.tags.length > 0 && !mayOnPage(req, 'write:tags', incoming)) {
         return reply.forbidden('You are not allowed to assign tags to a page here.')
       }
+      if (
+        visualSaveNeedsReload(
+          req.body.editor,
+          req.body,
+          req.headers[VISUAL_EDITOR_SCHEMA_HEADER],
+          Boolean(req.apiKey)
+        )
+      ) {
+        return reply.conflict(VISUAL_EDITOR_RELOAD_MESSAGE)
+      }
       const { page, versionId } = await WIKI.models.pages.createPage(
         req.params.siteId,
         req.body,
@@ -1412,6 +1427,17 @@ async function routes(app: FastifyInstance) {
       }
       if (!mayOnPage(req, 'write:pages', target)) {
         return reply.forbidden('You are not allowed to edit this page.')
+      }
+      // -> Use the stored editor, not a value an old tab could put into its patch.
+      if (
+        visualSaveNeedsReload(
+          target.editor,
+          req.body,
+          req.headers[VISUAL_EDITOR_SCHEMA_HEADER],
+          Boolean(req.apiKey)
+        )
+      ) {
+        return reply.conflict(VISUAL_EDITOR_RELOAD_MESSAGE)
       }
       /*
         Whether this save actually retags the page, and may — compared against the row rather than
@@ -1531,6 +1557,19 @@ async function routes(app: FastifyInstance) {
       const editors = WIKI.sites[req.params.siteId]?.config?.editors ?? {}
       if (!editors[req.body.editor]?.isActive) {
         return reply.badRequest('That editor is not enabled on this site.')
+      }
+
+      // -> Conversion can also rewrite source, so it must not bypass the visual save guard.
+      const sourceEditor = target.editor === 'visual' ? target.editor : req.body.editor
+      if (
+        visualSaveNeedsReload(
+          sourceEditor,
+          req.body,
+          req.headers[VISUAL_EDITOR_SCHEMA_HEADER],
+          Boolean(req.apiKey)
+        )
+      ) {
+        return reply.conflict(VISUAL_EDITOR_RELOAD_MESSAGE)
       }
 
       const previousEditor = target.editor

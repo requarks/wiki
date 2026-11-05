@@ -469,6 +469,8 @@ export const schema = new Schema({
         title: { default: null },
         width: { default: null },
         height: { default: null },
+        // -> A link on the picture itself; y-prosemirror 1.x preserves attributes but drops its marks.
+        imageLink: { default: null },
         ...mdAttrs
       },
       parseDOM: [
@@ -479,11 +481,19 @@ export const schema = new Schema({
             alt: dom.getAttribute('alt'),
             title: dom.getAttribute('title'),
             width: dom.getAttribute('width'),
-            height: dom.getAttribute('height')
+            height: dom.getAttribute('height'),
+            mdAttrs: readMdAttrs({
+              attrs: Array.from(dom.attributes, (attr) => [attr.name, attr.value])
+            })
           })
         }
       ],
-      toDOM: (node) => ['img', node.attrs]
+      toDOM: (node) => {
+        // -> Keep the internal object out of HTML; clipboard HTML carries a real anchor instead.
+        const { imageLink, mdAttrs: imageAttrs, ...attrs } = node.attrs
+        const image = ['img', { ...attrs, ...domAttrs(node), target: imageAttrs?.target }]
+        return imageLink ? ['a', linkDomAttrs(imageLink), image] : image
+      }
     },
 
     /**
@@ -635,14 +645,16 @@ export const schema = new Schema({
       parseDOM: [
         {
           tag: 'a[href]',
-          getAttrs: (dom) => ({ href: dom.getAttribute('href'), title: dom.getAttribute('title') })
+          getAttrs: (dom) => ({
+            href: dom.getAttribute('href'),
+            title: dom.getAttribute('title'),
+            mdAttrs: readMdAttrs({
+              attrs: Array.from(dom.attributes, (attr) => [attr.name, attr.value])
+            })
+          })
         }
       ],
-      toDOM: (node) => [
-        'a',
-        { ...domAttrs(node), href: node.attrs.href, title: node.attrs.title },
-        0
-      ]
+      toDOM: (node) => ['a', linkDomAttrs(node.attrs), 0]
     },
 
     /**
@@ -751,4 +763,14 @@ function domAttrs(node) {
     out.class = attrs.class
   }
   return out
+}
+
+/** Keep the same allowed HTML attributes for text links and links carried by images. */
+function linkDomAttrs(attrs) {
+  return {
+    ...domAttrs({ attrs }),
+    href: attrs.href,
+    title: attrs.title,
+    target: attrs.mdAttrs?.target
+  }
 }

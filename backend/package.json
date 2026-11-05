@@ -28,6 +28,7 @@
     "start": "cd .. && node --no-experimental-webstorage backend",
     "dev": "cd .. && nodemon --no-experimental-webstorage backend --watch backend --ext js,ts,json",
     "typecheck": "tsc",
+    "visual:check:protocol": "node --no-experimental-webstorage scripts/check-visual-editor-protocol.mjs",
     "typecheck:watch": "tsc --watch",
     "ncu": "ncu -i",
     "ncu-u": "ncu -u",

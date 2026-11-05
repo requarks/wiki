@@ -3,6 +3,7 @@ import { MarkdownParser } from 'prosemirror-markdown'
 import { KINDS, MARKER } from '@/renderers/modules/github-alerts'
 
 import { readMdAttrs, schema } from './schema'
+import { storeImageLinks } from './imageLinks'
 
 /**
  * Markdown into a ProseMirror document, through the site's own markdown-it.
@@ -679,7 +680,7 @@ export function createParser(renderer, config = {}) {
      *        through to markdown-it as its environment, exactly as the preview does it.
      */
     parse(markdown, pagePath = '') {
-      return parser.parse(markdown ?? '', { pagePath })
+      return storeImageLinks(parser.parse(markdown ?? '', { pagePath }))
     }
   }
 }

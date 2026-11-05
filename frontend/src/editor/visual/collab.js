@@ -8,6 +8,8 @@ import {
   yUndoPlugin
 } from 'y-prosemirror'
 
+import { storeImageLinks } from './imageLinks'
+
 /**
  * Collaborative editing for the Visual editor.
  *
@@ -57,11 +59,15 @@ const SEED_CLIENT_ID = 1
  * The room's starting state, as a Yjs update.
  *
  * Deterministic, for the reason `SEED_CLIENT_ID` gives.
+ *
+ * Preserving image links changes the seed's bytes. Old and new editor schemas must not seed or edit
+ * the same room: the old schema cannot read `imageLink`. A release needs existing sessions to end
+ * and their rooms to be rebuilt before clients using this schema join.
  */
 export function buildSeed(doc) {
   const scratch = new Y.Doc()
   scratch.clientID = SEED_CLIENT_ID
-  prosemirrorToYXmlFragment(doc, scratch.getXmlFragment(FRAGMENT))
+  prosemirrorToYXmlFragment(storeImageLinks(doc), scratch.getXmlFragment(FRAGMENT))
   const update = Y.encodeStateAsUpdate(scratch)
   scratch.destroy()
   return update

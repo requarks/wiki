@@ -6,6 +6,7 @@ import { KINDS } from '@/renderers/modules/github-alerts'
 import { wikiLinkText } from '@/renderers/modules/markdown-it-wikilinks'
 
 import { writeMdAttrs } from './schema'
+import { imageLinksAsMarks } from './imageLinks'
 
 /**
  * A ProseMirror document back into markdown.
@@ -542,6 +543,9 @@ const ESCAPE_EXTRA = new RegExp(
  * @returns {string} The page source, with the single trailing newline a file ends on.
  */
 export function serialize(doc) {
-  const text = serializer.serialize(doc, { tightLists: true, escapeExtraCharacters: ESCAPE_EXTRA })
+  const text = serializer.serialize(imageLinksAsMarks(doc), {
+    tightLists: true,
+    escapeExtraCharacters: ESCAPE_EXTRA
+  })
   return text.endsWith('\n') ? text : `${text}\n`
 }

@@ -2,6 +2,7 @@ import { watch } from 'vue'
 
 import { WebsocketProvider } from 'y-websocket'
 import * as Y from 'yjs'
+import { VISUAL_EDITOR_SCHEMA } from '@backend/visualEditorProtocol'
 
 import { useCollabStore } from '@/stores/collab'
 import { useEditorStore } from '@/stores/editor'
@@ -150,7 +151,13 @@ export function startCollabSession({ siteId, pageId, noteKey }) {
   provider = new WebsocketProvider(
     `${protocol}//${window.location.host}/_collab`,
     isNoteSession ? `${siteId}/notes/${noteKey}` : `${siteId}/${pageId}`,
-    doc
+    doc,
+    {
+      params: { visualSchema: VISUAL_EDITOR_SCHEMA },
+      // -> Direct tab sync starts before server authorization and ignores the version query.
+      //    Keep every shared update on the server-checked WebSocket path, including same-browser tabs.
+      disableBc: true
+    }
   )
 
   collabStore.$patch({
