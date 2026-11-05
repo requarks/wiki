@@ -118,26 +118,31 @@ export function seedIfEmpty(ydoc, scene) {
  * Excalidraw's own counter and is bumped on every change to an element, so comparing it is both
  * cheaper and more accurate than comparing the objects.
  *
+ * The diff is taken against VERSIONS, not against the elements, because Excalidraw edits an element
+ * where it stands -- `mutateElement` rewrites its fields and bumps its `version` on the same object,
+ * point by point while a stroke is drawn. Kept elements would be the very objects being changed, and
+ * comparing them with themselves would find nothing to send. For the same reason what is written is a
+ * copy: `Y.Map` keeps the value it is handed, and cannot see a change made inside it afterwards. A
+ * shallow copy is the whole of it, since Excalidraw replaces `points`, `pressures` and the rest of an
+ * element's arrays rather than editing inside them.
+ *
  * One transaction, so the whole of a change reaches the others as one update.
  *
- * @param {object} previous The elements by id as they were last time, which this returns the next of.
- * @returns {Map<string, object>} What to pass as `previous` next time.
+ * @param {Map<string, number>} previous Each element's `version` as it was last time, by id.
+ * @returns {Map<string, number>} What to pass as `previous` next time.
  */
 export function publishScene(ydoc, scene, previous) {
-  const next = new Map()
-  for (const element of scene.elements ?? []) {
-    next.set(element.id, element)
-  }
+  const elements = scene.elements ?? []
+  const next = new Map(elements.map((element) => [element.id, element.version]))
 
   const yElements = collabElements(ydoc)
   const yFiles = collabFiles(ydoc)
   const yScene = collabScene(ydoc)
 
   ydoc.transact(() => {
-    for (const [id, element] of next) {
-      const before = previous.get(id)
-      if (!before || before.version !== element.version) {
-        yElements.set(id, element)
+    for (const element of elements) {
+      if (previous.get(element.id) !== element.version) {
+        yElements.set(element.id, { ...element })
       }
     }
     /*
@@ -170,17 +175,23 @@ export function publishScene(ydoc, scene, previous) {
 /**
  * The drawing as the shared document has it.
  *
+ * Each element a copy of the document's value, since whatever is put on the canvas is edited in place
+ * by Excalidraw, and the document would go on holding -- and handing to anybody who joins -- a shape
+ * that had quietly changed under it.
+ *
  * Sorted by each element's fractional index, which is what z order means here. An element with none is
  * one Excalidraw has not indexed yet; those keep the order the map gives them and are put at the back,
  * where the editor assigns them an index of their own on the next change.
  */
 export function readScene(ydoc) {
-  const elements = [...collabElements(ydoc).values()].sort((a, b) => {
-    if (a.index == null || b.index == null) {
-      return a.index == null ? (b.index == null ? 0 : 1) : -1
-    }
-    return a.index < b.index ? -1 : a.index > b.index ? 1 : 0
-  })
+  const elements = [...collabElements(ydoc).values()]
+    .map((element) => ({ ...element }))
+    .sort((a, b) => {
+      if (a.index == null || b.index == null) {
+        return a.index == null ? (b.index == null ? 0 : 1) : -1
+      }
+      return a.index < b.index ? -1 : a.index > b.index ? 1 : 0
+    })
   const files = Object.fromEntries(
     [...collabFiles(ydoc).entries()].map(([id, file]) => [
       id,

@@ -61,6 +61,14 @@ is 0 and ProseMirror's is 1, and a seed reusing an id the document has seen is d
 `buildSeed` on the server skips `content` for a canvas editor (`CANVAS_EDITORS`), since a scene is
 tens of kilobytes of JSON that no client would ever bind to.
 
+**Excalidraw edits its elements in place**, bumping `version` on the same object point by point while
+a stroke is drawn. So `publishScene` diffs against a map of VERSIONS, never against kept elements
+(which would be the objects being changed, and never differ from themselves), and nothing the canvas
+holds is ever a value of the `Y.Map`: what is written and what `readScene` returns are copies. A
+remote change is merged onto the canvas with Excalidraw's own `reconcileElements`, which keeps the
+element being drawn and any element ahead of the room's version; only the first look at a room on
+joining replaces the canvas outright.
+
 **The sanitizer had to learn two things** (`helpers/sanitizeRender.ts`): the inert text and font
 attributes an export puts on every `text` element, and the `image` element. Neither grants anything
 new — `href` is scheme-checked like every other link, and `img` beside it could always fetch a

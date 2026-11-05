@@ -37,7 +37,7 @@ import { FILES_PREFIX } from '@/helpers/assets'
   fetches until a drawing is opened -- and importing them from inside `onMounted` instead would only
   turn one download into a waterfall of them.
 */
-import { CaptureUpdateAction, newElementWith } from '@excalidraw/excalidraw'
+import { CaptureUpdateAction, newElementWith, reconcileElements } from '@excalidraw/excalidraw'
 import {
   exportSceneSvg,
   mountExcalidraw,
@@ -112,7 +112,10 @@ const collabWatchers = []
 /** Whether a session is live and this editor is bound to it. */
 let collaborating = false
 
-/** The elements as they were last published, which is what the next publish is diffed against. */
+/**
+ * Each element's `version` by id as the room last had it, which is what the next publish is diffed
+ * against. Versions rather than the elements: see `publishScene`.
+ */
 let published = new Map()
 
 /**
@@ -400,13 +403,40 @@ function restoreEditorContent({ content }) {
   })
 }
 
-/** Take the room's drawing onto this canvas. */
-function applyRemote() {
+/**
+ * Take the room's drawing onto this canvas.
+ *
+ * @param {object} [options]
+ * @param {boolean} [options.joining] Whether this is the first look at the room, where its drawing
+ *   REPLACES what this browser loaded rather than being merged with it -- see `enableCollab`.
+ */
+function applyRemote({ joining = false } = {}) {
   const handles = collabHandles()
   if (!handles || !handle) {
     return
   }
-  const { elements, files, appState } = readScene(handles.ydoc)
+  const { elements: remote, files, appState } = readScene(handles.ydoc)
+  const local = handle.getScene()
+  const inRoom = new Set(remote.map((el) => el.id))
+  /*
+    Merged with what is on this canvas rather than put over it, by Excalidraw's own rule: an element
+    this author is in the middle of drawing, resizing or typing into stays theirs, and so does one
+    whose `version` is ahead of the room's -- which every element they are working on is, for up to a
+    publish tick. Replacing those would step a stroke back on its own author's canvas whenever
+    anybody else changed anything, and would leave Excalidraw drawing into an object no longer in the
+    scene.
+
+    An element the room no longer has is dropped unless it is one this author has not published yet:
+    gone from the room after being in it is somebody's undo of its creation, which `reconcileElements`
+    on its own would keep, and the next publish would put back.
+  */
+  const elements = joining
+    ? remote
+    : reconcileElements(
+        local.elements.filter((el) => inRoom.has(el.id) || !published.has(el.id)),
+        remote,
+        local.appState
+      )
   applyingRemote = true
   try {
     handle.addFiles(Object.values(files))
@@ -416,7 +446,9 @@ function applyRemote() {
       undo from Yjs rather than from ProseMirror.
     */
     handle.updateScene({ elements, appState, captureUpdate: CaptureUpdateAction.NEVER })
-    published = new Map(elements.map((el) => [el.id, el]))
+    // -> The room's versions, not the merged ones, so that whatever this author kept is still ahead
+    //    of them and goes out with the next publish
+    published = new Map(remote.map((el) => [el.id, el.version]))
   } finally {
     applyingRemote = false
   }
@@ -457,7 +489,7 @@ function enableCollab() {
   collabScene(handles.ydoc).observeDeep(onDocChange)
   handles.awareness.on('change', refreshCollaborators)
 
-  applyRemote()
+  applyRemote({ joining: true })
   refreshCollaborators()
 }
 
