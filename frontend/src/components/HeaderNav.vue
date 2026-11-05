@@ -1,11 +1,15 @@
 <template>
   <div class="site-header bg-header text-white">
     <div class="flex flex-nowrap">
-      <w-toolbar style="height: 64px">
+      <!-- -> `min-w-0` so this half is the one that gives way when the bar is short of room: a flex item
+              will not shrink below its content otherwise, and a long site title then pushed the search
+              and actions buttons off the screen instead of truncating. The right-hand toolbar keeps
+              its default `min-width: auto`, so it never shrinks below its buttons -->
+      <w-toolbar class="min-w-0" style="height: 64px">
         <!-- -> `to` still does the navigating, so the logo stays a real link -- middle click, open in
                 a new tab, the address in the status bar. The handler is only what a navigation cannot
                 do on its own; see `leaveEditorForHome` -->
-        <w-btn dense flat :to="homePath" @click="leaveEditorForHome">
+        <w-btn class="shrink-0" dense flat :to="homePath" @click="leaveEditorForHome">
           <w-avatar v-if="siteStore.logoText" size="34px" square>
             <img :src="`/_site/current/logo`" />
           </w-avatar>
