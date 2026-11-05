@@ -18,8 +18,8 @@
                 v-list-item-avatar
                   v-icon(:color='!tool.isAvailable ? `grey lighten-1` : (selectedTool === tool.key ? `blue ` : `grey darken-1`)') {{ tool.icon }}
                 v-list-item-content
-                  v-list-item-title.body-2(:class='!tool.isAvailable ? `grey--text` : (selectedTool === tool.key ? `primary--text` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Title') }}
-                  v-list-item-subtitle: .caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
+                  v-list-item-title.body-2(:class='!tool.isAvailable ? `grey--text` : (selectedTool === tool.key ? `primary--text` : ``)') {{ tool.title || $t('admin:utilities.' + tool.i18nKey + 'Title') }}
+                  v-list-item-subtitle: .caption(:class='!tool.isAvailable ? `grey--text text--lighten-1` : (selectedTool === tool.key ? `blue--text ` : ``)') {{ tool.subtitle || $t('admin:utilities.' + tool.i18nKey + 'Subtitle') }}
                 v-list-item-avatar(v-if='selectedTool === tool.key')
                   v-icon.animated.fadeInLeft(color='primary', large) mdi-chevron-right
               v-divider(v-if='idx < tools.length - 1')
@@ -35,6 +35,7 @@
 export default {
   components: {
     UtilityAuth: () => import(/* webpackChunkName: "admin" */ './admin-utilities-auth.vue'),
+    UtilityBackup: () => import(/* webpackChunkName: "admin" */ './admin-utilities-backup.vue'),
     UtilityContent: () => import(/* webpackChunkName: "admin" */ './admin-utilities-content.vue'),
     UtilityCache: () => import(/* webpackChunkName: "admin" */ './admin-utilities-cache.vue'),
     UtilityExport: () => import(/* webpackChunkName: "admin" */ './admin-utilities-export.vue'),
@@ -61,6 +62,14 @@ export default {
           key: 'UtilityExport',
           icon: 'mdi-database-export',
           i18nKey: 'export',
+          isAvailable: true
+        },
+        {
+          key: 'UtilityBackup',
+          icon: 'mdi-package-variant-closed',
+          // No localized strings exist for this utility yet, so it carries its own labels.
+          title: 'Export for Wiki.js 3.x',
+          subtitle: 'Create a .wkbackup migration package',
           isAvailable: true
         },
         {

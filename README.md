@@ -5,7 +5,7 @@
   <img alt="Wiki.js" src="https://static.requarks.io/logo/wikijs-full.svg" width="600">
 </picture>
 
-[![Release](https://img.shields.io/github/release/Requarks/wiki.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki/releases)
+[![Release](https://img.shields.io/github/release/Requarks/wiki-v2.svg?style=flat&maxAge=3600)](https://github.com/Requarks/wiki-v2/releases)
 [![License](https://img.shields.io/badge/license-AGPLv3-blue.svg?style=flat)](https://github.com/requarks/wiki/blob/master/LICENSE)
 [![Standard - JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-green.svg?style=flat&logo=javascript&logoColor=white)](http://standardjs.com/)
 [![Build + Publish](https://github.com/Requarks/wiki/actions/workflows/build.yml/badge.svg)](https://github.com/Requarks/wiki/actions/workflows/build.yml)  
@@ -72,8 +72,6 @@ A full review/approval pipeline that turns Wiki.js into a governed documentation
 - [Translations](https://docs.requarks.io/dev/translations) *(We need your help!)*
 - [Special Thanks](#special-thanks)
 - [Contribute](#contributors)
-
-[Follow our Twitter feed](https://twitter.com/requarks) to learn about upcoming updates and new releases!
 
 <h2 align="center">Donate</h2>
 

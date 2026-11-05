@@ -5,6 +5,7 @@ const _ = require('lodash')
 const CleanCSS = require('clean-css')
 const moment = require('moment')
 const qs = require('querystring')
+const fs = require('fs-extra')
 
 /* global WIKI */
 
@@ -393,6 +394,25 @@ router.get(['/s', '/s/*'], async (req, res, next) => {
 router.get(['/t', '/t/*'], (req, res, next) => {
   _.set(res.locals, 'pageMeta.title', 'Tags')
   res.render('tags')
+})
+
+/**
+ * Download Backup Package
+ *
+ * The .wkbackup package holds password hashes and TOTP secrets, so it is served
+ * only to administrators, and only from the backup directory.
+ */
+router.get('/_backup/:filename', async (req, res, next) => {
+  if (!WIKI.auth.checkAccess(req.user, ['manage:system'])) {
+    return res.sendStatus(403)
+  }
+
+  const filePath = WIKI.backup.resolveFile(req.params.filename)
+  if (!filePath || !await fs.pathExists(filePath)) {
+    return res.sendStatus(404)
+  }
+
+  res.download(filePath, req.params.filename)
 })
 
 /**
