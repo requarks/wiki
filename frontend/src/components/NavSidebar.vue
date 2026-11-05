@@ -28,7 +28,7 @@
       </template>
       <template v-for="item of siteStore.nav.items" :key="item.id">
         <w-item-label
-          class="sidebar-nav-header text-caption text-wordbreak-all"
+          class="sidebar-nav-header text-caption wrap-anywhere"
           v-if="item.type === `header`"
           header
           >{{ item.label }}</w-item-label
@@ -45,7 +45,7 @@
           <!-- reference is drawn by w-icon like everywhere else -->
           <template #header>
             <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
-            <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+            <w-item-section class="wrap-anywhere text-white">{{ item.label }}</w-item-section>
           </template>
           <w-list clickable dense dark>
             <w-item
@@ -53,7 +53,7 @@
               v-bind="destination(itemChild)"
               :key="itemChild.id">
               <w-item-section side><w-icon :name="itemChild.icon" color="white" /></w-item-section>
-              <w-item-section class="text-wordbreak-all text-white">{{
+              <w-item-section class="wrap-anywhere text-white">{{
                 itemChild.label
               }}</w-item-section>
             </w-item>
@@ -61,7 +61,7 @@
         </w-expansion-item>
         <w-item v-else-if="item.type === `link`" v-bind="destination(item)">
           <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
-          <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+          <w-item-section class="wrap-anywhere text-white">{{ item.label }}</w-item-section>
         </w-item>
         <!--
           Two ways in on one row, where the item links to the page at the target menu's location too:
@@ -74,7 +74,7 @@
                   sit in the split row's box -->
           <w-item class="sidebar-nav-split__link" dense :to="pageHref(item.targetPage)">
             <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
-            <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+            <w-item-section class="wrap-anywhere text-white">{{ item.label }}</w-item-section>
           </w-item>
           <w-item
             class="sidebar-nav-split__menu"
@@ -91,7 +91,7 @@
           clickable
           @click="siteStore.openNavigationMenu(item.targetNavId)">
           <w-item-section side><w-icon :name="item.icon" color="white" /></w-item-section>
-          <w-item-section class="text-wordbreak-all text-white">{{ item.label }}</w-item-section>
+          <w-item-section class="wrap-anywhere text-white">{{ item.label }}</w-item-section>
           <w-item-section side><w-icon name="mdi:chevron-right" color="white" /></w-item-section>
         </w-item>
         <w-separator v-else-if="item.type === `separator`" dark />

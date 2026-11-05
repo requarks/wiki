@@ -88,7 +88,7 @@
               @contextmenu="setItem(element)"
               clickable>
               <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
-              <w-item-section class="text-wordbreak-all">{{ element.label }}</w-item-section>
+              <w-item-section class="wrap-anywhere">{{ element.label }}</w-item-section>
               <w-item-section side>
                 <w-icon class="handle" name="mdi:drag-horizontal" size="sm" />
               </w-item-section>
@@ -116,7 +116,7 @@
               @contextmenu="setItem(element)"
               clickable>
               <w-item-section side><w-icon :name="element.icon" color="white" /></w-item-section>
-              <w-item-section class="text-wordbreak-all">{{ element.label }}</w-item-section>
+              <w-item-section class="wrap-anywhere">{{ element.label }}</w-item-section>
               <w-item-section side>
                 <w-icon
                   v-if="!element.targetNavId || element.targetMissing"

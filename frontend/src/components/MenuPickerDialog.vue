@@ -40,7 +40,7 @@
             <w-item-section side>
               <w-icon :name="menu.isRoot ? `la:home` : `mdi:folder-outline`" />
             </w-item-section>
-            <w-item-section class="text-wordbreak-all">/{{ menu.path }}</w-item-section>
+            <w-item-section class="wrap-anywhere">/{{ menu.path }}</w-item-section>
           </w-item>
         </w-list>
       </div>
