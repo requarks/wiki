@@ -364,6 +364,42 @@ export class MarkdownRenderer {
     if (config.multimdTable) {
       this.md.utils.assign ??= Object.assign
       this.md.use(mdMultiTable, { multiline: true, rowspan: true, headerless: true })
+
+      /*
+        `markdown-it-attrs` must not see the spans this plugin writes. It has its own span syntax --
+        `| 2 {colspan=2} | 22 | 222 |` -- in which the author writes a cell for EVERY column and the
+        attrs rule hides the ones a span covers. MultiMarkdown writes no cell for a covered column:
+        `| A || B |` is two cells, the empty one already folded into A's `colspan`. Read the attrs
+        way, B is the cell A covers, and it was hidden -- every body-row colspan lost the cells after
+        it, and `| A |||` lost A itself.
+
+        Only these spans can be on a cell when the attrs rule runs: `allowedAttributes` above never
+        lets an author write `colspan` or `rowspan`, so the attrs table patterns have nothing of their
+        own to act on. The spans are lifted off for that one rule and put back after it.
+      */
+      const attrsRule = this.md.core.ruler.__rules__.find(
+        (rule) => rule.name === 'curly_attributes'
+      )
+      const curlyAttributes = attrsRule.fn
+      this.md.core.ruler.at('curly_attributes', (state) => {
+        const spans = []
+        for (const token of state.tokens) {
+          if ((token.type !== 'td_open' && token.type !== 'th_open') || !token.attrs) {
+            continue
+          }
+          for (const name of ['colspan', 'rowspan']) {
+            const value = token.attrGet(name)
+            if (value !== null) {
+              spans.push([token, name, value])
+            }
+          }
+          token.attrs = token.attrs.filter(([name]) => name !== 'colspan' && name !== 'rowspan')
+        }
+        curlyAttributes(state)
+        for (const [token, name, value] of spans) {
+          token.attrSet(name, value)
+        }
+      })
     }
 
     // --------------------------------
