@@ -117,8 +117,8 @@ jobs:
             ghcr.io/requarks/wiki
           tags: |
             type=semver,pattern={{version}},value=${{ env.REL_VERSION }}
-            type=raw,value=3,enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=raw,value=3.0,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ steps.semver.outputs.nextMajorStrict }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ steps.semver.outputs.nextMinorStrict }},enable=${{ github.event_name == 'workflow_dispatch' }}
           labels: |
             org.opencontainers.image.title=Wiki.js
             org.opencontainers.image.description=Wiki.js - Next Generation Open Source Wiki
