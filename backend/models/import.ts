@@ -338,14 +338,30 @@ function stringOf(value: unknown, fallback = ''): string {
 }
 
 /**
+ * What 2.x allowed in a path that a path here may not hold at all: anything but a letter, a mark, a
+ * number, and the separators `normalizeNewPagePath` already folds into a hyphen (whitespace, `_`,
+ * `-`) or splits on (`/`). A dot is the common case — `v1.2` — but 2.x took `&`, `+`, `'`, `,`, `!`
+ * and the like as well, and a page whose path kept one was refused outright by `createPage`.
+ */
+const V2_PATH_PUNCTUATION = /[^\p{L}\p{M}\p{N}\s_/-]/gu
+
+/**
+ * A 2.x path with every character a path here may not hold turned into a hyphen, and nothing else
+ * changed — what `adoptStoredPage` is handed, since it does the rest of a path's normalization itself.
+ */
+function v2PathSpelling(value: string): string {
+  return value.replaceAll(V2_PATH_PUNCTUATION, '-')
+}
+
+/**
  * One 2.x path segment — of a page or a folder, never a file name — as this wiki writes it.
  *
- * `normalizeNewPagePath`, plus the one thing 2.x allowed in a path that a path here may not hold at
- * all: a dot, which becomes a hyphen like every other separator, so `v1.2` is `v1-2`. A file name
- * keeps its dot, since that is its extension; `sanitizeFileName` is that one's rule.
+ * `normalizeNewPagePath`, after every character a path here may not hold at all has become a hyphen
+ * like every other separator, so `v1.2` is `v1-2` and `a&b_page` is `a-b-page`. A file name keeps its
+ * dot, since that is its extension; `sanitizeFileName` is that one's rule.
  */
 function segmentOf(segment: string): string {
-  return normalizeNewPagePath(segment.replaceAll('.', '-'))
+  return normalizeNewPagePath(v2PathSpelling(segment))
 }
 
 /** A 2.x page path as this wiki writes one. See `segmentOf`. */
@@ -1843,11 +1859,12 @@ class Import {
             siteId: target.siteId,
             locale,
             /*
-              Only the dots are converted here. Everything else a path written today changes is done
-              by `adoptStoredPage` itself, which also finds a page imported before those rules under
-              the spelling it was given then, rather than writing a second copy beside it.
+              Only what a path may not hold at all is converted here (`v2PathSpelling`). Everything
+              else a path written today changes is done by `adoptStoredPage` itself, which also finds
+              a page imported before those rules under the spelling it was given then, rather than
+              writing a second copy beside it.
             */
-            path: pagePath.replaceAll('.', '-'),
+            path: v2PathSpelling(pagePath),
             title: stringOf(record?.title, pagePath),
             description: stringOf(record?.description),
             editor,
@@ -1895,6 +1912,9 @@ class Import {
         imported++
       } catch (err: any) {
         warnings.push(`"${pagePath}" could not be imported: ${err.message}`)
+        // -> The import log lives in one browser tab and the session's copy is capped, so a page that
+        //    did not make it is also in the server log, where it is looked for afterwards
+        WIKI.logger.warn(`Import: page "${pagePath}" could not be imported: ${err.message}`)
         skipped++
       }
     }
