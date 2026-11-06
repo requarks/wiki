@@ -67,7 +67,9 @@ document is whether the client will run the app, and each has its own function:
   Tailwind's preflight took away and is deliberately not a copy of the content styles, which belong
   to elements the app draws. Inside it, `prerenderFor` puts a `<header>` (logo and site title, linking
   home, on a plain black bar) over a `<main>` carrying the page's `lang` and `dir` — the header is the
-  site's, not the page's, so the language goes on `<main>` alone.
+  site's, not the page's, so the language goes on `<main>` alone. `<main>` opens with a `<header>` of
+  its own holding the page's title as an `<h1>` and its description, as the app's page header shows
+  them; the stored render carries neither.
 - **An anonymous request to a page path with nothing public at it answers 404**, where the shell used
   to answer 200 everywhere — which is what taught a crawler that every URL on the wiki exists. No
   page, an unpublished one and one the guests group's rules refuse are one answer, since the

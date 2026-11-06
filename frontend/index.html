@@ -137,6 +137,23 @@
           width: auto;
         }
 
+        /* The page's title and description, in a box of their own above the body. */
+        #wiki-prerender > main > header {
+          margin-bottom: 2rem;
+          padding: 1.25rem 1.5rem;
+          background: #f4f4f4;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+        }
+        #wiki-prerender > main > header h1 {
+          margin: 0;
+        }
+        #wiki-prerender > main > header p {
+          margin: .5rem 0 0;
+          color: #555;
+          font-size: 1.1em;
+        }
+
         /*
           The browser defaults Tailwind's preflight takes away, put back. Deliberately not a copy of
           the content styles in `css/tailwind.css`: those belong to elements the app draws, which is

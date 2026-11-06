@@ -479,7 +479,7 @@ function headForSite(siteConfig: any): string {
 
 /**
  * The copy of a page served to a client that will not run the app: the site's header over the page's
- * own body.
+ * title, description and own body.
  *
  * Wrapped in one element with a known id, which is what lets both sides deal with it: the stylesheet
  * in `frontend/index.html` keeps it out of sight of anyone whose browser is about to draw the real
@@ -507,12 +507,13 @@ function headForSite(siteConfig: any): string {
 async function prerenderFor(
   siteId: string,
   siteConfig: any,
-  locale: string,
+  page: PageDescription,
   content: string
 ): Promise<string> {
   if (!content) {
     return ''
   }
+  const locale = page.locale
   const translator = await WIKI.models.locales.translator(locale)
   const notice = `<noscript><p lang="${htmlEscape(translator.locale)}" dir="${translator.isRTL ? 'rtl' : 'ltr'}">${htmlEscape(translator.t('common.header.noScriptNotice'))}</p></noscript>`
   const siteTitle = htmlEscape(siteConfig?.title || 'Wiki.js')
@@ -521,16 +522,22 @@ async function prerenderFor(
   const header = siteConfig?.logoText
     ? `<img src="/_site/current/logo" alt=""><span>${siteTitle}</span>`
     : `<img src="/_site/current/logo" alt="${siteTitle}">`
-  return `<div id="${PRERENDER_ID}"><header><a href="${home}">${header}</a>${notice}</header><main${languageAttrs(locale)}>${content}</main></div>`
+  return `<div id="${PRERENDER_ID}"><header><a href="${home}">${header}</a>${notice}</header><main${languageAttrs(locale)}>${pageHeaderFor(page)}${content}</main></div>`
 }
 
 /**
- * The page's own markup, for a client that will not run the app.
- *
- * The title is deliberately not repeated above the body as a heading. A page written the ordinary way
- * opens with its own `# Title`, so a synthesized one is the same words twice — and where a page has
- * no heading of its own, the title is still in `<title>` and `og:title`, which is where every client
- * that cares about it looks.
+ * The page's title and description over its body, as the app draws them in the page header above
+ * the article — the body itself does not carry them, so without this a reader sees the content with
+ * nothing saying what it is.
+ */
+function pageHeaderFor(page: PageDescription): string {
+  const description = page.description ? `<p>${htmlEscape(page.description)}</p>` : ''
+  return `<header><h1>${htmlEscape(page.title)}</h1>${description}</header>`
+}
+
+/**
+ * The page's own markup, for a client that will not run the app. Its title and description are put
+ * above it by `prerenderFor`.
  */
 async function bodyForPage(siteId: string, page: PageDescription): Promise<string> {
   if (!page.render) {
@@ -702,7 +709,7 @@ async function fragmentsForCrawler(
     body: await prerenderFor(
       siteId,
       siteConfig,
-      page.locale,
+      page,
       page.editor === 'blog'
         ? await bodyForBlog(siteId, page)
         : page.editor === 'feedback'
