@@ -52,3 +52,12 @@ to the backend on **3000**, so the backend must be running too.
 - Cross-component messaging uses the `EVENT_BUS` global (mitt).
 - State lives in Pinia option stores. For utilities and dates use `es-toolkit` and `Temporal` — see
   [Utilities and dates](../CLAUDE.md#utilities-and-dates).
+
+## Patched dependencies
+
+`patches/` holds fixes to installed packages, applied by `patch-package` on every install
+(`postinstall`). **Read [patches/README.md](./patches/README.md) before upgrading a package that has a
+patch there** — currently `y-prosemirror`. The install deliberately stops when a patch does not match
+the installed version, and the README says what each patch fixes, how to carry it to a new release and
+how to tell when it is no longer needed. Never fix a dependency by editing `node_modules` by hand; add
+a patch, and a section to that README for it.

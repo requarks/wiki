@@ -27,6 +27,10 @@ import {
  * one means the whole parser, which lives in the browser and is deliberately not on the server. So the
  * seed is built HERE, by whichever clients arrive first — using the very same trick, for the very same
  * reason, under a client id of its own. See `SEED_CLIENT_ID`, which is where that gets interesting.
+ *
+ * y-prosemirror is PATCHED (`frontend/patches/`): released, it keeps marks only on text, so a linked
+ * image or a bold emoji lost its mark on the way through the fragment. `patches/README.md` explains the
+ * patch and what to do with it on an upgrade.
  */
 
 /** The shared type the document lives in. Named, because the room also holds the Markdown editor's. */

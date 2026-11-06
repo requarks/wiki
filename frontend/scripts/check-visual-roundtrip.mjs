@@ -67,6 +67,9 @@ registerHooks({
 const { MarkdownRenderer } = await import('../src/renderers/markdown.js')
 const { createParser } = await import('../src/editor/visual/parse.js')
 const { serialize } = await import('../src/editor/visual/serialize.js')
+const { buildSeed, collabFragment } = await import('../src/editor/visual/collab.js')
+const Y = await import('yjs')
+const { yXmlFragmentToProseMirrorRootNode } = await import('y-prosemirror')
 const { SAMPLE_PAGES } = await import('../src/helpers/sampleContent.js')
 
 const VERBOSE = process.argv.includes('--verbose')
@@ -128,6 +131,13 @@ const CONSTRUCTS = {
   'image with a width only': '![alt](pic.png =100x)',
   'image with a height only': '![alt](pic.png =x200)',
   'image sized in percent': '![alt](pic.png =50%x)',
+  /*
+    -> Marks on an inline node that is not text. The plain round trip always kept them; it was the
+       shared document that dropped them, which is why `throughCollab` exists
+  */
+  'linked image': '[![alt](pic.png)](/target)',
+  'linked image beside linked text': '[![alt](pic.png) and text](/target)',
+  'emphasised emoji and icon': '**Bold :smile:** and [linked :mdi:home:](/home)',
   'bullet list': '- one\n- two\n  - nested',
   'bullet list with stars': '* one\n* two',
   'ordered list': '1. one\n2. two',
@@ -205,6 +215,21 @@ function meaningOf(html) {
     .trim()
 }
 
+/**
+ * The document as a collaborator receives it: seeded into a shared Yjs fragment, then rebuilt from it.
+ *
+ * With collaboration on, this is the document the Visual editor actually edits -- `ySyncPlugin` builds
+ * it from the fragment -- so anything the fragment cannot hold is lost the moment the page is opened,
+ * and for good once it is saved.
+ */
+function throughCollab(doc) {
+  const ydoc = new Y.Doc()
+  Y.applyUpdate(ydoc, buildSeed(doc))
+  const rebuilt = yXmlFragmentToProseMirrorRootNode(collabFragment(ydoc), doc.type.schema)
+  ydoc.destroy()
+  return rebuilt
+}
+
 function check(name, source, config) {
   // -> A fresh renderer per render: footnote ids accumulate in the environment, so one instance
   //    rendering twice reports the second set differently for reasons that are not the page's
@@ -228,6 +253,26 @@ function check(name, source, config) {
   } catch (err) {
     return { ok: false, why: `threw on a second round trip: ${err.message}`, rewritten }
   }
+  let shared
+  try {
+    shared = serialize(throughCollab(parser.parse(source, 'demo/page')))
+  } catch (err) {
+    return {
+      ok: false,
+      why: `threw passing through the shared document: ${err.message}`,
+      rewritten
+    }
+  }
+  if (shared !== rewritten) {
+    return {
+      ok: false,
+      why: 'changes passing through the shared document',
+      rewritten,
+      before: rewritten,
+      after: shared
+    }
+  }
+
   if (again !== rewritten) {
     return {
       ok: false,

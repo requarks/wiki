@@ -1,0 +1,117 @@
+diff --git a/node_modules/y-prosemirror/src/plugins/sync-plugin.js b/node_modules/y-prosemirror/src/plugins/sync-plugin.js
+--- a/node_modules/y-prosemirror/src/plugins/sync-plugin.js
++++ b/node_modules/y-prosemirror/src/plugins/sync-plugin.js
+@@ -21,6 +21,7 @@
+ import * as dom from 'lib0/dom'
+ import * as eventloop from 'lib0/eventloop'
+ import * as map from 'lib0/map'
++import { equalityDeep } from 'lib0/function'
+ import * as utils from '../utils.js'
+ 
+ /**
+@@ -787,6 +788,8 @@
+   }
+   try {
+     const attrs = el.getAttributes(snapshot)
++    const marks = yAttrToNodeMarks(attrs[YMARKS], schema)
++    delete attrs[YMARKS]
+     if (snapshot !== undefined) {
+       if (!isVisible(/** @type {Y.Item} */ (el._item), snapshot)) {
+         attrs.ychange = computeYChange
+@@ -798,7 +801,7 @@
+           : { type: 'added' }
+       }
+     }
+-    const node = schema.node(el.nodeName, attrs, children)
++    const node = schema.node(el.nodeName, attrs, children, marks)
+     meta.mapping.set(el, node)
+     return node
+   } catch (e) {
+@@ -879,6 +882,10 @@
+       type.setAttribute(key, val)
+     }
+   }
++  const ymarks = nodeMarksToYAttr(node.marks)
++  if (ymarks !== null) {
++    type.setAttribute(YMARKS, ymarks)
++  }
+   type.insert(
+     0,
+     normalizePNodeContent(node).map((n) =>
+@@ -979,8 +986,12 @@
+     matchNodeName(ytype, pnode)
+   ) {
+     const normalizedContent = normalizePNodeContent(pnode)
++    const yattrs = ytype.getAttributes()
++    const ymarks = yattrs[YMARKS] ?? null
++    delete yattrs[YMARKS]
+     return ytype._length === normalizedContent.length &&
+-      equalAttrs(ytype.getAttributes(), pnode.attrs) &&
++      equalAttrs(yattrs, pnode.attrs) &&
++      equalityDeep(ymarks, nodeMarksToYAttr(pnode.marks)) &&
+       ytype.toArray().every((ychild, i) =>
+         equalYTypePNode(ychild, normalizedContent[i])
+       )
+@@ -1090,6 +1101,41 @@
+   )
+ }
+ 
++/**
++ * The attribute a non-text node's own marks are kept under.
++ *
++ * Text carries its marks as formatting attributes of the Y.XmlText, but an element has nowhere to put
++ * them, so without this the marks on an inline node (a linked image, a bold emoji) were dropped on the
++ * way into the shared document. Stored as the marks' JSON, and never handed to ProseMirror as an attr.
++ */
++const YMARKS = 'ymarks'
++
++/**
++ * @param {ReadonlyArray<import('prosemirror-model').Mark>} marks
++ * @return {Array<any>|null} null when there is nothing to store
++ */
++const nodeMarksToYAttr = (marks) => {
++  const json = marks
++    .filter((mark) => mark.type.name !== 'ychange')
++    .map((mark) => mark.toJSON())
++  return json.length > 0 ? json : null
++}
++
++/**
++ * A mark the schema does not know is skipped rather than allowed to throw, which would delete the
++ * whole node from the shared document.
++ *
++ * @param {any} ymarks
++ * @param {import('prosemirror-model').Schema} schema
++ * @return {Array<import('prosemirror-model').Mark>}
++ */
++const yAttrToNodeMarks = (ymarks, schema) =>
++  Array.isArray(ymarks)
++    ? ymarks
++      .filter((json) => json && schema.marks[json.type])
++      .map((json) => schema.markFromJSON(json))
++    : []
++
+ const hashedMarkNameRegex = /(.*)(--[a-zA-Z0-9+/=]{8})$/
+ /**
+  * @param {string} attrName
+@@ -1165,10 +1211,19 @@
+     }
+     // remove all keys that are no longer in pAttrs
+     for (const key in yDomAttrs) {
+-      if (pAttrs[key] === undefined) {
++      if (pAttrs[key] === undefined && key !== YMARKS) {
+         yDomFragment.removeAttribute(key)
+       }
+     }
++    // the node's own marks, which are kept apart from its attributes
++    const ymarks = nodeMarksToYAttr(pNode.marks)
++    if (ymarks === null) {
++      if (yDomAttrs[YMARKS] !== undefined) {
++        yDomFragment.removeAttribute(YMARKS)
++      }
++    } else if (!equalityDeep(yDomAttrs[YMARKS], ymarks)) {
++      yDomFragment.setAttribute(YMARKS, ymarks)
++    }
+   }
+   // update children
+   const pChildren = normalizePNodeContent(pNode)
