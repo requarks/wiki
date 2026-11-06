@@ -1565,7 +1565,7 @@ function exportRules() {
     })
   }
   const rules = state.group.rules.map(({ __typename, ...r }) => r)
-  fileSave(new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json;charset=UTF-8' }), {
+  fileSave(new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json' }), {
     fileName: 'rules.json',
     extensions: ['.json']
   })
