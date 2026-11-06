@@ -30,7 +30,7 @@ const lookupTerm: McpTool<{ name: string; locale?: string }> = {
   name: 'lookup_term',
   title: 'Look up a glossary term',
   description:
-    "Looks up a word or an acronym in the wiki's glossary, by its name or any of its aliases, and returns its definition (markdown), its expansion, related terms and the page that documents it. The glossary is where this organisation defines its own vocabulary: look a term up rather than guessing what an internal name means.",
+    "Looks up a word or an acronym in the wiki's glossary, by its name or any of its aliases, and returns its definition (markdown), its expansion, related terms, whether it is case-sensitive, whether it is linked automatically in page text, and the page that documents it. The glossary is where this organisation defines its own vocabulary: look a term up rather than guessing what an internal name means.",
   group: 'glossary',
   category: 'glossary',
   readOnly: true,
@@ -81,6 +81,8 @@ const lookupTerm: McpTool<{ name: string; locale?: string }> = {
       ...(term.expansion ? { expansion: term.expansion } : {}),
       ...(term.aliases.length > 0 ? { aliases: term.aliases } : {}),
       ...(term.category ? { category: term.category } : {}),
+      caseSensitive: term.caseSensitive,
+      autoLink: term.autoLink,
       definition: term.definition,
       ...(term.relatedTerms.length > 0
         ? { relatedTerms: term.relatedTerms.map((related) => related.term) }
@@ -150,6 +152,8 @@ interface TermFields {
   category?: string
   relatedTerms?: string[]
   documentationPath?: string
+  caseSensitive?: boolean
+  autoLink?: boolean
 }
 
 const TERM_FIELD_PROPERTIES = {
@@ -180,6 +184,16 @@ const TERM_FIELD_PROPERTIES = {
     type: 'string',
     maxLength: 2048,
     description: 'The path of the page that documents it, without a locale prefix.'
+  },
+  caseSensitive: {
+    type: 'boolean',
+    description:
+      'Whether a mention in page text has to match its exact case to be linked to the term — on for an acronym that is also an ordinary word, such as REST against "rest". Never about uniqueness: a name differing only in case from another term is refused either way.'
+  },
+  autoLink: {
+    type: 'boolean',
+    description:
+      'Whether its first mention on a page is linked to the term automatically. Off for a term that is mostly an ordinary word, where links would land on every page. Has no effect where the site or the page switches glossary links off.'
   }
 } as const
 
@@ -242,7 +256,11 @@ const defineTerm: McpTool<{ term: string; locale?: string } & TermFields> = {
         aliases: args.aliases ?? [],
         category: args.category ?? null,
         relatedTerms: await relatedIds(ctx, locale, args.relatedTerms ?? []),
-        documentationPath: args.documentationPath ? normalizePagePath(args.documentationPath) : null
+        documentationPath: args.documentationPath
+          ? normalizePagePath(args.documentationPath)
+          : null,
+        caseSensitive: args.caseSensitive ?? false,
+        autoLink: args.autoLink ?? true
       }
     })
     return jsonResult(termAnswer(term))
@@ -298,8 +316,8 @@ const updateTerm: McpTool<{ id: string; expectedUpdatedAt: string; term?: string
             : (current.documentation?.path ?? null),
         documentationLabel: current.documentation?.label ?? null,
         references: current.references,
-        caseSensitive: current.caseSensitive,
-        autoLink: current.autoLink
+        caseSensitive: args.caseSensitive ?? current.caseSensitive,
+        autoLink: args.autoLink ?? current.autoLink
       }
     })
     return jsonResult(termAnswer(term))

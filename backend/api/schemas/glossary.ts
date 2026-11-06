@@ -30,7 +30,7 @@ const summaryProperties = {
   autoLink: {
     type: 'boolean',
     description:
-      'Whether the term is linked automatically where it appears in page text. Stored, and not yet acted on.'
+      'Whether the first mention of the term on a page is linked to it automatically. Has no effect while the site’s `features.glossaryAutoLink` or the page’s `allowGlossaryLinks` is off.'
   }
 }
 

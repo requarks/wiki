@@ -749,7 +749,8 @@ refusal comes back as the tool's error, in the route's words.
   names the `updatedAt` it read (`expectedUpdatedAt`) and is refused when somebody saved since. The
   term route replaces a whole term, so `update_term` fills in what the agent left out from what is
   stored; related terms are given by name and resolved to ids, a name with no term refused rather
-  than dropped.
+  than dropped. Both take `caseSensitive` and `autoLink`, how the term is matched and linked in page
+  text, and `lookup_term` reports them.
 - **`upload_asset`** puts an image or a file into a folder, for documentation that needs a
   screenshot, and answers with the `/_files/` link to put in the page — the stored name, which the
   site's sanitizing and conflict rules may have changed. The bytes come as `base64`, or as `text` for
