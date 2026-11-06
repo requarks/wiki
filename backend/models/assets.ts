@@ -1171,6 +1171,10 @@ class Assets {
     overwrite?: boolean
     dispatch?: boolean
   }): Promise<Asset | null> {
+    // -> The folder too: a file in `img_2/` belongs in the `img-2` folder the first file adopted from
+    //    there created, or it is not found there on the next pass and is filed beside itself as
+    //    `name-1.ext`
+    folderPath = await WIKI.models.tree.folderPathAsFiled({ siteId, locale, path: folderPath })
     // -> A file uploaded before underscores became hyphens is found under its own name, and one
     //    uploaded since under the name this file would be written as — so that a tree the wiki
     //    exported itself comes back in onto the files it came from, rather than beside them

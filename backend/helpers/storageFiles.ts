@@ -672,19 +672,27 @@ async function adoptTree({
     const isReservedExtension = Boolean(ext) && reserved.includes(ext)
 
     if (!declared && !isReservedExtension && !isHomeReadme) {
-      const asset = await WIKI.models.assets.adoptStoredFile({
-        siteId: target.siteId,
-        locale,
-        folderPath,
-        fileName,
-        data: raw,
-        authorId: actorId,
-        overwrite
-      })
-      if (asset) {
-        summary.assets++
-      } else {
-        summary.skipped++
+      try {
+        const asset = await WIKI.models.assets.adoptStoredFile({
+          siteId: target.siteId,
+          locale,
+          folderPath,
+          fileName,
+          data: raw,
+          authorId: actorId,
+          overwrite
+        })
+        if (asset) {
+          summary.assets++
+        } else {
+          summary.skipped++
+        }
+      } catch (err: any) {
+        // -> As for a page: one file in a folder the tree will not take (a name that normalizes to
+        //    nothing, a segment too long) must not stop the rest of the tree, or every sync after it
+        summary.failed++
+        WIKI.logger.warn(`Could not import the file at ${filePath} [ SKIPPED ]`)
+        WIKI.logger.warn(err.message)
       }
       continue
     }

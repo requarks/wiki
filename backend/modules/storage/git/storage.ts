@@ -838,7 +838,12 @@ async function removeFromWiki(
   }
   const rest = [...stored.segments]
   const fileName = rest.pop()!
-  const folderPath = rest.join('/')
+  // -> Where the import filed it, which for `img_2/` is the `img-2` folder
+  const folderPath = await WIKI.models.tree.folderPathAsFiled({
+    siteId: target.siteId,
+    locale: stored.locale,
+    path: rest.join('/')
+  })
   const ext = path.extname(fileName).replace(/^\./, '').toLowerCase()
   const stem = fileName.slice(0, fileName.length - (ext ? ext.length + 1 : 0))
 

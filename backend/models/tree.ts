@@ -812,33 +812,102 @@ class Tree {
       return folder
     }
 
-    const { folderPath, fileName } = splitPath(encodeTreePath(path))
-    const results = await WIKI.db
-      .select()
-      .from(treeTable)
-      .where(
-        and(
-          eq(treeTable.siteId, siteId!),
-          eq(treeTable.locale, locale!),
-          eq(treeTable.folderPath, folderPath),
-          eq(treeTable.fileName, fileName),
-          eq(treeTable.type, 'folder')
+    const folderAt = async (slashPath?: string | null): Promise<TreeRow | null> => {
+      const { folderPath, fileName } = splitPath(encodeTreePath(slashPath))
+      const results = await WIKI.db
+        .select()
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId!),
+            eq(treeTable.locale, locale!),
+            eq(treeTable.folderPath, folderPath),
+            eq(treeTable.fileName, fileName),
+            eq(treeTable.type, 'folder')
+          )
         )
-      )
-      .limit(1)
-    if (results[0]) {
-      return results[0] as TreeRow
+        .limit(1)
+      return (results[0] as TreeRow) ?? null
+    }
+
+    const existing = await folderAt(path)
+    if (existing) {
+      return existing
     }
     if (!createIfMissing) {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
     }
+    // -> What it would be created as is looked for before it is created: a folder created from
+    //    `img_2` is called `img-2`, and asking for `img_2` again has to find it rather than collide
+    //    with it
+    const written = await this.folderPathAsFiled({ siteId: siteId!, locale: locale!, path })
+    const found = await folderAt(written)
+    if (found) {
+      return found
+    }
+    const segments = written.split('/')
+    const name = segments.pop()!
     return this.createFolder({
-      parentPath: decodeTreePath(folderPath),
-      pathName: fileName,
-      title: fileName,
+      parentPath: segments.join('/'),
+      pathName: name,
+      title: name,
       locale: locale!,
       siteId: siteId!
     })
+  }
+
+  /**
+   * A slash-separated folder path as the tree files it, for a path that came from outside — a file in
+   * a storage target, a path somebody typed.
+   *
+   * Each segment is spelled the way an existing folder at that level spells it: under its own name
+   * where a folder by that name is there (one created before underscores became hyphens keeps its
+   * `_`), otherwise under the name `createFolder` would give it. Once one level is missing, every
+   * level below it is missing too and is spelled as it would be written.
+   *
+   * Nothing is created, and a path is not checked for whether it could be: a segment that normalizes
+   * to nothing is left as it was, for `createFolder` to refuse.
+   */
+  async folderPathAsFiled({
+    siteId,
+    locale,
+    path
+  }: {
+    siteId: string
+    locale: string
+    path?: string | null
+  }): Promise<string> {
+    const segments = (path ?? '').split('/').filter(Boolean)
+    const filed: string[] = []
+    let parent = ''
+    for (const [i, segment] of segments.entries()) {
+      const asGiven = segment.toLowerCase().normalize('NFC')
+      const asWritten = normalizeNewPagePath(segment) || asGiven
+      const rows = await WIKI.db
+        .select({ folderPath: treeTable.folderPath, fileName: treeTable.fileName })
+        .from(treeTable)
+        .where(
+          and(
+            eq(treeTable.siteId, siteId),
+            eq(treeTable.locale, locale),
+            eq(treeTable.folderPath, parent),
+            inArray(treeTable.fileName, [asGiven, asWritten]),
+            eq(treeTable.type, 'folder')
+          )
+        )
+      const row = rows.find((r) => r.fileName === asGiven) ?? rows[0]
+      if (!row) {
+        filed.push(
+          ...segments
+            .slice(i)
+            .map((s) => normalizeNewPagePath(s) || s.toLowerCase().normalize('NFC'))
+        )
+        break
+      }
+      filed.push(row.fileName)
+      parent = childPathOf(row)
+    }
+    return filed.join('/')
   }
 
   /**
