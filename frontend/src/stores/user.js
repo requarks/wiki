@@ -282,6 +282,17 @@ export const useUserStore = defineStore('user', {
         return ''
       }
       return formatDatePart(toUserZone(date, this.timezone), this.dateFormat)
+    },
+    /**
+     * Format the TIME alone, in this user's 12h/24h choice and zone. The other half of `formatDate`,
+     * for a caller with no `t` to word the pair through `formatDateTime` -- a block, which reaches
+     * this store as `WIKI_STATE.user` and nothing of the app's i18n.
+     */
+    formatTime(date) {
+      if (!date) {
+        return ''
+      }
+      return formatTimePart(toUserZone(date, this.timezone), this.timeFormat)
     }
   }
 })

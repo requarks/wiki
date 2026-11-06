@@ -165,6 +165,13 @@ export class BlockIndexElement extends LitElement {
         default: false
       },
       {
+        name: 'showLastUpdated',
+        type: 'boolean',
+        label: 'Show Last Updated',
+        hint: 'Show when each page was last updated, under its title.',
+        default: false
+      },
+      {
         name: 'noResultMsg',
         type: 'string',
         label: 'Empty Message',
@@ -243,11 +250,11 @@ export class BlockIndexElement extends LitElement {
 
       li {
         background-color: #fafafa;
-        background-image: linear-gradient(to bottom,#fff,#fafafa);
-        border-right: 1px solid rgba(0,0,0,.05);
-        border-bottom: 1px solid rgba(0,0,0,.05);
-        border-left: 5px solid rgba(0,0,0,.1);
-        box-shadow: 0 3px 8px 0 rgba(116,129,141,.1);
+        background-image: linear-gradient(to bottom, #fff, #fafafa);
+        border-right: 1px solid rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-left: 5px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 3px 8px 0 rgba(116, 129, 141, 0.1);
         padding: 0;
         border-radius: 5px;
         font-weight: 500;
@@ -257,20 +264,20 @@ export class BlockIndexElement extends LitElement {
       }
       :host([dark]) li {
         background-color: #222;
-        background-image: linear-gradient(to bottom,#161b22, #0d1117);
-        border-right: 1px solid rgba(0,0,0,.5);
-        border-bottom: 1px solid rgba(0,0,0,.5);
-        border-left: 5px solid rgba(255,255,255,.2);
-        box-shadow: 0 3px 8px 0 rgba(0,0,0,.25);
+        background-image: linear-gradient(to bottom, #161b22, #0d1117);
+        border-right: 1px solid rgba(0, 0, 0, 0.5);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+        border-left: 5px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.25);
       }
       /* -> background-color is the faint tint the gradient lets through at its foot; the dark one is opaque */
       li:hover {
         background-color: var(--accent);
-        background-image: linear-gradient(to bottom,#fff,rgba(255,255,255,.95));
+        background-image: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.95));
         cursor: pointer;
       }
       :host([dark]) li:hover {
-        background-image: linear-gradient(to bottom,#1e232a, #161b22);
+        background-image: linear-gradient(to bottom, #1e232a, #161b22);
       }
       /*
         -> The border in the accent: on hover, or all the time with colorfulBorder. Spelled out under
@@ -325,13 +332,33 @@ export class BlockIndexElement extends LitElement {
       .description {
         display: block;
         color: #666;
-        font-size: .8em;
+        font-size: 0.8em;
         font-weight: normal;
         pointer-events: none;
       }
       /* -> The description grey links-grid uses on a dark card, since #666 is barely legible there */
       :host([dark]) .description {
-        color: rgba(255,255,255,.6);
+        color: rgba(255, 255, 255, 0.6);
+      }
+      /* -> Smaller and fainter than the description, which is the page speaking; this is metadata */
+      .updated {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+        color: #888;
+        font-size: 0.7em;
+        font-weight: normal;
+        pointer-events: none;
+      }
+      :host([dark]) .updated {
+        color: rgba(255, 255, 255, 0.45);
+      }
+      .updated svg {
+        flex: none;
+        width: 1.1em;
+        height: 1.1em;
+        fill: currentColor;
       }
       /*
         On a dark row the writing takes the app's lightened brand shade, the same one the interface
@@ -408,12 +435,13 @@ export class BlockIndexElement extends LitElement {
         pointer-events: none;
       }
       li a > svg path {
-        fill: rgba(0,0,0,.2);
+        fill: rgba(0, 0, 0, 0.2);
       }
       :host([dark]) li a > svg path {
-        fill: rgba(255,255,255,.2);
+        fill: rgba(255, 255, 255, 0.2);
       }
-      li:hover a > svg path, :host([dark]) li:hover a > svg path {
+      li:hover a > svg path,
+      :host([dark]) li:hover a > svg path {
         fill: color-mix(in srgb, var(--accent) 50%, transparent);
       }
 
@@ -506,6 +534,12 @@ export class BlockIndexElement extends LitElement {
        */
       showTags: boolean,
 
+      /**
+       * Whether each page's last updated date and time is shown under its title
+       * @type {boolean}
+       */
+      showLastUpdated: boolean,
+
       // Internal Properties
       _loading: { state: true },
       _pages: { state: true }
@@ -528,6 +562,7 @@ export class BlockIndexElement extends LitElement {
     this.usePageColors = true
     this.colorfulBorder = false
     this.showTags = false
+    this.showLastUpdated = false
     // -> Puts `dark` on this element for the styles above to key off
     this._darkMode = new DarkMode(this)
   }
@@ -596,6 +631,24 @@ export class BlockIndexElement extends LitElement {
     </span>`
   }
 
+  /**
+   * When the page was last updated, in the reader's own date and time format and timezone -- the
+   * user store's, the same preferences the page's own "last edited" line is drawn in. Joined with a
+   * space rather than worded: a block has none of the app's translations to word the pair with.
+   */
+  _updated(page) {
+    const user = WIKI_STATE.user
+    return html`<span class="updated">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+      </svg>
+      <time datetime="${page.updatedAt}"
+        >${user.formatDate(page.updatedAt)} ${user.formatTime(page.updatedAt)}</time
+      >
+    </span>`
+  }
+
   render() {
     return this._pages.length > 0 || this._loading
       ? html`
@@ -603,32 +656,35 @@ export class BlockIndexElement extends LitElement {
             ${this._pages.map((p) => {
               const color = this._color(p)
               return html`<li
-                  class="${color ? 'has-accent' : ''}"
-                  style="${styleMap(color ? { '--accent-light': color[0], '--accent-dark': color[1] } : {})}">
-                  <a
-                    class="${this.showIcons ? 'has-icon' : ''}"
-                    href="${p.href}"
-                    @click="${this._navigate}">
-                    ${this.showIcons ? this._icon(p) : null}
-                    <div class="text">
-                      ${p.title}
-                      ${p.description ? html`<span class="description">${p.description}</span>` : null}
-                    </div>
-                    ${
-                      this.showTags && p.tags?.length > 0
-                        ? html`<div class="tags">${p.tags.map((tag) => html`<span>${tag}</span>`)}</div>`
-                        : null
-                    }
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 48 48"
-                      width="48px"
-                      height="48px">
-                      <path
-                        d="M 24 4 C 12.972292 4 4 12.972292 4 24 C 4 32.465211 9.2720863 39.722981 16.724609 42.634766 A 1.50015 1.50015 0 1 0 17.816406 39.841797 C 11.48893 37.369581 7 31.220789 7 24 C 7 14.593708 14.593708 7 24 7 A 1.50015 1.50015 0 1 0 24 4 z M 32.734375 6.1816406 A 1.50015 1.50015 0 0 0 32.033203 9.0136719 C 37.368997 11.880008 41 17.504745 41 24 C 41 33.406292 33.406292 41 24 41 A 1.50015 1.50015 0 1 0 24 44 C 35.027708 44 44 35.027708 44 24 C 44 16.385255 39.733331 9.7447579 33.453125 6.3710938 A 1.50015 1.50015 0 0 0 32.734375 6.1816406 z M 25.484375 16.484375 A 1.50015 1.50015 0 0 0 24.439453 19.060547 L 27.878906 22.5 L 16.5 22.5 A 1.50015 1.50015 0 1 0 16.5 25.5 L 27.878906 25.5 L 24.439453 28.939453 A 1.50015 1.50015 0 1 0 26.560547 31.060547 L 32.560547 25.060547 A 1.50015 1.50015 0 0 0 32.560547 22.939453 L 26.560547 16.939453 A 1.50015 1.50015 0 0 0 25.484375 16.484375 z" />
-                    </svg>
-                  </a>
-                </li>`
+                class="${color ? 'has-accent' : ''}"
+                style="${styleMap(color ? { '--accent-light': color[0], '--accent-dark': color[1] } : {})}">
+                <a
+                  class="${this.showIcons ? 'has-icon' : ''}"
+                  href="${p.href}"
+                  @click="${this._navigate}">
+                  ${this.showIcons ? this._icon(p) : null}
+                  <div class="text">
+                    ${p.title}
+                    ${p.description ? html`<span class="description">${p.description}</span>` : null}
+                    ${this.showLastUpdated && p.updatedAt ? this._updated(p) : null}
+                  </div>
+                  ${
+                    this.showTags && p.tags?.length > 0
+                      ? html`<div class="tags">
+                          ${p.tags.map((tag) => html`<span>${tag}</span>`)}
+                        </div>`
+                      : null
+                  }
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 48 48"
+                    width="48px"
+                    height="48px">
+                    <path
+                      d="M 24 4 C 12.972292 4 4 12.972292 4 24 C 4 32.465211 9.2720863 39.722981 16.724609 42.634766 A 1.50015 1.50015 0 1 0 17.816406 39.841797 C 11.48893 37.369581 7 31.220789 7 24 C 7 14.593708 14.593708 7 24 7 A 1.50015 1.50015 0 1 0 24 4 z M 32.734375 6.1816406 A 1.50015 1.50015 0 0 0 32.033203 9.0136719 C 37.368997 11.880008 41 17.504745 41 24 C 41 33.406292 33.406292 41 24 41 A 1.50015 1.50015 0 1 0 24 44 C 35.027708 44 44 35.027708 44 24 C 44 16.385255 39.733331 9.7447579 33.453125 6.3710938 A 1.50015 1.50015 0 0 0 32.734375 6.1816406 z M 25.484375 16.484375 A 1.50015 1.50015 0 0 0 24.439453 19.060547 L 27.878906 22.5 L 16.5 22.5 A 1.50015 1.50015 0 1 0 16.5 25.5 L 27.878906 25.5 L 24.439453 28.939453 A 1.50015 1.50015 0 1 0 26.560547 31.060547 L 32.560547 25.060547 A 1.50015 1.50015 0 0 0 32.560547 22.939453 L 26.560547 16.939453 A 1.50015 1.50015 0 0 0 25.484375 16.484375 z" />
+                  </svg>
+                </a>
+              </li>`
             })}
           </ul>
         `

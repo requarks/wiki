@@ -126,6 +126,11 @@ export interface ListedPage {
    * index block that lists them. Only on a page the reader may open, whose tags it already shows.
    */
   tags: string[]
+  /**
+   * When the page last changed, from its tree row: the date a folder listing shows, and the one an
+   * `updatedAt` ordering sorts by, so a block drawing it agrees with its own order.
+   */
+  updatedAt: Date
 }
 
 /**
@@ -522,6 +527,7 @@ class Tree {
         fileName: treeTable.fileName,
         title: treeTable.title,
         tags: treeTable.tags,
+        updatedAt: treeTable.updatedAt,
         description: pagesTable.description,
         icon: pagesTable.icon,
         iconColor: sql<string | null>`${pagesTable.config}->>'iconColor'`,
@@ -551,7 +557,8 @@ class Tree {
         description: row.description ?? '',
         icon: row.icon ?? '',
         iconColor: row.iconColor ?? '',
-        tags: row.tags ?? []
+        tags: row.tags ?? [],
+        updatedAt: row.updatedAt
       }
       const ref = { siteId, locale, path: page.path, tags: page.tags }
       return isListable(unpublished, row.isLive, ref) &&

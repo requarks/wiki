@@ -158,6 +158,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       tags: {
         type: 'array',
         items: { type: 'string' }
+      },
+      updatedAt: {
+        type: 'string',
+        format: 'date-time',
+        description: 'When the page last changed.'
       }
     }
   })
