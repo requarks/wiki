@@ -46,6 +46,7 @@
           padding="xs md"
           @click="onDialogCancel" />
         <w-btn
+          ref="btnOk"
           unelevated
           :label="okLabel ?? t('common.actions.ok')"
           :color="color"
@@ -130,7 +131,15 @@ defineEmits(dialogComponentEmits)
 
 const { t } = useI18n()
 
-const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent()
+/*
+  Focus starts on the confirming button, so Enter answers the question being asked -- what anyone
+  pressing it on a confirmation expects. Escape (or Cancel) is the way out.
+*/
+const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogComponent({
+  autofocus: () => btnOk.value?.$el
+})
+
+const btnOk = ref(null)
 
 const paragraphs = computed(() => (Array.isArray(props.message) ? props.message : [props.message]))
 

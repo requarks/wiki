@@ -21,13 +21,18 @@
           v-if="modelValue"
           class="w-dialog-viewport fixed inset-0 z-[6000] flex flex-nowrap overflow-auto pointer-events-none"
           :class="viewportClasses">
+          <!-- `tabindex="-1"` makes the panel itself focusable, as the place focus lands on open
+               when nothing inside asks for it; never a Tab stop. -->
           <div
+            ref="panelEl"
             role="dialog"
             aria-modal="true"
-            class="w-dialog-panel pointer-events-auto flex flex-col overflow-auto shadow-dialog"
+            tabindex="-1"
+            class="w-dialog-panel pointer-events-auto flex flex-col overflow-auto shadow-dialog outline-none"
             :class="panelClasses"
             :style="panelStyle"
-            @click.stop>
+            @click.stop
+            @keydown="onPanelKeydown">
             <slot />
           </div>
         </div>
@@ -37,7 +42,9 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+
+import { isTopDialog, openDialogStack, tabbableIn } from '@/helpers/dialogFocus'
 
 /**
  * Modal dialog shell.
@@ -134,6 +141,16 @@ const panelStyle = computed(() =>
   !props.fullWidth && props.maxWidth ? { maxWidth: props.maxWidth } : undefined
 )
 
+// DATA
+
+const panelEl = ref(null)
+
+/** This instance's entry in `openDialogStack`. */
+const stackToken = {}
+
+/** Whatever held focus when the dialog opened -- usually the button that opened it. */
+let returnFocusTo = null
+
 // METHODS
 
 function close() {
@@ -147,10 +164,92 @@ function onBackdropClick() {
 }
 
 function onKeydown(ev) {
-  if (ev.key === 'Escape' && !props.persistent) {
-    // -> Stops the key also reaching a dialog underneath this one
+  /*
+    Every open dialog has this listener on `document`, and `stopPropagation()` does not stop other
+    listeners on that same node -- so one Escape used to close every non-persistent dialog in the
+    stack at once. Only the dialog on top answers it.
+  */
+  if (ev.key !== 'Escape' || !isTopDialog(stackToken)) {
+    return
+  }
+  // -> A persistent dialog leaves the key alone, so a select open inside it can still close on it
+  if (!props.persistent) {
     ev.stopPropagation()
     close()
+  }
+}
+
+/**
+ * Keeps Tab inside the panel by wrapping at either end, which `aria-modal` promises and which leaving
+ * the page behind reachable broke: tabbing out and pressing Enter clicked whatever was underneath.
+ *
+ * Bound on the panel, in the bubble phase, rather than on `document`: a code editor inside the panel
+ * claims Tab for indentation and calls `preventDefault()` on it, and that has to win. A dialog opened
+ * on top of this one is teleported out of the panel, so its keys never reach here.
+ */
+function onPanelKeydown(ev) {
+  if (ev.key !== 'Tab' || ev.defaultPrevented) {
+    return
+  }
+  const panel = panelEl.value
+  const items = tabbableIn(panel)
+  if (items.length === 0) {
+    ev.preventDefault()
+    return
+  }
+  const active = document.activeElement
+  if (ev.shiftKey && (active === items[0] || active === panel)) {
+    ev.preventDefault()
+    items.at(-1).focus()
+  } else if (!ev.shiftKey && active === items.at(-1)) {
+    ev.preventDefault()
+    items[0].focus()
+  }
+}
+
+/**
+ * Moves focus into the panel once it is rendered, unless something inside already took it (a field
+ * with `autofocus`, or `useDialogComponent({ autofocus })`, which runs a tick later and moves it on).
+ *
+ * Without this, focus stayed on the button that opened the dialog, so Enter clicked it again and
+ * stacked another copy of the dialog on top -- repeatably, until the screen went black.
+ */
+function focusPanel() {
+  const panel = panelEl.value
+  if (panel && !panel.contains(document.activeElement)) {
+    panel.focus({ preventScroll: true })
+  }
+}
+
+/** Hands focus back to the opener, if it still exists and nothing has deliberately moved it on. */
+function restoreFocus() {
+  const target = returnFocusTo
+  returnFocusTo = null
+  const active = document.activeElement
+  const focusIsOurs = !active || active === document.body || panelEl.value?.contains(active)
+  if (focusIsOurs && target?.isConnected && typeof target.focus === 'function') {
+    target.focus({ preventScroll: true })
+  }
+}
+
+function lock() {
+  document.addEventListener('keydown', onKeydown, true)
+  openDialogStack.push(stackToken)
+  const depth = Number(document.body.dataset.wDialogDepth ?? 0) + 1
+  document.body.dataset.wDialogDepth = String(depth)
+  document.body.style.overflow = 'hidden'
+}
+
+function release() {
+  document.removeEventListener('keydown', onKeydown, true)
+  const idx = openDialogStack.indexOf(stackToken)
+  if (idx >= 0) {
+    openDialogStack.splice(idx, 1)
+  }
+  const depth = Math.max(0, Number(document.body.dataset.wDialogDepth ?? 0) - 1)
+  document.body.dataset.wDialogDepth = String(depth)
+  if (depth === 0) {
+    document.body.style.overflow = ''
   }
 }
 
@@ -163,33 +262,28 @@ function onKeydown(ev) {
  */
 watch(
   () => props.modelValue,
-  (isOpen) => {
+  (isOpen, wasOpen) => {
     if (isOpen) {
-      document.addEventListener('keydown', onKeydown, true)
-      const depth = Number(document.body.dataset.wDialogDepth ?? 0) + 1
-      document.body.dataset.wDialogDepth = String(depth)
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.removeEventListener('keydown', onKeydown, true)
-      const depth = Math.max(0, Number(document.body.dataset.wDialogDepth ?? 0) - 1)
-      document.body.dataset.wDialogDepth = String(depth)
-      if (depth === 0) {
-        document.body.style.overflow = ''
-      }
+      returnFocusTo = document.activeElement
+      lock()
+      // -> The panel is rendered by the flush this change triggers, not yet
+      nextTick(focusPanel)
+    } else if (wasOpen) {
+      // -> Not on mounting closed, which has nothing to release -- that used to unlock the page's
+      //    scroll under a dialog that was already open
+      // -> Runs before the re-render, while the panel is still there to ask whether it holds focus
+      restoreFocus()
+      release()
     }
   },
   { immediate: true }
 )
 
 onBeforeUnmount(() => {
-  // -> An unmount while open (route change, host teardown) would otherwise leak both
+  // -> An unmount while open (route change, host teardown) would otherwise leak the listener, the
+  //    stack entry and the scroll lock
   if (props.modelValue) {
-    document.removeEventListener('keydown', onKeydown, true)
-    const depth = Math.max(0, Number(document.body.dataset.wDialogDepth ?? 0) - 1)
-    document.body.dataset.wDialogDepth = String(depth)
-    if (depth === 0) {
-      document.body.style.overflow = ''
-    }
+    release()
   }
 })
 </script>
