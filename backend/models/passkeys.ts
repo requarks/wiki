@@ -31,7 +31,11 @@ interface StoredPasskey {
   transports?: string[]
   createdAt: string
   siteId: string
-  /** The hostname the credential is bound to. A passkey only works on the site it was created on. */
+  /**
+   * The RP ID the credential is bound to: the hostname of the site it was created on, or the shared
+   * domain in `auth.passkeyRpId`. A passkey works on every site whose hostname is its RP ID or a
+   * subdomain of it.
+   */
   rpId: string
 }
 
@@ -76,7 +80,8 @@ const insecureOriginExceptions = new Set(['localhost', '127.0.0.1', '[::1]', '::
  * header cannot establish is that the connection was secure, so that is checked separately.
  *
  * @param origin The `Origin` header, if the client sent one
- * @param hostname The host the request was addressed to, i.e. the RP ID
+ * @param hostname The host the request was addressed to. This is not always the RP ID, which can be a
+ *                 parent domain of it (see `rpIdFor`)
  * @throws `ERR_PK_INSECURE_ORIGIN` for an origin that does not match, or that is not a secure context
  */
 function resolveOrigin(origin: string | undefined, hostname: string): string {
@@ -102,6 +107,28 @@ function resolveOrigin(origin: string | undefined, hostname: string): string {
 }
 
 /**
+ * The RP ID a passkey ceremony on a host is performed under.
+ *
+ * By default this is the host itself. When `auth.passkeyRpId` names a domain, every host that is that
+ * domain or a subdomain of it uses the domain instead, so a passkey registered on one site signs in on
+ * all of them. WebAuthn only accepts an RP ID that is a suffix of the origin's host, so a site
+ * outside the domain cannot use it, and keeps its own hostname.
+ *
+ * Only the RP ID is shared. The origin is still checked per site (`resolveOrigin`), so a ceremony is
+ * accepted only on the site that asked for it.
+ *
+ * @param hostname The host the request was addressed to
+ */
+function rpIdFor(hostname: string): string {
+  const host = hostname.toLowerCase()
+  const shared = WIKI.config.auth?.passkeyRpId
+  if (shared && (host === shared || host.endsWith(`.${shared}`))) {
+    return shared
+  }
+  return host
+}
+
+/**
  * Passkeys (WebAuthn) model
  *
  * Credentials are stored in the user's `passkeys` JSONB column rather than a table of their own: they
@@ -116,8 +143,9 @@ class Passkeys {
     return (store.authenticators ?? []).map((pk) => ({
       id: pk.id,
       name: pk.name,
-      // -> The hostname it was registered against, not the site's current one: that is what the
-      //    credential is actually bound to, and renaming a site does not move it
+      // -> The RP ID it was registered against, not the site's current hostname: that is what the
+      //    credential is bound to, and neither renaming a site nor changing `auth.passkeyRpId`
+      //    moves it
       siteHostname: pk.rpId,
       createdAt: pk.createdAt
     }))
@@ -127,7 +155,8 @@ class Passkeys {
    * Options for registering a new passkey.
    *
    * @param userId The user registering it, who must be logged in
-   * @param hostname The host being browsed, which becomes the RP ID the credential is bound to
+   * @param hostname The host being browsed, from which `rpIdFor` derives the RP ID the credential is
+   *                 bound to
    * @param origin The request's `Origin` header
    * @returns The options to hand the browser, and the challenge to remember for
    *          `finalizeRegistration()`
@@ -153,13 +182,14 @@ class Passkeys {
       throw new Error('ERR_PK_HOSTNAME_MISSING')
     }
     const expectedOrigin = resolveOrigin(origin, hostname)
+    const rpId = rpIdFor(hostname)
 
     const site = await WIKI.models.sites.getSiteByHostname({ hostname })
     const store = (user.passkeys ?? {}) as PasskeyStore
 
     const options = await generateRegistrationOptions({
       rpName: site?.config?.title || 'Wiki',
-      rpID: hostname,
+      rpID: rpId,
       // -> The user handle comes back on login as the only clue to who is signing in, so it is the
       //    user ID itself rather than a random value that would need a second lookup table
       userID: new TextEncoder().encode(user.id),
@@ -182,7 +212,7 @@ class Passkeys {
       registrationOptions: options,
       pending: {
         challenge: options.challenge,
-        rpId: hostname,
+        rpId,
         origin: expectedOrigin,
         siteId: site?.id ?? ''
       }
@@ -294,7 +324,7 @@ class Passkeys {
    * Options for logging in with a passkey.
    *
    * Nobody is named here, and no `allowCredentials` list is sent: every passkey is registered as a
-   * discoverable credential, so the authenticator offers whichever ones it holds for this host and the
+   * discoverable credential, so the authenticator offers whichever ones it holds for this RP ID and the
    * assertion says who signed. That is what makes a passkey login one gesture — there is nothing to ask
    * the user first, and no lookup that could reveal whether an address has an account.
    *
@@ -309,9 +339,10 @@ class Passkeys {
       throw new Error('ERR_PK_HOSTNAME_MISSING')
     }
     const expectedOrigin = resolveOrigin(origin, hostname)
+    const rpId = rpIdFor(hostname)
 
     const options = await generateAuthenticationOptions({
-      rpID: hostname,
+      rpID: rpId,
       userVerification: 'preferred'
     })
 
@@ -319,7 +350,7 @@ class Passkeys {
       authOptions: options,
       pending: {
         challenge: options.challenge,
-        rpId: hostname,
+        rpId,
         origin: expectedOrigin,
         siteId: (await WIKI.models.sites.getSiteByHostname({ hostname }))?.id ?? ''
       }

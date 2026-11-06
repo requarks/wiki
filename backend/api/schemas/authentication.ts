@@ -116,6 +116,12 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description:
           'Whether users may create personal access tokens. Turned off, the tokens already created stop working too; they are kept, and work again the moment it is turned back on.'
+      },
+      passkeyRpId: {
+        type: 'string',
+        maxLength: 253,
+        description:
+          'A shared domain to bind passkeys to (the WebAuthn RP ID), such as `example.com`, so that one passkey signs in on every site whose hostname is that domain or a subdomain of it. Empty, the default, binds each passkey to the hostname of the site it was registered on. A site whose hostname is outside the domain keeps using its own hostname. Passkeys already registered stay bound to the RP ID they were created with, so changing this means users register their passkeys again on the affected sites.'
       }
     }
   })

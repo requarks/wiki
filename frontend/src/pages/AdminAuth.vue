@@ -478,6 +478,23 @@
             </w-item-section>
           </w-item>
           <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon class="self-start" icon="website" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.auth.passkeyRpId`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.auth.passkeyRpIdHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-input
+                outlined
+                v-model="state.config.passkeyRpId"
+                dense
+                no-autofill
+                placeholder="example.com"
+                :aria-label="t(`admin.auth.passkeyRpId`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
           <w-item tag="label">
             <blueprint-icon class="self-start" icon="administrator-male" />
             <w-item-section>
@@ -566,6 +583,7 @@ const state = reactive({
   /** The instance-wide settings, which belong to no strategy — the Configuration screen. */
   config: {
     allowPasskeys: true,
+    passkeyRpId: '',
     allowProfileEditing: true,
     allowPersonalTokens: true
   },
@@ -812,6 +830,7 @@ async function save() {
     const resp = await API_CLIENT.put('authentication/config', {
       json: {
         allowPasskeys: state.config.allowPasskeys,
+        passkeyRpId: state.config.passkeyRpId,
         allowProfileEditing: state.config.allowProfileEditing,
         allowPersonalTokens: state.config.allowPersonalTokens
       }

@@ -159,15 +159,23 @@ function isBuiltInLocal(id: string): boolean {
 }
 
 /**
- * The instance-wide authentication settings, i.e. the half of the `auth` settings blob a person
- * sets. The rest of that blob — the session secret, the signing keypair, the seeded IDs — is the
- * installation's own and is never read or written through here.
+ * The instance-wide authentication switches: the on/off half of the settings a person sets on the
+ * Configuration screen. The rest of the `auth` settings blob — the session secret, the signing
+ * keypair, the seeded IDs — is the installation's own and is never read or written through here.
  */
-export const AUTH_CONFIG_FIELDS = [
+export const AUTH_SWITCHES = [
   'allowPasskeys',
   'allowProfileEditing',
   'allowPersonalTokens'
 ] as const
+
+/**
+ * A domain name as WebAuthn accepts one for an RP ID: dot-separated labels of letters, digits and
+ * inner hyphens. The last label must not be all digits, which also rules out an IPv4 address. A
+ * browser cannot use an IP address as an RP ID.
+ */
+const RP_ID_PATTERN =
+  /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*(?![0-9]+$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/
 
 /**
  * Authentication model
@@ -180,7 +188,7 @@ class Authentication {
   getPublicConfig(): Record<string, any> {
     const auth = WIKI.config.auth ?? {}
     const config: Record<string, any> = {}
-    for (const field of AUTH_CONFIG_FIELDS) {
+    for (const field of AUTH_SWITCHES) {
       config[field] = auth[field] !== false
     }
     return config
@@ -188,7 +196,10 @@ class Authentication {
 
   /** The instance-wide authentication settings, as the admin area expects them. */
   getConfig(): Record<string, any> {
-    return this.getPublicConfig()
+    return {
+      ...this.getPublicConfig(),
+      passkeyRpId: WIKI.config.auth?.passkeyRpId ?? ''
+    }
   }
 
   /**
@@ -199,12 +210,29 @@ class Authentication {
    */
   pickFields(body: Record<string, any>): Record<string, any> {
     const patch: Record<string, any> = {}
-    for (const field of AUTH_CONFIG_FIELDS) {
+    for (const field of AUTH_SWITCHES) {
       if (body[field] !== undefined) {
         patch[field] = Boolean(body[field])
       }
     }
+    if (typeof body.passkeyRpId === 'string') {
+      // -> Normalised before storing, so the stored value is exactly what `validate` checked and
+      //    what `passkeys.rpIdFor` compares hostnames against
+      patch.passkeyRpId = body.passkeyRpId.trim().toLowerCase().replace(/\.$/, '')
+    }
     return patch
+  }
+
+  /**
+   * Check a patch picked by `pickFields`.
+   *
+   * @returns The reason it is invalid, or null when it is fine
+   */
+  validate(patch: Record<string, any>): string | null {
+    if (patch.passkeyRpId && !RP_ID_PATTERN.test(patch.passkeyRpId)) {
+      return `"${patch.passkeyRpId}" is not a valid passkey domain. Enter a domain name only, such as example.com, without a protocol, port or path.`
+    }
+    return null
   }
 
   /**

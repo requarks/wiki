@@ -1518,7 +1518,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the instance-wide authentication settings',
         description:
-          'The settings that hold for every site: whether passkeys may be used, whether a user may edit their own profile, and whether users may create personal access tokens. Which strategies a site offers is part of that site’s configuration instead.',
+          'The settings that apply to every site: whether passkeys may be used and which domain they are bound to, whether a user may edit their own profile, and whether users may create personal access tokens. The strategies a site offers are part of that site’s own configuration.',
         tags: ['Authentication'],
         response: {
           200: { $ref: 'AuthConfig#' }
@@ -1565,6 +1565,11 @@ async function routes(app: FastifyInstance) {
       const patch = WIKI.models.authentication.pickFields(req.body)
       if (Object.keys(patch).length < 1) {
         return reply.badRequest('No valid authentication setting was provided.')
+      }
+
+      const invalid = WIKI.models.authentication.validate(patch)
+      if (invalid) {
+        return reply.badRequest(invalid)
       }
 
       if (!(await WIKI.models.authentication.updateConfig(patch))) {
