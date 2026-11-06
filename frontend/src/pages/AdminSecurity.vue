@@ -314,7 +314,7 @@
             <w-item-section style="flex: 0 0 200px">
               <w-input
                 outlined
-                v-model.number="state.humanUploadMaxFileSize"
+                v-model="state.humanUploadMaxFileSize"
                 dense
                 :aria-label="t(`admin.security.maxUploadSize`)" />
             </w-item-section>
