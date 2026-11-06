@@ -4,6 +4,8 @@ import { sortBy } from 'es-toolkit/array'
 import { cloneDeep } from 'es-toolkit/object'
 import semverGte from 'semver/functions/gte'
 
+import { useSiteStore } from './site'
+
 export const useAdminStore = defineStore('admin', {
   state: () => ({
     currentSiteId: null,
@@ -132,8 +134,16 @@ export const useAdminStore = defineStore('admin', {
     },
     async fetchSites() {
       this.sites = (await API_CLIENT.get('sites').json()) ?? []
-      if (!this.currentSiteId) {
-        this.currentSiteId = this.sites[0].id
+      /*
+        A selection that is still listed stands. Otherwise -- nothing chosen yet, or the chosen site was
+        just deleted -- fall back on the site being served at this hostname, so that the admin opens on
+        the site in front of the user rather than on whichever one sorts first.
+      */
+      if (!this.sites.some((st) => st.id === this.currentSiteId)) {
+        const hostSiteId = useSiteStore().id
+        this.currentSiteId = this.sites.some((st) => st.id === hostSiteId)
+          ? hostSiteId
+          : (this.sites[0]?.id ?? null)
       }
     }
   }
