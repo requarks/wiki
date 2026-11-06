@@ -142,6 +142,18 @@ export interface DeletedEntry {
   locale: string
 }
 
+/** An entry under a folder, as `getBranch` describes it for a permission check. */
+export interface BranchEntry {
+  type: TreeItemType
+  /** Slash-separated path of the entry itself, from the site root. */
+  path: string
+  locale: string
+  /** A page's own tags, which a rule may address it by. */
+  tags: string[]
+  /** Whether a page is live. Always false for a folder or an asset. */
+  isLive: boolean
+}
+
 /** A raw `tree` row, as the model passes it around internally. */
 export interface TreeRow {
   id: string
@@ -732,6 +744,51 @@ class Tree {
       .where(and(eq(treeTable.id, id), eq(treeTable.type, 'folder')))
       .limit(1)
     return (results[0] as TreeRow) ?? null
+  }
+
+  /**
+   * Everything under a folder, at any depth, in the folder's own locale.
+   *
+   * What a caller about to act on the whole branch has to hold its permissions against: deleting,
+   * moving or copying a folder does the same thing to every entry under it, and a page rule can be
+   * written for any of them. Scoped to the locale as the operations themselves are (see
+   * `deleteFolder`), so that what is checked is exactly what would be touched.
+   */
+  async getBranch(folder: {
+    siteId: string
+    locale: string
+    folderPath?: string | null
+    fileName: string
+  }): Promise<BranchEntry[]> {
+    const rows = await WIKI.db
+      .select({
+        type: treeTable.type,
+        folderPath: treeTable.folderPath,
+        fileName: treeTable.fileName,
+        locale: treeTable.locale,
+        tags: treeTable.tags,
+        // -> Null for anything but a page, which has no `pages` row to join
+        isLive: sql<boolean>`coalesce(${liveCondition(pagesTable)}, false)`.mapWith(Boolean)
+      })
+      .from(treeTable)
+      .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
+      .where(
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
+          sql`${treeTable.folderPath} <@ ${childPathOf(folder)}::ltree`
+        )
+      )
+    return rows.map((row) => {
+      const parent = decodeTreePath(row.folderPath)
+      return {
+        type: row.type,
+        path: parent ? `${parent}/${row.fileName}` : row.fileName,
+        locale: row.locale,
+        tags: row.tags ?? [],
+        isLive: row.type === 'page' && row.isLive
+      }
+    })
   }
 
   /**
