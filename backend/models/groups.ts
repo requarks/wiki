@@ -1,6 +1,11 @@
 import { v4 as uuid } from 'uuid'
 import { and, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm'
-import { groups as groupsTable, userGroups, users as usersTable } from '../db/schema.ts'
+import {
+  authentication as authenticationTable,
+  groups as groupsTable,
+  userGroups,
+  users as usersTable
+} from '../db/schema.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError, isNoteImagesPath } from '../helpers/common.ts'
 import { resolveLocaleRule, resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
@@ -827,13 +832,25 @@ class Groups {
    * sessions are ended, since each still carries the group's permissions — see
    * `sessions.refreshAccess`.
    *
+   * The group is also taken out of every strategy's `autoEnrollGroups`, which is a uuid array that no
+   * foreign key reaches. Left there, the id has no option in the strategy's Assign To picker to be
+   * unselected by, and `authentication.validateStrategy` refuses every later save of that strategy.
+   *
    * @param id Group ID
    * @param req The request making the change, whose own session is kept
    * @returns Whether a group was deleted
    */
   async deleteGroup(id: string, req?: FastifyRequest): Promise<boolean> {
     const members = await this.memberIds(id)
-    const result = await WIKI.db.delete(groupsTable).where(eq(groupsTable.id, id))
+    const result = await WIKI.db.transaction(async (tx) => {
+      await tx
+        .update(authenticationTable)
+        .set({
+          autoEnrollGroups: sql`array_remove(${authenticationTable.autoEnrollGroups}, ${id}::uuid)`
+        })
+        .where(sql`${id}::uuid = ANY(${authenticationTable.autoEnrollGroups})`)
+      return tx.delete(groupsTable).where(eq(groupsTable.id, id))
+    })
     await this.reloadCache()
     await WIKI.models.sessions.refreshAccess(members, req)
     return (result.rowCount ?? 0) > 0
