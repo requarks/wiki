@@ -401,6 +401,35 @@
     margin-bottom: 0;
   }
 
+  /*
+    Beside a float, which is what `block-infobox` is.
+
+    A float moves only the LINES next to it out of the way: the box of a block that follows still spans
+    the whole column, underneath the float. For a paragraph that is invisible. For a block that paints
+    its own box -- a links-list row, an admonition's wash, a quote's bar, the rule under a heading -- it
+    is the part of it that disappears under the infobox, with its text squeezed into what is left.
+
+    `flow-root` makes each of these a formatting context of its own, which a browser never lays over a
+    float: the box narrows to sit beside it, and takes the full column again once it is past it. One
+    too wide to fit beside it at all drops below it instead. Code blocks, titled code blocks and tables
+    already behave this way, through the `overflow` they set for their own reasons.
+
+    A links-list is done row by row rather than as one list, so that the rows past the bottom of the
+    infobox widen again instead of keeping the width of the ones beside it.
+
+    The cost is that a child's margin no longer collapses through the box. None of these has one that
+    did: each either has padding at that edge, holds only inline content, or -- a list item -- sets its
+    paragraphs' margins to nothing.
+  */
+  h1,
+  h2,
+  blockquote,
+  ul.links-list > li,
+  details,
+  hr {
+    display: flow-root;
+  }
+
   // ---------------------------------------------------------------------------
   // HEADINGS
   // ---------------------------------------------------------------------------

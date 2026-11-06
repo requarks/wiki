@@ -188,11 +188,11 @@ Website: https://montreal.ca
         max-width: 100%;
         margin: 4px 0 16px 24px !important;
         /*
-          A layer of its own, above the article's own decoration. A heading draws its rule as an
-          absolutely positioned pseudo-element spanning the whole column, and a positioned element
-          paints over a float whichever way round the two are written — so the rule ran straight
-          across the box. This is the right way round anyway: the box is a card sitting on the page,
-          and the rule belongs to the text it is sitting on.
+          A layer of its own, above the article's own decoration. A positioned element paints over a
+          float whichever way round the two are written, and the article has several (a heading with
+          its anchor button, an admonition with its icon). The blocks that paint a box are laid out
+          beside the float rather than under it (see "Beside a float" in _page-contents.scss), but
+          anything that still reaches across belongs under the card: the box is sitting on the page.
         */
         position: relative;
         z-index: 1;
