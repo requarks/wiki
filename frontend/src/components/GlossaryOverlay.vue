@@ -1345,12 +1345,17 @@ async function showCategory(category) {
 
 /**
  * Leave for the documentation page. The overlay is held open by `siteStore.overlay`, not by the route,
- * so it has to close first or the page would load behind it.
+ * so it has to be put away or the page would load behind it. Not through `close()`: opened from a link
+ * in the article, that steps back in history, and the asynchronous back would land after the push and
+ * undo it. The push alone takes the `?glossary=` parameter off, and leaves its entry behind it, so
+ * stepping back returns to the term.
  */
 function openDocumentation() {
   const href = documentationHref.value
-  close()
-  router.push(href)
+  guardUnsaved(() => {
+    siteStore.$patch({ overlay: '' })
+    router.push(href)
+  })
 }
 
 function switchLocale(locale) {
