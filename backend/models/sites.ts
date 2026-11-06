@@ -17,6 +17,7 @@ import { CustomError } from '../helpers/common.ts'
 import {
   detectImageMime,
   detectSvg,
+  isAnimatedImage,
   normalizeImage,
   sanitizeSvg,
   svgMimeType
@@ -47,6 +48,13 @@ const SITE_ASSET_NORMALIZATION: Record<SiteAssetKind, ImageNormalization> = {
   favicon: { width: 180, height: 180, fit: 'cover', format: 'png' },
   loginBg: { width: 1920, height: 1080, fit: 'cover', format: 'webp' }
 }
+
+/**
+ * The images an animated GIF or WebP is stored as uploaded for, rather than normalized: re-encoding
+ * keeps only the first frame, and the animation is the reason somebody uploaded one. Not the favicon, which
+ * a browser's tab strip draws still regardless of what it is handed.
+ */
+const SITE_ASSET_KEEPS_ANIMATION: ReadonlySet<SiteAssetKind> = new Set(['logo', 'loginBg'])
 
 /**
  * Images made from an upload rather than uploaded themselves, for somewhere the upload as stored
@@ -486,7 +494,9 @@ class Sites {
    * original of an image displayed 34 pixels tall. That needs the Sharp extension, so without it the
    * uploaded bytes are stored as they came in, which is what the admin area's "requires Sharp"
    * indicator is warning about. An SVG is never resized or re-encoded: it is markup, it already
-   * scales to any size, and rasterizing it would throw away the only reason to use one.
+   * scales to any size, and rasterizing it would throw away the only reason to use one. Nor is an
+   * animated GIF or WebP uploaded as a logo or a login background
+   * (`SITE_ASSET_KEEPS_ANIMATION`), since re-encoding would leave its first frame alone.
    *
    * An SVG is sanitized (`sanitizeSvg`) when the security settings say uploaded SVGs are — the same
    * `uploadScanSVG` an asset upload follows — and stored as it came in when they do not, behind the
@@ -509,7 +519,9 @@ class Sites {
       }
       data = sanitized
     }
-    const normalized = detectSvg(data)
+    const keepAsUploaded =
+      detectSvg(data) || (SITE_ASSET_KEEPS_ANIMATION.has(kind) && isAnimatedImage(data))
+    const normalized = keepAsUploaded
       ? data
       : ((await normalizeImage(data, SITE_ASSET_NORMALIZATION[kind])) ?? data)
     const rendition = SITE_ASSET_RENDITIONS[kind]

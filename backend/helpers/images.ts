@@ -449,6 +449,84 @@ export function detectImageMime(data: Buffer): ImageMimeType | null {
 }
 
 /**
+ * Whether these bytes are an animated GIF or WebP, i.e. one with more than one frame.
+ *
+ * Read from the file's own structure rather than through Sharp, so the answer does not depend on the
+ * extension being installed. Anything that does not parse is reported as not animated.
+ */
+export function isAnimatedImage(data: Buffer): boolean {
+  switch (detectImageMime(data)) {
+    case 'image/gif':
+      return gifHasManyFrames(data)
+    case 'image/webp':
+      return webpHasManyFrames(data)
+    default:
+      return false
+  }
+}
+
+/**
+ * Walks a GIF's blocks: the logical screen descriptor and its global color table, then extension and
+ * image blocks — each a chain of length-prefixed sub-blocks — until the trailer. Every image block is
+ * a frame.
+ */
+function gifHasManyFrames(data: Buffer): boolean {
+  /** The offset just past a chain of sub-blocks, which ends at a zero-length one. */
+  const skipSubBlocks = (at: number): number => {
+    while (at < data.length && data[at] !== 0) {
+      at += data[at] + 1
+    }
+    return at + 1
+  }
+  /** The size of a color table announced by a packed field, or 0 if there is none. */
+  const colorTableSize = (packed: number): number =>
+    packed & 0x80 ? 3 * 2 ** ((packed & 0x07) + 1) : 0
+
+  let pos = 13 + colorTableSize(data[10])
+  let frames = 0
+  while (pos < data.length) {
+    const introducer = data[pos]
+    if (introducer === 0x21) {
+      // -> Extension: introducer, label, then its sub-blocks
+      pos = skipSubBlocks(pos + 2)
+    } else if (introducer === 0x2c) {
+      if (++frames > 1) {
+        return true
+      }
+      // -> Image descriptor (10 bytes), its local color table, the LZW minimum code size, then the
+      //    image data's sub-blocks
+      if (pos + 10 > data.length) {
+        return false
+      }
+      pos = skipSubBlocks(pos + 10 + colorTableSize(data[pos + 9]) + 1)
+    } else {
+      // -> The trailer, or something that is not a GIF block
+      return false
+    }
+  }
+  return false
+}
+
+/**
+ * Walks a WebP's RIFF chunks, which follow the 12-byte file header: a four-character name, a
+ * little-endian payload size, then the payload, padded to an even length. An animated WebP holds one
+ * `ANMF` chunk per frame; a still one has none. The animation flag in the `VP8X` header is not what
+ * decides, since an encoder may set it on a file with a single frame.
+ */
+function webpHasManyFrames(data: Buffer): boolean {
+  let pos = 12
+  let frames = 0
+  while (pos + 8 <= data.length) {
+    if (data.subarray(pos, pos + 4).toString('latin1') === 'ANMF' && ++frames > 1) {
+      return true
+    }
+    const size = data.readUInt32LE(pos + 4)
+    pos += 8 + size + (size % 2)
+  }
+  return false
+}
+
+/**
  * Resize an image to a square JPEG, using the Sharp extension.
  *
  * Sharp ships as an optional dependency, so it is normally there — but an optional dependency is

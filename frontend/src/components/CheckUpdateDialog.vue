@@ -78,6 +78,7 @@ import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive } from 'vue'
 import semverGte from 'semver/functions/gte'
 
+import { useAdminStore } from '@/stores/admin'
 import { useUserStore } from '@/stores/user'
 
 // EMITS
@@ -90,6 +91,7 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
 
 // STORES
 
+const adminStore = useAdminStore()
 const userStore = useUserStore()
 
 // I18N
@@ -119,6 +121,10 @@ async function check() {
       state.current = resp.current
       state.latest = resp.latest
       state.latestDate = userStore.formatDate(resp.latestDate)
+      // -> The dashboard's version card and the sidebar's status light read these, and would keep
+      //    showing what `fetchInfo` got when the admin area was opened
+      adminStore.info.currentVersion = resp.current
+      adminStore.info.latestVersion = resp.latest
     } else {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }

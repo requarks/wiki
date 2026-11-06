@@ -6,7 +6,9 @@
           <w-btn dense flat to="/">
             <w-avatar size="34px" square><img src="/_assets/logo-wikijs.svg" /></w-avatar>
           </w-btn>
-          <w-toolbar-title>Wiki.js</w-toolbar-title>
+          <!-- -> Same cell as the site title in `HeaderNav`, so the name does not shift sideways when
+                  moving between the admin and the site -->
+          <div class="text-h6 ml-2 min-w-0 flex-1 truncate">Wiki.js</div>
         </w-toolbar>
         <w-toolbar class="max-md:hidden justify-center" style="height: 64px">
           <div class="text-overline uppercase text-grey">{{ t('admin.adminArea') }}</div>
