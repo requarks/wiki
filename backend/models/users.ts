@@ -1609,10 +1609,14 @@ class Users {
   async init(ids: SystemIds): Promise<void> {
     WIKI.logger.info('Inserting default users...')
 
+    // -> Normalized as every other address is (sign-in lowercases what is typed and matches it
+    //    exactly), and an empty value — `ADMIN_EMAIL=` from a compose file — falls back like an unset one
+    const adminEmail = (process.env.ADMIN_EMAIL ?? '').trim().toLowerCase() || 'admin@example.com'
+
     await WIKI.db.insert(usersTable).values([
       {
         id: ids.userAdminId,
-        email: process.env.ADMIN_EMAIL ?? 'admin@example.com',
+        email: adminEmail,
         auth: {
           [ids.authModuleId]: {
             password: await bcrypt.hash(process.env.ADMIN_PASS || '12345678', 12),
@@ -1675,6 +1679,12 @@ class Users {
         groupId: ids.groupGuestId
       }
     ])
+
+    WIKI.logger.info(
+      process.env.ADMIN_PASS
+        ? `Created administrator account <${adminEmail}> with the password from ADMIN_PASS`
+        : `Created administrator account <${adminEmail}> with the default password 12345678, which must be changed at first login`
+    )
   }
 
   async login(

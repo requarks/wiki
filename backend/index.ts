@@ -164,6 +164,14 @@ async function preBoot() {
   try {
     if (await WIKI.configSvc.loadFromDb()) {
       WIKI.logger.info('Settings merged with DB successfully [ OK ]')
+      // -> Only read by the first-boot seed, so say so rather than let a later setting look ignored
+      const adminVars = ['ADMIN_EMAIL', 'ADMIN_PASS'].filter((key) => process.env[key])
+      if (adminVars.length > 0) {
+        const plural = adminVars.length > 1
+        WIKI.logger.warn(
+          `${adminVars.join(' and ')} ${plural ? 'are' : 'is'} set but ignored: ${plural ? 'they only apply' : 'it only applies'} to the first start against an empty database.`
+        )
+      }
     } else {
       WIKI.logger.warn('No settings found in DB. Initializing with defaults...')
       await WIKI.configSvc.initDbValues()

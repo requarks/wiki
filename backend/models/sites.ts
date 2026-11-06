@@ -246,7 +246,7 @@ class Sites {
         authStrategies: [{ id: WIKI.data.systemIds.localAuthId, order: 0, isVisible: true }],
         auth: {
           autoLogin: false,
-          bypassUnauthorized: false,
+          bypassUnauthorized: true,
           hideLocal: false,
           loginRedirect: '/',
           welcomeRedirect: '/',
@@ -672,7 +672,7 @@ class Sites {
         authStrategies: [{ id: ids.authModuleId, order: 0, isVisible: true }],
         auth: {
           autoLogin: false,
-          bypassUnauthorized: false,
+          bypassUnauthorized: true,
           hideLocal: false,
           loginRedirect: '/',
           welcomeRedirect: '/',
