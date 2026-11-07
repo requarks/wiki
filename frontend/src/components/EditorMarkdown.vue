@@ -631,7 +631,7 @@ const fenceCompletions = useFenceCompletions({ getEditor: () => editor })
 // -> HTML tags such as `<kbd>` after a `<`, written with their closing tag
 const tagCompletions = useTagCompletions({ getEditor: () => editor })
 
-// -> Pages of this wiki after `](/`, by the start of their path
+// -> Pages of this wiki after `](`: by the link text until a `/` is typed, then by the start of the path
 const linkCompletions = useLinkCompletions({
   getEditor: () => editor,
   getLocale: () => docLocale.value
