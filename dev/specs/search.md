@@ -58,7 +58,33 @@ Full-text search is `searchPages` in `backend/models/search.ts`, served at
   could open it without the password. A page with no password is ranked on its whole index.
 - `isSearchable = false` keeps a page out of the results for everyone.
 
-`pg_trgm` was already in `REQUIRED_EXTENSIONS` (`core/db.ts`), with nothing using it.
+### Thai literal terms
+
+Postgres' default parser does not segment Thai: `รับชำระ` is not a lexeme in
+`การกระทบยอดรับชำระและตรวจใบลดหนี้ต้องทำก่อนปิดงาน`. A query consisting only of Thai
+letters and combining marks therefore matches a literal substring of the title, description or
+searchable body. This depends on the query's script, not the page's locale; Thai text in an English
+wiki must be found too. Queries containing spaces, quotes, `OR`, a leading `-`, punctuation or other
+scripts retain their existing websearch semantics. This is literal matching, not Thai word
+segmentation, spelling correction or Unicode normalization.
+
+`pages_thai_search_trgm_idx` indexes the same concatenated expression used by the query, omitting a
+password-protected page's body. The expression is used directly rather than OR-ed with a
+row-dependent `tsquery`, so PostgreSQL can use the trigram index. Terms with too few characters to
+provide a trigram can still require a scan. The new index is built on existing content by a schema
+migration; no search-vector rebuild is required. It adds storage and index maintenance on page edits.
+
+The existing full-text rank and excerpt generation are retained: a substring-only match may have
+rank zero and no emphasized term in the excerpt. Access, unpublished visibility and filters are
+still applied before pagination and totals; protected pages still rank on metadata alone and never
+return an excerpt. Page suggestions already use substring matching and are unchanged.
+
+Run `SEARCH_TEST_DATABASE_URL=postgres://... node dev/scripts/verify-thai-search.ts` against a
+disposable PostgreSQL 17+ database after installing backend dependencies. It exercises the real
+search model, applies the generated index migration in a temporary schema, checks readable counts,
+passwords, publishing, filters and English operators, and verifies index use with 20,000 filler pages.
+
+`pg_trgm` is already in `REQUIRED_EXTENSIONS` (`core/db.ts`); no new extension is needed.
 
 ---
 
