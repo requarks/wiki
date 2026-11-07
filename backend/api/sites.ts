@@ -303,6 +303,7 @@ async function routes(app: FastifyInstance) {
         deleteOrphanedMenus?: boolean
         includeStorageOperations?: boolean
         showParentLink?: boolean
+        folderMenuOnFolderPage?: boolean
       }
       locales?: {
         primary?: string
@@ -547,6 +548,17 @@ async function routes(app: FastifyInstance) {
             ...Object.keys(config).map((section) => `config.${section}`)
           ]
         })
+
+        /*
+          Which menu a page beside a folder shows is stored on the page rather than decided when it is
+          read, so the rule is applied to every such page whenever it is saved -- not only when it
+          changed, so that saving again finishes a pass that failed half-way. After the update, since
+          the resolution reads the setting off the cache the update just reloaded, and after the audit,
+          since the setting is saved by then whether or not this pass succeeds.
+        */
+        if (req.body.navigation?.folderMenuOnFolderPage !== undefined) {
+          await WIKI.models.navigation.repointPagesBesideFolders(req.params.siteId)
+        }
 
         return {
           ok: true,
