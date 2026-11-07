@@ -84,6 +84,22 @@
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
+          <w-item>
+            <blueprint-icon icon="trash" :hue-rotate="45" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.utilities.purgeRevokedKeys`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.utilities.purgeRevokedKeysHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section side>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="purgeRevokedKeys"
+                :label="t(`common.actions.proceed`)" />
+            </w-item-section>
+          </w-item>
         </w-list>
       </w-card>
       <w-card class="mb-4 break-inside-avoid">
@@ -146,22 +162,6 @@
                 icon="la:arrow-circle-right"
                 color="primary"
                 @click="purgeHistory"
-                :label="t(`common.actions.proceed`)" />
-            </w-item-section>
-          </w-item>
-          <w-item>
-            <blueprint-icon icon="trash" :hue-rotate="45" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.utilities.purgeRevokedKeys`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.utilities.purgeRevokedKeysHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section side>
-              <w-btn
-                class="acrylic-btn"
-                flat
-                icon="la:arrow-circle-right"
-                color="primary"
-                @click="purgeRevokedKeys"
                 :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
