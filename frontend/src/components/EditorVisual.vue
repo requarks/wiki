@@ -465,7 +465,7 @@ import { dialog } from '@/composables/dialog'
 import { useImagePropertiesDialog } from '@/composables/imagePropertiesDialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
-import { blockMarkdown, blockPropsFilled, writtenProps } from '@/helpers/blocks'
+import { blockMarkdown, blockPropsFilled, isCanvasBlock, writtenProps } from '@/helpers/blocks'
 import { classValues } from '@/helpers/markdownImages'
 import { renderPermissionsOf, sanitizeRender } from '@/helpers/sanitizeRender'
 
@@ -899,6 +899,10 @@ function slashItems() {
  * A block from its definition, as the picker would insert it left at its defaults -- and with its
  * parameters dialog opened over it when a required prop has no default to stand in, since a block
  * missing one draws nothing. Cancelling leaves the block in place for its header's own button.
+ *
+ * Failing that, a block whose body is a drawing (`isCanvasBlock`) opens its canvas, as one inserted
+ * from the picker does -- see `insertBlockClb`. Nothing closes after this the way the picker does, so
+ * there is no tick to wait for.
  */
 function insertSiteBlock(definition) {
   // -> At the caret, as its source: the Visual editor keeps an inline block as written, with no dialog
@@ -906,20 +910,18 @@ function insertSiteBlock(definition) {
     insertMarkdown(blockMarkdown(definition))
     return
   }
-  const { $from } = editor.view.state.selection
-  // -> Where `insertMarkdown` puts a block: over an empty line, otherwise after the one the caret is in
-  const pos =
-    $from.parent.isTextblock && $from.parent.content.size === 0 ? $from.before() : $from.after()
-  insertMarkdown(blockMarkdown(definition), { block: true })
+  const pos = insertMarkdown(blockMarkdown(definition), { block: true })
+  const node = pos === null ? null : editor.view.state.doc.nodeAt(pos)
+  if (node?.attrs.name !== definition.block) {
+    return
+  }
   const defaults = Object.fromEntries(
     (definition.props ?? []).map((prop) => [prop.name, prop.default ?? ''])
   )
-  if (blockPropsFilled(definition, defaults)) {
-    return
-  }
-  const node = editor.view.state.doc.nodeAt(pos)
-  if (node?.attrs.name === definition.block) {
+  if (!blockPropsFilled(definition, defaults)) {
     editBlockParams(node, pos)
+  } else if (isCanvasBlock(definition)) {
+    editBlockContent(node, pos)
   }
 }
 
@@ -962,14 +964,17 @@ function refreshActive() {
  * Every overlay in the app hands back markdown — the block picker, the table editor, the file
  * manager — and this is what lets the Visual editor reuse all of them unchanged instead of growing a
  * second set of insert paths that would have to be kept in step with the first.
+ *
+ * @returns {number|null} Where what was inserted begins -- for a block, the position of its node, for
+ *          a caller that wants to open something over it -- or null when nothing was.
  */
 function insertMarkdown(markdown, { block = false } = {}) {
   if (!editor) {
-    return
+    return null
   }
   const fragment = editor.parseFragment(markdown)
   if (fragment.size === 0) {
-    return
+    return null
   }
   const view = editor.view
   const { $from, from, to } = view.state.selection
@@ -980,11 +985,14 @@ function insertMarkdown(markdown, { block = false } = {}) {
     being dropped inside it — inserting a table into the empty paragraph at the end of a page should
     not leave that paragraph stranded above it.
   */
+  let start = from
   if (block && $from.parent.isTextblock && $from.parent.content.size === 0) {
-    tr.replaceWith($from.before(), $from.after(), fragment)
+    start = $from.before()
+    tr.replaceWith(start, $from.after(), fragment)
   } else if (block) {
     // -> After the block the caret is in, since a block construct cannot sit inside a paragraph
-    tr.insert($from.after(), fragment)
+    start = $from.after()
+    tr.insert(start, fragment)
   } else {
     /*
       Inline: what was parsed is a paragraph holding the inline content, and it is that content that
@@ -995,6 +1003,7 @@ function insertMarkdown(markdown, { block = false } = {}) {
   }
   view.dispatch(tr.scrollIntoView())
   view.focus()
+  return start
 }
 
 function insertAssets() {
@@ -1288,9 +1297,29 @@ async function insertTabset() {
   }
 }
 
-/** What the block picker built, as the nodes it parses to. */
+/**
+ * What the block picker built, as the nodes it parses to.
+ *
+ * A block whose body is a drawing (`isCanvasBlock`) opens its canvas straight away: its starter body
+ * is an empty diagram, so that is where the author was going. After a tick, because the picker closes
+ * itself straight after handing this over -- and closing is setting the overlay to nothing, which
+ * would close the canvas too if it were already open. Looked up again then rather than kept from here,
+ * as `editBlockContent` is handed the node it will write back to.
+ */
 function insertBlockClb(markdown) {
-  insertMarkdown(markdown, { block: true })
+  const pos = insertMarkdown(markdown, { block: true })
+  const inserted = pos === null ? null : editor.view.state.doc.nodeAt(pos)
+  if (
+    inserted?.type === schema.nodes.block_component &&
+    isCanvasBlock(blockDefinition(inserted.attrs.name))
+  ) {
+    nextTick(() => {
+      const node = editor?.view.state.doc.nodeAt(pos)
+      if (node?.type === schema.nodes.block_component) {
+        editBlockContent(node, pos)
+      }
+    })
+  }
 }
 
 /** The block as this site describes it, or undefined for one it does not list. */

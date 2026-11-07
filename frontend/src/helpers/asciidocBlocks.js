@@ -218,6 +218,37 @@ function closingLineOf(lines, delimiterIndex, delimiter) {
   return lines.length
 }
 
+/**
+ * Where every block's body runs, for the editor to fold it away.
+ *
+ * `start` is the attribute line and `end` the last line BEFORE the closing delimiter, which is how
+ * Monaco reads a folding range: the first line stays and the rest up to `end` is hidden. So a folded
+ * block shows its attribute line and the delimiter that closes it --
+ *
+ *     [block-drawio]
+ *     ====
+ *
+ * -- the opening delimiter going with the body, as the nearest thing to markdown's `::` pair.
+ *
+ * Only a block that is closed: `findBlocks` runs an unterminated one to the end of the source, which
+ * is right for a preview and would fold away everything after a block still being typed.
+ *
+ * @param {string} text The page source.
+ * @returns {Array<{ block: string, start: number, end: number }>} 1-based, by attribute line.
+ */
+export function findBlockRegions(text) {
+  const lines = text.split('\n')
+  return (
+    findBlocks(text)
+      // -> Past the opening delimiter, which is itself the last line of a block opened at the very end
+      .filter(
+        (found) =>
+          found.endLine > found.line + 1 && closes(lines[found.endLine - 1] ?? '', found.delimiter)
+      )
+      .map((found) => ({ block: found.block, start: found.line, end: found.endLine - 1 }))
+  )
+}
+
 /** An attribute line up to the end of the block's name, which may be partly typed or not at all. */
 const OPENING_NAME = /^\[block-([a-z\d-]*)/
 

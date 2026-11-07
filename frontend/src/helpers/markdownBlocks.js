@@ -89,6 +89,58 @@ export function findBlocks(text) {
   return blocks
 }
 
+/**
+ * Any component opening a line, a block or not: `::name`, three or more colons for one holding others.
+ *
+ * Looser than `OPENING`, because what it is for is matching closing lines -- and a component that is
+ * not a block still takes the `::` that closes it, which would otherwise close the block around it.
+ */
+const COMPONENT_OPENING = /^ {0,3}(:{2,})[a-z]/
+
+/**
+ * Where every block's body runs, for the editor to fold it away.
+ *
+ * `start` is the opening line and `end` the last line BEFORE the closing one, which is how Monaco
+ * reads a folding range: the first line stays and the rest up to `end` is hidden. So a folded block
+ * still shows both of its fences --
+ *
+ *     ::block-drawio
+ *     ::
+ *
+ * -- and nothing between them, which is the point for a body nobody reads as text.
+ *
+ * Nested blocks are matched with a stack, a closing line closing the innermost component still open
+ * when it is at least as long as that one's fence -- the same rule `findBlockContent` keeps. One whose
+ * fence it falls short of closes nothing: a `::` cannot end a `:::` block. A block still being typed
+ * has no closing line and so no region, and one with nothing between its fences has nothing to hide.
+ *
+ * @param {string} text The page source.
+ * @returns {Array<{ block: string, start: number, end: number }>} 1-based, by opening line.
+ */
+export function findBlockRegions(text) {
+  const lines = text.split('\n')
+  const open = []
+  const regions = []
+
+  for (const index of linesOutsideFences(lines)) {
+    const line = lines[index]
+    const component = COMPONENT_OPENING.exec(line)
+    if (component) {
+      open.push({ block: OPENING.exec(line)?.[2] ?? null, line: index + 1, fence: component[1] })
+      continue
+    }
+    const closing = CLOSING.exec(line)
+    if (closing && open.length > 0 && closing[1].length >= open.at(-1).fence.length) {
+      const found = open.pop()
+      // -> `index` is the closing line's 0-based index, and so the 1-based line above it
+      if (found.block && index > found.line) {
+        regions.push({ block: found.block, start: found.line, end: index })
+      }
+    }
+  }
+  return regions.sort((a, b) => a.start - b.start)
+}
+
 /** A block's opening line up to the end of its name, which may be partly typed or not typed at all. */
 const OPENING_NAME = /^(:{2,})block-([a-z0-9-]*)/
 

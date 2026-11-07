@@ -38,6 +38,20 @@ function compressForUrl(xml) {
 }
 
 /**
+ * An attribute that means "off" when it says so.
+ *
+ * MDC writes every prop with a value — `static="false"` is what the block picker produces for a
+ * toggle that was switched on and off again — and Lit's own Boolean converter reads any string at all
+ * as true, that one included.
+ */
+const boolean = {
+  converter: {
+    fromAttribute: (value) => value !== null && value !== 'false',
+    toAttribute: (value) => (value ? 'true' : null)
+  }
+}
+
+/**
  * Block Draw.io
  */
 export class BlockDrawioElement extends LitElement {
@@ -103,6 +117,14 @@ export class BlockDrawioElement extends LitElement {
         label: 'Alignment',
         options: ['left', 'center'],
         default: 'left'
+      },
+      {
+        name: 'static',
+        type: 'boolean',
+        label: 'Static',
+        hint: 'Show the diagram as a still picture: no toolbar, zoom, tooltips or clickable links.',
+        // -> Stated, so that a toggle switched on and then off again writes nothing into the page
+        default: false
       }
     ]
   }
@@ -153,6 +175,13 @@ export class BlockDrawioElement extends LitElement {
         height: 100%;
         border: 0;
       }
+      /*
+        A static diagram takes no pointer at all, so hovering shows no tooltip or highlight, a link
+        in the drawing cannot be followed, and the wheel scrolls the page rather than zooming.
+      */
+      .frame.is-static iframe {
+        pointer-events: none;
+      }
 
       .caption {
         font-size: 0.8em;
@@ -179,6 +208,8 @@ export class BlockDrawioElement extends LitElement {
       caption: { type: String },
       /** `left` or `center`. */
       align: { type: String },
+      /** No toolbar and no pointer: the drawing as a picture. */
+      static: boolean,
 
       _source: { state: true }
     }
@@ -190,6 +221,7 @@ export class BlockDrawioElement extends LitElement {
     this.height = 420
     this.caption = ''
     this.align = 'left'
+    this.static = false
     this._source = ''
     /*
       The lightbox reads its theme from the URL at load, so the frame is rebuilt when the reader
@@ -220,6 +252,10 @@ export class BlockDrawioElement extends LitElement {
    * `lightbox=1` is draw.io's read-only viewer: no editing, no menus, just the drawing with zoom and
    * a layers control. `edit=_blank` is deliberately absent — the pencil it adds opens the diagram in
    * a copy of draw.io that has nowhere to save to, and the way to change a drawing here is the page.
+   *
+   * A static diagram drops `nav=1` (folding a container is an interaction) and adds `toolbar=0`, which
+   * keeps draw.io from building the zoom toolbar at all. Only taking the pointer away, in the styles,
+   * would leave that toolbar still reachable from the keyboard.
    */
   _url() {
     const server = this._server()
@@ -228,7 +264,7 @@ export class BlockDrawioElement extends LitElement {
     }
     const params = new URLSearchParams({
       lightbox: '1',
-      nav: '1',
+      ...(this.static ? { toolbar: '0' } : { nav: '1' }),
       ui: this._darkMode.isDark ? 'dark' : 'kennedy'
     })
     return `${server}/?${params.toString()}#R${encodeURIComponent(compressForUrl(this._source))}`
@@ -274,9 +310,10 @@ export class BlockDrawioElement extends LitElement {
     const height = Number(this.height) > 0 ? Number(this.height) : 420
     return html`
       <div class="diagram ${this.align === 'center' ? 'is-center' : ''}">
-        <div class="frame" style="height: ${height}px">
+        <div class="frame ${this.static ? 'is-static' : ''}" style="height: ${height}px">
           <iframe
             src=${url}
+            tabindex=${this.static ? '-1' : '0'}
             title=${this.caption || 'Diagram'}
             loading="lazy"
             referrerpolicy="strict-origin-when-cross-origin"

@@ -235,3 +235,19 @@ export function blockPropsFilled(block, values) {
     .filter((prop) => prop.required)
     .every((prop) => String(values[prop.name] ?? '').length > 0)
 }
+
+/**
+ * Whether a block's body is a drawing, edited on a canvas and never read as text.
+ *
+ * A block that declares a `contentEditor` other than `code` -- `block-drawio` today. Its body is the
+ * drawing's own XML, which nobody reads or types, so the source editors fold it away from the start
+ * (`useBlockFolding`) and every editor opens the canvas the moment the block is inserted: an empty
+ * drawing has nothing to show until it is drawn, and "Edit Content" would be the next click anyway.
+ * A `code` body -- a formula, a Mermaid chart -- is text meant to be read and typed in place.
+ *
+ * @param {{ contentEditor?: string }|undefined} block A block as the API describes it.
+ * @returns {boolean}
+ */
+export function isCanvasBlock(block) {
+  return Boolean(block?.contentEditor) && block.contentEditor !== 'code'
+}
