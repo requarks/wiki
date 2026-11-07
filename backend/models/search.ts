@@ -414,10 +414,27 @@ class Search {
       ? this.dictionaryExpression(searchedLocales, await this.getAvailableDictionaries())
       : this.dictionaryExpression([], [])
     const tsQuery = sql`websearch_to_tsquery(${dict}, ${terms})`
+    /*
+      Postgres' parser keeps a run of Thai as one lexeme: `รับชำระ` cannot match inside
+      `การกระทบยอดรับชำระและตรวจใบลดหนี้`. For a bare Thai term, match the literal
+      substring, regardless of the page's locale (an English-language wiki can contain Thai).
+      Queries containing websearch operators or other scripts keep their existing semantics.
+
+      Keep this expression identical to pages_thai_search_trgm_idx. Excluding a protected body's
+      text here means neither the match nor its count can reveal anything behind the password.
+    */
+    const thaiMatch =
+      /^[\p{Script=Thai}\p{Mark}]+$/u.test(terms) &&
+      /^[\p{Letter}\p{Mark}]+$/u.test(terms) &&
+      /\p{Letter}/u.test(terms)
+        ? sql`(p.title || ' ' || coalesce(p.description, '') || ' ' ||
+            CASE WHEN p.password IS NULL THEN coalesce(p."searchContent", '') ELSE '' END)
+          ILIKE ${`%${escapeLike(terms)}%`}`
+        : null
 
     const conditions = [sql`p."siteId" = ${siteId}`, sql`p."isSearchable" = true`]
     if (hasQuery) {
-      conditions.push(sql`p.ts @@ ${tsQuery}`)
+      conditions.push(thaiMatch ?? sql`p.ts @@ ${tsQuery}`)
     }
     /*
       Matches what the page view shows, so that search cannot surface a page that could not then be
@@ -433,7 +450,7 @@ class Search {
     if (!checkUnpublished) {
       conditions.push(liveNow)
     }
-    if (hasQuery) {
+    if (hasQuery && !thaiMatch) {
       /*
         A protected page is findable by name, not by what it says — for every searcher, including
         whoever could open it without the password: a search result is not the page, and one rule for

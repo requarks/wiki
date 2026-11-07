@@ -1,0 +1,2 @@
+CREATE INDEX "pages_thai_search_trgm_idx" ON "pages" USING gin (("title" || ' ' || coalesce("description", '') || ' ' ||
+        CASE WHEN "password" IS NULL THEN coalesce("searchContent", '') ELSE '' END) gin_trgm_ops);
