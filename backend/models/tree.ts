@@ -1542,7 +1542,9 @@ class Tree {
               showSidebar: page.showSidebar,
               showTags: page.showTags
             },
-            actor
+            actor,
+            // -> A copy adds no tag: what it carries is the source's, invalid or not
+            { carriedTags: page.tags }
           )
           break
         }

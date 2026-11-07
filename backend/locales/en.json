@@ -3052,6 +3052,7 @@
   "editor.props.styles": "CSS Styles",
   "editor.props.stylesHint": "CSS Rules to add to the page",
   "editor.props.tags": "Tags",
+  "editor.props.tagInvalid": "Not added: {tags}. A tag may only contain letters, numbers, spaces, hyphens, underscores and dots.",
   "editor.props.tagsFailed": "Failed to load existing tags. You can still add new ones.",
   "editor.props.tagsHint": "Use tags to categorize your pages and make them easier to find.",
   "editor.props.tagsPlaceholder": "Select or create tags...",

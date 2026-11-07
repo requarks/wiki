@@ -199,6 +199,7 @@
                 hide-bottom-space
                 monospaced
                 :model-value="category.tag"
+                :rules="[categoryTagRule]"
                 :label="t('editor.feedback.categoryTag')"
                 @update:model-value="setCategory(index, 'tag', $event)" />
               <w-btn
@@ -278,6 +279,7 @@ import {
   normalizeCategories,
   parseBoard
 } from '@/helpers/pageFeedback'
+import { isValidTag } from '@/helpers/tags'
 
 import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
@@ -415,9 +417,22 @@ function setCategory(index, key, value) {
   touch()
 }
 
-/** A tag as a label would be written as one: lowercased, spaces joined with hyphens. */
+/**
+ * A tag as a label would be written as one: lowercased, and every run of spaces or of characters a
+ * tag may not hold (`helpers/tags.js`) joined with a hyphen, so that `Q&A` becomes `q-a` rather than
+ * a tag the save would be refused for.
+ */
 function tagFor(label) {
-  return (label ?? '').trim().toLowerCase().replace(/\s+/g, '-')
+  return (label ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}._-]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/** A row with no tag yet is dropped on save rather than refused, so only a written one is checked. */
+function categoryTagRule(value) {
+  return !value || isValidTag(value) || t('editor.props.tagInvalid', { tags: value })
 }
 
 function moveCategory(index, step) {

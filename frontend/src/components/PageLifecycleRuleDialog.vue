@@ -162,6 +162,8 @@
 import { useI18n } from 'vue-i18n'
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 
+import { notify } from '@/composables/notify'
+import { parseTypedTags } from '@/helpers/tags'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -295,10 +297,13 @@ const canSubmit = computed(
 
 /** Tags typed in, one or several at once, separated as the page's own tag field separates them. */
 function createTag(val) {
-  const typed = val
-    .split(/[,;]+/)
-    .map((v) => v.trim())
-    .filter(Boolean)
+  const { valid: typed, invalid } = parseTypedTags(val)
+  if (invalid.length > 0) {
+    notify({
+      type: 'negative',
+      message: t('editor.props.tagInvalid', { tags: invalid.join(', ') })
+    })
+  }
   for (const tag of typed) {
     if (!state.tagOptions.includes(tag)) {
       state.tagOptions.push(tag)

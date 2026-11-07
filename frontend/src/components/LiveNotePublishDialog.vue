@@ -104,6 +104,7 @@ import { useI18n } from 'vue-i18n'
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { parseTypedTags } from '@/helpers/tags'
 
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 
@@ -149,10 +150,13 @@ const sortedTags = computed(() => [...state.tagOptions].sort((a, b) => a.localeC
 
 /** A comma or a semicolon separates tags, so a list can be pasted in one go -- as in `PageTags.vue`. */
 function createTag(val) {
-  const tags = val
-    .split(/[,;]+/)
-    .map((v) => v.trim())
-    .filter(Boolean)
+  const { valid: tags, invalid } = parseTypedTags(val)
+  if (invalid.length > 0) {
+    notify({
+      type: 'negative',
+      message: t('editor.props.tagInvalid', { tags: invalid.join(', ') })
+    })
+  }
   for (const tag of tags) {
     if (!state.tagOptions.includes(tag)) {
       state.tagOptions.push(tag)

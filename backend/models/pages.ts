@@ -15,6 +15,7 @@ import {
   timingSafeCompare
 } from '../helpers/common.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
+import { assertValidTags, isValidTag } from '../helpers/tags.ts'
 import { liveCondition, maySeeUnpublished } from '../helpers/publishing.ts'
 import { rewriteSourceLinks } from '../helpers/linkRewrite.ts'
 import type { SourceSyntax } from '../helpers/linkRewrite.ts'
@@ -2178,8 +2179,16 @@ class Pages {
    * Create a page.
    *
    * @param actor Who is saving it. Their permissions decide what survives sanitizing.
+   * @param options.carriedTags Tags the page is carrying over from one that already has them — a
+   *   copy's source — which ask nothing of `assertValidTags`, so that copying a page still bearing a
+   *   tag from before the rule existed copies it rather than failing
    */
-  async createPage(siteId: string, input: PageInput, actor: PageActor): Promise<PageChange> {
+  async createPage(
+    siteId: string,
+    input: PageInput,
+    actor: PageActor,
+    { carriedTags = [] }: { carriedTags?: string[] } = {}
+  ): Promise<PageChange> {
     if (!WIKI.sites[siteId]) {
       throw new CustomError('pageInvalidSite', 'This site does not exist.', 404)
     }
@@ -2222,6 +2231,7 @@ class Pages {
     await this.guardFeedbackBoards(siteId, locale, path, editor)
 
     const alias = await this.validateAlias(siteId, input.alias)
+    assertValidTags(input.tags, carriedTags)
     // -> Against the page as it is about to be, the tags it arrives with included: there is no row yet
     const allowed = renderPermissionsFor(actor, { siteId, locale, path, tags: input.tags ?? [] })
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
@@ -2398,6 +2408,8 @@ class Pages {
       return null
     }
 
+    // -> Ahead of the locale relations, which write: a save refused for its tags must change nothing
+    assertValidTags(patch.tags, existing.tags ?? [])
     /*
       First, before a single column is written: joining a set can be refused, and a save that is going
       to fail has to fail before it has changed the page. The two are independent otherwise -- a locale
@@ -3826,7 +3838,7 @@ class Pages {
     //    comes back in onto the pages it came from, rather than beside them
     const asWritten = normalizePagePath(path)
     const existing = await WIKI.db
-      .select({ id: pagesTable.id, path: pagesTable.path })
+      .select({ id: pagesTable.id, path: pagesTable.path, tags: pagesTable.tags })
       .from(pagesTable)
       .where(
         and(
@@ -3841,6 +3853,20 @@ class Pages {
       return null
     }
     const normalized = existing[0]?.path ?? normalizePath(path)
+
+    /*
+      A tag the wiki would not let anybody type is left out rather than failing the page: the file came
+      from somewhere else, and the rest of it is worth having. One the page already carries stays, as
+      it would through the editor (`assertValidTags`).
+    */
+    const kept = new Set(existing[0]?.tags ?? [])
+    const dropped = (tags ?? []).filter((tag) => !kept.has(tag) && !isValidTag(tag))
+    if (dropped.length > 0) {
+      WIKI.logger.warn(
+        `Importing ${locale}/${normalized}: left out invalid tag(s) ${dropped.map((tag) => `"${tag}"`).join(', ')}`
+      )
+      tags = (tags ?? []).filter((tag) => !dropped.includes(tag))
+    }
 
     /*
       Imported content is rendered with NO script or style permission, whoever ran the import.

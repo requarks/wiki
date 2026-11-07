@@ -127,7 +127,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           type: 'string'
         },
         description:
-          'Changing these requires the `write:tags` permission, on the page as it stands and as the tags leave it. Sending the tags the page already carries asks nothing, which is what lets somebody without it save a tagged page.'
+          'Changing these requires the `write:tags` permission, on the page as it stands and as the tags leave it. Sending the tags the page already carries asks nothing, which is what lets somebody without it save a tagged page.\n\nA tag may only contain letters and numbers (in any script), spaces, hyphens, underscores and dots, with no surrounding whitespace. A tag the page already carries is not checked, so a page tagged before this rule existed can still be saved.'
       },
       allowBacklinks: { type: 'boolean' },
       allowComments: { type: 'boolean' },

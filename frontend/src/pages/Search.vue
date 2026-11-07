@@ -231,7 +231,32 @@ import MainOverlayDialog from '@/components/MainOverlayDialog.vue'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { pageIconColorToken } from '@/helpers/pageIconColors'
 
-const tagsInQueryRgx = /#[a-z0-9-\u3400-\u4DBF\u4E00-\u9FFF]+(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/g
+/**
+ * A `#tag` token in the query, outside of any quoted phrase.
+ *
+ * The characters are the ones a tag may hold (`helpers/tags.js`) less the space, which is what ends a
+ * token. It used to be `a-z`, digits, `-` and CJK only, so `#user_guide` was read as the tag `user`
+ * followed by the search term `_guide`, and an uppercase or accented tag could not be filtered by.
+ */
+const tagsInQueryRgx = /#([\p{L}\p{M}\p{N}._-]+)(?=(?:[^"]*(?:")[^"]*(?:"))*[^"]*$)/gu
+
+/** The tags named in a query, in the order they appear. */
+function tagsInQuery(query) {
+  return Array.from((query ?? '').matchAll(tagsInQueryRgx)).map((match) => match[1])
+}
+
+/**
+ * The query without the `#tag` tokens `drop` says to take out.
+ *
+ * Token by token rather than `replaceAll('#' + tag)`, which also took the front off every longer tag
+ * starting with the same letters -- removing `#api` turned `#api-v2` into the search term `-v2`.
+ */
+function withoutTags(query, drop = () => true) {
+  return query
+    .replace(tagsInQueryRgx, (token, tag) => (drop(tag) ? '' : token))
+    .replaceAll(/\s\s+/g, ' ')
+    .trim()
+}
 
 /** How many results one search returns. The API caps this at 100, and there is no pager yet. */
 const RESULTS_LIMIT = 100
@@ -418,23 +443,16 @@ function setOrderBy(val) {
 }
 
 function syncTags(newSelection) {
-  const queryTags = Array.from(siteStore.search.matchAll(tagsInQueryRgx)).map((t) =>
-    t[0].substring(1)
-  )
+  const queryTags = tagsInQuery(siteStore.search)
   if (!newSelection) {
     state.selectedTags = queryTags
   } else {
-    let newQuery = siteStore.search
-    for (const tag of newSelection) {
-      if (!newQuery.includes(`#${tag}`)) {
-        newQuery = `${newQuery} #${tag}`
-      }
+    const removed = new Set(difference(queryTags, newSelection))
+    let newQuery = withoutTags(siteStore.search ?? '', (tag) => removed.has(tag))
+    for (const tag of difference(newSelection, queryTags)) {
+      newQuery = `${newQuery} #${tag}`
     }
-    for (const tag of difference(queryTags, newSelection)) {
-      newQuery = newQuery.replaceAll(`#${tag}`, '')
-    }
-    newQuery = newQuery.replaceAll('  ', ' ').trim()
-    router.replace({ path: '/_search', query: { q: newQuery } })
+    router.replace({ path: '/_search', query: { q: newQuery.trim() } })
   }
 }
 
@@ -442,11 +460,8 @@ async function performSearch() {
   let q = siteStore.search ?? ''
 
   // -> Extract tags
-  const queryTags = Array.from(q.matchAll(tagsInQueryRgx)).map((t) => t[0].substring(1))
-  for (const tag of queryTags) {
-    q = q.replaceAll(`#${tag}`, '')
-  }
-  q = q.trim().replaceAll(/\s\s+/g, ' ')
+  const queryTags = tagsInQuery(q)
+  q = withoutTags(q)
 
   const filters = {
     ...(state.params.filterPath ? { path: state.params.filterPath } : {}),
