@@ -71,13 +71,16 @@
                   <strong>{{ props.value }}</strong>
                   <w-icon class="ml-2" v-if="props.row.isSystem" name="la:lock" color="pink" />
                   <!-- -> A group a directory owns, which is the one kind SCIM may delete -->
-                  <w-icon
-                    class="ml-2"
+                  <span
                     v-if="props.row.isProvisioned"
-                    name="la:cloud-download-alt"
-                    color="blue-grey">
+                    class="ml-2 inline-flex align-middle"
+                    data-tooltip-anchor
+                    role="img"
+                    tabindex="0"
+                    :aria-label="t('admin.groups.provisioned')">
+                    <w-icon name="la:cloud-download-alt" color="blue-grey" />
                     <w-tooltip>{{ t('admin.groups.provisioned') }}</w-tooltip>
-                  </w-icon>
+                  </span>
                 </div>
               </w-td>
             </template>

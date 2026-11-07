@@ -88,6 +88,93 @@
             </w-item-section>
           </w-item>
         </w-card>
+        <w-card class="mt-4 py-2">
+          <w-card-header>
+            {{ t('admin.search.mappings') }}
+            <template #hint>{{ t('admin.search.mappingsHint') }}</template>
+          </w-card-header>
+          <!-- -> A table rather than list items: one line per entry, with the columns lined up
+                  down the card, keeps some thirty rows short enough to read at a glance -->
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-sm">
+              <thead>
+                <tr class="text-caption text-black/54 dark:text-white/70">
+                  <th class="px-4 py-1 font-medium">{{ t('admin.search.mappingColCode') }}</th>
+                  <th class="px-4 py-1 font-medium">{{ t('admin.search.mappingColLanguage') }}</th>
+                  <th class="px-4 py-1 font-medium">
+                    {{ t('admin.search.mappingColDictionary') }}
+                  </th>
+                  <th class="px-4 py-1 text-right font-medium">
+                    {{ t('admin.search.mappingColSource') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="m of mappings"
+                  :key="m.locale"
+                  class="border-t border-black/12 dark:border-white/15">
+                  <td class="px-4 py-1.5 font-mono text-xs text-black/54 dark:text-white/70">
+                    {{ m.locale }}
+                  </td>
+                  <td class="px-4 py-1.5">{{ m.name }}</td>
+                  <td class="px-4 py-1.5 font-mono whitespace-nowrap">
+                    <!-- -> The built-in an override replaces, struck out ahead of what replaced it -->
+                    <template v-if="m.source === 'override' && m.builtin">
+                      <span class="line-through opacity-50">{{ m.builtin }}</span>
+                      <w-icon
+                        class="mx-1 align-middle opacity-50"
+                        name="mdi:arrow-right"
+                        size="14px" />
+                    </template>
+                    <span :class="m.installed ? '' : 'text-negative line-through'">
+                      {{ m.dictionary }}
+                    </span>
+                    <!-- -> The icon draws as an aria-hidden <svg> with no slot, so the span carries
+                            both the tooltip and what a screen reader says -->
+                    <span
+                      v-if="!m.installed"
+                      class="ml-1 inline-flex align-middle"
+                      data-tooltip-anchor
+                      role="img"
+                      tabindex="0"
+                      :aria-label="notInstalledLabel">
+                      <w-icon name="la:exclamation-triangle" color="negative" size="16px" />
+                      <w-tooltip>{{ notInstalledLabel }}</w-tooltip>
+                    </span>
+                  </td>
+                  <td class="px-4 py-1.5 text-right">
+                    <w-badge
+                      v-if="m.source === 'override'"
+                      color="secondary"
+                      :label="t('admin.search.mappingOverride')" />
+                    <w-badge
+                      v-else
+                      color="grey-7"
+                      outline
+                      :label="t('admin.search.mappingBuiltin')" />
+                  </td>
+                </tr>
+                <tr class="border-t border-black/12 dark:border-white/15">
+                  <td class="px-4 py-1.5 font-mono text-xs text-black/54 dark:text-white/70">*</td>
+                  <td class="px-4 py-1.5">
+                    {{ t('admin.search.mappingFallback') }}
+                    <span class="text-caption text-black/54 dark:text-white/70">
+                      · {{ t('admin.search.mappingFallbackHint') }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-1.5 font-mono">{{ state.fallbackDictionary }}</td>
+                  <td class="px-4 py-1.5 text-right">
+                    <w-badge
+                      color="grey-7"
+                      outline
+                      :label="t('admin.search.mappingFallbackSource')" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </w-card>
       </div>
       <div class="col-span-12 max-lg:hidden lg:col-span-5">
         <div class="p-4 text-center">
@@ -99,7 +186,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useDark } from '@/composables/dark'
@@ -122,7 +209,7 @@ const siteStore = useSiteStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // META
 
@@ -136,12 +223,50 @@ const state = reactive({
   loading: 0,
   rebuildLoading: false,
   availableDictionaries: [],
+  // -> As saved, worked out by the server: what the overrides editor holds takes effect on Apply
+  mappings: [],
+  fallbackDictionary: 'simple',
   config: {
     termHighlighting: false,
     // -> The editor works on text; the API stores and returns an object
     dictOverrides: '{}'
   }
 })
+
+// COMPUTED
+
+/**
+ * The mapping in force, overrides first since they are what the administrator wrote, each with the
+ * language named in the interface's own language.
+ */
+const mappings = computed(() => {
+  let names = null
+  try {
+    names = new Intl.DisplayNames([locale.value], { type: 'language', languageDisplay: 'standard' })
+  } catch {
+    // -> An interface locale Intl does not know; the codes alone still say everything
+  }
+  return state.mappings
+    .map((m) => {
+      let name = m.locale
+      try {
+        name = names?.of(m.locale) ?? m.locale
+      } catch {
+        // -> A malformed tag throws rather than returning nothing; show the code
+      }
+      return { ...m, name }
+    })
+    .sort((a, b) => {
+      if (a.source !== b.source) {
+        return a.source === 'override' ? -1 : 1
+      }
+      return a.locale.localeCompare(b.locale)
+    })
+})
+
+const notInstalledLabel = computed(() =>
+  t('admin.search.mappingNotInstalled', { fallback: state.fallbackDictionary })
+)
 
 // METHODS
 
@@ -155,6 +280,8 @@ async function load() {
       dictOverrides: JSON.stringify(resp?.dictOverrides ?? {}, null, 2)
     }
     state.availableDictionaries = resp?.availableDictionaries ?? []
+    state.mappings = resp?.mappings ?? []
+    state.fallbackDictionary = resp?.fallbackDictionary ?? 'simple'
   } catch (err) {
     notify({
       type: 'negative',

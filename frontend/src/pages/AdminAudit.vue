@@ -189,14 +189,16 @@
                 -->
                 <div>
                   <strong>{{ props.row.meta?.actor?.name || t('admin.audit.anonymous') }}</strong>
-                  <w-icon
+                  <span
                     v-if="!props.row.userId && props.row.meta?.actor?.email"
-                    class="ml-1"
-                    name="la:user-slash"
-                    color="grey"
-                    size="xs">
+                    class="ml-1 inline-flex align-middle"
+                    data-tooltip-anchor
+                    role="img"
+                    tabindex="0"
+                    :aria-label="t('admin.audit.accountGone')">
+                    <w-icon name="la:user-slash" color="grey" size="xs" />
                     <w-tooltip>{{ t('admin.audit.accountGone') }}</w-tooltip>
-                  </w-icon>
+                  </span>
                 </div>
                 <small class="text-grey" v-if="props.row.meta?.actor?.email">
                   {{ props.row.meta.actor.email }}

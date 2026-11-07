@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { BUNDLED_ICONS } from '@/assets/icons.generated'
 
 /**
@@ -51,6 +51,16 @@ import { BUNDLED_ICONS } from '@/assets/icons.generated'
  * - `img:<url>` — an image file, e.g. the blueprint SVGs under `/_assets/icons`.
  *
  * Anything else renders nothing.
+ *
+ * There is no slot, and there cannot be one: the bundled branch fills its `<svg>` with `v-html`, which
+ * leaves no room for children. A `<w-tooltip>` written inside a `<w-icon>` was therefore dropped
+ * without a word, and three admin tables shipped tooltips nobody ever saw. Wrap the icon instead,
+ * so the tooltip has an element to attach to and the text reaches a keyboard and a screen reader:
+ *
+ *   <span class="inline-flex align-middle" data-tooltip-anchor role="img" tabindex="0" :aria-label="text">
+ *     <w-icon name="la:cloud-download-alt" />
+ *     <w-tooltip>{{ text }}</w-tooltip>
+ *   </span>
  */
 const props = defineProps({
   name: {
@@ -84,6 +94,13 @@ const props = defineProps({
     default: false
   }
 })
+
+// -> Development only, since the mistake is in the markup and shows up the first time it renders
+if (import.meta.env.DEV && useSlots().default) {
+  console.warn(
+    `<w-icon name="${props.name}"> has content, which is never rendered: WIcon has no slot. Wrap the icon instead (see WIcon.vue).`
+  )
+}
 
 // -> Deliberately strict, so that `img:/_assets/x.svg` stays out of the Iconify branch
 const ICONIFY_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:[-.][a-z0-9]+)*$/

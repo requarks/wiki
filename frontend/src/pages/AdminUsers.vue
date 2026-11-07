@@ -89,13 +89,16 @@
                   <w-icon class="ml-2" v-if="props.row.isSystem" name="la:lock" color="pink" />
                   <w-icon class="ml-2" v-if="!props.row.isActive" name="la:ban" color="pink" />
                   <!-- -> An account a directory owns, which is the one kind SCIM may deprovision -->
-                  <w-icon
-                    class="ml-2"
+                  <span
                     v-if="props.row.isProvisioned"
-                    name="la:cloud-download-alt"
-                    color="blue-grey">
+                    class="ml-2 inline-flex align-middle"
+                    data-tooltip-anchor
+                    role="img"
+                    tabindex="0"
+                    :aria-label="t('admin.users.provisioned')">
+                    <w-icon name="la:cloud-download-alt" color="blue-grey" />
                     <w-tooltip>{{ t('admin.users.provisioned') }}</w-tooltip>
-                  </w-icon>
+                  </span>
                 </div>
               </w-td>
             </template>

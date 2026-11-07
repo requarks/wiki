@@ -17,6 +17,7 @@ import type { DatedCommentInput } from '../models/comments.ts'
 import { SAMPLE_ACCOUNT_DOMAIN } from '../models/users.ts'
 import { PAGE_PROBLEM_CHECKS } from '../models/pageProblems.ts'
 import { purgeTimeframes } from '../models/pageHistory.ts'
+import { FALLBACK_DICTIONARY } from '../models/search.ts'
 import type { PurgeTimeframe } from '../models/pageHistory.ts'
 import type { FastifyInstance } from 'fastify'
 
@@ -504,8 +505,31 @@ async function routes(app: FastifyInstance) {
               },
               availableDictionaries: {
                 type: 'array',
-                description: 'Dictionary names this postgres installation knows.',
+                description:
+                  'Text search configurations this database has, schema-qualified where the wiki search path does not reach them (`public.chinese`).',
                 items: { type: 'string' }
+              },
+              mappings: {
+                type: 'array',
+                description:
+                  'The mapping in force: the built-in defaults with `dictOverrides` laid over them, one entry per language or locale code. A regional locale (`pt-BR`) uses its own entry when it has one, otherwise its language entry; a locale with neither, or whose dictionary is not installed, is indexed with `fallbackDictionary`.',
+                items: {
+                  type: 'object',
+                  properties: {
+                    locale: { type: 'string' },
+                    dictionary: { type: 'string' },
+                    source: { type: 'string', enum: ['builtin', 'override'] },
+                    builtin: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'The built-in dictionary an override replaces, if any.'
+                    },
+                    installed: { type: 'boolean' }
+                  }
+                }
+              },
+              fallbackDictionary: {
+                type: 'string'
               }
             }
           }
@@ -513,9 +537,12 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
+      const availableDictionaries = await WIKI.models.search.getAvailableDictionaries()
       return {
         ...WIKI.models.search.getConfig(),
-        availableDictionaries: await WIKI.models.search.getAvailableDictionaries()
+        availableDictionaries,
+        mappings: WIKI.models.search.effectiveMappings(availableDictionaries),
+        fallbackDictionary: FALLBACK_DICTIONARY
       }
     }
   )

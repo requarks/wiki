@@ -781,15 +781,6 @@ export function parseModuleProps(
   return result
 }
 
-export function getDictNameFromLocale(locale: string): string {
-  const loc = locale.length > 2 ? locale.substring(0, 2) : locale
-  if (loc in WIKI.config.search.dictOverrides) {
-    return WIKI.config.search.dictOverrides[loc]
-  } else {
-    return WIKI.data.tsDictMappings[loc] ?? 'simple'
-  }
-}
-
 export function replyWithFile(reply: FastifyReply, filePath: string): FastifyReply {
   const stream = fs.createReadStream(filePath)
   reply.header('Content-Type', mime.getType(filePath))
