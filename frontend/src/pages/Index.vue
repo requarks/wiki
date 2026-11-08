@@ -1410,7 +1410,14 @@ const crumbSeparator = computed(() =>
  * written into the markup, so the bar takes a single flat list.
  */
 const breadcrumbs = computed(() => [
-  { key: 'home', icon: 'la:home', to: '/', ariaLabel: 'Home', tooltip: 'Home' },
+  // -> The home of the page's own locale, as every crumb after it is: a bare `/` is the primary's
+  {
+    key: 'home',
+    icon: 'la:home',
+    to: `${siteStore.localeUrlPrefix(pageStore.locale)}/`,
+    ariaLabel: 'Home',
+    tooltip: 'Home'
+  },
   ...pageStore.breadcrumbs.map((brd) => ({
     key: brd.id,
     icon: brd.icon,
