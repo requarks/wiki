@@ -3238,8 +3238,11 @@ class Pages {
    *
    * What does not come back, and why:
    * - The RENDER is not part of a version, so it is the browser's, from the snapshot's source — and
-   *   is sanitized against what the RESTORER may embed, as any render is. Scripts the page carried in
-   *   its own `scripts` column come back regardless, since those are what their author wrote.
+   *   is sanitized against what the RESTORER may embed, as any render is.
+   * - Its own SCRIPTS and CSS, unless the restorer holds `write:scripts` / `write:styles` at the
+   *   destination: each comes back empty otherwise. A restore is a write by the restorer, and
+   *   letting it carry them would let anyone with `delete:pages` put back a script an administrator
+   *   removed — by deleting the page and restoring it from a version that still had it.
    * - Its place in a set of TRANSLATIONS. Leaving the set dissolved it if it left one page behind, and
    *   rejoining one is a statement about the other pages that is not this restore's to make.
    * - An ALIAS another page has taken since.
@@ -3331,11 +3334,13 @@ class Pages {
     const creatorId = creatorExists ? origin!.authorId! : actor.id
 
     const tags: string[] = Array.isArray(meta.tags) ? meta.tags : []
+    const allowed = renderPermissionsFor(actor, { siteId, locale, path, tags })
     const { render, toc, text, links } = await WIKI.models.rendering.postProcess(
       siteId,
       input.render ?? '',
-      renderPermissionsFor(actor, { siteId, locale, path, tags })
+      allowed
     )
+    const snapshotScripts = meta.scripts ?? {}
 
     const inserted = await WIKI.db
       .insert(pagesTable)
@@ -3363,7 +3368,11 @@ class Pages {
         relations: meta.relations ?? [],
         render,
         searchContent: text,
-        scripts: meta.scripts ?? {},
+        scripts: {
+          jsLoad: allowed.scripts ? (snapshotScripts.jsLoad ?? '') : '',
+          jsUnload: allowed.scripts ? (snapshotScripts.jsUnload ?? '') : '',
+          css: allowed.styles ? (snapshotScripts.css ?? '') : ''
+        },
         siteId,
         tags,
         title,
