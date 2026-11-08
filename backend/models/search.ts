@@ -5,6 +5,7 @@ import {
   maySeeUnpublished,
   maySeeUnpublishedAnywhere
 } from '../helpers/publishing.ts'
+import { toTsQueryText } from '../helpers/searchQuery.ts'
 import type { AccessActor } from './groups.ts'
 
 /**
@@ -351,10 +352,10 @@ class Search {
    * Parsed with the dictionary the locale's pages were indexed with, as `searchPages` does it. One
    * locale means one dictionary, so there is no CASE to build.
    *
-   * @param match `all` reads the terms the way the search box does (`websearch_to_tsquery`); `any`
+   * @param match `all` reads the terms the way the search box does (`toTsQueryText`); `any`
    *   ORs the words instead, for a query whose words need not all be there — two people rarely
    *   describe the same idea in the same words. Quotes and a leading `-` are dropped first, since
-   *   they mean something to the websearch syntax and nothing to a list of words.
+   *   they mean something to the search syntax and nothing to a list of words.
    */
   async tsQueryFor(locale: string, terms: string, match: 'all' | 'any' = 'all'): Promise<SQL> {
     const dictionary = this.dictionaryForLocale(locale, await this.getAvailableDictionaries())
@@ -366,7 +367,7 @@ class Search {
             .filter((word) => word.length > 0 && word.toLowerCase() !== 'or')
             .join(' or ')
         : terms
-    return sql`websearch_to_tsquery(${regconfig(dictionary)}, ${text})`
+    return sql`to_tsquery(${regconfig(dictionary)}, ${toTsQueryText(text)})`
   }
 
   /**
@@ -413,7 +414,7 @@ class Search {
     const dict = hasQuery
       ? this.dictionaryExpression(searchedLocales, await this.getAvailableDictionaries())
       : this.dictionaryExpression([], [])
-    const tsQuery = sql`websearch_to_tsquery(${dict}, ${terms})`
+    const tsQuery = sql`to_tsquery(${dict}, ${toTsQueryText(terms)})`
 
     const conditions = [sql`p."siteId" = ${siteId}`, sql`p."isSearchable" = true`]
     if (hasQuery) {
