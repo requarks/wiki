@@ -33,7 +33,7 @@ place. Three things about it are not guessable:
 
 - **The site ID comes from `GET /_api/bootstrap`**, which is `publicAccess: true` and answers with the
   site, the flags and the session — it is what the SPA itself calls on boot. Not from `GET /_api/sites`:
-  that needs `read:sites` or `access:admin`, so logged out it answers 401, and the site ID is what
+  that needs `manage:sites` or `access:admin`, so logged out it answers 401, and the site ID is what
   logging in requires.
 - **Login is `PUT /_api/sites/:siteId/auth/login`** (not POST) with `{strategyId, username, password}`.
   The strategy is the built-in local one, whose ID is fixed as `systemIds.localAuthId` in `base.yml`.

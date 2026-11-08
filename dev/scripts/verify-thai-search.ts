@@ -257,6 +257,27 @@ try {
     'English OR unchanged',
     [english, unrelated].every((id) => or.results.some((r) => r.id === id))
   )
+  for (const query of ['computer,oranges', 'computer|oranges']) {
+    const result = await find(query)
+    check(
+      `${query}: upstream OR separators retained`,
+      [english, unrelated].every((id) => result.results.some((r) => r.id === id))
+    )
+  }
+  check(
+    'upstream English prefix operator retained',
+    (await find('comp*')).results.some((r) => r.id === english)
+  )
+  check(
+    'upstream exclamation negation retained',
+    !(await find('running !computer')).results.some((r) => r.id === english)
+  )
+  const thaiPrefix = await find('รับ*')
+  check(
+    'Thai prefix uses upstream token-prefix matching',
+    thaiPrefix.results.some((r) => r.id === spaced) &&
+      !thaiPrefix.results.some((r) => r.id === body)
+  )
   check('punctuation-only input does not match everything', (await find('%_')).totalHits === 0)
   check(
     'Thai plus wildcard does not broaden into substring search',

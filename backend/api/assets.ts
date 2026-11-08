@@ -7,7 +7,7 @@ import { requestUserId } from '../helpers/requester.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { isImageEditingAvailable, NEUTRAL_ADJUST } from '../helpers/images.ts'
 import type { ImageAdjust, ImageOperation } from '../helpers/images.ts'
-import { deliveryOf } from '../models/assets.ts'
+import { deliveryOf, renamedFileName } from '../models/assets.ts'
 import type { Asset } from '../models/assets.ts'
 import { userRequired } from './pages.ts'
 
@@ -460,7 +460,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Rename an asset or move it to another folder',
         description:
-          'Any of the three may be sent on its own, and they are the same operation to a storage target: a file is addressed by its locale, its folder and its name together, so the copy on every target follows. The extension is part of the name, and changing it changes the type the file is served as.\n\nMoving needs `manage:assets` at the destination as well as at the source, since page rules are granted per path and per locale.',
+          'Any of the three may be sent on its own, and they are the same operation to a storage target: a file is addressed by its locale, its folder and its name together, so the copy on every target follows. The extension is part of the name, and changing it changes the type the file is served as.\n\nRenaming or moving needs `manage:assets` at the destination as well as at the source, since page rules are granted per path and per locale, and the file name is part of the path.',
         tags: ['Assets'],
         params: assetIdParam,
         body: {
@@ -512,22 +512,29 @@ async function routes(app: FastifyInstance) {
         return reply.forbidden('You are not allowed to rename or move this file.')
       }
       /*
-        And at the destination, when that is somewhere else: rules are granted per path AND per
-        locale, so a move is a write to a place the mover may have no say over -- which without this
-        is a way to put a file where they could not have uploaded one.
+        And at the destination, whenever that is another path: rules are granted per path AND per
+        locale, and the file name is the last segment of the path, so a rename in place is as much a
+        write to a place the caller may have no say over as a move to another folder -- without this,
+        a way to put a file onto a name a rule denies them. The name is settled as `moveAsset` will
+        settle it, so that the path asked about is the path written.
       */
       const destination = {
         folderPath:
           req.body.folderPath === undefined
             ? existing.folderPath
             : normalizeFolderPath(req.body.folderPath),
-        fileName: req.body.fileName ?? existing.fileName,
+        fileName: renamedFileName(existing.fileName, req.body.fileName),
         locale: req.body.locale || existing.locale
       }
       const isRelocated =
         destination.folderPath !== existing.folderPath || destination.locale !== existing.locale
-      if (isRelocated && !mayOnAsset(req, 'manage:assets', destination)) {
-        return reply.forbidden('You are not allowed to move this file there.')
+      const isRenamed = destination.fileName !== existing.fileName
+      if ((isRelocated || isRenamed) && !mayOnAsset(req, 'manage:assets', destination)) {
+        return reply.forbidden(
+          isRelocated
+            ? 'You are not allowed to move this file there.'
+            : 'You are not allowed to give this file that name.'
+        )
       }
       const asset = await WIKI.models.assets.moveAsset(
         req.params.siteId,

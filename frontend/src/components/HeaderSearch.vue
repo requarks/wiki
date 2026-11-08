@@ -123,7 +123,7 @@
         </template>
         <template v-else-if="siteStore.tagsLoaded && siteStore.tags.length > 0">
           <div class="searchpanel-header">
-            <span>Popular Tags</span>
+            <span>{{ t('common.header.searchPopularTags') }}</span>
             <w-space />
             <!--
               `mousedown.prevent` for the same reason the clear button has it: the press would
@@ -132,7 +132,7 @@
             <w-btn
               class="acrylic-btn"
               flat
-              label="View All"
+              :label="t('common.header.searchViewAllTags')"
               size="xs"
               @mousedown.prevent
               @click="viewAllTags" />
@@ -153,20 +153,30 @@
           </div>
         </template>
         <template v-if="!suggestionsAreShown">
-          <div class="searchpanel-header">Search Operators</div>
+          <div class="searchpanel-header">{{ t('common.header.searchOperators') }}</div>
+          <!--
+            The operators are syntax, not prose, so they stay as typed and reach the translated
+            sentence as slots -- as do the example words, which have to agree with the operators.
+          -->
           <div class="searchpanel-tips">
-            <div class="searchpanel-tip">
-              <code>!foo</code> or <code>-bar</code> to exclude "foo" and "bar".
-            </div>
-            <div class="searchpanel-tip">
-              <code>foo*</code> to match any term starting with "foo".
-            </div>
-            <div class="searchpanel-tip">
-              <code>foo,bar</code> or <code>foo|bar</code> to search for "foo" OR "bar".
-            </div>
-            <div class="searchpanel-tip">
-              <code>"foo bar"</code> to match exactly the phrase "foo bar".
-            </div>
+            <i18n-t keypath="common.header.searchTipExclude" tag="div" class="searchpanel-tip">
+              <template #operator><code>-foo</code></template>
+              <template #term>foo</template>
+            </i18n-t>
+            <i18n-t keypath="common.header.searchTipPrefix" tag="div" class="searchpanel-tip">
+              <template #operator><code>foo*</code></template>
+              <template #term>foo</template>
+            </i18n-t>
+            <i18n-t keypath="common.header.searchTipOr" tag="div" class="searchpanel-tip">
+              <template #operator1><code>foo,bar</code></template>
+              <template #operator2><code>foo|bar</code></template>
+              <template #term1>foo</template>
+              <template #term2>bar</template>
+            </i18n-t>
+            <i18n-t keypath="common.header.searchTipPhrase" tag="div" class="searchpanel-tip">
+              <template #operator><code>"foo bar"</code></template>
+              <template #phrase>foo bar</template>
+            </i18n-t>
           </div>
         </template>
       </div>

@@ -126,6 +126,8 @@ const CONSTRUCTS = {
   'link whose text is bracketed': 'See [[1]](https://example.com) here.',
   'link with a span in its text': 'A [text with [a span]{.x} in it](https://example.com) here.',
   'link with a title and a target': 'A [both](https://example.com "Tip"){target="_blank"} here.',
+  // -> A shortcut reference, which MDC's span took for itself until the definition was looked up
+  'reference links': 'See [Foo], [Foo][] and [bar][Foo].\n\n[Foo]: https://example.com',
   'image with size': '![alt](pic.png =100x200)',
   // -> Both halves of the suffix are optional, and a height on its own went missing on the way back
   'image with a width only': '![alt](pic.png =100x)',

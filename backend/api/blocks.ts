@@ -1,4 +1,5 @@
 import { audit } from '../helpers/audit.ts'
+import { ruleIsScopedTo } from '../helpers/pageRules.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { MAX_PACKAGE_SIZE } from '../helpers/wkblock.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
@@ -9,7 +10,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
  * Only the ones a group really is granted as a blanket. Writing a page is NOT among them, however much
  * it sounds like it belongs: page permissions come from a group's rules, and are read below.
  */
-const LIST_PERMISSIONS = ['read:sites', 'manage:sites', 'manage:system']
+const LIST_PERMISSIONS = ['manage:sites', 'manage:system']
 
 /** The page rules that make somebody an author, i.e. able to put a block into a page directly. */
 const AUTHOR_ROLES = ['write:pages', 'manage:pages']
@@ -22,7 +23,8 @@ const AUTHOR_ROLES = ['write:pages', 'manage:pages']
  * Four ways of being that person:
  *
  *   - an administrator, from the group-wide list above;
- *   - an author, from a page rule that lets them write somewhere on this site;
+ *   - an author, from a page rule that lets them write somewhere on THIS site — a rule limited to
+ *     other sites says nothing here, any more than it would let them write a page here;
  *   - anyone an enabled approval rule lets SUGGEST an edit — the guests group included, when a wiki
  *     has opened suggestions to the public. A suggestion is written in the same editor, with the same
  *     picker in it, and refusing the list there leaves the button throwing an error at a reader who
@@ -49,7 +51,10 @@ async function mayListBlocks(req: FastifyRequest, siteId: string): Promise<boole
     WIKI.models.groups
       .rulesForGroups(actor.groupIds)
       .some(
-        (rule) => rule.mode !== 'DENY' && AUTHOR_ROLES.some((role) => rule.roles?.includes(role))
+        (rule) =>
+          rule.mode !== 'DENY' &&
+          AUTHOR_ROLES.some((role) => rule.roles?.includes(role)) &&
+          ruleIsScopedTo(rule, { siteId })
       )
   ) {
     return true

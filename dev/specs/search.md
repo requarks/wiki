@@ -65,7 +65,7 @@ Postgres' default parser does not segment Thai: `รับชำระ` is not a
 letters and combining marks therefore matches a literal substring of the title, description or
 searchable body. This depends on the query's script, not the page's locale; Thai text in an English
 wiki must be found too. Queries containing spaces, quotes, `OR`, a leading `-`, punctuation or other
-scripts retain their existing websearch semantics. This is literal matching, not Thai word
+scripts retain the shared query parser semantics. This is literal matching, not Thai word
 segmentation, spelling correction or Unicode normalization.
 
 `pages_thai_search_trgm_idx` indexes the same concatenated expression used by the query, omitting a

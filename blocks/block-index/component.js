@@ -583,7 +583,10 @@ export class BlockIndexElement extends LitElement {
           tags: this.tags
         }
       }).json()
-      this._pages = pages.map((p) => ({ ...p, href: `/${p.path}` }))
+      // -> Every page listed is in the locale asked for, whose URLs carry its prefix -- a bare
+      //    `/${path}` would open the primary locale's page at that path instead
+      const prefix = WIKI_STATE.site.localeUrlPrefix(WIKI_STATE.page.locale)
+      this._pages = pages.map((p) => ({ ...p, href: `${prefix}/${p.path}` }))
       if (this.showIcons) {
         await this._loadIcons()
       }

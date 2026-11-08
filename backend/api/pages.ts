@@ -1992,7 +1992,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Restore a deleted page',
         description:
-          "Bring a page back out of the recycle bin under its own id, so its whole history comes back with it. The page is restored as the deletion's snapshot held it; only its render is the caller's, produced from that snapshot's source the way an editor produces one, and sanitized against what the caller may embed.\n\nBack where it was unless `path` / `locale` say otherwise. A path another page has taken since answers 409 `pageDuplicatePath`, and a `versionId` that is no longer the page's deletion (it was restored and deleted again meanwhile) answers 409 `pageRestoreStale`.\n\nNeeds `delete:pages` where the page was when it was deleted, and at the destination when that is somewhere else.",
+          "Bring a page back out of the recycle bin under its own id, so its whole history comes back with it. The page is restored as the deletion's snapshot held it; only its render is the caller's, produced from that snapshot's source the way an editor produces one, and sanitized against what the caller may embed. Its own scripts come back only if the caller holds `write:scripts` at the destination, and its CSS only with `write:styles`; otherwise each is restored empty.\n\nBack where it was unless `path` / `locale` say otherwise. A path another page has taken since answers 409 `pageDuplicatePath`, and a `versionId` that is no longer the page's deletion (it was restored and deleted again meanwhile) answers 409 `pageRestoreStale`.\n\nNeeds `delete:pages` where the page was when it was deleted, and at the destination when that is somewhere else.",
         tags: ['Pages'],
         params: pageIdParam,
         body: {

@@ -137,7 +137,7 @@ Conventions established during the conversion, worth following in new code:
 - **Routes** are Fastify plugins: `async function routes(app) { ... }` with a default export.
 - **Permissions** are declared per-route in `config.permissions`, and enforced by a single
   `preParsing` hook in `index.ts`. The array is OR-ed; a nested array is AND-ed
-  (`permissions: ['read:sites', ['manage:users', 'manage:groups']]`). `manage:system` bypasses every
+  (`permissions: ['manage:sites', ['manage:users', 'manage:groups']]`). `manage:system` bypasses every
   check. `@fastify/swagger`'s `transform` folds these into the OpenAPI description automatically —
   so declaring them is also how they get documented. Only **global** permissions belong here; see
   [Permissions](../CLAUDE.md#permissions) for the other kind and how they are checked.
