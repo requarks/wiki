@@ -259,6 +259,16 @@ export class MarkdownRenderer {
       answer is no -- the bracket is then counted as plain text, as it is without MDC, and the label is
       tokenized for real afterwards, span and all.
 
+      A shortcut reference link is the third reading, `[MyMiniFactory]` with a
+      `[MyMiniFactory]: https://…` definition elsewhere on the page. MDC steps aside for `[text](…)`
+      and `[text][ref]` by looking at the character after the `]`, but a shortcut reference has
+      nothing after it, so every one rendered as a `<span>` and its definition went unused -- on pages
+      that linked that way in 2.x, where the link rule had the brackets to itself. The label is
+      measured the way the link rule measures it and looked up the way it looks it up, so the two
+      agree on what is a link: a label with a definition is one, `[text]{.cls}` with none stays a
+      span. A defined label with props after it, `[Foo]{.cls}`, is then a link carrying the class, as
+      `[Foo](/foo){.cls}` already is.
+
       Reaching into `__rules__` is the only way to get hold of the original: markdown-it can replace a
       rule by name but has no way to read one back out.
     */
@@ -273,6 +283,15 @@ export class MarkdownRenderer {
       }
       if (silent) {
         return false
+      }
+      if (state.src[state.pos] === '[' && state.env.references) {
+        const labelEnd = state.md.helpers.parseLinkLabel(state, state.pos, true)
+        if (labelEnd >= 0) {
+          const label = state.src.slice(state.pos + 1, labelEnd)
+          if (state.env.references[state.md.utils.normalizeReference(label)]) {
+            return false
+          }
+        }
       }
       return inlineSpan(state, false)
     })
