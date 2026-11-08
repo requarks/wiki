@@ -199,7 +199,7 @@ export interface RuleLocaleRef {
 }
 
 /** Whether a rule speaks for this site and locale at all — its `sites` and `locales`, nothing else. */
-function ruleIsScopedTo(rule: GroupRule, scope: RuleLocaleRef): boolean {
+export function ruleIsScopedTo(rule: GroupRule, scope: RuleLocaleRef): boolean {
   // -> A rule may be limited to particular sites; an empty list means every one of them
   if (rule.sites?.length > 0 && !rule.sites.includes(scope.siteId)) {
     return false
