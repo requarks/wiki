@@ -229,6 +229,22 @@ function lookupFileName(name: string): string {
 }
 
 /**
+ * The name a rename to `requested` stores, for an asset currently called `current`: its own name back
+ * when nothing was asked or when the request is that name under another spelling (one written before
+ * underscores became hyphens included), otherwise the sanitized form. Empty when nothing usable is
+ * left of it.
+ *
+ * One function for both sides of a rename, since the route asks the page rules about the path this
+ * answers and `moveAsset` writes it -- a check made against the name as sent would be about a
+ * different path from the one written.
+ */
+export function renamedFileName(current: string, requested: string | undefined): string {
+  return requested === undefined || lookupFileName(requested) === current
+    ? current
+    : sanitizeFileName(requested)
+}
+
+/**
  * The form a file path is cached under.
  *
  * Matches what the lookup does with it — empty segments dropped, lowercased, NFC — so that the
@@ -1658,11 +1674,7 @@ class Assets {
     if (!asset || !entry) {
       return null
     }
-    // -> Its own name back is no rename, even one written before underscores became hyphens
-    const safeName =
-      fileName === undefined || lookupFileName(fileName) === asset.fileName
-        ? asset.fileName
-        : sanitizeFileName(fileName)
+    const safeName = renamedFileName(asset.fileName, fileName)
     if (!safeName) {
       throw new CustomError('assetInvalidFileName', 'This file name cannot be used.')
     }
