@@ -1,0 +1,1 @@
+ALTER TABLE "groups" ADD COLUMN "tfaRequired" boolean DEFAULT false NOT NULL;

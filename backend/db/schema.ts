@@ -583,6 +583,12 @@ export const groups = pgTable(
     redirectOnLogin: varchar({ length: 255 }).notNull().default(''),
     redirectOnFirstLogin: varchar({ length: 255 }).notNull().default(''),
     redirectOnLogout: varchar({ length: 255 }).notNull().default(''),
+    /**
+     * Whether every member must sign in with two-factor authentication, on top of the strategy's own
+     * `enforceTfa` and the user's own `tfaRequired`. Asked wherever those two are; see
+     * `users.isTfaRequiredByGroup`.
+     */
+    tfaRequired: boolean().notNull().default(false),
     isSystem: boolean().notNull().default(false),
     /**
      * What the directory provisioning this group calls it, as SCIM's `externalId`.

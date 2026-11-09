@@ -293,10 +293,14 @@
             <!-- ----------------------- -->
             <w-card class="pb-2 mt-4">
               <w-card-header>{{ t('admin.auth.strategyConfiguration') }}</w-card-header>
-              <w-card-section>
+              <!--
+                The condition belongs on the section, not on the banner inside it: a section is a
+                padded band whether or not anything renders in it, so leaving it unconditional put
+                32px of empty space between the header and the first setting.
+              -->
+              <w-card-section
+                v-if="!state.strategy.config || Object.keys(state.strategy.config).length < 1">
                 <w-banner
-                  class="mt-4"
-                  v-if="!state.strategy.config || Object.keys(state.strategy.config).length < 1"
                   :class="dark.isActive ? `bg-dark-4 text-grey-5` : `bg-grey-2 text-grey-7`">
                   <em>{{ t('admin.auth.noConfigOption') }}</em>
                 </w-banner>

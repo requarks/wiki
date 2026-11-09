@@ -195,6 +195,8 @@ export interface GroupWithUserCount {
   redirectOnLogin: string
   redirectOnFirstLogin: string
   redirectOnLogout: string
+  /** Whether every member must sign in with two-factor authentication. */
+  tfaRequired: boolean
   isSystem: boolean
   /** Whether a SCIM client owns this group, which is what the admin list badges. */
   isProvisioned: boolean
@@ -209,6 +211,7 @@ export interface GroupPatch {
   redirectOnLogin?: string
   redirectOnFirstLogin?: string
   redirectOnLogout?: string
+  tfaRequired?: boolean
   permissions?: string[]
   rules?: GroupRule[]
   /** SCIM's bookkeeping; see the same two fields on `UserPatch`. */
@@ -258,6 +261,7 @@ const groupSelection = {
   redirectOnLogin: groupsTable.redirectOnLogin,
   redirectOnFirstLogin: groupsTable.redirectOnFirstLogin,
   redirectOnLogout: groupsTable.redirectOnLogout,
+  tfaRequired: groupsTable.tfaRequired,
   isSystem: groupsTable.isSystem,
   isProvisioned: groupsTable.isProvisioned,
   createdAt: groupsTable.createdAt,

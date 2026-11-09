@@ -10,6 +10,7 @@ interface GroupUpdateBody {
   redirectOnLogin?: string
   redirectOnFirstLogin?: string
   redirectOnLogout?: string
+  tfaRequired?: boolean
   permissions?: string[]
   rules?: GroupRule[]
 }
@@ -227,7 +228,8 @@ async function routes(app: FastifyInstance) {
       if (!group) {
         return reply.notFound('Group does not exist.')
       }
-      return group
+      // -> Declared by `GroupCore`, and what the editor holds the 2FA toggle on, as the update does
+      return { ...group, isElevated: isElevated(group.permissions ?? []) }
     }
   )
 
@@ -274,6 +276,11 @@ async function routes(app: FastifyInstance) {
             redirectOnLogout: {
               type: 'string',
               maxLength: 255
+            },
+            tfaRequired: {
+              type: 'boolean',
+              description:
+                'Whether every member must sign in with two-factor authentication, in addition to the strategy enforcing it for everybody and the per-user flag. Only applies to logins that go through 2FA at all: a login through an external provider is never asked for a code. On a group that administers the wiki, changing it takes the same permission as changing who belongs to the group.'
             },
             permissions: {
               type: 'array',
@@ -362,6 +369,9 @@ async function routes(app: FastifyInstance) {
       if (req.body.redirectOnLogout !== undefined) {
         patch.redirectOnLogout = req.body.redirectOnLogout
       }
+      if (req.body.tfaRequired !== undefined) {
+        patch.tfaRequired = req.body.tfaRequired
+      }
       if (req.body.permissions !== undefined) {
         patch.permissions = req.body.permissions
       }
@@ -433,6 +443,24 @@ async function routes(app: FastifyInstance) {
               403
             )
           }
+        }
+      }
+
+      /*
+        Lifting the 2FA requirement off a group that administers the wiki weakens the login of every
+        administrator in it, which is as much a question about who holds that group's power as
+        changing its membership is -- so it is held to the same line. Setting it is held there too,
+        since a requirement one rung may set is one the same rung may later lift. Compared rather
+        than refused when present, so the editor's round trip of the whole group still saves.
+      */
+      if (patch.tfaRequired !== undefined && patch.tfaRequired !== group.tfaRequired) {
+        const tfaRefusal = elevatedGroupGuard(
+          req,
+          group,
+          'change whether its members must use two-factor authentication'
+        )
+        if (tfaRefusal) {
+          throw tfaRefusal
         }
       }
 

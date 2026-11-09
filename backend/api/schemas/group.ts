@@ -148,6 +148,10 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           },
           redirectOnLogout: {
             type: 'string'
+          },
+          tfaRequired: {
+            type: 'boolean',
+            description: 'Whether every member must sign in with two-factor authentication.'
           }
         }
       }
