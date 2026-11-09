@@ -328,6 +328,26 @@ const EVENT_DEFINITIONS = computed(() => [
     name: t('admin.webhooks.eventDeleteComment'),
     type: t('admin.webhooks.typeComment')
   },
+  {
+    key: 'submission:new',
+    name: t('admin.webhooks.eventNewSubmission'),
+    type: t('admin.webhooks.typeSubmission')
+  },
+  {
+    key: 'submission:edit',
+    name: t('admin.webhooks.eventEditSubmission'),
+    type: t('admin.webhooks.typeSubmission')
+  },
+  {
+    key: 'submission:approve',
+    name: t('admin.webhooks.eventApproveSubmission'),
+    type: t('admin.webhooks.typeSubmission')
+  },
+  {
+    key: 'submission:reject',
+    name: t('admin.webhooks.eventRejectSubmission'),
+    type: t('admin.webhooks.typeSubmission')
+  },
   { key: 'user:join', name: t('admin.webhooks.eventUserJoin'), type: t('admin.webhooks.typeUser') },
   {
     key: 'user:login',

@@ -19,6 +19,10 @@ export const HOOK_EVENTS = [
   'comment:new',
   'comment:edit',
   'comment:delete',
+  'submission:new',
+  'submission:edit',
+  'submission:approve',
+  'submission:reject',
   'user:join',
   'user:login',
   'user:logout'

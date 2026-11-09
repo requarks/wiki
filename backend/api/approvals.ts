@@ -1,8 +1,56 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
+import { requestUser } from '../helpers/requester.ts'
 import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
 import type { ApprovalPageRef, ApprovalRulePatch, ReviewerScope } from '../models/approvals.ts'
+import type { HookEvent } from '../models/hooks.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+
+/**
+ * Queue the webhooks for something that happened to an edit suggestion.
+ *
+ * Shaped like the comment events: identity at the top level, who sent it in `metadata`, and the
+ * suggested source as `content`. A submission keeps its id when its author resubmits, so a subscriber
+ * can follow one from `submission:new` through any `submission:edit` to its approval or rejection.
+ *
+ * An author's email goes out only for a guest, as with comments: an account is identified by
+ * `authorId`, and a guest by nothing but what they typed.
+ */
+async function emitSubmissionHook(
+  event: Extract<HookEvent, `submission:${string}`>,
+  {
+    siteId,
+    submissionId,
+    page,
+    author,
+    content,
+    extra = {}
+  }: {
+    siteId: string
+    submissionId: string
+    page: { id: string; path: string; locale: string; title: string }
+    author: { id: string | null; name: string; email: string }
+    content: string
+    extra?: Record<string, any>
+  }
+): Promise<void> {
+  await WIKI.models.hooks.emit(event, {
+    id: submissionId,
+    pageId: page.id,
+    path: page.path,
+    locale: page.locale,
+    siteId,
+    authorId: author.id,
+    ...extra,
+    metadata: {
+      pageTitle: page.title,
+      authorName: author.name,
+      authorEmail: author.id ? null : author.email,
+      isGuest: !author.id
+    },
+    content
+  })
+}
 
 /**
  * The page a suggestion is about, with the source it would be edited from.
@@ -570,10 +618,11 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('This edit suggestion does not exist.')
       }
 
+      const content = req.body.content ?? submission.content
       const applied = await WIKI.models.approvals.approveSubmission({
         siteId: req.params.siteId,
         submissionId: req.params.submissionId,
-        content: req.body.content ?? submission.content,
+        content,
         render: req.body.render,
         actor
       })
@@ -591,6 +640,19 @@ async function routes(app: FastifyInstance) {
         path: submission.page.path,
         submittedBy: submission.author.name,
         submittedByGuest: submission.author.isGuest
+      })
+      // -> `content` is what went onto the page, which the reviewer may have adjusted; `isModified`
+      //    says whether they did. The write itself also sends `page:edit`, under the reviewer's name
+      await emitSubmissionHook('submission:approve', {
+        siteId: req.params.siteId,
+        submissionId: req.params.submissionId,
+        page: submission.page,
+        author: submission.author,
+        content,
+        extra: {
+          reviewerId: actor.id,
+          isModified: content !== submission.content
+        }
       })
 
       return {
@@ -652,6 +714,17 @@ async function routes(app: FastifyInstance) {
         path: submission.page.path,
         submittedBy: submission.author.name,
         submittedByGuest: submission.author.isGuest
+      })
+      // -> `content` is the suggestion as it stood, which is now gone from the wiki
+      await emitSubmissionHook('submission:reject', {
+        siteId: req.params.siteId,
+        submissionId: req.params.submissionId,
+        page: submission.page,
+        author: submission.author,
+        content: submission.content,
+        extra: {
+          reviewerId: requestUser(req)?.id ?? null
+        }
       })
 
       return {
@@ -945,6 +1018,15 @@ async function routes(app: FastifyInstance) {
         locale: page.locale,
         path: page.path,
         ...(actor ? {} : { guestName, guestEmail })
+      })
+      await emitSubmissionHook(previous ? 'submission:edit' : 'submission:new', {
+        siteId: req.params.siteId,
+        submissionId: submission.id,
+        page,
+        author: actor
+          ? { id: actor.id, name: requestUser(req)?.name ?? '', email: '' }
+          : { id: null, name: guestName, email: guestEmail },
+        content: submission.content
       })
       await WIKI.models.notifications.emit('submission:new', {
         siteId: req.params.siteId,
