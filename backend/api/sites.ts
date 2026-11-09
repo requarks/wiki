@@ -314,6 +314,7 @@ async function routes(app: FastifyInstance) {
         deleteOrphanedMenus?: boolean
         includeStorageOperations?: boolean
         showParentLink?: boolean
+        sortAlphabetically?: boolean
       }
       locales?: {
         primary?: string

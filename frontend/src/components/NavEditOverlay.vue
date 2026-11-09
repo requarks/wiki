@@ -207,6 +207,14 @@
               auto-close>
               <w-card class="p-2">
                 <w-list dense style="min-width: 150px">
+                  <w-item clickable @click="sortItems" :disable="state.items.length < 2">
+                    <w-item-section side>
+                      <w-icon name="mdi:sort-alphabetical-ascending" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.sortItems') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
                   <w-item clickable @click="clearItems" :disable="state.items.length < 1">
                     <w-item-section side>
                       <w-icon name="la:trash-alt" color="negative" />
@@ -1038,6 +1046,48 @@ function toggleNesting(item) {
   if (target) {
     target.isNested = !target.isNested
   }
+}
+
+// -> Natural order, case- and accent-insensitive, as `sortItems` in the backend's navigation model
+const labelCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+// -> Menu items (folders) first, as a file explorer lists them; then by label
+const byLabel = (a, b) =>
+  Number(b.type === 'menu') - Number(a.type === 'menu') ||
+  labelCollator.compare(a.label ?? '', b.label ?? '')
+
+/**
+ * Put the items in alphabetical order of their labels, menu items (folders) first, once — the same order the site's
+ * `sortAlphabetically` setting shows every menu in. Headers and separators stay where they are and only
+ * the items between two of them move; a nested item moves with the link above it and is sorted among
+ * that link's other children. Nothing is saved until Save is clicked.
+ */
+function sortItems() {
+  // -> Each top-level item with the nested ones under it, as the unit that moves
+  const blocks = []
+  for (const item of state.items) {
+    if (item.isNested && blocks.length > 0) {
+      blocks.at(-1).push(item)
+    } else {
+      blocks.push([item])
+    }
+  }
+  const sorted = []
+  let run = []
+  const emit = ([parent, ...children]) => sorted.push(parent, ...children.sort(byLabel))
+  const flush = () => {
+    run.sort((a, b) => byLabel(a[0], b[0])).forEach(emit)
+    run = []
+  }
+  for (const block of blocks) {
+    if (block[0].type === 'header' || block[0].type === 'separator') {
+      flush()
+      emit(block)
+    } else {
+      run.push(block)
+    }
+  }
+  flush()
+  state.items = sorted
 }
 
 function clearItems() {

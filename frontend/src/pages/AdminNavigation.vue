@@ -209,6 +209,21 @@
                 :aria-label="t(`admin.navigation.showParentLink`)" />
             </w-item-section>
           </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
+            <blueprint-icon class="self-start" icon="list" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.navigation.sortAlphabetically`) }}</w-item-label>
+              <w-item-label caption>{{
+                t(`admin.navigation.sortAlphabeticallyHint`)
+              }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.sortAlphabetically"
+                :aria-label="t(`admin.navigation.sortAlphabetically`)" />
+            </w-item-section>
+          </w-item>
         </w-card>
         <w-card class="pb-2">
           <w-card-header>
@@ -296,7 +311,8 @@ const state = reactive({
     createFolderMenus: false,
     deleteOrphanedMenus: false,
     includeStorageOperations: false,
-    showParentLink: false
+    showParentLink: false,
+    sortAlphabetically: false
   }
 })
 
