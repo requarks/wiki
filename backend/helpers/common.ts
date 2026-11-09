@@ -366,6 +366,35 @@ export function isValidPathSegment(segment: string): boolean {
 }
 
 /**
+ * The path segment a title suggests, for a page named after its title rather than by its author.
+ *
+ * Anything that cannot be in a segment becomes a hyphen rather than disappearing — `C++ Guide` is
+ * `c-guide`, `Add dark mode.` is `add-dark-mode` — and the result is cut to `maxBytes` on a whole
+ * character. Empty when the title holds no letter or digit at all. Mirrored by `pathSegmentFromTitle`
+ * in the frontend's `helpers/pagePaths.js`.
+ *
+ * @param maxBytes Room to leave below `MAX_PATH_SEGMENT_BYTES`, for a caller that may still add a
+ *   suffix to what comes back
+ */
+export function pathSegmentFromTitle(title: string, maxBytes = MAX_PATH_SEGMENT_BYTES): string {
+  const slug = title
+    .toLowerCase()
+    .normalize('NFC')
+    .replaceAll(/[^\p{L}\p{M}\p{N}]+/gu, '-')
+    .replaceAll(/^-+|-+$/g, '')
+  let kept = ''
+  let used = 0
+  for (const char of slug) {
+    used += Buffer.byteLength(char, 'utf8')
+    if (used > maxBytes) {
+      break
+    }
+    kept += char
+  }
+  return kept.replace(/-+$/, '')
+}
+
+/**
  * Reduce a page path to the single form it is looked up under.
  *
  * A path is a URL, and a URL that differs only in casing, in how a space was encoded, or in how an

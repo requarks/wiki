@@ -2,8 +2,9 @@ import { audit } from '../helpers/audit.ts'
 import {
   CustomError,
   markdownToPlainText,
+  MAX_PATH_SEGMENT_BYTES,
   normalizePagePath,
-  normalizeNewPagePath
+  pathSegmentFromTitle
 } from '../helpers/common.ts'
 import { requestUser } from '../helpers/requester.ts'
 import { actorFrom, mayOnPage, unlockedFor, unpublishedFor, userRequired } from './pages.ts'
@@ -32,6 +33,9 @@ const ideaParams = {
 
 /** The longest title an idea may have, which is what the `pages.title` column holds. */
 const IDEA_TITLE_MAX_LENGTH = 255
+
+/** Bytes an idea's name leaves free for the collision suffix `freePath` may add (`-` and digits). */
+const IDEA_SUFFIX_BYTES = 8
 
 /** The longest description an idea may be submitted with, the same as a comment. */
 const IDEA_CONTENT_MAX_LENGTH = COMMENT_MAX_LENGTH
@@ -472,7 +476,9 @@ async function routes(app: FastifyInstance) {
         req.body.categories,
         WIKI.models.feedback.mayModerate((permission) => mayOnPage(req, permission, board))
       )
-      const name = normalizeNewPagePath(title).split('/').join('-')
+      // -> Named after the title with every character a path may not hold folded into a hyphen, and
+      //    short enough that the `-2`, `-3`… `freePath` adds on a collision still fits
+      const name = pathSegmentFromTitle(title, MAX_PATH_SEGMENT_BYTES - IDEA_SUFFIX_BYTES)
       if (!name) {
         return reply.badRequest('The title has nothing in it a page could be named after.')
       }
