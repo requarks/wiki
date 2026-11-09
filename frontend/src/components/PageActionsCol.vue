@@ -205,7 +205,7 @@
     <template v-if="!(editorStore.isActive && [`create`, `suggest`].includes(editorStore.mode))">
       <w-btn
         class="h-12"
-        v-if="userStore.can(`write:pages`)"
+        v-if="canDuplicate"
         flat
         square
         icon="la:copy"
@@ -338,6 +338,16 @@ const canViewSource = computed(
   () =>
     userStore.can('read:source') || userStore.can('write:pages') || userStore.can('manage:pages')
 )
+
+/**
+ * Whether Duplicate Page is offered.
+ *
+ * Not `write:pages` on THIS page: a copy is a new page, saved wherever the author picks, and the save
+ * is checked there. What duplicating needs of the source is its source, which is how a page can serve
+ * as a template for authors who may not edit the template itself. So: source access here, and
+ * `write:pages` somewhere on the site, or there is nowhere the copy could go.
+ */
+const canDuplicate = computed(() => canViewSource.value && userStore.canWriteOnSite)
 
 /**
  * Whether this page exists on the server yet.

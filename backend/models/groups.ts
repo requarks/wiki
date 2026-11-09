@@ -8,7 +8,12 @@ import {
 } from '../db/schema.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError, isNoteImagesPath } from '../helpers/common.ts'
-import { resolveLocaleRule, resolvePageRule, type RulePageRef } from '../helpers/pageRules.ts'
+import {
+  resolveLocaleRule,
+  resolvePageRule,
+  ruleIsScopedTo,
+  type RulePageRef
+} from '../helpers/pageRules.ts'
 import type { SystemIds } from './types.ts'
 import type { FastifyRequest } from 'fastify'
 
@@ -464,13 +469,19 @@ class Groups {
    * field offers -- has to know, since that request names no page of its own.
    *
    * A `DENY` rule is not a grant, so a set of rules that only ever denies answers false.
+   *
+   * Given a `siteId`, only the rules scoped to that site count -- "anywhere on this site", in any of
+   * its locales. Without one, a rule limited to some other site counts as well.
    */
-  grantsAnywhere(actor: AccessActor, permission: string): boolean {
+  grantsAnywhere(actor: AccessActor, permission: string, siteId?: string): boolean {
     if (actor.permissions.includes('manage:system')) {
       return true
     }
     return this.rulesForGroups(actor.groupIds).some(
-      (rule) => rule.mode !== 'DENY' && (rule.roles ?? []).includes(permission)
+      (rule) =>
+        rule.mode !== 'DENY' &&
+        (rule.roles ?? []).includes(permission) &&
+        (siteId === undefined || ruleIsScopedTo(rule, { siteId }))
     )
   }
   async init(ids: SystemIds): Promise<void> {

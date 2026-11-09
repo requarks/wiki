@@ -108,6 +108,11 @@ export const useUserStore = defineStore('user', {
     contentTextSize: 'default',
     permissions: [],
     pagePermissions: [],
+    /*
+      Whether some rule grants `write:pages` somewhere on this site -- not necessarily at the path in
+      front of the reader. Arrives with the page, as `pagePermissions` does.
+    */
+    canWriteOnSite: false,
     authenticated: false,
     profileLoaded: false
   }),
@@ -200,6 +205,7 @@ export const useUserStore = defineStore('user', {
         // -> Page permissions arrive with the page, so leaving them would keep edit buttons on screen
         //    for a user who is no longer logged in until they navigate
         pagePermissions: [],
+        canWriteOnSite: false,
         authenticated: false,
         /*
           Loaded, not unknown: being a guest IS an answer, and this is where it is recorded — whether

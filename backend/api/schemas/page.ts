@@ -377,6 +377,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'The page permissions held AT THIS PATH, as this reader’s groups’ rules decide. The same answer `pages/userPermissions` gives for the path.'
           },
+          canWriteOnSite: {
+            type: 'boolean',
+            description:
+              'Some rule of the requester’s grants `write:pages` somewhere on this site, in any locale — not necessarily here. With source access to this page, that is what offering to duplicate it turns on: the copy is saved wherever the requester may write, and the save is checked there.'
+          },
           canSuggestEdits: {
             type: 'boolean',
             description:

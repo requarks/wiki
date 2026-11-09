@@ -527,7 +527,10 @@ export const usePageStore = defineStore('page', {
         return
       }
       const userStore = useUserStore()
-      userStore.$patch({ pagePermissions: viewer.permissions ?? [] })
+      userStore.$patch({
+        pagePermissions: viewer.permissions ?? [],
+        canWriteOnSite: viewer.canWriteOnSite === true
+      })
       this.$patch({
         canSuggestEdits: viewer.canSuggestEdits === true,
         hasOpenSuggestion: viewer.hasOpenSuggestion === true,

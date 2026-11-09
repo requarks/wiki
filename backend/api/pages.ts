@@ -1168,6 +1168,16 @@ async function routes(app: FastifyInstance) {
         viewer: {
           canMarkReviewed,
           permissions: pagePermissionsFor(req, page),
+          /*
+            Whether a copy of this page could be saved anywhere on the site, which is what the page
+            view offers Duplicate Page on alongside the source: a page whose readers may see its source
+            is a template for anybody who may write somewhere, without granting them this page.
+          */
+          canWriteOnSite: WIKI.models.groups.grantsAnywhere(
+            WIKI.models.groups.actorForRequest(req),
+            'write:pages',
+            req.params.siteId
+          ),
           ...approvalState,
           isWatching,
           rating: ownRating,
