@@ -643,6 +643,12 @@ class Storage {
           handler,
           ...(action as Omit<StorageAction, 'handler'>)
         }))
+        // -> Serving is the ordinary thing for a target to do, so a module has to opt *out* of it;
+        //    handing out direct links is the opposite, something a module has to opt *in* to
+        parsed.assetDelivery = {
+          isDirectAccessSupported: parsed.assetDelivery?.isDirectAccessSupported ?? false,
+          isDeliverySupported: parsed.assetDelivery?.isDeliverySupported ?? true
+        }
         parsed.hasImplementation = await this.hasImplementation(dir)
         definitions.push(parsed as StorageDefinition)
       }
@@ -795,9 +801,8 @@ class Storage {
           activeTypes: contentTypes.activeTypes ?? []
         },
         assetDelivery: {
-          isDirectAccessSupported: definition.assetDelivery?.isDirectAccessSupported ?? false,
-          // -> Serving is the ordinary thing for a target to do, so a module has to opt *out*
-          isDeliverySupported: definition.assetDelivery?.isDeliverySupported ?? true,
+          isDirectAccessSupported: definition.assetDelivery.isDirectAccessSupported,
+          isDeliverySupported: definition.assetDelivery.isDeliverySupported,
           mode: (STORAGE_DELIVERY_MODES as readonly string[]).includes(assetDelivery.mode)
             ? (assetDelivery.mode as StorageDeliveryMode)
             : 'streaming',
@@ -1045,11 +1050,7 @@ class Storage {
         return `${definition.title} cannot serve ${unstored}, as it is not configured to store them.`
       }
     }
-    if (
-      servedTypes &&
-      servedTypes.length > 0 &&
-      definition.assetDelivery.isDeliverySupported === false
-    ) {
+    if (servedTypes && servedTypes.length > 0 && !definition.assetDelivery.isDeliverySupported) {
       return `${definition.title} cannot be a delivery source: it is a place to keep a copy of this site's content, not one to serve it from.`
     }
     const delivery = patch.assetDelivery
