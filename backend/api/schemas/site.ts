@@ -333,6 +333,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Show a "Go up" link at the top of every menu that is not a locale\'s root menu, to the page or folder above the one owning it — unless the menu was opened from a menu item, where "Go back" takes its place.'
           },
+          sortAlphabetically: {
+            type: 'boolean',
+            description:
+              "Show the items of every menu of this site in alphabetical order of their labels, menu items (folders) first, in the sidebar and in the menu editor. Headers and separators stay where they are and only the items between them are sorted; a link's children are sorted under it. Off, a menu is shown in the order it was saved in."
+          },
           includeStorageOperations: {
             type: 'boolean',
             description:

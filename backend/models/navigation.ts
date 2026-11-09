@@ -14,6 +14,41 @@ import {
 } from '../helpers/common.ts'
 import { liveCondition } from '../helpers/publishing.ts'
 
+/** Natural order, case- and accent-insensitive: `Page 2` before `Page 10`, `école` beside `Ecole`. */
+const labelCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+
+/** Menu items (folders) before everything else, as a file explorer lists them; then by label. */
+function compareItems(a: NavigationItem, b: NavigationItem): number {
+  const folderFirst = Number(b.type === 'menu') - Number(a.type === 'menu')
+  return folderFirst || labelCollator.compare(a.label ?? '', b.label ?? '')
+}
+
+/**
+ * A menu's items in alphabetical order of their labels, menu items (folders) first, as the site's
+ * `sortAlphabetically` setting shows them. Headers and separators stay where they are and only the items between two of them are
+ * sorted, so the sections of a menu keep the order an editor gave them. A link's children are sorted
+ * among themselves and stay under it.
+ */
+export function sortItems(items: NavigationItem[]): NavigationItem[] {
+  const out: NavigationItem[] = []
+  let run: NavigationItem[] = []
+  const flush = () => {
+    out.push(...run.sort(compareItems))
+    run = []
+  }
+  for (const item of items) {
+    const sorted = item.children?.length ? { ...item, children: sortItems(item.children) } : item
+    if (item.type === 'header' || item.type === 'separator') {
+      flush()
+      out.push(sorted)
+    } else {
+      run.push(sorted)
+    }
+  }
+  flush()
+  return out
+}
+
 export const NAVIGATION_MODES = [
   'inherit',
   'override',
@@ -189,7 +224,13 @@ class Navigation {
       .where(and(eq(navigationTable.id, id), eq(navigationTable.siteId, siteId)))
       .limit(1)
 
-    const items = (rows[0]?.items ?? []) as NavigationItem[]
+    // -> Sorted as it is read rather than as it is stored, so that every way a menu is written (the
+    //    editor, the automations, an import) is shown in order, and turning the setting off gives back
+    //    the order the menu was saved in
+    const stored = (rows[0]?.items ?? []) as NavigationItem[]
+    const items = WIKI.sites[siteId]?.config?.navigation?.sortAlphabetically
+      ? sortItems(stored)
+      : stored
     const targets = await this.menuTargetsOf(siteId, id, items)
     if (unfiltered) {
       // -> The editor is told where each `menu` item points, and which no longer point anywhere,
