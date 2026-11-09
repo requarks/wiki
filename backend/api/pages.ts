@@ -12,7 +12,7 @@ import {
 import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { maySeeUnpublished, maySeeUnpublishedAnywhere } from '../helpers/publishing.ts'
-import { generatePathHash, normalizePagePath } from '../helpers/common.ts'
+import { generatePathHash, normalizePagePath, pagePathToWrite } from '../helpers/common.ts'
 import { limitAuthAttempts, limitRenders } from '../helpers/rateLimit.ts'
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
@@ -1333,11 +1333,15 @@ async function routes(app: FastifyInstance) {
         is going to and the tags it is arriving with. A tag rule has nothing else to read here — the
         tags a new page carries are the ones in this request — and leaving them out would make a
         rule addressing tags silently miss every page the moment it was created.
+
+        And at the path and locale it will be STORED under, which the model is then handed: the path
+        as the request spelled it would let `HR/Notice` past a rule over `hr` and land at `hr/notice`,
+        and a locale left out would be matched by every locale's rules and land in the primary one.
       */
       const incoming = {
         siteId: req.params.siteId,
-        path: req.body.path,
-        locale: req.body.locale,
+        path: pagePathToWrite(req.body.path),
+        locale: req.body.locale || WIKI.models.pages.defaultLocale(req.params.siteId),
         tags: req.body.tags ?? []
       }
       if (!mayOnPage(req, 'write:pages', incoming)) {
@@ -1353,7 +1357,7 @@ async function routes(app: FastifyInstance) {
       }
       const { page, versionId } = await WIKI.models.pages.createPage(
         req.params.siteId,
-        req.body,
+        { ...req.body, path: incoming.path, locale: incoming.locale },
         actor
       )
 
@@ -1697,11 +1701,12 @@ async function routes(app: FastifyInstance) {
       /*
         And at the destination, when that is somewhere else: rules are granted per path AND per
         locale, so a move is a write to a place the mover may have no say over — which without this
-        is a way to put a page somewhere they could not have created one.
+        is a way to put a page somewhere they could not have created one. Asked of the path as it
+        will be stored, which is what the model is handed, rather than as the request spelled it.
       */
       const destination = {
         siteId: req.params.siteId,
-        path: req.body.path.replace(/^\/+/, ''),
+        path: pagePathToWrite(req.body.path, target.path),
         locale: req.body.locale || target.locale,
         tags: target.tags
       }
@@ -1714,7 +1719,7 @@ async function routes(app: FastifyInstance) {
       const change = await WIKI.models.pages.movePage(
         req.params.siteId,
         req.params.pageId,
-        req.body,
+        { ...req.body, path: destination.path, locale: destination.locale },
         actor
       )
       if (!change) {
@@ -2139,9 +2144,10 @@ async function routes(app: FastifyInstance) {
       ) {
         return reply.notFound('This page is not in the recycle bin.')
       }
-      // -> Somewhere else is somewhere this caller has to be allowed to put it, on the same terms
+      // -> Somewhere else is somewhere this caller has to be allowed to put it, on the same terms --
+      //    and asked of the path the restore will write, not of the one the request spelled
       const destination = {
-        path: req.body.path ? normalizePagePath(req.body.path) : deletion.path,
+        path: req.body.path ? pagePathToWrite(req.body.path, deletion.path) : deletion.path,
         locale: req.body.locale || deletion.locale,
         tags: deletion.meta.tags
       }

@@ -5,6 +5,9 @@ paths:
   - "backend/models/pages.ts"
   - "backend/api/tree.ts"
   - "backend/api/pages.ts"
+  - "backend/api/assets.ts"
+  - "backend/helpers/pageRules.ts"
+  - "backend/models/groups.ts"
   - "frontend/src/helpers/pagePaths.js"
   - "frontend/src/components/Tree*.vue"
 ---
@@ -24,9 +27,18 @@ concatenated into a link or a file path without escaping.
   and hyphens into a single hyphen, then drops any hyphen left at either end of a segment.
   `normalizePagePath` is for a lookup and turns only spaces into hyphens, because pages written before
   the underscore rule keep their `_` and must stay reachable. A move or rename that asks for a page's
-  or folder's current name again gets exactly that name back (`normalizePath(input, current)` in
-  `models/pages.ts`, `pathSegmentToWrite` in the frontend), so editing only a title never moves
+  or folder's current name again gets exactly that name back (`pagePathToWrite(input, current)` in
+  `helpers/common.ts`, `pathSegmentToWrite` in the frontend), so editing only a title never moves
   anything.
+- **A permission check is asked of the path that will be STORED.** Rules are matched against stored
+  paths, exactly, so a route that checks the path as the request spelled it and then hands it to a
+  model that normalizes it lets `HR/Notice` past a DENY over `hr` and lands it at `hr/notice`. A write
+  route normalizes first — `pagePathToWrite` for a page (the model's own normalizer), the tree's own
+  resolution for a folder (`tree.folderPathAsFiled`, or the lowercased spelling `createFolder` gives a
+  parent), `sanitizeFileName` / `renamedFileName` for an asset's name — checks that, and passes that
+  same value to the model. The same goes for a
+  locale the model would default. Rule paths are stored in page-path spelling for the same reason
+  (`normalizeRulePath` in `helpers/pageRules.ts`, on every group save).
 - **ltree labels are hex, never the name.** `tree.folderPath` is an ltree whose every label is
   `encodeTreeLabel(name)`, the hex of the name's UTF-8 bytes, while `fileName` holds the name itself.
   This is because ltree accepts in a label only what the database's locale calls alphanumeric (ASCII

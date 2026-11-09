@@ -30,6 +30,7 @@ import {
   splitLocalePath
 } from '../helpers/common.ts'
 import { htmlToMarkdown, type ConversionLosses } from '../helpers/htmlToMarkdown.ts'
+import { normalizeRulePath } from '../helpers/pageRules.ts'
 import { rewriteSourceLinks, sourceLinkHrefs } from '../helpers/linkRewrite.ts'
 import { sanitizeFileName } from './assets.ts'
 import { SOURCE_SYNTAX } from './pages.ts'
@@ -1317,7 +1318,7 @@ class Import {
         match,
         // -> 2.x has no FORCEALLOW; `deny` is the whole of what it could say
         mode: entry?.deny === true ? 'DENY' : 'ALLOW',
-        path: stringOf(entry?.path),
+        path: normalizeRulePath(match, stringOf(entry?.path)),
         tags: (Array.isArray(entry?.tags) ? entry.tags : []).map((tag: unknown) => stringOf(tag)),
         locales: (Array.isArray(entry?.locales) ? entry.locales : []).map((code: unknown) =>
           stringOf(code)

@@ -8,10 +8,9 @@ import {
 import {
   CustomError,
   generatePathHash,
-  isValidPathSegment,
-  MAX_PATH_SEGMENT_BYTES,
   normalizeNewPagePath,
   normalizePagePath,
+  pagePathToWrite,
   timingSafeCompare
 } from '../helpers/common.ts'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
@@ -636,31 +635,6 @@ function renderPermissionsFor(actor: PageActor, page: RulePageRef): RenderPermis
     scripts: WIKI.models.groups.checkAccess(actor, 'write:scripts', page),
     styles: WIKI.models.groups.checkAccess(actor, 'write:styles', page)
   }
-}
-
-/**
- * Normalize a path to the form that gets stored, and refuse it if what is left is not addressable.
- *
- * Casing, spaces and underscores are corrected rather than rejected — `My_Page` is a path someone
- * meant, and it means `my-page`. Anything else outside what a segment may hold
- * (`isValidPathSegment`) is not something to guess at.
- *
- * @param current The path the page already has, when this is a move or a restore. Asked for the same
- *   path back, it gets exactly that path: one written before underscores became hyphens keeps its
- *   `_`, rather than a rename that only changes the title moving the page somewhere new.
- */
-function normalizePath(input: string, current?: string): string {
-  if (current !== undefined && normalizePagePath(input) === current) {
-    return current
-  }
-  const path = normalizeNewPagePath(input)
-  if (!path.split('/').every(isValidPathSegment)) {
-    throw new CustomError(
-      'pageInvalidPath',
-      `A page path may only contain letters, numbers, hyphens and slashes, and each part of it be at most ${MAX_PATH_SEGMENT_BYTES} bytes long.`
-    )
-  }
-  return path
 }
 
 /**
@@ -2199,7 +2173,7 @@ class Pages {
       throw new CustomError('pageInvalidSite', 'This site does not exist.', 404)
     }
 
-    const path = normalizePath(input.path)
+    const path = pagePathToWrite(input.path)
     const locale = input.locale || this.defaultLocale(siteId)
     const title = (input.title ?? '').trim()
     if (title.length < 1) {
@@ -2795,7 +2769,7 @@ class Pages {
     }
     this.assertEditable(page)
     const existingContent = page.content
-    const newPath = normalizePath(path, page.path)
+    const newPath = pagePathToWrite(path, page.path)
     /*
       A move may cross locales — the same page, translated, is the same page moved — so the
       destination is a locale AND a path, and everything below asks about the pair rather than about
@@ -3337,7 +3311,7 @@ class Pages {
 
     const meta = deletion.meta
     const title = input.title?.trim() || deletion.title
-    const path = normalizePath(input.path ?? deletion.path, deletion.path)
+    const path = pagePathToWrite(input.path ?? deletion.path, deletion.path)
     const locale = input.locale || deletion.locale
     const editor = meta.editor || 'markdown'
     const contentType = meta.contentType || EDITOR_CONTENT_TYPES[editor] || 'text'
@@ -3924,7 +3898,7 @@ class Pages {
     if (existing.length > 0 && !overwrite) {
       return null
     }
-    const normalized = existing[0]?.path ?? normalizePath(path)
+    const normalized = existing[0]?.path ?? pagePathToWrite(path)
 
     /*
       A tag the wiki would not let anybody type is left out rather than failing the page: the file came

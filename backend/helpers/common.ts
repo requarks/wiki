@@ -460,6 +460,35 @@ export function normalizeNewPagePath(input?: string | null): string {
 }
 
 /**
+ * A page path as it is about to be stored, refused if what is left is not addressable.
+ *
+ * Casing, spaces and underscores are corrected rather than rejected — `My_Page` is a path someone
+ * meant, and it means `my-page`. Anything else outside what a segment may hold
+ * (`isValidPathSegment`) is not something to guess at.
+ *
+ * This is the path a page create, move or restore WRITES, and so the one its permission check has to
+ * be asked of: a rule is matched against stored paths, and checking the path as the request spelled
+ * it would let `HR/Notice` past a rule over `hr`, and then store it at `hr/notice`.
+ *
+ * @param current The path the page already has, when this is a move or a restore. Asked for the same
+ *   path back, it gets exactly that path: one written before underscores became hyphens keeps its
+ *   `_`, rather than a rename that only changes the title moving the page somewhere new.
+ */
+export function pagePathToWrite(input: string, current?: string): string {
+  if (current !== undefined && normalizePagePath(input) === current) {
+    return current
+  }
+  const path = normalizeNewPagePath(input)
+  if (!path.split('/').every(isValidPathSegment)) {
+    throw new CustomError(
+      'pageInvalidPath',
+      `A page path may only contain letters, numbers, hyphens and slashes, and each part of it be at most ${MAX_PATH_SEGMENT_BYTES} bytes long.`
+    )
+  }
+  return path
+}
+
+/**
  * Reduce a folder path to the segments it actually names.
  *
  * Wrapping and doubled slashes go, and so do `.` and `..` segments — in a wiki tree those name a

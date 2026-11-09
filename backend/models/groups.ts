@@ -9,6 +9,7 @@ import {
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
 import { CustomError, isNoteImagesPath } from '../helpers/common.ts'
 import {
+  normalizeRulePath,
   resolveLocaleRule,
   resolvePageRule,
   ruleIsScopedTo,
@@ -787,7 +788,8 @@ class Groups {
   }
 
   /**
-   * Tidy the tags on the rules being saved: trimmed, lowercased, de-duplicated, blanks dropped.
+   * Tidy the rules being saved: each path spelled as the page paths it is compared against are
+   * (`normalizeRulePath`), and the tags trimmed, lowercased, de-duplicated, blanks dropped.
    *
    * Done on the way in rather than at match time so that the stored rule says exactly what it
    * matches. `ruleTags` lowercases anyway — a rule written through the API keeps working either
@@ -806,6 +808,7 @@ class Groups {
       ...patch,
       rules: patch.rules.map((rule) => ({
         ...rule,
+        path: normalizeRulePath(rule.match, rule.path),
         tags: [...new Set((rule.tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean))]
       }))
     }

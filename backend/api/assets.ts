@@ -7,7 +7,7 @@ import { requestUserId } from '../helpers/requester.ts'
 import { attachmentDisposition, decodeTreePath, normalizeFolderPath } from '../helpers/common.ts'
 import { isImageEditingAvailable, NEUTRAL_ADJUST } from '../helpers/images.ts'
 import type { ImageAdjust, ImageOperation } from '../helpers/images.ts'
-import { deliveryOf, renamedFileName } from '../models/assets.ts'
+import { deliveryOf, renamedFileName, sanitizeFileName } from '../models/assets.ts'
 import type { Asset } from '../models/assets.ts'
 import { userRequired } from './pages.ts'
 
@@ -106,10 +106,17 @@ async function applyImageEdit(
     reply.notFound('This asset does not exist.')
     return null
   }
-  // -> Where the result lands: the file itself, or a new name beside it
+  // -> Where the result lands: the file itself, or a new name beside it -- under the name it will be
+  //    stored as, which is what a rule names: `Logo.PNG` asked as sent would miss a rule over
+  //    `logo.png` and then be written over it
+  const saveAs = isSaveAs ? sanitizeFileName(edit.fileName!) : null
+  if (isSaveAs && !saveAs) {
+    reply.badRequest('This file name cannot be used.')
+    return null
+  }
   const destination = {
     folderPath: source.folderPath,
-    fileName: isSaveAs ? edit.fileName! : source.fileName,
+    fileName: saveAs ?? source.fileName,
     locale: source.locale
   }
   if (!mayOnAsset(req, 'write:assets', destination)) {
@@ -122,7 +129,7 @@ async function applyImageEdit(
     operations: edit.operations,
     adjust: edit.adjust,
     quality: edit.quality,
-    saveAs: isSaveAs ? edit.fileName : null,
+    saveAs,
     unchangedSince: edit.unchangedSince,
     authorId
   })
@@ -142,6 +149,8 @@ interface UploadTarget {
   folderPath: string | null
   destination: string
   locale: string
+  /** The file name as `sanitizeFileName` stores it, which is the one the check asked about. */
+  safeName: string
 }
 const uploadTargets = new WeakMap<FastifyRequest, UploadTarget>()
 
@@ -209,19 +218,35 @@ async function uploadRoutes(app: FastifyInstance) {
           get one; a path is already one, and is normalized here rather than trusted -- the model
           would happily create a folder called `..`.
         */
+        // -> Settled once, since the rule check and the write have to be asking about the same locale
+        const locale =
+          requestedLocale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
+        /*
+          And spelled as the tree will file it, which is what a rule names and what the model is then
+          handed: the folder as the tree resolves it (an existing folder's own spelling, else the one
+          it would be created under), and the name as `upload` sanitizes it. Asked as the request
+          spelled them, `HR/Private` would miss a rule over `hr` and then land in `hr/private`.
+        */
         const folder = folderId ? await WIKI.models.tree.getFolderById(folderId) : null
-        const folderPath = folderId ? null : normalizeFolderPath(requestedPath)
+        const folderPath = folderId
+          ? null
+          : await WIKI.models.tree.folderPathAsFiled({
+              siteId: req.params.siteId,
+              locale,
+              path: normalizeFolderPath(requestedPath)
+            })
         const parentPath = folder ? decodeTreePath(folder.folderPath) : ''
         const destination = folder
           ? [parentPath, folder.fileName].filter(Boolean).join('/')
           : (folderPath ?? '')
-        // -> Settled once, since the rule check and the write have to be asking about the same locale
-        const locale =
-          requestedLocale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
+        const safeName = sanitizeFileName(fileName)
+        if (!safeName) {
+          throw app.httpErrors.badRequest('This file name cannot be used.')
+        }
         if (
           !mayOnAsset(req, 'write:assets', {
             folderPath: destination,
-            fileName,
+            fileName: safeName,
             locale
           })
         ) {
@@ -232,7 +257,7 @@ async function uploadRoutes(app: FastifyInstance) {
           kind: 'asset',
           parentPath: destination
         })
-        uploadTargets.set(req, { authorId, folderPath, destination, locale })
+        uploadTargets.set(req, { authorId, folderPath, destination, locale, safeName })
         return payload
       },
       schema: {
@@ -299,13 +324,13 @@ async function uploadRoutes(app: FastifyInstance) {
       if (!Buffer.isBuffer(data) || data.length < 1) {
         return reply.badRequest('No file was sent.')
       }
-      const { authorId, folderPath, destination, locale } = uploadTargets.get(req)!
+      const { authorId, folderPath, destination, locale, safeName } = uploadTargets.get(req)!
       const asset = await WIKI.models.assets.upload({
         siteId: req.params.siteId,
         locale,
         folderId: req.query.folderId,
         folderPath,
-        fileName: req.query.fileName,
+        fileName: safeName,
         mimeType: req.headers['content-type'],
         data,
         authorId
@@ -516,15 +541,22 @@ async function routes(app: FastifyInstance) {
         locale, and the file name is the last segment of the path, so a rename in place is as much a
         write to a place the caller may have no say over as a move to another folder -- without this,
         a way to put a file onto a name a rule denies them. The name is settled as `moveAsset` will
-        settle it, so that the path asked about is the path written.
+        settle it, and the folder as the tree will resolve it, so that the path asked about is the
+        path written -- `HR/Private` asked as sent would miss a rule over `hr` and land in
+        `hr/private`. The model is handed the folder as settled here.
       */
+      const locale = req.body.locale || existing.locale
       const destination = {
         folderPath:
           req.body.folderPath === undefined
             ? existing.folderPath
-            : normalizeFolderPath(req.body.folderPath),
+            : await WIKI.models.tree.folderPathAsFiled({
+                siteId: req.params.siteId,
+                locale,
+                path: normalizeFolderPath(req.body.folderPath)
+              }),
         fileName: renamedFileName(existing.fileName, req.body.fileName),
-        locale: req.body.locale || existing.locale
+        locale
       }
       const isRelocated =
         destination.folderPath !== existing.folderPath || destination.locale !== existing.locale
@@ -539,7 +571,10 @@ async function routes(app: FastifyInstance) {
       const asset = await WIKI.models.assets.moveAsset(
         req.params.siteId,
         req.params.assetId,
-        req.body,
+        {
+          ...req.body,
+          ...(req.body.folderPath === undefined ? {} : { folderPath: destination.folderPath ?? '' })
+        },
         requestUserId(req) ?? undefined
       )
       if (!asset) {

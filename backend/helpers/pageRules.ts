@@ -132,6 +132,42 @@ const MODE_PRIORITY: GroupRuleMode[] = ['ALLOW', 'DENY', 'FORCEALLOW']
 /** The kinds that address pages by tag rather than by path. */
 const TAG_MATCHES: GroupRuleMatch[] = ['TAG', 'TAGALL']
 
+/** The kinds whose path is a literal piece of a page path, compared character for character. */
+const LITERAL_PATH_MATCHES: GroupRuleMatch[] = ['START', 'END', 'SUBTREE', 'EXACT']
+
+/**
+ * A rule's path as it is stored: spelled the way the page paths it is compared against are.
+ *
+ * A page path is always lowercase and NFC-normalized and never holds whitespace, and the comparison
+ * in `ruleMatchesPage` is exact — so a rule written as `HR` or `/My Docs` matched nothing at all, and
+ * a DENY an administrator believed was closing a branch silently closed none. Normalized when a rule
+ * is saved rather than when it is matched, so that the stored rule says exactly what it matches.
+ *
+ * Only the four literal path kinds. A regex is left as written: its case and escapes are its meaning
+ * (`\D` is not `\d`). The tag kinds keep their path untouched as well, since it is what they would
+ * match on if switched back to a regex. Underscores are left alone, as `normalizePagePath` leaves
+ * them, because pages written before the underscore rule still have them.
+ *
+ * A trailing slash is dropped from an exact path and a branch, where it can only stop the rule
+ * matching; a prefix keeps it, since `hr/` is a different prefix from `hr` — it leaves out the page
+ * at `hr` itself and `hrm`.
+ *
+ * Mirrored by the `group-rule-paths` migration, which brought existing rules into this shape.
+ */
+export function normalizeRulePath(match: GroupRuleMatch, path?: string | null): string {
+  const value = path ?? ''
+  if (!LITERAL_PATH_MATCHES.includes(match)) {
+    return value
+  }
+  const normalized = value
+    .trim()
+    .replace(/^\/+/, '')
+    .replaceAll(/\s+/g, '-')
+    .toLowerCase()
+    .normalize('NFC')
+  return match === 'EXACT' || match === 'SUBTREE' ? normalized.replace(/\/+$/, '') : normalized
+}
+
 /**
  * The tags a rule addresses, as they are compared.
  *

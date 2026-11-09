@@ -4,6 +4,7 @@ import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import {
   decodeTreePath,
+  encodeTreePath,
   normalizeFolderPath,
   normalizeNewPagePath,
   normalizePagePath,
@@ -43,6 +44,18 @@ interface FolderBody {
  */
 function defaultLocale(siteId: string): string {
   return WIKI.sites[siteId]?.config?.locales?.primary ?? 'en'
+}
+
+/**
+ * A folder path as `createFolder` files a new folder's parent: each segment lowercased and
+ * NFC-normalized, which is what `encodeTreePath` writes into the ltree.
+ *
+ * A rule is matched against stored paths, so this is the spelling a permission check over where a
+ * folder is going has to be asked of, and the one the model is then handed — asked as the request
+ * spelled it, `HR` would miss a rule over `hr` and then be filed under `hr` regardless.
+ */
+function asStoredFolderPath(path?: string | null): string {
+  return decodeTreePath(encodeTreePath(path))
 }
 
 /** Comma-separated query lists, which is how the browser sends a multi-valued filter here. */
@@ -753,18 +766,23 @@ async function routes(app: FastifyInstance) {
       /*
         Against where the folder is going. `parentPath` is the slash-separated path when given; with
         `parentId` the parent has to be looked up, and a missing one is left to the model to report.
+        A parent found also decides the locale, as it does in `createFolder`: a folder cannot be in a
+        different locale than the one holding it, so the one the request named is not where it lands.
       */
-      let parentPath = req.body.parentPath ?? ''
+      let parentPath = asStoredFolderPath(req.body.parentPath)
+      let locale = req.body.locale ?? defaultLocale(req.params.siteId)
       if (req.body.parentId) {
         const parent = await WIKI.models.tree.getFolderById(req.body.parentId)
-        parentPath = parent ? folderPathOf(parent) : parentPath
+        if (parent) {
+          parentPath = folderPathOf(parent)
+          locale = parent.locale
+        }
       }
       // -> Under the name it will be created as, which is what a rule written for it names
       const target = [parentPath, normalizeNewPagePath(req.body.pathName)].filter(Boolean).join('/')
       // -> Refused by the rules below as well, but as something nobody may do here, which is not the
       //    reason: the name is taken
       refuseNoteImagesPath(target)
-      const locale = req.body.locale ?? defaultLocale(req.params.siteId)
       if (!mayOnFolder(req, 'manage:pages', target, locale)) {
         return reply.forbidden('You are not allowed to create a folder here.')
       }
@@ -772,7 +790,7 @@ async function routes(app: FastifyInstance) {
         siteId: req.params.siteId,
         locale,
         parentId: req.body.parentId,
-        parentPath: req.body.parentPath,
+        parentPath,
         pathName: req.body.pathName,
         title: req.body.title
       })
@@ -961,8 +979,14 @@ async function routes(app: FastifyInstance) {
         over: rules are granted per path AND per locale, so without this a folder full of pages is a
         way to write into a place they could not have created one.
       */
-      const destination = normalizeFolderPath(req.body.folderPath)
       const destinationLocale = req.body.locale || existing.locale
+      // -> As `moveFolder` will resolve it, an existing folder's own spelling included: a rule is
+      //    matched against stored paths, and `HR` asked as given would miss a rule over `hr`
+      const destination = await WIKI.models.tree.folderPathAsFiled({
+        siteId: req.params.siteId,
+        locale: destinationLocale,
+        path: normalizeFolderPath(req.body.folderPath)
+      })
       const moved = {
         path: [destination, existing.fileName].filter(Boolean).join('/'),
         locale: destinationLocale
@@ -1083,7 +1107,7 @@ async function routes(app: FastifyInstance) {
       }
       // -> And where the copy is going, which is a whole branch of new pages arriving somewhere the
       //    copier may have no say over
-      const destination = normalizeFolderPath(req.body.folderPath)
+      const destination = asStoredFolderPath(normalizeFolderPath(req.body.folderPath))
       const destinationLocale = req.body.locale || existing.locale
       const copied = {
         path: [destination, normalizeNewPagePath(req.body.pathName)].filter(Boolean).join('/'),
