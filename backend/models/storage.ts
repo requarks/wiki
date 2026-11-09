@@ -1126,7 +1126,7 @@ class Storage {
     */
     const willBeEnabled = patch.isEnabled ?? target.isEnabled
     const servedTypes =
-      willBeEnabled && definition.assetDelivery.isDeliverySupported
+      willBeEnabled && (definition.assetDelivery.isDeliverySupported ?? true)
         ? (patch.assetDelivery?.servedTypes ?? target.assetDelivery.servedTypes)
         : []
     if (patch.assetDelivery || (!willBeEnabled && target.assetDelivery.servedTypes.length > 0)) {
