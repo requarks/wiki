@@ -75,6 +75,9 @@ const EXCLUDED_FROM_META = new Set([
   'contentUpdatedAt',
   'lastReviewedAt',
   'lifecycleBanner',
+  // -> Not something a version records either: restoring one from before the page was locked must
+  //    not unlock it, nor one from before it was unlocked lock it again
+  'isEditLocked',
   // -> Held in columns of their own
   'locale',
   'path',

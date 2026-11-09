@@ -1151,6 +1151,44 @@ class Tree {
   }
 
   /**
+   * Refuse to rename, move or delete a folder holding a page that is locked against edits.
+   *
+   * Each of those changes every page under the folder — its path, or whether it exists — without going
+   * through `pages.movePage` or `pages.deletePage`, so the lock those refuse at has to be asked here
+   * too. Asked of exactly the rows the three operations touch: the folder's descendants in its own
+   * locale, by the `<@` they use. Refused whole, before anything is written, rather than skipping the
+   * locked pages: a folder moved without some of its pages is a folder split in two.
+   *
+   * Counts rather than names them: whoever is moving the folder need not be able to read every page in
+   * it, and which ones are locked is the business of whoever can.
+   */
+  async assertNoLockedPages(folder: TreeRow): Promise<void> {
+    const [row] = await WIKI.db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(treeTable)
+      .innerJoin(pagesTable, eq(pagesTable.id, treeTable.id))
+      .where(
+        and(
+          eq(treeTable.siteId, folder.siteId),
+          eq(treeTable.locale, folder.locale),
+          eq(treeTable.type, 'page'),
+          sql`${treeTable.folderPath} <@ ${childPathOf(folder)}::ltree`,
+          eq(pagesTable.isEditLocked, true)
+        )
+      )
+    const count = row?.count ?? 0
+    if (count > 0) {
+      throw new CustomError(
+        'treeFolderHasLockedPages',
+        count === 1
+          ? 'This folder contains a page that is locked against edits, so it cannot be renamed, moved or deleted until that page is unlocked.'
+          : `This folder contains ${count} pages that are locked against edits, so it cannot be renamed, moved or deleted until they are unlocked.`,
+        423
+      )
+    }
+  }
+
+  /**
    * Rename a folder, moving everything under it along with it.
    *
    * @param pathName The new path segment, normalized as on the way in. Unchanged from the current
@@ -1201,6 +1239,9 @@ class Tree {
       )
       return updated[0] as TreeRow
     }
+
+    // -> Only now: a change of title alone moves nothing, and is allowed over a locked page
+    await this.assertNoLockedPages(folder)
 
     // -> As on the way in: a page may share the name, an asset may not
     const existing = await WIKI.db
@@ -1684,6 +1725,9 @@ class Tree {
       [requested, folder.fileName].filter(Boolean).join('/')
     )
 
+    // -> Before the destination is resolved as well, which may create folders on the way
+    await this.assertNoLockedPages(folder)
+
     const parent = requested
       ? await this.getFolder({
           path: requested,
@@ -1983,6 +2027,7 @@ class Tree {
     if (!folder) {
       throw new CustomError('treeInvalidFolder', 'This folder does not exist.', 404)
     }
+    await this.assertNoLockedPages(folder)
     const path = childPathOf(folder)
     WIKI.logger.debug(`Deleting folder ${folder.id} at path ${path}...`)
 

@@ -905,6 +905,8 @@ async function routes(app: FastifyInstance) {
       if (!rule) {
         return reply.forbidden('This page does not accept edit suggestions from you.')
       }
+      // -> Refused at the door: approving it later would be refused anyway, by `updatePage`
+      WIKI.models.pages.assertEditable(page)
 
       const guestName = (req.body.guestName ?? '').trim()
       const guestEmail = (req.body.guestEmail ?? '').trim()

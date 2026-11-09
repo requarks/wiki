@@ -88,6 +88,28 @@ export const SAVED_PAGE_FIELDS = [
   'tocDepth'
 ]
 
+const SAVED_FIELDS = new Set(SAVED_PAGE_FIELDS)
+
+/**
+ * Whether a mutation of this store is an edit a save would carry, for a `$subscribe` that marks
+ * changes pending.
+ *
+ * Everything is, except a `$patch` object touching none of `SAVED_PAGE_FIELDS`: state applied by a
+ * request of its own -- the edit lock, which a save would only be refused for -- is written that way
+ * so that it does not put Save and Discard up. Told apart by the patch's keys, which Pinia passes for
+ * a patch object in every build. A direct assignment carries nothing to tell it by and always counts,
+ * which is right for a field edited through `v-model` and is why an action setting something a save
+ * does not send has to use `$patch`.
+ *
+ * @param {import('pinia').SubscriptionCallbackMutation} mutation
+ */
+export function isSavedFieldMutation(mutation) {
+  return (
+    mutation.type !== 'patch object' ||
+    Object.keys(mutation.payload ?? {}).some((key) => SAVED_FIELDS.has(key))
+  )
+}
+
 export const usePageStore = defineStore('page', {
   state: () => ({
     alias: '',
@@ -170,6 +192,12 @@ export const usePageStore = defineStore('page', {
      * never sent them — so nothing here can display a locked page by mistake.
      */
     isLocked: false,
+    /**
+     * Whether the page is locked against edits -- nothing to do with `isLocked` above. While set the
+     * server refuses every save, move, conversion and deletion of the page, and every change to its
+     * owners and lifecycle rules; only `manage:pages` on it sets or clears it (`pageSetEditLock`).
+     */
+    isEditLocked: false,
     isSearchable: true,
     locale: 'en',
     navigationId: null,
@@ -593,6 +621,7 @@ export const usePageStore = defineStore('page', {
           updatedAt: '',
           publishState: '',
           isLocked: false,
+          isEditLocked: false,
           canSuggestEdits: false,
           hasOpenSuggestion: false,
           canReview: false,
@@ -847,6 +876,8 @@ export const usePageStore = defineStore('page', {
         ownership: { mode: 'creator', users: [], groups: [] },
         lifecycleRules: [],
         lifecycleBanner: null,
+        // -> Not the page this one was started from: a copy of a locked page is a new, open one
+        isEditLocked: false,
         // -> The page being created is very often the one that was missing, and it is not missing now
         notFound: false,
         folderId: '',
@@ -948,6 +979,10 @@ export const usePageStore = defineStore('page', {
       if (!resp?.canSubmit) {
         throw new Error('ERR_SUGGESTIONS_NOT_ALLOWED')
       }
+      // -> Submitting would be refused, so the editor is not opened on a suggestion that cannot be sent
+      if (this.isEditLocked) {
+        throw new Error('ERR_PAGE_EDIT_LOCKED')
+      }
 
       this.$patch({
         content: resp.content ?? '',
@@ -1040,6 +1075,14 @@ export const usePageStore = defineStore('page', {
       } else {
         await this.pageLoad(loadArgs)
       }
+      /*
+        Asked of the page just loaded, not of a button: the Edit button is disabled on a locked page,
+        but `/_edit/...` can be typed, reloaded or followed from a link. The server would refuse the
+        save anyway; this is so nobody writes a change first and finds that out after.
+      */
+      if (this.isEditLocked) {
+        throw new Error('ERR_PAGE_EDIT_LOCKED')
+      }
 
       if (!editorStore.configIsLoaded) {
         await editorStore.fetchConfigs()
@@ -1050,6 +1093,26 @@ export const usePageStore = defineStore('page', {
         mode: 'edit',
         editor: this.editor
       })
+    },
+    /**
+     * PAGE - LOCK / UNLOCK EDITS
+     *
+     * Applied at once rather than held for the next save like the panel's other fields: a lock is not
+     * a property of the page's content, and the save it would otherwise wait for is exactly what it
+     * refuses. Needs `manage:pages` on the page, which the server checks.
+     *
+     * @param {boolean} isEditLocked
+     */
+    async pageSetEditLock(isEditLocked) {
+      const siteStore = useSiteStore()
+      const resp = unwrap(
+        await API_CLIENT.put(`sites/${siteStore.id}/pages/${this.id}/edit-lock`, {
+          json: { isEditLocked }
+        }).json()
+      )
+      // -> As a `$patch` object, never a direct assignment: the properties panel counts every other
+      //    mutation of this store as an edit waiting to be saved, and tells this one apart by its keys
+      this.$patch({ isEditLocked: resp.isEditLocked })
     },
     /**
      * PAGE - LOAD SOURCE ONLY

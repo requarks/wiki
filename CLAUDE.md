@@ -346,6 +346,14 @@ Consequences worth knowing:
   `liveCondition` for SQL, `maySeeUnpublished` per page, and `unpublishedFor(req)` in `api/pages.ts`
   is what a reader-facing `getPage` passes as `unpublished`. That option defaults to open because most
   callers are the wiki acting on its own pages, so a new route answering a reader has to pass it.
+- **A page can be locked against edits** (`pages.isEditLocked`), set and cleared only with
+  `manage:pages` on it (`PUT …/edit-lock`). Not the password lock, which is `isLocked` on the API's
+  page. While it stands, `pages.assertEditable` refuses with 423 in `updatePage`, `convertPage`,
+  `movePage` and `deletePage`, so every caller meets it; a route changing what is kept BESIDE a page
+  (owners, lifecycle rules, a suggestion) calls it too. A new page write path does the same. Renaming,
+  moving or deleting a FOLDER is refused whole while any page under it is locked
+  (`tree.assertNoLockedPages`). A storage import is the one exception and goes through — see
+  [Storage targets](.claude/rules/storage.md).
 - **An anonymous request is the guests group**, not an absence of groups: that is how a wiki opens
   reading, and suggesting edits, to the public. Deny guests explicitly where an account is genuinely
   required (`reviewerFor` in `api/approvals.ts` is the worked example).

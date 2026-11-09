@@ -1722,7 +1722,15 @@ watch(
         })
       } catch (err) {
         editorStore.closeEditor()
-        notify({ type: 'negative', message: t('editor.openFailed'), caption: err.message })
+        if (err.message === 'ERR_PAGE_EDIT_LOCKED') {
+          notify({
+            type: 'negative',
+            message: t('editor.editLocked'),
+            caption: t('editor.editLockedHint')
+          })
+        } else {
+          notify({ type: 'negative', message: t('editor.openFailed'), caption: err.message })
+        }
         // -> Onto the page itself, which says what happened properly: not found, or the unauthorized
         //    screen with its offer to sign in as somebody else
         router.replace(`/${route.params.pagePath}`)

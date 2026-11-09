@@ -215,6 +215,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           'The page is password protected and this requester has not entered it, so `content`, `render` and `toc` were withheld. Unlock it with `POST …/unlock`.'
       },
+      isEditLocked: {
+        type: 'boolean',
+        description:
+          'The page is locked against edits — unrelated to `isLocked`, which is about its password. While set, saving, converting, moving or deleting the page, and changing its owners or lifecycle rules, answers 423, as does suggesting an edit to it. Set and cleared with `PUT …/edit-lock`, which needs `manage:pages` on the page.'
+      },
       relations: {
         type: 'array',
         items: { type: 'object', additionalProperties: true }

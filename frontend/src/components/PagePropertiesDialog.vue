@@ -17,6 +17,29 @@
     <w-toolbar class="bg-primary text-white flex">
       <div class="text-subtitle2">{{ t('editor.props.pageProperties') }}</div>
       <w-space />
+      <!--
+        The edit lock, applied at once rather than with the next save -- see `pageSetEditLock`. Shown
+        to everybody who can open this panel, so the state of the lock is never a surprise, and only
+        usable with `manage:pages` here; the span carries the tooltip for the disabled case, where the
+        button itself takes no hover. Absent while a page is being created, which has nothing stored to
+        lock yet, and while suggesting, which changes nothing about the page itself.
+      -->
+      <template v-if="showEditLock">
+        <span class="inline-flex" data-tooltip-anchor>
+          <w-btn
+            dense
+            flat
+            rounded
+            color="white"
+            :icon="pageStore.isEditLocked ? `la:lock` : `la:lock-open`"
+            :aria-label="editLockTooltip"
+            :disabled="!mayManagePage"
+            :loading="state.editLockBusy"
+            @click="toggleEditLock" />
+          <w-tooltip>{{ editLockTooltip }}</w-tooltip>
+        </span>
+        <w-separator class="mx-2" vertical dark inset />
+      </template>
       <w-btn
         class="mr-2"
         dense
@@ -34,6 +57,19 @@
       :thumb-style="siteStore.scrollStyle.thumb"
       :bar-style="siteStore.scrollStyle.bar"
       style="height: calc(100% - 50px)">
+      <!--
+        Above everything, and not dismissable: every field below still edits, but the save that would
+        carry any of it is refused while the lock stands, and finding that out at the end is worse.
+      -->
+      <w-card-section v-if="showEditLock && pageStore.isEditLocked" class="pb-0">
+        <w-banner class="bg-orange-1 text-orange-9 dark:bg-orange-9/30 dark:text-orange-2" dense>
+          <template #avatar>
+            <w-icon name="la:lock" size="20px" />
+          </template>
+          <div class="font-semibold">{{ t('editor.props.editLockedWarning') }}</div>
+          <div class="text-caption">{{ t('editor.props.editLockedWarningHint') }}</div>
+        </w-banner>
+      </w-card-section>
       <w-card-section id="refCardInfo">
         <div class="w-section-header">{{ t('editor.props.info') }}</div>
         <w-form class="gap-2">
@@ -589,11 +625,14 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { debounce } from 'es-toolkit/function'
 import { v4 as uuid } from 'uuid'
 
+import { apiErrorMessage } from '@/helpers/apiError'
 import { scrollBehavior } from '@/helpers/motion'
+import { confirm } from '@/composables/dialog'
+import { notify } from '@/composables/notify'
 import { PAGE_ICON_COLORS, pageIconColorClass } from '@/helpers/pageIconColors'
 
 import { useEditorStore } from '@/stores/editor'
-import { usePageStore } from '@/stores/page'
+import { isSavedFieldMutation, usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
@@ -629,7 +668,8 @@ const state = reactive({
   groupOptions: [],
   ownerLookups: 0,
   showLifecycleRuleDialog: false,
-  editLifecycleRuleIdx: null
+  editLifecycleRuleIdx: null,
+  editLockBusy: false
 })
 
 // REFS
@@ -657,6 +697,22 @@ const mayWriteStyles = computed(() => userStore.pagePermissions.includes('write:
   PATCH route would refuse a body that did.
 */
 const mayWriteTags = computed(() => userStore.pagePermissions.includes('write:tags'))
+
+/*
+  The edit lock, which `manage:pages` on this page sets and clears -- a page rule permission, so read
+  off `pagePermissions` for the reason the two above are. Only for a page that exists, and never in
+  suggest mode.
+*/
+const mayManagePage = computed(() => userStore.pagePermissions.includes('manage:pages'))
+const showEditLock = computed(() => Boolean(pageStore.id) && editorStore.mode !== 'suggest')
+const editLockTooltip = computed(() => {
+  if (mayManagePage.value) {
+    return pageStore.isEditLocked ? t('editor.props.editUnlock') : t('editor.props.editLock')
+  }
+  return pageStore.isEditLocked
+    ? t('editor.props.editLockedReadOnly')
+    : t('editor.props.editUnlockedReadOnly')
+})
 // -> Named apart from `pageStore.showTags`, which is the page's own choice to display them
 const showTagsSection = computed(() => mayWriteTags.value || pageStore.tags?.length > 0)
 
@@ -795,7 +851,12 @@ const publishingRange = computed({
 
 // WATCHERS
 
-pageStore.$subscribe(() => {
+// -> Every edit made here is a change for the header to offer to save -- but not the edit lock, which
+//    is applied by its own request; see `isSavedFieldMutation`
+pageStore.$subscribe((mutation) => {
+  if (!isSavedFieldMutation(mutation)) {
+    return
+  }
   editorStore.$patch({
     lastChangeTimestamp: Temporal.Now.instant()
   })
@@ -902,6 +963,35 @@ function saveLifecycleRule(rule) {
 }
 function removeLifecycleRule(idx) {
   setLifecycleRules(lifecycleRules.value.filter((_rule, i) => i !== idx))
+}
+
+function toggleEditLock() {
+  const lock = !pageStore.isEditLocked
+  confirm({
+    title: lock ? t('editor.props.editLock') : t('editor.props.editUnlock'),
+    icon: lock ? 'la:lock' : 'la:lock-open',
+    message: lock ? t('editor.props.editLockConfirm') : t('editor.props.editUnlockConfirm'),
+    cancel: true,
+    color: lock ? 'negative' : 'primary',
+    okLabel: lock ? t('editor.props.editLockAction') : t('editor.props.editUnlockAction')
+  }).onOk(async () => {
+    state.editLockBusy = true
+    try {
+      await pageStore.pageSetEditLock(lock)
+      notify({
+        type: 'positive',
+        message: lock ? t('editor.props.editLockDone') : t('editor.props.editUnlockDone')
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('editor.props.editLockFailed'),
+        caption: apiErrorMessage(err)
+      })
+    } finally {
+      state.editLockBusy = false
+    }
+  })
 }
 
 function editScripts(mode) {

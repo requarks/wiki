@@ -45,6 +45,8 @@ export const AUDIT_ACTIONS = {
     'restorePage',
     'renderPage',
     'unlockPage',
+    'lockPageEdits',
+    'unlockPageEdits',
     'watchPage',
     'unwatchPage',
     'ratePage',

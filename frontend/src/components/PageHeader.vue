@@ -246,8 +246,26 @@
         into the pending state without an editor behind it, and hiding Edit there left no way back into
         the content at all. Ahead of the commit actions so those stay rightmost.
       -->
+      <!--
+        Disabled rather than hidden on a page locked against edits, with the reason in its tooltip: a
+        button that vanishes says nothing, and the reader may well hold the permission it used to need.
+        The span is what the tooltip hangs on, since a disabled button takes no hover of its own.
+      -->
       <template v-if="!editorStore.isActive && userStore.can(`write:pages`)">
+        <span v-if="pageStore.isEditLocked" class="ms-4 inline-flex" data-tooltip-anchor>
+          <w-btn
+            class="acrylic-btn"
+            flat
+            icon="la:edit"
+            color="deep-orange-9"
+            :label="t(`common.actions.edit`)"
+            :aria-label="t(`common.actions.edit`)"
+            no-caps
+            disabled />
+          <w-tooltip>{{ t('editor.editLockedTooltip') }}</w-tooltip>
+        </span>
         <w-btn
+          v-else
           class="acrylic-btn ms-4"
           flat
           icon="la:edit"
@@ -269,7 +287,20 @@
         the one place that asks for it.
       -->
       <template v-else-if="!editorStore.isActive && pageStore.canSuggestEdits && !isRedirect">
+        <span v-if="pageStore.isEditLocked" class="ms-4 inline-flex" data-tooltip-anchor>
+          <w-btn
+            class="acrylic-btn"
+            flat
+            icon="la:edit"
+            color="deep-orange-9"
+            :label="t(`common.actions.suggestEdits`)"
+            :aria-label="t(`common.actions.suggestEdits`)"
+            no-caps
+            disabled />
+          <w-tooltip>{{ t('editor.editLockedTooltip') }}</w-tooltip>
+        </span>
         <w-btn
+          v-else
           class="acrylic-btn ms-4"
           flat
           icon="la:edit"
@@ -850,11 +881,11 @@ async function suggestEdits() {
   try {
     await pageStore.pageSuggest()
   } catch (err) {
-    notify({
-      type: 'negative',
-      message: t('common.page.suggestFailed'),
-      caption: err.message
-    })
+    notify(
+      err.message === 'ERR_PAGE_EDIT_LOCKED'
+        ? { type: 'negative', message: t('editor.editLocked'), caption: t('editor.editLockedHint') }
+        : { type: 'negative', message: t('common.page.suggestFailed'), caption: err.message }
+    )
   }
   loading.hide()
 }

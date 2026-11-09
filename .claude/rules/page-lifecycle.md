@@ -25,6 +25,9 @@ after them, and a rule whose only action is `remove` is refused.
   is gone or disabled. So a rule that is new or changed is checked against its saver: `move` needs
   `manage:pages` on the page and at the destination, `tags` needs what `retagRefusal` asks. The daily
   run asks the author again before acting, since a permission may have been lost since.
+- **A page locked against edits** (`isEditLocked`) has its `tags` and `move` actions skipped, recorded
+  as such on the rule, rather than failed. Its banner and notification still happen, since neither
+  edits the page.
 - **The daily run is in-process**, `tasks/simple/process-lifecycle-rules.ts` off `SYSTEM_SCHEDULE`,
   because moving, retagging and notifying need models a worker thread does not have. Rules fire one
   at a time and re-read their page, because a move changes what the next rule sees.

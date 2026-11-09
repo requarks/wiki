@@ -496,6 +496,11 @@ class PageLifecycle {
               if (tags.length === (page.tags ?? []).length) {
                 break
               }
+              // -> Skipped rather than failed: the lock is somebody's decision, not a fault
+              if (page.isEditLocked) {
+                skip('Tags not applied: the page is locked against edits.')
+                break
+              }
               // -> Asked again now, not only when the rule was saved: the author may have lost it since
               if (!mayAt('write:tags', page) || !mayAt('write:tags', { ...page, tags })) {
                 skip('Tags not applied: the author may no longer change tags here.')
@@ -520,6 +525,10 @@ class PageLifecycle {
             case 'move': {
               const path = this.destinationOf(action.path, page.path)
               if (path === page.path) {
+                break
+              }
+              if (page.isEditLocked) {
+                skip(`Not moved to /${path}: the page is locked against edits.`)
                 break
               }
               const destination = { path, locale: page.locale, tags: page.tags ?? [] }

@@ -1,0 +1,1 @@
+ALTER TABLE "pages" ADD COLUMN "isEditLocked" boolean DEFAULT false NOT NULL;

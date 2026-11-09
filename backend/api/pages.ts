@@ -1648,7 +1648,7 @@ async function routes(app: FastifyInstance) {
                   skipped: {
                     type: 'array',
                     description:
-                      'The skipped pages the caller may read. `forbidden`: the caller may not edit it. `notInSource`: the link could not be found in its source. `failed`: the save was refused.',
+                      'The skipped pages the caller may read. `forbidden`: the caller may not edit it. `locked`: it is locked against edits. `notInSource`: the link could not be found in its source. `failed`: the save was refused.',
                     items: {
                       type: 'object',
                       properties: {
@@ -1656,7 +1656,10 @@ async function routes(app: FastifyInstance) {
                         locale: { type: 'string' },
                         path: { type: 'string' },
                         title: { type: 'string' },
-                        reason: { type: 'string', enum: ['forbidden', 'notInSource', 'failed'] }
+                        reason: {
+                          type: 'string',
+                          enum: ['forbidden', 'locked', 'notInSource', 'failed']
+                        }
                       }
                     }
                   },
@@ -1908,6 +1911,78 @@ async function routes(app: FastifyInstance) {
       })
 
       return reply.code(204).send()
+    }
+  )
+
+  /**
+   * LOCK / UNLOCK PAGE EDITS
+   */
+  app.put<{ Params: { siteId: string; pageId: string }; Body: { isEditLocked: boolean } }>(
+    '/sites/:siteId/pages/:pageId/edit-lock',
+    {
+      config: {
+        scope: 'pages'
+      },
+      /*
+        No route-level `permissions`: `manage:pages` is a page rule permission, granted per path by a
+        group's RULES, which the group-wide list that hook reads cannot answer. Checked against the
+        page in question below instead.
+      */
+      schema: {
+        summary: 'Lock a page against edits, or unlock it',
+        description:
+          'A locked page cannot be saved, converted to another editor, moved, renamed or deleted, and its owners and lifecycle rules cannot be changed — each of those answers 423 until the page is unlocked. Nor does it take edit suggestions.\n\nNeeds `manage:pages` on the page, both ways. Not a page edit: records no version, and is not undone by restoring one.\n\nUnrelated to a page password, which is `POST …/unlock`.',
+        tags: ['Pages'],
+        params: pageIdParam,
+        body: {
+          type: 'object',
+          required: ['isEditLocked'],
+          properties: {
+            isEditLocked: { type: 'boolean' }
+          }
+        },
+        response: {
+          200: {
+            description: 'The lock as it now stands',
+            type: 'object',
+            properties: {
+              ok: { type: 'boolean' },
+              isEditLocked: { type: 'boolean' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const actor = actorFrom(req)
+      if (!actor) {
+        return reply.unauthorized(userRequired(req, 'Locking a page'))
+      }
+      const target = await WIKI.models.pages.getPage({
+        siteId: req.params.siteId,
+        id: req.params.pageId
+      })
+      if (!target) {
+        return reply.notFound('This page does not exist.')
+      }
+      if (!mayOnPage(req, 'manage:pages', target)) {
+        return reply.forbidden('Locking or unlocking a page needs manage:pages on it.')
+      }
+      const { isEditLocked } = req.body
+      // -> Nothing to record for a lock that already stood as asked
+      if (target.isEditLocked !== isEditLocked) {
+        if (!(await WIKI.models.pages.setEditLock(req.params.siteId, target.id, isEditLocked))) {
+          return reply.notFound('This page does not exist.')
+        }
+        await audit(req, 'page', isEditLocked ? 'lockPageEdits' : 'unlockPageEdits', {
+          pageId: target.id,
+          siteId: req.params.siteId,
+          locale: target.locale,
+          path: target.path,
+          title: target.title
+        })
+      }
+      return { ok: true, isEditLocked }
     }
   )
 

@@ -82,6 +82,8 @@ async function routes(app: FastifyInstance) {
       if (!mayOnPage(req, 'write:pages', page)) {
         return reply.forbidden('You are not allowed to edit this page.')
       }
+      // -> Its rules are among its properties, which a lock holds as it holds the page itself
+      WIKI.models.pages.assertEditable(page)
 
       const rules = req.body.rules.map((rule) =>
         WIKI.models.pageLifecycle.normalize(rule, page.path)

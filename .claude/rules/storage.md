@@ -185,6 +185,11 @@ Everything else follows from that:
   scope that `putAsset`, `eachPageTarget` and `eachAssetTarget` skip that target in (counting it,
   for `putAsset`, as somewhere the file is held). Anything else a module does to the wiki while
   holding its own queue — git's removals in `applyIncoming` — needs the same scope.
+- **An import goes through a page's edit lock.** `pages.assertEditable` lets a write through while
+  `storage.isImporting()`: the file on the target has already changed, and refusing it would only
+  leave the wiki and the target disagreeing. An edited page stays locked, since no save writes
+  `isEditLocked`, and a deleted one goes. Another reason the scope above has to wrap everything a
+  module does to the wiki: outside it, a pull meets the lock and is refused.
 - **On import a file is a page if its extension is reserved, or if it declares an `editor`** in its
   front matter. A text page is front matter plus the source; a **JSON** page — a redirection today —
   is one JSON document with the metadata at its top level and the source under `content`.

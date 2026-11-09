@@ -52,7 +52,7 @@ import { useRouter } from 'vue-router'
 import { notify } from '@/composables/notify'
 
 import { useEditorStore } from '@/stores/editor'
-import { usePageStore } from '@/stores/page'
+import { isSavedFieldMutation, usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { tagBrowserRoute } from '@/helpers/tagBrowser'
@@ -107,8 +107,9 @@ const sortedTags = computed(() => [...state.tags].sort((a, b) => a.localeCompare
 
 // WATCHERS
 
-pageStore.$subscribe(() => {
-  if (props.edit) {
+// -> Not for the edit lock, applied by its own request: see `isSavedFieldMutation`
+pageStore.$subscribe((mutation) => {
+  if (props.edit && isSavedFieldMutation(mutation)) {
     editorStore.$patch({
       lastChangeTimestamp: Temporal.Now.instant()
     })

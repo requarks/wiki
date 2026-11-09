@@ -1207,6 +1207,14 @@ export const pages = pgTable(
     ),
     password: varchar({ length: 255 }),
     /**
+     * Whether the page is locked against edits: its content, its properties, its owners and lifecycle
+     * rules, its editor, its path, and its existence. Set and cleared only with `manage:pages` on the
+     * page (`PUT …/edit-lock`); every write path in `models/pages.ts` refuses a locked page.
+     *
+     * Not the password lock, which is `password` above and `isLocked` on the API's page.
+     */
+    isEditLocked: boolean().notNull().default(false),
+    /**
      * How readers have rated the page, per scale: `{ thumbs?: { count, sum, up, down }, stars?: … }`.
      * A cache of the `pageRatings` rows, rewritten by every rating and withdrawal (`models/pageRatings.ts`)
      * so that a page view reads it off the row it already loads instead of aggregating per view.
