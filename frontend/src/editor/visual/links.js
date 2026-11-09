@@ -189,3 +189,46 @@ export function linkBar({ onEdit, onRemove, t }) {
     }
   })
 }
+
+/**
+ * `[[` opens the link picker, as typing it does in MediaWiki's visual editor.
+ *
+ * The second bracket goes in like any other character and the picker opens over it, so the brackets
+ * are on the page while the author chooses: picking a link replaces them (`onTrigger`'s caller does
+ * that), and cancelling leaves exactly what was typed. A literal `[[` therefore costs one Escape and
+ * nothing else.
+ *
+ * Only for a typed `[` with nothing selected, after exactly one `[` -- a third bracket is somebody
+ * writing brackets, not asking for the picker again -- and never in code, where `[[` is far more likely
+ * to be an array or a shell test than a link.
+ *
+ * @param {object} handlers
+ * @param {() => void} handlers.onTrigger Open the link picker.
+ */
+export function linkTrigger({ onTrigger }) {
+  return new Plugin({
+    props: {
+      handleTextInput(view, from, to, text) {
+        if (text !== '[' || from !== to || !view.editable) {
+          return false
+        }
+        const $from = view.state.doc.resolve(from)
+        if ($from.parent.type.spec.code || schema.marks.code.isInSet($from.marks())) {
+          return false
+        }
+        const before = $from.parent.textBetween(
+          Math.max(0, $from.parentOffset - 2),
+          $from.parentOffset,
+          null,
+          '\ufffc'
+        )
+        if (!before.endsWith('[') || before === '[[') {
+          return false
+        }
+        view.dispatch(view.state.tr.insertText(text, from, to))
+        onTrigger()
+        return true
+      }
+    }
+  })
+}

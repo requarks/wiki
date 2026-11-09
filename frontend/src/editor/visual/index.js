@@ -10,7 +10,7 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 import { collabPlugins, collabRedo, collabUndo, seedIfEmpty } from './collab'
 import { buildInputRules, buildKeymap, taskCheckboxes } from './commands'
 import { imageBar } from './images'
-import { linkBar } from './links'
+import { linkBar, linkTrigger } from './links'
 import { createNodeViews } from './nodeviews'
 import { createParser } from './parse'
 import { schema } from './schema'
@@ -98,6 +98,8 @@ export function createVisualEditor({
       getItems: () => context.slashItems(),
       t: context.t
     }),
+    // -> `[[` opens the link picker -- see `links.js`
+    linkTrigger({ onTrigger: () => context.insertLinkFromBrackets() }),
     buildInputRules(),
     keymap(buildKeymap({ collab: isCollab })),
     gapCursor(),

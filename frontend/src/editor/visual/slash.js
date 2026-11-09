@@ -14,6 +14,10 @@ import { schema } from './schema'
  * quote, a table or a block, where what the line may turn into is the container's business and a `/`
  * is far more likely to be the first character of a path being written down.
  *
+ * Ctrl+Space opens it too, with nothing typed: on such an empty line as the whole menu, and anywhere
+ * else in text as the entries that go in at the caret without replacing the line -- a link, an inline
+ * content block -- whose query is then what is typed after the caret. See `openFromShortcut`.
+ *
  * The plugin is the whole of the behaviour -- when the menu is open, what it lists, which entry is
  * highlighted, what the keys do and what picking one does. The menu itself is drawn by
  * `EditorVisual.vue`, because it wants icons and those are components; it is told what to draw through
@@ -170,28 +174,73 @@ export const SLASH_ITEMS = [
 ]
 
 /**
- * The text typed after the `/`, while the caret is still on the line the menu was opened on and that
- * line still holds nothing but the slash and what follows it. Null once any of that stops being true,
- * which is what closes the menu.
+ * The text typed since the menu opened, or null once it should close.
  *
- * @param {number} from Where the `/` is.
+ * On a line (`inline` false) the query is the whole line after the prefix, and holds only while the
+ * caret is still on the line the menu was opened on and that line still holds nothing but the prefix
+ * and what follows it. Inline, it is what lies between where the menu opened and the caret, in the
+ * same textblock.
+ *
+ * @param {{ from: number, prefix: string, inline: boolean }} menu Where the menu opened and what was
+ *        typed to open it: `/`, or nothing for the keyboard shortcut.
  */
-function queryAt(state, from) {
+function queryAt(state, { from, prefix, inline }) {
   const { selection } = state
   if (!selection.empty) {
     return null
   }
   const { $from } = selection
+  if ($from.pos < from + prefix.length) {
+    return null
+  }
+  if (inline) {
+    if (!state.doc.resolve(from).sameParent($from)) {
+      return null
+    }
+    const text = state.doc.textBetween(from, $from.pos, null, '\ufffc')
+    // -> Anything that is not text -- an emoji, an image, an inline block -- ends it
+    return text.includes('\ufffc') ? null : text
+  }
   const line = $from.parent
   if (!isMenuLine($from) || $from.start() !== from) {
     return null
   }
   const text = line.textContent
   // -> Anything that is not text -- a hard break, an emoji, an image -- ends it as surely as a new line
-  if (!text.startsWith('/') || line.content.size !== text.length || $from.pos <= from) {
+  if (!text.startsWith(prefix) || line.content.size !== text.length) {
     return null
   }
-  return text.slice(1)
+  return text.slice(prefix.length)
+}
+
+/**
+ * Ctrl+Space, on every platform: on a Mac `Cmd+Space` is Spotlight's, and `Ctrl+Space` is what code
+ * editors there use for the same "what can go here" menu.
+ */
+function isMenuShortcut(event) {
+  return (
+    event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    !event.shiftKey &&
+    (event.code === 'Space' || event.key === ' ')
+  )
+}
+
+/**
+ * Whether the caret can take the inline entries: an empty selection in a textblock that holds text and
+ * links, and not code, where neither a link nor a block is anything but characters.
+ */
+function takesInline(state) {
+  const { selection } = state
+  const { $from } = selection
+  return (
+    selection.empty &&
+    $from.parent.inlineContent &&
+    !$from.parent.type.spec.code &&
+    $from.parent.type.allowsMarkType(schema.marks.link) &&
+    !schema.marks.code.isInSet($from.marks())
+  )
 }
 
 /** The lines the menu belongs to: a paragraph or a heading, at the top level of the page. */
@@ -223,6 +272,8 @@ function opensAt(state, from, to) {
  *        `{ key, group, icon, title, description, keywords, run }`, already translated, whose `run()`
  *        does whatever picking it means -- open a dialog, insert a block -- once the line is cleared.
  *        Asked again whenever the list is filtered, so it can follow what the site has switched on.
+ *        An entry with `inline: true` goes in at the caret without disturbing the line, which makes it
+ *        one of the entries offered mid-line.
  */
 export function slashMenu({ onUpdate, t, getItems }) {
   // -> The host's entries come with their words already in place; these are written as string keys
@@ -233,9 +284,12 @@ export function slashMenu({ onUpdate, t, getItems }) {
    * The entries a query leaves, matched on the start of any word of the label or of a keyword -- with
    * the ones the query names exactly first, so `/hr` is the horizontal line even though another entry
    * listed ahead of it could have a word starting with those letters. Otherwise in their own order.
+   *
+   * Mid-line (`inline`), only the entries that go in at the caret: every other one replaces the line.
    */
-  function itemsFor(query) {
-    const all = [...SLASH_ITEMS, ...getItems()]
+  function itemsFor(query, inline) {
+    const everything = [...SLASH_ITEMS, ...getItems()]
+    const all = inline ? everything.filter((item) => item.inline) : everything
     const needle = query.trim().toLocaleLowerCase()
     if (!needle) {
       return all
@@ -252,14 +306,49 @@ export function slashMenu({ onUpdate, t, getItems }) {
     return groups.flatMap((group) => ranked.filter((item) => item.group === group))
   }
 
+  /** The state of a menu that has just opened, with nothing typed into it yet. */
+  function opened(from, prefix, inline) {
+    return { from, prefix, inline, query: '', items: itemsFor('', inline), index: 0 }
+  }
+
+  /**
+   * Ctrl+Space: the whole menu on an empty line, where a `/` would have opened it, and the inline
+   * entries anywhere else that can take them. Nothing is typed, so the query starts at the caret.
+   *
+   * @returns {boolean} Whether it opened; when it did not, the key is left to the browser.
+   */
+  function openFromShortcut(view) {
+    const { state } = view
+    if (!view.editable || !state.selection.empty) {
+      return false
+    }
+    const { $from } = state.selection
+    const inline = !isEmptyMenuLine($from)
+    if (inline && !takesInline(state)) {
+      return false
+    }
+    const menu = opened($from.pos, '', inline)
+    if (menu.items.length < 1) {
+      return false
+    }
+    view.dispatch(state.tr.setMeta(key, menu))
+    return true
+  }
+
   return new Plugin({
     key,
 
     /*
-      `{ from, query, items, index }` while the menu is open, null while it is not. Opened only by the
-      transaction `handleTextInput` makes for a typed `/`, so moving the caret onto a line that happens
-      to start with one, a paste and a collaborator's typing never open it. Closed by Escape, by a
-      query nothing matches, and by anything that makes `queryAt` give up.
+      `{ from, prefix, inline, query, items, index }` while the menu is open, null while it is not.
+      Opened only by the transaction `handleTextInput` makes for a typed `/` (`prefix` '/') and by the
+      shortcut (`prefix` ''), so moving the caret onto a line that happens to start with one, a paste
+      and a collaborator's typing never open it. Closed by Escape, by a query nothing matches, and by
+      anything that makes `queryAt` give up -- and, mid-line, by the caret moving on its own, since
+      picking an entry there deletes what lies between where the menu opened and the caret, and that
+      must never be words the author did not type into it.
+
+      `from` is mapped to stay put when text is typed right at it: with no `/` in front, the first
+      letter of the query goes in exactly there.
     */
     state: {
       init: () => null,
@@ -271,16 +360,19 @@ export function slashMenu({ onUpdate, t, getItems }) {
         if (!prev) {
           return null
         }
-        const from = tr.mapping.map(prev.from)
-        const query = queryAt(newState, from)
+        if (prev.inline && !tr.docChanged && tr.selectionSet) {
+          return null
+        }
+        const from = tr.mapping.map(prev.from, -1)
+        const query = queryAt(newState, { ...prev, from })
         if (query === null) {
           return null
         }
         if (query === prev.query) {
           return from === prev.from ? prev : { ...prev, from }
         }
-        const items = itemsFor(query)
-        return items.length > 0 ? { from, query, items, index: 0 } : null
+        const items = itemsFor(query, prev.inline)
+        return items.length > 0 ? { ...prev, from, query, items, index: 0 } : null
       }
     },
 
@@ -293,7 +385,8 @@ export function slashMenu({ onUpdate, t, getItems }) {
       */
       decorations(state) {
         const { selection } = state
-        if (!selection.empty || !isEmptyMenuLine(selection.$from)) {
+        // -> Not under a menu the shortcut opened on it, which is the answer to what the words suggest
+        if (!selection.empty || !isEmptyMenuLine(selection.$from) || key.getState(state)) {
           return null
         }
         const { $from } = selection
@@ -310,7 +403,7 @@ export function slashMenu({ onUpdate, t, getItems }) {
           return false
         }
         const tr = view.state.tr.insertText(text, from, to)
-        view.dispatch(tr.setMeta(key, { from, query: '', items: itemsFor(''), index: 0 }))
+        view.dispatch(tr.setMeta(key, opened(from, '/', false)))
         return true
       },
 
@@ -319,8 +412,15 @@ export function slashMenu({ onUpdate, t, getItems }) {
         otherwise split the line and the arrows move the caret before the menu ever saw them.
       */
       handleKeyDown(view, event) {
+        if (view.composing) {
+          return false
+        }
         const menu = key.getState(view.state)
-        if (!menu || view.composing) {
+        if (isMenuShortcut(event)) {
+          // -> Swallowed while the menu is open, so that it does not reopen over itself
+          return Boolean(menu) || openFromShortcut(view)
+        }
+        if (!menu) {
           return false
         }
         switch (event.key) {
@@ -420,6 +520,14 @@ export function chooseSlashItem(view, index) {
   const menu = key.getState(view.state)
   const item = menu?.items[index]
   if (!item) {
+    return
+  }
+  // -> Mid-line, only the query goes, and the entry is put where it was
+  if (menu.inline) {
+    const to = Math.max(menu.from, view.state.selection.from)
+    view.dispatch(view.state.tr.delete(menu.from, to).setMeta(key, null))
+    view.focus()
+    item.run?.()
     return
   }
   const $line = view.state.doc.resolve(menu.from)

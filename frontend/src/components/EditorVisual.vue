@@ -857,6 +857,7 @@ function slashItems() {
       title: t('editor.visual.slash.link'),
       description: t('editor.visual.slash.linkHint'),
       keywords: ['link', 'url', 'page'],
+      inline: true,
       run: insertLink
     },
     {
@@ -889,6 +890,8 @@ function slashItems() {
     title: definition.block === 'tabs' ? t('editor.visual.slash.tabset') : definition.name,
     description: definition.description ?? '',
     keywords: [definition.block, 'block', ...(definition.block === 'tabs' ? ['tabset'] : [])],
+    // -> Goes in at the caret, so it is offered mid-line as well -- see `insertSiteBlock`
+    inline: Boolean(definition.inline),
     run: () => insertSiteBlock(definition)
   }))
 
@@ -1157,24 +1160,50 @@ const imageDialog = useImagePropertiesDialog({
  * was picked.
  */
 function insertLink() {
-  dialog({ component: LinkPickerDialog }).onOk(({ href, title, openInNewTab }) => {
-    if (!href) {
-      return
-    }
-    const view = editor.view
-    const { from, to, empty } = view.state.selection
-    // -> How both editors write "open in a new tab": an attribute the renderer reads off the link
-    const mdAttrs = openInNewTab ? { target: '_blank' } : null
+  dialog({ component: LinkPickerDialog }).onOk(applyPickedLink)
+}
 
-    if (empty) {
-      insertMarkdown(`[${title || href}](${href})${openInNewTab ? '{target="_blank"}' : ''}`)
-      return
-    }
-    view.dispatch(
-      view.state.tr.addMark(from, to, schema.marks.link.create({ href, title: null, mdAttrs }))
-    )
-    view.focus()
-  })
+/**
+ * The same picker, opened by typing `[[` (see `linkTrigger` in `links.js`).
+ *
+ * The brackets are in the document while the picker is up. A pick replaces them, provided they are
+ * still right before the caret -- a collaborator may have edited that spot in the meantime, and then
+ * the link goes in at the caret with nothing removed. A cancel leaves them where they are, and hands
+ * the caret back to the editor so that typing carries on where it stopped.
+ */
+function insertLinkFromBrackets() {
+  dialog({ component: LinkPickerDialog })
+    .onOk((pick) => {
+      if (!editor || !pick.href) {
+        return
+      }
+      const view = editor.view
+      const { from, empty } = view.state.selection
+      if (empty && from >= 2 && view.state.doc.textBetween(from - 2, from) === '[[') {
+        view.dispatch(view.state.tr.delete(from - 2, from))
+      }
+      applyPickedLink(pick)
+    })
+    .onCancel(() => editor?.view.focus())
+}
+
+function applyPickedLink({ href, title, openInNewTab }) {
+  if (!editor || !href) {
+    return
+  }
+  const view = editor.view
+  const { from, to, empty } = view.state.selection
+  // -> How both editors write "open in a new tab": an attribute the renderer reads off the link
+  const mdAttrs = openInNewTab ? { target: '_blank' } : null
+
+  if (empty) {
+    insertMarkdown(`[${title || href}](${href})${openInNewTab ? '{target="_blank"}' : ''}`)
+    return
+  }
+  view.dispatch(
+    view.state.tr.addMark(from, to, schema.marks.link.create({ href, title: null, mdAttrs }))
+  )
+  view.focus()
 }
 
 function insertCodeBlock(language) {
@@ -1717,6 +1746,7 @@ onMounted(async () => {
       liftNode,
       editLink,
       removeLink: unlink,
+      insertLinkFromBrackets,
       editImage,
       replaceImage,
       onSlashMenu,
