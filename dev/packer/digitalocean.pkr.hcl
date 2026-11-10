@@ -73,10 +73,11 @@ build {
     ]
   }
 
-  # Docker + Compose, then the firewall
+  # DigitalOcean's agents out, Docker + Compose in, then the firewall
   provisioner "shell" {
     environment_vars = local.apt_env
     scripts = [
+      "${path.root}/scripts/009-remove-droplet-agent.sh",
       "${path.root}/scripts/010-docker.sh",
       "${path.root}/scripts/011-ufw.sh"
     ]
