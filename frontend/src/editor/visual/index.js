@@ -9,6 +9,7 @@ import { MarkdownRenderer } from '@/renderers/markdown'
 
 import { collabPlugins, collabRedo, collabUndo, seedIfEmpty } from './collab'
 import { buildInputRules, buildKeymap, taskCheckboxes } from './commands'
+import { keepSelectionOnFocus } from './focus'
 import { imageBar } from './images'
 import { linkBar, linkTrigger } from './links'
 import { createNodeViews } from './nodeviews'
@@ -103,6 +104,8 @@ export function createVisualEditor({
     buildInputRules(),
     keymap(buildKeymap({ collab: isCollab })),
     gapCursor(),
+    // -> Focus handed back by a dialog keeps the selection it was opened on -- see `focus.js`
+    keepSelectionOnFocus(),
     taskCheckboxes(),
     /*
       No `columnResizing`: a dragged width is a `colwidth` on each cell that markdown has no way to
