@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
 
     - name: Install Packer
       run: |
@@ -28,4 +28,5 @@ jobs:
         WIKI_APP_VERSION: ${{ github.event.inputs.version }}
       working-directory: dev/packer
       run: |
-        packer build digitalocean.json
+        packer init digitalocean.pkr.hcl
+        packer build digitalocean.pkr.hcl

@@ -1,0 +1,89 @@
+# Wiki.js 3 — DigitalOcean 1-Click
+#
+# Caddy is the only service reachable from outside. With no hostname set it answers plain HTTP on
+# port 80, so the wiki can be opened at the droplet's IP address. Run `wiki-hostname <domain>` (or set
+# WIKI_HOSTNAME in .env and `docker compose up -d`) to switch to HTTPS on that domain. Caddy gets the
+# certificate from Let's Encrypt and renews it by itself.
+#
+# Updating: docker compose pull && docker compose up -d
+
+name: wiki
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wiki
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      # The parent of PGDATA rather than PGDATA itself, as the image expects from 18 on
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      # Over TCP, which the temporary server the image runs while initialising does not listen on,
+      # so the check cannot pass before the database is really up
+      test: ['CMD', 'pg_isready', '-h', '127.0.0.1', '-U', 'wiki', '-d', 'wiki']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+      start_interval: 2s
+
+  wiki:
+    image: ghcr.io/requarks/wiki:3
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wiki
+      DB_NAME: wiki
+      DB_SSL: 'false'
+      DB_PASS_FILE: /run/secrets/db_password
+      # Read only on the first start against an empty database, which creates admin@example.com with
+      # it. The first-boot script passes it once and then recreates the container without it.
+      ADMIN_PASS: ${ADMIN_PASS:-}
+    secrets:
+      - db_password
+    volumes:
+      - wiki-data:/wiki/data
+    healthcheck:
+      # /_live answers once the HTTP server is listening, which is after migrations have run
+      test: ['CMD', 'curl', '-fsS', '-o', '/dev/null', 'http://127.0.0.1:3000/_live']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5m
+      start_interval: 5s
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - wiki
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      # A bare `:80` serves any host over plain HTTP. A domain name turns on automatic HTTPS for it.
+      WIKI_HOSTNAME: ${WIKI_HOSTNAME:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+
+volumes:
+  db-data:
+  wiki-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,7 @@
+# WIKI_HOSTNAME is set in .env, or by `wiki-hostname <domain>`. Left empty, compose passes `:80`,
+# which serves the wiki over plain HTTP on any address. With a domain name Caddy obtains a certificate
+# for it, serves HTTPS and redirects HTTP to HTTPS.
+{$WIKI_HOSTNAME} {
+	encode zstd gzip
+	reverse_proxy wiki:3000
+}

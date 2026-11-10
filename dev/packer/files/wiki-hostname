@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Sets the domain name the wiki is served on, switching it to HTTPS.
+#
+#   wiki-hostname wiki.example.com   serve https://wiki.example.com (certificate from Let's Encrypt)
+#   wiki-hostname --clear            go back to plain HTTP on the droplet's IP address
+
+set -euo pipefail
+
+WIKI_DIR=/root/wiki
+ENV_FILE="$WIKI_DIR/.env"
+
+usage() {
+  echo "Usage: wiki-hostname <domain> | --clear" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+
+public_ip=$(curl -fsS --max-time 2 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || true)
+
+if [[ $1 == "--clear" ]]; then
+  host=""
+else
+  host="${1,,}"
+  host="${host#http://}"
+  host="${host#https://}"
+  host="${host%/}"
+  if [[ ! $host =~ ^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$ ]]; then
+    echo "\"$1\" is not a domain name." >&2
+    usage
+  fi
+
+  # Let's Encrypt can only issue a certificate once the domain points at this droplet
+  resolved=$(getent ahostsv4 "$host" | awk '{ print $1; exit }' || true)
+  if [[ -z $resolved ]]; then
+    echo "Warning: $host does not resolve yet. Create an A record pointing it to ${public_ip:-this droplet}." >&2
+    echo "Caddy will keep retrying, and HTTPS starts working once DNS has propagated." >&2
+  elif [[ -n $public_ip && $resolved != "$public_ip" ]]; then
+    echo "Warning: $host resolves to $resolved, not to this droplet ($public_ip)." >&2
+    echo "Caddy will keep retrying, and HTTPS starts working once DNS points here." >&2
+  fi
+fi
+
+touch "$ENV_FILE"
+if grep -q '^WIKI_HOSTNAME=' "$ENV_FILE"; then
+  sed -i "s|^WIKI_HOSTNAME=.*|WIKI_HOSTNAME=$host|" "$ENV_FILE"
+else
+  echo "WIKI_HOSTNAME=$host" >> "$ENV_FILE"
+fi
+
+cd "$WIKI_DIR"
+docker compose up -d caddy
+
+if [[ -n $host ]]; then
+  echo "The wiki is now served at https://$host (it is no longer reachable by IP address)."
+else
+  echo "The wiki is now served over plain HTTP at http://${public_ip:-<droplet IP>}/."
+fi

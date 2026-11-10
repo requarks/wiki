@@ -6,15 +6,18 @@ myip=$(hostname -I | awk '{print$1}')
 cat <<EOF
 ********************************************************************************
 Welcome to Wiki.js's 1-Click DigitalOcean Droplet.
-To keep this Droplet secure, the UFW firewall is enabled.
-All ports are BLOCKED except 22 (SSH), 80 (Docker) and 443 (Docker).
-* The Wiki.js 1-Click DigitalOcean Quickstart guide is available at:
-  https://docs.requarks.io/install/digitalocean
+
+* Your administrator login is in /root/wiki-admin.txt
+  (delete that file once you have changed the password).
+* Wiki.js runs with Docker Compose from /root/wiki
+  (PostgreSQL 18, Wiki.js 3 and the Caddy web server).
+* To serve the wiki over HTTPS on your own domain, point its DNS A record
+  to this droplet, then run:  wiki-hostname wiki.example.com
+* To update Wiki.js:  cd /root/wiki && docker compose pull && docker compose up -d
+* The UFW firewall is enabled. All ports are BLOCKED except
+  22 (SSH), 80 (HTTP) and 443 (HTTPS).
 * You can SSH to this Droplet in a terminal as root: ssh root@$myip
-* Docker is installed and configured per Docker's recommendations:
-  https://docs.docker.com/install/linux/docker-ce/ubuntu/
-* Docker Compose is installed and configured per Docker's recommendations:
-  https://docs.docker.com/compose/install/#install-compose
+
 For more information, visit https://docs.requarks.io/install/digitalocean
 ********************************************************************************
 To delete this message of the day: rm -rf $(readlink -f ${0})
