@@ -17,8 +17,12 @@ const GROUPS_SCOPE = 'https://www.googleapis.com/auth/cloud-identity.groups.read
 
 /**
  * The label that distinguishes a Google Group from the other things Cloud Identity calls a group —
- * security groups, dynamic groups, the identity-mapped groups other providers put there. The query
- * language requires a label, so this is not a filter that could be left off.
+ * dynamic groups, the identity-mapped groups other providers put there.
+ *
+ * Matched against each membership's `labels` here rather than put in the query. Google's reference
+ * says the `searchDirectGroups` query MUST name a label, but Workspaces exist that answer such a
+ * query with 400 INVALID_ARGUMENT and the member-only one with the full list (requarks/wiki#8230),
+ * while every answer carries each group's labels — so filtering the answer works for both.
  */
 const DISCUSSION_FORUM_LABEL = 'cloudidentity.googleapis.com/groups.discussion_forum'
 
@@ -136,6 +140,9 @@ export default class GoogleAuthentication {
    * **Direct memberships only.** `searchDirectGroups` is what a member may run about themselves;
    * `searchTransitiveGroups` would follow nesting but is limited to the Enterprise and Cloud Identity
    * Premium tiers, so a group that contains another group has to be named here in its own right.
+   *
+   * **Google Groups only**, told apart by `DISCUSSION_FORUM_LABEL` on each answered membership. A
+   * membership answered without its labels raises rather than being dropped — see the loop.
    */
   private async groupsFor(
     email: string,
@@ -155,13 +162,34 @@ export default class GoogleAuthentication {
       is here so that stays a fact about Google rather than an assumption this code rests on.
     */
     const member = email.replaceAll('\\', '\\\\').replaceAll("'", "\\'")
-    const query = `member_key_id == '${member}' && '${DISCUSSION_FORUM_LABEL}' in labels`
+    const query = `member_key_id == '${member}'`
     const byName = this.conf.groupIdentifier === 'name'
     const names: string[] = []
+    const skipped: string[] = []
     let pageToken: string | undefined
     for (let page = 1; page <= MAX_GROUP_PAGES; page++) {
       const body = await this.groupPage(query, accessToken, pageToken)
       for (const membership of body?.memberships ?? []) {
+        /*
+          Every group has at least one label, so a membership answered without the map is one this
+          code cannot classify — not one that is "not a Google Group". Skipping it would read as the
+          person belonging to nothing, which under `unassignMissingGroups` takes memberships away
+          on a login that otherwise succeeds; refusing the login says something is wrong instead.
+        */
+        if (typeof membership?.labels !== 'object' || membership.labels === null) {
+          WIKI.logger.warn(
+            `Google strategy ${this.strategyId} got a group membership from the Cloud Identity API without its labels, so it cannot tell which groups are Google Groups.`
+          )
+          strategyDebug(
+            this,
+            `the Cloud Identity API answered a membership with no \`labels\`: ${JSON.stringify(membership)}`
+          )
+          throw new Error('ERR_PROVIDER_REQUEST_FAILED')
+        }
+        if (!Object.hasOwn(membership.labels, DISCUSSION_FORUM_LABEL)) {
+          skipped.push(membership?.groupKey?.id ?? membership?.group ?? '(unnamed)')
+          continue
+        }
         const value = byName ? membership?.displayName : membership?.groupKey?.id
         if (typeof value === 'string' && value.trim().length > 0) {
           names.push(value.trim())
@@ -169,6 +197,12 @@ export default class GoogleAuthentication {
       }
       pageToken = body?.nextPageToken
       if (!pageToken) {
+        if (skipped.length > 0) {
+          strategyDebug(
+            this,
+            `skipping ${skipped.length} membership(s) of <${email}> that are not Google Groups (no \`${DISCUSSION_FORUM_LABEL}\` label): ${skipped.join(', ')}`
+          )
+        }
         strategyDebug(
           this,
           `the Cloud Identity API names ${names.length} group(s) for <${email}>, read by ${byName ? 'display name' : 'group key'}: ${names.join(', ') || 'none'}`
