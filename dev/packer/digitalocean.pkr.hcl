@@ -27,6 +27,8 @@ locals {
   timestamp  = regex_replace(timestamp(), "[- TZ:]", "")
   image_name = "wikijs-snapshot-${local.timestamp}"
 
+  apt_build_conf = "/etc/apt/apt.conf.d/99-packer-build"
+
   apt_env = [
     "DEBIAN_FRONTEND=noninteractive",
     "LC_ALL=C",
@@ -52,9 +54,17 @@ build {
   }
 
   # Latest OS updates
+  #
+  # The Ubuntu archives, security.ubuntu.com especially, drop connections from time to time, and one
+  # failed download fails the whole build. Every apt call in it, the vendored 900-cleanup.sh and
+  # 999-img-check.sh included, therefore retries more patiently than apt's default 3 attempts, with
+  # apt's own exponential backoff between them. Removed again at the end, so the image ships stock.
   provisioner "shell" {
     environment_vars = local.apt_env
     inline = [
+      "echo 'Acquire::Retries \"10\";' > ${local.apt_build_conf}",
+      "echo 'Acquire::http::Timeout \"30\";' >> ${local.apt_build_conf}",
+      "echo 'Acquire::https::Timeout \"30\";' >> ${local.apt_build_conf}",
       "apt-get -qqy update",
       "apt-get -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' full-upgrade",
       "apt-get -qqy -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install ca-certificates curl openssl",
@@ -109,5 +119,9 @@ build {
       "${path.root}/scripts/900-cleanup.sh",
       "${path.root}/scripts/999-img-check.sh"
     ]
+  }
+
+  provisioner "shell" {
+    inline = ["rm -f ${local.apt_build_conf}"]
   }
 }
