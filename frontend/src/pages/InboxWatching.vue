@@ -30,7 +30,7 @@
             <w-item-label>
               <strong>{{ page.title }}</strong>
             </w-item-label>
-            <w-item-label caption>/{{ page.path }}</w-item-label>
+            <w-item-label caption class="wrap-anywhere">/{{ page.path }}</w-item-label>
             <w-item-label caption>
               {{ t('inbox.watchingUpdated', { date: humanizeDate(page.updatedAt) }) }}
               &middot;

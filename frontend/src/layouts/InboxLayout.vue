@@ -5,7 +5,35 @@
     </w-header>
     <w-page-container class="layout-inbox">
       <div class="layout-inbox-card">
-        <div class="layout-inbox-sd">
+        <!--
+          Below 900px the section list is a disclosure above the content rather than a column beside it,
+          as in the profile layout: a 300px rail left a phone nothing for the lists. The bar names the
+          section being read, and carries the unread count so it is not hidden behind a closed list.
+        -->
+        <w-btn
+          v-if="isNavCollapsed"
+          class="layout-inbox-navbtn"
+          flat
+          no-caps
+          :icon="currentSection.icon"
+          :label="currentSection.label"
+          :aria-expanded="state.navOpen"
+          @click="toggleNav">
+          <template #append>
+            <span class="inline-flex items-center gap-2">
+              <w-badge
+                v-if="notificationsStore.badge"
+                color="negative"
+                rounded
+                :label="notificationsStore.badge" />
+              <w-icon
+                class="layout-inbox-navchevron"
+                :class="{ 'is-open': state.navOpen }"
+                name="mdi:chevron-down" />
+            </span>
+          </template>
+        </w-btn>
+        <div class="layout-inbox-sd" v-show="!isNavCollapsed || state.navOpen">
           <w-list>
             <w-item
               v-for="navItem of sidenav"
@@ -34,10 +62,11 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { computed, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
 import { useMeta } from '@/composables/meta'
+import { useMinWidth } from '@/composables/screen'
 import { loginLocation } from '@/helpers/loginRedirect'
 
 import { useNotificationsStore } from '@/stores/notifications'
@@ -109,18 +138,45 @@ const sidenav = computed(() => [
   }
 ])
 
+const state = reactive({
+  /** Whether the section list is open. Only consulted below 900px, where it is a disclosure. */
+  navOpen: false
+})
+
+// COMPUTED
+
+/**
+ * Below 900px, where the rail becomes a disclosure above the content. The same boundary as the profile
+ * layout's, for the same reason; `$nav-collapse-max` in the stylesheet is this from the other side.
+ */
+const isAtLeast900 = useMinWidth(900)
+const isNavCollapsed = computed(() => !isAtLeast900.value)
+
+/** The section being read, which the collapsed bar is labelled with. The inbox for anything else. */
+const currentSection = computed(
+  () => sidenav.value.find((item) => route.path === `/_inbox/${item.key}`) ?? sidenav.value[0]
+)
+
 // WATCHERS
 
 // -> There is nothing in here for somebody with no account, and every section is about them
 watch(
   () => route.path,
   (newValue) => {
+    // -> Picking a section is what the open list is for, so arriving at one puts it away again
+    state.navOpen = false
     if (newValue.startsWith('/_inbox') && !userStore.authenticated) {
       router.replace(loginLocation(route.fullPath))
     }
   },
   { immediate: true }
 )
+
+// METHODS
+
+function toggleNav() {
+  state.navOpen = !state.navOpen
+}
 </script>
 
 <style lang="scss">
@@ -130,7 +186,13 @@ watch(
 
   What differs is the card. The profile card is a centred column of forms; this one is a workspace of
   lists, so it takes the whole viewport less a margin.
+
+  `$nav-collapse-max` has to agree with the 900px `useMinWidth` above, which decides whether the
+  disclosure button is rendered at all.
 */
+$nav-collapse-max: 899.98px;
+$nav-shrink-max: 1199.98px;
+
 .layout-inbox {
   // -> Dark in both themes, unlike the profile layout: there is no light half here for a light theme
   //    to own, so the surface is the same either way
@@ -236,6 +298,94 @@ watch(
     }
     @at-root .body--dark & {
       border-left: 1px solid rgba($dark-6, 0.75);
+    }
+  }
+
+  /*
+    NARROWER LAYOUTS
+    ================
+
+    The profile layout's three steps, less the gutters: this card already sits 16px from the edges.
+
+      below 1200px   the rail shrinks from 300px to the width of its own labels
+      below 900px    the rail becomes a disclosure above the content
+      below 600px    the card stops being a sheet and becomes the screen
+
+    Narrowest last, so each block overrides the one above it.
+  */
+
+  @media (max-width: $nav-shrink-max) {
+    &-sd {
+      flex: 0 0 auto;
+    }
+  }
+
+  @media (max-width: $nav-collapse-max) {
+    &-card {
+      flex-direction: column;
+    }
+
+    // -> The top of the card now, so it takes the card's top corners; the count and chevron sit at the
+    //    far end from the label
+    &-navbtn {
+      justify-content: space-between;
+      border-radius: 7px 7px 0 0;
+
+      @at-root .body--light & {
+        background-color: $grey-1;
+        border-bottom: 1px solid $grey-3;
+      }
+      @at-root .body--dark & {
+        background-color: $dark-4;
+        border-bottom: 1px solid $dark-2;
+      }
+    }
+
+    &-navchevron {
+      transition: transform 0.2s var(--ease-standard);
+
+      &.is-open {
+        transform: rotate(180deg);
+      }
+    }
+
+    // -> Per theme, because that is where the rules being replaced are declared
+    &-sd {
+      flex: none;
+      width: 100%;
+      border-radius: 0;
+
+      @at-root .body--light & {
+        border-right: 0;
+        border-bottom: 1px solid $grey-3;
+        box-shadow: none;
+      }
+      @at-root .body--dark & {
+        border-right: 0;
+        border-bottom: 1px solid rgba(#fff, 0.12);
+        box-shadow: none;
+      }
+    }
+
+    .w-page {
+      @at-root .body--light & {
+        border-left: 0;
+      }
+      @at-root .body--dark & {
+        border-left: 0;
+      }
+    }
+  }
+
+  @media (max-width: $breakpoint-xs-max) {
+    &-card {
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    &-navbtn {
+      border-radius: 0;
     }
   }
 }

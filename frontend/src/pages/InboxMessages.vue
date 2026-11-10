@@ -103,7 +103,8 @@
                   <w-icon name="la:lock" size="1.1em" />
                   {{ t('notifications.excerptWithheld') }}
                 </w-item-label>
-                <w-item-label caption>
+                <!-- -> `wrap-anywhere`: a page path has no spaces to break at on a phone -->
+                <w-item-label caption class="wrap-anywhere">
                   <!-- -> Anchored on the date itself, or WTooltip climbs to the row's `.w-item` -->
                   <span data-tooltip-anchor>
                     {{ relativeDate(entry.updatedAt) }}
@@ -419,6 +420,15 @@ onMounted(() => {
   // -> A shade up from the card in dark mode, where `dark-2` is barely apart from `dark-3`
   @at-root .body--dark & {
     --inbox-tab-bg: #{$dark-1};
+  }
+
+  /*
+    Below 900px the inbox layout puts its section bar above this page (`$nav-collapse-max` there), so
+    the corner the tab fills is no longer the card's rounded one, and the tab's own radius would leave
+    a notch against the bar.
+  */
+  @media (max-width: 899.98px) {
+    border-top-right-radius: 0;
   }
 }
 

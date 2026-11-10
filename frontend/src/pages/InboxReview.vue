@@ -34,7 +34,9 @@
               <w-item-label>
                 <strong>{{ submission.page.title }}</strong>
               </w-item-label>
-              <w-item-label caption>/{{ submission.page.path }}</w-item-label>
+              <w-item-label caption class="wrap-anywhere">
+                /{{ submission.page.path }}
+              </w-item-label>
               <w-item-label caption>
                 <i18n-t keypath="inbox.reviewSubmittedBy" scope="global">
                   <template #author>
@@ -77,11 +79,15 @@
           @click="closeSubmission">
           <w-tooltip>{{ t(`inbox.reviewBack`) }}</w-tooltip>
         </w-btn>
-        <div class="min-w-0 flex-1">
+        <!--
+          -> A 12rem basis rather than none, so the action buttons wrap onto a line of their own on a
+             narrow screen instead of squeezing the title to a sliver beside them
+        -->
+        <div class="min-w-0 flex-[1_1_12rem]">
           <div class="text-subtitle1">
             <strong>{{ state.selected.page.title }}</strong>
           </div>
-          <div class="text-caption text-grey">
+          <div class="text-caption text-grey wrap-anywhere">
             <i18n-t keypath="inbox.reviewSubmittedBy" scope="global">
               <template #author>
                 <strong>{{ state.selected.author.name || t('inbox.reviewUnknownAuthor') }}</strong>
@@ -341,7 +347,8 @@ function mountEditor() {
     automaticLayout: true,
     fontSize: 14,
     // -> Side by side: this screen exists to compare the two, and an inline diff of prose reads as a
-    //    jumble of half-lines
+    //    jumble of half-lines. Monaco still falls back to inline below 900px of editor width
+    //    (`useInlineViewWhenSpaceIsLimited`, on by default), which is what a phone gets
     renderSideBySide: true,
     originalEditable: false,
     readOnly: false,
