@@ -1,3 +1,4 @@
+import { isPlainObject } from 'es-toolkit/predicate'
 import * as client from 'openid-client'
 import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type {
@@ -67,10 +68,11 @@ export default class OidcAuthentication {
       )
       throw new Error('ERR_STRATEGY_MISCONFIGURED')
     }
+    let config: client.Configuration
     if (this.conf.useDiscovery !== false) {
       strategyDebug(this, `reading the provider's metadata from ${issuer}`)
       try {
-        this.config = await client.discovery(
+        config = await client.discovery(
           new URL(issuer),
           clientId,
           clientSecret,
@@ -90,7 +92,7 @@ export default class OidcAuthentication {
         )
         throw err
       }
-      const meta = this.config.serverMetadata()
+      const meta = config.serverMetadata()
       strategyDebug(
         this,
         `the provider is ${meta.issuer} — authorization at ${meta.authorization_endpoint}, token at ${meta.token_endpoint}, userinfo at ${meta.userinfo_endpoint ?? 'nowhere (it publishes none)'}`
@@ -103,7 +105,7 @@ export default class OidcAuthentication {
         )
         throw new Error('ERR_STRATEGY_MISCONFIGURED')
       }
-      this.config = new client.Configuration(
+      config = new client.Configuration(
         {
           issuer,
           authorization_endpoint: this.conf.authorizationURL,
@@ -117,7 +119,7 @@ export default class OidcAuthentication {
         clientSecret
       )
       if (this.conf.allowInsecureHttp === true) {
-        client.allowInsecureRequests(this.config)
+        client.allowInsecureRequests(config)
       }
     }
     if (this.conf.allowInsecureHttp === true) {
@@ -129,10 +131,13 @@ export default class OidcAuthentication {
     // -> After either branch: which endpoint the userinfo request goes to is what discovery answers,
     //    and how the token is presented to it is a separate question with the same answer either way
     if (this.conf.useQueryStringForAccessToken === true) {
-      this.accessTokenInQueryString(this.config)
+      this.accessTokenInQueryString(config)
     }
-    this.acceptScopeAsList(this.config)
-    return this.config
+    this.acceptScopeAsList(config)
+    // -> Kept only once it is complete: one cached halfway through building would skip whatever was
+    //    still to be applied to it, on every login from then on
+    this.config = config
+    return config
   }
 
   /**
@@ -160,22 +165,23 @@ export default class OidcAuthentication {
    * nobody checked may be about somebody else.
    */
   private accessTokenInQueryString(config: client.Configuration): void {
-    const endpoint = config.serverMetadata().userinfo_endpoint
-    // -> The library asks for the endpoint's `href`, so the configured string is normalized once here
-    //    rather than compared as it was typed
-    const userInfoHref = endpoint ? new URL(endpoint).href : null
+    const userInfoHref = OidcAuthentication.endpointHref(config.serverMetadata().userinfo_endpoint)
+    if (!userInfoHref) {
+      return
+    }
+    const inner = OidcAuthentication.currentFetch(config)
     config[client.customFetch] = (url, options) => {
       // -> Only a Bearer presentation is moved: a DPoP-bound token is not a credential the query
       //    string can carry, and every other request the library makes is somebody else's business
       const bearer = /^Bearer (.+)$/.exec(options.headers.authorization ?? '')?.[1]
-      if (!userInfoHref || !bearer || new URL(url).href !== userInfoHref) {
-        return fetch(url, options)
+      if (!bearer || new URL(url).href !== userInfoHref) {
+        return inner(url, options)
       }
       const target = new URL(url)
       target.searchParams.set('access_token', bearer)
       const headers = { ...options.headers }
       delete headers.authorization
-      return fetch(target, { ...options, headers })
+      return inner(target.href, { ...options, headers })
     }
   }
 
@@ -184,34 +190,36 @@ export default class OidcAuthentication {
    * RFC 6749 section 5.1 defines.
    *
    * Twitch answers with `"scope": ["openid", "user:read:email"]`, and `openid-client` refuses any
-   * `scope` that is not a string, before the ID token is even looked at. A provider that is otherwise
-   * a working OpenID Connect issuer then cannot sign anybody in, and nothing in the settings can help.
-   * Joining the list says exactly what the provider meant, and nothing here reads the granted scope.
+   * `scope` that is not a string, before the ID token is even looked at — so a provider that is
+   * otherwise a working OpenID Connect issuer cannot sign anybody in, and no setting can help. Joining
+   * the list says exactly what the provider meant, and nothing here reads the granted scope.
    *
-   * Only a successful answer from the token endpoint is touched, and only when every entry is a
-   * string: anything else reaches the library as the provider sent it, to be judged there. The
-   * `fetch` already in place, such as `accessTokenInQueryString`'s, still makes the request.
+   * Only a 200 from the token endpoint is touched, and only when every entry is a string: anything
+   * else reaches the library as the provider sent it, to be judged there. The ID token is never
+   * touched, and is verified exactly as before.
    */
   private acceptScopeAsList(config: client.Configuration): void {
-    const endpoint = config.serverMetadata().token_endpoint
-    if (!endpoint) {
+    const tokenHref = OidcAuthentication.endpointHref(config.serverMetadata().token_endpoint)
+    if (!tokenHref) {
       return
     }
-    const tokenHref = new URL(endpoint).href
-    const inner: client.CustomFetch =
-      config[client.customFetch] ?? ((url, options) => fetch(url, options))
+    const inner = OidcAuthentication.currentFetch(config)
     config[client.customFetch] = async (url, options) => {
       const response = await inner(url, options)
-      if (!response.ok || new URL(url).href !== tokenHref) {
+      if (response.status !== 200 || new URL(url).href !== tokenHref) {
         return response
       }
-      let body: any
+      let body: unknown
       try {
         body = await response.clone().json()
       } catch {
         return response
       }
-      if (!Array.isArray(body?.scope) || !body.scope.every((s: unknown) => typeof s === 'string')) {
+      if (
+        !isPlainObject(body) ||
+        !Array.isArray(body.scope) ||
+        !body.scope.every((one: unknown) => typeof one === 'string')
+      ) {
         return response
       }
       strategyDebug(
@@ -228,6 +236,25 @@ export default class OidcAuthentication {
         headers
       })
     }
+  }
+
+  /**
+   * The endpoint's `href`, which is what the library asks for, so a configured string is compared
+   * normalized rather than as it was typed.
+   *
+   * Null for one that is not a URL at all, rather than an error here: the library then reports it
+   * when it is used, where the login's own debug line says which request failed.
+   */
+  private static endpointHref(endpoint: string | undefined): string | null {
+    return endpoint && URL.canParse(endpoint) ? new URL(endpoint).href : null
+  }
+
+  /**
+   * The `fetch` the library would make its requests with now, for a rewrite to wrap rather than
+   * replace — so the rewrites compose regardless of what order they are applied in.
+   */
+  private static currentFetch(config: client.Configuration): client.CustomFetch {
+    return config[client.customFetch] ?? ((url, options) => fetch(url, options))
   }
 
   /**
