@@ -118,6 +118,7 @@ build {
       "${path.root}/scripts/020-application-tag.sh",
       "${path.root}/scripts/890-force-ssh-logout.sh",
       "${path.root}/scripts/900-cleanup.sh",
+      "${path.root}/scripts/950-stop-syslog.sh",
       "${path.root}/scripts/999-img-check.sh"
     ]
   }
