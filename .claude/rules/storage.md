@@ -282,6 +282,11 @@ misconfigured one reads healthy until something is actually asked of it.
 - **An empty commit is never made.** Most page saves do not change the stored form of the page (a
   re-publish, a tag reordered into the same order), and `commitPaths` checks `diff --cached` before
   committing so the history says what actually changed.
+- **A symlink in the remote is never a link here.** `prepareRepo` sets `core.symlinks=false`, so one
+  is checked out as a plain file holding its target, and drops the index so a link an older working
+  copy already has is rewritten by the next `checkoutAt`. `absPathIn` is lexical only, and a link
+  such as `en/evil -> ../.git` would otherwise carry an upload into `.git/config` — a
+  `core.fsmonitor` there is code execution on the next `git add`. Don't remove it.
 - Operator git config is inherited on purpose — including `commit.gpgsign`, which will fail every
   commit if it is on without a usable key. The failure surfaces as the target's recorded `error`, and
   the queue is kept for the sync after it. simple-git strips every ambient `GIT_*` variable before

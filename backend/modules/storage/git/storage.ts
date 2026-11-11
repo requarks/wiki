@@ -197,6 +197,20 @@ async function prepareRepo(target: StorageTarget): Promise<Repo> {
   await git.addConfig('user.name', target.config.defaultName || FALLBACK_AUTHOR.name)
   await git.addConfig('user.email', target.config.defaultEmail || FALLBACK_AUTHOR.email)
   await git.addConfig('http.sslVerify', target.config.verifySSL === false ? 'false' : 'true')
+  /*
+    A symlink in the remote is checked out as a plain file holding its target, never as a link. The
+    remote is written to by people who are not administrators of this machine, and a link checked out
+    here would be followed by every write and read the sync makes through the working tree: an
+    `en/evil -> ../.git` link lets an upload land in `.git/config`, and a `core.fsmonitor` there is a
+    command git runs on the next `git add`. `absPathIn` is a lexical check and cannot see a link.
+
+    The index goes too, for a working copy that already has a link checked out: git leaves a link it
+    has on disk alone when the setting changes, and only rewrites it once the index no longer vouches
+    for it. Every operation that touches the tree starts from `checkoutAt`, which rebuilds the index
+    and puts every file back as a file.
+  */
+  await git.addConfig('core.symlinks', 'false')
+  await fs.rm(path.join(root, '.git', 'index'), { force: true })
 
   if (target.config.authType === 'ssh') {
     let keyPath = target.config.sshPrivateKeyPath
