@@ -1521,14 +1521,31 @@ function removeNode(pos) {
   view.focus()
 }
 
-/** Unwrap a container block, keeping what it held. */
+/**
+ * Unwrap a container block, keeping what it held.
+ *
+ * A tabset is unwrapped two levels deep: what it holds is its tabs, and a tab is nothing outside a
+ * tabset. Lifting only the set left each tab standing loose in the page, drawn as a panel no tabset
+ * would ever show -- invisible here, while its content still saved as a `::block-tab`.
+ */
 function liftNode(pos) {
   const view = editor.view
   const node = view.state.doc.nodeAt(pos)
   if (!node) {
     return
   }
-  view.dispatch(view.state.tr.replaceWith(pos, pos + node.nodeSize, node.content))
+  let content = node.content
+  if (node.attrs.name === 'tabs') {
+    content = []
+    node.forEach((child) => {
+      if (child.type === node.type && child.attrs.name === 'tab') {
+        child.forEach((inner) => content.push(inner))
+      } else {
+        content.push(child)
+      }
+    })
+  }
+  view.dispatch(view.state.tr.replaceWith(pos, pos + node.nodeSize, content))
   view.focus()
 }
 

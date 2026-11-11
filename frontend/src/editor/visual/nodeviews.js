@@ -1254,6 +1254,12 @@ class InlineBlockView {
   }
 }
 
+/** The node a node view is being made for sits in. */
+function parentOf(view, getPos) {
+  const pos = getPos()
+  return pos === undefined ? null : view.state.doc.resolve(pos).parent
+}
+
 /**
  * @param {object} context Everything the views need from the editor around them — see
  *        `EditorVisual.vue`, which is the only thing that builds one.
@@ -1269,7 +1275,11 @@ export function createNodeViews(context) {
       if (node.attrs.name === 'tabs') {
         return new TabsetView(node, view, getPos, context)
       }
-      if (node.attrs.name === 'tab') {
+      /*
+        Only inside a tabset. A `::block-tab` the markdown has standing on its own would otherwise be
+        a panel nothing ever shows -- so it gets the labelled frame, where it can be seen and removed.
+      */
+      if (node.attrs.name === 'tab' && parentOf(view, getPos)?.attrs.name === 'tabs') {
         return new TabPanelView(node)
       }
       return new BlockContainerView(node, view, getPos, context)
