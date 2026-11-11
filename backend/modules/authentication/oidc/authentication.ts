@@ -131,6 +131,7 @@ export default class OidcAuthentication {
     if (this.conf.useQueryStringForAccessToken === true) {
       this.accessTokenInQueryString(this.config)
     }
+    this.acceptScopeAsList(this.config)
     return this.config
   }
 
@@ -175,6 +176,57 @@ export default class OidcAuthentication {
       const headers = { ...options.headers }
       delete headers.authorization
       return fetch(target, { ...options, headers })
+    }
+  }
+
+  /**
+   * Accept a token response whose `scope` is a list, by joining it into the space-separated string
+   * RFC 6749 section 5.1 defines.
+   *
+   * Twitch answers with `"scope": ["openid", "user:read:email"]`, and `openid-client` refuses any
+   * `scope` that is not a string, before the ID token is even looked at. A provider that is otherwise
+   * a working OpenID Connect issuer then cannot sign anybody in, and nothing in the settings can help.
+   * Joining the list says exactly what the provider meant, and nothing here reads the granted scope.
+   *
+   * Only a successful answer from the token endpoint is touched, and only when every entry is a
+   * string: anything else reaches the library as the provider sent it, to be judged there. The
+   * `fetch` already in place, such as `accessTokenInQueryString`'s, still makes the request.
+   */
+  private acceptScopeAsList(config: client.Configuration): void {
+    const endpoint = config.serverMetadata().token_endpoint
+    if (!endpoint) {
+      return
+    }
+    const tokenHref = new URL(endpoint).href
+    const inner: client.CustomFetch =
+      config[client.customFetch] ?? ((url, options) => fetch(url, options))
+    config[client.customFetch] = async (url, options) => {
+      const response = await inner(url, options)
+      if (!response.ok || new URL(url).href !== tokenHref) {
+        return response
+      }
+      let body: any
+      try {
+        body = await response.clone().json()
+      } catch {
+        return response
+      }
+      if (!Array.isArray(body?.scope) || !body.scope.every((s: unknown) => typeof s === 'string')) {
+        return response
+      }
+      strategyDebug(
+        this,
+        'the token endpoint gave `scope` as a list rather than a string; joined it'
+      )
+      // -> The body is encoded again, so the length and encoding the provider sent no longer apply
+      const headers = new Headers(response.headers)
+      headers.delete('content-length')
+      headers.delete('content-encoding')
+      return new Response(JSON.stringify({ ...body, scope: body.scope.join(' ') }), {
+        status: response.status,
+        statusText: response.statusText,
+        headers
+      })
     }
   }
 
