@@ -40,7 +40,7 @@ locals {
 source "digitalocean" "wikijs" {
   api_token     = var.do_api_token
   image         = "ubuntu-26-04-x64"
-  region        = "tor1"
+  region        = "nyc1"
   size          = "s-1vcpu-1gb"
   ssh_username  = "root"
   snapshot_name = local.image_name
