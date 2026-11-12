@@ -190,8 +190,8 @@ class Jobs {
    *
    * Exactly one instance holds the `cron` lock at a time and refreshes it as it queues the next
    * batch of scheduled jobs, so a stale timestamp means no instance is running that check any more.
-   * The lock is only re-acquired once it is 5 minutes old, and the check itself runs on an interval,
-   * so the threshold has to be a comfortable multiple of that to avoid crying wolf.
+   * The lock becomes eligible slightly before the configured check interval elapses. The
+   * 15-minute health threshold spans three check intervals at the default of five minutes.
    */
   async isHealthy(): Promise<boolean> {
     const results = await WIKI.db

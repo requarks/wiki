@@ -134,7 +134,9 @@ export default {
     this.tasks = {}
     for (const f of await fs.readdir(path.join(WIKI.SERVERPATH, 'tasks/simple'))) {
       const taskName = camelCase(f.replace(/\.[jt]s$/, ''))
-      this.tasks[taskName] = (await import(pathToFileURL(path.join(WIKI.SERVERPATH, 'tasks/simple', f)).href)).task
+      this.tasks[taskName] = (
+        await import(pathToFileURL(path.join(WIKI.SERVERPATH, 'tasks/simple', f)).href)
+      ).task
     }
     return this
   },
@@ -580,17 +582,26 @@ export default {
   async addScheduled(): Promise<void> {
     try {
       await WIKI.db.transaction(async (trx: any) => {
+        const scheduledCheckMs = WIKI.config.scheduler.scheduledCheck * 1000
+        // Leave room for timer jitter and differences in how long it takes to start the transaction.
+        // A check that narrowly misses the cutoff otherwise waits a full interval to try again.
+        const relockAfterMs = Math.floor(scheduledCheckMs - Math.min(scheduledCheckMs / 10, 30_000))
+        const now = Temporal.Now.instant()
+        const relockBefore = now
+          .subtract({ milliseconds: relockAfterMs })
+          .toString({ smallestUnit: 'millisecond' })
+
         // -> Acquire lock
         const jobLock = await trx
           .update(jobLockTable)
           .set({
             lastCheckedBy: WIKI.INSTANCE_ID,
-            lastCheckedAt: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' })
+            lastCheckedAt: now.toString({ smallestUnit: 'millisecond' })
           })
           .where(
             eq(
               jobLockTable.key,
-              sql`(SELECT "jobLock"."key" FROM "jobLock" WHERE "jobLock"."key" = 'cron' AND "jobLock"."lastCheckedAt" <= ${Temporal.Now.instant().subtract({ minutes: 5 }).toString({ smallestUnit: 'millisecond' })} FOR UPDATE SKIP LOCKED LIMIT 1)`
+              sql`(SELECT "jobLock"."key" FROM "jobLock" WHERE "jobLock"."key" = 'cron' AND "jobLock"."lastCheckedAt" <= ${relockBefore} FOR UPDATE SKIP LOCKED LIMIT 1)`
             )
           )
 
