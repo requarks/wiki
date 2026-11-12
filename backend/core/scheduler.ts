@@ -18,6 +18,9 @@ import {
 import { and, eq, lt, sql } from 'drizzle-orm'
 import type { PoolClient } from 'pg'
 
+/** How many runs of each scheduled task are queued ahead, at minimum. See `addScheduled`. */
+const MIN_QUEUED_RUNS = 6
+
 /** What the scheduler hands an in-process task besides its payload. */
 export interface TaskContext {
   /**
@@ -107,6 +110,20 @@ export default {
   scheduledRef: null as NodeJS.Timeout | null,
   tasks: null as Record<string, SimpleTask> | null,
   completionPromises: [] as CompletionPromise[],
+  /**
+   * How far ahead the cron planner queues scheduled jobs, and also how long the `cron` lock may go
+   * unrefreshed before `jobs.isHealthy()` reports the scheduler as down. The two are the same span on
+   * purpose: as long as some instance plans within it, every run is already queued, so a run is
+   * dropped only once the scheduler is reported unhealthy.
+   *
+   * Three check intervals, so two checks in a row can be missed (a restart, a slow transaction)
+   * without losing a run.
+   */
+  cronHorizon(): Temporal.Duration {
+    return Temporal.Duration.from({
+      milliseconds: Math.round(WIKI.config.scheduler.scheduledCheck * 3000)
+    })
+  },
   async init() {
     // -> `availableParallelism` rather than `cpus().length`, which counts every core of the host: in a
     //    container that is the whole node, while this is capped by the cgroup CPU quota (a pod's
@@ -582,11 +599,13 @@ export default {
   async addScheduled(): Promise<void> {
     try {
       await WIKI.db.transaction(async (trx: any) => {
-        const scheduledCheckMs = WIKI.config.scheduler.scheduledCheck * 1000
-        // Leave room for timer jitter and differences in how long it takes to start the transaction.
-        // A check that narrowly misses the cutoff otherwise waits a full interval to try again.
-        const relockAfterMs = Math.floor(scheduledCheckMs - Math.min(scheduledCheckMs / 10, 30_000))
         const now = Temporal.Now.instant()
+
+        // -> The lock may be taken again slightly before a full interval has passed. Timers fire with
+        //    some jitter, and starting the transaction takes longer on some checks than on others, so
+        //    a check that narrowly misses the cutoff would otherwise wait a full interval.
+        const scheduledCheckMs = Math.round(WIKI.config.scheduler.scheduledCheck * 1000)
+        const relockAfterMs = scheduledCheckMs - Math.min(Math.round(scheduledCheckMs / 10), 30_000)
         const relockBefore = now
           .subtract({ milliseconds: relockAfterMs })
           .toString({ smallestUnit: 'millisecond' })
@@ -614,30 +633,39 @@ export default {
               .select()
               .from(jobsTable)
               .where(eq(jobsTable.isScheduled, true))
+            const horizonEnd = now.add(this.cronHorizon())
             let totalAdded = 0
             for (const job of scheduledJobs) {
               // -> Get next planned iterations
               const plannedIterations = CronExpressionParser.parse(job.cron, {
-                startDate: Temporal.Now.instant().toString({ smallestUnit: 'millisecond' }),
-                // -> 24 hours rather than `{ days: 1 }`: Temporal.Instant only accepts exact time
-                //    units, and in UTC a calendar day is exactly 24 hours anyway.
-                endDate: Temporal.Now.instant()
-                  .add({ hours: 24, minutes: 5 })
-                  .toString({ smallestUnit: 'millisecond' }),
+                startDate: now.toString({ smallestUnit: 'millisecond' }),
+                // -> A day past the horizon, so a task that runs less often than the horizon still
+                //    has its next run queued. 24 hours rather than `{ days: 1 }`: Temporal.Instant
+                //    only accepts exact time units, and in UTC a calendar day is exactly 24 hours.
+                endDate: horizonEnd.add({ hours: 24 }).toString({ smallestUnit: 'millisecond' }),
                 tz: 'UTC'
               })
               /*
-                At most 6 iterations of a task are queued ahead, and `take` is what stops there --
-                and stops early where the window above holds fewer, since it gives back what it
-                reached rather than throwing at the end of it.
+                Every run up to the horizon is queued, so that a frequent task keeps running through
+                missed checks for as long as the scheduler counts as healthy. Every task also gets
+                at least its next MIN_QUEUED_RUNS runs, so an hourly or daily one is queued well
+                ahead of time. The iterator ends quietly at `endDate`, so a task with fewer runs in
+                the window gets only those.
 
-                The cap is a horizon rather than a quota: an iteration already queued still spends
-                one of the six, so what is pending for a task never runs further ahead than its next
-                six runs however often this runs. Counting only the ones added would push that
-                horizon out on every pass, until a minute-by-minute task had the whole window queued.
+                Both limits are measured from now, not counted in new jobs: a run already queued
+                still counts toward them. Counting only the ones added would push the queue further
+                out on every pass, until a minute-by-minute task had the whole window queued.
               */
-              for (const iteration of plannedIterations.take(6)) {
+              let planned = 0
+              for (const iteration of plannedIterations) {
                 const waitUntil = iteration.toDate()
+                if (
+                  planned >= MIN_QUEUED_RUNS &&
+                  waitUntil.getTime() > horizonEnd.epochMilliseconds
+                ) {
+                  break
+                }
+                planned++
                 // -> Ensure this iteration isn't already scheduled
                 if (
                   existingJobs.some(

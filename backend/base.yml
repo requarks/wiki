@@ -39,6 +39,9 @@ defaults:
     scheduler:
       workers: 3
       pollingCheck: 5
+      # How often, in seconds, scheduled (cron) jobs are planned. Each pass queues every run due in
+      # the next three intervals, and the scheduler is reported unhealthy once no pass has run for
+      # that long.
       scheduledCheck: 300
       maxRetries: 2
       retryBackoff: 60
