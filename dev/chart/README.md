@@ -134,6 +134,27 @@ the container. It switches the wiki's shutdown to Kubernetes semantics: on SIGTE
 503 while in-flight and still-routed requests keep being served. The default `preStop` sleep gives
 load balancers five seconds to drop the pod first.
 
+## Maintenance from the command line
+
+The image carries a management CLI for recovery when the admin area is out of reach. It reads the
+same configuration and environment as the wiki, so run it inside a wiki pod:
+
+```sh
+kubectl exec -it deployment/wiki -- backend/cli.ts                     # list the commands
+kubectl exec -it deployment/wiki -- backend/cli.ts reset-password      # asks for the account
+kubectl exec -it deployment/wiki -- backend/cli.ts set-hostname
+kubectl exec -it deployment/wiki -- backend/cli.ts info
+```
+
+It covers resetting a password (removing 2FA and passkeys), changing a site's hostname, listing and
+restoring administrators, re-enabling an account, turning off a CSP that stops the interface
+loading, and flushing every replica's caches. Every change is recorded in the audit log under the
+pod it ran in. With no terminal attached, pass the values as options (`--help` on each command) and
+`--yes` to confirm.
+
+Run it interactively rather than as a Job: `reset-password` prints the new password, and a Job's
+output is kept in the pod logs.
+
 ## Upgrading
 
 Every build of the wiki publishes a chart of the same version, e.g. `3.0.1`, whose

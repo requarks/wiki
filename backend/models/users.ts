@@ -1274,6 +1274,69 @@ class Users {
   }
 
   /**
+   * Put an account back in the hands of whoever is given the new password, as the management CLI's
+   * `reset-password` does: the one way back in for an administrator who has lost every other.
+   *
+   * Everything that could stand between that password and a signed-in session is taken away in the
+   * same write, since a recovery that leaves any of it behind is not one:
+   *
+   * - the local password is replaced, and must be changed at the next login;
+   * - password login is turned back on (`restrictLogin`), or the password would be refused;
+   * - two-factor authentication is turned off under EVERY strategy, secret and all, since a lost
+   *   authenticator is the usual reason for being here. A group or strategy that requires 2FA makes
+   *   the user enrol again on the way in, which is the point;
+   * - every passkey is removed — a device that may be in somebody else's hands is a way in too.
+   *
+   * Then every session is ended. Not the user's personal access tokens, which are the caller's
+   * decision (`personalTokens.removeAllForUser`).
+   *
+   * Unlike `disableTfa`, nothing here asks whether 2FA is enforced: the caller has already decided,
+   * from outside the wiki's own permission model, that this account is to be let back in.
+   *
+   * @returns What was taken away, or null if the user does not exist
+   */
+  async recoverAccount({
+    id,
+    newPassword
+  }: {
+    id: string
+    newPassword: string
+  }): Promise<{ tfaDisabled: boolean; passkeysRemoved: number } | null> {
+    const user = await this.getById(id)
+    if (!user) {
+      return null
+    }
+
+    const localStrategyId = WIKI.data.systemIds.localAuthId
+    const auth = (user.auth ?? {}) as Record<string, any>
+    let tfaDisabled = false
+    for (const [strategyId, config] of Object.entries(auth)) {
+      if (config?.tfaIsActive || config?.tfaSecret) {
+        tfaDisabled = tfaDisabled || Boolean(config.tfaIsActive)
+        auth[strategyId] = { ...config, tfaIsActive: false, tfaSecret: '' }
+      }
+    }
+    auth[localStrategyId] = {
+      tfaRequired: false,
+      ...auth[localStrategyId],
+      password: await bcrypt.hash(newPassword, 12),
+      mustChangePwd: true,
+      restrictLogin: false,
+      tfaIsActive: false,
+      tfaSecret: ''
+    }
+    const passkeysRemoved = (((user.passkeys ?? {}) as Record<string, any>).authenticators ?? [])
+      .length
+
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, passkeys: { authenticators: [] }, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, id))
+    await WIKI.models.sessions.clearSessionsFromUser(id)
+    return { tfaDisabled, passkeysRemoved }
+  }
+
+  /**
    * The authentication providers linked to a user, as its own profile page shows them.
    *
    * Reshaped from the stored `auth` blob the same way `getUserDetail()` does it, but reporting only

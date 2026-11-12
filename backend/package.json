@@ -27,6 +27,7 @@
   "scripts": {
     "start": "cd .. && node --no-experimental-webstorage backend",
     "dev": "cd .. && nodemon --no-experimental-webstorage backend --watch backend --ext js,ts,json",
+    "cli": "node --no-experimental-webstorage cli.ts",
     "typecheck": "tsc",
     "typecheck:watch": "tsc --watch",
     "ncu": "ncu -i",

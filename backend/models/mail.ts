@@ -6,7 +6,8 @@ import type { Translator } from './locales.ts'
 /**
  * The templates this wiki sends, and what each one needs.
  *
- * Two of them belong to a flow — registration and a forgotten password; `test` is the admin area's
+ * Two of them belong to a flow — registration and a forgotten password; `adminPasswordReset` is the
+ * notice the management CLI sends when it resets one; `test` is the admin area's
  * button; `notification` and `notificationDigest` are what the notification system sends (see
  * `notifications/mailer.ts`). Held as literals rather than rows in a table because nothing sends a mail this wiki did
  * not ask it to — a template is part of the flow that uses it, and a flow that gained one would
@@ -37,6 +38,20 @@ export interface MailTemplateData {
     baseUrl: string
     /** Where to choose the new password. Stands for the request until it is used or expires. */
     resetUrl: string
+  }
+  /**
+   * Telling an account holder that their password was reset from the server's command line
+   * (`cli/resetPassword.ts`). Not a link to act on: the new password reaches them through whoever
+   * ran the command, and this is how they learn it happened if that was not them.
+   */
+  adminPasswordReset: {
+    name: string
+    /** Null on a wildcard site with no base URL, where the mail goes out without its link. */
+    baseUrl: string | null
+    /** Whether 2FA or passkeys were taken off the account along with the password. */
+    secondFactorsRemoved: boolean
+    /** Whether the account's personal access tokens were revoked. */
+    tokensRevoked: boolean
   }
   test: {
     /** Null on a wildcard site with no base URL, where the mail goes out without its link. */
@@ -579,6 +594,24 @@ class Mail {
           ],
           action: { label: t('mail.resetPwd.action'), url: d.resetUrl },
           footer: t('mail.resetPwd.footer', { siteName })
+        }
+      }
+      case 'adminPasswordReset': {
+        const d = data as MailTemplateData['adminPasswordReset']
+        return {
+          subject: t('mail.adminPasswordReset.subject', { siteName }),
+          title: t('mail.adminPasswordReset.title'),
+          body: [
+            t('mail.common.greeting', { name: d.name }),
+            t('mail.adminPasswordReset.body', { siteName }),
+            ...(d.secondFactorsRemoved ? [t('mail.adminPasswordReset.secondFactors')] : []),
+            ...(d.tokensRevoked ? [t('mail.adminPasswordReset.tokens')] : []),
+            t('mail.adminPasswordReset.unexpected', { siteName })
+          ],
+          action: d.baseUrl
+            ? { label: t('mail.adminPasswordReset.action'), url: `${d.baseUrl}/login` }
+            : undefined,
+          footer: t('mail.adminPasswordReset.footer', { siteName })
         }
       }
       case 'notification':

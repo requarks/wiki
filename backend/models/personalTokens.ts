@@ -253,6 +253,23 @@ class PersonalTokens {
   }
 
   /**
+   * Delete every token a user holds, those an OAuth client was issued on their behalf included. They
+   * stop working on the next request.
+   *
+   * @returns How many were deleted
+   */
+  async removeAllForUser(userId: string): Promise<number> {
+    const rows = await WIKI.db
+      .delete(personalTokensTable)
+      .where(eq(personalTokensTable.userId, userId))
+      .returning({ id: personalTokensTable.id })
+    for (const row of rows) {
+      this.#touchedAt.delete(row.id)
+    }
+    return rows.length
+  }
+
+  /**
    * Resolve the claims of a verified token into what it grants. Called by `ApiKeys.verify` once the
    * signature has checked out and the audience has said this is a personal token.
    *

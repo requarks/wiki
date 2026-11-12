@@ -69,8 +69,8 @@ before working in an area — and add to it there, not here:
   `distributing-blocks` (the `.wkblock` package), `emails`, `excalidraw`, `analytics`,
   `live-notes`, `audit-log`, `notifications`, `mcp`, `page-lifecycle`, `glossary`,
   `feedback-boards`, `metrics`, `icons`, `page-paths` (path segments, the ltree encoding),
-  `personal-access-tokens` (`config.scope`, `requestUser(req)`) and `image-editor` (the file
-  manager's image editor and resize).
+  `personal-access-tokens` (`config.scope`, `requestUser(req)`), `image-editor` (the file
+  manager's image editor and resize) and `cli` (the management CLI, `backend/cli.ts`).
 - **Procedures** — `.claude/skills/`: `throwaway-instance` boots, scripts and tears down a
   disposable instance.
 
@@ -89,6 +89,7 @@ npm run typecheck        # tsc — type check only, never emits
 npm run typecheck:watch
 npm run db-generate -- --name=foo-column   # drizzle-kit generate — after editing db/schema.ts
 npm run db-up            # drizzle-kit up
+npm run cli -- <command> # management CLI (reset-password, set-hostname, info, …); also backend/cli.ts
 
 # frontend
 npm run dev            # vite dev server on :3001 (needs backend running on :3000)
