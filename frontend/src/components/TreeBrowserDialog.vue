@@ -44,7 +44,8 @@
             <div>
               <tree
                 ref="treeComp"
-                v-model:selected="state.currentFolderId"
+                :selected="state.currentFolderId"
+                @update:selected="selectFolder"
                 :nodes="state.treeNodes"
                 :roots="state.treeRoots"
                 :use-lazy-load="true"
@@ -252,6 +253,11 @@ const props = defineProps({
     required: false,
     default: ''
   },
+  /** Keep an explicitly requested new-page name independent of its title. */
+  preservePath: {
+    type: Boolean,
+    default: false
+  },
   /**
    * The locale to browse, and — where the mode allows it — the one the page ends up in. The caller's
    * to give: the page view means the page on screen, the file manager means whichever locale it is
@@ -286,6 +292,8 @@ const state = reactive({
   displayMode: 'title',
   locale: props.locale || siteStore.locales.primary,
   currentFolderId: null,
+  // -> A new page may target folders which the server will create on save.
+  pendingFolderPath: null,
   currentFileId: null,
   isFetching: false,
   treeNodes: {},
@@ -362,6 +370,9 @@ const pathField = computed(() => {
 })
 
 const currentFolderPath = computed(() => {
+  if (state.pendingFolderPath !== null) {
+    return `/${state.pendingFolderPath}/`
+  }
   const folderNode = state.currentFolderId ? state.treeNodes[state.currentFolderId] : null
   if (!folderNode?.fileName) {
     return '/'
@@ -419,6 +430,12 @@ watch(
 function onPathFocus() {
   state.pathDirty = true
   state.currentFileId = null
+}
+
+/** Choosing a folder, including the root, replaces the requested destination. */
+function selectFolder(id) {
+  state.pendingFolderPath = null
+  state.currentFolderId = id
 }
 
 async function save() {
@@ -486,7 +503,10 @@ async function save() {
   // -> A path is a URL: casing, spaces and underscores are corrected rather than refused, the way the
   //    server does it, and the field is left showing what will actually be saved
   state.path = pathSegmentToWrite(state.path, state.currentPath)
-  if (state.path !== state.currentPath && !isValidPathSegment(state.path)) {
+  if (
+    (state.path !== state.currentPath && !isValidPathSegment(state.path)) ||
+    (state.pendingFolderPath !== null && !state.pendingFolderPath.split('/').every(isValidPathSegment))
+  ) {
     notify({
       type: 'negative',
       message: t('pageSaveDialog.pathInvalid')
@@ -516,6 +536,7 @@ async function switchLocale(locale) {
     return
   }
   state.locale = locale
+  state.pendingFolderPath = null
   state.treeNodes = {}
   state.treeRoots = []
   state.currentFolderId = null
@@ -670,7 +691,7 @@ function treeContextAction(nodeId, action) {
 function selectItem(item) {
   // -> A folder is somewhere to save into, not something to overwrite
   if (item.type === 'folder') {
-    state.currentFolderId = item.id
+    selectFolder(item.id)
     treeComp.value?.setOpened(item.id)
     return
   }
@@ -714,7 +735,11 @@ onMounted(async () => {
     fName = fParts.at(-1)
   }
   switch (props.mode) {
-    case 'savePage':
+    case 'savePage': {
+      state.typesToFetch = ['folder', 'page']
+      state.pathDirty = props.preservePath && Boolean(fName)
+      break
+    }
     case 'duplicatePage': {
       state.typesToFetch = ['folder', 'page']
       break
@@ -771,6 +796,9 @@ onMounted(async () => {
       }
     }
     state.currentFolderId = startFolderId
+  } else if (props.mode === 'savePage' && fPath) {
+    // -> No tree id does not mean root: retain the path until a folder is chosen explicitly.
+    state.pendingFolderPath = normalizeNewPagePath(fPath)
   }
 })
 </script>

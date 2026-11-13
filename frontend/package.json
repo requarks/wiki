@@ -15,7 +15,8 @@
     "icons:check": "node scripts/generate-icons.mjs --check",
     "emoji": "node scripts/generate-emoji.mjs",
     "emoji:check": "node scripts/generate-emoji.mjs --check",
-    "visual:check": "node scripts/check-visual-roundtrip.mjs"
+    "visual:check": "node scripts/check-visual-roundtrip.mjs",
+    "page-save-path:check": "node --test scripts/check-page-save-path.mjs"
   },
   "dependencies": {
     "@asciidoctor/core": "4.2.1",

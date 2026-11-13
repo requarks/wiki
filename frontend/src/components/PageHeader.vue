@@ -810,6 +810,7 @@ async function createPage() {
       folderPath: '',
       itemTitle: pageStore.title,
       itemFileName: pageStore.path,
+      preservePath: editorStore.preservePagePath,
       locale: pageStore.locale
     }
   }).onOk(async ({ path, title, locale }) => {

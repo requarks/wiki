@@ -757,6 +757,7 @@ export const usePageStore = defineStore('page', {
         originPageId: editorStore.isActive ? editorStore.originPageId : this.id, // Don't replace if already in edit mode
         isActive: true,
         mode: 'create',
+        preservePagePath: Boolean(path),
         editor
       })
 

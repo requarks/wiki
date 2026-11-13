@@ -19,6 +19,8 @@ export const useEditorStore = defineStore('editor', {
     editor: '',
     originPageId: '',
     mode: 'edit',
+    // -> An explicit new-page destination must not be replaced by a slug of its title.
+    preservePagePath: false,
     activeModal: '',
     activeModalData: null,
     hideSideNav: false,
@@ -106,6 +108,7 @@ export const useEditorStore = defineStore('editor', {
         isReady: false,
         editor: '',
         mode: 'edit',
+        preservePagePath: false,
         // -> Only ever meaningful while a page is being created: it is where Discard goes back to
         originPageId: ''
       })
