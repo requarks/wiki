@@ -1,20 +1,26 @@
 import crypto from 'node:crypto'
 import { validate as uuidValidate } from 'uuid'
+import { mayReadAsset } from '../helpers/assetAccess.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
- * A thumbnail is generated once, at upload time, and an asset that changes gets a new ID — so the
- * bytes behind a given URL never change.
+ * Asked again on every use, and answered with a 304 while the ETag still matches.
+ *
+ * Not long-lived: an asset keeps its ID when its bytes are replaced — the image editor writing over
+ * the file, an import overwriting it — and its thumbnail is regenerated under the same URL, so a
+ * redaction has to reach the next look at it. `private`, because the reply depends on who asked: a
+ * shared cache holding one reader's copy would hand it to the next reader along.
  */
-const THUMB_CACHE = 'public, max-age=31536000, immutable'
+const THUMB_CACHE = 'private, no-cache'
 
 /**
  * _thumb Routes
  *
- * Public, like `_site` and `_user`: a thumbnail is a shrunken copy of an asset already served on the
- * pages that embed it, and the URL has to be known to be asked for. Only assets that have a preview
- * answer here — everything else, including every non-image, is a 404 the file manager draws a file
- * type icon for.
+ * No session is required, but every request is judged against `read:assets` on the file the
+ * thumbnail was made from, exactly as `_files` judges the file itself (`mayReadAsset`): a thumbnail
+ * is a shrunken copy of the file, and must not show what the file would refuse. Only assets that
+ * have a preview answer here — everything else, including every non-image, is a 404 the file manager
+ * draws a file type icon for.
  */
 async function routes(app: FastifyInstance) {
   app.get<{ Params: { fileName: string } }>('/:fileName', async (req, reply) => {
@@ -25,12 +31,14 @@ async function routes(app: FastifyInstance) {
       return reply.notFound('Thumbnail not found')
     }
 
-    const preview = await WIKI.models.assets.getThumbnail(assetId)
-    if (!preview) {
+    const thumb = await WIKI.models.assets.getThumbnail(assetId)
+    // -> Not readable is answered as not there, so the URL cannot be used to probe for files. Checked
+    //    before the ETag, so that a 304 is never an answer either.
+    if (!thumb || !mayReadAsset(req, thumb.siteId, thumb)) {
       return reply.notFound('Thumbnail not found')
     }
 
-    const etag = `"${crypto.createHash('sha1').update(preview).digest('hex')}"`
+    const etag = `"${crypto.createHash('sha1').update(thumb.preview).digest('hex')}"`
     reply.header('ETag', etag)
     reply.header('Cache-Control', THUMB_CACHE)
     reply.header('X-Content-Type-Options', 'nosniff')
@@ -38,7 +46,7 @@ async function routes(app: FastifyInstance) {
       return reply.code(304).send()
     }
 
-    return reply.type('image/webp').send(preview)
+    return reply.type('image/webp').send(thumb.preview)
   })
 }
 

@@ -1,15 +1,15 @@
-import { attachmentDisposition, isNoteImagesPath } from '../helpers/common.ts'
-import { requestUserId } from '../helpers/requester.ts'
+import { mayReadAsset } from '../helpers/assetAccess.ts'
+import { attachmentDisposition } from '../helpers/common.ts'
 import { deliveryOf } from '../models/assets.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
  * How long a browser may keep a file before asking again.
  *
- * Short, and revalidated: unlike a thumbnail, what sits at a path is not fixed — deleting a file and
- * uploading another under the same name puts different bytes behind the same URL. `private`, because
- * the reply depends on who asked: a shared cache holding one reader's copy of a file the rules put
- * behind an account would hand it to the next reader along.
+ * Short, and revalidated: what sits at a path is not fixed — deleting a file and uploading another
+ * under the same name puts different bytes behind the same URL. `private`, because the reply depends
+ * on who asked: a shared cache holding one reader's copy of a file the rules put behind an account
+ * would hand it to the next reader along.
  */
 const FILE_CACHE = 'private, max-age=600, must-revalidate'
 
@@ -34,9 +34,9 @@ function directAccessCacheSeconds(expiresInSeconds: number): number {
  * they picked, and so that content carries nothing instance-specific. The cost is the other half of
  * that bargain: renaming or moving a file leaves the pages that pointed at it pointing at nothing.
  *
- * Public in the sense that `_site` and `_thumb` are — no session is required — but not unguarded:
- * assets are addressed by the same rules as the pages they sit among, so every request is judged
- * against `read:assets` for the path it asked for.
+ * Public in the sense that `_site` is — no session is required — but not unguarded: assets are
+ * addressed by the same rules as the pages they sit among, so every request is judged against
+ * `read:assets` for the path it asked for (`mayReadAsset`, which `_thumb` asks too).
  *
  * Every image on every page comes through here, so neither half of the lookup normally reaches the
  * database: the path resolves out of memory and the bytes stream off the local disk cache. See the
@@ -50,30 +50,8 @@ async function routes(app: FastifyInstance) {
     }
 
     const asset = await WIKI.models.assets.resolveAssetPath(site.id, req.params['*'] ?? '')
-    /*
-      A live note's image is not judged by the page rules for its path, which nobody writes for its
-      folder and which answer no there whatever they say (`checkAccess`). It is the note's own footing
-      instead: anybody who may read the site's live notes -- a guest, where the guests group holds
-      `read:notes` -- and holds the URL, its random name being what nobody can guess.
-    */
-    const isNoteImage = Boolean(asset && isNoteImagesPath(asset.folderPath))
     // -> Not readable is answered as not there, so the URL cannot be used to probe for files
-    if (
-      !asset ||
-      (isNoteImage
-        ? !WIKI.models.liveNotes.permissionsFor(
-            {
-              userId: requestUserId(req),
-              actor: WIKI.models.groups.actorForRequest(req)
-            },
-            site.id
-          ).read
-        : !WIKI.models.groups.checkAccess(WIKI.models.groups.actorForRequest(req), 'read:assets', {
-            siteId: site.id,
-            path: asset.folderPath ? `${asset.folderPath}/${asset.fileName}` : asset.fileName,
-            locale: asset.locale
-          }))
-    ) {
+    if (!asset || !mayReadAsset(req, site.id, asset)) {
       return reply.notFound('File not found')
     }
 

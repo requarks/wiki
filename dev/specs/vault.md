@@ -565,8 +565,8 @@ see `/hr/secrets` could move it by moving `/hr`. A move may not put one vault in
   carries no page rules, let alone a vault's.
 - **Serving** (`controllers/files.ts` and the asset content API): membership, `read:assets` and
   unsealed, then decrypt. `Cache-Control: private, no-store` instead of `FILE_CACHE`.
-- **Thumbnails.** `controllers/thumb.ts` is public on purpose for ordinary assets, and answers 404
-  for a vault asset. The file manager inside a vault asks for previews through the authenticated
+- **Thumbnails.** `controllers/thumb.ts` judges an ordinary asset's thumbnail by `read:assets`, as
+  `controllers/files.ts` judges the file, and answers 404 for a vault asset. The file manager inside a vault asks for previews through the authenticated
   asset route instead, which decrypts `preview`.
 - **The image editor and resizing** run on the decrypted buffer and seal the result.
 - **`assets.meta` stays in the clear**, as metadata. It must not be given anything read out of a
