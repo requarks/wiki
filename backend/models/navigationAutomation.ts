@@ -20,6 +20,12 @@ export interface NavigationAutomationSettings {
   deleteOrphanedMenus: boolean
   /** Also act on what an import or a storage sync does, not only on what a person does. */
   includeStorageOperations: boolean
+  /**
+   * Not an automation but a sidebar rule, kept with these since it is the same settings block: a
+   * page sharing its path with a folder shows that folder's menu while it inherits, rather than the
+   * menu of the folder above both. Off by default. See `navigation.ancestorNavId`.
+   */
+  folderMenuOnFolderPage: boolean
 }
 
 /** A page, as the automations need to know it: where it sits and what it is called. */
@@ -155,7 +161,10 @@ class NavigationAutomation {
    */
   isOn(
     siteId: string,
-    key: Exclude<keyof NavigationAutomationSettings, 'includeStorageOperations'>
+    key: Exclude<
+      keyof NavigationAutomationSettings,
+      'includeStorageOperations' | 'folderMenuOnFolderPage'
+    >
   ) {
     const settings = this.settingsFor(siteId)
     if (!settings[key]) {
