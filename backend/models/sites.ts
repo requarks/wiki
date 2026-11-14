@@ -190,6 +190,10 @@ class Sites {
           title: '',
           content: ''
         },
+        maintenance: {
+          mode: 'off',
+          bypassGroups: []
+        },
         cookieConsent: {
           isEnabled: false,
           message: DEFAULT_COOKIE_CONSENT_MESSAGE
@@ -647,6 +651,10 @@ class Sites {
           isEnabled: false,
           title: '',
           content: ''
+        },
+        maintenance: {
+          mode: 'off',
+          bypassGroups: []
         },
         cookieConsent: {
           isEnabled: false,

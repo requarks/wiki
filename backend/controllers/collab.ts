@@ -1,6 +1,7 @@
 import { validate as uuidValidate } from 'uuid'
 
 import { mayOnPage } from '../api/pages.ts'
+import { effectiveMaintenance } from '../helpers/maintenance.ts'
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { WebSocket } from 'ws'
@@ -53,6 +54,10 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.sites[siteId]?.config?.features?.collaborativeEditing) {
         return socket.close(4403, 'Collaborative editing is disabled on this site')
       }
+      // -> Editing is a write, which either maintenance mode holds back
+      if (effectiveMaintenance(req, siteId) !== 'off') {
+        return socket.close(4403, 'This site is in maintenance mode')
+      }
 
       const page = await WIKI.models.pages.getPage({ siteId, id: pageId })
       if (!page) {
@@ -94,6 +99,11 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.models.liveNotes.isEnabled(siteId)) {
         return socket.close(4403, 'Live notes are disabled on this site')
       }
+      // -> A closed site serves nothing; a read-only one still lets a note be followed, below
+      const maintenance = effectiveMaintenance(req, siteId)
+      if (maintenance === 'restricted') {
+        return socket.close(4403, 'This site is in maintenance mode')
+      }
       const userId = req.session?.authenticated && req.session.user?.id ? req.session.user.id : null
       const requester = { userId, actor: WIKI.models.groups.actorForRequest(req) }
       if (!WIKI.models.liveNotes.permissionsFor(requester, siteId).read) {
@@ -111,11 +121,11 @@ async function routes(app: FastifyInstance) {
         return socket.close(4403, 'This note is private')
       }
 
-      // -> Whoever may not write joins as a reader -- of a locked note, without `write:notes`, or as
-      //    a guest: the room drops what they send
+      // -> Whoever may not write joins as a reader -- of a locked note, without `write:notes`, as a
+      //    guest, or on a site in read-only maintenance: the room drops what they send
       await WIKI.collab.join(socket, { kind: 'note', id: note.id, siteId }, session, {
         userId,
-        readOnly: !rights.write,
+        readOnly: !rights.write || maintenance === 'readonly',
         manager: rights.manage
       })
     }

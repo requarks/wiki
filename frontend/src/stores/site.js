@@ -100,6 +100,15 @@ export const useSiteStore = defineStore('site', {
       content: ''
     },
     /**
+     * The site's maintenance mode, set beside the banner — `off`, `readonly` or `restricted` — and
+     * whether it lets THIS reader through (`isBypassed`), which the server works out from their groups.
+     * `effectiveMaintenance` below is the question most callers mean. See `backend/helpers/maintenance.ts`.
+     */
+    maintenance: {
+      mode: 'off',
+      isBypassed: false
+    },
+    /**
      * The cookie consent banner (`CookieConsentBanner.vue`). `message` is markdown, rendered at display
      * time the way the site banner's content is.
      */
@@ -285,6 +294,12 @@ export const useSiteStore = defineStore('site', {
     }
   }),
   getters: {
+    /**
+     * The maintenance mode as it applies to this reader: the site's own, or `off` when they bypass
+     * it. `restricted` is what swaps every screen but the login for the maintenance page (`App.vue`).
+     */
+    effectiveMaintenance: (state) =>
+      state.maintenance.isBypassed ? 'off' : state.maintenance.mode,
     /** How a locale is referred to — `fr` for `fr-FR` — falling back to the code until read. */
     localeAlias: (state) => (code) =>
       state.installedLocales.find((lc) => lc.code === code)?.displayCode ?? code,
@@ -562,6 +577,10 @@ export const useSiteStore = defineStore('site', {
         banner: {
           ...this.banner,
           ...siteInfo.banner
+        },
+        maintenance: {
+          mode: siteInfo.maintenance?.mode ?? 'off',
+          isBypassed: siteInfo.maintenance?.isBypassed === true
         },
         cookieConsent: {
           ...this.cookieConsent,

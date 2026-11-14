@@ -3,6 +3,7 @@ import ajvFormats from 'ajv-formats'
 import { TOKEN_SCOPE_CATEGORIES } from '../../models/personalTokens.ts'
 import { MCP_TOOL_GROUPS } from '../../models/mcp.ts'
 import { holdsScope } from '../context.ts'
+import { effectiveMaintenance } from '../../helpers/maintenance.ts'
 import { assetTools } from './assets.ts'
 import { commentTools, suggestTools } from './contribute.ts'
 import { destructiveTools } from './destructive.ts'
@@ -79,8 +80,13 @@ export function scopesFor(tool: McpTool): TokenScope[] {
 }
 
 /**
- * Whether this caller may call this tool at all: its group is switched on, and the caller holds both
- * scopes. What the call then touches is still a page rule's to decide, inside the tool.
+ * Whether this caller may call this tool at all: its group is switched on, the caller holds both
+ * scopes, and — for a tool that writes — the site is not in read-only maintenance for them. What the
+ * call then touches is still a page rule's to decide, inside the tool.
+ *
+ * The maintenance check is here rather than left to the request hook because some tools write through
+ * the models directly, never passing through a route the hook could refuse; `/_mcp` itself is let
+ * through in read-only mode so that reading goes on (see `maintenanceRefusal`).
  *
  * The same answer for `tools/list` and `tools/call`, so that a tool is never offered that will only
  * be refused — a client hands every listed tool to the model, which then tries it.
@@ -88,6 +94,7 @@ export function scopesFor(tool: McpTool): TokenScope[] {
 export function mayCall(ctx: McpContext, tool: McpTool): boolean {
   return (
     WIKI.models.mcp.isGroupEnabled(tool.group) &&
+    (tool.readOnly || effectiveMaintenance(ctx.req, ctx.siteId) === 'off') &&
     scopesFor(tool).every((scope) => holdsScope(ctx, scope)) &&
     (tool.isAvailable?.(ctx) ?? true)
   )

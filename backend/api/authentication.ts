@@ -272,6 +272,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/strategies',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {
@@ -420,6 +421,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/login',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
@@ -504,6 +506,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/changePassword',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
@@ -947,6 +950,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/tfa',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
@@ -1037,6 +1041,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/passkey/challenge',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
@@ -1104,6 +1109,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/passkey/login',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> Guessing is what this endpoint is attacked with; see `helpers/rateLimit.ts`
@@ -1183,6 +1189,7 @@ async function routes(app: FastifyInstance) {
     '/auth/:strategyId/authorize',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {
@@ -1284,6 +1291,7 @@ async function routes(app: FastifyInstance) {
     '/auth/:strategyId/callback',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       // -> A callback is a password check by another name: whatever it carries decides who is logged in
@@ -1324,6 +1332,7 @@ async function routes(app: FastifyInstance) {
     '/auth/:strategyId/callback',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       onRequest: limitAuthAttempts,
@@ -1374,6 +1383,7 @@ async function routes(app: FastifyInstance) {
     '/auth/:strategyId/metadata',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {
@@ -1412,6 +1422,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/auth/logout',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {

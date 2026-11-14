@@ -316,6 +316,7 @@ async function routes(app: FastifyInstance) {
     '/whoami',
     {
       config: {
+        maintenance: 'open',
         scope: 'profile'
       },
       schema: {

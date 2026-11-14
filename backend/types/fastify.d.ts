@@ -116,5 +116,16 @@ declare module 'fastify' {
      * every token without anybody having to remember to close it.
      */
     scope?: RouteScope
+    /**
+     * What the site's maintenance mode makes of this route, checked by the maintenance hook in
+     * `index.ts` (see `helpers/maintenance.ts`). Absent, a route is refused by `restricted`, and by
+     * `readonly` too unless it is a GET or HEAD.
+     *
+     * - `open` — reachable in every mode, by everybody: what signing in goes through, and what the app
+     *   needs to draw the maintenance page and the login screen.
+     * - `read` — a POST or PUT that changes nothing, which `readonly` lets through like a GET.
+     *   `restricted` still refuses it.
+     */
+    maintenance?: 'open' | 'read'
   }
 }

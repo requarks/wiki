@@ -70,7 +70,8 @@ before working in an area — and add to it there, not here:
   `live-notes`, `audit-log`, `notifications`, `mcp`, `page-lifecycle`, `glossary`,
   `feedback-boards`, `metrics`, `icons`, `page-paths` (path segments, the ltree encoding),
   `personal-access-tokens` (`config.scope`, `requestUser(req)`), `image-editor` (the file
-  manager's image editor and resize) and `cli` (the management CLI, `backend/cli.ts`).
+  manager's image editor and resize), `maintenance` (a site's read-only / restricted mode,
+  `config.maintenance` on routes) and `cli` (the management CLI, `backend/cli.ts`).
 - **Procedures** — `.claude/skills/`: `throwaway-instance` boots, scripts and tears down a
   disposable instance.
 

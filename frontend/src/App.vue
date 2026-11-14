@@ -1,5 +1,7 @@
 <template>
-  <router-view />
+  <!-- -> A site closed for maintenance shows its maintenance page in place of every screen but the login -->
+  <maintenance-page v-if="isClosed" />
+  <router-view v-else />
   <!-- Mounted once for the whole app; driven by composables/{notify,loading,dialog,pageProgress}.js -->
   <w-notifications />
   <w-loading-overlay />
@@ -11,7 +13,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, reactive, watch } from 'vue'
+import { computed, defineAsyncComponent, reactive, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
@@ -24,6 +26,7 @@ import { notify } from '@/composables/notify'
 import { pageProgress } from '@/composables/pageProgress'
 
 import CookieConsentBanner from '@/components/CookieConsentBanner.vue'
+import MaintenancePage from '@/components/MaintenancePage.vue'
 import PageProgressBar from '@/components/PageProgressBar.vue'
 
 import WDialogHost from '@/components/shared/WDialogHost.vue'
@@ -85,10 +88,23 @@ const LOGOUT_NOTICE_KEY = 'wiki.logoutNotice'
 /** The router guard's latest `applyLocale`, which it does not wait on -- see `showLogoutNotice`. */
 let localeApplied = Promise.resolve()
 
+// COMPUTED
+
+/**
+ * Whether the site is closed to this reader (`restricted` maintenance, and not in a bypass group).
+ *
+ * The login screen stays reachable, since signing in is how a member of a bypass group gets let
+ * through -- the server keeps those routes open too (`config.maintenance` in `backend/types/fastify.d.ts`).
+ * Not until the bootstrap has answered, which is when the site's mode is first known.
+ */
+const isClosed = computed(
+  () => siteStore.effectiveMaintenance === 'restricted' && route.path !== '/login'
+)
+
 // WATCHERS
 
 watch(
-  () => [userStore.appearance, route.meta.forceDark === true],
+  () => [userStore.appearance, route.meta.forceDark === true, isClosed.value],
   () => {
     dark.set(wantsDark())
   }
@@ -179,9 +195,10 @@ function isAdminPath(path) {
 /**
  * A route can pin the app dark whatever the reader or the site chose (`meta.forceDark`, the login
  * page) — and only for as long as it is open, since leaving it lands back here with the preference.
+ * The maintenance page pins it too: it is drawn over the login background like the login screen.
  */
 function wantsDark() {
-  if (route.meta.forceDark === true) {
+  if (route.meta.forceDark === true || isClosed.value) {
     return true
   }
   if (userStore.appearance === 'site') {
@@ -478,6 +495,17 @@ EVENT_BUS.on('logout', ({ redirect } = {}) => {
 
 EVENT_BUS.on('applyTheme', () => {
   applyTheme()
+})
+
+/*
+  A request the server refused because of the site's maintenance mode (`boot/api.js` reads its
+  header). The mode was switched on while this reader had the app open, or was changed: what it is
+  now is what the refusal named, so the app follows it -- the maintenance page for a closed site, the
+  banner for a read-only one -- without asking again. The page permissions already loaded still say
+  what they said, which is harmless: anything they offer is refused the same way.
+*/
+EVENT_BUS.on('maintenanceRefusal', (mode) => {
+  siteStore.$patch({ maintenance: { mode, isBypassed: false } })
 })
 
 /**

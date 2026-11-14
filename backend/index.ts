@@ -40,6 +40,11 @@ import { SESSION_MAX_AGE_DAYS } from './models/sessions.ts'
 import { replayedKeyId } from './mcp/inject.ts'
 import { renderAppShell } from './helpers/appShell.ts'
 import {
+  MAINTENANCE_HEADER,
+  maintenanceRefusal,
+  maintenanceRefusalMessage
+} from './helpers/maintenance.ts'
+import {
   isPageUrl,
   originOf,
   RESERVED_ROOT_FILES,
@@ -761,6 +766,27 @@ async function initHTTPServer() {
     addresses anonymous access was opened to is entitled to an answer.
   */
   app.addHook('onRequest', metricsHook)
+
+  // ----------------------------------------
+  // Maintenance Mode
+  // ----------------------------------------
+
+  /*
+    A site in maintenance refuses what its mode holds back, for every requester it applies to — see
+    `helpers/maintenance.ts` for what each mode refuses, and `config.maintenance` for the routes that
+    stay open. After the session and API key hooks, since who bypasses it is decided by their groups,
+    and before the body is read, for the reason the permission hook gives.
+
+    503, the status that says the refusal is temporary. The header names the mode, so that the app
+    can tell this from any other 503 and switch to the right view.
+  */
+  app.addHook('onRequest', async (req, reply) => {
+    const mode = maintenanceRefusal(req)
+    if (mode) {
+      reply.header(MAINTENANCE_HEADER, mode)
+      return reply.serviceUnavailable(maintenanceRefusalMessage(mode))
+    }
+  })
 
   // ----------------------------------------
   // SEO

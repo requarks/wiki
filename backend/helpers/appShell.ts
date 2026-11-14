@@ -13,6 +13,7 @@ import {
   originOf,
   splitLocalePath
 } from './common.ts'
+import { effectiveMaintenance } from './maintenance.ts'
 import { linksGridCards } from './pageLinks.ts'
 
 /**
@@ -117,7 +118,10 @@ interface ShellFragments {
   head: string
   /** Appended to the shell's `<body>`. Empty where there is no page body to show. */
   body: string
-  /** 200, or 404 for a page path with nothing a reader without a session may read at it. */
+  /**
+   * 200; 404 for a page path with nothing a reader without a session may read at it; 503 everywhere
+   * on a site closed for maintenance.
+   */
   status: number
   /** The `X-Robots-Tag` to answer with, or null where a crawler's default is what the site wants. */
   robots: string | null
@@ -891,9 +895,12 @@ export async function renderAppShell(
   shell: string
 ): Promise<AppShellDocument> {
   const urlPath = req.raw.url!.split('?')[0]!
-  const fragments = isAnonymous(req)
-    ? await publicFragments(req, siteId, urlPath)
-    : await fragmentsForBrowser(req, siteId, urlPath)
+  const fragments =
+    effectiveMaintenance(req, siteId) === 'restricted'
+      ? closedFragments(siteId)
+      : isAnonymous(req)
+        ? await publicFragments(req, siteId, urlPath)
+        : await fragmentsForBrowser(req, siteId, urlPath)
 
   /*
     The head replaces the shell's own `<title>` where there is one and is appended to its `<head>`
@@ -918,6 +925,25 @@ export async function renderAppShell(
     .replace('</body>', () => `${fragments.body}${injected.body}</body>`)
 
   return { html, status: fragments.status, robots: fragments.robots }
+}
+
+/**
+ * The fragments of a site closed for maintenance (`restricted`), for a requester it holds back.
+ *
+ * The site's own head and nothing about the page at the URL: no title, no description, no copy of
+ * the body — the app is about to show the maintenance page in place of everything, and a client that
+ * will not run it must not be handed the content the closure is keeping back. 503 at every path,
+ * which tells a crawler the site is down for now rather than that its pages are gone, and `noindex`
+ * so that nothing it fetches meanwhile is filed as the page. Never cached: the public fragments
+ * cached for the same URL are the open site's, and are served again the moment it reopens.
+ */
+function closedFragments(siteId: string | undefined): ShellFragments {
+  return {
+    head: headForSite(siteId ? WIKI.sites[siteId]?.config : undefined),
+    body: '',
+    status: 503,
+    robots: 'noindex, nofollow'
+  }
 }
 
 /** The cached half: one URL's public fragments, keeping the namespace under its ceiling. */

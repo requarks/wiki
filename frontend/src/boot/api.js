@@ -7,6 +7,17 @@ const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 const CONTENT_ROUTE = /^\/_api\/sites\/[^/]+\/(pages|tree)(\/|$)/
 
 /**
+ * The header a refusal by the site's maintenance mode carries, naming the mode (`readonly` or
+ * `restricted`). Set by the maintenance hook in `backend/index.ts`; see `backend/helpers/maintenance.ts`.
+ */
+const MAINTENANCE_HEADER = 'X-Wiki-Maintenance'
+
+/** The mode a refusal by the site's maintenance mode names, or null for any other failure. */
+function maintenanceModeOf(error) {
+  return error?.response?.headers?.get(MAINTENANCE_HEADER) ?? null
+}
+
+/**
  * The HTTP client every call to the API goes through, exposed as the `API_CLIENT` global.
  *
  * Nothing is attached to a request beyond the session cookie: authentication is the `wikiSession`
@@ -39,9 +50,29 @@ export function initializeApi() {
     retry: {
       methods: ['get', 'head'],
       statusCodes: [408, 500, 502, 503, 504],
-      afterStatusCodes: []
+      afterStatusCodes: [],
+      // -> A 503 from maintenance mode is a decision, not a blip: asking again gets the same answer
+      shouldRetry: ({ error }) => (maintenanceModeOf(error) ? false : undefined)
     },
     hooks: {
+      /*
+        A refusal by the site's maintenance mode is reported in the server's words rather than as ky's
+        "Request failed with status code 503", which is what the many callers reading `err.message`
+        would otherwise show -- and the app is told, so it can switch to the maintenance page or show
+        the banner without waiting for the next full load (`App.vue`).
+      */
+      beforeError: [
+        ({ error }) => {
+          const mode = maintenanceModeOf(error)
+          if (mode) {
+            if (error.data?.message) {
+              error.message = error.data.message
+            }
+            globalThis.EVENT_BUS?.emit('maintenanceRefusal', mode)
+          }
+          return error
+        }
+      ],
       afterResponse: [
         /*
           A successful write to a page or to the tree says so on the event bus. The server may have

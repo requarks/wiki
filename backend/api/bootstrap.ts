@@ -1,3 +1,4 @@
+import { maintenanceForRequest } from '../helpers/maintenance.ts'
 import { whoAmI } from './users.ts'
 import type { FastifyInstance } from 'fastify'
 
@@ -19,6 +20,7 @@ async function routes(app: FastifyInstance) {
     '/',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {
@@ -82,7 +84,9 @@ async function routes(app: FastifyInstance) {
           // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
           showAiBadge: WIKI.models.mcp.getConfig().showAiBadge,
           // -> What the cookie consent banner offers a choice about
-          hasAnalytics: WIKI.models.analytics.servesTags(site.id)
+          hasAnalytics: WIKI.models.analytics.servesTags(site.id),
+          // -> Whether this requester is held back by it, and its bypass list only for an admin
+          maintenance: maintenanceForRequest(req, site.id)
         },
         flags: WIKI.models.flags.getFlags(),
         auth: WIKI.models.authentication.getPublicConfig(),

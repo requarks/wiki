@@ -3,6 +3,7 @@ import { and, count, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm'
 import {
   authentication as authenticationTable,
   groups as groupsTable,
+  sites as sitesTable,
   userGroups,
   users as usersTable
 } from '../db/schema.ts'
@@ -853,6 +854,8 @@ class Groups {
    * The group is also taken out of every strategy's `autoEnrollGroups`, which is a uuid array that no
    * foreign key reaches. Left there, the id has no option in the strategy's Assign To picker to be
    * unselected by, and `authentication.validateStrategy` refuses every later save of that strategy.
+   * And out of every site's maintenance bypass list (`config.maintenance.bypassGroups`), for the same
+   * reason: the site update route refuses a bypass list naming a group that does not exist.
    *
    * @param id Group ID
    * @param req The request making the change, whose own session is kept
@@ -867,11 +870,25 @@ class Groups {
           autoEnrollGroups: sql`array_remove(${authenticationTable.autoEnrollGroups}, ${id}::uuid)`
         })
         .where(sql`${id}::uuid = ANY(${authenticationTable.autoEnrollGroups})`)
-      return tx.delete(groupsTable).where(eq(groupsTable.id, id))
+      const bypass = await tx
+        .update(sitesTable)
+        .set({
+          config: sql`jsonb_set(${sitesTable.config}, '{maintenance,bypassGroups}', (
+            SELECT coalesce(jsonb_agg(g), '[]'::jsonb)
+            FROM jsonb_array_elements(${sitesTable.config} -> 'maintenance' -> 'bypassGroups') AS g
+            WHERE g <> to_jsonb(${id}::text)
+          ))`
+        })
+        .where(sql`${sitesTable.config} -> 'maintenance' -> 'bypassGroups' ? ${id}::text`)
+      const deleted = await tx.delete(groupsTable).where(eq(groupsTable.id, id))
+      return { deleted, sitesChanged: (bypass.rowCount ?? 0) > 0 }
     })
+    if (result.sitesChanged) {
+      await WIKI.models.sites.reloadCacheEverywhere()
+    }
     await this.reloadCache()
     await WIKI.models.sessions.refreshAccess(members, req)
-    return (result.rowCount ?? 0) > 0
+    return (result.deleted.rowCount ?? 0) > 0
   }
 
   /**

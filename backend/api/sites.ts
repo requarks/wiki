@@ -1,6 +1,8 @@
 import { validate as uuidValidate } from 'uuid'
 import { audit } from '../helpers/audit.ts'
 import { CustomError, isRedirectTarget, normalizePastedDestination } from '../helpers/common.ts'
+import { maintenanceForRequest, MAINTENANCE_MODES } from '../helpers/maintenance.ts'
+import type { MaintenanceMode } from '../helpers/maintenance.ts'
 import { detectImageMime, detectSvg, imageMimeTypes, svgMimeType } from '../helpers/images.ts'
 import { siteAssetKinds } from '../models/sites.ts'
 import type { SiteAssetKind } from '../models/sites.ts'
@@ -20,6 +22,7 @@ const SITE_CONFIG_KEYS = [
   'contentLicense',
   'footerExtra',
   'banner',
+  'maintenance',
   'cookieConsent',
   'pageExtensions',
   'colorizeBrokenLinks',
@@ -96,6 +99,7 @@ async function routes(app: FastifyInstance) {
     '/:siteIdorHostname',
     {
       config: {
+        maintenance: 'open',
         publicAccess: true
       },
       schema: {
@@ -157,7 +161,9 @@ async function routes(app: FastifyInstance) {
           // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
           showAiBadge: WIKI.models.mcp.getConfig().showAiBadge,
           // -> What the cookie consent banner offers a choice about
-          hasAnalytics: WIKI.models.analytics.servesTags(site.id)
+          hasAnalytics: WIKI.models.analytics.servesTags(site.id),
+          // -> Whether this requester is held back by it, and its bypass list only for an admin
+          maintenance: maintenanceForRequest(req, site.id)
         }
       } else {
         return reply.notFound('Site does not exist.')
@@ -287,6 +293,7 @@ async function routes(app: FastifyInstance) {
       contentLicense?: string
       footerExtra?: string
       banner?: { isEnabled?: boolean; title?: string; content?: string }
+      maintenance?: { mode?: MaintenanceMode; bypassGroups?: string[] }
       cookieConsent?: { isEnabled?: boolean; message?: string }
       pageExtensions?: string[]
       colorizeBrokenLinks?: boolean
@@ -369,6 +376,23 @@ async function routes(app: FastifyInstance) {
             },
             banner: {
               $ref: 'Site#/properties/banner'
+            },
+            // -> Not a `$ref` to the site's own: `isBypassed` is computed per request, never stored
+            maintenance: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                mode: {
+                  type: 'string',
+                  enum: [...MAINTENANCE_MODES]
+                },
+                bypassGroups: {
+                  type: 'array',
+                  maxItems: 100,
+                  uniqueItems: true,
+                  items: { type: 'string', format: 'uuid' }
+                }
+              }
             },
             cookieConsent: {
               $ref: 'Site#/properties/cookieConsent'
@@ -511,6 +535,45 @@ async function routes(app: FastifyInstance) {
           throw new CustomError(
             'siteUpdatePrimaryLocaleNotActive',
             'The primary locale must be one of the active locales.'
+          )
+        }
+      }
+
+      // -> Maintenance mode, judged against what the site ends up with once the patch is merged
+      if (req.body.maintenance) {
+        const bypassGroups: string[] =
+          req.body.maintenance.bypassGroups ?? site.config.maintenance?.bypassGroups ?? []
+        if (req.body.maintenance.bypassGroups) {
+          // -> The guests group IS the anonymous visitor: letting it through is turning the mode off
+          //    for the public while it still reads as on
+          if (bypassGroups.includes(WIKI.data.systemIds.guestsGroupId)) {
+            throw new CustomError(
+              'siteUpdateMaintenanceGuests',
+              'The Guests group cannot bypass maintenance mode.'
+            )
+          }
+          const known = new Set((await WIKI.models.groups.getAllGroups()).map((g) => g.id))
+          const unknown = bypassGroups.filter((id) => !known.has(id))
+          if (unknown.length > 0) {
+            throw new CustomError('siteUpdateUnknownGroup', `No such group: ${unknown.join(', ')}`)
+          }
+        }
+        /*
+          Nobody may switch on a mode that holds THEM back. The site's settings are behind the mode
+          like everything else, so an administrator with `manage:sites` who is in none of the bypass
+          groups would be refused the very save that turns it off again, and only `manage:system`
+          could undo it.
+        */
+        const mode = req.body.maintenance.mode ?? site.config.maintenance?.mode ?? 'off'
+        const actor = WIKI.models.groups.actorForRequest(req)
+        if (
+          mode !== 'off' &&
+          !actor.permissions.includes('manage:system') &&
+          !bypassGroups.some((id) => actor.groupIds.includes(id))
+        ) {
+          throw new CustomError(
+            'siteUpdateMaintenanceLockout',
+            'Add one of your own groups to the maintenance bypass list first: otherwise this maintenance mode would also apply to you, and you could not turn it off again.'
           )
         }
       }

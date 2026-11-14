@@ -10,6 +10,7 @@ import {
   type SearchTagsMatch
 } from '../models/search.ts'
 import { audit } from '../helpers/audit.ts'
+import { effectiveMaintenance } from '../helpers/maintenance.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { maySeeUnpublished, maySeeUnpublishedAnywhere } from '../helpers/publishing.ts'
 import { generatePathHash, normalizePagePath, pagePathToWrite } from '../helpers/common.ts'
@@ -247,8 +248,16 @@ export function pagePermissionsFor(req: FastifyRequest, page: RulePageRef): stri
   if (actor.permissions.includes('manage:system')) {
     return PAGE_PERMISSIONS
   }
-  return PAGE_PERMISSIONS.filter((permission) =>
-    WIKI.models.groups.checkAccess(actor, permission, page)
+  /*
+    A read-only site answers with the reading half alone, for whoever it holds back. Not what refuses
+    a write — the maintenance hook in `index.ts` does that for every route at once — but what the
+    interface hides its controls by, so that nobody is offered an edit button that can only fail.
+  */
+  const readOnly = effectiveMaintenance(req, page.siteId) === 'readonly'
+  return PAGE_PERMISSIONS.filter(
+    (permission) =>
+      (!readOnly || permission.startsWith('read:')) &&
+      WIKI.models.groups.checkAccess(actor, permission, page)
   )
 }
 
@@ -1197,6 +1206,10 @@ async function routes(app: FastifyInstance) {
   }>(
     '/sites/:siteId/pages/:pageIdOrHash/unlock',
     {
+      config: {
+        // -> Reading a page, which a read-only site still lets a reader with the password do
+        maintenance: 'read'
+      },
       // -> A password endpoint like the ones in `api/authentication.ts`, and limited with them
       onRequest: limitAuthAttempts,
       schema: {
@@ -2737,6 +2750,7 @@ async function routes(app: FastifyInstance) {
     '/sites/:siteId/pages/userPermissions',
     {
       config: {
+        maintenance: 'read',
         scope: 'pages:read'
       },
       schema: {

@@ -52,6 +52,24 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       },
+      maintenance: {
+        type: 'object',
+        description:
+          "The site's maintenance mode, set beside the site-wide banner. `readonly` keeps the site readable but refuses every change to it; `restricted` closes it, the app showing a maintenance page with the banner's title and contents in place of every screen but the login, and the server answering 503 for everything but signing in. Neither applies to a requester holding `manage:system` or belonging to one of `bypassGroups`.\n\n`isBypassed` is computed per request: whether the CALLER is let through. `bypassGroups` is only returned to a caller holding `manage:sites`.",
+        properties: {
+          mode: {
+            type: 'string',
+            enum: ['off', 'readonly', 'restricted']
+          },
+          bypassGroups: {
+            type: 'array',
+            items: { type: 'string', format: 'uuid' }
+          },
+          isBypassed: {
+            type: 'boolean'
+          }
+        }
+      },
       cookieConsent: {
         type: 'object',
         description:

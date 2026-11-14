@@ -17,6 +17,8 @@ import { computed, ref, watch } from 'vue'
 
 import { escape } from 'es-toolkit/string'
 
+import { renderBannerMarkdown } from '@/helpers/bannerMarkdown'
+
 import { useSiteStore } from '@/stores/site'
 
 /**
@@ -25,13 +27,13 @@ import { useSiteStore } from '@/stores/site'
  * Site configuration rather than content: it is set in the admin area's General section, is the same
  * on every page, and so never goes through the page renderer -- which renders ONE page, on the server,
  * and stores the result. This renders here instead, on every view, which is also what lets a banner
- * raised during an incident appear without every page being re-rendered.
+ * raised during an incident appear without every page being re-rendered. The markdown is rendered by
+ * `helpers/bannerMarkdown.js`, which the maintenance page shares.
  *
- * Only the inline parts of markdown are worth anything in a notice a few lines long, but the full
- * block grammar comes free with the parser, so the whole of markdown-it is what runs -- with `html`
- * OFF, unlike the page renderer. An administrator writing a banner is not writing a page, and
- * markdown-it's own link validation (`javascript:` and friends) is then the only escape left to
- * worry about, which it handles itself.
+ * Shown while the site is in maintenance as well, whether or not the banner itself is switched on:
+ * the banner is what says why nothing can be saved, and an administrator who forgot to raise it would
+ * otherwise leave readers with refusals and no explanation. Shown to a reader who bypasses the mode
+ * too, as the reminder that everybody else is held back.
  */
 
 // STORES
@@ -40,15 +42,6 @@ const siteStore = useSiteStore()
 
 // DATA
 
-/**
- * The parser, built on first use and kept.
- *
- * Imported dynamically so that markdown-it stays out of the bundle a reader downloads for a site with
- * no banner, which is nearly all of them -- and so that it is fetched alongside the banner rather than
- * ahead of the page.
- */
-let md = null
-
 /** Which render is the current one, so that a slower earlier import cannot land on top of a later. */
 let generation = 0
 
@@ -56,7 +49,10 @@ const html = ref('')
 
 // COMPUTED
 
-const banner = computed(() => siteStore.banner)
+const banner = computed(() => ({
+  ...siteStore.banner,
+  isShown: siteStore.banner.isEnabled || siteStore.maintenance.mode !== 'off'
+}))
 
 // WATCHERS
 
@@ -66,8 +62,8 @@ watch(banner, render, { deep: true, immediate: true })
 
 async function render() {
   const gen = ++generation
-  const { isEnabled, title, content } = banner.value
-  if (!isEnabled) {
+  const { isShown, title, content } = banner.value
+  if (!isShown) {
     html.value = ''
     return
   }
@@ -77,12 +73,7 @@ async function render() {
   const parts = title ? [`<p class="site-banner-title">${escape(title)}</p>`] : []
 
   if (content) {
-    md ??= new (await import('markdown-it')).default({
-      html: false,
-      linkify: true,
-      breaks: true
-    })
-    parts.push(md.render(content))
+    parts.push(await renderBannerMarkdown(content))
   }
 
   /*
