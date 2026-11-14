@@ -378,6 +378,7 @@ export default class OidcAuthentication {
       name: (info[this.conf.displayNameClaim || 'name'] as string) || email,
       picture: this.pictureFrom(info),
       meta: this.metaFrom(info),
+      ...this.handleFrom(info),
       // -> Absent rather than empty when groups are not mapped: an empty list is the provider saying
       //    this person is in none, which with `unassignMissingGroups` on takes memberships away
       ...(groups
@@ -521,6 +522,29 @@ export default class OidcAuthentication {
       meta[key] = value
     }
     return meta
+  }
+
+  /**
+   * The mention handle the claim carries, when one is mapped.
+   *
+   * Unmapped by default, and a mapped claim missing from the answer leaves the handle alone, for the
+   * same reasons as `metaFrom`. Whether the value is a handle this wiki accepts, and whether it is
+   * free, is decided where it is stored.
+   */
+  private handleFrom(info: Record<string, any>): Pick<ProviderProfile, 'handle'> {
+    const claim = this.conf.handleClaim
+    if (!claim) {
+      return {}
+    }
+    const value = info[claim]
+    if (typeof value !== 'string') {
+      strategyDebug(
+        this,
+        `the \`${claim}\` claim carries no text for handle, which is left as it was`
+      )
+      return {}
+    }
+    return { handle: value }
   }
 
   /**

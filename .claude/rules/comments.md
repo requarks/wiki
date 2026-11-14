@@ -83,8 +83,12 @@ delete anybody's. The two are not interchangeable and neither implies the other.
 - **A mention is `@handle`**, and `users.handle` is a column with a unique index on `lower(handle)` —
   `@ana` means one person or it means nothing. It is null until somebody picks one, and a user without
   one is simply not mentionable; nothing is derived from a display name on anybody's behalf. It is
-  edited under **Profile → Info** and is NOT gated on `allowProfileEditing`, because no identity
-  provider owns a wiki mention handle. The comments endpoint resolves the handles of a whole page in
+  edited under **Profile → Info**, gated on `allowProfileEditing` like the name, since a provider
+  can fill it on every login: the Discord username or the GitHub login (`mapHandle`), an
+  OIDC claim (`handleClaim`), or an LDAP or SAML attribute (`mappingHandle`) — each off unless an
+  administrator turns it on. One that is not a valid handle, or is already held, is skipped without
+  failing the login (`applyProviderHandle` in `models/users.ts`). An administrator can still set it
+  under **Admin → Users** either way. The comments endpoint resolves the handles of a whole page in
   one query and the renderer links only those, so a mention never points at whoever took the handle
   later.
 - **A comment that starts a thread can annotate the article**: passages picked from it (New

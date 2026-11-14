@@ -49,12 +49,6 @@
       </w-item-section>
     </w-item>
     <w-separator inset spaced="sm" />
-    <!--
-      The handle, which is NOT gated on `canEdit` like the name and the fields under it. No identity
-      provider owns a wiki mention handle, so a wiki that keeps its names in step with a directory has
-      no reason to stop anybody choosing one -- and with profile editing off this would otherwise be
-      the one field nobody could ever fill in.
-    -->
     <w-item>
       <blueprint-icon icon="rename" />
       <w-item-section>
@@ -69,7 +63,8 @@
           hide-bottom-space
           prefix="@"
           maxlength="32"
-          :aria-label="t(`profile.handle`)" />
+          :aria-label="t(`profile.handle`)"
+          :readonly="!canEdit" />
       </w-item-section>
     </w-item>
     <w-separator inset spaced="sm" />
@@ -453,12 +448,12 @@ async function save() {
         ...(canEdit.value
           ? {
               name: state.config.name,
+              handle: state.config.handle.trim(),
               location: state.config.location,
               jobTitle: state.config.jobTitle,
               pronouns: state.config.pronouns
             }
           : {}),
-        handle: state.config.handle.trim(),
         locale: state.config.locale,
         timezone: state.config.timezone,
         dateFormat: state.config.dateFormat,

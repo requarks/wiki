@@ -339,6 +339,11 @@ export default class DiscordAuthentication {
       // -> `global_name` is the display name; `username` is the handle, and is all an account that
       //    has not set one has
       name: account.global_name || account.username,
+      // -> 2 to 32 lowercase letters, digits, `_` and `.` at Discord, so one with a dot in it or only
+      //    2 long is not a handle here and is skipped, leaving whatever the account has
+      ...(this.conf.mapHandle === true && typeof account.username === 'string'
+        ? { handle: account.username }
+        : {}),
       picture: this.pictureFor(account),
       ...(groups
         ? {

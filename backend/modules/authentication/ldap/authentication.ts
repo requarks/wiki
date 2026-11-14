@@ -195,6 +195,7 @@ export default class LdapAuthentication {
         name: this.attr(entry, this.conf.mappingDisplayName || 'displayName') || email,
         pictureData,
         meta: this.metaFrom(entry),
+        ...this.handleFrom(entry),
         ...(groups
           ? {
               groups,
@@ -427,6 +428,25 @@ export default class LdapAuthentication {
       meta[key] = value ?? ''
     }
     return meta
+  }
+
+  /**
+   * The mention handle the entry carries, when an attribute is mapped to it.
+   *
+   * Unmapped by default. A mapped attribute the entry lacks takes the handle off, for the same reason
+   * as in `metaFrom`. Whether the value is a handle this wiki accepts, and whether it is free, is
+   * decided where it is stored.
+   */
+  private handleFrom(entry: Entry): Pick<ProviderProfile, 'handle'> {
+    const name = this.conf.mappingHandle
+    if (!name) {
+      return {}
+    }
+    const value = this.attr(entry, name)
+    if (value === undefined) {
+      strategyDebug(this, `\`${entry.dn}\` has no \`${name}\`, so its handle is cleared`)
+    }
+    return { handle: value ?? '' }
   }
 
   /** The photo held in the entry, when the configuration names an attribute holding one. */

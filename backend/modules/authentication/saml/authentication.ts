@@ -264,6 +264,7 @@ export default class SamlAuthentication {
       name: this.attr(profile, this.conf.mappingDisplayName) || email,
       picture: this.attr(profile, this.conf.mappingPicture),
       meta: this.metaFrom(profile),
+      ...this.handleFrom(profile),
       ...(groups
         ? {
             groups,
@@ -494,6 +495,27 @@ export default class SamlAuthentication {
       meta[key] = first
     }
     return meta
+  }
+
+  /**
+   * The mention handle the assertion carries, when an attribute is mapped to it.
+   *
+   * Unmapped by default, and a mapped attribute missing from the assertion leaves the handle alone,
+   * for the same reasons as `metaFrom`. Whether the value is a handle this wiki accepts, and whether
+   * it is free, is decided where it is stored.
+   */
+  private handleFrom(profile: Record<string, any>): Pick<ProviderProfile, 'handle'> {
+    const name = this.conf.mappingHandle
+    if (!name) {
+      return {}
+    }
+    const value = profile[name]
+    const first = Array.isArray(value) ? value[0] : value
+    if (typeof first !== 'string') {
+      strategyDebug(this, `\`${name}\` carries no text for handle, which is left as it was`)
+      return {}
+    }
+    return { handle: first }
   }
 
   /**

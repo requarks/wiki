@@ -82,7 +82,7 @@ export function whoAmI(req: FastifyRequest): Record<string, any> {
  * The profile fields an identity provider owns: who the person is, as the wiki displays them.
  * `allowProfileEditing` is what says whether they are the user's to change here.
  */
-const IDENTITY_PROFILE_FIELDS = ['name', 'location', 'jobTitle', 'pronouns'] as const
+const IDENTITY_PROFILE_FIELDS = ['name', 'handle', 'location', 'jobTitle', 'pronouns'] as const
 
 /**
  * The rest of the profile: how the wiki behaves for this one person.
@@ -94,13 +94,6 @@ const IDENTITY_PROFILE_FIELDS = ['name', 'location', 'jobTitle', 'pronouns'] as 
  * away with it.
  */
 const PERSONAL_PROFILE_FIELDS = [
-  /*
-    The handle is here rather than among the identity fields on purpose. No identity provider owns a
-    wiki mention handle — there is nothing in a directory for it to be kept in step with — so a wiki
-    that turned profile editing off to keep names authoritative would otherwise have taken away the
-    one field that lets anybody be mentioned in a comment.
-  */
-  'handle',
   'locale',
   'timezone',
   'dateFormat',
@@ -388,7 +381,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: "Update the logged in user's own profile",
         description:
-          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the language, time zone, date and time formats, appearance and accessibility settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
+          'Updates any subset of the profile fields; omitted ones are left unchanged. The name, handle, location, job title and pronouns require profile editing to be enabled on this wiki (Administration → Authentication) and are refused otherwise; the language, time zone, date and time formats, appearance and accessibility settings are the user’s own and are always accepted. The email cannot be changed here, and neither can any field an administrator owns.',
         tags: ['Users'],
         body: {
           $ref: 'UserProfileUpdate#'

@@ -126,6 +126,16 @@ export interface ProviderProfile {
    * module passes on what the provider said.
    */
   meta?: Partial<Record<ProviderProfileMetaKey, string>>
+  /**
+   * The mention handle the provider holds for this person, written over the account's own on every
+   * login.
+   *
+   * Present only when the module maps it (a Map Handle setting for Discord and GitHub, a field
+   * mapping for LDAP, SAML and OIDC) AND the provider answered with a value: absent leaves the handle alone, an
+   * empty string takes it off. A value the handle rules refuse, or one another account already
+   * holds, leaves it alone too rather than failing the login — see `loginWithProvider`.
+   */
+  handle?: string
 }
 
 /** The `users.meta` keys a provider may fill in. */

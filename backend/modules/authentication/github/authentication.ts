@@ -308,6 +308,11 @@ export default class GitHubAuthentication {
       id: String(account.id),
       email,
       name: account.name || account.login,
+      // -> Letters, digits and hyphens at GitHub, so all a login can fail on here is being shorter
+      //    than 3 or longer than 32, which is skipped and leaves whatever the account has
+      ...(this.conf.mapHandle === true && typeof account.login === 'string'
+        ? { handle: account.login }
+        : {}),
       ...(groups
         ? {
             groups,

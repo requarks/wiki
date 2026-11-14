@@ -1978,6 +1978,8 @@ class Users {
       .set({ auth, ...(metaChanged ? { meta: user.meta } : {}), updatedAt: sql`now()` })
       .where(eq(usersTable.id, user.id))
 
+    await this.applyProviderHandle(user, profile, strategy)
+
     // -> After the account exists and before `afterLoginChecks`, which reads the memberships back out
     //    to resolve this session's permissions and its redirect
     await this.applyProviderGroups(user.id, profile, strategy, req)
@@ -1993,6 +1995,54 @@ class Users {
       { ip, siteId },
       { skipTFA: true, skipChangePwd: true },
       req
+    )
+  }
+
+  /**
+   * Write the handle the provider reported over the account's own, when the module mapped one.
+   *
+   * Never fails the login. A handle is unique across the wiki and held to `HANDLE_PATTERN`, and a
+   * provider is not bound by either — its usernames may carry dots or an `@`, and somebody here may
+   * already have picked the same one. Either way the account keeps the handle it has, and the reason
+   * goes to the auth debug log, where an administrator chasing a missing handle will look.
+   */
+  private async applyProviderHandle(
+    user: { id: string; handle: string | null },
+    profile: ProviderProfile,
+    strategy: AuthStrategy
+  ): Promise<void> {
+    if (typeof profile.handle !== 'string') {
+      return
+    }
+    const trimmed = profile.handle.trim()
+    if (trimmed.length > 0 && !HANDLE_PATTERN.test(trimmed)) {
+      WIKI.models.flags.authDebug(
+        `Handle "${trimmed}" from strategy ${strategy.id} is not a valid handle, so user ${user.id} keeps "${user.handle ?? ''}"`
+      )
+      return
+    }
+    const handle = trimmed.length > 0 ? trimmed : null
+    if (handle === user.handle) {
+      return
+    }
+    try {
+      await WIKI.db
+        .update(usersTable)
+        .set({ handle, updatedAt: sql`now()` })
+        .where(eq(usersTable.id, user.id))
+    } catch (err: any) {
+      const cause = err.cause ?? err
+      if (cause.code === '23505' && cause.constraint === 'users_handle_idx') {
+        WIKI.models.flags.authDebug(
+          `Handle "${handle}" from strategy ${strategy.id} is already held by another account, so user ${user.id} keeps "${user.handle ?? ''}"`
+        )
+        return
+      }
+      throw err
+    }
+    user.handle = handle
+    WIKI.models.flags.authDebug(
+      `Updated handle of user ${user.id} to "${handle ?? ''}" from strategy ${strategy.id}`
     )
   }
 
