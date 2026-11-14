@@ -548,6 +548,7 @@ const toolGroups = [
   { key: 'suggest', icon: 'merge-files', scopes: 'mcp:write + approvals:write' },
   { key: 'edit', icon: 'pen', scopes: 'mcp:write + pages:write' },
   { key: 'assets', icon: 'add-image', scopes: 'mcp:* + assets:*' },
+  { key: 'navigation', icon: 'tree-structure', scopes: 'mcp:* + navigation:*' },
   { key: 'destructive', icon: 'trash', scopes: 'mcp:write + pages:write' }
 ]
 

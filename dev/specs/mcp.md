@@ -183,6 +183,16 @@ working on `/_mcp` and refused on `/_api`, the grant listed as a connection, ref
 reused refresh token revoking the grant and its access token with it, and an admin deleting the
 client. The consent page was looked at in both themes, signed out (sent to login and back) and in.
 
+**Built since:** the `navigation` group (`mcp/tools/navigation.ts`), off by default.
+`get_navigation` reads the sidebar a page or folder shows — its mode, the menu and where that menu
+lives, its items (whole for whoever may edit them, as the editor reads them, otherwise as a reader
+sees them) and a `version`; `update_navigation` sets the mode and/or replaces the items, refused
+when the menu changed since the `version` was read; `list_navigation_menus` lists the menus the
+caller may manage, which are also what a `menu` item may open (`targetMenuPath`). All three go
+through the routes in `api/navigation.ts` in-process, which hold `manage:navigation` on the entry
+and on the menu's owner, and the audit entry. Icons an agent names are materialized after the save,
+as the icon picker does.
+
 **Not built**:
 
 - The **Usage** card on Admin → MCP, which was optional ([§8.1](#81-admin--mcp)).
@@ -498,20 +508,22 @@ Four things decide whether a call goes through, and they are asked in this order
 
 ### 5.2 The tools
 
-| Group         | Tools                                                                 | Scope             | Page permission                            | Default |
-| ------------- | --------------------------------------------------------------------- | ----------------- | ------------------------------------------ | ------- |
-| `discover`    | `search_pages`, `browse_tree`, `list_tags`, `recent_changes`          | `pages:read`      | `read:pages`                               | on      |
-| `pages`       | `get_page`; `get_page_links`, `get_backlinks`                         | `pages:read`      | `read:pages`, `read:source` for the source | on      |
-| `history`     | `list_versions`, `get_version`, `diff_versions`                       | `pages:read`      | `read:history`                             | on      |
-| `glossary`    | `lookup_term`, `list_terms`                                           | `glossary:read`   | `read:glossary`                            | on      |
-|               | `define_term`, `update_term`                                          | `glossary:write`  | `manage:glossary`                          |         |
-| `comments`    | `list_comments`                                                       | `comments:read`   | `read:comments`                            | on      |
-|               | `post_comment`, with optional annotations                             | `comments:write`  | `write:comments`                           |         |
-| `suggest`     | `suggest_edit` through the approvals flow                             | `approvals:write` | the site's approval rules                  | on      |
-| `edit`        | `create_page`, `update_page`                                          | `pages:write`     | `write:pages`, `write:tags` for tags       | on      |
-| `assets`      | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read`     | `read:assets`                              | off     |
-|               | `upload_asset`                                                        | `assets:write`    | `write:assets`                             |         |
-| `destructive` | `move_page`, `delete_page` (to the recycle bin)                       | `pages:write`     | `manage:pages`, `delete:pages`             | off     |
+| Group         | Tools                                                                 | Scope              | Page permission                              | Default |
+| ------------- | --------------------------------------------------------------------- | ------------------ | -------------------------------------------- | ------- |
+| `discover`    | `search_pages`, `browse_tree`, `list_tags`, `recent_changes`          | `pages:read`       | `read:pages`                                 | on      |
+| `pages`       | `get_page`; `get_page_links`, `get_backlinks`                         | `pages:read`       | `read:pages`, `read:source` for the source   | on      |
+| `history`     | `list_versions`, `get_version`, `diff_versions`                       | `pages:read`       | `read:history`                               | on      |
+| `glossary`    | `lookup_term`, `list_terms`                                           | `glossary:read`    | `read:glossary`                              | on      |
+|               | `define_term`, `update_term`                                          | `glossary:write`   | `manage:glossary`                            |         |
+| `comments`    | `list_comments`                                                       | `comments:read`    | `read:comments`                              | on      |
+|               | `post_comment`, with optional annotations                             | `comments:write`   | `write:comments`                             |         |
+| `suggest`     | `suggest_edit` through the approvals flow                             | `approvals:write`  | the site's approval rules                    | on      |
+| `edit`        | `create_page`, `update_page`                                          | `pages:write`      | `write:pages`, `write:tags` for tags         | on      |
+| `assets`      | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read`      | `read:assets`                                | off     |
+|               | `upload_asset`                                                        | `assets:write`     | `write:assets`                               |         |
+| `navigation`  | `get_navigation`, `list_navigation_menus`                             | `navigation:read`  | `read:pages`                                 | off     |
+|               | `update_navigation`                                                   | `navigation:write` | `manage:navigation`, on the menu's owner too |         |
+| `destructive` | `move_page`, `delete_page` (to the recycle bin)                       | `pages:write`      | `manage:pages`, `delete:pages`               | off     |
 
 Every tool needs `mcp` at the same level as well as the scope in the table, so a read tool needs
 `mcp:read` and a write tool `mcp:write`. Each tool's category is the one the `/_api` route doing the
@@ -759,6 +771,12 @@ refusal comes back as the tool's error, in the route's words.
   reserved page extensions and the conflict behaviour are decided. A diagram is better written as a
   `mermaid` or `kroki` code block, which stays text a person can review — the tool's description says
   so, and `create_page`'s.
+
+**The sidebar** (`navigation`) is off by default for the same reason as moving a page: a menu is
+shown on every page under the entry owning it — the site-wide one on every page — so changing it is
+a decision about the wiki's structure. The route replaces a menu whole, so `update_navigation`
+carries a stale-read check the route does not: the `version` `get_navigation` returned, a hash of
+the stored items, is required whenever the menu being replaced is not empty.
 
 **Moving and deleting** (`destructive`) are not contributing and stay off until an administrator
 turns them on: a reorganisation is a decision about the wiki, not knowledge added to it, and a move

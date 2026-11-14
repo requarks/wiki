@@ -19,6 +19,7 @@ export const MCP_TOOL_GROUPS = [
   'suggest',
   'edit',
   'assets',
+  'navigation',
   'destructive'
 ] as const
 export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number]

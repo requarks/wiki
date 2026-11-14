@@ -22,7 +22,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       tools: {
         type: 'object',
         description:
-          "Which groups of tools exist. A group that is off is listed to nobody, whatever a token's scopes say. `destructive` (moving and deleting pages) is reached by `pages:write` as soon as it is on.",
+          "Which groups of tools exist. A group that is off is listed to nobody, whatever a token's scopes say. `destructive` (moving and deleting pages) is reached by `pages:write` as soon as it is on. `navigation` (reading and editing the sidebar menus) is reached by `navigation:*`.",
         properties: Object.fromEntries(
           MCP_TOOL_GROUPS.map((group) => [group, { type: 'boolean' }])
         ),

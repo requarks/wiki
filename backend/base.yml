@@ -167,7 +167,8 @@ defaults:
       # Which groups of tools exist at all. A group that is off is listed to nobody, whatever a
       # token's scopes say. The write groups are on because a token's scopes are what keep it from
       # writing (a token reaches a write tool only with `mcp:write` and the category's write scope);
-      # moving and deleting pages are off because they reorganise the wiki rather than add to it.
+      # moving and deleting pages, and editing the sidebar, are off because they reorganise the wiki
+      # rather than add to it.
       tools:
         discover: true
         pages: true
@@ -177,6 +178,7 @@ defaults:
         suggest: true
         edit: true
         assets: false
+        navigation: false
         destructive: false
       # The publish state of a page an agent creates: `published` or `draft`. Published, because a
       # draft is visible only to those who may edit it, so no reader -- and no other agent -- would
