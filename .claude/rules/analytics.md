@@ -5,6 +5,8 @@ paths:
   - "backend/api/analytics.ts"
   - "backend/helpers/appShell.ts"
   - "frontend/src/pages/AdminAnalytics.vue"
+  - "frontend/src/components/CookieConsentBanner.vue"
+  - "frontend/src/composables/cookieConsent.js"
 ---
 
 # Analytics
@@ -37,6 +39,20 @@ an authentication strategy. `analyticsInjections` sorts documents by their own U
 so it is a hard navigation to an admin path that comes back clean; walking into the admin area
 through the app still carries whatever tag the document it started from loaded, and there is no
 taking that back without the per-provider client-side layer described below.
+
+**A site with its cookie consent banner on serves the tags only to a reader who accepted
+tracking.** The banner is `cookieConsent` in the site config (**Admin → General**, off by default —
+the wiki itself sets only its strictly necessary session cookie). The reader's answer is the
+`wikiConsent` cookie (`acknowledged` / `necessary` / `all`), written by
+`frontend/src/composables/cookieConsent.js` and read by `analyticsInjections`, which leaves both slots
+empty unless it says `all`. A cookie and not local storage, because the server is what acts on it:
+declining keeps the scripts out of the document rather than asking them to behave. Accepting reloads
+the page so the server serves the tags, and withdrawing reloads it too, since a running tag cannot be
+unloaded — this is still not a client-side injection layer. No answer is no consent, so on such a site
+a first visit, a client with JavaScript off and a provider's own verification crawler all get a
+document without a tag. Whether the banner offers a choice at all is `hasAnalytics` on the public site
+payload (`analytics.servesTags`, the same rendering `injectionsFor` does): with nothing served it only
+asks to be acknowledged, and `acknowledged` is asked again once the site does serve a tag.
 
 **The consequence is that a provider sees the initial document load and no more.** This is a single
 page app, so moving between wiki pages is a router transition and not a navigation; a provider that

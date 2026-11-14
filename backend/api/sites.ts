@@ -20,6 +20,7 @@ const SITE_CONFIG_KEYS = [
   'contentLicense',
   'footerExtra',
   'banner',
+  'cookieConsent',
   'pageExtensions',
   'colorizeBrokenLinks',
   'logoText',
@@ -154,7 +155,9 @@ async function routes(app: FastifyInstance) {
           isEnabled: site.isEnabled,
           comments: WIKI.models.comments.publicConfigFor(site.id),
           // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
-          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
+          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge,
+          // -> What the cookie consent banner offers a choice about
+          hasAnalytics: WIKI.models.analytics.servesTags(site.id)
         }
       } else {
         return reply.notFound('Site does not exist.')
@@ -284,6 +287,7 @@ async function routes(app: FastifyInstance) {
       contentLicense?: string
       footerExtra?: string
       banner?: { isEnabled?: boolean; title?: string; content?: string }
+      cookieConsent?: { isEnabled?: boolean; message?: string }
       pageExtensions?: string[]
       colorizeBrokenLinks?: boolean
       logoText?: boolean
@@ -365,6 +369,9 @@ async function routes(app: FastifyInstance) {
             },
             banner: {
               $ref: 'Site#/properties/banner'
+            },
+            cookieConsent: {
+              $ref: 'Site#/properties/cookieConsent'
             },
             pageExtensions: {
               type: 'array',

@@ -103,6 +103,14 @@ const ADMIN_PATH_PREFIX = '/_admin'
  */
 const THEME_CSS_ID = 'theme-css-override'
 
+/**
+ * The cookie a reader's answer to the site's cookie consent banner is kept in, and the name BOTH
+ * sides use for it: `frontend/src/composables/cookieConsent.js` writes it, and only `all` — tracking
+ * accepted — lets `analyticsInjections` serve a tag. Strictly necessary itself, since it is what
+ * remembers that the reader said no.
+ */
+const CONSENT_COOKIE = 'wikiConsent'
+
 /** What the shell is enriched with, before it is put into the document. */
 interface ShellFragments {
   /** Replaces the shell's `<title>` and is appended to its `<head>`. */
@@ -810,9 +818,28 @@ async function fragmentsForBrowser(
  * through the app carries whatever tag the document it started from already loaded. There is no
  * getting that back without a per-provider way to stop one, which is the client-side layer this
  * deliberately does not have.
+ *
+ * **Nor for a reader who has not accepted tracking, on a site that asks.** Where the site's cookie
+ * consent banner is on (**Admin → General**), the tags go only to a request carrying
+ * `CONSENT_COOKIE` set to `all`, which the banner writes when a reader accepts tracking — and reloads
+ * the page to get them, the tags being served rather than added by the app. No answer yet is no
+ * consent: a first visit, a client that never runs the app to show a banner, and a provider's own
+ * crawler checking for its snippet all get a document without one. With the banner off, every
+ * document carries the tags as it always has, consent then being the administrator's business.
  */
-function analyticsInjections(siteId: string | undefined, urlPath: string): AnalyticsInjections {
+function analyticsInjections(
+  req: FastifyRequest,
+  siteId: string | undefined,
+  urlPath: string
+): AnalyticsInjections {
   if (urlPath === ADMIN_PATH_PREFIX || urlPath.startsWith(`${ADMIN_PATH_PREFIX}/`)) {
+    return { head: '', bodyStart: '' }
+  }
+  if (
+    siteId &&
+    WIKI.sites[siteId]?.config?.cookieConsent?.isEnabled === true &&
+    req.cookies[CONSENT_COOKIE] !== 'all'
+  ) {
     return { head: '', bodyStart: '' }
   }
   return WIKI.models.analytics.injectionsFor(siteId)
@@ -874,7 +901,7 @@ export async function renderAppShell(
   */
   const withoutTitle = shell.replace(/[ \t]*<title>[\s\S]*?<\/title>\n?/i, '')
   const injected = themeInjections(siteId)
-  const tags = analyticsInjections(siteId, urlPath)
+  const tags = analyticsInjections(req, siteId, urlPath)
   const head = [fragments.head, tags.head, injected.head].filter(Boolean).join('\n  ')
   /*
     Immediately after the opening `<body>`, which is the one slot that is not the end of something:

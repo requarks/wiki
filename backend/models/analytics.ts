@@ -349,6 +349,16 @@ class Analytics {
   }
 
   /**
+   * Whether this site serves any tag at all — what the cookie consent banner offers readers a choice
+   * about. Asked of the same rendering `injectionsFor` does, so a provider that is enabled but would
+   * render nothing (an empty required field, a `num` that is not a number) is not a reason to ask.
+   */
+  servesTags(siteId: string | undefined): boolean {
+    const injections = this.injectionsFor(siteId)
+    return injections.head.length > 0 || injections.bodyStart.length > 0
+  }
+
+  /**
    * Which of a provider's required props are empty, in declaration order.
    *
    * The same question the admin area asks of the form in front of it, so that "Google Analytics is

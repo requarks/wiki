@@ -52,6 +52,25 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           }
         }
       },
+      cookieConsent: {
+        type: 'object',
+        description:
+          'A cookie consent banner shown to every reader of this site until they answer it. Off by default: the wiki itself sets only its session cookie, which is strictly necessary. When the site serves analytics (`hasAnalytics`), the banner offers necessary cookies only or necessary plus tracking, and the analytics tags are left out of the document for any reader who has not accepted tracking. The message is markdown, rendered by the app.',
+        properties: {
+          isEnabled: {
+            type: 'boolean'
+          },
+          message: {
+            type: 'string',
+            maxLength: 8192
+          }
+        }
+      },
+      hasAnalytics: {
+        type: 'boolean',
+        description:
+          'Whether this site serves any analytics tag — at least one provider under Admin → Analytics is enabled with its required fields filled. Computed, never stored: what the cookie consent banner offers a choice about.'
+      },
       pageExtensions: {
         type: 'array',
         items: {

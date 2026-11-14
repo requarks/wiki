@@ -84,6 +84,17 @@ const SITE_ASSET_RENDITIONS: Partial<
 }
 
 /**
+ * What a site's cookie consent banner says until an administrator writes their own.
+ *
+ * True whether or not the site offers a choice about tracking: the wiki itself sets only its session
+ * cookie, which is strictly necessary, and an analytics provider's cookies are set only for a reader
+ * who accepted them (see `analyticsInjections` in `helpers/appShell.ts`). The data migration that
+ * gave existing sites the banner (`cookie-consent`) carries a copy of this text.
+ */
+const DEFAULT_COOKIE_CONSENT_MESSAGE =
+  'This site uses cookies that are strictly necessary for it to work, such as the one keeping you signed in. Any other cookie, such as one measuring how the site is used, is only set with your consent.'
+
+/**
  * Sites model
  */
 class Sites {
@@ -178,6 +189,10 @@ class Sites {
           isEnabled: false,
           title: '',
           content: ''
+        },
+        cookieConsent: {
+          isEnabled: false,
+          message: DEFAULT_COOKIE_CONSENT_MESSAGE
         },
         pageExtensions: ['md', 'html', 'txt'],
         colorizeBrokenLinks: true,
@@ -632,6 +647,10 @@ class Sites {
           isEnabled: false,
           title: '',
           content: ''
+        },
+        cookieConsent: {
+          isEnabled: false,
+          message: DEFAULT_COOKIE_CONSENT_MESSAGE
         },
         pageExtensions: ['md', 'html', 'txt'],
         colorizeBrokenLinks: true,

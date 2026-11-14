@@ -80,7 +80,9 @@ async function routes(app: FastifyInstance) {
           //    is the selected provider and the markup to mount, and nothing else
           comments: WIKI.models.comments.publicConfigFor(site.id),
           // -> Instance-wide, but drawn per page: whether a version an assistant wrote is marked
-          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge
+          showAiBadge: WIKI.models.mcp.getConfig().showAiBadge,
+          // -> What the cookie consent banner offers a choice about
+          hasAnalytics: WIKI.models.analytics.servesTags(site.id)
         },
         flags: WIKI.models.flags.getFlags(),
         auth: WIKI.models.authentication.getPublicConfig(),

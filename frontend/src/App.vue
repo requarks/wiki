@@ -4,6 +4,8 @@
   <w-notifications />
   <w-loading-overlay />
   <page-progress-bar />
+  <!-- -> Not in the admin area, which is never served an analytics tag to consent to -->
+  <cookie-consent-banner v-if="!isAdminArea()" />
   <w-dialog-host />
   <component :is="DevQuickMenu" v-if="DevQuickMenu" />
 </template>
@@ -21,6 +23,7 @@ import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
 import { pageProgress } from '@/composables/pageProgress'
 
+import CookieConsentBanner from '@/components/CookieConsentBanner.vue'
 import PageProgressBar from '@/components/PageProgressBar.vue'
 
 import WDialogHost from '@/components/shared/WDialogHost.vue'

@@ -590,6 +590,51 @@
           </w-item>
         </w-card>
         <!-- ----------------------- -->
+        <!-- Cookie Consent -->
+        <!-- ----------------------- -->
+        <w-card class="pb-2 mt-4">
+          <w-card-header>{{ t('admin.general.cookieConsent') }}</w-card-header>
+          <w-item tag="label">
+            <blueprint-icon icon="cookies" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.cookieConsentEnabled`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.cookieConsentEnabledHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.cookieConsent.isEnabled"
+                :aria-label="t(`admin.general.cookieConsentEnabled`)" />
+            </w-item-section>
+          </w-item>
+          <w-item v-if="state.config.cookieConsent.isEnabled">
+            <w-item-section>
+              <w-item-label caption>
+                {{
+                  state.hasAnalytics
+                    ? t('admin.general.cookieConsentAnalyticsOn')
+                    : t('admin.general.cookieConsentAnalyticsOff')
+                }}
+              </w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
+            <blueprint-icon icon="markdown" class="self-start" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.general.cookieConsentMessage`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.general.cookieConsentMessageHint`) }}</w-item-label>
+            </w-item-section>
+          </w-item>
+          <w-item>
+            <w-item-section>
+              <util-code-editor
+                v-model="state.config.cookieConsent.message"
+                language="markdown"
+                :aria-label="t(`admin.general.cookieConsentMessage`)" />
+            </w-item-section>
+          </w-item>
+        </w-card>
+        <!-- ----------------------- -->
         <!-- Uploads -->
         <!-- ----------------------- -->
         <w-card class="pb-2 mt-4" v-if="state.config.uploads">
@@ -768,6 +813,10 @@ function defaultConfig() {
       title: '',
       content: ''
     },
+    cookieConsent: {
+      isEnabled: false,
+      message: ''
+    },
     pageExtensions: '',
     colorizeBrokenLinks: true,
     logoText: false,
@@ -817,6 +866,8 @@ const state = reactive({
   //    The previews always render: without one they show the default that is served instead.
   hasLogo: false,
   hasFavicon: false,
+  // -> Whether the site serves any analytics tag, which decides what the consent banner offers
+  hasAnalytics: false,
   config: defaultConfig()
 })
 
@@ -880,6 +931,7 @@ async function load() {
   })
   state.hasLogo = resp?.assets?.logo ?? false
   state.hasFavicon = resp?.assets?.favicon ?? false
+  state.hasAnalytics = resp?.hasAnalytics === true
   loading.hide()
   state.loading--
 }
@@ -909,6 +961,10 @@ async function save() {
           isEnabled: state.config.banner?.isEnabled ?? false,
           title: state.config.banner?.title ?? '',
           content: state.config.banner?.content ?? ''
+        },
+        cookieConsent: {
+          isEnabled: state.config.cookieConsent?.isEnabled ?? false,
+          message: state.config.cookieConsent?.message ?? ''
         },
         pageExtensions: parsePageExtensions(state.config.pageExtensions),
         colorizeBrokenLinks: state.config.colorizeBrokenLinks ?? true,

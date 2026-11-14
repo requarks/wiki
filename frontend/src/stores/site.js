@@ -99,6 +99,19 @@ export const useSiteStore = defineStore('site', {
       title: '',
       content: ''
     },
+    /**
+     * The cookie consent banner (`CookieConsentBanner.vue`). `message` is markdown, rendered at display
+     * time the way the site banner's content is.
+     */
+    cookieConsent: {
+      isEnabled: false,
+      message: ''
+    },
+    /**
+     * Whether the site serves any analytics tag, which is what decides whether the consent banner
+     * offers a choice about tracking or only asks to be acknowledged. Computed by the server.
+     */
+    hasAnalytics: false,
     dark: false,
     title: '',
     description: '',
@@ -550,6 +563,11 @@ export const useSiteStore = defineStore('site', {
           ...this.banner,
           ...siteInfo.banner
         },
+        cookieConsent: {
+          ...this.cookieConsent,
+          ...siteInfo.cookieConsent
+        },
+        hasAnalytics: siteInfo.hasAnalytics === true,
         features: {
           ...this.features,
           ...siteInfo.features

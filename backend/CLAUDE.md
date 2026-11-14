@@ -161,7 +161,11 @@ Conventions established during the conversion, worth following in new code:
   does** — `npm run db-generate -- --name=comment-handles`, kebab-case, one or two terms. The script
   carries `--name=scarlett` (the branch name) as its default and a later `--name` on the command line
   overrides it, so leaving it off files the change as another `…_scarlett` directory that says nothing
-  about it.
+  about it. **A data migration (`-- --custom`) is created empty, and a running `npm run dev` applies
+  it the instant it appears** — nodemon restarts on the new file and the boot migrates — so the dev
+  database records it as done with nothing in it, and never runs the SQL written into it afterwards.
+  Stop the dev server before generating one, or write its SQL into that database by hand once it is
+  filled in.
 - **A module prop marked `sensitive` is write-only.** A route answering with a module's stored config
   runs it through `maskSensitiveProps` (`helpers/common.ts`) first, which replaces every non-empty
   sensitive value with `SENSITIVE_MASK`; the client posts the whole configuration back, and
