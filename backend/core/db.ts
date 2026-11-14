@@ -47,6 +47,18 @@ const REQUIRED_EXTENSIONS = ['ltree', 'pg_trgm']
 const LEGACY_TABLES = ['knex_migrations', 'searchEngines']
 
 /**
+ * Tables that together mark a 2.x installation in ANOTHER schema of the same database — 2.x installs
+ * into whatever schema its connection lands in, `public` unless told otherwise, while 3.x defaults to
+ * `wiki`, so pointing a 3.x config at the 2.x database finds nothing in its own schema at all.
+ *
+ * Two of these in one schema, rather than one: `knex_migrations` is simply Knex's ledger, and an
+ * unrelated application sharing the database may well have one. The other three are 2.x tables 3.x
+ * never created, and two at once is no coincidence -- while still catching a 2.x schema whose ledger
+ * somebody dropped.
+ */
+const LEGACY_SCHEMA_TABLES = ['knex_migrations', 'searchEngines', 'commentProviders', 'pageTree']
+
+/**
  * Query logger, consulted by Drizzle on every query.
  *
  * The decision is made per query rather than when the instance is built, so that the `sqlLog` system
@@ -309,20 +321,63 @@ export default {
    * migrations would run over the 2.x tables they know nothing about and leave a database that is
    * neither version. Exits rather than throws — a 2.x database is not something a retry or a later
    * boot phase can recover from, and the operator has to point the config at a fresh one.
+   *
+   * Two questions, asked of the catalog (`pg_tables`) rather than `information_schema`, which lists
+   * only the tables the connecting role has a privilege on — and a 2.x installation is as likely as
+   * not to belong to a different role:
+   *
+   *   - **The configured schema** holding either of `LEGACY_TABLES` is a 2.x database, full stop.
+   *   - **Any other schema** holding two of `LEGACY_SCHEMA_TABLES` is a 2.x installation beside it,
+   *     which is what pointing a 3.x config at the 2.x database looks like when the two disagree about
+   *     the schema (2.x in `public`, 3.x in `wiki`): the configured schema is empty, and without this
+   *     the boot would carry on and lay a fresh, empty wiki down next to the old one. Only refused
+   *     when the configured schema has no 3.x installation yet — no `migrations` ledger — so that a
+   *     3.x already running beside an old 2.x schema, deliberately or not, keeps booting; it is
+   *     warned about instead.
    */
   async checkForLegacyInstall(db: WikiDb): Promise<void> {
-    const res = await db.execute(sql`
-      SELECT table_name FROM information_schema.tables
-      WHERE table_schema = ${WIKI.config.db.schema} AND table_name IN ${LEGACY_TABLES}
+    const schema = WIKI.config.db.schema
+    const own = await db.execute(sql`
+      SELECT tablename FROM pg_catalog.pg_tables
+      WHERE schemaname = ${schema} AND tablename IN ${LEGACY_TABLES}
       LIMIT 1
     `)
-    if (res.rows.length > 0) {
+    if (own.rows.length > 0) {
       WIKI.logger.error('ERROR: UPGRADING FROM A 2.x INSTALLATION IS NOT YET SUPPORTED. Exiting...')
       WIKI.logger.error(
-        `Found the Wiki.js 2.x table "${res.rows[0].table_name}" in schema "${WIKI.config.db.schema}".`
+        `Found the Wiki.js 2.x table "${own.rows[0].tablename}" in schema "${schema}".`
       )
       process.exit(1)
     }
+
+    const elsewhere = await db.execute(sql`
+      SELECT schemaname FROM pg_catalog.pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema', ${schema})
+        AND tablename IN ${LEGACY_SCHEMA_TABLES}
+      GROUP BY schemaname
+      HAVING count(*) >= 2
+      ORDER BY schemaname
+    `)
+    if (elsewhere.rows.length < 1) {
+      return
+    }
+    const legacySchemas = elsewhere.rows.map((row) => `"${row.schemaname}"`).join(', ')
+    const installed = await db.execute(sql`
+      SELECT 1 FROM pg_catalog.pg_tables
+      WHERE schemaname = ${schema} AND tablename = 'migrations'
+      LIMIT 1
+    `)
+    if (installed.rows.length > 0) {
+      WIKI.logger.warn(
+        `A Wiki.js 2.x installation was found in schema ${legacySchemas} of this database. It is not used by this installation, which is in schema "${schema}".`
+      )
+      return
+    }
+    WIKI.logger.error('ERROR: UPGRADING FROM A 2.x INSTALLATION IS NOT YET SUPPORTED. Exiting...')
+    WIKI.logger.error(
+      `Found a Wiki.js 2.x installation in schema ${legacySchemas} of this database. This installation is configured for schema "${schema}" and would be created empty beside it. Point the database configuration at a separate, empty database to install Wiki.js 3.x.`
+    )
+    process.exit(1)
   },
   /**
    * Migrate DB Schemas
