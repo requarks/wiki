@@ -1,0 +1,188 @@
+key: oauth2
+title: OAuth2
+description: Sign in through any OAuth 2.0 provider that answers who the user is from a user info endpoint, without an ID token — Mattermost, Rocket.Chat and the like. For a provider that speaks OpenID Connect, use that strategy instead.
+author: requarks.io
+icon: /_assets/icons/ultraviolet-oauth2.svg
+color: blue-grey-8
+isAvailable: true
+useForm: false
+usernameType: email
+props:
+  clientId:
+    type: String
+    title: Client ID
+    hint: Application Client ID, as the provider issued it.
+    icon: key
+    order: 1
+  clientSecret:
+    type: String
+    title: Client Secret
+    hint: Application Client Secret, as the provider issued it.
+    icon: password
+    sensitive: true
+    order: 2
+  authorizationURL:
+    type: String
+    title: Authorization Endpoint URL
+    hint: Where the browser is sent to log in, e.g. https://chat.example.com/oauth/authorize.
+    icon: enter
+    order: 3
+  tokenURL:
+    type: String
+    title: Token Endpoint URL
+    hint: Where the authorization code is exchanged for an access token, e.g. https://chat.example.com/oauth/access_token.
+    icon: exit
+    order: 4
+  userInfoURL:
+    type: String
+    title: User Info Endpoint URL
+    hint: Where the access token is spent to learn who signed in, e.g. https://chat.example.com/api/v4/users/me. It must answer with a JSON object about the account the token belongs to — every claim below is read from it.
+    icon: contact
+    order: 5
+  logoutURL:
+    type: String
+    title: Logout URL
+    hint: Optional - Where the browser is sent once the wiki has logged somebody out, so that the provider's own session ends too. Sent as it is — OAuth2 has no standard way of asking the provider to send the browser back afterwards. Without it, signing out leaves the provider still signed in and the next login goes through without a password being asked for.
+    icon: exit
+    order: 6
+  allowInsecureHttp:
+    type: Boolean
+    title: Allow Insecure HTTP
+    hint: Allow the endpoints above to be plain http:// URLs. Off, they must be https://. They carry the authorization code, the client secret and the access token, and over plain HTTP anything between the wiki, the browser and the provider can read them. Turn on only for a provider on a network you trust, such as a test server.
+    icon: security-ssl
+    default: false
+    order: 7
+  clientAuthMethod:
+    type: String
+    title: Client Authentication
+    hint: How the Client ID and Secret are presented to the token endpoint. In the request body is what most providers that are not OpenID Connect expect; the Authorization header is the one RFC 6749 says every provider must accept. Only one is sent — a provider may refuse a request carrying both.
+    icon: password
+    enum:
+      - post|In the request body (client_secret_post)
+      - basic|In an Authorization header (client_secret_basic)
+    default: post
+    order: 8
+  usePkce:
+    type: Boolean
+    title: Use PKCE
+    hint: Bind the authorization code to this login with a PKCE challenge, so that a code intercepted on its way back is useless to anybody else. Providers that do not support it generally ignore it; turn it off only for one that refuses the login because of it.
+    icon: secure
+    default: true
+    order: 9
+  scopes:
+    type: String
+    title: Scopes
+    hint: Optional - Space-separated, as the provider documents them. Left empty, no scope is asked for and the provider grants its default, which is all Mattermost and Rocket.Chat have.
+    icon: rules
+    default: ''
+    order: 10
+  useQueryStringForAccessToken:
+    type: Boolean
+    title: Pass access token via GET query string to User Info Endpoint
+    hint: Pass the access token in an `access_token` parameter attached to the GET query string of the User Info Endpoint URL. Otherwise the access token will be passed in the Authorization header, which is the one to use — the query string puts a live credential in every access log between here and the provider.
+    icon: download-from-cloud
+    default: false
+    order: 11
+  idClaim:
+    type: String
+    title: ID Claim
+    hint: Which field of the user info answer carries the provider's own identifier for the account — one that never changes, not a username that can be renamed. Usually id (Mattermost) or sub (Rocket.Chat's /oauth/userinfo). A number is accepted too. A dotted path reaches into a nested object, e.g. `data.id`, and a number in it indexes a list.
+    icon: key
+    default: id
+    order: 12
+  emailClaim:
+    type: String
+    title: Email Claim
+    hint: Which field carries the email address, e.g. `email`, or `emails.0.address` for a list of them.
+    icon: envelope
+    default: email
+    order: 13
+  requireVerifiedEmail:
+    type: Boolean
+    title: Require Verified Email
+    hint: Refuse a login or registration unless the provider says it has verified the email address. An account here is matched by address, so an unverified one says nothing about who holds the mailbox — on a provider that lets people type in any address they like, it is a way into somebody else's account.
+    icon: secure
+    default: false
+    order: 14
+  verifiedEmailClaim:
+    type: String
+    title: Verified Email Claim
+    hint: Which field says the email address was verified, e.g. `email_verified`, or `emails.0.verified`. Only `true` (also as the string "true", in any casing) or `1` counts; anything else, the field missing included, refuses the login.
+    icon: email-open
+    default: email_verified
+    order: 15
+    if:
+      - { key: 'requireVerifiedEmail', eq: true }
+  displayNameClaim:
+    type: String
+    title: Display Name Claim
+    hint: Which field carries the name to show, e.g. `name`, or `username` for a provider with no full name in one field. Falls back to the email address when the field is absent.
+    icon: person
+    default: name
+    order: 16
+  pictureClaim:
+    type: String
+    title: Picture Claim
+    hint: Optional - Which field carries the absolute URL of the account's picture, fetched on login and stored as the avatar. It is fetched without the access token, so a picture the provider only serves to a signed-in client cannot be used. Leave empty to let people keep whatever avatar they set here.
+    icon: image
+    default: ''
+    order: 17
+  handleClaim:
+    type: String
+    title: Handle Claim
+    hint: Optional - Which field carries the person's mention handle, e.g. `username` or `preferred_username`. Copied to their profile on every login, replacing what was set here. A value that is not 3 to 32 letters, digits, hyphens and underscores, or that another account already holds, is skipped and the handle left as it was. Leave empty to let people pick their own.
+    icon: rename
+    default: ''
+    order: 18
+  locationClaim:
+    type: String
+    title: Location Claim
+    hint: Optional - Which field carries where the person is. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: geography
+    default: ''
+    order: 19
+  jobTitleClaim:
+    type: String
+    title: Job Title Claim
+    hint: Optional - Which field carries the person's job title, e.g. `position`. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: new-job
+    default: ''
+    order: 20
+  pronounsClaim:
+    type: String
+    title: Pronouns Claim
+    hint: Optional - Which field carries the person's pronouns. Copied to their profile on every login, replacing what was set here. Leave empty to let people set their own.
+    icon: gender
+    default: ''
+    order: 21
+  mapGroups:
+    type: Boolean
+    title: Map Groups
+    hint: Put the user in the wiki groups a field names, on every login. Only groups that already exist here are matched, by name and ignoring case — nothing is created.
+    icon: user-groups
+    default: false
+    order: 22
+  groupsClaim:
+    type: String
+    title: Groups Claim
+    hint: Which field carries the group names. Either one name or a list of them, e.g. `groups` or `roles`. A dotted path reaches into a nested object.
+    icon: rules
+    default: groups
+    order: 23
+    if:
+      - { key: 'mapGroups', eq: true }
+  unassignMissingGroups:
+    type: Boolean
+    title: Unassign from groups no longer present in claim
+    hint: Off adds what the field names and takes nothing away, so a membership granted here survives. On makes the provider the authority instead, and a group it stops naming is taken back — bar the ones this strategy auto-enrolls into, which are granted here to everyone it lets in.
+    icon: unfriend
+    default: false
+    order: 24
+    if:
+      - { key: 'mapGroups', eq: true }
+refs:
+  callbackUrl:
+    title: Authorization Callback URL
+    hint: Register this as the redirect / callback URI at the provider. If you have multiple sites using this strategy, you must register all the site hostnames as well.
+    icon: back
+    value: '{host}/_api/auth/{id}/callback'

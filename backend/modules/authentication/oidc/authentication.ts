@@ -1,20 +1,13 @@
 import { isPlainObject } from 'es-toolkit/predicate'
 import * as client from 'openid-client'
+import { profileFromClaims } from '../../../helpers/authClaims.ts'
 import { describeAuthError, missingSettings, strategyDebug } from '../../../helpers/authDebug.ts'
 import type {
   AuthFlow,
   AuthFlowCallback,
   AuthLogout,
-  ProviderProfile,
-  ProviderProfileMetaKey
+  ProviderProfile
 } from '../../../models/authentication.ts'
-
-/** Which setting names the claim for each profile field a provider may fill in. */
-const META_CLAIM_SETTINGS: Record<ProviderProfileMetaKey, string> = {
-  location: 'locationClaim',
-  jobTitle: 'jobTitleClaim',
-  pronouns: 'pronounsClaim'
-}
 
 /**
  * OpenID Connect / OAuth2
@@ -348,46 +341,7 @@ export default class OidcAuthentication {
       unless an administrator names another claim. Whichever it is, it is what the account is linked
       by from here on — the ID token's own subject stays what the library verified the answer against.
     */
-    const idClaim = this.conf.idClaim || 'sub'
-    const id = info[idClaim]
-    if (!id || typeof id !== 'string') {
-      strategyDebug(
-        this,
-        `the \`${idClaim}\` claim carries no identifier for this account (Unique ID Claim)`
-      )
-      throw new Error('ERR_NO_PROVIDER_ACCOUNT')
-    }
-    const emailClaim = this.conf.emailClaim || 'email'
-    const email = info[emailClaim]
-    if (!email || typeof email !== 'string') {
-      strategyDebug(
-        this,
-        `the \`${emailClaim}\` claim carries no address, and an account here is matched by address (Email Claim)`
-      )
-      throw new Error('ERR_NO_EMAIL_FROM_PROVIDER')
-    }
-    this.checkEmailVerified(info, email)
-    const groups = this.conf.mapGroups === true ? this.groupsFrom(info) : undefined
-    strategyDebug(
-      this,
-      `${id} signs in as <${email}>${groups ? `, in ${groups.length} provider group(s)` : ', groups not mapped'}`
-    )
-    return {
-      id,
-      email,
-      name: (info[this.conf.displayNameClaim || 'name'] as string) || email,
-      picture: this.pictureFrom(info),
-      meta: this.metaFrom(info),
-      ...this.handleFrom(info),
-      // -> Absent rather than empty when groups are not mapped: an empty list is the provider saying
-      //    this person is in none, which with `unassignMissingGroups` on takes memberships away
-      ...(groups
-        ? {
-            groups,
-            groupsExclusive: this.conf.unassignMissingGroups === true
-          }
-        : {})
-    }
+    return profileFromClaims(this, info, { idClaim: 'sub' })
   }
 
   /**
@@ -441,138 +395,6 @@ export default class OidcAuthentication {
       )
       throw new Error('ERR_ACR_NOT_SATISFIED')
     }
-  }
-
-  /**
-   * Hold the provider to having verified the email address, when the strategy requires it.
-   *
-   * Read from the merged answer rather than the ID token alone, unlike `acr`: the address itself is
-   * read from there, and a provider that keeps `email` behind the userinfo endpoint keeps
-   * `email_verified` beside it.
-   *
-   * The spec makes `email_verified` a JSON boolean, and `true` is the answer to expect. The rest of
-   * what counts is what providers are known to send instead, all of it unambiguous: the string
-   * `"true"` in any casing (Cognito sends `"true"`, a claim mapped from a string attribute or written
-   * by Python's `str()` comes out `"True"`), and `1` or `"1"` from a provider storing the flag as an
-   * integer column. Nothing looser — `"yes"` or `"verified"` is a value this would have to guess at,
-   * and one it should refuse.
-   *
-   * Absent counts as not verified — this is the check that stops an address nobody proved they hold
-   * from logging into the account that has it, so the direction for it to fail in is closed.
-   *
-   * @throws `ERR_EMAIL_NOT_VERIFIED`
-   */
-  private checkEmailVerified(info: Record<string, any>, email: string): void {
-    if (this.conf.requireVerifiedEmail !== true) {
-      return
-    }
-    const claim = this.conf.verifiedEmailClaim || 'email_verified'
-    const verified = info[claim]
-    const normalized = typeof verified === 'string' ? verified.trim().toLowerCase() : verified
-    if (normalized !== true && normalized !== 1 && normalized !== 'true' && normalized !== '1') {
-      strategyDebug(
-        this,
-        `the \`${claim}\` claim does not say <${email}> is verified (it says ${JSON.stringify(verified) ?? 'nothing'}), and this strategy requires a verified address (Verified Email Claim)`
-      )
-      throw new Error('ERR_EMAIL_NOT_VERIFIED')
-    }
-  }
-
-  /**
-   * The URL of the account's picture, if the claim carrying it names one.
-   *
-   * An empty claim name turns this off, which is how a wiki lets people keep an avatar they chose
-   * here rather than having it replaced at every sign-in.
-   */
-  private pictureFrom(info: Record<string, any>): string | undefined {
-    const claim = this.conf.pictureClaim ?? 'picture'
-    if (!claim) {
-      return undefined
-    }
-    const value = info[claim]
-    return typeof value === 'string' && value.length > 0 ? value : undefined
-  }
-
-  /**
-   * The profile fields the claims carry, for those an administrator has mapped.
-   *
-   * Every one is unmapped by default, so people keep what they set here. A mapped claim that is
-   * missing from the answer leaves the field alone too — a provider that leaves a claim out has
-   * usually not been asked for it (a scope, an attribute not released to this client), which is not
-   * the same as saying the person has none. A claim that is present but empty does clear it.
-   */
-  private metaFrom(info: Record<string, any>): ProviderProfile['meta'] {
-    const meta: ProviderProfile['meta'] = {}
-    for (const [key, setting] of Object.entries(META_CLAIM_SETTINGS) as [
-      ProviderProfileMetaKey,
-      string
-    ][]) {
-      const claim = this.conf[setting]
-      if (!claim) {
-        continue
-      }
-      const value = info[claim]
-      if (typeof value !== 'string') {
-        strategyDebug(
-          this,
-          `the \`${claim}\` claim carries no text for ${key}, which is left as it was`
-        )
-        continue
-      }
-      meta[key] = value
-    }
-    return meta
-  }
-
-  /**
-   * The mention handle the claim carries, when one is mapped.
-   *
-   * Unmapped by default, and a mapped claim missing from the answer leaves the handle alone, for the
-   * same reasons as `metaFrom`. Whether the value is a handle this wiki accepts, and whether it is
-   * free, is decided where it is stored.
-   */
-  private handleFrom(info: Record<string, any>): Pick<ProviderProfile, 'handle'> {
-    const claim = this.conf.handleClaim
-    if (!claim) {
-      return {}
-    }
-    const value = info[claim]
-    if (typeof value !== 'string') {
-      strategyDebug(
-        this,
-        `the \`${claim}\` claim carries no text for handle, which is left as it was`
-      )
-      return {}
-    }
-    return { handle: value }
-  }
-
-  /**
-   * The group names the claim carries.
-   *
-   * Either one name or a list of them: a provider with a single group per account commonly sends the
-   * bare string, and both forms mean the same thing here. Anything else in the list — a nested object
-   * from a provider that sends group records rather than names — is skipped rather than stringified,
-   * since a name that matches nothing is a membership silently not granted.
-   */
-  private groupsFrom(info: Record<string, any>): string[] {
-    const claim = this.conf.groupsClaim || 'groups'
-    const value = info[claim]
-    const raw = typeof value === 'string' ? [value] : Array.isArray(value) ? value : []
-    const names = raw
-      .filter((entry) => typeof entry === 'string' && entry.trim().length > 0)
-      .map((entry) => entry.trim())
-    /*
-      Said even when it is empty, and especially then: a provider that emits the groups claim only for
-      a client asking for the right scope — or only once the claim is configured on the application —
-      answers with nothing here, which is not distinguishable on the wiki side from somebody genuinely
-      being in no group.
-    */
-    strategyDebug(
-      this,
-      `the \`${claim}\` claim names ${names.length} group(s): ${names.join(', ') || 'none'}`
-    )
-    return names
   }
 
   /**
