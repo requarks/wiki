@@ -584,6 +584,13 @@ function normalizeIcon(value: unknown): string | undefined {
 
 class Import {
   /**
+   * Per session, the 2.x locale codes this instance already failed to serve — see `#localeMapperFor`.
+   * Held in memory because it is only an economy: another instance of an HA set tries once more and
+   * says so once more, which is all that is lost.
+   */
+  #unresolvedLocales = new Map<string, Set<string>>()
+
+  /**
    * Check a package before anything is written.
    *
    * Everything answerable from `manifest.json` alone, which the browser has read by the time it calls
@@ -906,7 +913,8 @@ class Import {
   }
 
   /**
-   * What a record's 2.x locale code is filed under on this site.
+   * What a batch's 2.x locale codes are filed under on this site — after making sure the site serves
+   * each of them.
    *
    * The settings step matches 2.x's codes onto 3.x's and sets the site's active locales to the result
    * — 2.x's `it` becomes `it-IT` — but every record still carries the 2.x code, and content written
@@ -915,23 +923,66 @@ class Import {
    * the outcome gives the same answer the settings step gave (it picks the shortest candidate among a
    * superset of these), which is what keeps this from having to be stored on the session.
    *
+   * **A language the site does not serve is installed and added to it before anything is written.**
+   * The settings step only knows the languages 2.x listed as active, and does nothing at all when
+   * Settings is left unticked — yet a 2.x wiki holds pages in languages it no longer listed, and those
+   * pages were otherwise filed under a code that is neither installed nor served: imported, and
+   * unreachable. The content itself is the authority on which languages it needs, so every content
+   * stream asks here with its batch in hand. The install and the matching are `#installLocales`, the
+   * same as the settings step's.
+   *
+   * A code that still cannot be served — an offline instance, a language 3.x does not publish — is
+   * kept as it is, and reported once per session rather than once per batch: `#unresolvedLocales`
+   * remembers it, so the next batch neither repeats the warning nor fetches the upstream list again.
+   *
    * Read from the database rather than `WIKI.sites`, once per batch: in an HA set the batch after the
-   * settings step can land on an instance that has not heard the site changed. A code with no match
-   * among the active locales — Settings left unticked, a language the site does not serve — is kept
-   * as it is, which `#localesStream` has already warned about.
+   * settings step can land on an instance that has not heard the site changed.
    */
-  async #localeMapperFor(siteId: string): Promise<(code: string) => string> {
+  async #localeMapperFor(
+    session: ImportSession,
+    siteId: string,
+    records: any[],
+    warnings: string[]
+  ): Promise<(code: string) => string> {
     const rows = await WIKI.db
       .select({ config: sitesTable.config })
       .from(sitesTable)
       .where(eq(sitesTable.id, siteId))
       .limit(1)
-    const active = (rows[0]?.config as any)?.locales?.active
-    const available: string[] = Array.isArray(active) ? active : []
+    const configured = (rows[0]?.config as any)?.locales?.active
+    const active: string[] = Array.isArray(configured) ? [...configured] : []
+
+    const unresolved = this.#unresolvedLocales.get(session.id) ?? new Set<string>()
+    const unserved = [
+      ...new Set(records.map((record) => stringOf(record?.localeCode).trim()).filter(Boolean))
+    ].filter((code) => !matchLocale(code, active) && !unresolved.has(code))
+    if (unserved.length > 0) {
+      const matched = await this.#installLocales(unserved, warnings)
+      for (const code of unserved) {
+        if (!matched.has(code)) {
+          unresolved.add(code)
+          warnings.push(
+            `Content in the locale "${code}" is filed under that code as it stands, which this site does not serve.`
+          )
+        }
+      }
+      if (unresolved.size > 0) {
+        this.#unresolvedLocales.set(session.id, unresolved)
+      }
+      const added = [...new Set(matched.values())].filter((code) => !active.includes(code))
+      if (added.length > 0) {
+        active.push(...added)
+        await WIKI.models.sites.updateSite(siteId, { config: { locales: { active } } })
+        warnings.push(
+          `Added ${added.map((code) => `"${code}"`).join(', ')} to the site's locales, for the content imported in them.`
+        )
+      }
+    }
+
     const cache = new Map<string, string>()
     return (code) => {
       if (!cache.has(code)) {
-        cache.set(code, matchLocale(code, available) ?? code)
+        cache.set(code, matchLocale(code, active) ?? code)
       }
       return cache.get(code) as string
     }
@@ -1045,7 +1096,7 @@ class Import {
   ): Promise<IngestResult> {
     switch (stream) {
       case 'locales':
-        return this.#localesStream(session, records)
+        return this.#localesStream(records)
       case 'groups':
         return this.#groupsStream(session, records)
       case 'users':
@@ -1067,7 +1118,7 @@ class Import {
   ): Promise<IngestResult> {
     switch (stream) {
       case 'tree':
-        return this.#treeStream(target, records)
+        return this.#treeStream(session, target, records)
       case 'site':
         return this.#siteStream(target, records)
       case 'pages':
@@ -1094,50 +1145,21 @@ class Import {
   // ==============================================================================================
 
   /**
-   * Locales — reported, never installed.
+   * Locales — counted, not acted on.
    *
-   * Installing one is a download from a third party, and doing it unasked in the middle of somebody's
-   * migration is not this feature's business. What matters is that the operator learns their pages
-   * are arriving in a locale this wiki has no strings for, while there is still time to add it.
+   * 2.x's table carries a row for every locale it knows of, active or not, so most of what arrives
+   * here is a locale nobody ever wrote a page in, and installing from this list would download
+   * languages nothing uses. The locales that matter are installed where they are known for certain:
+   * the site's own list by the settings step, and whatever the content arrives in by the content
+   * streams themselves (`#localeMapperFor`) — which is also where a locale that cannot be installed is
+   * reported.
    */
-  async #localesStream(session: ImportSession, records: any[]): Promise<IngestResult> {
+  async #localesStream(records: any[]): Promise<IngestResult> {
     const installed = new Set(
       (await WIKI.models.locales.getInstalledLocales()).map((locale: any) => locale.code)
     )
-    /*
-      Whether anything is worth saying about a locale that is missing.
-
-      The settings stream installs the ones the site actually uses, matching 2.x's codes onto this
-      wiki's as it goes — and it runs minutes before this log is read. Warning here as well said a
-      locale was missing and named a screen to go and fix it by hand, for locales the import then
-      installed by itself two steps later. So the warning belongs to the case where nothing is going
-      to install them: Settings left unticked.
-    */
-    const settingsWillInstall = session.includes.includes('settings')
-    const warnings: string[] = []
-    let imported = 0
-    for (const record of records) {
-      const code = stringOf(record?.code).trim()
-      if (!code) {
-        continue
-      }
-      if (installed.has(code)) {
-        imported++
-        continue
-      }
-      /*
-        And only for a locale the source wiki was actually SERVING. 2.x's table carries a row for
-        every locale it knows of, active or not, so most of what arrives here is a locale nobody ever
-        wrote a page in. `isActive` is the exporter's flag; a package written without it is treated as
-        active, which errs towards saying too much rather than too little.
-      */
-      if (!settingsWillInstall && record?.isActive !== false) {
-        warnings.push(
-          `The package uses the locale "${code}", which is not installed here. Its content is imported either way; install it under Administration → Locale, or tick Settings to have the import do it.`
-        )
-      }
-    }
-    return { imported, skipped: records.length - imported, warnings }
+    const imported = records.filter((record) => installed.has(stringOf(record?.code).trim())).length
+    return { imported, skipped: records.length - imported, warnings: [] }
   }
 
   /**
@@ -1517,9 +1539,13 @@ class Import {
    * Pages and assets create the folders they need on their way in, so this stream exists for the two
    * things they cannot supply: the title somebody gave a folder, and a folder with nothing in it.
    */
-  async #treeStream(target: ImportSessionSite, records: any[]): Promise<IngestResult> {
+  async #treeStream(
+    session: ImportSession,
+    target: ImportSessionSite,
+    records: any[]
+  ): Promise<IngestResult> {
     const warnings: string[] = []
-    const localeOf = await this.#localeMapperFor(target.siteId)
+    const localeOf = await this.#localeMapperFor(session, target.siteId, records, warnings)
     let imported = 0
     let skipped = 0
 
@@ -1557,23 +1583,9 @@ class Import {
   }
 
   /**
-   * The locales a 2.x site was running, matched onto this wiki's codes and installed.
-   *
-   * **The codes are not the same vocabulary.** 2.x lowercases everything and carries a mixture of
-   * bare languages and language-region pairs (`en`, `fr`, `zh`, `pt-br`); 3.x uses BCP-47 as it is
-   * published upstream, where the region is capitalised (`pt-BR`, `zh-CN`). So an exact match is
-   * tried first, case-insensitively, and failing that the two are compared on their language alone —
-   * which is what turns 2.x's `pt-br` into `pt-BR`, and its bare `zh` into whichever Chinese this
-   * wiki publishes.
-   *
-   * A language match prefers the shortest candidate, so a bare `pt` wins over `pt-BR` when both
-   * exist: picking a region for somebody who never chose one is a guess, where falling back to the
-   * language is the same thing they had.
-   *
-   * Installing pulls the strings from upstream, so it needs the network and is skipped entirely on an
-   * `offline` instance. None of it is allowed to fail the import: a locale that cannot be fetched is
-   * reported and left out of the active list, because a site set to a language whose strings are not
-   * here reads as a half-translated wiki.
+   * The locales a 2.x site was running, matched onto this wiki's codes and installed — see
+   * `#installLocales` for both. What did not come through is left out of the active list, and a
+   * primary that did not survive falls back to one that did.
    */
   async #importLocales(
     source: any,
@@ -1593,6 +1605,43 @@ class Import {
       return null
     }
 
+    const matched = await this.#installLocales(wanted, warnings)
+    const resolved = [...new Set(matched.values())]
+    if (resolved.length < 1) {
+      return null
+    }
+    const primary = source?.primary ? matched.get(stringOf(source.primary).trim()) : undefined
+    return {
+      // -> The site has to be readable in its primary locale, so one that did not survive the matching
+      //    falls back to whatever did rather than leaving the site pointed at nothing
+      primary: primary ?? resolved[0],
+      active: resolved
+    }
+  }
+
+  /**
+   * 2.x locale codes matched onto this wiki's, and each match installed.
+   *
+   * Answers each code that came through with the 3.x code it became; one that did not is reported in
+   * `warnings` and absent from the answer.
+   *
+   * **The codes are not the same vocabulary.** 2.x lowercases everything and carries a mixture of
+   * bare languages and language-region pairs (`en`, `fr`, `zh`, `pt-br`); 3.x uses BCP-47 as it is
+   * published upstream, where the region is capitalised (`pt-BR`, `zh-CN`). So an exact match is
+   * tried first, case-insensitively, and failing that the two are compared on their language alone —
+   * which is what turns 2.x's `pt-br` into `pt-BR`, and its bare `zh` into whichever Chinese this
+   * wiki publishes.
+   *
+   * A language match prefers the shortest candidate, so a bare `pt` wins over `pt-BR` when both
+   * exist: picking a region for somebody who never chose one is a guess, where falling back to the
+   * language is the same thing they had.
+   *
+   * Installing pulls the strings from upstream, so it needs the network and is skipped entirely on an
+   * `offline` instance. None of it is allowed to fail the import: a locale that cannot be fetched is
+   * reported and left out of the answer, because a site set to a language whose strings are not here
+   * reads as a half-translated wiki.
+   */
+  async #installLocales(wanted: string[], warnings: string[]): Promise<Map<string, string>> {
     const installed = (await WIKI.models.locales.getLocales({ cache: false }))
       .filter((locale: any) => locale.isInstalled)
       .map((locale: any) => locale.code as string)
@@ -1624,7 +1673,7 @@ class Import {
       }
     }
 
-    const resolved: string[] = []
+    const matched = new Map<string, string>()
     for (const code of wanted) {
       const match = matchLocale(code, available)
       if (!match) {
@@ -1644,19 +1693,9 @@ class Import {
           continue
         }
       }
-      resolved.push(match)
+      matched.set(code, match)
     }
-
-    if (resolved.length < 1) {
-      return null
-    }
-    const primary = source?.primary ? matchLocale(stringOf(source.primary), resolved) : null
-    return {
-      // -> The site has to be readable in its primary locale, so one that did not survive the matching
-      //    falls back to whatever did rather than leaving the site pointed at nothing
-      primary: primary ?? resolved[0],
-      active: [...new Set(resolved)]
-    }
+    return matched
   }
 
   /**
@@ -1804,7 +1843,7 @@ class Import {
     /** Source editor → how many pages of it changed editor on the way in. */
     const converted = new Map<string, number>()
     const convertHtml = session.htmlConversion !== 'html'
-    const localeOf = await this.#localeMapperFor(target.siteId)
+    const localeOf = await this.#localeMapperFor(session, target.siteId, records, warnings)
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
@@ -2302,7 +2341,7 @@ class Import {
       'page',
       records.map((record) => record?.pageId)
     )
-    const localeOf = await this.#localeMapperFor(target.siteId)
+    const localeOf = await this.#localeMapperFor(session, target.siteId, records, warnings)
 
     for (const record of records) {
       const pagePath = stringOf(record?.path)
@@ -2556,7 +2595,7 @@ class Import {
     const warnings: string[] = []
     let imported = 0
     let skipped = 0
-    const localeOf = await this.#localeMapperFor(target.siteId)
+    const localeOf = await this.#localeMapperFor(session, target.siteId, records, warnings)
     // -> The stream order puts this after pages and assets, so everything a sidebar points at is here
     const resolve = await this.#linkResolverFor(target.siteId)
 
@@ -2743,6 +2782,7 @@ class Import {
   }
 
   async #clearStaging(sessionId: string): Promise<void> {
+    this.#unresolvedLocales.delete(sessionId)
     try {
       await fs.rm(this.stagingDir(sessionId), { recursive: true, force: true })
     } catch (err: any) {

@@ -655,9 +655,10 @@ Rows of 2.x's `locales`, plus two flags the exporter adds:
   "availability": 100, "isPrimary": true, "isActive": true }
 ```
 
-Only `code` is read. The importer checks each against the locales installed here and reports the ones
-that are not; it installs nothing, because that is a download from a third party in the middle of
-somebody's migration.
+Only `code` is read, and only to count the ones already installed here. Nothing is installed from
+this list: 2.x's table holds a row for every locale it knows of, used or not. The locales a site
+needs are installed by the site's settings and by the content itself — see
+[Locale codes are not the same vocabulary](#locale-codes-are-not-the-same-vocabulary).
 
 ### `streams/groups.ndjson`
 
@@ -986,7 +987,13 @@ survive falls back to one that did rather than leaving the site pointed at nothi
 **Content follows the same matching.** Every folder, page, history and navigation record carries
 2.x's code in `localeCode`, and is filed under that code matched — the same way — against the
 locales the target site is active in. Content stored under `it` on a site serving `it-IT` is in the
-database and nowhere in the interface. A code with no match there is kept as it is.
+database and nowhere in the interface.
+
+**Content in a locale the site does not serve brings it in.** Before a batch is written, any code in
+it with no match among the site's active locales is matched and installed exactly as above, and added
+to the site's active locales — whether or not Settings was ticked, since a 2.x wiki holds pages in
+languages its own settings no longer listed. A code that still cannot be served (offline, or not
+published for 3.x) is kept as it is and reported once per import.
 
 ### `streams/settings.json`
 
