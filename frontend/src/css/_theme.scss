@@ -28,7 +28,7 @@ $sidebar: $primary;
 
 /*
   The width of the two rails that frame every editor: the page actions rail down the right of every
-  page (`PageActionsCol.vue`), and the insert rail down the left of each editor -- Markdown, AsciiDoc
+  editor (`PageActionsCol.vue`, which a right-to-left page outside the editor has on its left), and the insert rail down the left of each editor -- Markdown, AsciiDoc
   and Visual. One value because they are one piece of chrome at either edge of the same screen, and
   the preview panes' measure is worked out from both. Also the height of the actions rail's buttons
   (`h-12`), so the rail is a column of squares, and room for the insert rail's 40px buttons with a

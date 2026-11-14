@@ -306,6 +306,19 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item tag="label">
+            <blueprint-icon icon="translation" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.theme.invertPositionsForRtl`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.theme.invertPositionsForRtlHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.invertPositionsForRtl"
+                :aria-label="t(`admin.theme.invertPositionsForRtl`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
             <blueprint-icon icon="print" />
             <w-item-section>
               <w-item-label>{{ t(`admin.theme.showPrintBtn`) }}</w-item-label>
@@ -440,6 +453,7 @@ function defaultConfig() {
     contentWidth: 'full',
     sidebarPosition: 'left',
     tocPosition: 'right',
+    invertPositionsForRtl: true,
     showPrintBtn: true,
     showPageProgress: true,
     pageTransitions: true,
@@ -865,6 +879,7 @@ async function save() {
       contentWidth: state.config.contentWidth,
       sidebarPosition: state.config.sidebarPosition,
       tocPosition: state.config.tocPosition,
+      invertPositionsForRtl: state.config.invertPositionsForRtl,
       showPrintBtn: state.config.showPrintBtn,
       showPageProgress: state.config.showPageProgress,
       pageTransitions: state.config.pageTransitions,

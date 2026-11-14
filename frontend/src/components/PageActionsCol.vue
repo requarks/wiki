@@ -9,9 +9,17 @@
     Page Properties keeps the rail's full square; every other button is 48px. The primary action for
     the page reads as the largest target, and the rest sit quieter beneath it.
   -->
+  <!--
+    At the far end of the page from where its text starts: the right on a left-to-right interface and
+    the left on a right-to-left one -- `side`, which the page decides (`pages/Index.vue`). Physical
+    order and not `dir`, since the row this sits in is laid out in physical terms throughout.
+  -->
   <div
-    class="page-actions flex flex-col items-stretch order-last"
-    :class="editorStore.isActive ? `is-editor` : ``">
+    class="page-actions flex flex-col items-stretch"
+    :class="[
+      isLeft ? `order-first page-actions--left` : `order-last`,
+      { 'is-editor': editorStore.isActive }
+    ]">
     <template v-if="userStore.can(`write:pages`)">
       <!--
         Off for a redirection: the panel is contents, tags, ratings, comments and scripts, all of them
@@ -27,7 +35,7 @@
         :disable="isRedirect"
         aria-label="Page Properties"
         @click="togglePageProperties">
-        <w-tooltip anchor="center left" self="center right">Page Properties</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Page Properties</w-tooltip>
       </w-btn>
       <w-btn
         class="h-12"
@@ -39,7 +47,7 @@
         aria-label="Page Data"
         @click="togglePageData"
         disable>
-        <w-tooltip anchor="center left" self="center right">Page Data</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Page Data</w-tooltip>
       </w-btn>
       <!-- -> Nothing can be pasted or dropped onto a redirection: it is a form, not a document -->
       <w-btn
@@ -61,8 +69,12 @@
           floating>
           <strong>{{ editorStore.pendingAssets.length * 1 }}</strong>
         </w-badge>
-        <w-tooltip anchor="center left" self="center right">Pending Asset Uploads</w-tooltip>
-        <w-menu ref="menuPendingAssets" anchor="top left" self="top right" :offset="[10, 0]">
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Pending Asset Uploads</w-tooltip>
+        <w-menu
+          ref="menuPendingAssets"
+          :anchor="menuAnchor"
+          :self="menuSelf"
+          :offset="[isLeft ? -10 : 10, 0]">
           <w-card style="width: 450px">
             <w-card-section class="card-header">
               <w-icon name="img:/_assets/icons/color-data-pending.svg" left size="sm" />
@@ -120,7 +132,7 @@
       :color="editorStore.isActive ? `white` : `grey`"
       aria-label="Page History"
       @click="viewPageHistory">
-      <w-tooltip anchor="center left" self="center right">Page History</w-tooltip>
+      <w-tooltip :anchor="tipAnchor" :self="tipSelf">Page History</w-tooltip>
     </w-btn>
     <!--
       `read:source` likewise, granted per path by a rule — so guests have it wherever a rule says so,
@@ -135,7 +147,7 @@
       :color="editorStore.isActive ? `white` : `grey`"
       aria-label="Page Source"
       @click="viewPageSource">
-      <w-tooltip anchor="center left" self="center right">Page Source</w-tooltip>
+      <w-tooltip :anchor="tipAnchor" :self="tipSelf">Page Source</w-tooltip>
     </w-btn>
     <!-- -> `showPageActions` takes the rule with it: a separator over a button that opens nothing is a
             line drawn for its own sake -->
@@ -149,7 +161,7 @@
         icon="la:ellipsis-h"
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Page Actions">
-        <w-tooltip anchor="center left" self="center right">Page Actions</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Page Actions</w-tooltip>
         <!--
           Literal colour classes, not WIcon's `color` prop: that builds `text-<name>` at runtime and
           Tailwind only emits a utility it can see spelled out, so these three icons had been drawing
@@ -157,8 +169,8 @@
         -->
         <w-menu
           class="translucent-menu"
-          anchor="top left"
-          self="top right"
+          :anchor="menuAnchor"
+          :self="menuSelf"
           auto-close
           transition-show="jump-left">
           <w-list padding style="min-width: 225px">
@@ -212,7 +224,7 @@
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Duplicate Page"
         @click="duplicatePage">
-        <w-tooltip anchor="center left" self="center right">Duplicate Page</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Duplicate Page</w-tooltip>
       </w-btn>
       <w-btn
         class="h-12"
@@ -223,7 +235,7 @@
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Rename / Move Page"
         @click="renamePage">
-        <w-tooltip anchor="center left" self="center right">Rename / Move Page</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Rename / Move Page</w-tooltip>
       </w-btn>
       <w-btn
         class="h-12"
@@ -234,7 +246,7 @@
         :color="editorStore.isActive ? `deep-orange-2` : `grey`"
         aria-label="Delete Page"
         @click="deletePage">
-        <w-tooltip anchor="center left" self="center right">Delete Page</w-tooltip>
+        <w-tooltip :anchor="tipAnchor" :self="tipSelf">Delete Page</w-tooltip>
       </w-btn>
     </template>
     <!-- What the rail says instead: which of the two write modes the editor is in. -->
@@ -263,6 +275,14 @@ import { useUserStore } from '@/stores/user'
 
 // STORES
 
+const props = defineProps({
+  /** Which side of the page the rail is on, `left` or `right`. */
+  side: {
+    type: String,
+    default: 'right'
+  }
+})
+
 const editorStore = useEditorStore()
 const flagsStore = useFlagsStore()
 const pageStore = usePageStore()
@@ -285,6 +305,14 @@ const menuPendingAssets = ref(null)
 // DATA
 
 // COMPUTED
+
+const isLeft = computed(() => props.side === 'left')
+
+// -> Tooltips and menus open away from the rail, over the article rather than off the window's edge
+const tipAnchor = computed(() => (isLeft.value ? 'center right' : 'center left'))
+const tipSelf = computed(() => (isLeft.value ? 'center left' : 'center right'))
+const menuAnchor = computed(() => (isLeft.value ? 'top right' : 'top left'))
+const menuSelf = computed(() => (isLeft.value ? 'top left' : 'top right'))
 
 const hasPendingAssets = computed(() => editorStore.pendingAssets?.length > 0)
 
@@ -542,6 +570,13 @@ $action-btn-height: 3rem;
   */
   @media (max-width: $sidebar-overlay-max) {
     padding-bottom: $action-btn-height;
+  }
+
+  // -> Nothing to clear on the left: the corner button stays in the bottom-RIGHT corner
+  &--left {
+    @media (max-width: $sidebar-overlay-max) {
+      padding-bottom: 0;
+    }
   }
 
   /*

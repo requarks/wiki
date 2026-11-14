@@ -3,7 +3,7 @@
           right one only while the sidebar is on the left; see the stylesheet -->
   <w-scroll-area
     class="sidebar-nav"
-    :class="siteStore.theme.sidebarPosition === `right` ? `sidebar-nav--flipped` : ``"
+    :class="siteStore.sidebarSide(commonStore.locale) === `right` ? `sidebar-nav--flipped` : ``"
     :thumb-style="thumbStyle"
     :bar-style="barStyle">
     <w-list class="sidebar-nav-list" clickable dense dark>
@@ -110,11 +110,13 @@ import { debounce } from 'es-toolkit/function'
 import { decodeUrlPath } from '@/helpers/pagePaths'
 import { routableHref } from '@/helpers/renderedContent'
 
+import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 // STORES
 
+const commonStore = useCommonStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 

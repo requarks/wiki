@@ -54,9 +54,7 @@
       @branch="branchFrom" />
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
     <div class="page-container flex min-h-0 flex-nowrap items-stretch" style="flex: 1 1 100%">
-      <div
-        class="min-w-0 flex-1"
-        :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
+      <div class="min-w-0 flex-1" :style="tocSide === `left` ? `order: 2;` : `order: 1;`">
         <!--
           The same placeholder column the page view uses for a page that is not there, and for the
           same reason: this is a state of the view rather than an error screen. Nothing here offers a
@@ -127,7 +125,7 @@
         class="page-sidebar"
         v-if="showToc"
         :class="{ 'is-open': tocPanelIsOpen }"
-        :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`"
+        :style="tocSide === `left` ? `order: 1;` : `order: 2;`"
         @click="onSidebarClick">
         <div class="p-4 flex items-center">
           <w-icon class="mr-2" name="la:stream" color="grey" />
@@ -246,6 +244,9 @@ useMeta(() => ({
 /** Below 750px, where the contents stop being a column beside the article and become a panel over it. */
 const isAtLeast750 = useMinWidth(750)
 const tocIsPanel = computed(() => !isAtLeast750.value)
+
+/** The side of the article the contents are on, for the locale the version was written in. */
+const tocSide = computed(() => siteStore.tocSide(state.version?.pageLocale))
 
 const tocPanelIsOpen = computed(() => tocIsPanel.value && showToc.value && state.tocPanelOpen)
 

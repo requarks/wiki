@@ -504,6 +504,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             type: 'string',
             enum: ['off', 'left', 'right']
           },
+          invertPositionsForRtl: {
+            type: 'boolean',
+            description:
+              'Swap the sides of the sidebar and of the table of contents on a right-to-left locale: one set to the left is drawn on the right, and the other way round.'
+          },
           showPrintBtn: {
             type: 'boolean'
           },

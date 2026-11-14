@@ -54,6 +54,21 @@ function describeLocales(codes, installed) {
 }
 
 /**
+ * Where a sidebar set to `position` (`off`, `left` or `right`) is drawn for `locale`: as set, or on the
+ * other side where the theme inverts positions for right-to-left locales and `locale` is one.
+ */
+function sideFor(state, position, locale) {
+  if (
+    position === 'off' ||
+    !state.theme.invertPositionsForRtl ||
+    !state.installedLocales.find((lc) => lc.code === locale)?.isRTL
+  ) {
+    return position
+  }
+  return position === 'left' ? 'right' : 'left'
+}
+
+/**
  * The editors whose pages have no article of their own.
  *
  * The client's copy of `BODYLESS_EDITORS` in `backend/models/pages.ts`, which is what decides on the
@@ -221,6 +236,7 @@ export const useSiteStore = defineStore('site', {
       contentWidth: 'full',
       sidebarPosition: 'left',
       tocPosition: 'right',
+      invertPositionsForRtl: true,
       showPrintBtn: true,
       showPageProgress: true,
       pageTransitions: true
@@ -293,6 +309,20 @@ export const useSiteStore = defineStore('site', {
     },
     overlayIsShown: (state) => Boolean(state.overlay),
     sideNavIsDisabled: (state) => Boolean(state.theme.sidebarPosition === 'off'),
+    /**
+     * The side of the window the nav sidebar is drawn on, `left` or `right` -- or `off` -- for an
+     * interface in `locale`. That is the theme's `sidebarPosition`, swapped on a right-to-left locale
+     * when the theme asks for it (`invertPositionsForRtl`). Asked of the INTERFACE's locale, which is
+     * the one the sidebar is written in.
+     */
+    sidebarSide: (state) => (locale) => sideFor(state, state.theme.sidebarPosition, locale),
+    /**
+     * The side of the article the table of contents is drawn on, `left` or `right` -- or `off` -- for
+     * content in `locale`. That is the theme's `tocPosition`, swapped on a right-to-left locale when
+     * the theme asks for it (`invertPositionsForRtl`). Asked of the locale of what the contents list,
+     * which is the one the column is written in.
+     */
+    tocSide: (state) => (locale) => sideFor(state, state.theme.tocPosition, locale),
     scrollStyle: (state) => {
       const userStore = useUserStore()
       let isDark = false

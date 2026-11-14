@@ -1,12 +1,18 @@
 <template>
   <!--
-    `aria-orientation` is stated because the tabs are at the RIGHT end of the bar and the arrow keys
-    below move along it -- a reader on a screen reader is told which way the strip runs rather than
-    inferring it from where the labels landed.
+    `aria-orientation` is stated because the tabs are at the END of the bar and the arrow keys below
+    move along it -- a reader on a screen reader is told which way the strip runs rather than inferring
+    it from where the labels landed.
+
+    Chrome, so in the interface's language and direction, as the breadcrumbs and the actions rail are.
+    The direction is also what puts the tabs at the right end read left to right and at the left end
+    read right to left, with Article nearest where the line starts either way.
   -->
   <div
     ref="listEl"
     class="page-view-tabs"
+    :lang="commonStore.locale"
+    :dir="dir"
     role="tablist"
     aria-orientation="horizontal"
     @keydown="onKeydown">
@@ -33,7 +39,9 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { useCommonStore } from '@/stores/common'
 import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
 
 /**
  * Article / Talk / Links, above the content of a page that has more than one view of itself.
@@ -44,8 +52,9 @@ import { usePageStore } from '@/stores/page'
  * out of it in the article's own colour so the two read as one surface. A pill floating in padding
  * above the article says "a control", where this says "you are looking at one of these".
  *
- * The tabs are at the RIGHT end: the article's first heading is what a reader is here for and it
- * starts at the left, so the switch stays out of the way of the column's own beginning.
+ * The tabs are at the END of the line -- the right read left to right, the left read right to left:
+ * the article's first heading is what a reader is here for and it starts at the other end, so the
+ * switch stays out of the way of the column's own beginning.
  *
  * Which tabs there are is the caller's decision, not this component's -- each one is gated on things
  * only `pages/Index.vue` knows (the comments provider in use, the page's own switches, the rules this
@@ -79,7 +88,9 @@ const emit = defineEmits(['update:modelValue'])
 
 // STORES
 
+const commonStore = useCommonStore()
 const pageStore = usePageStore()
+const siteStore = useSiteStore()
 
 // I18N
 
@@ -90,6 +101,8 @@ const { t } = useI18n()
 const listEl = ref(null)
 
 // COMPUTED
+
+const dir = computed(() => siteStore.localeDir(commonStore.locale))
 
 const tabs = computed(() => [
   {
@@ -140,7 +153,9 @@ const tabs = computed(() => [
  * strip has three tabs at most and each is a view of the page the reader is already on.
  */
 function onKeydown(ev) {
-  const keys = { ArrowRight: 1, ArrowLeft: -1, Home: 'first', End: 'last' }
+  // -> Along the strip as it runs: read right to left, the next tab is the one to the LEFT
+  const ahead = dir.value === 'rtl' ? -1 : 1
+  const keys = { ArrowRight: ahead, ArrowLeft: -ahead, Home: 'first', End: 'last' }
   const move = keys[ev.key]
   if (move === undefined) {
     return
@@ -182,7 +197,7 @@ function onKeydown(ev) {
   position: relative;
   display: flex;
   align-items: flex-end;
-  /* -> Right-aligned: see the component note */
+  /* -> At the end of the line, which `dir` makes the right or the left: see the component note */
   justify-content: flex-end;
   gap: 2px;
   height: 44px;
@@ -199,7 +214,7 @@ function onKeydown(ev) {
   }
   /* -> Enough that the last tab's corner reads as a corner, and not so much that the strip stops
         being flush with the side */
-  padding-right: 0.5rem;
+  padding-inline-end: 0.5rem;
   /*
     The one gap in the strip, and it belongs to what may sit under it rather than to the strip: a
     site banner is drawn flush to the top of the article column, pulled out of its padding with a
@@ -248,8 +263,9 @@ function onKeydown(ev) {
     height: 1px;
     background-color: var(--page-chrome-rule);
 
-    /* -> The edge is down the left when the contents column is (`.page-article-col`), so the corner is too */
-    .page-container--toc-left & {
+    /* -> The edge is down the left when the contents column or the rail is (`.page-article-col`), so the
+          corner is too */
+    .page-container--edge-left & {
       right: auto;
       left: 0;
     }

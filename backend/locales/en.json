@@ -1561,6 +1561,8 @@
   "admin.theme.headerColorHint": "The background color for the site top header.",
   "admin.theme.iconset": "Icon Set",
   "admin.theme.iconsetHint": "Set of icons to use for the sidebar navigation.",
+  "admin.theme.invertPositionsForRtl": "Invert Positions Above for RTL Languages",
+  "admin.theme.invertPositionsForRtlHint": "In a right-to-left language, display a sidebar set to Left on the right, and one set to Right on the left.",
   "admin.theme.layout": "Layout",
   "admin.theme.loadFailed": "Failed to load the site theme configuration.",
   "admin.theme.options": "Theme Options",

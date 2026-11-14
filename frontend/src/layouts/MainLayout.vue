@@ -5,8 +5,9 @@
     </w-header>
     <!--
       In the interface's language and direction. Which edge of the window the drawer sits on is the
-      theme's `sidebarPosition` and is placed in physical terms, so it does not move with them -- what
-      runs the other way on a right-to-left interface is what is inside it.
+      theme's `sidebarPosition` and is placed in physical terms, so `dir` does not move it -- what runs
+      the other way on a right-to-left interface is what is inside it. The theme can still swap the
+      side for a right-to-left interface (`invertPositionsForRtl`), which `sidebarSide` answers.
     -->
     <w-drawer
       class="bg-sidebar"
@@ -15,7 +16,7 @@
       v-model="isSidebarOpen"
       :width="sidebarWidth"
       :overlay-below="SIDEBAR_OVERLAY_BELOW"
-      :side="siteStore.theme.sidebarPosition === `right` ? `right` : `left`">
+      :side="sidebarSide === `right` ? `right` : `left`">
       <div v-if="isSidebarMini" class="sidebar-mini flex flex-col items-stretch">
         <w-btn
           v-if="siteStore.locales.showMenu"
@@ -325,6 +326,9 @@ const SIDEBAR_WIDTH_MINI = 56
 
 const sidebarWidth = computed(() => (isSidebarMini.value ? SIDEBAR_WIDTH_MINI : SIDEBAR_WIDTH))
 
+/** The edge of the window the sidebar is on, for the interface's locale -- see `siteStore.sidebarSide`. */
+const sidebarSide = computed(() => siteStore.sidebarSide(commonStore.locale))
+
 /*
   The scroll-to-top button ENDS where the sidebar's column does, tucked into the bottom of it: the
   sidebar's own width on the left, or the window's right edge when the site puts its sidebar there,
@@ -340,7 +344,7 @@ const scrollerAnchorX = computed(() => {
   if (!isWideViewport.value || !isSidebarAvailable.value) {
     return null
   }
-  return siteStore.theme.sidebarPosition === 'right' ? '100%' : `${sidebarWidth.value}px`
+  return sidebarSide.value === 'right' ? '100%' : `${sidebarWidth.value}px`
 })
 
 // -> The "Allow Browsing" site feature (admin/general): with it off the tree browser is not something

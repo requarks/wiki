@@ -508,16 +508,16 @@ $toc-overlay-max: 749.98px;
   the actions rail, both of them chrome, and a column edge that appeared only on pages that take
   comments would be a difference a reader cannot account for.
 
-  On the right, against the contents column or the rail -- or on the left when the contents are a
-  column there (`page-container--toc-left`, from `pages/Index.vue`), since the edge is drawn against
-  the contents wherever they are. Physical sides both, because which side the column is on is the
-  theme's setting and not the language's. `PageViewTabs.vue` turns the corner to meet it on the same
+  On the right, against the contents column or the rail -- or on the left when that is where they are
+  (`page-container--edge-left`, from `pages/Index.vue`): the contents when they are a column there, or
+  the rail on a right-to-left interface when there is no contents column. Physical sides both, because
+  the row is laid out in physical terms. `PageViewTabs.vue` turns the corner to meet it on the same
   class.
 */
 .page-article-col {
   border-right: 1px solid var(--page-chrome-rule);
 
-  .page-container--toc-left & {
+  .page-container--edge-left & {
     border-right: 0;
     border-left: 1px solid var(--page-chrome-rule);
   }

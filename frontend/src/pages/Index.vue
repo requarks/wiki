@@ -69,7 +69,7 @@
     <!-- -> `min-h-0` so the columns inside can be shorter than their content and scroll -->
     <div
       class="page-container flex min-h-0 flex-nowrap items-stretch"
-      :class="{ 'page-container--toc-left': tocColumnIsLeft }"
+      :class="{ 'page-container--edge-left': articleEdgeIsLeft }"
       style="flex: 1 1 100%">
       <!--
         `flex flex-col min-h-0`: the strip below is fixed to the top of this column and the scrolling
@@ -79,7 +79,7 @@
       -->
       <div
         class="min-w-0 flex-1 flex flex-col min-h-0"
-        :style="siteStore.theme.tocPosition === `left` ? `order: 2;` : `order: 1;`">
+        :style="tocSide === `left` ? `order: 2;` : `order: 1;`">
         <!--
           Article / Talk / Links, above the content and only where there is somewhere else to go: the
           talk page needs the built-in comments provider on a page that takes comments, for a reader
@@ -432,7 +432,8 @@
         In the page's own language and direction, labels included: on a page the interface speaks the
         page's locale (see `App.vue`), so the headings, the tags and the captions beside them are all
         written in it. Which side of the article the column sits on, and where the panel slides in from,
-        is the layout's business and is set in physical terms, so neither moves with it.
+        is the layout's business and is set in physical terms, so neither moves with `dir` -- only with
+        the theme's own swap for a right-to-left locale (`invertPositionsForRtl`), which `tocSide` answers.
       -->
       <div
         class="page-sidebar"
@@ -440,7 +441,7 @@
         :lang="pageStore.locale"
         :dir="siteStore.localeDir(pageStore.locale)"
         :class="{ 'is-open': tocPanelIsOpen }"
-        :style="siteStore.theme.tocPosition === `left` ? `order: 1;` : `order: 2;`"
+        :style="tocSide === `left` ? `order: 1;` : `order: 2;`"
         @click="onSidebarClick">
         <!--
           A blog's front page gets its own column. It has none of what the three sections below offer
@@ -655,7 +656,7 @@
         </template>
       </div>
       <!-- -> Every action on it acts on a page: there is none here to edit, share, rate or delete -->
-      <page-actions-col v-if="!pageStore.notFound" />
+      <page-actions-col v-if="!pageStore.notFound" :side="railSide" />
     </div>
     <!--
       What opens that panel, in the bottom-right corner -- the corner `MainLayout` gives to scroll-to-top,
@@ -959,6 +960,12 @@ const annotator = ref(null)
 const isAtLeast750 = useMinWidth(750)
 const tocIsPanel = computed(() => !isAtLeast750.value)
 
+/*
+  The side of the article the contents column is on, for the page's locale -- the one the column is
+  written in. The theme's `tocPosition`, unless the theme swaps it for a right-to-left locale.
+*/
+const tocSide = computed(() => siteStore.tocSide(pageStore.locale))
+
 /** Whether the contents panel is on screen. Never true while the contents are a column. */
 const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && state.tocPanelOpen)
 
@@ -969,16 +976,25 @@ const tocPanelIsOpen = computed(() => tocIsPanel.value && showSidebar.value && s
 const showTocPanelBtn = computed(() => tocIsPanel.value && showSidebar.value && !state.tocPanelOpen)
 
 /*
-  Whether the contents are a column to the LEFT of the article, which is what moves the article
-  column's edge (`.page-article-col`) over to that side: the edge is drawn against the contents, and
-  with the contents on the left the right-hand side of the article is the actions rail.
+  The side of the page the actions rail is on (`PageActionsCol`): the far end from where the interface's
+  text starts, so the right read left to right and the left read right to left. It is chrome, so it is
+  the INTERFACE's direction that decides, as it is for the breadcrumbs and the header.
 
-  Only while there is such a column. With nothing to show in it, or below 750px where it is a panel
-  over the article instead, what is on the left is the nav sidebar or the window, and the edge stays on
-  the right against the rail.
+  Always the right while an editor is open: every editor's bar steps into the rail as brickwork at its
+  right-hand end (`css/_bricks.scss`), and lays out its own insert rail and preview on that understanding.
 */
-const tocColumnIsLeft = computed(
-  () => showSidebar.value && !tocIsPanel.value && siteStore.theme.tocPosition === 'left'
+const railSide = computed(() =>
+  !editorStore.isActive && siteStore.localeDir(commonStore.locale) === 'rtl' ? 'left' : 'right'
+)
+
+/*
+  Whether the article column's edge (`.page-article-col`) is down its LEFT side. The edge is drawn
+  against the contents while they are a column beside the article, and against the actions rail
+  otherwise -- with nothing to show in the contents, or below 750px where they are a panel over the
+  article instead, it is the rail that closes the article's far side.
+*/
+const articleEdgeIsLeft = computed(() =>
+  showSidebar.value && !tocIsPanel.value ? tocSide.value === 'left' : railSide.value === 'left'
 )
 
 /*
@@ -994,7 +1010,7 @@ const tocJoinsArticleEdge = computed(() => {
     return false
   }
   const isRtl = siteStore.localeDir(pageStore.locale) === 'rtl'
-  return siteStore.theme.tocPosition === 'left' ? isRtl : !isRtl
+  return tocSide.value === 'left' ? isRtl : !isRtl
 })
 
 /**
@@ -1146,7 +1162,7 @@ watch(
 )
 
 // -> The one change that moves the body without resizing it: the contents column changing sides
-watch(tocColumnIsLeft, () => nextTick(measureHeaderBounds))
+watch(articleEdgeIsLeft, () => nextTick(measureHeaderBounds))
 
 onBeforeUnmount(() => headerBoundsObserver?.disconnect())
 

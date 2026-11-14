@@ -8,7 +8,7 @@
   -->
   <div
     class="page-container flex min-h-0 flex-nowrap items-stretch"
-    :class="{ 'page-container--toc-left': tocColumnIsLeft }"
+    :class="{ 'page-container--edge-left': tocColumnIsLeft }"
     style="flex: 1 1 100%">
     <div class="min-w-0 flex-1" :style="tocIsLeft ? `order: 2;` : `order: 1;`">
       <!-- -> Until the room has answered there is no note to draw, only an empty document -->
@@ -194,7 +194,8 @@ let unmounted = false
 const isAtLeast750 = useMinWidth(750)
 const tocIsPanel = computed(() => !isAtLeast750.value)
 
-const tocIsLeft = computed(() => siteStore.theme.tocPosition === 'left')
+// -> The interface's locale: a note belongs to no locale, and the contents are written in this one
+const tocIsLeft = computed(() => siteStore.tocSide(commonStore.locale) === 'left')
 
 /*
   The article's edge goes down whichever side faces the contents (`.page-article-col` in
