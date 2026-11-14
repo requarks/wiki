@@ -810,6 +810,9 @@ async function createPage() {
       folderPath: '',
       itemTitle: pageStore.title,
       itemFileName: pageStore.path,
+      // -> A path somebody already asked for -- the missing page they followed a link to -- is
+      //    offered as it is, rather than replaced with one made from the title
+      keepPath: editorStore.pathChosen,
       locale: pageStore.locale
     }
   }).onOk(async ({ path, title, locale }) => {

@@ -36,6 +36,13 @@ export const useEditorStore = defineStore('editor', {
     ignoreRouteChange: false,
     pendingAssets: [],
     /**
+     * Whether the path of the page being created was handed to `pageCreate` rather than made up by
+     * it -- the path a reader followed to a page that does not exist, a `/_create?path=` link, the
+     * destination a copy was given. The save dialog keeps such a path as it is instead of deriving one
+     * from the title, which is only a guess for a page that started out as `new-page`.
+     */
+    pathChosen: false,
+    /**
      * The page's owners as the properties panel has them, `{ mode, users, groups }`, while that
      * differs from `pageStore.ownership`; null when nothing about them is pending.
      *
@@ -107,7 +114,8 @@ export const useEditorStore = defineStore('editor', {
         editor: '',
         mode: 'edit',
         // -> Only ever meaningful while a page is being created: it is where Discard goes back to
-        originPageId: ''
+        originPageId: '',
+        pathChosen: false
       })
     },
     /**

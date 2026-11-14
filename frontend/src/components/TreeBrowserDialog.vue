@@ -204,7 +204,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 
-import { dialog, dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
+import { confirm, dialog, dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
@@ -251,6 +251,15 @@ const props = defineProps({
     type: String,
     required: false,
     default: ''
+  },
+  /**
+   * Whether the path name in `itemFileName` was already chosen, so it is kept as it is rather than
+   * derived from the title. The title still drives it again once the field is emptied.
+   */
+  keepPath: {
+    type: Boolean,
+    required: false,
+    default: false
   },
   /**
    * The locale to browse, and — where the mode allows it — the one the page ends up in. The caller's
@@ -692,15 +701,121 @@ function newFolder(parentId) {
   })
 }
 
+/**
+ * The page permissions the session holds at a path, in the locale being browsed. Asked directly
+ * rather than through the user store, whose `pagePermissions` describe the page on screen and are
+ * not this dialog's to replace. Nothing on a failure, so a question that went unanswered offers
+ * nothing rather than everything.
+ */
+async function permissionsAt(path) {
+  try {
+    return await API_CLIENT.post(`sites/${siteStore.id}/pages/userPermissions`, {
+      json: { path, locale: state.locale }
+    }).json()
+  } catch {
+    return []
+  }
+}
+
+/** The slash path a folder's own children are addressed under. */
+function folderPathOfNode(node) {
+  return node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName
+}
+
 /** The id of an already-loaded folder, addressed the way a path addresses it. */
 function findFolderIdByPath(path) {
   if (!path) {
     return null
   }
-  const entry = Object.entries(state.treeNodes).find(
-    ([, node]) => (node.folderPath ? `${node.folderPath}/${node.fileName}` : node.fileName) === path
-  )
+  const entry = Object.entries(state.treeNodes).find(([, node]) => folderPathOfNode(node) === path)
   return entry?.[0] ?? null
+}
+
+/**
+ * A page being saved into folders that do not exist yet -- somebody followed a link to `foo/bar/abc`
+ * and neither `foo` nor `bar` is there. The browser can only open on a folder that exists, so the
+ * author is asked whether to create the missing ones first rather than having the page quietly
+ * offered the root instead.
+ *
+ * One request creates the whole branch: the server fills in every missing folder above the one
+ * asked for, each titled with its own path name, which is all anybody has said about it so far.
+ *
+ * Only offered to an author who could go through with it: `write:pages` where the page is going,
+ * since folders made for a page that cannot then be saved there are litter, and `write:pages` or
+ * `manage:pages` on the folder, which is what the server asks of whoever creates one. Both asked in
+ * the locale being browsed, which is the one the page will be written in. The server checks both
+ * again regardless.
+ *
+ * @param {string} folderPath The folder the page is meant to go in.
+ * @param {string} pageName The page's own path name inside it.
+ * @returns {Promise<string|null>} The folder to open the browser on: the one asked for once it has
+ *   been created, otherwise the deepest of its ancestors that does exist (null for the root).
+ */
+async function offerMissingFolders(folderPath, pageName) {
+  const parts = folderPath.split('/')
+  let existingDepth = parts.length - 1
+  while (existingDepth > 0 && !findFolderIdByPath(parts.slice(0, existingDepth).join('/'))) {
+    existingDepth--
+  }
+  const nearestId = findFolderIdByPath(parts.slice(0, existingDepth).join('/'))
+  const missing = parts.slice(existingDepth)
+
+  const [atPage, atFolder] = await Promise.all([
+    permissionsAt(pageName ? `${folderPath}/${pageName}` : folderPath),
+    permissionsAt(folderPath)
+  ])
+  const mayCreateFolder = atFolder.includes('write:pages') || atFolder.includes('manage:pages')
+  if (!atPage.includes('write:pages') || !mayCreateFolder) {
+    return nearestId
+  }
+
+  const accepted = await new Promise((resolve) => {
+    confirm({
+      title: t('pageSaveDialog.missingFoldersTitle', missing.length),
+      icon: 'img:/_assets/icons/fluent-folder-tree.svg',
+      message: t('pageSaveDialog.missingFolders', { folders: `/${folderPath}/` }, missing.length),
+      cancel: true,
+      okLabel: t('pageSaveDialog.missingFoldersCreate', missing.length),
+      cancelLabel: t('pageSaveDialog.missingFoldersSkip')
+    })
+      .onOk(() => resolve(true))
+      .onCancel(() => resolve(false))
+  })
+  if (!accepted) {
+    return nearestId
+  }
+
+  let folder
+  try {
+    const resp = await API_CLIENT.post(`sites/${siteStore.id}/tree/folders`, {
+      json: {
+        parentPath: parts.slice(0, -1).join('/') || null,
+        pathName: parts.at(-1),
+        title: parts.at(-1),
+        locale: state.locale
+      }
+    }).json()
+    // -> The API client does not throw on 400, so a refused name comes back as a parsed error
+    if (resp?.ok === false) {
+      throw new Error(resp.message || 'An unexpected error occured.')
+    }
+    folder = resp.folder
+  } catch (err) {
+    notify({
+      type: 'negative',
+      message: t('pageSaveDialog.missingFoldersFailed'),
+      caption: apiErrorMessage(err)
+    })
+    return nearestId
+  }
+  /*
+    The new branch, ancestors included, so that the tree can draw it open down to the new folder.
+    Addressed as the server filed it rather than as it was asked for: a name is normalized for writing
+    on the way in, and the path this came from was only normalized for a lookup -- `foo_bar` arrives
+    as `foo-bar`.
+  */
+  await loadTree({ parentPath: folderPathOfNode(folder), initLoad: true })
+  return state.treeNodes[folder.id] ? folder.id : nearestId
 }
 
 // MOUNTED
@@ -717,6 +832,7 @@ onMounted(async () => {
     case 'savePage':
     case 'duplicatePage': {
       state.typesToFetch = ['folder', 'page']
+      state.pathDirty = props.keepPath
       break
     }
     case 'renamePage':
@@ -761,9 +877,19 @@ onMounted(async () => {
   })
   // -> A page that lives in a subfolder opens the browser on that subfolder rather than on the root.
   //    The initial request asked for the ancestors too, so the whole branch is already here.
-  const startFolderId = findFolderIdByPath(fPath)
+  let startFolderId = findFolderIdByPath(fPath)
+  if (fPath && !startFolderId && props.mode === 'savePage') {
+    startFolderId = await offerMissingFolders(fPath, fName)
+    // -> The first listing was of a folder that is not there, and so empty. Opening on a folder
+    //    reloads the list through the watcher, but staying on the root has to ask for it again
+    if (!startFolderId) {
+      await loadTree({})
+    }
+  }
   if (startFolderId) {
-    const parts = fPath.split('/')
+    // -> The folder's own path rather than `fPath`, which it is not when the browser fell back to the
+    //    nearest existing ancestor or the server normalized the name of a folder it just created
+    const parts = folderPathOfNode(state.treeNodes[startFolderId]).split('/')
     for (let i = 1; i <= parts.length; i++) {
       const ancestorId = findFolderIdByPath(parts.slice(0, i).join('/'))
       if (ancestorId) {
