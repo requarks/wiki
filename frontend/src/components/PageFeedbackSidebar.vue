@@ -46,7 +46,8 @@
         <router-link
           class="page-feedback-category"
           :class="{ 'is-active': !filter.category }"
-          :to="categoryLink(null)">
+          :to="categoryLink(null)"
+          @click="rememberCategory(null, $event)">
           {{ t('common.feedback.allCategories') }}
         </router-link>
         <router-link
@@ -54,14 +55,16 @@
           v-for="entry of feedbackState.facets.categories"
           :key="entry.tag"
           :class="{ 'is-active': filter.category === entry.tag }"
-          :to="categoryLink(entry.tag)">
+          :to="categoryLink(entry.tag)"
+          @click="rememberCategory(entry.tag, $event)">
           {{ entry.label }}
           <span class="page-feedback-category-count">{{ entry.count }}</span>
         </router-link>
         <router-link
           class="page-feedback-category"
           :class="{ 'is-active': filter.category === 'none' }"
-          :to="categoryLink('none')">
+          :to="categoryLink('none')"
+          @click="rememberCategory('none', $event)">
           {{ t('common.feedback.uncategorized') }}
           <span class="page-feedback-category-count">{{ feedbackState.facets.uncategorized }}</span>
         </router-link>
@@ -77,7 +80,11 @@ import { useI18n } from 'vue-i18n'
 
 import { feedbackState } from '@/composables/feedback'
 
-import { feedbackFilterFromQuery, feedbackFilterQuery } from '@/helpers/feedbackFilter'
+import {
+  feedbackFilterFromQuery,
+  feedbackFilterQuery,
+  rememberFeedbackSelection
+} from '@/helpers/feedbackFilter'
 import { FEEDBACK_STATUSES, defaultStatusesFor, parseBoard } from '@/helpers/pageFeedback'
 
 import { usePageStore } from '@/stores/page'
@@ -138,23 +145,42 @@ function toggleStatus(status, on) {
   const next = on
     ? FEEDBACK_STATUSES.filter((entry) => entry === status || shownStatuses.value.includes(entry))
     : shownStatuses.value.filter((entry) => entry !== status)
-  router.push({
-    path: route.path,
-    query: feedbackFilterQuery({
-      ...filter.value,
-      statuses: next.length > 0 ? next : [...FEEDBACK_STATUSES]
-    })
-  })
+  applyFilter({ statuses: next.length > 0 ? next : [...FEEDBACK_STATUSES] })
 }
 
 function resetStatuses() {
-  router.push({ path: route.path, query: feedbackFilterQuery({ ...filter.value, statuses: null }) })
+  applyFilter({ statuses: null })
+}
+
+/**
+ * Navigate to the board with part of the selection changed, and remember it for the session, as
+ * `PageFeedback.vue` does for the sort (`helpers/feedbackFilter.js`).
+ */
+function applyFilter(patch) {
+  const next = { ...filter.value, ...patch }
+  rememberFeedbackSelection(pageStore.id, next)
+  router.push({ path: route.path, query: feedbackFilterQuery(next) })
 }
 
 /** Picking the category already selected clears it, so the list is its own way back out. */
+function categoryFilter(tag) {
+  return { ...filter.value, category: tag && filter.value.category === tag ? null : tag }
+}
+
 function categoryLink(tag) {
-  const next = tag && filter.value.category === tag ? null : tag
-  return { path: route.path, query: feedbackFilterQuery({ ...filter.value, category: next }) }
+  return { path: route.path, query: feedbackFilterQuery(categoryFilter(tag)) }
+}
+
+/**
+ * The categories stay links (see the template) and navigate on their own; a click also remembers the
+ * one picked for the session. Not a click the router leaves to the browser -- opening the category in
+ * another tab, with a modifier or another button -- which changes nothing in this one.
+ */
+function rememberCategory(tag, event) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+    return
+  }
+  rememberFeedbackSelection(pageStore.id, categoryFilter(tag))
 }
 </script>
 

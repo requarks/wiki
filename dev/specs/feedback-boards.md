@@ -572,6 +572,10 @@ card layout as there is for a blog, because a board is scanned rather than brows
   board's `voting` is off or the idea's `allowRatings` is off, and the count is still shown.
 - Search is debounced and written into the URL, so a search result can be linked to, as a blog's
   tag filter can.
+- The sort, statuses and category the reader picks are also remembered per board for the browser
+  session (`sessionStorage`), and put back into a board URL that arrives with no selection at all, so
+  that coming back from an idea through a link does not reset the board to its defaults. A URL that
+  carries any selection is shown as it is, and the search is never remembered.
 - **The sidebar** carries two lists. Status lists all six, each with its count, as checkboxes. Until
   the reader touches them they show the default for the current sort, so changing the sort changes
   them too. Once the reader has picked statuses, `status` is in the URL and changing the sort leaves

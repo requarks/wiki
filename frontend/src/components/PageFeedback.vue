@@ -154,7 +154,13 @@ import { feedbackState, loadFeedback, resetFeedback, toggleVote } from '@/compos
 import { notify } from '@/composables/notify'
 
 import { apiErrorMessage } from '@/helpers/apiError'
-import { feedbackFilterFromQuery, feedbackFilterQuery } from '@/helpers/feedbackFilter'
+import {
+  feedbackFilterFromQuery,
+  feedbackFilterQuery,
+  hasFeedbackSelection,
+  rememberFeedbackSelection,
+  rememberedFeedbackSelection
+} from '@/helpers/feedbackFilter'
 import { FEEDBACK_SORTS, parseBoard, takesVotes } from '@/helpers/pageFeedback'
 import { renderBoardIntro } from '@/renderers/feedback'
 
@@ -180,7 +186,8 @@ import FeedbackVote from '@/components/FeedbackVote.vue'
  *
  * The reader's selection lives in the query string (`?q=…&sort=…&status=…&category=…&p=…`): see
  * `helpers/feedbackFilter.js`. The status and category halves of it are written by
- * `PageFeedbackSidebar.vue`.
+ * `PageFeedbackSidebar.vue`. The sort, statuses and category picked are also remembered for the
+ * browser session, and put back into a board URL that arrives with no selection (`load` below).
  */
 
 // STORES
@@ -272,9 +279,14 @@ function dateOf(value) {
   return userStore.formatDate(value)
 }
 
-/** Navigate to the same board with part of the selection changed, back on the first page of it. */
+/**
+ * Navigate to the same board with part of the selection changed, back on the first page of it, and
+ * remember it for the session (`helpers/feedbackFilter.js`).
+ */
 function applyFilter(patch) {
-  router.push({ path: route.path, query: feedbackFilterQuery({ ...filter.value, ...patch }) })
+  const next = { ...filter.value, ...patch }
+  rememberFeedbackSelection(pageStore.id, next)
+  router.push({ path: route.path, query: feedbackFilterQuery(next) })
 }
 
 /*
@@ -302,9 +314,10 @@ function setSort(sort) {
   applyFilter({ sort: sort === settings.value.sort ? null : sort })
 }
 
+/** Drop everything that narrows the listing. The order is not a filter and stays as it was. */
 function clearFilter() {
   state.q = ''
-  router.push({ path: route.path })
+  applyFilter({ q: '', statuses: null, category: null })
 }
 
 function goToPage(page) {
@@ -359,6 +372,18 @@ function openSubmit() {
 function load() {
   if (!pageStore.path) {
     return
+  }
+  /*
+    -> A board reached with no selection in its URL -- a link back from one of its ideas, say -- opens
+       on the selection the reader last made here. Replaced rather than pushed, and the listing is
+       loaded by the watch below once the URL carries it, so there is one request and one history entry.
+  */
+  if (!hasFeedbackSelection(filter.value)) {
+    const remembered = rememberedFeedbackSelection(pageStore.id)
+    if (remembered) {
+      router.replace({ path: route.path, query: { ...route.query, ...remembered } })
+      return
+    }
   }
   loadFeedback({
     siteId: siteStore.id,

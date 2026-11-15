@@ -62,3 +62,56 @@ export function feedbackFilterQuery({ q, sort, statuses, category } = {}) {
   }
   return query
 }
+
+/** Whether a filter narrows or orders the listing at all, as against the board as it opens. */
+export function hasFeedbackSelection({ q, sort, statuses, category } = {}) {
+  return Boolean(q || sort || statuses || category)
+}
+
+/**
+ * The selection a reader made on a board -- its sort, statuses and category -- kept for the rest of
+ * their browser session.
+ *
+ * The URL is still what the listing is read in; this only fills in a board URL that arrives with no
+ * selection at all, so that a link back to the board -- an idea's own "back to the board", the
+ * breadcrumbs -- does not drop the reader into the board's defaults every time they come back from an
+ * idea. A URL that carries any selection is a link somebody meant, and is shown as it is.
+ *
+ * Kept per board, by the board's page id, since each board has its own default sort and categories.
+ * Only what the reader picks is remembered, never what merely arrived in a link they were handed, and
+ * the search is not remembered at all. Stored in its query-string form and read back through
+ * `feedbackFilterFromQuery`, so that a value the board no longer accepts is simply dropped.
+ *
+ * `sessionStorage` can be unavailable or throw (a private window, blocked site data), in which case
+ * there is simply nothing remembered.
+ */
+const SELECTION_KEY_PREFIX = 'feedback-selection:'
+
+/** The remembered selection as route query fields, or null when there is none. */
+export function rememberedFeedbackSelection(boardId) {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(`${SELECTION_KEY_PREFIX}${boardId}`))
+    if (!stored || typeof stored !== 'object') {
+      return null
+    }
+    const { sort, statuses, category } = feedbackFilterFromQuery(stored)
+    const query = feedbackFilterQuery({ sort, statuses, category })
+    return Object.keys(query).length > 0 ? query : null
+  } catch {
+    return null
+  }
+}
+
+/** Remember the sort, statuses and category of `filter`, or forget them when it sets none. */
+export function rememberFeedbackSelection(boardId, { sort, statuses, category } = {}) {
+  const query = feedbackFilterQuery({ sort, statuses, category })
+  try {
+    if (Object.keys(query).length > 0) {
+      sessionStorage.setItem(`${SELECTION_KEY_PREFIX}${boardId}`, JSON.stringify(query))
+    } else {
+      sessionStorage.removeItem(`${SELECTION_KEY_PREFIX}${boardId}`)
+    }
+  } catch {
+    // -> Nothing remembered, which only costs the reader their selection on the way back
+  }
+}
