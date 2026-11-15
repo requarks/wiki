@@ -20,7 +20,7 @@ import { rewriteSourceLinks } from '../helpers/linkRewrite.ts'
 import type { SourceSyntax } from '../helpers/linkRewrite.ts'
 import { relinkHref, rewriteRenderLinks } from '../helpers/pageLinks.ts'
 import { currentVia } from '../helpers/via.ts'
-import type { AccessActor } from './groups.ts'
+import { SYSTEM_PERMISSION, type AccessActor } from './groups.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import type { FastifyRequest } from 'fastify'
 import type { TocNode } from './rendering.ts'
@@ -2308,7 +2308,7 @@ class Pages {
       fileName: pathParts.at(-1)!,
       contentType: EDITOR_CONTENT_TYPES[editor] ?? 'text'
     })
-    await this.guardFeedbackBoards(siteId, locale, path, editor)
+    await this.guardFeedbackBoards(siteId, locale, path, editor, actor)
 
     const alias = await this.validateAlias(siteId, input.alias)
     assertValidTags(input.tags, carriedTags)
@@ -2907,7 +2907,7 @@ class Pages {
         fileName: newPath.split('/').at(-1)!,
         contentType: page.contentType
       })
-      await this.guardFeedbackBoards(siteId, newLocale, newPath, page.editor)
+      await this.guardFeedbackBoards(siteId, newLocale, newPath, page.editor, actor)
     }
 
     /*
@@ -3436,7 +3436,7 @@ class Pages {
       fileName: pathParts.at(-1)!,
       contentType
     })
-    await this.guardFeedbackBoards(siteId, locale, path, editor)
+    await this.guardFeedbackBoards(siteId, locale, path, editor, actor)
 
     // -> Kept only while it is still free: an alias is unique across the site, and one taken since is
     //    somebody else's now
@@ -3813,16 +3813,19 @@ class Pages {
 
   /**
    * Refuse a page that would land in a feedback board's folder without being one of its ideas, or a
-   * board that would land on a folder already holding something else — see `feedback.refuseNonIdea`.
+   * board that would land on a folder already holding something — see `feedback.refuseNonIdea` and
+   * `feedback.guardBoardFolder`.
    *
    * @param path Slash-separated path the page is going to
+   * @param actor Who is putting it there: only `manage:system` may bring a board over existing pages
    * @throws `feedbackIdeasOnly`
    */
   private async guardFeedbackBoards(
     siteId: string,
     locale: string,
     path: string,
-    editor: string
+    editor: string,
+    actor: AccessActor
   ): Promise<void> {
     WIKI.models.feedback.refuseNonIdea(siteId, locale, {
       kind: 'page',
@@ -3830,7 +3833,9 @@ class Pages {
       editor
     })
     if (editor === FEEDBACK_EDITOR) {
-      await WIKI.models.feedback.guardBoardFolder(siteId, locale, path)
+      await WIKI.models.feedback.guardBoardFolder(siteId, locale, path, {
+        adoptPages: actor.permissions.includes(SYSTEM_PERMISSION)
+      })
     }
   }
 

@@ -417,35 +417,63 @@ class Feedback {
   }
 
   /**
-   * Refuse to put a board where its folder already holds something that is not an idea — a
-   * sub-folder, a file, or a page with no body of its own. The board would take every one of them
-   * under its access, and could not list any of them.
+   * Refuse to put a board where its folder already holds something.
+   *
+   * Never where it holds something that is not an idea — a sub-folder, a file, or a page with no
+   * body of its own — since the board would take each of them under its access and could not list
+   * any of them.
+   *
+   * And, unless `adoptPages`, not where it holds anything at all, ordinary pages included, nor where
+   * the recycle bin holds a page that was at or under the path. A board replaces the rule reference
+   * of everything under it (`ruleRefFor`), so arriving over pages that are already there voids
+   * every rule written for them — a DENY on one page or on a tag included — for every account, and
+   * all that creating, moving or restoring a page asks is the caller's right to write at the
+   * board's own path. Ideas that arrive AFTER the board are filed under rules their author can see,
+   * and moving an existing page in asks `manage:pages` at the page itself. `adoptPages` is for an
+   * actor holding `manage:system`, who is above every rule anyway, so that a board deleted with its
+   * ideas left behind can be restored over them.
    *
    * @param path Slash-separated path of the board's front page, which is also its folder
    * @throws `feedbackIdeasOnly`
    */
-  async guardBoardFolder(siteId: string, locale: string, path: string): Promise<void> {
+  async guardBoardFolder(
+    siteId: string,
+    locale: string,
+    path: string,
+    { adoptPages }: { adoptPages: boolean }
+  ): Promise<void> {
     const own = path.replace(/^\/+|\/+$/g, '')
     if (!own) {
       return
+    }
+    const conditions: SQL[] = [
+      eq(treeTable.siteId, siteId),
+      eq(treeTable.locale, locale),
+      eq(treeTable.folderPath, encodeTreePath(own))
+    ]
+    if (adoptPages) {
+      conditions.push(
+        or(ne(treeTable.type, 'page'), inArray(pagesTable.editor, bodylessEditors()))!
+      )
     }
     const occupants = await WIKI.db
       .select({ id: treeTable.id })
       .from(treeTable)
       .leftJoin(pagesTable, eq(pagesTable.id, treeTable.id))
-      .where(
-        and(
-          eq(treeTable.siteId, siteId),
-          eq(treeTable.locale, locale),
-          eq(treeTable.folderPath, encodeTreePath(own)),
-          or(ne(treeTable.type, 'page'), inArray(pagesTable.editor, bodylessEditors()))
-        )
-      )
+      .where(and(...conditions))
       .limit(1)
     if (occupants.length > 0) {
       throw new CustomError(
         'feedbackIdeasOnly',
-        `A feedback board holds ideas and nothing else, and the folder at /${own} already holds other folders, files or pages.`
+        adoptPages
+          ? `A feedback board holds ideas and nothing else, and the folder at /${own} already holds other folders, files or pages.`
+          : `A feedback board can only be placed on an empty folder, and the folder at /${own} already holds folders, files or pages.`
+      )
+    }
+    if (!adoptPages && (await WIKI.models.pageHistory.hasDeletedAtOrUnder(siteId, locale, own))) {
+      throw new CustomError(
+        'feedbackIdeasOnly',
+        `A feedback board can only be placed on an empty folder, and the recycle bin holds pages deleted from /${own}.`
       )
     }
   }

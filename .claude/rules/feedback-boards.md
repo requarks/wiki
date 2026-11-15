@@ -22,9 +22,15 @@ frontend `PageFeedback.vue` (the listing), `PageFeedbackIdea.vue` (an idea's hea
 - **A board's folder holds its ideas and nothing else** — no sub-folder, file, bodyless page or page
   further down. `feedback.refuseNonIdea` (in memory, asked with the folder a thing goes INTO) is
   called by every model method that places a page, folder or asset; `refuseAsBoardFolder` stops a
-  folder renamed, moved or copied onto a board's own path, and `guardBoardFolder` a board created or
-  moved over a folder already holding something else. A new way of putting something somewhere asks
-  them too.
+  folder renamed, moved or copied onto a board's own path, and `guardBoardFolder` a board created,
+  moved or restored over a folder already holding something else. A new way of putting something
+  somewhere asks them too.
+- **A board never arrives over existing pages**, unless the actor holds `manage:system`.
+  `guardBoardFolder` refuses an occupied folder outright, ordinary pages included, and a path the
+  recycle bin holds a page deleted from at or under. `ruleRefFor` would otherwise void every rule
+  already written for those pages, for every account, on nothing but `write:pages` at the board's
+  own path. Ideas come after the board; an existing page is moved in, which asks `manage:pages` at
+  the page.
 - **Access is the board's, all or nothing** — see [Permissions](../../CLAUDE.md#permissions). `feedback.ruleRefFor`
   reads an in-memory list of every board (`reloadBoards`), which is why it costs `checkAccess` no
   query. Anything that creates, moves, retags or deletes a board's front page has to reload it:

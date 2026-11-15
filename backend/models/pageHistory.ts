@@ -556,6 +556,58 @@ class PageHistory {
   }
 
   /**
+   * Whether the recycle bin holds a page that was at this path, or anywhere under it, when it was
+   * deleted.
+   *
+   * Asked of a feedback board about to arrive at the path: a page in the bin has its page rules
+   * resolved where it was (`delete:pages` there opens it), which under a board is the board.
+   * Matched as `listDeleted` matches — the newest version per page, across every locale, then
+   * filtered — and the prefix compared literally rather than with `LIKE`, where `_` is a wildcard.
+   *
+   * @param path Slash-separated path, without leading or trailing slashes
+   */
+  async hasDeletedAtOrUnder(siteId: string, locale: string, path: string): Promise<boolean> {
+    const latest = WIKI.db
+      .selectDistinctOn([pageHistoryTable.pageId], {
+        action: pageHistoryTable.action,
+        locale: pageHistoryTable.locale,
+        path: pageHistoryTable.path
+      })
+      .from(pageHistoryTable)
+      .where(
+        and(
+          eq(pageHistoryTable.siteId, siteId),
+          notExists(
+            WIKI.db
+              .select({ id: pagesTable.id })
+              .from(pagesTable)
+              .where(eq(pagesTable.id, pageHistoryTable.pageId))
+          )
+        )
+      )
+      .orderBy(
+        pageHistoryTable.pageId,
+        desc(pageHistoryTable.versionDate),
+        desc(pageHistoryTable.id)
+      )
+      .as('latest')
+
+    const prefix = `${path}/`
+    const rows = await WIKI.db
+      .select({ action: latest.action })
+      .from(latest)
+      .where(
+        and(
+          eq(latest.action, 'deleted'),
+          eq(latest.locale, locale),
+          sql`(${latest.path} = ${path} OR left(${latest.path}, ${prefix.length}) = ${prefix})`
+        )
+      )
+      .limit(1)
+    return rows.length > 0
+  }
+
+  /**
    * The deletion a page is in the recycle bin by, or null when it is not in the bin — because it was
    * never deleted, because it has been restored since, or because it never existed on this site.
    *
