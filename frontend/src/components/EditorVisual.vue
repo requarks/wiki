@@ -312,7 +312,7 @@
               <w-list dense padding>
                 <template v-for="item of tableActions" :key="item.key">
                   <w-separator v-if="item.divider" class="my-2" />
-                  <w-item v-else clickable @click="item.run">
+                  <w-item v-else-if="!item.hidden" clickable @click="item.run">
                     <w-item-section side><w-icon :name="item.icon" /></w-item-section>
                     <w-item-section>
                       <w-item-label>{{ t(item.label) }}</w-item-label>
@@ -386,7 +386,7 @@
                   <w-list dense padding>
                     <template v-for="item of tableMoreActions" :key="item.key">
                       <w-separator v-if="item.divider" class="my-2" />
-                      <w-item v-else clickable @click="item.run">
+                      <w-item v-else-if="!item.hidden" clickable @click="item.run">
                         <w-item-section side><w-icon :name="item.icon" /></w-item-section>
                         <w-item-section>
                           <w-item-label>{{ t(item.label) }}</w-item-label>
@@ -616,6 +616,7 @@ const disabledBlockTags = new Set()
 let editingBlockPos = null
 
 const underlineEnabled = ref(false)
+const mergeEnabled = ref(false)
 
 // METHODS
 
@@ -692,7 +693,14 @@ const tableActions = [
     key: 'merge',
     icon: 'mdi:table-merge-cells',
     label: 'editor.visual.table.mergeCells',
-    run: () => run(mergeCells)
+    run: () => run(mergeCells),
+    /*
+      Only MultiMarkdown tables can write a merge down (`||`, `^^`), so without `multimdTable` the
+      merge would quietly come apart on save. Splitting stays, for a merge pasted in from elsewhere.
+    */
+    get hidden() {
+      return !mergeEnabled.value
+    }
   },
   {
     key: 'split',
@@ -1735,6 +1743,7 @@ onMounted(async () => {
   */
   const config = editorStore.editors.markdown ?? {}
   underlineEnabled.value = Boolean(config.underline)
+  mergeEnabled.value = Boolean(config.multimdTable)
 
   await loadSiteBlocks()
 

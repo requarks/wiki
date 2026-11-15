@@ -487,18 +487,20 @@ export const schema = new Schema({
     },
 
     /**
-     * A line break inside a paragraph — and which of the two kinds markdown has.
+     * A line break inside a paragraph — and which of the kinds markdown has.
      *
      * `soft` is a plain newline, `hard` the backslash that forces a break wherever it is read. They
      * are kept apart because a site with `lineBreaks` on draws BOTH as a `<br>`: flattening a soft
      * break into a space, which is what a CommonMark serialiser does, would quietly delete a visible
-     * line break from every page written on such a site.
+     * line break from every page written on such a site. `html` is a `<br>` the author wrote, kept as
+     * they spelled it in `source` (`<br/>`, `<BR>`), and is also the only break a table cell can hold
+     * — see `hard_break` in `serialize.js`.
      */
     hard_break: {
       inline: true,
       group: 'inline',
       selectable: false,
-      attrs: { markup: { default: 'hard' } },
+      attrs: { markup: { default: 'hard' }, source: { default: null } },
       parseDOM: [{ tag: 'br' }],
       toDOM: () => ['br']
     },

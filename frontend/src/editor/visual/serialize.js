@@ -1,5 +1,6 @@
 import emoticons from 'markdown-it-emoji/lib/data/shortcuts.mjs'
 import { MarkdownSerializer } from 'prosemirror-markdown'
+import { TableMap } from 'prosemirror-tables'
 
 import { inlineMarkdownValue } from '@/helpers/blocks'
 import { KINDS } from '@/renderers/modules/github-alerts'
@@ -63,61 +64,178 @@ function blockOpening(node, fence) {
 }
 
 /**
- * A table row as one pipe-delimited line.
+ * A table as the lines of a pipe table: the header row(s), the delimiter row, then the body.
  *
- * Cells are rendered as inline markdown: a pipe table has one line per row, so a cell holding more
- * than a paragraph cannot be written as one. Rather than refuse, the paragraphs are joined with a
- * space and the round-trip check is what tells the author the page no longer renders the same — which
- * is the honest failure for a construct this format genuinely cannot express.
+ * Written from the table's grid (`TableMap`) rather than from its rows, because a merged cell leaves
+ * its row short: `prosemirror-tables` keeps no node for a position a span covers, while a pipe table
+ * needs a slot in every row for every column or what follows shifts left. MultiMarkdown, which the
+ * renderer reads with `multimdTable` on, has a mark for both kinds of covered slot -- an empty one,
+ * `||` with nothing between the pipes, extends the cell to its left, and `^^` extends the cell above.
+ *
+ * Two merges have no MultiMarkdown spelling, and are written as an ordinary grid with the covered
+ * slots left empty -- the content survives and the columns stay aligned, only the merge is lost:
+ *
+ * - any merge on a site with `multimdTable` off, where `||` is an empty cell and `^^` is text;
+ * - a header cell merged down into the body: the plugin starts its rowspans afresh in each of
+ *   `<thead>` and `<tbody>`, so a `^^` in the first body row is read as the text `^^`.
  */
-function tableRow(state, row) {
-  const cells = []
-  row.forEach((cell) => {
-    const parts = []
-    cell.forEach((child) => {
-      parts.push(inlineOf(state, child))
-    })
+function tableLines(state, table) {
+  const map = TableMap.get(table)
+  const { multimdTable } = state.options.site
+  const headerRows = multimdTable ? headerRowCount(table) : 1
+  const lines = []
+
+  for (let row = 0; row < map.height; row++) {
+    let line = '|'
+    for (let col = 0; col < map.width;) {
+      const pos = map.map[row * map.width + col]
+      const rect = map.findCell(pos)
+      const own = rect.top === row
+      const spanable = multimdTable && (own || rect.top >= headerRows || row < headerRows)
+      let text = ''
+      if (own) {
+        text = cellText(state, table.nodeAt(pos))
+      } else if (spanable) {
+        text = '^^'
+      }
+      line += ` ${text} |`
+      // -> The rest of the cell's width: an empty slot extends it, a blank one is a cell of its own
+      for (let i = rect.left + 1; i < rect.right; i++) {
+        line += spanable ? '|' : '  |'
+      }
+      col = rect.right
+    }
+    lines.push(line)
     /*
-      A literal pipe would end the cell, so it is escaped here rather than by the text rule, which has
-      no idea it is inside a table. One that is already escaped is left alone: a code span may hold
-      `a\|b` as its literal text, and escaping the escape would put a second backslash on the page.
+      The delimiter row goes under the header rows -- which in markdown is the only place it can go,
+      and the only thing that makes the table a table.
     */
-    cells.push(
-      parts
-        .join(' ')
-        .replace(/\\?\|/g, (match) => (match === '|' ? '\\|' : match))
-        .trim()
-    )
-  })
-  return `| ${cells.join(' | ')} |`
+    if (row === headerRows - 1) {
+      lines.push(alignmentRow(table, map))
+    }
+  }
+  return lines
 }
 
 /**
- * One block's inline content as a string, rendered through a throwaway serializer state.
+ * How many rows the table's header is: the first row, and every row after it made only of header
+ * cells.
+ *
+ * MultiMarkdown allows a header of several rows -- every row above the delimiter -- and a header cell
+ * can only span rows inside it, so a header of two rows has to be written as one for its spans to
+ * survive. GFM's tables, with the plugin off, have exactly one.
+ */
+function headerRowCount(table) {
+  let count = 1
+  for (; count < table.childCount; count++) {
+    let headers = true
+    table.child(count).forEach((cell) => {
+      headers &&= cell.type.name === 'table_header'
+    })
+    if (!headers) {
+      break
+    }
+  }
+  return count
+}
+
+/**
+ * One cell as inline markdown.
+ *
+ * A pipe table has one line per row, so a cell's paragraphs -- which is what pressing Enter in one
+ * makes -- cannot be written as paragraphs. Each is written as a line of the cell instead, joined with
+ * the `<br>` that draws a break between them, or with a space on a site that does not allow HTML,
+ * where nothing can. The page reads back with the cell as one paragraph of lines, which renders the
+ * same. A list or a quote in a cell gives up its marker the same way and keeps its lines.
+ */
+function cellText(state, cell) {
+  const lineBreak = state.options.site.allowHTML ? '<br>' : ' '
+  const lines = cellLines(state, cell)
+  // -> An empty paragraph at either end is where the caret was left, not a line anybody wrote
+  while (lines.length > 1 && lines.at(-1) === '') {
+    lines.pop()
+  }
+  while (lines.length > 1 && lines[0] === '') {
+    lines.shift()
+  }
+  return (
+    lines
+      .join(lineBreak)
+      /*
+        Nothing above writes a newline -- `hard_break` does not inside a cell -- but a code block's text
+        has its own, and any newline that got through would end the row and push the rest of the cell
+        into the next.
+      */
+      .replace(/\n/g, lineBreak)
+      /*
+        A literal pipe would end the cell, so it is escaped here rather than by the text rule, which
+        has no idea it is inside a table. One that is already escaped is left alone: a code span may
+        hold `a\|b` as its literal text, and escaping the escape would put a second backslash on the
+        page.
+      */
+      .replace(/\\?\|/g, (match) => (match === '|' ? '\\|' : match))
+      .trim()
+  )
+}
+
+/** Every textblock in a cell, in order, as one line each -- however deeply it is nested. */
+function cellLines(state, node) {
+  const lines = []
+  node.forEach((child) => {
+    if (child.isTextblock) {
+      lines.push(inlineOf(state, child))
+    } else if (child.isLeaf) {
+      // -> A rule or a raw block says nothing a cell can show, and an empty line for it would be a gap
+      if (child.textContent) {
+        lines.push(child.textContent)
+      }
+    } else {
+      lines.push(...cellLines(state, child))
+    }
+  })
+  return lines
+}
+
+/**
+ * One textblock's inline content as a string, rendered through a throwaway serializer state.
  *
  * `MarkdownSerializerState` writes into an accumulator it owns, and a table cell has to be turned
  * into text before the row it belongs to can be written at all — so the cell is rendered on a state
- * of its own and the result taken out of it.
+ * of its own and the result taken out of it. The state is told it is inside a cell, which is what
+ * `hard_break` asks.
  */
 function inlineOf(state, node) {
-  if (node.isTextblock) {
-    const sub = new state.constructor(state.nodes, state.marks, state.options)
-    sub.renderInline(node)
-    return sub.out.trim()
-  }
-  return node.textContent
+  const sub = new state.constructor(state.nodes, state.marks, {
+    ...state.options,
+    inTableCell: true
+  })
+  sub.renderInline(node)
+  return sub.out.trim()
 }
 
-/** The delimiter row, which is also where a pipe table says how each column is set. */
-function alignmentRow(row) {
-  const cells = []
-  row.forEach((cell) => {
-    const align = cell.attrs.align
-    cells.push(
+/**
+ * The delimiter row, which is also where a pipe table says how each column is set.
+ *
+ * One delimiter per column of the grid, not per cell of the first row, which a merge leaves short. A
+ * column's alignment is read off the first cell that starts in it, which is the cell the renderer
+ * gave that column's alignment to.
+ */
+function alignmentRow(table, map) {
+  const delimiters = []
+  for (let col = 0; col < map.width; col++) {
+    let align = null
+    for (let row = 0; row < map.height; row++) {
+      const pos = map.map[row * map.width + col]
+      if (map.findCell(pos).left === col) {
+        align = table.nodeAt(pos).attrs.align
+        break
+      }
+    }
+    delimiters.push(
       align === 'center' ? ':---:' : align === 'right' ? '---:' : align === 'left' ? ':---' : '---'
     )
-  })
-  return `| ${cells.join(' | ')} |`
+  }
+  return `| ${delimiters.join(' | ')} |`
 }
 
 const nodes = {
@@ -242,18 +360,10 @@ const nodes = {
   },
 
   table(state, node) {
-    node.forEach((row, _offset, index) => {
-      state.write(tableRow(state, row))
+    for (const line of tableLines(state, node)) {
+      state.write(line)
       state.ensureNewLine()
-      /*
-        The delimiter row goes under the first row when that row is the header — which in markdown is
-        the only place it can go, and the only thing that makes the table a table.
-      */
-      if (index === 0) {
-        state.write(alignmentRow(row))
-        state.ensureNewLine()
-      }
-    })
+    }
     state.closeBlock(node)
   },
 
@@ -318,15 +428,33 @@ const nodes = {
   },
 
   /**
-   * A line break, as whichever of the two kinds it was.
+   * A line break, as whichever of the kinds it was.
    *
-   * A trailing break is dropped: markdown has nowhere to put one, and writing it would leave a stray
-   * backslash at the end of a paragraph.
+   * A `<br>` the author wrote is written back as they wrote it, wherever it is. Otherwise a trailing break is
+   * dropped: markdown has nowhere to put one, and writing it would leave a stray backslash at the end
+   * of a paragraph.
+   *
+   * Inside a table cell neither newline can be written, since a pipe table's row is one line — and
+   * with `multimdTable` on, a row ending in the backslash of a hard break is a MultiMarkdown
+   * multi-line row, which moved the rest of the cell into the first column. So a break that draws as
+   * a `<br>` is written as one; where it cannot be (a site that does not allow HTML), or where it
+   * would not have drawn as one (a soft break without `lineBreaks`), it is a space.
    */
   hard_break(state, node, parent, index) {
+    const { markup } = node.attrs
+    if (markup === 'html') {
+      state.write(node.attrs.source)
+      return
+    }
     for (let i = index + 1; i < parent.childCount; i++) {
       if (parent.child(i).type !== node.type) {
-        state.write(node.attrs.markup === 'soft' ? '\n' : '\\\n')
+        if (state.options.inTableCell) {
+          const { allowHTML, lineBreaks } = state.options.site
+          const drawn = markup === 'hard' || lineBreaks
+          state.write(drawn && allowHTML ? '<br>' : ' ')
+        } else {
+          state.write(markup === 'soft' ? '\n' : '\\\n')
+        }
         return
       }
     }
@@ -539,9 +667,20 @@ const ESCAPE_EXTRA = new RegExp(
 
 /**
  * @param {import('prosemirror-model').Node} doc
+ * @param {object} config The site's markdown editor config, the one the parser was built with. What
+ *        a table can say depends on it: `multimdTable` decides whether a merge can be written, and
+ *        `allowHTML` / `lineBreaks` whether a line break in a cell can.
  * @returns {string} The page source, with the single trailing newline a file ends on.
  */
-export function serialize(doc) {
-  const text = serializer.serialize(doc, { tightLists: true, escapeExtraCharacters: ESCAPE_EXTRA })
+export function serialize(doc, config) {
+  const text = serializer.serialize(doc, {
+    tightLists: true,
+    escapeExtraCharacters: ESCAPE_EXTRA,
+    site: {
+      allowHTML: Boolean(config.allowHTML),
+      lineBreaks: Boolean(config.lineBreaks),
+      multimdTable: Boolean(config.multimdTable)
+    }
+  })
   return text.endsWith('\n') ? text : `${text}\n`
 }

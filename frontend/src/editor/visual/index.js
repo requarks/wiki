@@ -172,10 +172,10 @@ export function createVisualEditor({
     schema,
 
     /** The page source as it stands. */
-    getMarkdown: () => serialize(view.state.doc),
+    getMarkdown: () => serialize(view.state.doc, config),
 
     /** The render of that source, which is what a save stores as the page's HTML. */
-    getRender: () => context.sanitize(render(serialize(view.state.doc))),
+    getRender: () => context.sanitize(render(serialize(view.state.doc, config))),
 
     /**
      * Undo and redo, as the document currently means them.

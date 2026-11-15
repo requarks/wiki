@@ -187,7 +187,7 @@ async function selectTarget(target) {
     const renderer = new MarkdownRenderer(config)
     const result = normalizeForVisual(source, {
       parser: createParser(renderer, config),
-      serialize,
+      serialize: (doc) => serialize(doc, config),
       renderer,
       pagePath: pageStore.path,
       pageExtensions: siteStore.pageExtensions

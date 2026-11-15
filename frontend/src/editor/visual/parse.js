@@ -210,6 +210,16 @@ function normalizeInline(children, config) {
       `renderers/markdown.js` that keeps MDC's inline span off that marker, without which it silently
       sliced nothing and left the marker in the page.
     */
+    /*
+      A `<br>` the author wrote is a line break, and is drawn and edited as one rather than as a raw
+      chip. It is the only way a pipe table can hold a break at all -- a table row is one line -- so
+      it is also what the serialiser writes for a break inside a cell, and what it reads back as.
+    */
+    if (tok.type === 'html_inline' && /^<br\s*\/?>$/i.test(tok.content)) {
+      out.push(retype(tok, { type: 'md_html_break' }))
+      continue
+    }
+
     if (tok.type === 'html_inline' && tok.content.includes('task-list-item-checkbox')) {
       const next = children[i + 1]
       if (next?.type === 'text') {
@@ -484,8 +494,8 @@ const tokenSpecs = {
 
   table: { block: 'table' },
   tr: { block: 'table_row' },
-  th: { block: 'table_header', getAttrs: (tok) => ({ align: alignOf(tok) }) },
-  td: { block: 'table_cell', getAttrs: (tok) => ({ align: alignOf(tok) }) },
+  th: { block: 'table_header', getAttrs: cellAttrs },
+  td: { block: 'table_cell', getAttrs: cellAttrs },
 
   mdc_container: {
     block: 'block_container',
@@ -533,6 +543,10 @@ const tokenSpecs = {
   },
   hardbreak: { node: 'hard_break', getAttrs: () => ({ markup: 'hard' }) },
   softbreak: { node: 'hard_break', getAttrs: () => ({ markup: 'soft' }) },
+  md_html_break: {
+    node: 'hard_break',
+    getAttrs: (tok) => ({ markup: 'html', source: tok.content })
+  },
   emoji: {
     node: 'emoji',
     getAttrs: (tok) => ({ shortcode: tok.markup, char: tok.content })
@@ -623,6 +637,23 @@ function deflistIsTight(tokens, index) {
 function alignOf(tok) {
   const match = /text-align:\s*(left|center|right)/.exec(tok.attrGet('style') ?? '')
   return match ? match[1] : null
+}
+
+/**
+ * A cell's attributes: its alignment, and the merge `markdown-it-multimd-table` read off `||` and
+ * `^^`.
+ *
+ * The plugin writes no token for a cell a span covers, which is exactly how `prosemirror-tables`
+ * models a merge -- so carrying the two numbers across is all it takes. Without them every hand-written
+ * merge came in as a short row, which the table plugin then padded out with an empty cell, and the
+ * next save wrote that grid back with the merge gone.
+ */
+function cellAttrs(tok) {
+  return {
+    align: alignOf(tok),
+    colspan: Number(tok.attrGet('colspan') ?? 1),
+    rowspan: Number(tok.attrGet('rowspan') ?? 1)
+  }
 }
 
 /**
