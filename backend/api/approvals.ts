@@ -1,9 +1,22 @@
 import { audit } from '../helpers/audit.ts'
 import { CustomError } from '../helpers/common.ts'
 import { requestUser } from '../helpers/requester.ts'
-import { actorFrom, mayBypassPassword, mayOnPage, unlockedFor, unpublishedFor } from './pages.ts'
-import type { ApprovalPageRef, ApprovalRulePatch, ReviewerScope } from '../models/approvals.ts'
+import {
+  actorFrom,
+  mayBypassPassword,
+  mayKnowOfPage,
+  mayOnPage,
+  unlockedFor,
+  unpublishedFor
+} from './pages.ts'
+import type {
+  ApprovalPageRef,
+  ApprovalRulePatch,
+  ReviewableSubmissionDetail,
+  ReviewerScope
+} from '../models/approvals.ts'
 import type { HookEvent } from '../models/hooks.ts'
+import type { Page } from '../models/pages.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
 /**
@@ -92,8 +105,12 @@ async function loadSuggestablePage(req: FastifyRequest, siteId: string, pageId: 
  *
  * Page permissions are per page, so `reviewsAll` is answered for a page when there is one. Without
  * one — the site-wide queue in the inbox — it is answered at the site root, which is the only thing
- * a queue spanning every page could ask about; the per-page check then still applies to each entry
- * through the approval rules that produced it.
+ * a queue spanning every page could ask about.
+ *
+ * Either way this says only who REVIEWS, never who may READ. An approval rule says which pages take
+ * suggestions and which groups answer them, not that a member may see a page their own group rules
+ * deny them, one that is not live, or one whose password they have not entered. Each entry is held
+ * to those separately: by `mayKnowOfPage` in the queue, and by `loadReviewTarget` for one opened.
  *
  * Nobody reviews anything without an account. A guest is treated as a member of the guests group,
  * which is right for SUBMITTING — anonymous suggestions are a feature — but a review is an act with
@@ -122,6 +139,51 @@ function reviewerFor(
         tags: page?.tags
       })
   }
+}
+
+/**
+ * A suggestion this caller reviews, together with its page as they may read it.
+ *
+ * Reviewing a suggestion shows the page's current source and writes the page, so the page is loaded
+ * exactly as a suggestion to it is (`loadSuggestablePage`): `read:pages` on it, live or let through
+ * by the publish rule, and its password satisfied. A page the reviewer may not know of answers as
+ * though the suggestion were not there. A password-protected page they have not unlocked is refused
+ * rather than hidden, since its existence is not what the password guards — the queue still lists
+ * it, as a page view still shows its title — but its body is, and the suggestion, its diff and the
+ * page source all are that body.
+ *
+ * Being a reviewer is the whole of the authority to APPLY a suggestion, adjusted or not: nothing here
+ * asks `write:pages`.
+ */
+async function loadReviewTarget(
+  req: FastifyRequest<{ Params: { siteId: string; submissionId: string } }>
+): Promise<
+  { submission: ReviewableSubmissionDetail; page: Page } | { refused: 'notFound' | 'locked' }
+> {
+  const submission = await WIKI.models.approvals.getSubmissionForReview(
+    req.params.siteId,
+    req.params.submissionId,
+    reviewerFor(req),
+    (page) => mayKnowOfPage(req, page)
+  )
+  if (!submission) {
+    return { refused: 'notFound' }
+  }
+  const page = await loadSuggestablePage(req, req.params.siteId, submission.page.id)
+  if (!page) {
+    return { refused: 'notFound' }
+  }
+  if (page.isLocked) {
+    return { refused: 'locked' }
+  }
+  return { submission, page }
+}
+
+/** The refusal `loadReviewTarget` settled on, as a reply. */
+function refuseReview(reply: FastifyReply, refused: 'notFound' | 'locked'): FastifyReply {
+  return refused === 'locked'
+    ? reply.forbidden('This page is password protected. Unlock it to review the suggestion.')
+    : reply.notFound('This edit suggestion does not exist.')
 }
 
 /** Shorthand for the model's own check; see `isReviewerSession` there for why reviewing needs one. */
@@ -488,7 +550,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'List the edit suggestions waiting for the caller to review',
         description:
-          'Scoped by the approval rules: a suggestion appears here when an enabled rule covers its page and names a group the caller is in. Oldest first, which is the order a queue is worked through. `manage:system` sees the whole site’s queue.',
+          'Scoped by the approval rules: a suggestion appears here when an enabled rule covers its page and names a group the caller is in, and the caller may read that page — `read:pages` on it, and live unless they may see it while it is not. Being a reviewer never opens a page the caller could not otherwise read. Oldest first, which is the order a queue is worked through. `manage:system` sees the whole site’s queue.',
         tags: ['Approvals'],
         params: {
           type: 'object',
@@ -508,7 +570,9 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      return WIKI.models.approvals.getReviewableSubmissions(req.params.siteId, reviewerFor(req))
+      return WIKI.models.approvals.getReviewableSubmissions(req.params.siteId, reviewerFor(req), {
+        visible: (page) => mayKnowOfPage(req, page)
+      })
     }
   )
 
@@ -524,7 +588,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get an edit suggestion, with both sides of the diff',
         description:
-          'The suggested source and the page as it currently stands, which is what the review screen compares. Answers 404 for a suggestion that is not the caller’s to review, so that an ID cannot be probed for.',
+          'The suggested source and the page as it currently stands, which is what the review screen compares. Answers 404 for a suggestion that is not the caller’s to review, or whose page they may not read, so that an ID cannot be probed for; and 403 while the page is password protected and this session has not unlocked it. Approving and declining answer the same way.',
         tags: ['Approvals'],
         params: {
           type: 'object',
@@ -541,15 +605,11 @@ async function routes(app: FastifyInstance) {
     },
     async (req, reply) => {
       reply.preventCache()
-      const submission = await WIKI.models.approvals.getSubmissionForReview(
-        req.params.siteId,
-        req.params.submissionId,
-        reviewerFor(req)
-      )
-      if (!submission) {
-        return reply.notFound('This edit suggestion does not exist.')
+      const target = await loadReviewTarget(req)
+      if ('refused' in target) {
+        return refuseReview(reply, target.refused)
       }
-      return submission
+      return target.submission
     }
   )
 
@@ -609,19 +669,17 @@ async function routes(app: FastifyInstance) {
       if (!actor) {
         return reply.unauthorized()
       }
-      const submission = await WIKI.models.approvals.getSubmissionForReview(
-        req.params.siteId,
-        req.params.submissionId,
-        reviewerFor(req)
-      )
-      if (!submission) {
-        return reply.notFound('This edit suggestion does not exist.')
+      const target = await loadReviewTarget(req)
+      if ('refused' in target) {
+        return refuseReview(reply, target.refused)
       }
+      const { submission, page } = target
 
       const content = req.body.content ?? submission.content
       const applied = await WIKI.models.approvals.approveSubmission({
         siteId: req.params.siteId,
         submissionId: req.params.submissionId,
+        page,
         content,
         render: req.body.render,
         actor
@@ -696,14 +754,11 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      const submission = await WIKI.models.approvals.getSubmissionForReview(
-        req.params.siteId,
-        req.params.submissionId,
-        reviewerFor(req)
-      )
-      if (!submission) {
-        return reply.notFound('This edit suggestion does not exist.')
+      const target = await loadReviewTarget(req)
+      if ('refused' in target) {
+        return refuseReview(reply, target.refused)
       }
+      const { submission } = target
       await WIKI.models.approvals.rejectSubmission(req.params.siteId, req.params.submissionId)
 
       await audit(req, 'page', 'rejectPageEdit', {
@@ -806,10 +861,15 @@ async function routes(app: FastifyInstance) {
       }
       return {
         canReview: true,
-        submissions: await WIKI.models.approvals.getReviewableSubmissions(req.params.siteId, {
-          ...scope,
-          pageId: req.params.pageId
-        })
+        // -> `loadSuggestablePage` above has already asked everything `visible` would
+        submissions: await WIKI.models.approvals.getReviewableSubmissions(
+          req.params.siteId,
+          scope,
+          {
+            pageId: req.params.pageId,
+            visible: () => true
+          }
+        )
       }
     }
   )
@@ -833,7 +893,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Whether the caller may suggest edits to a page, and what they already suggested',
         description:
-          "Answers `canSubmit: false` for a page no enabled rule opens to this reader, which is what hides the button. With `withContent`, also returns the source the editor should open with: the caller's own pending suggestion when they have one, so that they carry on where they left off, otherwise the page as it stands. The source is only ever included when `canSubmit` holds.",
+          "Answers `canSubmit: false` for a page no enabled rule opens to this reader, or one whose password this session has not satisfied, which is what hides the button. With `withContent`, also returns the source the editor should open with: the caller's own pending suggestion when they have one, so that they carry on where they left off, otherwise the page as it stands. The source is only ever included when `canSubmit` holds.",
         tags: ['Approvals'],
         params: {
           type: 'object',
@@ -892,7 +952,8 @@ async function routes(app: FastifyInstance) {
         allowContributions: page.allowContributions
       }
       const rule = await WIKI.models.approvals.findSubmitRule(req.params.siteId, pageRef, groupIds)
-      if (!rule) {
+      // -> Locked: the editor would open on an empty source, which `PUT` below refuses anyway
+      if (!rule || page.isLocked) {
         return { canSubmit: false, isGuest: !actor, submission: null }
       }
 
@@ -977,6 +1038,14 @@ async function routes(app: FastifyInstance) {
       const rule = await WIKI.models.approvals.findSubmitRule(req.params.siteId, pageRef, groupIds)
       if (!rule) {
         return reply.forbidden('This page does not accept edit suggestions from you.')
+      }
+      /*
+        The source a suggestion is diffed against is the page's body, which the password withholds:
+        submitted without it, the patch is taken against an empty page and accepting it would replace
+        the whole page with whatever was sent.
+      */
+      if (page.isLocked) {
+        return reply.forbidden('This page is password protected.')
       }
       // -> Refused at the door: approving it later would be refused anyway, by `updatePage`
       WIKI.models.pages.assertEditable(page)

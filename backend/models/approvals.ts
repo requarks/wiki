@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { createPatch } from 'diff'
+import { liveCondition } from '../helpers/publishing.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import {
@@ -9,7 +10,8 @@ import {
   pages as pagesTable,
   users as usersTable
 } from '../db/schema.ts'
-import type { PageActor } from './pages.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
+import type { Page, PageActor } from './pages.ts'
 
 /**
  * How a rule decides which pages it covers. The same set group page rules use, so an administrator
@@ -56,6 +58,18 @@ export interface ReviewerScope {
   groupIds: string[]
   reviewsAll?: boolean
 }
+
+/**
+ * Whether the reviewer may be told of the page a submission is about at all: `read:pages` on it, and
+ * live or let through by the publish rule (`mayKnowOfPage` in `api/pages.ts`).
+ *
+ * Being a reviewer is not that. An approval rule says which pages take suggestions and which groups
+ * answer them; it says nothing about whether a member may read a page their own group rules deny
+ * them, or one that is not live. So the queue asks both, and this is the second, supplied by the
+ * route because only the route has the request. A caller that has already read the page through
+ * `getPage` -- the page view, the per-page queue -- has asked it already and passes `() => true`.
+ */
+export type SubmissionPageFilter = (page: RulePageRef & { isLive: boolean }) => boolean
 
 /** An edit suggested against a page, as the author's own view of it. */
 export interface PageEditSubmission {
@@ -477,7 +491,12 @@ class Approvals {
       hasOpenSuggestion,
       canReview,
       pendingSubmissions: canReview
-        ? await this.getReviewableSubmissions(siteId, { ...reviewerScope, pageId: page.id })
+        ? // -> The page view has already read the page through `getPage`, which asked everything
+          //    `visible` would
+          await this.getReviewableSubmissions(siteId, reviewerScope, {
+            pageId: page.id,
+            visible: () => true
+          })
         : []
     }
   }
@@ -590,14 +609,16 @@ class Approvals {
    * Every suggestion waiting on this reviewer, oldest first.
    *
    * A suggestion is theirs to review when an enabled rule covers its page and names a group they are
-   * in — the same rules that let it be submitted, read from the other side. Someone holding
-   * `manage:system` sees the site's whole queue, as they do everywhere else.
+   * in — the same rules that let it be submitted, read from the other side — AND `visible` lets them
+   * know of its page. Someone holding `manage:system` sees the site's whole queue, as they do
+   * everywhere else.
    *
    * Ordered oldest first because a queue is worked through in the order things arrived.
    */
   async getReviewableSubmissions(
     siteId: string,
-    { groupIds, reviewsAll = false, pageId }: ReviewerScope & { pageId?: string }
+    { groupIds, reviewsAll = false }: ReviewerScope,
+    { pageId, visible }: { pageId?: string; visible: SubmissionPageFilter }
   ): Promise<ReviewableSubmission[]> {
     if (!reviewsAll && groupIds.length < 1) {
       return []
@@ -624,6 +645,7 @@ class Approvals {
         pageLocale: pagesTable.locale,
         pageTags: pagesTable.tags,
         pageContent: pagesTable.content,
+        pageIsLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean),
         authorId: usersTable.id,
         authorName: usersTable.name,
         authorEmail: usersTable.email
@@ -639,18 +661,26 @@ class Approvals {
       .orderBy(asc(submissionsTable.createdAt))
 
     // -> Matched in memory rather than in SQL: a rule can be a regular expression or a set of tags,
-    //    which no `WHERE` clause here could express, and a review queue is small
+    //    which no `WHERE` clause here could express, and a review queue is small.
+    /*
+      No `allowContributions` here, deliberately: that switch governs whether a suggestion may be
+      MADE. One already sent stays in its reviewers' queue if the page is later closed to
+      contributions -- otherwise turning the switch off would silently strand work somebody had
+      submitted in good faith, with nobody able to accept or decline it.
+    */
     return rows
-      .filter((row: any) =>
-        rules.some((rule) =>
-          /*
-            No `allowContributions` here, deliberately: that switch governs whether a suggestion may
-            be MADE. One already sent stays in its reviewers' queue if the page is later closed to
-            contributions -- otherwise turning the switch off would silently strand work somebody had
-            submitted in good faith, with nobody able to accept or decline it.
-          */
-          this.matchesPage(rule, { path: row.pagePath, tags: row.pageTags ?? [] })
-        )
+      .filter(
+        (row: any) =>
+          visible({
+            siteId,
+            path: row.pagePath,
+            locale: row.pageLocale,
+            tags: row.pageTags ?? [],
+            isLive: row.pageIsLive
+          }) &&
+          rules.some((rule) =>
+            this.matchesPage(rule, { path: row.pagePath, tags: row.pageTags ?? [] })
+          )
       )
       .map((row: any) => this.toReviewable(row))
   }
@@ -658,15 +688,19 @@ class Approvals {
   /**
    * One submission, if it is this reviewer's to look at, with both sides of the diff.
    *
+   * `pageContent` is the page's stored source, read regardless of the password: the route checks the
+   * lock on the page before handing this over (`loadReviewTarget` in `api/approvals.ts`).
+   *
    * @returns The submission, or null when it does not exist or is not theirs to review
    */
   async getSubmissionForReview(
     siteId: string,
     submissionId: string,
-    { groupIds, reviewsAll = false }: ReviewerScope
+    scope: ReviewerScope,
+    visible: SubmissionPageFilter
   ): Promise<ReviewableSubmissionDetail | null> {
     // -> Reuses the queue rather than re-deriving who may see what: one definition of reviewable
-    const reviewable = await this.getReviewableSubmissions(siteId, { groupIds, reviewsAll })
+    const reviewable = await this.getReviewableSubmissions(siteId, scope, { visible })
     if (!reviewable.some((s) => s.id === submissionId)) {
       return null
     }
@@ -703,17 +737,24 @@ class Approvals {
    * other save, with the reviewer recorded as the author: they are the one putting it on the page, and
    * a guest submitter has no account to attribute it to.
    *
-   * @returns False when there is no such submission
+   * Being a reviewer of the page is the whole of the authority for this write, adjusted content
+   * included: an approval rule naming the reviewer's group, or `review:pages`, is the grant, and
+   * `write:pages` is not asked. `page` is the page as the ROUTE read it for this reviewer, so the
+   * read, publish and password checks have already been made by the time it gets here.
+   *
+   * @returns False when there is no such submission on that page
    */
   async approveSubmission({
     siteId,
     submissionId,
+    page,
     content,
     render,
     actor
   }: {
     siteId: string
     submissionId: string
+    page: Page
     content: string
     /** The rendered HTML. Rendered here instead when the caller has none, which needs an extension. */
     render?: string
@@ -725,16 +766,7 @@ class Approvals {
       .where(and(eq(submissionsTable.id, submissionId), eq(submissionsTable.siteId, siteId)))
       .limit(1)
     const submission = rows[0]
-    if (!submission) {
-      return false
-    }
-
-    const page = await WIKI.models.pages.getPage({
-      siteId,
-      id: submission.pageId,
-      withContent: true
-    })
-    if (!page) {
+    if (!submission || submission.pageId !== page.id) {
       return false
     }
 
