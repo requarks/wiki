@@ -9,10 +9,11 @@ import { createProseMarkdown } from './comment.js'
  * linked, since an idea addresses the board rather than somebody in particular.
  *
  * Unlike a comment, the result is STORED: an idea is a page, and a page's render is produced by the
- * browser that changed it. That makes the restriction here a matter of what a submission looks like
- * rather than the security boundary — the server sanitizes the render like every save, with no script
- * or style permission whoever submitted it. The source is a page's markdown like any other, so
- * somebody who may write the page can go on to edit it in the full editor.
+ * browser that changed it. So the restriction here is not the security boundary, since a request can
+ * send any render it likes: the server holds the render to the elements this markdown produces
+ * (`sanitizeProse` in the backend's `helpers/sanitizeRender.ts`, which has to keep up with the rules
+ * enabled in `createProseMarkdown`). The source is a page's markdown like any other, so somebody who
+ * may write the page can go on to edit it in the full editor.
  */
 const md = createProseMarkdown({ rel: 'nofollow ugc noopener' })
 

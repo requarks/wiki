@@ -21,6 +21,19 @@ of range — so their appearance lives in `frontend/src/css/_page-contents.scss`
 content typography, and the component itself is a plain `HTMLElement` carrying the definition. Don't
 copy that shape for a block that draws its own furniture; a shadow root is still the default.
 
+**A prop is text, and never reaches anything that parses HTML.** A block's code is trusted (built-in,
+or uploaded by an administrator), but its props are written by whoever wrote the page — and the
+server sanitizer passes a declared prop's value through as it is: it drops `on*` attribute names and
+scheme-checks a `url: true` prop, and that is all. So show a prop's value only through Lit's
+`${…}` interpolation, which escapes it, or as a text node / `textContent`. Never hand one to
+`unsafeHTML`, `unsafeSVG`, `innerHTML`, `insertAdjacentHTML`, or a **library call that takes a
+string as markup** — the hard case, since nothing at the call site says so. Leaflet's `bindPopup` and
+`bindTooltip` are that: a string goes to `innerHTML`, which is how `block-map`'s marker label was
+stored XSS reachable by any account through a feedback idea, until it was handed a
+`document.createTextNode`. Before passing a prop to a library, check what the library does with a
+string. A block whose whole point is markup an author wrote (`block-include`, the math blocks) renders
+something the server sanitized or a library produced from a non-HTML input, never a prop's raw value.
+
 **Dark mode goes through `blocks/shared/theme.js`, never `:host-context()`.** The app's source of
 truth is the `body--dark` class on `<body>`, which CSS in a shadow root cannot see; `:host-context()`
 is the selector for exactly that and is what every block used to use, but only Chromium ever shipped

@@ -1,3 +1,4 @@
+import sanitizeHtml from 'sanitize-html'
 import { audit } from '../helpers/audit.ts'
 import {
   CustomError,
@@ -7,6 +8,7 @@ import {
   pathSegmentFromTitle
 } from '../helpers/common.ts'
 import { requestUser } from '../helpers/requester.ts'
+import { sanitizeProse } from '../helpers/sanitizeRender.ts'
 import { actorFrom, mayOnPage, unlockedFor, unpublishedFor, userRequired } from './pages.ts'
 import { COMMENT_MAX_LENGTH } from '../models/comments.ts'
 import { FEEDBACK_STATUSES, IDEA_ICON, isFeedbackStatus } from '../models/feedback.ts'
@@ -43,6 +45,20 @@ const IDEA_CONTENT_MAX_LENGTH = COMMENT_MAX_LENGTH
 /** How much of an idea's text becomes its `description`, the line a listing shows under it. */
 const IDEA_EXCERPT_LENGTH = 200
 
+/**
+ * An idea's render, cut down to the prose markdown its description is written in.
+ *
+ * The browser renders the description with the comment's markdown (`renderers/feedback.js`), which
+ * cannot produce a block, an image or raw HTML -- but the render arrives beside the source and a
+ * request can put anything in it. Left to the page sanitizer, which is what `createPage` and
+ * `updatePage` run, it could carry whatever a page may: every enabled block, with props the submitter
+ * chose. So the narrow set is enforced here, before the page save sanitizes it again as nobody's.
+ * Somebody who may write the page can still edit it in the full editor afterwards, sanitized as theirs.
+ */
+function ideaRender(render: string): string {
+  return sanitizeProse(sanitizeHtml, render, { rel: 'nofollow ugc noopener' })
+}
+
 /** What a submission or an author's edit carries, as a route body schema's properties. */
 const ideaInputProperties = {
   title: { type: 'string', minLength: 1, maxLength: IDEA_TITLE_MAX_LENGTH },
@@ -54,7 +70,7 @@ const ideaInputProperties = {
   render: {
     type: 'string',
     description:
-      'The HTML the browser rendered `content` to. Sanitized on the way in like every page save, with no script or style permission regardless of what the submitter holds.'
+      'The HTML the browser rendered `content` to. Only what the prose markdown produces is kept (paragraphs, emphasis, code, quotes, lists and links); everything else is stripped, blocks and images included, regardless of what the submitter holds.'
   },
   categories: {
     type: 'array',
@@ -423,7 +439,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Submit an idea to a feedback board',
         description:
-          "Creates a page in the board's folder, named after the title (with `-2`, `-3`… on a collision), as the caller — so it has history, is indexed, copied to storage targets and announced like any page — and upvotes it on the caller's behalf, unless the board has voting off.\n\nNeeds an account and `write:feedback` on the board, on a board that accepts ideas. The render is sanitized with no script or style permission regardless of what the caller holds. Limited to one submission per account per the site's submission interval (Admin → Editors → Feedback Board Editor, a minute by default), answering 429 with `Retry-After` past that.",
+          "Creates a page in the board's folder, named after the title (with `-2`, `-3`… on a collision), as the caller — so it has history, is indexed, copied to storage targets and announced like any page — and upvotes it on the caller's behalf, unless the board has voting off.\n\nNeeds an account and `write:feedback` on the board, on a board that accepts ideas. The render keeps only what the prose markdown produces, regardless of what the caller holds. Limited to one submission per account per the site's submission interval (Admin → Editors → Feedback Board Editor, a minute by default), answering 429 with `Retry-After` past that.",
         tags: ['Pages'],
         params: siteIdParam,
         body: {
@@ -510,7 +526,7 @@ async function routes(app: FastifyInstance) {
           icon: IDEA_ICON,
           editor: 'markdown',
           content: req.body.content,
-          render: req.body.render,
+          render: ideaRender(req.body.render),
           tags: categories,
           publishState: 'published',
           allowComments: true,
@@ -688,7 +704,7 @@ async function routes(app: FastifyInstance) {
           ...(title !== undefined && { title }),
           ...(req.body.content !== undefined && {
             content: req.body.content,
-            render: req.body.render,
+            render: ideaRender(req.body.render!),
             description: excerptOf(req.body.content)
           }),
           ...(tags !== undefined && { tags })

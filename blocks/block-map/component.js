@@ -284,7 +284,11 @@ export class BlockMapElement extends LitElement {
       keyboard: false
     }).addTo(this._map)
     if (this.label) {
-      marker.bindPopup(this.label)
+      // -> A text node, never the string: Leaflet assigns string popup content to `innerHTML`, and
+      //    this prop is written by whoever wrote the page. The sanitiser passes a prop's value
+      //    through as it is, so a label carrying `<img onerror=…>` would run in every reader's
+      //    session. A node is appended as it is, so the label reads as the plain text it is.
+      marker.bindPopup(document.createTextNode(this.label))
     }
   }
 

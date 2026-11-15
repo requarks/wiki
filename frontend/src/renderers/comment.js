@@ -28,6 +28,11 @@ import MarkdownIt from 'markdown-it'
  * set and differ only in who wrote the links -- see there. Everything said above about `html: false`
  * holds for both.
  *
+ * An idea on a feedback board is rendered with it too, and STORED, so the server holds a submitted
+ * render to the elements this can produce (`sanitizeProse` in the backend's
+ * `helpers/sanitizeRender.ts`). Enabling a rule here that emits a new element means adding it there,
+ * or it is stripped from every idea that uses it.
+ *
  * @param {object} opts
  * @param {string} opts.rel What every link leaves with
  */

@@ -303,6 +303,69 @@ const BASE_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
 const ALLOWED_SCHEMES = ['http', 'https', 'mailto', 'tel', 'ftp']
 
 /**
+ * Every element the prose markdown can produce (`createProseMarkdown` in the frontend's
+ * `renderers/comment.js`), and nothing else: paragraphs and line breaks, emphasis and strikethrough,
+ * code spans and fenced code, quotes, lists and links. A change to the rules enabled there is a change
+ * here too.
+ */
+const PROSE_ALLOWED_TAGS = [
+  'p',
+  'br',
+  'em',
+  'strong',
+  's',
+  'code',
+  'pre',
+  'blockquote',
+  'ul',
+  'ol',
+  'li',
+  'a'
+]
+
+/**
+ * Sanitize HTML that is meant to be prose markdown, and only that.
+ *
+ * For a render that was produced in the browser from markdown which may hold only prose -- an idea on
+ * a feedback board -- by somebody who may write nothing else. The browser renders it with raw HTML
+ * off, but the render is sent to the server alongside the source and a request can carry any HTML in
+ * it, so the narrow set has to be enforced here rather than trusted: `sanitizeRender` would let
+ * through everything a page may hold, enabled blocks and their props included.
+ *
+ * A link's `rel` and `target` are set here rather than kept from the input, so that what a submitter
+ * may not opt out of (`nofollow ugc`) does not depend on their browser.
+ *
+ * @param sanitizeHtml The library, from the caller's own dependencies — see the top of this file
+ * @param html The render, as the browser produced it
+ * @param options.rel What every link leaves with
+ */
+export function sanitizeProse(
+  sanitizeHtml: typeof SanitizeHtml,
+  html: string,
+  { rel }: { rel: string }
+): string {
+  return sanitizeHtml(html, {
+    allowedTags: PROSE_ALLOWED_TAGS,
+    allowedAttributes: {
+      a: ['href', 'rel', 'target'],
+      ol: ['start'],
+      code: ['class']
+    },
+    // -> The fence's info string, which the page's highlighter reads
+    allowedClasses: { code: ['language-*'] },
+    allowedSchemes: ALLOWED_SCHEMES,
+    allowProtocolRelative: false,
+    transformTags: {
+      a: (tagName, attribs) => ({
+        tagName,
+        attribs: { ...attribs, rel, target: '_blank' }
+      })
+    },
+    nonTextTags: ['style', 'script', 'textarea', 'option', 'noscript']
+  })
+}
+
+/**
  * Strip everything a render may not carry.
  *
  * @param sanitizeHtml The library, from the caller's own dependencies — see the top of this file
