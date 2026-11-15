@@ -1255,12 +1255,24 @@ class Pages {
    * its other rows in from — and what tells it, before anything is saved, that the set already has a
    * page for a locale it has spoken for.
    *
+   * `unpublished` narrows both halves the way it narrows `getPage`: a page asked about that is not
+   * live answers as no page at all, and a counterpart that is not live is left out of the set.
+   *
    * @returns The whole group INCLUDING the page asked about, or null when there is no page there.
    *          A page with no counterparts answers with just itself.
    */
   async localeGroupAt(
     siteId: string,
-    { locale, path }: { locale?: string; path: string }
+    {
+      locale,
+      path,
+      unpublished = true
+    }: {
+      locale?: string
+      path: string
+      /** As for `getPage`. */
+      unpublished?: boolean | ((page: RulePageRef) => boolean)
+    }
   ): Promise<{
     page: PageLocaleRelation & { id: string }
     relations: PageLocaleRelation[]
@@ -1269,6 +1281,14 @@ class Pages {
     //    path does: a path alone names the primary locale's page
     const page = await this.findByPath(siteId, locale || this.defaultLocale(siteId), path)
     if (!page) {
+      return null
+    }
+    if (
+      !page.isLive &&
+      (typeof unpublished === 'function'
+        ? !unpublished({ siteId, locale: page.locale, path: page.path, tags: page.tags ?? [] })
+        : !unpublished)
+    ) {
       return null
     }
     return {
@@ -1281,7 +1301,8 @@ class Pages {
       },
       relations: await this.localeRelationsFor(siteId, {
         localeGroupId: page.localeGroupId,
-        id: page.id
+        id: page.id,
+        unpublished
       })
     }
   }
@@ -1317,7 +1338,13 @@ class Pages {
     return rows[0]?.tags ?? []
   }
 
-  /** One page of a site, by the locale and path that address it. */
+  /**
+   * One page of a site, by the locale and path that address it.
+   *
+   * Regardless of its publish state, with `isLive` saying what that is: every caller answers somebody
+   * about the page it finds, and a page that is not live is only theirs to hear about if they may
+   * edit it.
+   */
   private async findByPath(
     siteId: string,
     locale: string,
@@ -1329,6 +1356,7 @@ class Pages {
     title: string
     tags: string[]
     localeGroupId: string | null
+    isLive: boolean
   } | null> {
     const rows = await WIKI.db
       .select({
@@ -1337,7 +1365,8 @@ class Pages {
         path: pagesTable.path,
         title: pagesTable.title,
         tags: pagesTable.tags,
-        localeGroupId: pagesTable.localeGroupId
+        localeGroupId: pagesTable.localeGroupId,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(
@@ -1390,6 +1419,23 @@ class Pages {
   }
 
   /**
+   * Whether a page of a translation set may be named to this actor: `read:pages` on it, and either
+   * live or theirs to edit (`helpers/publishing.ts`). What the page view's own list of counterparts
+   * is cut to, asked again by a save so that the two agree on what the author was shown.
+   */
+  private mayNameCounterpart(
+    actor: AccessActor,
+    siteId: string,
+    page: { locale: string; path: string; tags: string[] | null; isLive: boolean }
+  ): boolean {
+    const ref = { siteId, locale: page.locale, path: page.path, tags: page.tags ?? [] }
+    return (
+      WIKI.models.groups.checkAccess(actor, 'read:pages', ref) &&
+      (page.isLive || maySeeUnpublished(actor, ref))
+    )
+  }
+
+  /**
    * Set the locale group a page belongs to: which pages are this page in another language.
    *
    * **The list states the whole group, not this page's half of it.** The panel that sends it shows
@@ -1407,13 +1453,21 @@ class Pages {
    * holds a page for a locale this request speaks for — most importantly for the saving page's OWN
    * locale, which is the case of a French page that is already some other English page's translation.
    *
+   * **A page the author may not see is neither joined, named nor dropped** — one outside `read:pages`
+   * for them, or not live and not theirs to edit (`mayNameCounterpart`). Naming one that is not
+   * already in this page's set is answered exactly as naming nothing; one that IS a member and that
+   * the list leaves out is kept, since nobody can mean to remove a page they were never shown; and a
+   * refusal caused by one says which slot is taken without saying by what.
+   *
    * @param page The page being saved, as it stands in the database.
    * @param wanted Its counterparts. Empty dissolves the group, leaving every member unrelated.
+   * @param actor Who is saving, which decides what in the set they may see.
    */
   private async applyLocaleRelations(
     siteId: string,
     page: { id: string; locale: string; localeGroupId: string | null },
-    wanted: PageLocaleRelationInput[]
+    wanted: PageLocaleRelationInput[],
+    actor: AccessActor
   ): Promise<void> {
     /*
       The group as it will stand, by locale. Seeded with the saving page, which occupies its own
@@ -1431,7 +1485,15 @@ class Pages {
       }
       const path = normalizePagePath(entry?.path ?? '')
       const target = await this.findByPath(siteId, locale, path)
-      if (!target) {
+      /*
+        A page already in this page's set is agreement rather than an instruction, and is not asked
+        about: a save response hands the author the whole set back, and refusing a member they echo
+        would refuse a save that changes nothing about it. Anything else is being joined to this page,
+        which is not for an author to do with a page they may not see -- and refusing it in different
+        words from a missing page would tell them it is there.
+      */
+      const isMember = Boolean(page.localeGroupId) && target?.localeGroupId === page.localeGroupId
+      if (!target || (!isMember && !this.mayNameCounterpart(actor, siteId, target))) {
         throw new CustomError(
           'pageLocaleRelationNotFound',
           `There is no page at "${path}" in locale ${locale} to relate this page to.`
@@ -1474,7 +1536,9 @@ class Pages {
           id: pagesTable.id,
           locale: pagesTable.locale,
           path: pagesTable.path,
-          localeGroupId: pagesTable.localeGroupId
+          tags: pagesTable.tags,
+          localeGroupId: pagesTable.localeGroupId,
+          isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
         })
         .from(pagesTable)
         .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.localeGroupId, groupId)))
@@ -1483,15 +1547,38 @@ class Pages {
         if (claimed?.id === member.id) {
           continue
         }
+        const visible = this.mayNameCounterpart(actor, siteId, member)
         if (groupId === page.localeGroupId) {
-          // -> A member of this page's own group that the request does not name: the author took it
-          //    out of the set, or pointed that locale at a different page, so it is dropped below
+          if (visible) {
+            // -> A member of this page's own group that the request does not name: the author took it
+            //    out of the set, or pointed that locale at a different page, so it is dropped below
+            continue
+          }
+          /*
+            One the author was never shown, so leaving it out says nothing: the page view lists only
+            the counterparts its reader may see, and every save sends that list back. Kept -- and a
+            different page named for its locale is refused, without saying what holds the slot.
+          */
+          if (claimed) {
+            throw new CustomError(
+              'pageLocaleRelationConflict',
+              `This page's set of translations already has a ${member.locale} page. A page has one counterpart per locale.`,
+              409
+            )
+          }
+          desired.set(member.locale, {
+            id: member.id,
+            path: member.path,
+            localeGroupId: member.localeGroupId
+          })
           continue
         }
         if (claimed) {
           throw new CustomError(
             'pageLocaleRelationConflict',
-            `"${chosenPath}" already belongs to a set of translations whose ${member.locale} page is "${member.path}". A page can belong to only one set.`,
+            visible
+              ? `"${chosenPath}" already belongs to a set of translations whose ${member.locale} page is "${member.path}". A page can belong to only one set.`
+              : `"${chosenPath}" already belongs to a set of translations that has a ${member.locale} page. A page can belong to only one set.`,
             409
           )
         }
@@ -2100,8 +2187,12 @@ class Pages {
    * Deliberately the only way past the lock: a reader gets the body from here or from a `getPage` the
    * route has already marked as unlocked, and never from a flag the browser sent.
    *
-   * @returns The page, its body included, or null when the password is wrong or the page has none —
-   *          the caller cannot tell those apart, and neither can whoever is guessing.
+   * A password is a lock on top of the page rules, never a way round them: a page the requester may
+   * not read is refused before its password is so much as compared, exactly as a wrong one is.
+   *
+   * @returns The page, its body included, or null when the password is wrong, the page has none, or
+   *          the requester may not read it — the caller cannot tell those apart, and neither can
+   *          whoever is guessing.
    */
   async unlockPage({
     siteId,
@@ -2109,6 +2200,7 @@ class Pages {
     hash,
     locale,
     password,
+    readable,
     unpublished = true
   }: {
     siteId: string
@@ -2116,6 +2208,12 @@ class Pages {
     hash?: string
     locale?: string
     password: string
+    /**
+     * Whether the requester may read this page (`read:pages` on it). Asked of the page once it is
+     * found, since a request addressing one by hash does not know which page it is. No default:
+     * whoever unlocks a page has to say who may read it.
+     */
+    readable: (page: RulePageRef) => boolean
     /** As for `getPage`. */
     unpublished?: boolean | ((page: RulePageRef) => boolean)
   }): Promise<Page | null> {
@@ -2132,7 +2230,9 @@ class Pages {
       unlocked: false,
       withPassword: false
     })
-    if (!page?.isLocked) {
+    // -> Not readable answers as a wrong password does, so that this cannot be used to learn either
+    //    that a page is there or what unlocks it
+    if (!page?.isLocked || !readable(page)) {
       return null
     }
     const stored = await WIKI.db
@@ -2272,7 +2372,8 @@ class Pages {
         await this.applyLocaleRelations(
           siteId,
           { id: page.id, locale, localeGroupId: null },
-          input.localeRelations
+          input.localeRelations,
+          actor
         )
       }
       await WIKI.models.tree.addPage({
@@ -2442,7 +2543,8 @@ class Pages {
       await this.applyLocaleRelations(
         siteId,
         { id: existing.id, locale: existing.locale, localeGroupId: existing.localeGroupId },
-        patch.localeRelations
+        patch.localeRelations,
+        actor
       )
     }
 
@@ -4084,15 +4186,17 @@ class Pages {
   async getPathFromAlias(
     siteId: string,
     alias: string
-  ): Promise<{ id: string; path: string; locale: string; tags: string[] } | null> {
-    // -> The locale and the tags come back alongside the path because the caller has to decide
-    //    whether this reader may know the page exists, and a rule reads all three
+  ): Promise<{ id: string; path: string; locale: string; tags: string[]; isLive: boolean } | null> {
+    // -> The locale, the tags and the publish state come back alongside the path because the caller
+    //    has to decide whether this reader may know the page exists: a rule reads the first three,
+    //    and a page that is not live is only known to whoever may edit it
     const results = await WIKI.db
       .select({
         id: pagesTable.id,
         path: pagesTable.path,
         locale: pagesTable.locale,
-        tags: pagesTable.tags
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.alias, alias)))
@@ -4103,9 +4207,9 @@ class Pages {
   /**
    * Where the page with this id lives, for the short link that names it.
    *
-   * The id half of `getPathFromAlias`, and it answers with the same four fields for the same reason:
-   * the caller has to decide whether this reader may be told the page exists, and a page rule reads
-   * the path, the locale and the tags to say so.
+   * The id half of `getPathFromAlias`, and it answers with the same fields for the same reason: the
+   * caller has to decide whether this reader may be told the page exists, and a page rule reads the
+   * path, the locale and the tags to say so, and the publish state decides who else may know of it.
    *
    * An id is the one name for a page that never changes — an alias can be retyped and a path can be
    * moved — which is what makes it worth a link of its own.
@@ -4113,13 +4217,14 @@ class Pages {
   async getPathFromId(
     siteId: string,
     id: string
-  ): Promise<{ id: string; path: string; locale: string; tags: string[] } | null> {
+  ): Promise<{ id: string; path: string; locale: string; tags: string[]; isLive: boolean } | null> {
     const results = await WIKI.db
       .select({
         id: pagesTable.id,
         path: pagesTable.path,
         locale: pagesTable.locale,
-        tags: pagesTable.tags
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
       })
       .from(pagesTable)
       .where(and(eq(pagesTable.siteId, siteId), eq(pagesTable.id, id)))

@@ -49,6 +49,11 @@ async function followRedirect(
 
 /** Everything `get_page` says about a page before its text. */
 async function describe(ctx: McpContext, page: Page) {
+  // -> `getPage` left out the drafts this account may not edit; a translation it may not read is
+  //    not one to name either
+  const translations = page.localeRelations.filter((relation) =>
+    mayOnPage(ctx, 'read:pages', { ...relation, siteId: ctx.siteId })
+  )
   return {
     ...pageFields(ctx, page),
     versionId: await WIKI.models.pageHistory.latestVersionId(ctx.siteId, page.id),
@@ -57,9 +62,9 @@ async function describe(ctx: McpContext, page: Page) {
     publishState: page.publishState,
     editor: page.editor,
     ...(page.isLocked ? { isLocked: true } : {}),
-    ...(page.localeRelations.length > 0
+    ...(translations.length > 0
       ? {
-          translations: page.localeRelations.map((relation) => ({
+          translations: translations.map((relation) => ({
             locale: relation.locale,
             title: relation.title,
             url: pageUrl(ctx, relation.locale, relation.path)

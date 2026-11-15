@@ -1,6 +1,6 @@
 import { validate as uuidValidate } from 'uuid'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import type { PageActor, PageInput } from '../models/pages.ts'
+import type { Page, PageActor, PageInput, PageLocaleRelation } from '../models/pages.ts'
 import type { RulePageRef } from '../helpers/pageRules.ts'
 import { PAGE_PERMISSIONS } from '../models/groups.ts'
 import {
@@ -225,6 +225,39 @@ export function unpublishedFor(req: FastifyRequest): false | ((page: RulePageRef
     return false
   }
   return (page) => maySeeUnpublished(actor, page)
+}
+
+/**
+ * Whether this requester may be told that a page is there at all: `read:pages` on it, and either
+ * live or let through by `unpublishedFor`.
+ *
+ * For a route that answers ABOUT a page — where it is, what it is called — from a row it read itself
+ * rather than through `getPage`, which would have applied the publish rule for it.
+ */
+export function mayKnowOfPage(
+  req: FastifyRequest,
+  page: RulePageRef & { isLive: boolean }
+): boolean {
+  if (!mayOnPage(req, 'read:pages', page)) {
+    return false
+  }
+  if (page.isLive) {
+    return true
+  }
+  const unpublished = unpublishedFor(req)
+  return unpublished !== false && unpublished(page)
+}
+
+/**
+ * A page's counterparts in other locales, cut to the ones this requester may read.
+ *
+ * `getPage` has already left out those that are not live for them; a counterpart they may not read
+ * is not one to name either, any more than in the translation set the page properties panel asks for.
+ */
+function readableCounterparts(req: FastifyRequest, page: Page): PageLocaleRelation[] {
+  return page.localeRelations.filter((rel) =>
+    mayOnPage(req, 'read:pages', { ...rel, siteId: page.siteId })
+  )
 }
 
 /**
@@ -870,7 +903,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get the translation set a page belongs to',
         description:
-          'The pages that are the same page as this one, in other locales, addressed by path rather than by ID — which is what a page picker has in hand.\n\nWhat the page properties panel asks before it accepts a chosen page. A page that is already part of a set answers with the rest of it, so the panel can fill its other rows in and say what set is being joined; a page with no counterparts answers with an empty list. Saving is what actually joins them — see `localeRelations` on `PageInput`.\n\nThe set comes back whole, unfiltered by publish state: an author choosing a translation has to be told about a draft one, or they would be shown an empty row and refused on save.',
+          'The pages that are the same page as this one, in other locales, addressed by path rather than by ID — which is what a page picker has in hand.\n\nWhat the page properties panel asks before it accepts a chosen page. A page that is already part of a set answers with the rest of it, so the panel can fill its other rows in and say what set is being joined; a page with no counterparts answers with an empty list. Saving is what actually joins them — see `localeRelations` on `PageInput`.\n\nAnswers only with what the caller may read, as the page itself does: the page asked about and each member of its set need `read:pages`, and one that is not live is there only for a caller who may edit it. Saving keeps the members left out here where they are, rather than reading their absence as a removal.',
         tags: ['Pages'],
         params: siteIdParam,
         querystring: {
@@ -910,7 +943,10 @@ async function routes(app: FastifyInstance) {
       const path = normalizePagePath(req.query.path)
       const group = await WIKI.models.pages.localeGroupAt(req.params.siteId, {
         locale: req.query.locale,
-        path
+        path,
+        // -> A draft, asked for by its own path or met as a member of the set, is only there for
+        //    whoever may edit it -- the asker holding `read:pages` is not enough
+        unpublished: unpublishedFor(req)
       })
       const siteId = req.params.siteId
       // -> As for an include: a page the asker may not read is not one to confirm the existence of
@@ -1135,6 +1171,7 @@ async function routes(app: FastifyInstance) {
       const { ratings, ...pageFields } = page
       return {
         ...pageFields,
+        localeRelations: readableCounterparts(req, page),
         commentsCount,
         // -> Off the totals cached on the row just loaded, so no aggregate per view
         rating: ratingMode ? WIKI.models.pageRatings.summaryFromCache(ratings, ratingMode) : null,
@@ -1215,7 +1252,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Unlock a password-protected page',
         description:
-          'Answers with the page, body included, when the password matches — and records the unlock on the session, so that reading the page again does not ask a second time. A wrong password is a 401 and says nothing more; a page with no password on it answers the same way, so that this cannot be used to find out which pages are protected.\n\nCallable without a session, because a protected page is written for readers who have the password rather than an account. Unlocking one is what first gives an anonymous reader a session.\n\nWhoever may edit the page never needs this: they can read the source and remove the password, so `GET` already hands them the body.',
+          'Answers with the page, body included, when the password matches — and records the unlock on the session, so that reading the page again does not ask a second time. A wrong password is a 401 and says nothing more; a page with no password on it answers the same way, so that this cannot be used to find out which pages are protected, and so does a page the caller may not read (`read:pages`): the password is a lock on top of the page rules, never a way round them.\n\nCallable without a session, because a protected page is written for readers who have the password rather than an account. Unlocking one is what first gives an anonymous reader a session.\n\nWhoever may edit the page never needs this: they can read the source and remove the password, so `GET` already hands them the body.',
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -1263,6 +1300,9 @@ async function routes(app: FastifyInstance) {
         ...(isId ? { id: req.params.pageIdOrHash } : { hash: req.params.pageIdOrHash }),
         locale: req.query.locale,
         password: req.body.password,
+        // -> The password is on top of the page rules, not instead of them: GET refuses this
+        //    reader before the lock ever comes up, and so does this
+        readable: (target) => mayOnPage(req, 'read:pages', target),
         unpublished: unpublishedFor(req)
       })
       if (!page) {
@@ -1293,7 +1333,7 @@ async function routes(app: FastifyInstance) {
       const commentsCount = WIKI.models.comments.usesBuiltIn(req.params.siteId)
         ? await WIKI.models.comments.countForPage(page.id)
         : 0
-      return { ...page, commentsCount }
+      return { ...page, localeRelations: readableCounterparts(req, page), commentsCount }
     }
   )
 
@@ -2465,11 +2505,11 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('No page uses this alias.')
       }
       // -> Resolving an alias tells the caller a page exists and where it is, which is only theirs
-      //    to know if they may read it
-      if (!mayOnPage(req, 'read:pages', { ...target, siteId: req.params.siteId })) {
+      //    to know if they may read it -- and, while it is not live, edit it
+      if (!mayKnowOfPage(req, { ...target, siteId: req.params.siteId })) {
         return reply.notFound('No page uses this alias.')
       }
-      // -> `id`, `path` and `locale` are what the response schema keeps; the tags were for the check
+      // -> `id`, `path` and `locale` are what the response schema keeps; the rest was for the check
       return target
     }
   )
@@ -2490,7 +2530,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Resolve a page id to its path',
         description:
-          'The id half of the alias lookup, for the short link that names a page by the one thing about it that never changes: an alias can be retyped and a path can be moved, and neither breaks a link built on the id.\n\nAnswers 404 rather than 403 for a page the caller may not read — that a page exists at all is only theirs to know if they may read it.',
+          'The id half of the alias lookup, for the short link that names a page by the one thing about it that never changes: an alias can be retyped and a path can be moved, and neither breaks a link built on the id.\n\nAnswers 404 rather than 403 for a page the caller may not read, and for one that is not live unless they may edit it — that a page exists at all is only theirs to know if they may read it.',
         tags: ['Pages'],
         params: {
           type: 'object',
@@ -2525,8 +2565,8 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('No page has this id.')
       }
       // -> Resolving an id tells the caller a page exists and where it is, which is only theirs to
-      //    know if they may read it
-      if (!mayOnPage(req, 'read:pages', { ...target, siteId: req.params.siteId })) {
+      //    know if they may read it -- and, while it is not live, edit it
+      if (!mayKnowOfPage(req, { ...target, siteId: req.params.siteId })) {
         return reply.notFound('No page has this id.')
       }
       return target
