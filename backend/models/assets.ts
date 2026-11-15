@@ -169,9 +169,27 @@ export interface AssetAtPath extends Asset {}
  *
  * Applied to every upload, with nothing to turn it off: a stored name is a URL, and a path is looked
  * up lowercased, so a name that skipped this would be one the site could not serve back.
+ *
+ * Idempotent, and it has to be: a route checks the page rules against this function's answer and
+ * then hands that answer to a model that runs it through here again on the way to storage, so a
+ * second pass that changed anything would write a name nobody asked the rules about -- `brand.-.png`
+ * checked as `brand..png` and stored over a protected `brand.png`. One pass is not a fixed point (a
+ * rule can recreate what an earlier one removed, and the truncation can cut just after a dot), so the
+ * pass is repeated until it changes nothing. That always ends: after the first pass no rule lengthens
+ * the name, and every rule that changes it shortens it.
  */
 export function sanitizeFileName(input: string): string {
-  const base = path.basename(input.trim().replaceAll('\\', '/'))
+  let name = cleanFileName(path.basename(input.trim().replaceAll('\\', '/')))
+  for (let next = cleanFileName(name); next !== name; next = cleanFileName(name)) {
+    name = next
+  }
+  return name
+}
+
+/**
+ * One pass of `sanitizeFileName` over a name with no directory part. Not idempotent on its own.
+ */
+function cleanFileName(base: string): string {
   const cleaned = base
     .toLowerCase()
     .normalize('NFC')
@@ -215,8 +233,8 @@ function truncateFileName(name: string): string {
     }
     kept += char
   }
-  // -> The cut may land just after a hyphen, which would then end the stem
-  return `${kept.replace(/-+$/, '')}${suffix}`
+  // -> The cut may land just after a hyphen or a dot, which would then end the stem
+  return `${kept.replace(/[.-]+$/, '')}${suffix}`
 }
 
 /**
