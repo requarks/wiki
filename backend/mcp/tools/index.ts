@@ -11,6 +11,7 @@ import { discoverTools } from './discover.ts'
 import { editTools } from './edit.ts'
 import { glossaryTools } from './glossary.ts'
 import { historyTools } from './history.ts'
+import { navigationTools } from './navigation.ts'
 import { pageTools } from './pages.ts'
 import type { ValidateFunction } from 'ajv'
 import type { McpContext } from '../context.ts'
@@ -22,6 +23,7 @@ const ALL_TOOLS: McpTool[] = [
   ...pageTools,
   ...historyTools,
   ...glossaryTools,
+  ...navigationTools,
   ...commentTools,
   ...suggestTools,
   ...editTools,

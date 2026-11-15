@@ -173,6 +173,7 @@ defaults:
         pages: true
         history: true
         glossary: true
+        navigation: true
         comments: true
         suggest: true
         edit: true

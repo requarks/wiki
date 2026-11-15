@@ -544,6 +544,7 @@ const toolGroups = [
   { key: 'pages', icon: 'parchment', scopes: 'mcp:read + pages:read' },
   { key: 'history', icon: 'historical', scopes: 'mcp:read + pages:read' },
   { key: 'glossary', icon: 'index', scopes: 'mcp:* + glossary:*' },
+  { key: 'navigation', icon: 'navigation-toolbar-top', scopes: 'mcp:* + navigation:*' },
   { key: 'comments', icon: 'discussion-forum', scopes: 'mcp:* + comments:*' },
   { key: 'suggest', icon: 'merge-files', scopes: 'mcp:write + approvals:write' },
   { key: 'edit', icon: 'pen', scopes: 'mcp:write + pages:write' },

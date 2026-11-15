@@ -60,6 +60,19 @@ export async function resolvePageId(ctx: McpContext, ref: PageRef): Promise<stri
     }
     return ref.id
   }
+  const { locale, path } = resolveRefPath(ctx, ref)
+  const id = await WIKI.models.pages.idAtPath(ctx.siteId, locale, path)
+  if (!id) {
+    throw new ToolError(NOT_READABLE)
+  }
+  return id
+}
+
+/**
+ * Where a reference by `url` or `path` points — the locale and the slash path, whether or not there
+ * is a page there. For a tool that addresses something else a path can name, such as a folder.
+ */
+export function resolveRefPath(ctx: McpContext, ref: PageRef): { locale: string; path: string } {
   const site = WIKI.sites[ctx.siteId]
   if (ref.url) {
     let urlPath: string
@@ -84,20 +97,13 @@ export async function resolvePageId(ctx: McpContext, ref: PageRef): Promise<stri
     }
     urlPath = stripPageExtension(urlPath, site?.config?.pageExtensions) ?? urlPath
     const { locale, path } = resolvePagePath(ctx.siteId, urlPath)
-    const id = await WIKI.models.pages.idAtPath(ctx.siteId, locale, path)
-    if (!id) {
-      throw new ToolError(NOT_READABLE)
-    }
-    return id
+    return { locale, path }
   }
   if (ref.path !== undefined) {
-    const locale = ref.locale || site?.config?.locales?.primary || 'en'
-    const path = normalizePagePath(decodeUrlPath(ref.path)) || 'home'
-    const id = await WIKI.models.pages.idAtPath(ctx.siteId, locale, path)
-    if (!id) {
-      throw new ToolError(NOT_READABLE)
+    return {
+      locale: ref.locale || site?.config?.locales?.primary || 'en',
+      path: normalizePagePath(decodeUrlPath(ref.path)) || 'home'
     }
-    return id
   }
   throw new ToolError('Name the page with `id`, `url` or `path`.')
 }

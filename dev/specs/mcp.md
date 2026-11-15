@@ -183,6 +183,14 @@ working on `/_mcp` and refused on `/_api`, the grant listed as a connection, ref
 reused refresh token revoking the grant and its access token with it, and an admin deleting the
 client. The consent page was looked at in both themes, signed out (sent to login and back) and in.
 
+**Built since:**
+
+| Piece                                                        | Where                                                                                                                                                 |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_navigation`, `update_navigation`, for pages and folders | `mcp/tools/navigation.ts`; the `navigation` group (`MCP_TOOL_GROUPS`, `base.yml`, `AdminMcp.vue`)                                                     |
+| The `manage:navigation` checks, shared                       | `mayManageAt` / `mayEditItemsAt` in `models/navigation.ts`, taking the caller's question — the route's from the request, the tools' from `McpContext` |
+| Writing a menu against what was read                         | `navigation.itemsRevision`, `navigation.itemsNavId`                                                                                                   |
+
 **Not built**:
 
 - The **Usage** card on Admin → MCP, which was optional ([§8.1](#81-admin--mcp)).
@@ -251,23 +259,23 @@ thing would be a real project of its own, and nothing here so far is.
 
 ### 3.2 Where the code lives
 
-| Path                                      | What                                                                                                                                                                                                                                                                                                |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `controllers/mcp.ts`                      | The endpoint: enabled check, Origin check, site, credential, rate limit, then dispatch                                                                                                                                                                                                              |
-| `mcp/protocol.ts`                         | JSON-RPC framing, `initialize` and its instructions, the `tools/*` and `resources/*` methods, error codes, the result-size backstop                                                                                                                                                                 |
-| `mcp/context.ts`                          | `McpContext` — who a call acts as — and the access questions asked of it: `mayOnPage`, `mayReadSource`, `mayBypassPassword`, `unpublishedFor`, `holdsScope`                                                                                                                                         |
-| `mcp/content.ts`                          | Page resolution and reading, shared by the tools                                                                                                                                                                                                                                                    |
-| `mcp/tool.ts`                             | `McpTool`, the result helpers, `ToolError`                                                                                                                                                                                                                                                          |
-| `mcp/tools/*.ts`                          | Tool definitions — `discover`, `pages`, `history`, `glossary`, `edit`, and `contribute` (suggestions and comments) — plus `index.ts`, the registry. A tool calls the **models**, except where an action's rules live in its REST route rather than in a model, where it calls that route in-process |
-| `mcp/inject.ts`                           | That in-process call: `app.inject` with the caller's token, host and address, inside their `withVia('mcp')` scope                                                                                                                                                                                   |
-| `helpers/via.ts`                          | `withVia` / `currentVia`: the scope that marks everything a call leads to as done through MCP                                                                                                                                                                                                       |
-| `helpers/tokenBucket.ts`                  | The in-memory rate limiter, [§7.1](#71-performance)                                                                                                                                                                                                                                                 |
-| `models/mcp.ts`                           | The `mcp` settings blob (`getConfig` / `pickFields` / `validate` / `updateConfig`, as `models/scim.ts`), the group switches and the budget. No token code: issuing and resolving tokens is `models/personalTokens.ts`                                                                               |
-| `api/mcp.ts`                              | The instance settings and status under `/system/mcp`, beside SCIM and metrics; the per-site setting under `/sites/:siteId/mcp`, and the site's contributions. Tokens are managed by the existing routes in `api/personalTokens.ts`                                                                  |
-| `base.yml`                                | The `mcp` defaults. No seed row: `base.yml` is merged under the stored settings on every boot, so a fixed default needs nothing else                                                                                                                                                                |
-| `index.ts`                                | The bearer hook admits `/_mcp` and leaves a personal token's scope check there to the controller ([§4.2](#42-personal-access-tokens-are-the-credential)); the controller is registered                                                                                                              |
-| `controllers/oauth.ts`, `models/oauth.ts` | The OAuth 2.1 authorization server and the `/.well-known/` metadata, [§4.3](#43-oauth-21)                                                                                                                                                                                                           |
-| `api/oauth.ts`                            | The consent screen's two calls, and the admin area's OAuth clients                                                                                                                                                                                                                                  |
+| Path                                      | What                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `controllers/mcp.ts`                      | The endpoint: enabled check, Origin check, site, credential, rate limit, then dispatch                                                                                                                                                                                                                            |
+| `mcp/protocol.ts`                         | JSON-RPC framing, `initialize` and its instructions, the `tools/*` and `resources/*` methods, error codes, the result-size backstop                                                                                                                                                                               |
+| `mcp/context.ts`                          | `McpContext` — who a call acts as — and the access questions asked of it: `mayOnPage`, `mayReadSource`, `mayBypassPassword`, `unpublishedFor`, `holdsScope`                                                                                                                                                       |
+| `mcp/content.ts`                          | Page resolution and reading, shared by the tools                                                                                                                                                                                                                                                                  |
+| `mcp/tool.ts`                             | `McpTool`, the result helpers, `ToolError`                                                                                                                                                                                                                                                                        |
+| `mcp/tools/*.ts`                          | Tool definitions — `discover`, `pages`, `history`, `glossary`, `navigation`, `edit`, and `contribute` (suggestions and comments) — plus `index.ts`, the registry. A tool calls the **models**, except where an action's rules live in its REST route rather than in a model, where it calls that route in-process |
+| `mcp/inject.ts`                           | That in-process call: `app.inject` with the caller's token, host and address, inside their `withVia('mcp')` scope                                                                                                                                                                                                 |
+| `helpers/via.ts`                          | `withVia` / `currentVia`: the scope that marks everything a call leads to as done through MCP                                                                                                                                                                                                                     |
+| `helpers/tokenBucket.ts`                  | The in-memory rate limiter, [§7.1](#71-performance)                                                                                                                                                                                                                                                               |
+| `models/mcp.ts`                           | The `mcp` settings blob (`getConfig` / `pickFields` / `validate` / `updateConfig`, as `models/scim.ts`), the group switches and the budget. No token code: issuing and resolving tokens is `models/personalTokens.ts`                                                                                             |
+| `api/mcp.ts`                              | The instance settings and status under `/system/mcp`, beside SCIM and metrics; the per-site setting under `/sites/:siteId/mcp`, and the site's contributions. Tokens are managed by the existing routes in `api/personalTokens.ts`                                                                                |
+| `base.yml`                                | The `mcp` defaults. No seed row: `base.yml` is merged under the stored settings on every boot, so a fixed default needs nothing else                                                                                                                                                                              |
+| `index.ts`                                | The bearer hook admits `/_mcp` and leaves a personal token's scope check there to the controller ([§4.2](#42-personal-access-tokens-are-the-credential)); the controller is registered                                                                                                                            |
+| `controllers/oauth.ts`, `models/oauth.ts` | The OAuth 2.1 authorization server and the `/.well-known/` metadata, [§4.3](#43-oauth-21)                                                                                                                                                                                                                         |
+| `api/oauth.ts`                            | The consent screen's two calls, and the admin area's OAuth clients                                                                                                                                                                                                                                                |
 
 ---
 
@@ -498,20 +506,22 @@ Four things decide whether a call goes through, and they are asked in this order
 
 ### 5.2 The tools
 
-| Group         | Tools                                                                 | Scope             | Page permission                            | Default |
-| ------------- | --------------------------------------------------------------------- | ----------------- | ------------------------------------------ | ------- |
-| `discover`    | `search_pages`, `browse_tree`, `list_tags`, `recent_changes`          | `pages:read`      | `read:pages`                               | on      |
-| `pages`       | `get_page`; `get_page_links`, `get_backlinks`                         | `pages:read`      | `read:pages`, `read:source` for the source | on      |
-| `history`     | `list_versions`, `get_version`, `diff_versions`                       | `pages:read`      | `read:history`                             | on      |
-| `glossary`    | `lookup_term`, `list_terms`                                           | `glossary:read`   | `read:glossary`                            | on      |
-|               | `define_term`, `update_term`                                          | `glossary:write`  | `manage:glossary`                          |         |
-| `comments`    | `list_comments`                                                       | `comments:read`   | `read:comments`                            | on      |
-|               | `post_comment`, with optional annotations                             | `comments:write`  | `write:comments`                           |         |
-| `suggest`     | `suggest_edit` through the approvals flow                             | `approvals:write` | the site's approval rules                  | on      |
-| `edit`        | `create_page`, `update_page`                                          | `pages:write`     | `write:pages`, `write:tags` for tags       | on      |
-| `assets`      | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read`     | `read:assets`                              | off     |
-|               | `upload_asset`                                                        | `assets:write`    | `write:assets`                             |         |
-| `destructive` | `move_page`, `delete_page` (to the recycle bin)                       | `pages:write`     | `manage:pages`, `delete:pages`             | off     |
+| Group         | Tools                                                                 | Scope              | Page permission                                            | Default |
+| ------------- | --------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------- | ------- |
+| `discover`    | `search_pages`, `browse_tree`, `list_tags`, `recent_changes`          | `pages:read`       | `read:pages`                                               | on      |
+| `pages`       | `get_page`; `get_page_links`, `get_backlinks`                         | `pages:read`       | `read:pages`, `read:source` for the source                 | on      |
+| `history`     | `list_versions`, `get_version`, `diff_versions`                       | `pages:read`       | `read:history`                                             | on      |
+| `glossary`    | `lookup_term`, `list_terms`                                           | `glossary:read`    | `read:glossary`                                            | on      |
+|               | `define_term`, `update_term`                                          | `glossary:write`   | `manage:glossary`                                          |         |
+| `navigation`  | `get_navigation`                                                      | `navigation:read`  | `read:pages`; `manage:navigation` in full                  | on      |
+|               | `update_navigation`                                                   | `navigation:write` | `manage:navigation`, at the menu's owner too for its items |         |
+| `comments`    | `list_comments`                                                       | `comments:read`    | `read:comments`                                            | on      |
+|               | `post_comment`, with optional annotations                             | `comments:write`   | `write:comments`                                           |         |
+| `suggest`     | `suggest_edit` through the approvals flow                             | `approvals:write`  | the site's approval rules                                  | on      |
+| `edit`        | `create_page`, `update_page`                                          | `pages:write`      | `write:pages`, `write:tags` for tags                       | on      |
+| `assets`      | `list_assets`, `get_asset` — images as MCP image content, size-capped | `assets:read`      | `read:assets`                                              | off     |
+|               | `upload_asset`                                                        | `assets:write`     | `write:assets`                                             |         |
+| `destructive` | `move_page`, `delete_page` (to the recycle bin)                       | `pages:write`      | `manage:pages`, `delete:pages`                             | off     |
 
 Every tool needs `mcp` at the same level as well as the scope in the table, so a read tool needs
 `mcp:read` and a write tool `mcp:write`. Each tool's category is the one the `/_api` route doing the
@@ -759,6 +769,26 @@ refusal comes back as the tool's error, in the route's words.
   reserved page extensions and the conflict behaviour are decided. A diagram is better written as a
   `mermaid` or `kroki` code block, which stays text a person can review — the tool's description says
   so, and `create_page`'s.
+- **`get_navigation` / `update_navigation`** (`navigation`) read and set the sidebar a page shows, as
+  Edit Nav does from the page: its navigation mode, and the items of the menu that mode resolves to.
+  Never the admin area's Navigation screen, which edits every menu of a site under `manage:sites` —
+  that is administration. A page has two menus to speak of, the one `inherit` resolves to (an
+  ancestor's, or the locale's site-wide one) and its own, and `shows` says which readers see. A reader
+  is given the shown one as the sidebar draws it for them, through the menu route in-process. Whoever
+  holds `manage:navigation` on the page is given both in full, each with `canEditItems` — asked of the
+  navigation model's `mayEditItemsAt`, the same check the route makes, so `manage:navigation` has to
+  reach the menu's owner too — plus `menuTargets`, and an `itemsRevision` (a hash of the stored items,
+  `navigation.itemsRevision`) for each menu they may edit. The write goes through
+  `PUT …/navigation/pages/:pageId` in-process. A menu is replaced whole and keeps no history, so
+  `update_navigation` is annotated `destructiveHint`, needs `expectedItemsRevision` whenever it sends
+  items, and is refused when the menu the mode stores them in has changed since — what makes a write
+  from an incomplete or stale read impossible. A link to a page on this wiki given as an absolute URL
+  is stored as its path, and a new item is given an id. A folder is reached the way the browser
+  reaches it — from its path where there is no page the caller may read, as the missing-page screen's
+  Edit Nav does (`folderIdAt`), or by the `id` an answer gave it — and is named `folder` rather than
+  `page` in the answer. Its rule is `read:pages` at its path, as for the `navigation/path` route.
+  Falling back on the folder for an unreadable page, not only an absent one, is what keeps a hidden
+  page from showing through.
 
 **Moving and deleting** (`destructive`) are not contributing and stay off until an administrator
 turns them on: a reorganisation is a decision about the wiki, not knowledge added to it, and a move

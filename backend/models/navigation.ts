@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   navigation as navigationTable,
@@ -13,6 +14,7 @@ import {
   treeLabelSql
 } from '../helpers/common.ts'
 import { liveCondition } from '../helpers/publishing.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 
 export const NAVIGATION_MODES = [
   'inherit',
@@ -90,6 +92,23 @@ export interface NavigationTargetPage {
  * a save made on the wiki's own behalf, which is not refused anything.
  */
 export type MayPickMenuTarget = (target: NavigationOwner) => boolean
+
+/**
+ * Asked of a path by the permission checks below: whether the caller holds `manage:navigation` there.
+ * The route asks it of the request, an MCP tool of its context.
+ */
+export type MayManageNavigation = (ref: RulePageRef) => boolean
+
+/** A tree entry that has a sidebar of its own to set: a page, or a folder. */
+export interface NavigationEntry {
+  id: string
+  type: 'page' | 'folder'
+  /** Slash path, as the page rules are asked about it. */
+  path: string
+  locale: string
+  tags: string[]
+  navigationMode: NavigationMode
+}
 
 export interface UpdateNavigationResult {
   navigationMode: NavigationMode
@@ -743,16 +762,64 @@ class Navigation {
     siteId: string,
     entryId: string
   ): Promise<{ path: string; locale: string; tags: string[] } | null> {
+    const entry = await this.describeEntry(siteId, entryId)
+    return entry ? { path: entry.path, locale: entry.locale, tags: entry.tags } : null
+  }
+
+  /**
+   * A page or folder by its tree entry id, with what its sidebar is set to — for a caller that has an
+   * id and has to tell which of the two it names. Null for anything else, or nothing.
+   */
+  async describeEntry(siteId: string, entryId: string): Promise<NavigationEntry | null> {
     const entry = await this.getEntry(siteId, entryId).catch(() => null)
     if (!entry) {
       return null
     }
     const folder = entry.folderPath ? decodeTreePath(entry.folderPath) : ''
     return {
+      id: entry.id,
+      type: entry.type as NavigationEntry['type'],
       path: folder ? `${folder}/${entry.fileName}` : entry.fileName,
       locale: entry.locale,
-      tags: (entry.tags ?? []) as string[]
+      tags: (entry.tags ?? []) as string[],
+      navigationMode: entry.navigationMode as NavigationMode
     }
+  }
+
+  /**
+   * The folder at a path, which a navigation change addresses where there is no page: its sidebar is
+   * its own to set, and the one a page written there would start from.
+   *
+   * @param path Slash path, already normalized for a lookup
+   */
+  async folderIdAt(siteId: string, locale: string, path: string): Promise<string | null> {
+    return (await this.folderRowAt(siteId, locale, path))?.id ?? null
+  }
+
+  private async folderRowAt(siteId: string, locale: string, path: string) {
+    const segments = path.split('/').filter(Boolean)
+    const fileName = segments.at(-1)
+    if (!fileName) {
+      return null
+    }
+    const folders = await WIKI.db
+      .select({
+        id: treeTable.id,
+        navigationMode: treeTable.navigationMode,
+        navigationId: treeTable.navigationId
+      })
+      .from(treeTable)
+      .where(
+        and(
+          eq(treeTable.siteId, siteId),
+          eq(treeTable.locale, locale),
+          eq(treeTable.type, 'folder'),
+          eq(treeTable.folderPath, encodeTreePath(segments.slice(0, -1).join('/'))),
+          eq(treeTable.fileName, fileName)
+        )
+      )
+      .limit(1)
+    return folders[0] ?? null
   }
 
   /**
@@ -775,39 +842,23 @@ class Navigation {
     navigationMode: NavigationMode
     navigationId: string | null
   }> {
-    const segments = path.split('/').filter(Boolean)
-    const fileName = segments.at(-1)
-    const folderPath = encodeTreePath(segments.slice(0, -1).join('/'))
-    if (fileName && includeFolder) {
-      const folders = await WIKI.db
-        .select({
-          id: treeTable.id,
-          navigationMode: treeTable.navigationMode,
-          navigationId: treeTable.navigationId
-        })
-        .from(treeTable)
-        .where(
-          and(
-            eq(treeTable.siteId, siteId),
-            eq(treeTable.locale, locale),
-            eq(treeTable.type, 'folder'),
-            eq(treeTable.folderPath, folderPath),
-            eq(treeTable.fileName, fileName)
-          )
-        )
-        .limit(1)
-      if (folders[0]) {
-        return {
-          folderId: folders[0].id,
-          navigationMode: folders[0].navigationMode as NavigationMode,
-          navigationId: folders[0].navigationId ?? null
-        }
+    const folder = includeFolder ? await this.folderRowAt(siteId, locale, path) : null
+    if (folder) {
+      return {
+        folderId: folder.id,
+        navigationMode: folder.navigationMode as NavigationMode,
+        navigationId: folder.navigationId ?? null
       }
     }
+    const segments = path.split('/').filter(Boolean)
     return {
       folderId: null,
       navigationMode: 'inherit',
-      navigationId: await this.ancestorNavId(siteId, locale, folderPath)
+      navigationId: await this.ancestorNavId(
+        siteId,
+        locale,
+        encodeTreePath(segments.slice(0, -1).join('/'))
+      )
     }
   }
 
@@ -909,6 +960,97 @@ class Navigation {
   }
 
   /**
+   * Whether the caller may manage the navigation of the page or folder at `pageId`.
+   *
+   * `manage:navigation` is a PAGE RULE, so it is a question about a path and is asked of the entry the
+   * caller is standing on — a page, or a folder at a path with no page, which has a sidebar of its own.
+   * What it buys there is the MODE — whether this entry inherits, overrides or hides its sidebar — which
+   * is a property of the entry and affects nothing above it.
+   *
+   * @param mayManage Whether the caller holds `manage:navigation` at a path. Who is asking is the
+   *                  caller's business — a request, or an MCP context — so the model only applies it.
+   */
+  async mayManageAt(
+    siteId: string,
+    pageId: string,
+    mayManage: MayManageNavigation
+  ): Promise<boolean> {
+    const entry = await this.entryRef(siteId, pageId)
+    return Boolean(entry && mayManage({ ...entry, siteId }))
+  }
+
+  /**
+   * Whether the caller may edit the ITEMS of the menu a save with `mode` would store them in.
+   *
+   * Two permissions, not one, and the second is the point of the whole arrangement: the items belong
+   * to whichever entry OWNS the menu, which for a page that inherits is an ancestor — so editing them
+   * from here changes what every page under that ancestor shows. Somebody who runs `/guides` may
+   * therefore set `/guides/foo` to override or hide, but may not reach up and rewrite the menu
+   * `/guides` hands down unless their rules reach `/guides` too.
+   *
+   * Which entry that is depends on the mode being SET, not on the one stored: a page being pointed at
+   * `override` is about to own its menu, so the question is about its own path. Only `inherit` reaches
+   * upwards. `menuOwnerRef` is what resolves the two cases; null from it means the sidebar above is
+   * hidden, so there is no menu and nothing to edit.
+   */
+  async mayEditItemsAt(
+    siteId: string,
+    pageId: string,
+    mode: NavigationMode,
+    mayManage: MayManageNavigation
+  ): Promise<boolean> {
+    if (!(await this.mayManageAt(siteId, pageId, mayManage))) {
+      return false
+    }
+    const owner = await this.menuOwnerRef(siteId, pageId, mode)
+    return Boolean(owner && mayManage({ ...owner, siteId }))
+  }
+
+  /**
+   * The menu a save of `items` with `mode` stores them in, exactly as `updateNavigation` picks it: the
+   * inherited one for `inherit`, and the entry's own for anything else. Null when the mode is
+   * `inherit` and the sidebar above is hidden, which leaves no menu to store items in.
+   */
+  async itemsNavId(siteId: string, pageId: string, mode: NavigationMode): Promise<string | null> {
+    const entry = await this.getEntry(siteId, pageId)
+    return mode === 'inherit'
+      ? this.ancestorNavId(siteId, entry.locale, entry.folderPath ?? '')
+      : this.ownNavIdOf(siteId, entry)
+  }
+
+  /**
+   * A fingerprint of a menu's stored items, which changes whenever they do — what a caller that read
+   * the menu earlier hands back to show that its items are still the ones it read, since a save
+   * replaces the whole menu. A menu that does not exist yet has the fingerprint of an empty one,
+   * which is what it is to everybody reading it.
+   */
+  async itemsRevision(siteId: string, navId: string): Promise<string> {
+    const rows = await WIKI.db
+      .select({ items: navigationTable.items })
+      .from(navigationTable)
+      .where(and(eq(navigationTable.id, navId), eq(navigationTable.siteId, siteId)))
+      .limit(1)
+    // -> `jsonb` stores keys in an order of its own, so the same items read back the same way
+    return createHash('sha256')
+      .update(JSON.stringify(rows[0]?.items ?? []))
+      .digest('hex')
+      .slice(0, 16)
+  }
+
+  /**
+   * The menu an entry owns: its own id, except for the home page at the root, which edits the
+   * site-wide menu FOR ITS LOCALE rather than one of its own — which is what makes that the menu every
+   * other page in the locale inherits.
+   */
+  private async ownNavIdOf(
+    siteId: string,
+    entry: { id: string; type: string; locale: string; folderPath: string | null; fileName: string }
+  ): Promise<string> {
+    const isSiteRoot = !entry.folderPath && entry.fileName === 'home' && entry.type === 'page'
+    return isSiteRoot ? this.siteNavId(siteId, entry.locale) : entry.id
+  }
+
+  /**
    * The entry a menu belongs to, as a path the page rules can be asked about.
    *
    * A menu belonging to the tree is keyed by its entry's id; the site-wide one is keyed by site and
@@ -980,10 +1122,7 @@ class Navigation {
     const entry = await this.getEntry(siteId, pageId)
 
     const folderPath = entry.folderPath ?? ''
-    // -> The home page at the root edits the site-wide menu FOR ITS LOCALE rather than one of its own,
-    //    which is what makes it the menu every other page in that locale inherits
-    const isSiteRoot = folderPath === '' && entry.fileName === 'home' && entry.type === 'page'
-    const ownNavId = isSiteRoot ? await this.siteNavId(siteId, entry.locale) : entry.id
+    const ownNavId = await this.ownNavIdOf(siteId, entry)
     const label = encodeTreeLabel(entry.fileName)
     const fullPath = folderPath ? `${folderPath}.${label}` : label
 

@@ -15,6 +15,7 @@ export const MCP_TOOL_GROUPS = [
   'pages',
   'history',
   'glossary',
+  'navigation',
   'comments',
   'suggest',
   'edit',

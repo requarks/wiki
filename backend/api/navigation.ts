@@ -4,59 +4,19 @@ import { mayOnPage, unpublishedFor } from './pages.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import {
   NAVIGATION_MODES,
+  type MayManageNavigation,
   type NavigationItem,
   type NavigationMode,
   type NavigationOwner
 } from '../models/navigation.ts'
 
 /**
- * Whether this requester may manage the navigation of the page or folder at `pageId`.
- *
- * `manage:navigation` is a PAGE RULE, so it is a question about a path and is asked of the entry the
- * caller is standing on — a page, or a folder at a path with no page, which has a sidebar of its own.
- * What it buys there is the MODE — whether this entry inherits, overrides or hides its sidebar — which
- * is a property of the entry and affects nothing above it.
+ * Whether this requester holds `manage:navigation` at a path — what the navigation model's
+ * permission checks (`mayManageAt`, `mayEditItemsAt`) are asked with. See those for the two
+ * questions, and why editing a menu's items is a second one.
  */
-async function mayManageNavAt(
-  req: FastifyRequest,
-  siteId: string,
-  pageId: string
-): Promise<boolean> {
-  const entry = await WIKI.models.navigation.entryRef(siteId, pageId)
-  if (!entry) {
-    return false
-  }
-  return mayOnPage(req, 'manage:navigation', { ...entry, siteId })
-}
-
-/**
- * Whether this requester may edit the ITEMS of the menu the page at `pageId` shows.
- *
- * Two permissions, not one, and the second is the point of the whole arrangement: the items belong
- * to whichever entry OWNS the menu, which for a page that inherits is an ancestor — so editing them
- * from here changes what every page under that ancestor shows. Somebody who runs `/guides` may
- * therefore set `/guides/foo` to override or hide, but may not reach up and rewrite the menu
- * `/guides` hands down unless their rules reach `/guides` too.
- *
- * Which entry that is depends on the mode the request is SETTING, not on the one stored: a page
- * being pointed at `override` is about to own its menu, so the question is about its own path. Only
- * `inherit` reaches upwards. `menuOwnerRef` is what resolves the two cases; null from it means the
- * sidebar above is hidden, so there is no menu and nothing to edit.
- */
-async function mayEditNavItems(
-  req: FastifyRequest,
-  siteId: string,
-  pageId: string,
-  mode: NavigationMode
-): Promise<boolean> {
-  if (!(await mayManageNavAt(req, siteId, pageId))) {
-    return false
-  }
-  const owner = await WIKI.models.navigation.menuOwnerRef(siteId, pageId, mode)
-  if (!owner) {
-    return false
-  }
-  return mayOnPage(req, 'manage:navigation', { ...owner, siteId })
+function navRuleFor(req: FastifyRequest): MayManageNavigation {
+  return (ref) => mayOnPage(req, 'manage:navigation', ref)
 }
 
 /**
@@ -691,7 +651,13 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      if (!(await mayManageNavAt(req, req.params.siteId, req.params.pageId))) {
+      if (
+        !(await WIKI.models.navigation.mayManageAt(
+          req.params.siteId,
+          req.params.pageId,
+          navRuleFor(req)
+        ))
+      ) {
         return reply.forbidden('You are not allowed to manage the navigation of this page.')
       }
       /*
@@ -705,7 +671,12 @@ async function routes(app: FastifyInstance) {
           req.params.siteId,
           req.params.pageId
         ),
-        canEditItems: await mayEditNavItems(req, req.params.siteId, req.params.pageId, 'inherit')
+        canEditItems: await WIKI.models.navigation.mayEditItemsAt(
+          req.params.siteId,
+          req.params.pageId,
+          'inherit',
+          navRuleFor(req)
+        )
       }
     }
   )
@@ -777,7 +748,13 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req, reply) => {
-      if (!(await mayManageNavAt(req, req.params.siteId, req.params.pageId))) {
+      if (
+        !(await WIKI.models.navigation.mayManageAt(
+          req.params.siteId,
+          req.params.pageId,
+          navRuleFor(req)
+        ))
+      ) {
         return reply.forbidden('You are not allowed to manage the navigation of this page.')
       }
       /*
@@ -788,7 +765,12 @@ async function routes(app: FastifyInstance) {
       */
       if (
         req.body.items !== undefined &&
-        !(await mayEditNavItems(req, req.params.siteId, req.params.pageId, req.body.mode))
+        !(await WIKI.models.navigation.mayEditItemsAt(
+          req.params.siteId,
+          req.params.pageId,
+          req.body.mode,
+          navRuleFor(req)
+        ))
       ) {
         return reply.forbidden(
           'You are not allowed to edit the items of the menu this page shows, as it belongs to a page you do not manage the navigation of. You can still change how this page resolves its navigation.'

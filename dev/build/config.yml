@@ -10,6 +10,9 @@ db:
   ssl: $(DB_SSL)
 logLevel: $(LOG_LEVEL:info)
 logFormat: $(LOG_FORMAT:default)
+offline: $(OFFLINE:false)
 dataPath: ./data
+icons:
+  apiUrl: '$(ICONIFY_API_URL:https://api.iconify.design)'
 scheduler:
   workers: auto

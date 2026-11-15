@@ -313,9 +313,10 @@ Consequences worth knowing:
   every page under that entry: a page that inherits is editing its ancestor's menu, and a page with
   no overriding ancestor is editing the site-wide one, which `navigation.menuOwnerRef` reports as the
   home page's path. So a rule over `/guides` lets that section re-point its own pages without letting
-  it rewrite the menu handed down to it. `api/navigation.ts` has the pair of checks
-  (`mayManageNavAt`, `mayEditNavItems`), and the `inherited` route answers `canEditItems` so the
-  editor knows which of its two halves to offer.
+  it rewrite the menu handed down to it. The navigation model has the pair of checks
+  (`mayManageAt`, `mayEditItemsAt`), each handed the caller's own `manage:navigation` question so
+  that `api/navigation.ts` and the MCP navigation tools ask the same thing, and the `inherited` route
+  answers `canEditItems` so the editor knows which of its two halves to offer.
 - **`read:glossary` and `manage:glossary` ignore the path.** They are the page permissions about a
   site and a locale rather than a page (`LOCALE_PERMISSIONS` in `models/groups.ts`): every rule naming
   one that is scoped to the site and locale applies, regardless of what it matches, and mode alone decides —

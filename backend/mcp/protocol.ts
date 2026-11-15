@@ -229,6 +229,11 @@ async function instructionsFor(ctx: McpContext): Promise<string> {
   if (can('define_term')) {
     contributing.push('Define internal terms the glossary is missing with define_term.')
   }
+  if (can('update_navigation')) {
+    contributing.push(
+      'Where a page you wrote belongs in a sidebar, add it with update_navigation after reading the menu with get_navigation. A menu is usually shared by every page below where it is defined, so change it only where the person you are working for would want it.'
+    )
+  }
   const lines = [
     `This server is ${title}, a Wiki.js wiki at ${ctx.origin}${description ? ` — ${description}` : ''}.`,
     "It holds this organisation's own documentation: when a question may be about its systems, processes, conventions or vocabulary, search here before answering from general knowledge.",
