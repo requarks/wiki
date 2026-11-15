@@ -93,6 +93,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { apiFailureMessage } from '@/helpers/apiError'
 import { onMounted, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
@@ -116,7 +117,7 @@ const siteStore = useSiteStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // META
 
@@ -267,7 +268,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.editors.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.editors',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     if (adminStore.currentSiteId === siteStore.id) {

@@ -708,7 +708,7 @@
                             <w-item-section side>
                               <w-icon name="la:copy" color="teal" />
                             </w-item-section>
-                            <w-item-section>Duplicate...</w-item-section>
+                            <w-item-section>{{ t(`common.actions.duplicate`) }}...</w-item-section>
                           </w-item>
                           <!--
                           One entry for a page: its name and its place are picked in the same dialog
@@ -722,7 +722,7 @@
                             <w-item-section side>
                               <w-icon name="la:share" color="teal" />
                             </w-item-section>
-                            <w-item-section>Rename / Move Page...</w-item-section>
+                            <w-item-section>{{ t(`fileman.renameMovePage`) }}...</w-item-section>
                           </w-item>
                           <!--
                           One entry for a file too, and for a plainer reason than a page's: its name
@@ -736,7 +736,7 @@
                             <w-item-section side>
                               <w-icon name="la:share" color="teal" />
                             </w-item-section>
-                            <w-item-section>Rename / Move To...</w-item-section>
+                            <w-item-section>{{ t(`fileman.renameMoveTo`) }}...</w-item-section>
                           </w-item>
                           <!-- -> Folders, which are the only thing left with two entries: their name
                                 and their place are asked for in two different dialogs -->
@@ -745,13 +745,13 @@
                               <w-item-section side>
                                 <w-icon name="la:redo" color="teal" />
                               </w-item-section>
-                              <w-item-section>Rename...</w-item-section>
+                              <w-item-section>{{ t(`common.actions.rename`) }}...</w-item-section>
                             </w-item>
                             <w-item clickable @click="moveFolder(item.id)">
                               <w-item-section side>
                                 <w-icon name="la:arrow-right" color="teal" />
                               </w-item-section>
-                              <w-item-section>Move To...</w-item-section>
+                              <w-item-section>{{ t(`common.actions.moveTo`) }}...</w-item-section>
                             </w-item>
                           </template>
                           <w-item clickable @click="delItem(item)">

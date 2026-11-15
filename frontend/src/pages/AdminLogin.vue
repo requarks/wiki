@@ -242,7 +242,7 @@ import { onMounted, reactive, watch } from 'vue'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 import { isRedirectTarget } from '@/helpers/loginRedirect'
 
 import { useAdminStore } from '@/stores/admin'
@@ -265,7 +265,7 @@ const siteStore = useSiteStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // META
 
@@ -364,7 +364,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.login.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.login',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({

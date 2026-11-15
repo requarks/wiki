@@ -391,6 +391,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { apiFailureMessage } from '@/helpers/apiError'
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
@@ -424,7 +425,7 @@ const siteStore = useSiteStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // META
 
@@ -897,7 +898,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.theme.${resp?.error}`, resp?.message || t('common.error.unexpected'))
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.theme',
+          fallback: t('common.error.unexpected')
+        })
       )
     }
     if (adminStore.currentSiteId === siteStore.id) {

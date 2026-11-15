@@ -44,6 +44,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { apiFailureMessage } from '@/helpers/apiError'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
@@ -61,7 +62,7 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // DATA
 
@@ -98,7 +99,12 @@ async function create() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.groups',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({

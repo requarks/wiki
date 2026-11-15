@@ -63,6 +63,7 @@
           hide-bottom-space
           prefix="@"
           maxlength="32"
+          :rules="[(val) => isValidHandle(val) || t('profile.handleInvalid')]"
           :aria-label="t(`profile.handle`)"
           :readonly="!canEdit" />
       </w-item-section>
@@ -295,6 +296,7 @@ import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 
 import { apiErrorMessage } from '@/helpers/apiError'
+import { isValidHandle } from '@/helpers/handles'
 import { loading } from '@/composables/loading'
 import { computed, onMounted, reactive } from 'vue'
 
@@ -433,6 +435,15 @@ function applyProfile(profile) {
 }
 
 async function save() {
+  // -> Said here in the reader's language, rather than left to the server, which quotes its pattern
+  if (canEdit.value && !isValidHandle(state.config.handle)) {
+    notify({
+      type: 'negative',
+      message: t('profile.saveFailed'),
+      caption: t('profile.handleInvalid')
+    })
+    return
+  }
   loading.show({
     message: t('profile.saving')
   })

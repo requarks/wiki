@@ -22,3 +22,29 @@
 export function apiErrorMessage(err, fallback) {
   return err?.data?.message || err?.message || fallback
 }
+
+/**
+ * The message a `{ ok: false }` answer should be reported with — the 400s the API client resolves
+ * rather than throws (`throwHttpErrors` in `boot/api.js`).
+ *
+ * A translation of the error's name when the locale has one (`<prefix>.<error>`), and the server's
+ * own message otherwise. Never `t(key, resp.message)`: vue-i18n compiles a default message as message
+ * syntax, so a server message holding `{`, `}`, `|` or `@` — a validation error quoting its pattern,
+ * say — either comes out mangled or throws a compile error, which a production build reports as
+ * nothing but its numeric code. That is how an invalid handle used to be reported as "7".
+ *
+ * @param {object} resp The parsed response body
+ * @param {object} opts
+ * @param {Function} opts.t The `t` of `useI18n()`
+ * @param {Function} opts.te The `te` of `useI18n()`
+ * @param {string} opts.prefix Where this screen's error translations live, e.g. `admin.users`
+ * @param {string} opts.fallback Shown when the server sent no message either
+ * @returns {string} What to put in front of the user
+ */
+export function apiFailureMessage(resp, { t, te, prefix, fallback }) {
+  const key = `${prefix}.${resp?.error}`
+  if (resp?.error && te(key)) {
+    return t(key)
+  }
+  return resp?.message || fallback
+}

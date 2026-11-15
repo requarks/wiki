@@ -815,7 +815,7 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -838,7 +838,7 @@ const siteStore = useSiteStore()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // META
 
@@ -1092,7 +1092,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.general.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.general',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({

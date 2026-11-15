@@ -79,7 +79,7 @@ import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 import { computed, reactive, ref } from 'vue'
 
 // PROPS
@@ -101,7 +101,7 @@ const { dialogVisible, onDialogHide, onDialogOK, onDialogCancel } = useDialogCom
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // DATA
 
@@ -183,7 +183,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.users',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({

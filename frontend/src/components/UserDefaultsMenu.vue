@@ -90,13 +90,14 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
+import { apiFailureMessage } from '@/helpers/apiError'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 import { notify } from '@/composables/notify'
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // DATA
 
@@ -144,7 +145,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.users',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({

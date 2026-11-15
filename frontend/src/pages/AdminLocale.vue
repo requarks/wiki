@@ -257,7 +257,7 @@ import { loading } from '@/composables/loading'
 
 import LocaleAliasesDialog from '@/components/LocaleAliasesDialog.vue'
 import LocaleFetchDialog from '@/components/LocaleFetchDialog.vue'
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -277,7 +277,7 @@ const userStore = useUserStore()
 
 // I18N
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 
 // META
 
@@ -413,7 +413,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.locale.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.locale',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     state.active = active

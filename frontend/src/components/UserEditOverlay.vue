@@ -136,6 +136,7 @@
                       hide-bottom-space
                       prefix="@"
                       maxlength="32"
+                      :rules="[(val) => isValidHandle(val) || t('profile.handleInvalid')]"
                       :aria-label="t(`admin.users.handle`)" />
                   </w-item-section>
                 </w-item>
@@ -829,7 +830,8 @@ import { useFlagsStore } from '@/stores/flags'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
 
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
+import { isValidHandle } from '@/helpers/handles'
 
 import PersonalTokenList from './PersonalTokenList.vue'
 import UserChangePwdDialog from './UserChangePwdDialog.vue'
@@ -853,7 +855,7 @@ const route = useRoute()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // DATA
 
@@ -1090,6 +1092,14 @@ function unassignGroup(id) {
 }
 
 async function save(patch, { silent, keepOpen } = { silent: false, keepOpen: false }) {
+  // -> Said here in the reader's language, rather than left to the server, which quotes its pattern
+  if (!patch && !isValidHandle(state.user.handle)) {
+    notify({
+      type: 'negative',
+      message: t('profile.handleInvalid')
+    })
+    return
+  }
   loading.show()
   if (!patch) {
     patch = {
@@ -1114,7 +1124,12 @@ async function save(patch, { silent, keepOpen } = { silent: false, keepOpen: fal
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.users.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.users',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     if (!silent) {

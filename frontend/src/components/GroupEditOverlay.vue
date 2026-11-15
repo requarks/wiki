@@ -505,7 +505,7 @@
                     </w-item-section>
                     <w-item-section>
                       <w-item-label>{{ perm.permission }}</w-item-label>
-                      <w-item-label caption>{{ perm.hint }}</w-item-label>
+                      <w-item-label caption>{{ t(perm.hint) }}</w-item-label>
                     </w-item-section>
                     <w-item-section avatar>
                       <w-toggle
@@ -552,7 +552,7 @@
                     </w-item-section>
                     <w-item-section>
                       <w-item-label>{{ perm.permission }}</w-item-label>
-                      <w-item-label caption>{{ perm.hint }}</w-item-label>
+                      <w-item-label caption>{{ t(perm.hint) }}</w-item-label>
                     </w-item-section>
                     <w-item-section avatar>
                       <w-toggle
@@ -599,7 +599,7 @@
                   </w-item-section>
                   <w-item-section>
                     <w-item-label>{{ systemPermission.permission }}</w-item-label>
-                    <w-item-label caption>{{ systemPermission.hint }}</w-item-label>
+                    <w-item-label caption>{{ t(systemPermission.hint) }}</w-item-label>
                   </w-item-section>
                   <w-item-section avatar>
                     <!--
@@ -792,7 +792,7 @@ import { fileOpen, fileSave } from 'browser-fs-access'
 import RuleModeMenu from '@/components/RuleModeMenu.vue'
 import RulePermissionsDialog from '@/components/RulePermissionsDialog.vue'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
-import { apiErrorMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 import { isRedirectTarget } from '@/helpers/loginRedirect'
 
 // COMPOSABLES
@@ -812,7 +812,7 @@ const route = useRoute()
 
 // I18N
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 // DATA
 
@@ -921,19 +921,19 @@ const permissionCards = [
     permissions: [
       {
         permission: 'access:admin',
-        hint: 'Can access the administration and view the dashboard. Cannot perform any other action unless other permissions are also granted.'
+        hint: 'admin.groups.globalPermission.accessAdminHint'
       },
       {
         permission: 'read:audit',
-        hint: 'Can read the audit log, i.e. the record of what everybody on this wiki has done.'
+        hint: 'admin.groups.globalPermission.readAuditHint'
       },
       {
         permission: 'read:metrics',
-        hint: 'Can scrape the Prometheus metrics endpoint from an address it is not open to anonymously.'
+        hint: 'admin.groups.globalPermission.readMetricsHint'
       },
       {
         permission: 'use:mcp',
-        hint: "Can connect an AI assistant to the MCP endpoint with a personal access token. The assistant can only do what the user could, within the token's scopes."
+        hint: 'admin.groups.globalPermission.useMcpHint'
       }
     ]
   },
@@ -946,15 +946,15 @@ const permissionCards = [
     permissions: [
       {
         permission: 'manage:sites',
-        hint: 'Can create / manage sites and their settings: general, analytics, approvals, comments, content blocks, editors, locale and login. Theme and storage are separate permissions.'
+        hint: 'admin.groups.globalPermission.manageSitesHint'
       },
       {
         permission: 'manage:theme',
-        hint: 'Can modify site theme settings, including the CSS, head and body injected into every page. This is the only permission that can.'
+        hint: 'admin.groups.globalPermission.manageThemeHint'
       },
       {
         permission: 'manage:storage',
-        hint: "Can modify site storage settings: which targets hold this site's content, where it is served from, and the actions that move it. This is the only permission that can."
+        hint: 'admin.groups.globalPermission.manageStorageHint'
       }
     ]
   },
@@ -967,11 +967,11 @@ const permissionCards = [
     permissions: [
       {
         permission: 'read:webhooks',
-        hint: 'Can view webhooks and their settings, but not create or modify them. The authorization header of each one reads as a mask rather than as its value.'
+        hint: 'admin.groups.globalPermission.readWebhooksHint'
       },
       {
         permission: 'manage:webhooks',
-        hint: 'Can view, create, modify and delete webhooks.'
+        hint: 'admin.groups.globalPermission.manageWebhooksHint'
       }
     ]
   },
@@ -984,39 +984,39 @@ const permissionCards = [
     permissions: [
       {
         permission: 'list:users',
-        hint: 'Can look users up by name, e.g. to pick the owners of a page. Sees their name, handle and avatar only.'
+        hint: 'admin.groups.globalPermission.listUsersHint'
       },
       {
         permission: 'read:users',
-        hint: 'Can view users, but not create or modify them.'
+        hint: 'admin.groups.globalPermission.readUsersHint'
       },
       {
         permission: 'write:users',
-        hint: 'Can create new users, but not modify existing ones. A new user can only be placed in groups that do not administer the wiki.'
+        hint: 'admin.groups.globalPermission.writeUsersHint'
       },
       {
         permission: 'manage:users',
-        hint: 'Can create and modify users, except those in a group with manage:system. Cannot move a user in or out of a group that administers the wiki.'
+        hint: 'admin.groups.globalPermission.manageUsersHint'
       },
       {
         permission: 'list:groups',
-        hint: 'Can look groups up by name, e.g. to pick the owners of a page. Sees their name only.'
+        hint: 'admin.groups.globalPermission.listGroupsHint'
       },
       {
         permission: 'read:groups',
-        hint: 'Can view groups and their permissions, but not create or modify them.'
+        hint: 'admin.groups.globalPermission.readGroupsHint'
       },
       {
         permission: 'write:groups',
-        hint: 'Can create and manage groups and their page rules, but cannot change what a group is allowed to do, delete one, or change the membership of a group that administers the wiki.'
+        hint: 'admin.groups.globalPermission.writeGroupsHint'
       },
       {
         permission: 'manage:groups',
-        hint: 'Can create / manage groups and assign permissions (but not manage:system) / page rules'
+        hint: 'admin.groups.globalPermission.manageGroupsHint'
       },
       {
         permission: 'manage:scim',
-        hint: 'Can drive SCIM provisioning at /_scim/v2: create and deactivate accounts, and set the membership of groups that do not administer the wiki. Meant for an API key issued to an identity provider, not for a person.'
+        hint: 'admin.groups.globalPermission.manageScimHint'
       }
     ]
   }
@@ -1027,7 +1027,7 @@ const rightPermissionCards = permissionCards.filter((c) => c.column === 'right')
 
 const systemPermission = {
   permission: 'manage:system',
-  hint: 'Can manage and access everything. Root administrator.'
+  hint: 'admin.groups.globalPermission.manageSystemHint'
 }
 
 /**
@@ -1048,136 +1048,136 @@ const GUEST_ROLES = [
 const rules = [
   {
     permission: 'read:pages',
-    title: 'Read Pages',
-    hint: 'Can view and search pages.',
+    title: 'admin.groups.pagePermission.readPages',
+    hint: 'admin.groups.pagePermission.readPagesHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:pages',
-    title: 'Write Pages',
-    hint: 'Can create and edit pages.',
+    title: 'admin.groups.pagePermission.writePages',
+    hint: 'admin.groups.pagePermission.writePagesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'review:pages',
-    title: 'Review Pages',
-    hint: 'Can review and approve edits submitted by users.',
+    title: 'admin.groups.pagePermission.reviewPages',
+    hint: 'admin.groups.pagePermission.reviewPagesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:pages',
-    title: 'Manage Pages',
-    hint: 'Can move existing pages to other locations the user has write access to.',
+    title: 'admin.groups.pagePermission.managePages',
+    hint: 'admin.groups.pagePermission.managePagesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'delete:pages',
-    title: 'Delete Pages',
-    hint: 'Can delete existing pages and restore them from the recycle bin.',
+    title: 'admin.groups.pagePermission.deletePages',
+    hint: 'admin.groups.pagePermission.deletePagesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'write:tags',
-    title: 'Assign Tags',
-    hint: 'Can assign and unassign tags on pages.',
+    title: 'admin.groups.pagePermission.writeTags',
+    hint: 'admin.groups.pagePermission.writeTagsHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'write:styles',
-    title: 'Use CSS',
-    hint: 'Can insert CSS styles in pages.',
+    title: 'admin.groups.pagePermission.writeStyles',
+    hint: 'admin.groups.pagePermission.writeStylesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'write:scripts',
-    title: 'Use JavaScript',
-    hint: 'Can set the JavaScript a page runs on load and unload, and embed iframes in pages.',
+    title: 'admin.groups.pagePermission.writeScripts',
+    hint: 'admin.groups.pagePermission.writeScriptsHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'read:source',
-    title: 'View Page Source',
-    hint: 'Can view pages source.',
+    title: 'admin.groups.pagePermission.readSource',
+    hint: 'admin.groups.pagePermission.readSourceHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'read:history',
-    title: 'View Page History',
-    hint: 'Can view previous versions of pages.',
+    title: 'admin.groups.pagePermission.readHistory',
+    hint: 'admin.groups.pagePermission.readHistoryHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'manage:navigation',
-    title: 'Manage Navigation',
-    hint: 'Can change how pages here resolve their sidebar, and edit the menu itself where this rule also covers the page the menu belongs to.',
+    title: 'admin.groups.pagePermission.manageNavigation',
+    hint: 'admin.groups.pagePermission.manageNavigationHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'read:assets',
-    title: 'View Assets',
-    hint: 'Can view / use assets (such as images and files) in pages.',
+    title: 'admin.groups.pagePermission.readAssets',
+    hint: 'admin.groups.pagePermission.readAssetsHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:assets',
-    title: 'Upload Assets',
-    hint: 'Can upload new assets (such as images and files).',
+    title: 'admin.groups.pagePermission.writeAssets',
+    hint: 'admin.groups.pagePermission.writeAssetsHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'manage:assets',
-    title: 'Manage Assets',
-    hint: 'Can edit and delete existing assets (such as images and files).',
+    title: 'admin.groups.pagePermission.manageAssets',
+    hint: 'admin.groups.pagePermission.manageAssetsHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
   },
   {
     permission: 'read:comments',
-    title: 'Read Comments',
-    hint: 'Can view page comments.',
+    title: 'admin.groups.pagePermission.readComments',
+    hint: 'admin.groups.pagePermission.readCommentsHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'write:comments',
-    title: 'Write Comments',
-    hint: 'Can post new comments on pages.',
+    title: 'admin.groups.pagePermission.writeComments',
+    hint: 'admin.groups.pagePermission.writeCommentsHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
   },
   {
     permission: 'manage:comments',
-    title: 'Manage Comments',
-    hint: 'Can edit and delete existing page comments.',
+    title: 'admin.groups.pagePermission.manageComments',
+    hint: 'admin.groups.pagePermission.manageCommentsHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
@@ -1189,8 +1189,8 @@ const rules = [
   */
   {
     permission: 'write:feedback',
-    title: 'Submit Feedback',
-    hint: 'Can submit ideas to a feedback board, and edit or withdraw their own while they are open.',
+    title: 'admin.groups.pagePermission.writeFeedback',
+    hint: 'admin.groups.pagePermission.writeFeedbackHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
@@ -1207,8 +1207,8 @@ const rules = [
   {
     permission: 'read:glossary',
     scope: 'locale',
-    title: 'Read Glossary',
-    hint: "Can view the site's glossary.",
+    title: 'admin.groups.pagePermission.readGlossary',
+    hint: 'admin.groups.pagePermission.readGlossaryHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
@@ -1216,8 +1216,8 @@ const rules = [
   {
     permission: 'manage:glossary',
     scope: 'locale',
-    title: 'Manage Glossary',
-    hint: 'Can create, edit and delete glossary terms, and view them.',
+    title: 'admin.groups.pagePermission.manageGlossary',
+    hint: 'admin.groups.pagePermission.manageGlossaryHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
@@ -1225,8 +1225,8 @@ const rules = [
   {
     permission: 'read:notes',
     scope: 'locale',
-    title: 'Read Live Notes',
-    hint: 'Can view live notes from a shared link.',
+    title: 'admin.groups.pagePermission.readNotes',
+    hint: 'admin.groups.pagePermission.readNotesHint',
     warning: false,
     restrictedForSystem: false,
     disabled: false
@@ -1234,8 +1234,8 @@ const rules = [
   {
     permission: 'write:notes',
     scope: 'locale',
-    title: 'Write Live Notes',
-    hint: 'Can create and contribute to live notes. Can delete own notes.',
+    title: 'admin.groups.pagePermission.writeNotes',
+    hint: 'admin.groups.pagePermission.writeNotesHint',
     warning: false,
     restrictedForSystem: true,
     disabled: false
@@ -1308,6 +1308,15 @@ const isGuestGroup = computed(() => {
 })
 
 /**
+ * A page permission as the picker and the rule bar draw it: `title` and `hint` in `rules` are locale
+ * keys, resolved here rather than when the list is built, since the locale strings can land after
+ * `setup()` has run (see `TreeNav`).
+ */
+function translateRule(rule) {
+  return { ...rule, title: t(rule.title), hint: t(rule.hint) }
+}
+
+/**
  * The permissions a rule may grant, which for the guests group is a short list.
  *
  * That group is every anonymous reader at once, so a rule on it is a rule about the open internet:
@@ -1318,7 +1327,9 @@ const isGuestGroup = computed(() => {
  * group edited through the API as well; this keeps the screen from offering what would be dropped.
  */
 const ruleOptions = computed(() =>
-  isGuestGroup.value ? rules.filter((rule) => GUEST_ROLES.includes(rule.permission)) : rules
+  (isGuestGroup.value ? rules.filter((rule) => GUEST_ROLES.includes(rule.permission)) : rules).map(
+    translateRule
+  )
 )
 
 /**
@@ -1449,7 +1460,12 @@ async function save() {
     }).json()
     if (!resp?.ok) {
       throw new Error(
-        t(`admin.groups.${resp?.error}`, resp?.message || 'An unexpected error occured.')
+        apiFailureMessage(resp, {
+          t,
+          te,
+          prefix: 'admin.groups',
+          fallback: 'An unexpected error occured.'
+        })
       )
     }
     notify({
@@ -1568,7 +1584,7 @@ function setRuleMode(rule, mode) {
  */
 function ruleRoleChips(rule) {
   const roles = new Set(rule.roles)
-  const known = rules.filter((opt) => roles.has(opt.permission))
+  const known = rules.filter((opt) => roles.has(opt.permission)).map(translateRule)
   const unknown = rule.roles
     .filter((role) => !rules.some((opt) => opt.permission === role))
     .map((role) => ({ permission: role, title: role }))
