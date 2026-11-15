@@ -99,7 +99,7 @@
               <!--
                 The condition belongs on the section rather than on the text inside it: a section is
                 a padded band whether or not anything renders in it, so an unconditional one would
-                leave 32px of empty space under the toggle on every provider that does have props.
+                leave 32px of empty space under the header on every provider that does have props.
               -->
               <w-card-section
                 v-if="!state.provider.config || Object.keys(state.provider.config).length < 1">
@@ -107,8 +107,10 @@
                   {{ t('admin.comments.providerNoConfiguration') }}
                 </div>
               </w-card-section>
-              <template v-for="(cfg, cfgKey) in state.provider.config" :key="cfgKey">
-                <w-separator class="my-2" inset />
+              <!-- -> Separators go BETWEEN rows only: unlike Analytics there is no Enabled toggle
+                   above the first one here, so a leading separator would sit under the header. -->
+              <template v-for="(cfg, cfgKey, cfgIdx) in state.provider.config" :key="cfgKey">
+                <w-separator v-if="cfgIdx > 0" class="my-2" inset />
                 <w-item v-if="cfg.type === `boolean`" tag="label">
                   <blueprint-icon class="self-start" :icon="cfg.icon" />
                   <w-item-section>
