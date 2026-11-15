@@ -160,10 +160,34 @@
           </w-item>
           <w-separator class="my-2" inset />
           <w-item>
+            <blueprint-icon icon="access" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.mail.smtpAuth`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.mail.smtpAuthHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section>
+              <w-select
+                outlined
+                :model-value="state.config.authType"
+                :options="authTypeOptions"
+                emit-value
+                map-options
+                dense
+                hide-bottom-space
+                :aria-label="t(`admin.mail.smtpAuth`)"
+                @update:model-value="setAuthType" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item>
             <blueprint-icon icon="test-account" />
             <w-item-section>
-              <w-item-label>{{ t(`admin.mail.smtpUser`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.mail.smtpUserHint`) }}</w-item-label>
+              <w-item-label>{{
+                t(isOAuth ? `admin.mail.oauthMailbox` : `admin.mail.smtpUser`)
+              }}</w-item-label>
+              <w-item-label caption>{{
+                t(isOAuth ? `admin.mail.oauthMailboxHint` : `admin.mail.smtpUserHint`)
+              }}</w-item-label>
             </w-item-section>
             <w-item-section>
               <w-input
@@ -171,30 +195,122 @@
                 v-model="state.config.user"
                 dense
                 no-autofill
-                :aria-label="t(`admin.mail.smtpUser`)" />
+                :placeholder="isOAuth ? state.config.senderEmail : undefined"
+                :aria-label="t(isOAuth ? `admin.mail.oauthMailbox` : `admin.mail.smtpUser`)" />
             </w-item-section>
           </w-item>
-          <w-separator class="my-2" inset />
-          <w-item>
-            <blueprint-icon icon="password" />
-            <w-item-section>
-              <w-item-label>{{ t(`admin.mail.smtpPwd`) }}</w-item-label>
-              <w-item-label caption>{{ t(`admin.mail.smtpPwdHint`) }}</w-item-label>
-            </w-item-section>
-            <w-item-section>
-              <!-- -> Masked, with WInput's own reveal toggle: what arrives from the server is a mask
-                      rather than the password, so the only value ever readable here is one the
-                      operator is typing at that moment and may want to check -->
-              <w-input
-                outlined
-                v-model="state.config.pass"
-                dense
-                type="password"
-                revealable
-                no-autofill
-                :aria-label="t(`admin.mail.smtpPwd`)" />
-            </w-item-section>
-          </w-item>
+          <template v-if="state.config.authType === 'microsoft'">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="microsoft" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.msTenantId`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.msTenantIdHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.config.msTenantId"
+                  dense
+                  no-autofill
+                  :aria-label="t(`admin.mail.msTenantId`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="key" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.msClientId`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.msClientIdHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.config.msClientId"
+                  dense
+                  no-autofill
+                  :aria-label="t(`admin.mail.msClientId`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="password" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.msClientSecret`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.msClientSecretHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <!-- -> Arrives masked, as the password does; see below -->
+                <w-input
+                  outlined
+                  v-model="state.config.msClientSecret"
+                  dense
+                  type="password"
+                  revealable
+                  no-autofill
+                  :aria-label="t(`admin.mail.msClientSecret`)" />
+              </w-item-section>
+            </w-item>
+          </template>
+          <template v-else-if="state.config.authType === 'google'">
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="google" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.googleServiceAccount`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.googleServiceAccountHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <w-input
+                  outlined
+                  v-model="state.config.googleServiceAccount"
+                  dense
+                  no-autofill
+                  :aria-label="t(`admin.mail.googleServiceAccount`)" />
+              </w-item-section>
+            </w-item>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="grand-master-key" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.googlePrivateKey`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.googlePrivateKeyHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <!-- -> Arrives masked like the password; the mask posted back keeps the stored key -->
+                <w-input
+                  outlined
+                  v-model="state.config.googlePrivateKey"
+                  dense
+                  no-autofill
+                  :aria-label="t(`admin.mail.googlePrivateKey`)"
+                  type="textarea" />
+              </w-item-section>
+            </w-item>
+          </template>
+          <template v-else>
+            <w-separator class="my-2" inset />
+            <w-item>
+              <blueprint-icon icon="password" />
+              <w-item-section>
+                <w-item-label>{{ t(`admin.mail.smtpPwd`) }}</w-item-label>
+                <w-item-label caption>{{ t(`admin.mail.smtpPwdHint`) }}</w-item-label>
+              </w-item-section>
+              <w-item-section>
+                <!-- -> Masked, with WInput's own reveal toggle: what arrives from the server is a mask
+                        rather than the password, so the only value ever readable here is one the
+                        operator is typing at that moment and may want to check -->
+                <w-input
+                  outlined
+                  v-model="state.config.pass"
+                  dense
+                  type="password"
+                  revealable
+                  no-autofill
+                  :aria-label="t(`admin.mail.smtpPwd`)" />
+              </w-item-section>
+            </w-item>
+          </template>
           <w-separator class="my-2" inset />
           <w-item>
             <blueprint-icon icon="server" />
@@ -281,6 +397,7 @@
                 <w-item-label caption>{{ t(`admin.mail.dkimPrivateKeyHint`) }}</w-item-label>
               </w-item-section>
               <w-item-section>
+                <!-- -> Arrives masked like the password; the mask posted back keeps the stored key -->
                 <w-input
                   outlined
                   v-model="state.config.dkimPrivateKey"
@@ -329,7 +446,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
@@ -373,8 +490,14 @@ function defaultConfig() {
     name: '',
     secure: true,
     verifySSL: true,
+    authType: 'basic',
     user: '',
     pass: '',
+    msTenantId: '',
+    msClientId: '',
+    msClientSecret: '',
+    googleServiceAccount: '',
+    googlePrivateKey: '',
     useDKIM: false,
     dkimDomainName: '',
     dkimKeySelector: '',
@@ -389,7 +512,33 @@ const state = reactive({
   loading: 0
 })
 
+const authTypeOptions = computed(() => [
+  { label: t('admin.mail.smtpAuthBasic'), value: 'basic' },
+  { label: t('admin.mail.smtpAuthMicrosoft'), value: 'microsoft' },
+  { label: t('admin.mail.smtpAuthGoogle'), value: 'google' }
+])
+
+const isOAuth = computed(() => state.config.authType !== 'basic')
+
+/**
+ * Where each OAuth2 provider takes SMTP submissions, filled in on choosing it while no host is set
+ * yet. Exchange Online only takes OAuth2 over STARTTLS on 587; Gmail takes it on 465 as well.
+ */
+const AUTH_TYPE_SERVERS = {
+  microsoft: { host: 'smtp.office365.com', port: 587, secure: false },
+  google: { host: 'smtp.gmail.com', port: 465, secure: true }
+}
+
 // METHODS
+
+function setAuthType(authType) {
+  state.config.authType = authType
+  const server = AUTH_TYPE_SERVERS[authType]
+  if (server && !state.config.host?.trim()) {
+    Object.assign(state.config, server)
+  }
+}
+
 async function load() {
   state.loading++
   try {
@@ -426,8 +575,14 @@ async function save() {
         name: state.config.name || '',
         secure: state.config.secure ?? false,
         verifySSL: state.config.verifySSL ?? false,
+        authType: state.config.authType || 'basic',
         user: state.config.user || '',
         pass: state.config.pass || '',
+        msTenantId: state.config.msTenantId || '',
+        msClientId: state.config.msClientId || '',
+        msClientSecret: state.config.msClientSecret || '',
+        googleServiceAccount: state.config.googleServiceAccount || '',
+        googlePrivateKey: state.config.googlePrivateKey || '',
         useDKIM: state.config.useDKIM ?? false,
         dkimDomainName: state.config.dkimDomainName || '',
         dkimKeySelector: state.config.dkimKeySelector || '',

@@ -123,6 +123,74 @@ interface MailContent {
 }
 
 /**
+ * How the wiki signs in to the SMTP server.
+ *
+ * - `basic` — a username and password, or nothing at all for a relay that trusts the address.
+ * - `microsoft` — Microsoft 365 / Exchange Online, as an Entra ID app registration with a client
+ *   secret (the client credentials grant). The app needs the `SMTP.SendAsApp` application
+ *   permission, and its service principal Exchange's `SendAs` / mailbox permission on the mailbox.
+ * - `google` — Google Workspace, as a service account with domain-wide delegation for the
+ *   `https://mail.google.com/` scope, impersonating the mailbox.
+ *
+ * Both OAuth2 types are server-to-server: nobody signs in through a browser, so there is no
+ * refresh token to keep — a token is asked for when the transport needs one and held until it
+ * expires, in each process that sends.
+ */
+export const MAIL_AUTH_TYPES = ['basic', 'microsoft', 'google'] as const
+export type MailAuthType = (typeof MAIL_AUTH_TYPES)[number]
+
+/** Where Google's service accounts exchange their signed assertion for a token. */
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
+/** The scope Exchange Online's SMTP AUTH accepts an app-only token for. */
+const MICROSOFT_SMTP_SCOPE = 'https://outlook.office365.com/.default'
+
+/** How long a token request may take before the send it is for gives up. */
+const TOKEN_REQUEST_TIMEOUT_MS = 30_000
+
+/**
+ * Seconds before a token's stated expiry at which it is treated as expired, so that one about to
+ * run out is not handed to a session that then outlives it.
+ */
+const TOKEN_EXPIRY_MARGIN_S = 60
+
+/**
+ * Ask Entra ID for an app-only token to send through Exchange Online.
+ *
+ * Nodemailer has no client credentials grant of its own, so this is its `provisionCallback`. The
+ * error carries Entra's own `error_description` — a wrong secret, an unknown tenant and a missing
+ * consent all read differently, and the admin area's test button shows the message verbatim.
+ *
+ * @returns The token, and when it expires as a timestamp in milliseconds
+ */
+async function fetchMicrosoftToken(
+  tenantId: string,
+  clientId: string,
+  clientSecret: string
+): Promise<{ accessToken: string; expires: number }> {
+  const resp = await fetch(
+    `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`,
+    {
+      method: 'POST',
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope: MICROSOFT_SMTP_SCOPE
+      }),
+      signal: AbortSignal.timeout(TOKEN_REQUEST_TIMEOUT_MS)
+    }
+  )
+  const data = (await resp.json().catch(() => null)) as Record<string, any> | null
+  if (!resp.ok || typeof data?.access_token !== 'string') {
+    const reason = data?.error_description ?? data?.error ?? `HTTP ${resp.status}`
+    throw new Error(`Microsoft did not issue a token: ${reason}`)
+  }
+  const lifetime = Math.max(Number(data.expires_in) - TOKEN_EXPIRY_MARGIN_S, 0)
+  return { accessToken: data.access_token, expires: Date.now() + lifetime * 1000 }
+}
+
+/**
  * The SMTP settings, as they are stored under the `mail` key of the settings table.
  *
  * Everything here is what an administrator typed in the admin area's Mail page, which is also the
@@ -137,8 +205,24 @@ interface MailConfig {
   name?: string
   secure?: boolean
   verifySSL?: boolean
+  /** How the wiki signs in to the SMTP server. See `MailAuthType`. */
+  authType?: MailAuthType
+  /**
+   * The account signed in as. With `basic`, the SMTP username, and no credentials at all when it is
+   * empty. With either OAuth2 type, the mailbox the token acts for, defaulting to the sender address.
+   */
   user?: string
   pass?: string
+  /** Microsoft 365: the Entra ID tenant the app registration belongs to (an id or a domain). */
+  msTenantId?: string
+  /** Microsoft 365: the app registration's Application (client) ID. */
+  msClientId?: string
+  /** Microsoft 365: a client secret of that app registration. */
+  msClientSecret?: string
+  /** Google Workspace: the service account's email address (`client_email` in its key file). */
+  googleServiceAccount?: string
+  /** Google Workspace: the service account's private key, PEM (`private_key` in its key file). */
+  googlePrivateKey?: string
   useDKIM?: boolean
   dkimDomainName?: string
   dkimKeySelector?: string
@@ -430,13 +514,88 @@ class Mail {
       conf.name,
       conf.secure,
       conf.verifySSL,
+      conf.authType,
       conf.user,
       conf.pass,
+      conf.msTenantId,
+      conf.msClientId,
+      conf.msClientSecret,
+      conf.googleServiceAccount,
+      conf.googlePrivateKey,
       conf.useDKIM,
       conf.dkimDomainName,
       conf.dkimKeySelector,
       conf.dkimPrivateKey
     ])
+  }
+
+  /**
+   * How the transport signs in, as the `auth` option nodemailer takes — or nothing at all.
+   *
+   * The OAuth2 types sign in as the mailbox named in `user`, or as the sender address when that is
+   * empty, since that is nearly always the mailbox being sent from. Missing credentials are not
+   * refused here: the token request fails on them instead, with a message the test button shows.
+   */
+  private authOptions(conf: MailConfig) {
+    const mailbox = conf.user?.trim() || conf.senderEmail?.trim() || ''
+    /** OAuth2 with tokens from `provide`, asked for whenever the cached one has expired. */
+    const provisioned = (provide: () => Promise<{ accessToken: string; expires: number }>) => ({
+      auth: {
+        type: 'OAuth2' as const,
+        user: mailbox,
+        provisionCallback: (
+          _user: string,
+          _renew: boolean,
+          done: (err: Error | null, accessToken?: string, expires?: number) => void
+        ) => {
+          provide().then(
+            ({ accessToken, expires }) => done(null, accessToken, expires),
+            (err: any) => done(err instanceof Error ? err : new Error(String(err)))
+          )
+        }
+      }
+    })
+    switch (conf.authType ?? 'basic') {
+      case 'microsoft': {
+        const tenantId = conf.msTenantId?.trim() ?? ''
+        const clientId = conf.msClientId?.trim() ?? ''
+        const clientSecret = conf.msClientSecret ?? ''
+        // -> A client credentials token cannot be refreshed, only reissued, so `renew` makes no
+        //    difference to what is asked for
+        return provisioned(async () => {
+          if (!tenantId || !clientId || !clientSecret) {
+            throw new Error('Microsoft 365 needs a tenant ID, a client ID and a client secret.')
+          }
+          return fetchMicrosoftToken(tenantId, clientId, clientSecret)
+        })
+      }
+      case 'google': {
+        const serviceClient = conf.googleServiceAccount?.trim() ?? ''
+        // -> Copied out of the key file's JSON, the newlines may still be written as `\n`
+        const privateKey = (conf.googlePrivateKey ?? '').replace(/\\n/g, '\n').trim()
+        if (!serviceClient || !privateKey) {
+          // -> Left to nodemailer, either one missing falls through to its refresh token flow and
+          //    fails with a message about a refresh token nobody was asked for
+          return provisioned(async () => {
+            throw new Error('Google Workspace needs a service account email and its private key.')
+          })
+        }
+        // -> Nodemailer signs the service account assertion and caches the token itself
+        return {
+          auth: {
+            type: 'OAuth2' as const,
+            user: mailbox,
+            serviceClient,
+            privateKey,
+            accessUrl: GOOGLE_TOKEN_URL
+          }
+        }
+      }
+      default:
+        // -> No credentials at all rather than empty ones: a relay that authenticates by IP
+        //    address refuses an empty AUTH instead of skipping it.
+        return conf.user?.trim() ? { auth: { user: conf.user.trim(), pass: conf.pass ?? '' } } : {}
+    }
   }
 
   private getTransporter(): Transporter {
@@ -453,14 +612,7 @@ class Mail {
       // -> The name this client identifies itself as in EHLO. Left off, nodemailer sends the machine
       //    hostname, which is what most relays expect.
       ...(conf.name?.trim() && { name: conf.name.trim() }),
-      // -> No credentials at all rather than empty ones: a relay that authenticates by IP address
-      //    refuses an empty AUTH instead of skipping it.
-      ...(conf.user?.trim() && {
-        auth: {
-          user: conf.user.trim(),
-          pass: conf.pass ?? ''
-        }
-      }),
+      ...this.authOptions(conf),
       tls: {
         rejectUnauthorized: conf.verifySSL !== false
       },

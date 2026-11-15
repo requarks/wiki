@@ -3,6 +3,7 @@ paths:
   - "backend/models/mail.ts"
   - "backend/models/locales.ts"
   - "backend/api/mail.ts"
+  - "backend/api/schemas/mail.ts"
   - "backend/notifications/mailer.ts"
   - "frontend/src/pages/AdminMail.vue"
 ---
@@ -18,6 +19,20 @@ reads. `MailTemplateData` is the closed list, held as typed literals rather than
 nothing sends a mail this wiki did not ask it to, so a template is part of the flow that uses it and
 a flow that gained one would gain code there anyway. A wiki with no SMTP settings is the normal case, which is why `isConfigured` is
 a question callers ask rather than something `send()` assumes.
+
+**Three ways to sign in to the SMTP server**, chosen by `mail.authType` (`MAIL_AUTH_TYPES`):
+`basic` (username and password, or none for a relay that trusts the address), `microsoft` and
+`google`. Both OAuth2 types are server-to-server on purpose — an Entra ID app registration with a
+client secret (the client credentials grant, fetched by `fetchMicrosoftToken` as nodemailer's
+`provisionCallback`, since nodemailer has no such grant), and a Google service account with
+domain-wide delegation (nodemailer's own `serviceClient` flow). Nobody consents in a browser, so
+there is no refresh token to store or rotate, and a worker thread just asks for a token of its own.
+A consent ("Connect your account") flow was left out for that reason: it would need a callback
+route, rotated refresh tokens written back from the worker, and Google's verification of the
+restricted `https://mail.google.com/` scope. The OAuth2 types sign in as `user`, or as the sender
+address when it is empty. Every credential — the password, the client secret, the service account
+key and the DKIM key — is masked by `api/mail.ts` (`SECRET_KEYS`), and missing credentials fail at
+send time with a message the test button shows, rather than making `isConfigured` false.
 
 **No mail is written in English in the code.** Every string lives in `locales/en.json` under
 `mail.*` and is translated by the same CrowdIn pipeline the interface uses, so a locale somebody

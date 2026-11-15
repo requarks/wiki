@@ -78,8 +78,15 @@ defaults:
       name: ''
       secure: true
       verifySSL: true
+      # How to sign in to the SMTP server: basic (user + pass), microsoft or google (OAuth2)
+      authType: 'basic'
       user: ''
       pass: ''
+      msTenantId: ''
+      msClientId: ''
+      msClientSecret: ''
+      googleServiceAccount: ''
+      googlePrivateKey: ''
       useDKIM: false
       dkimDomainName: ''
       dkimKeySelector: ''

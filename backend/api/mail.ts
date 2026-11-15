@@ -1,11 +1,15 @@
 import { audit } from '../helpers/audit.ts'
 import type { FastifyInstance } from 'fastify'
+import type { MailAuthType } from '../models/mail.ts'
 
 /**
- * Placeholder sent to the client in place of the stored SMTP password. Sending it back unchanged
- * leaves the stored password alone.
+ * Placeholder sent to the client in place of a stored secret. Sending it back unchanged leaves the
+ * stored value alone; an empty value is never masked, so clearing the field removes the secret.
  */
-const PASSWORD_MASK = '********'
+const SECRET_MASK = '********'
+
+/** The settings that are credentials, which the client is only ever told are set. */
+const SECRET_KEYS = ['pass', 'msClientSecret', 'googlePrivateKey', 'dkimPrivateKey'] as const
 
 /**
  * Mail settings, stored as the `mail` key of the settings table.
@@ -19,8 +23,14 @@ const MAIL_CONFIG_KEYS = [
   'name',
   'secure',
   'verifySSL',
+  'authType',
   'user',
   'pass',
+  'msTenantId',
+  'msClientId',
+  'msClientSecret',
+  'googleServiceAccount',
+  'googlePrivateKey',
   'useDKIM',
   'dkimDomainName',
   'dkimKeySelector',
@@ -53,10 +63,11 @@ async function routes(app: FastifyInstance) {
       }
     },
     async () => {
-      return {
-        ...WIKI.config.mail,
-        pass: WIKI.config.mail?.pass?.length > 0 ? PASSWORD_MASK : ''
+      const conf = { ...WIKI.config.mail }
+      for (const key of SECRET_KEYS) {
+        conf[key] = conf[key]?.length > 0 ? SECRET_MASK : ''
       }
+      return conf
     }
   )
 
@@ -73,8 +84,14 @@ async function routes(app: FastifyInstance) {
       name?: string
       secure?: boolean
       verifySSL?: boolean
+      authType?: MailAuthType
       user?: string
       pass?: string
+      msTenantId?: string
+      msClientId?: string
+      msClientSecret?: string
+      googleServiceAccount?: string
+      googlePrivateKey?: string
       useDKIM?: boolean
       dkimDomainName?: string
       dkimKeySelector?: string
@@ -121,9 +138,11 @@ async function routes(app: FastifyInstance) {
         patch.defaultBaseURL = patch.defaultBaseURL.replace(/\/+$/, '')
       }
 
-      // -> The client only ever receives a masked password, so an unchanged one must not be stored
-      if (patch.pass === PASSWORD_MASK) {
-        delete patch.pass
+      // -> The client only ever receives masked secrets, so an unchanged one must not be stored
+      for (const key of SECRET_KEYS) {
+        if (patch[key] === SECRET_MASK) {
+          delete patch[key]
+        }
       }
 
       const previousConfig = WIKI.config.mail
@@ -134,8 +153,8 @@ async function routes(app: FastifyInstance) {
         return reply.internalServerError('Failed to save mail configuration.')
       }
 
-      // -> Which settings were touched, never their values: `patch` carries the SMTP password and
-      //    the DKIM private key
+      // -> Which settings were touched, never their values: `patch` carries the SMTP password, the
+      //    OAuth2 credentials and the DKIM private key
       await audit(req, 'admin', 'updateMailConfig', { changedFields: Object.keys(patch) })
 
       return {
