@@ -1056,7 +1056,7 @@ async function routes(app: FastifyInstance) {
           const asked = {
             siteId: req.params.siteId,
             path: normalizePagePath(req.query.path) || 'home',
-            locale: req.query.locale ?? WIKI.models.pages.defaultLocale(req.params.siteId),
+            locale: req.query.locale || WIKI.models.pages.defaultLocale(req.params.siteId),
             tags: []
           }
           if (!mayOnPage(req, 'read:pages', asked)) {

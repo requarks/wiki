@@ -540,7 +540,7 @@ async function routes(app: FastifyInstance) {
       const level = await WIKI.models.tree.browse({
         siteId: req.params.siteId,
         path: req.query.path,
-        locale: req.query.locale ?? defaultLocale(req.params.siteId),
+        locale: req.query.locale || defaultLocale(req.params.siteId),
         unpublished: unpublishedFor(req)
       })
       if (!level) {
@@ -561,7 +561,7 @@ async function routes(app: FastifyInstance) {
           WIKI.models.groups.checkAccess(actor, 'read:pages', {
             siteId: req.params.siteId,
             path: item.path,
-            locale: req.query.locale ?? defaultLocale(req.params.siteId),
+            locale: req.query.locale || defaultLocale(req.params.siteId),
             tags: item.tags
           })
         )
@@ -653,7 +653,7 @@ async function routes(app: FastifyInstance) {
       return WIKI.models.tree.listPages({
         siteId: req.params.siteId,
         path: req.query.path,
-        locale: req.query.locale ?? defaultLocale(req.params.siteId),
+        locale: req.query.locale || defaultLocale(req.params.siteId),
         tags: splitList(req.query.tags),
         limit: req.query.limit,
         orderBy: req.query.orderBy,
@@ -770,7 +770,7 @@ async function routes(app: FastifyInstance) {
         different locale than the one holding it, so the one the request named is not where it lands.
       */
       let parentPath = asStoredFolderPath(req.body.parentPath)
-      let locale = req.body.locale ?? defaultLocale(req.params.siteId)
+      let locale = req.body.locale || defaultLocale(req.params.siteId)
       if (req.body.parentId) {
         const parent = await WIKI.models.tree.getFolderById(req.body.parentId)
         if (parent) {

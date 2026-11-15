@@ -218,9 +218,11 @@ async function uploadRoutes(app: FastifyInstance) {
           get one; a path is already one, and is normalized here rather than trusted -- the model
           would happily create a folder called `..`.
         */
-        // -> Settled once, since the rule check and the write have to be asking about the same locale
+        // -> Settled once, since the rule check and the write have to be asking about the same locale.
+        //    `||` and not `??`: an empty `locale=` is not a locale, and a reference whose locale is
+        //    empty is one no locale-scoped rule excludes
         const locale =
-          requestedLocale ?? WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en'
+          requestedLocale || (WIKI.sites[req.params.siteId]?.config?.locales?.primary ?? 'en')
         /*
           And spelled as the tree will file it, which is what a rule names and what the model is then
           handed: the folder as the tree resolves it (an existing folder's own spelling, else the one

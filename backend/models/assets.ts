@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import mime from 'mime'
-import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm'
 import { assets as assetsTable, tree as treeTable } from '../db/schema.ts'
 import {
   CustomError,
@@ -970,7 +970,14 @@ class Assets {
           eq(treeTable.fileName, fileName)
         )
       )
-      .orderBy(desc(sql`${treeTable.locale} = ${primaryLocale}`))
+      // -> Then the oldest, so that two other locales holding the same path give one answer rather
+      //    than whichever row the plan happens to read first, and a later upload into another locale
+      //    cannot take over a URL that is already being served
+      .orderBy(
+        desc(sql`${treeTable.locale} = ${primaryLocale}`),
+        asc(assetsTable.createdAt),
+        asc(assetsTable.id)
+      )
       .limit(1)
 
     const row = results[0]

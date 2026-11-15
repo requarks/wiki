@@ -171,7 +171,7 @@ async function routes(app: FastifyInstance) {
       if (!WIKI.sites[req.params.siteId]) {
         return reply.notFound('This site does not exist.')
       }
-      const locale = req.query.locale ?? defaultLocale(req.params.siteId)
+      const locale = req.query.locale || defaultLocale(req.params.siteId)
       const path = normalizePagePath(req.query.path)
       const blog = await WIKI.models.blogs.blogAt(req.params.siteId, locale, path)
       if (!blog) {

@@ -241,8 +241,14 @@ export function ruleIsScopedTo(rule: GroupRule, scope: RuleLocaleRef): boolean {
     return false
   }
   // -> And to particular locales, the same way. Unlike the site, a reference may leave the locale
-  //    out — an asset addressed by path alone — and such a page is not one a locale rule excludes
-  if (rule.locales?.length > 0 && scope.locale && !rule.locales.includes(scope.locale)) {
+  //    out — an asset addressed by path alone — and such a page is not one a locale rule excludes.
+  //    Out means absent, not falsy: an empty string is a locale no rule names, so a locale-scoped
+  //    rule passes over it as it would over any other locale it does not list
+  if (
+    rule.locales?.length > 0 &&
+    scope.locale !== undefined &&
+    !rule.locales.includes(scope.locale)
+  ) {
     return false
   }
   return true

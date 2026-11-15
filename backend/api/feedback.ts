@@ -86,7 +86,7 @@ function loadBoard(
     reply.notFound('This site does not exist.')
     return null
   }
-  const locale = query.locale ?? defaultLocale(req.params.siteId)
+  const locale = query.locale || defaultLocale(req.params.siteId)
   const board = WIKI.models.feedback.boardAt(
     req.params.siteId,
     locale,
