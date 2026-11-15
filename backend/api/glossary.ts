@@ -2,9 +2,15 @@ import { createHash } from 'node:crypto'
 
 import { audit } from '../helpers/audit.ts'
 import { requestUserId } from '../helpers/requester.ts'
+import { unpublishedFor } from './pages.ts'
 import { GLOSSARY_INPUT_PROPERTIES } from './schemas/glossary.ts'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import type { GlossaryTermInput, GlossaryWriteResult } from '../models/glossary.ts'
+import type {
+  GlossaryTerm,
+  GlossaryTermInput,
+  GlossaryTermView,
+  GlossaryWriteResult
+} from '../models/glossary.ts'
 
 const siteIdParam = {
   type: 'object',
@@ -108,11 +114,23 @@ function guardRead(req: FastifyRequest, reply: FastifyReply, siteId: string, loc
   return true
 }
 
+/**
+ * A term as this requester sees it, which is how every route here answers with one: whether its
+ * documentation page exists is asked as a reader of that page, not of the glossary (spec §4.4).
+ */
+function asSeenBy(req: FastifyRequest, term: GlossaryTerm): Promise<GlossaryTermView> {
+  return WIKI.models.glossary.asSeenBy(term, {
+    actor: WIKI.models.groups.actorForRequest(req),
+    unpublished: unpublishedFor(req)
+  })
+}
+
 /** Send a refused write as the status it stands for. */
-function sendRefusal(
+async function sendRefusal(
+  req: FastifyRequest,
   reply: FastifyReply,
   result: Exclude<GlossaryWriteResult, { ok: true }>
-): FastifyReply {
+): Promise<FastifyReply> {
   switch (result.reason) {
     case 'notFound':
       return reply.notFound('This term does not exist.')
@@ -138,7 +156,7 @@ function sendRefusal(
         error: 'Conflict',
         message: 'This term was changed by somebody else since it was opened.',
         reason: 'stale',
-        current: result.current
+        current: await asSeenBy(req, result.current)
       })
   }
 }
@@ -409,7 +427,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Get a glossary term',
         description:
-          'A term in full: its definition, related terms (from both sides), documentation page as it now resolves, and references.\n\nNeeds `read:glossary` in the term’s locale.',
+          'A term in full: its definition, related terms (from both sides), documentation page (whether it exists answered as the caller may see pages), and references.\n\nNeeds `read:glossary` in the term’s locale.',
         tags: ['Glossary'],
         params: termIdParam,
         response: {
@@ -429,7 +447,7 @@ async function routes(app: FastifyInstance) {
       if (!term || !mayRead(req, req.params.siteId, term.locale)) {
         return reply.notFound('This term does not exist.')
       }
-      return term
+      return asSeenBy(req, term)
     }
   )
 
@@ -484,7 +502,7 @@ async function routes(app: FastifyInstance) {
         requestUserId(req)
       )
       if (!result.ok) {
-        return sendRefusal(reply, result)
+        return sendRefusal(req, reply, result)
       }
       await audit(req, 'glossary', 'createGlossaryTerm', {
         siteId,
@@ -492,7 +510,7 @@ async function routes(app: FastifyInstance) {
         termId: result.term.id,
         term: result.term.term
       })
-      return result.term
+      return asSeenBy(req, result.term)
     }
   )
 
@@ -545,7 +563,7 @@ async function routes(app: FastifyInstance) {
         requestUserId(req)
       )
       if (!result.ok) {
-        return sendRefusal(reply, result)
+        return sendRefusal(req, reply, result)
       }
       await audit(req, 'glossary', 'updateGlossaryTerm', {
         siteId,
@@ -554,7 +572,7 @@ async function routes(app: FastifyInstance) {
         term: result.term.term,
         changedFields: result.changedFields
       })
-      return result.term
+      return asSeenBy(req, result.term)
     }
   )
 

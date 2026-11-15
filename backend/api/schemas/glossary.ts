@@ -135,14 +135,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       documentation: {
         type: ['object', 'null'],
         description:
-          'The page in the same locale that documents the term, looked up as it is read. Null when none is named; `exists` false when the named path has no page.',
+          'The page in the same locale that documents the term, looked up as it is read. Null when none is named. `exists` is false when the named path has no page the caller may see — one a page rule withholds from them, or one not live that they may not edit, answers as no page at all.',
         properties: {
           path: { type: 'string' },
           label: {
             type: ['string', 'null'],
             description: 'The link text. Null for the default, which the client supplies.'
           },
-          title: { type: ['string', 'null'] },
           exists: { type: 'boolean' }
         }
       },

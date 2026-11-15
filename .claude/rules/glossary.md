@@ -48,5 +48,10 @@ menu. **`dev/specs/glossary.md` is the design**; `models/glossary.ts`, `api/glos
   holds ranges into the article needs the same.
 - **A bare `?query` href is not a page link** to the server (`resolveLink`), as a bare `#fragment` is
   not — it is the page it sits on, asked something.
+- **A term's documentation page is resolved for the reader, as a page** (`glossary.asSeenBy`, spec
+  §4.4): `exists` needs `read:pages` on it and the live condition, regardless of who may read the
+  glossary, and nothing else about the page — not its title — travels with the term. `glossary.get`
+  returns only the stored path and label; every route and tool answering with a term passes it
+  through `asSeenBy` (or `documentationPageId`), the 409 `stale` copy included.
 - **A page move with `updateLinks` takes the terms it documents along** (`glossary.relinkDocumentation`,
   from `relinkMovedPage`): rewritten in the same locale, cleared when the page leaves it.

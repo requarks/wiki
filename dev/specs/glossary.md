@@ -229,9 +229,15 @@ not even read answers 404 there, as it does on the read route; one they may read
 
 ### 4.4 What a reader sees
 
-**The documentation link is shown to every reader of the term**, whether or not they may read the page
-it points at; following it answers as the page route always does. Hiding it would need a page-rule check
-per term in the list, for no information the reader does not already have from the term itself.
+**The documentation path and label are shown to every reader of the term**, since both are stored on
+the term and the reader has them from the term itself. **Whether a page is there is not**: `exists` is
+answered as a reader of PAGES, with `read:pages` on the page and the live condition as the page view
+asks them (`glossary.documentationPageId`), so a page a rule withholds from the reader, or one not
+live that they may not edit, answers `exists: false` exactly as no page at all. The path is chosen by
+whoever edits the glossary, and `manage:glossary` ignores the path, so an answer resolved for the
+glossary would let that permission probe any path in the locale for a page. Nothing else about the page
+— its title included — travels with the term. Only the single-term reads resolve it (the list carries
+no documentation), so the check is one per term opened.
 
 ### 4.5 On the frontend
 

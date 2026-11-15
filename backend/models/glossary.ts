@@ -5,6 +5,9 @@ import {
   pages as pagesTable,
   users as usersTable
 } from '../db/schema.ts'
+import { liveCondition } from '../helpers/publishing.ts'
+import type { AccessActor } from './groups.ts'
+import type { RulePageRef } from '../helpers/pageRules.ts'
 
 /**
  * How much a term may carry. Shared with the route schemas, which are what actually enforce it.
@@ -64,19 +67,33 @@ export interface GlossaryTerm extends GlossaryTermSummary {
   references: GlossaryReference[]
   relatedTerms: Array<{ id: string; term: string }>
   /**
-   * The documentation page, resolved. Null when the term names none; `exists: false` when it names a
-   * path with no page, which the view says rather than offering a dead link.
+   * The documentation page as the term names it. Null when it names none. Whether there is a page
+   * there is a question about a page, so it is answered per reader by `asSeenBy`, never here.
    */
   documentation: {
     path: string
     label: string | null
-    title: string | null
-    exists: boolean
   } | null
   author: { id: string; name: string } | null
   createdAt: string
   /** At millisecond precision — what a save hands back as `expectedUpdatedAt`. */
   updatedAt: string
+}
+
+/**
+ * A term as one reader sees it: `documentation.exists` says whether there is a page at the path that
+ * THIS reader may see. What every route and tool answers with.
+ */
+export interface GlossaryTermView extends Omit<GlossaryTerm, 'documentation'> {
+  /** `exists: false` is said rather than a dead link offered — see `asSeenBy`. */
+  documentation: (NonNullable<GlossaryTerm['documentation']> & { exists: boolean }) | null
+}
+
+/** Who a term's documentation page is resolved for. */
+export interface PageReader {
+  actor: AccessActor
+  /** As `unpublishedFor` answers it for the request: who may see a page that is not live. */
+  unpublished: false | ((page: RulePageRef) => boolean)
 }
 
 /**
@@ -347,27 +364,6 @@ class Glossary {
       .where(or(eq(relationsTable.termId, id), eq(relationsTable.relatedId, id)))
       .orderBy(sql`lower(${termsTable.term})`)
 
-    let documentation: GlossaryTerm['documentation'] = null
-    if (row.documentationPath) {
-      const page = await tx
-        .select({ title: pagesTable.title })
-        .from(pagesTable)
-        .where(
-          and(
-            eq(pagesTable.siteId, siteId),
-            eq(pagesTable.locale, row.locale),
-            eq(pagesTable.path, row.documentationPath)
-          )
-        )
-        .limit(1)
-      documentation = {
-        path: row.documentationPath,
-        label: row.documentationLabel,
-        title: page[0]?.title ?? null,
-        exists: page.length > 0
-      }
-    }
-
     return {
       id: row.id,
       siteId: row.siteId,
@@ -381,11 +377,76 @@ class Glossary {
       autoLink: row.autoLink,
       references: (row.references ?? []) as GlossaryReference[],
       relatedTerms: related,
-      documentation,
+      documentation: row.documentationPath
+        ? { path: row.documentationPath, label: row.documentationLabel }
+        : null,
       author: row.authorId && authorName ? { id: row.authorId, name: authorName } : null,
       createdAt: iso(row.createdAt),
       updatedAt: iso(row.updatedAt)
     }
+  }
+
+  /**
+   * The id of the page documenting a term, when this reader may see it; null otherwise.
+   *
+   * A term names its documentation page by path, and whoever may edit the glossary chooses that path,
+   * so this is asked as a reader of PAGES rather than of the glossary: `read:pages` on the page, and
+   * the live condition, as the page view asks them. A page the reader may not see answers exactly
+   * as no page at all — the path is on the term, but whether anything is there, and what it is
+   * called, is not the glossary's to tell.
+   */
+  async documentationPageId(
+    term: Pick<GlossaryTerm, 'siteId' | 'locale' | 'documentation'>,
+    reader: PageReader
+  ): Promise<string | null> {
+    if (!term.documentation) {
+      return null
+    }
+    const conditions = [
+      eq(pagesTable.siteId, term.siteId),
+      eq(pagesTable.locale, term.locale),
+      eq(pagesTable.path, term.documentation.path)
+    ]
+    if (reader.unpublished === false) {
+      conditions.push(liveCondition(pagesTable))
+    }
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        path: pagesTable.path,
+        locale: pagesTable.locale,
+        tags: pagesTable.tags,
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
+      })
+      .from(pagesTable)
+      .where(and(...conditions))
+      .limit(1)
+    const row = rows[0]
+    if (!row) {
+      return null
+    }
+    const ref: RulePageRef = {
+      siteId: term.siteId,
+      locale: row.locale,
+      path: row.path,
+      tags: row.tags
+    }
+    if (!WIKI.models.groups.checkAccess(reader.actor, 'read:pages', ref)) {
+      return null
+    }
+    if (!row.isLive && !(reader.unpublished && reader.unpublished(ref))) {
+      return null
+    }
+    return row.id
+  }
+
+  /** A term with its documentation page resolved for this reader — see `documentationPageId`. */
+  async asSeenBy(term: GlossaryTerm, reader: PageReader): Promise<GlossaryTermView> {
+    if (!term.documentation) {
+      return { ...term, documentation: null }
+    }
+    const pageId = await this.documentationPageId(term, reader)
+    return { ...term, documentation: { ...term.documentation, exists: pageId !== null } }
   }
 
   /**

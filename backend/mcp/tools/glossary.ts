@@ -2,6 +2,7 @@ import { normalizePagePath } from '../../helpers/common.ts'
 import { callApi } from '../inject.ts'
 import { activeLocales, loadReadablePage, pageFields, primaryLocale, toIso } from '../content.ts'
 import { jsonResult, ToolError } from '../tool.ts'
+import { unpublishedFor } from '../context.ts'
 import type { McpContext } from '../context.ts'
 import type { McpTool } from '../tool.ts'
 
@@ -57,23 +58,18 @@ const lookupTerm: McpTool<{ name: string; locale?: string }> = {
       throw new ToolError(`No glossary term goes by "${args.name}" in ${locale}.`)
     }
     /*
-      The documentation page as THIS caller may read it, rather than as the term reports it: the
-      glossary resolves the page's title for whoever may read the glossary, and a title is content a
-      page rule may be withholding.
+      The documentation page as THIS caller may read it: the same question the glossary routes ask
+      (`glossary.documentationPageId`), then the page in the fields every tool names one by.
     */
-    let documentation = null
-    if (term.documentation?.exists) {
-      const pageId = await WIKI.models.pages.idAtPath(
-        ctx.siteId,
-        term.locale,
-        term.documentation.path
-      )
-      documentation = pageId
-        ? await loadReadablePage(ctx, pageId)
-            .then((page) => pageFields(ctx, page))
-            .catch(() => null)
-        : null
-    }
+    const pageId = await WIKI.models.glossary.documentationPageId(term, {
+      actor: ctx.actor,
+      unpublished: unpublishedFor(ctx)
+    })
+    const documentation = pageId
+      ? await loadReadablePage(ctx, pageId)
+          .then((page) => pageFields(ctx, page))
+          .catch(() => null)
+      : null
     return jsonResult({
       id: term.id,
       term: term.term,
