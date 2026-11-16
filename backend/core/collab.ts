@@ -5,9 +5,8 @@ import * as awarenessProtocol from 'y-protocols/awareness'
 import * as syncProtocol from 'y-protocols/sync'
 import * as Y from 'yjs'
 
-import { createNotifier } from '../helpers/pubsub.ts'
+import { createChannel } from '../helpers/pubsub.ts'
 
-import type { PoolClient } from 'pg'
 import type { WebSocket } from 'ws'
 
 /**
@@ -190,7 +189,7 @@ interface RelayEnvelope {
   i: string
   /** Room: a page id, or a note's id behind `NOTE_ROOM_PREFIX`. */
   r: string
-  t: 'update' | 'awareness' | 'hello' | 'state' | 'saved' | 'deleted' | 'access'
+  t: 'update' | 'awareness' | 'hello' | 'state' | 'resync' | 'saved' | 'deleted' | 'access'
   /** Payload: base64 for the binary kinds, JSON for `saved`, absent for `hello`. */
   p?: string
   /** Instance this is addressed to, when it is a reply rather than a broadcast. */
@@ -277,16 +276,28 @@ function buildSeed(page: {
 }
 
 /**
- * Sends this instance's relay messages, one at a time.
+ * The relay's connection: a client of its own rather than the event bus's, since these messages are
+ * far more frequent than events are, and a slow consumer on one channel should not hold up the other.
  *
- * Every one of them starts in a Yjs handler that cannot wait for postgres, and a single edit can
+ * Every message sent on it starts in a Yjs handler that cannot wait for postgres, and a single edit can
  * produce several — see `publish`.
  */
-const notifier = createNotifier(() => WIKI.collab.listenClient, 'collaboration relay')
+const channel = createChannel({
+  channel: NOTIFY_CHANNEL,
+  role: 'COLLAB',
+  label: 'collaboration relay',
+  onNotification(payload) {
+    try {
+      WIKI.collab.receiveRelay(JSON.parse(payload) as RelayEnvelope)
+    } catch (err: any) {
+      WIKI.logger.warn(`Malformed collaboration relay message: ${err.message}`)
+    }
+  },
+  onResubscribe: () => WIKI.collab.resyncRooms()
+})
 
 export default {
   rooms: new Map<string, CollabRoom>(),
-  listenClient: null as PoolClient | null,
   /** Chunked relay messages still waiting for the rest of themselves, keyed by sender and message id. */
   partials: new Map<string, PartialRelay>(),
   /** Rooms this instance is waiting on a peer's state for, by page id. */
@@ -295,26 +306,9 @@ export default {
   peerPresence: { known: false, checkedAt: 0 },
   pingTimer: null as NodeJS.Timeout | null,
 
-  /**
-   * Open the relay connection.
-   *
-   * A client of its own rather than the event bus's: these messages are far more frequent than events
-   * are, and a slow consumer on one channel should not hold up the other.
-   */
+  /** Open the relay connection. */
   async init(): Promise<void> {
-    this.listenClient = await WIKI.dbManager.pool!.connect()
-    await this.listenClient.query(`SET application_name = 'Wiki.js - ${WIKI.INSTANCE_ID}:COLLAB'`)
-    this.listenClient.on('notification', (msg) => {
-      if (msg.channel !== NOTIFY_CHANNEL || !msg.payload) {
-        return
-      }
-      try {
-        this.receiveRelay(JSON.parse(msg.payload) as RelayEnvelope)
-      } catch (err: any) {
-        WIKI.logger.warn(`Malformed collaboration relay message: ${err.message}`)
-      }
-    })
-    await this.listenClient.query(`LISTEN ${NOTIFY_CHANNEL}`)
+    await channel.open()
 
     this.pingTimer = setInterval(() => {
       for (const room of this.rooms.values()) {
@@ -365,13 +359,7 @@ export default {
       room.doc.destroy()
     }
     this.rooms.clear()
-    if (this.listenClient) {
-      // -> Whatever is still on its way out goes out first: releasing the client from under a
-      //    notification in flight would fail that one for no reason
-      await notifier.drained()
-      this.listenClient.release(true)
-      this.listenClient = null
-    }
+    await channel.close()
   },
 
   /**
@@ -958,7 +946,9 @@ export default {
 
   /** Publish a message to the other instances, split into chunks postgres will accept. */
   relay(message: Omit<RelayEnvelope, 'i'>): void {
-    if (!this.listenClient) {
+    // -> Not queued for later while the connection is being replaced: an update is worthless a second
+    //    after it was made, and `resyncRooms` carries over what was missed as one state per room
+    if (!channel.connected) {
       return
     }
     const envelope: RelayEnvelope = { ...message, i: WIKI.INSTANCE_ID }
@@ -988,7 +978,29 @@ export default {
    * a single client, which a burst of updates or one chunked message would otherwise breach.
    */
   publish(envelope: RelayEnvelope): void {
-    notifier.send(NOTIFY_CHANNEL, JSON.stringify(envelope))
+    channel.send(JSON.stringify(envelope))
+  },
+
+  /**
+   * Bring every room back in step with the cluster after the relay's connection was lost and replaced.
+   *
+   * Whatever was typed on either side in the meantime never crossed, so each open room sends its whole
+   * state, and each instance holding the same room merges it and answers with its own (`resync` in
+   * {@link receiveRelay}). Merging two states of one room duplicates nothing: they share its starting
+   * state, peer-handed or the deterministic seed, and what follows is operations both sides can apply
+   * in any order.
+   */
+  resyncRooms(): void {
+    for (const room of this.rooms.values()) {
+      if (room.provisional) {
+        continue
+      }
+      this.relay({
+        r: room.id,
+        t: 'resync',
+        p: Buffer.from(Y.encodeStateAsUpdate(room.doc)).toString('base64')
+      })
+    }
   },
 
   receiveRelay(envelope: RelayEnvelope): void {
@@ -1032,6 +1044,22 @@ export default {
           return
         }
         waiting(Buffer.from(envelope.p ?? '', 'base64'))
+        break
+      }
+      case 'resync': {
+        // -> A peer is back from losing its connection. Take what it has, then hand back what it
+        //    missed; a room still filling itself has nothing to give and is about to ask anyway
+        const room = this.rooms.get(envelope.r)
+        if (!room || room.provisional) {
+          return
+        }
+        Y.applyUpdate(room.doc, Buffer.from(envelope.p ?? '', 'base64'), RELAYED)
+        this.relay({
+          r: envelope.r,
+          t: 'update',
+          to: envelope.i,
+          p: Buffer.from(Y.encodeStateAsUpdate(room.doc)).toString('base64')
+        })
         break
       }
       case 'update': {

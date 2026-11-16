@@ -5,25 +5,60 @@ import { setTimeout } from 'node:timers/promises'
 import { sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { Pool, type PoolClient, type PoolConfig } from 'pg'
+import { Pool, type PoolConfig } from 'pg'
 import { parse } from 'pg-connection-string'
 import semver from 'semver'
 
 import { relations } from '../db/relations.ts'
 import { flags } from '../models/flags.ts'
 import { createDeferred } from '../helpers/common.ts'
-import { createNotifier } from '../helpers/pubsub.ts'
+import { createChannel } from '../helpers/pubsub.ts'
 import maintenance from './maintenance.ts'
 // import migrationSource from '../db/migrator-source.js'
 
 /**
- * Sends the event bus's cross-instance notifications, one at a time.
+ * Inbound events replayed on this instance after its event bus connection was lost and replaced.
+ *
+ * Each of these says "something stored changed, read it back", and is harmless to act on when nothing
+ * did, so an instance that may have missed one simply acts on all of them. `flushCaches` and
+ * `disconnectWebsockets` are left out: they are an administrator's one-off actions, not state that
+ * drifts, and replaying them would purge every disk cache and drop every editor on a network blip.
+ */
+const RESYNC_EVENTS = [
+  'reloadConfig',
+  'reloadLocales',
+  'reloadSites',
+  'reloadStorageTargets',
+  'reloadFeedbackBoards',
+  'reloadBlocks'
+]
+
+/**
+ * The event bus's connection: LISTEN on `wiki` for what other instances publish, NOTIFY for what this
+ * one does.
  *
  * Built here rather than on the object below because `notifyViaDB` is handed to Emittery as a bare
- * listener and so has no `this` to reach it through. The client is read per send for the same reason
- * it is elsewhere: it does not exist until `subscribeToNotifications`.
+ * listener and so has no `this` to reach it through.
  */
-const notifier = createNotifier(() => WIKI.dbManager.pubsubClient, 'event bus')
+const channel = createChannel({
+  channel: 'wiki',
+  role: 'EVENTS',
+  label: 'event bus',
+  onNotification(payload) {
+    const decoded = JSON.parse(payload)
+    if ('event' in decoded && decoded.source !== WIKI.INSTANCE_ID) {
+      WIKI.logger.info(`Received event ${decoded.event} from instance ${decoded.source}: [ OK ]`)
+      WIKI.events.inbound.emit(decoded.event, decoded.value)
+    }
+  },
+  async onResubscribe() {
+    for (const event of RESYNC_EVENTS) {
+      await WIKI.events.inbound.emit(event).catch((err: any) => {
+        WIKI.logger.warn(`Failed to replay ${event} after reconnecting: ${err.message}`)
+      })
+    }
+  }
+})
 
 /**
  * Postgres extensions the schema depends on, installed before the migrations run.
@@ -93,7 +128,6 @@ export type WikiDb = ReturnType<typeof createDb>
  */
 export default {
   pool: null as Pool | null,
-  pubsubClient: null as PoolClient | null,
   config: null as PoolConfig | null,
   dbName: null as string | null | undefined,
   VERSION: null as string | null,
@@ -182,6 +216,23 @@ export default {
       options: `-c search_path=${WIKI.config.db.schema} -c timezone=UTC`
     })
 
+    /*
+      A connection that drops — a failover, a proxy timing it out, `pg_terminate_backend` — makes its
+      client emit `error`, and an `error` event with no listener ends the process. pg-pool listens on
+      the clients it holds idle and re-emits on the pool, which has no listener of its own either; a
+      client checked out (a transaction, the storage lock, the LISTEN connections) has none at all
+      until somebody adds one. So every client gets one the moment it exists, and whoever is using it
+      learns of the loss the ordinary way: its query fails, and pg-pool discards the client on release.
+      The pool's listener is only there so that its re-emit of the same error is not fatal; the
+      client's has already logged it.
+    */
+    this.pool.on('connect', (client) => {
+      client.on('error', (err) => {
+        WIKI.logger.warn(`Lost a database connection: ${err.message}`)
+      })
+    })
+    this.pool.on('error', () => {})
+
     const db = createDb(this.pool)
 
     // Connect
@@ -224,27 +275,7 @@ export default {
    * Subscribe to database LISTEN / NOTIFY for multi-instances events
    */
   async subscribeToNotifications(): Promise<void> {
-    const connectionAppName = `Wiki.js - ${WIKI.INSTANCE_ID}:EVENTS`
-    this.pubsubClient = await this.pool!.connect()
-    await this.pubsubClient.query(`SET application_name = '${connectionAppName}'`)
-
-    // -> Outbound events handling
-
-    await this.pubsubClient.query('LISTEN wiki')
-    this.pubsubClient.on('notification', (msg) => {
-      if (msg.channel !== 'wiki') {
-        return
-      }
-      try {
-        const decoded = JSON.parse(msg.payload!)
-        if ('event' in decoded && decoded.source !== WIKI.INSTANCE_ID) {
-          WIKI.logger.info(
-            `Received event ${decoded.event} from instance ${decoded.source}: [ OK ]`
-          )
-          WIKI.events.inbound.emit(decoded.event, decoded.value)
-        }
-      } catch {}
-    })
+    await channel.open()
     // -> Cast because `onAny` types the event as every pair the map allows plus Emittery's own meta
     //    events, and this listener is written to the one shape they have in common
     WIKI.events.outbound.onAny(this.notifyViaDB as any)
@@ -262,14 +293,9 @@ export default {
    * Unsubscribe from database LISTEN / NOTIFY
    */
   async unsubscribeFromNotifications(): Promise<void> {
-    if (this.pubsubClient) {
-      WIKI.events.outbound.offAny(this.notifyViaDB as any)
-      WIKI.events.inbound.clearListeners()
-      // -> Whatever the last events queued goes out before the client goes: releasing it from under a
-      //    notification in flight would fail that one for no reason
-      await notifier.drained()
-      this.pubsubClient.release(true)
-    }
+    WIKI.events.outbound.offAny(this.notifyViaDB as any)
+    WIKI.events.inbound.clearListeners()
+    await channel.close()
   },
   /**
    * Publish event via database NOTIFY
@@ -281,8 +307,7 @@ export default {
    * @param event Event fired, and its payload
    */
   notifyViaDB({ name, data }: { name?: string; data?: unknown }): void {
-    notifier.send(
-      'wiki',
+    channel.send(
       JSON.stringify({
         source: WIKI.INSTANCE_ID,
         event: name,

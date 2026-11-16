@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { CronExpressionParser } from 'cron-parser'
 import { v4 as uuid } from 'uuid'
 import { createDeferred, type Deferred } from '../helpers/common.ts'
-import { createNotifier } from '../helpers/pubsub.ts'
+import { createChannel } from '../helpers/pubsub.ts'
 import { camelCase } from 'es-toolkit/string'
 import { remove } from 'es-toolkit/array'
 import {
@@ -15,8 +15,7 @@ import {
   jobSchedule as jobScheduleTable,
   jobHistory as jobHistoryTable
 } from '../db/schema.ts'
-import { and, eq, lt, sql } from 'drizzle-orm'
-import type { PoolClient } from 'pg'
+import { and, eq, inArray, lt, sql } from 'drizzle-orm'
 
 /** How many runs of each scheduled task are queued ahead, at minimum. See `addScheduled`. */
 const MIN_QUEUED_RUNS = 6
@@ -69,12 +68,22 @@ const IN_PROCESS_STOP_GRACE = 60_000
 const abandonedTasks = new Map<string, number>()
 
 /**
- * Sends the scheduler's cross-instance notifications, one at a time.
+ * The scheduler's connection: `newJob` and `jobCompleted`, to and from every instance.
  *
  * Nothing here awaits a notification: a job being added or finishing should not wait on a round trip,
  * and `processJob` runs concurrently with itself, so two notifications easily meet on the one client.
+ *
+ * A `newJob` missed while the connection was being replaced costs nothing, since every instance polls
+ * for work anyway. A missed `jobCompleted` would leave its waiter waiting for good, so those are
+ * settled from the job history instead.
  */
-const notifier = createNotifier(() => WIKI.scheduler.pubsubClient, 'scheduler')
+const channel = createChannel({
+  channel: 'scheduler',
+  role: 'SCHEDULER',
+  label: 'scheduler',
+  onNotification: (payload) => WIKI.scheduler.onNotification(payload),
+  onResubscribe: () => WIKI.scheduler.settleMissedCompletions()
+})
 
 /** A pending `addJob({ promise: true })` caller, waiting on the `jobCompleted` event. */
 interface CompletionPromise {
@@ -103,7 +112,6 @@ export interface AddJobOptions {
 
 export default {
   workerPool: null as FixedThreadPool<any, boolean> | null,
-  pubsubClient: null as PoolClient | null,
   maxWorkers: 1,
   activeWorkers: 0,
   pollingRef: null as NodeJS.Timeout | null,
@@ -160,45 +168,7 @@ export default {
   async start(): Promise<void> {
     WIKI.logger.info('Starting Scheduler...')
 
-    const connectionAppName = `Wiki.js - ${WIKI.INSTANCE_ID}:SCHEDULER`
-    this.pubsubClient = await WIKI.dbManager.pool!.connect()
-    await this.pubsubClient!.query(`SET application_name = '${connectionAppName}'`)
-
-    // -> Outbound events handling
-
-    await this.pubsubClient!.query('LISTEN scheduler')
-    this.pubsubClient!.on('notification', async (msg) => {
-      if (msg.channel !== 'scheduler') {
-        return
-      }
-      try {
-        const decoded = JSON.parse(msg.payload!)
-        switch (decoded?.event) {
-          case 'newJob': {
-            // -> No counting here: `processJob` accounts for the jobs it actually claims, and
-            //    counting this call as a worker as well would hide one slot for its duration
-            if (this.activeWorkers < this.maxWorkers) {
-              await this.processJob()
-            }
-            break
-          }
-          case 'jobCompleted': {
-            const jobPromise = this.completionPromises.find((p) => p.id === decoded.id)
-            if (jobPromise) {
-              if (decoded.state === 'success') {
-                jobPromise.resolve()
-              } else {
-                jobPromise.reject(new Error(decoded.errorMessage))
-              }
-              setTimeout(() => {
-                remove(this.completionPromises, (p) => p.id === decoded.id)
-              })
-            }
-            break
-          }
-        }
-      } catch {}
-    })
+    await channel.open()
 
     // -> Start scheduled jobs check
     this.scheduledRef = setInterval(async () => {
@@ -222,6 +192,69 @@ export default {
     }, WIKI.config.scheduler.pollingCheck * 1000)
 
     WIKI.logger.info('Scheduler: [ STARTED ]')
+  },
+  /** Act on a notification from any instance, this one included. */
+  async onNotification(payload: string): Promise<void> {
+    const decoded = JSON.parse(payload)
+    switch (decoded?.event) {
+      case 'newJob': {
+        // -> No counting here: `processJob` accounts for the jobs it actually claims, and counting
+        //    this call as a worker as well would hide one slot for its duration
+        if (this.activeWorkers < this.maxWorkers) {
+          await this.processJob()
+        }
+        break
+      }
+      case 'jobCompleted': {
+        this.settleCompletion(decoded.id, decoded.state === 'success', decoded.errorMessage)
+        break
+      }
+    }
+  },
+  /** Resolve or reject the `addJob({ promise: true })` caller waiting on a job, if there is one. */
+  settleCompletion(id: string, succeeded: boolean, errorMessage?: string): void {
+    const jobPromise = this.completionPromises.find((p) => p.id === id)
+    if (!jobPromise) {
+      return
+    }
+    if (succeeded) {
+      jobPromise.resolve()
+    } else {
+      jobPromise.reject(new Error(errorMessage))
+    }
+    setTimeout(() => {
+      remove(this.completionPromises, (p) => p.id === id)
+    })
+  },
+  /**
+   * Settle the waiters whose job finished while the scheduler's connection was down, and so whose
+   * `jobCompleted` never arrived. The job history has the outcome; a job still running is left to
+   * report the ordinary way.
+   */
+  async settleMissedCompletions(): Promise<void> {
+    if (this.completionPromises.length < 1) {
+      return
+    }
+    const finished = await WIKI.db
+      .select({
+        id: jobHistoryTable.id,
+        state: jobHistoryTable.state,
+        lastErrorMessage: jobHistoryTable.lastErrorMessage
+      })
+      .from(jobHistoryTable)
+      .where(
+        inArray(
+          jobHistoryTable.id,
+          this.completionPromises.map((p) => p.id)
+        )
+      )
+    for (const job of finished) {
+      if (job.state === 'completed') {
+        this.settleCompletion(job.id, true)
+      } else if (job.state === 'failed' || job.state === 'interrupted') {
+        this.settleCompletion(job.id, false, job.lastErrorMessage ?? undefined)
+      }
+    }
   },
   /**
    * Add a job to the scheduler
@@ -257,8 +290,7 @@ export default {
         createdBy: WIKI.INSTANCE_ID
       })
       if (notify) {
-        notifier.send(
-          'scheduler',
+        channel.send(
           JSON.stringify({
             source: WIKI.INSTANCE_ID,
             event: 'newJob',
@@ -479,8 +511,7 @@ export default {
         })
         .where(eq(jobHistoryTable.id, job.id))
       WIKI.logger.info(`Completed job ${job.id}: ${job.task}`)
-      notifier.send(
-        'scheduler',
+      channel.send(
         JSON.stringify({
           source: WIKI.INSTANCE_ID,
           event: 'jobCompleted',
@@ -500,8 +531,7 @@ export default {
             lastErrorMessage: err.message
           })
           .where(eq(jobHistoryTable.id, job.id))
-        notifier.send(
-          'scheduler',
+        channel.send(
           JSON.stringify({
             source: WIKI.INSTANCE_ID,
             event: 'jobCompleted',
@@ -706,6 +736,7 @@ export default {
     clearInterval(this.scheduledRef!)
     clearInterval(this.pollingRef!)
     await this.workerPool!.destroy()
+    await channel.close()
     WIKI.logger.info('Scheduler: [ STOPPED ]')
   }
 }
