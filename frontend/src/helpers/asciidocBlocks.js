@@ -3,6 +3,7 @@ import {
   blockAsciidoc,
   blockAttributes,
   inlineAsciidocValue,
+  snippetAttributes,
   snippetText
 } from '@/helpers/blocks'
 
@@ -332,8 +333,9 @@ function inlineNameContext(source, column) {
  * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
  * holds nothing else yet.
  *
- * The same markup as `blockAsciidoc` with somewhere to type. Each REQUIRED prop is written with an
- * empty value and a tab stop in it, and the caret ends up after them, before the closing bracket --
+ * The same markup as `blockAsciidoc` with somewhere to type. Each REQUIRED prop is written with a tab
+ * stop in it, and every prop the site's administrator set or locked as the picker would write it
+ * (`snippetAttributes`), and the caret ends up after them, before the closing bracket --
  * where a comma opens the list of the rest.
  *
  * An inline block is `block-x:[value]`, its starting value selected to be typed over, any required
@@ -347,15 +349,13 @@ function inlineNameContext(source, column) {
 export function blockSnippet(definition, context = {}) {
   if (context.inline) {
     const value = snippetText(inlineAsciidocValue(definition.template ?? ''))
-    const attributes = (definition.props ?? [])
-      .filter((prop) => prop.required)
-      .map((prop, index) => `, ${prop.name}="$${index + 2}"`)
+    const attributes = snippetAttributes(definition, 2, asciidocQuoteValue)
+      .map((attribute) => `, ${attribute}`)
       .join('')
     return `block-${definition.block}:[\${1:${value}}${attributes}]$0`
   }
-  const attributes = (definition.props ?? [])
-    .filter((prop) => prop.required)
-    .map((prop, index) => `, ${prop.name}="$${index + 1}"`)
+  const attributes = snippetAttributes(definition, 1, asciidocQuoteValue)
+    .map((attribute) => `, ${attribute}`)
     .join('')
   // -> Everything below the attribute line, which is the same whatever the attributes are
   const markup = blockAsciidoc(definition)

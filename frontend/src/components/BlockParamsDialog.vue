@@ -23,7 +23,10 @@
           @keyup.enter="apply" />
       </w-card-section>
       <w-card-section v-if="content === null || (definition.props ?? []).length > 0">
-        <block-props-form :fields="definition.props ?? []" :values="state.values" />
+        <block-props-form
+          :fields="definition.props ?? []"
+          :values="state.values"
+          :locked="Object.keys(locked)" />
       </w-card-section>
       <w-card-actions class="card-actions">
         <w-space />
@@ -51,7 +54,7 @@ import { computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
-import { blockPropsFilled } from '@/helpers/blocks'
+import { blockPropsFilled, lockedValues } from '@/helpers/blocks'
 
 import BlockPropsForm from '@/components/BlockPropsForm.vue'
 
@@ -63,6 +66,10 @@ import BlockPropsForm from '@/components/BlockPropsForm.vue'
  * was on and what else was written on it, and is the one to put the answer back.
  *
  * The values are copied on the way in, so closing without applying leaves the page as it was.
+ *
+ * A prop the site's administrator locked opens on its locked value, greyed out, whatever the page
+ * gave it -- which is what the page will render with regardless, so applying writes it into the
+ * source too.
  *
  * An inline block is given its `content` too -- the value between its brackets -- which is offered
  * above the props: for a timestamp or a colour it is the thing being edited, and the props only say
@@ -104,8 +111,10 @@ const { t } = useI18n()
 
 // DATA
 
+const locked = lockedValues(props.definition)
+
 const state = reactive({
-  values: { ...props.values },
+  values: { ...props.values, ...locked },
   content: props.content ?? ''
 })
 

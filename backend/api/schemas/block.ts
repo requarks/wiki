@@ -2,6 +2,37 @@ import type { FastifyInstance } from 'fastify'
 
 export async function registerSchemas(app: FastifyInstance): Promise<void> {
   /**
+   * BLOCK CONFIG
+   */
+  app.addSchema({
+    $id: 'BlockConfig',
+    type: 'object',
+    description:
+      "A site administrator's settings for the block's props, by prop name. Only the props that were changed or locked have an entry: `{}` is a block used exactly as its component declares it.",
+    additionalProperties: {
+      type: 'object',
+      required: ['value', 'locked'],
+      properties: {
+        /*
+          No `type`, deliberately. A list of three makes Ajv's strict mode warn at every boot, and
+          `anyOf` is worse: type coercion and the serializer both take its first branch, so `600` and
+          `false` came back as strings. The value is checked against its prop's own type by the model
+          (`normalizeConfig`), which is the only place that knows which of the three it should be.
+        */
+        value: {
+          description:
+            "A string, number or boolean, as the prop's type: what the editor starts the prop on when the block is inserted — or, when locked, the only value it may have. Empty stands for the block's own default."
+        },
+        locked: {
+          type: 'boolean',
+          description:
+            'Whether authors may change it. A locked value is written onto every element of the block when a page is rendered, replacing whatever the source gave it.'
+        }
+      }
+    }
+  })
+
+  /**
    * BLOCK
    */
   app.addSchema({
@@ -44,10 +75,7 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         description:
           "True for a block that sits in a line of text rather than on a line of its own — `:block-color[#ff6600]{…}` in markdown, `block-color:[#ff6600, …]` in AsciiDoc. What goes between the brackets is its value, kept as the element's text so a reader without the component still sees it; `template` is the value an editor starts it with."
       },
-      config: {
-        type: 'object',
-        additionalProperties: true
-      },
+      config: { $ref: 'BlockConfig#' },
       template: {
         type: 'string',
         description:

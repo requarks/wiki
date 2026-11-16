@@ -3,6 +3,7 @@ import { ruleIsScopedTo } from '../helpers/pageRules.ts'
 import { requestUserId } from '../helpers/requester.ts'
 import { MAX_PACKAGE_SIZE } from '../helpers/wkblock.ts'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { BlockState } from '../models/blocks.ts'
 
 /**
  * Group-wide permissions that carry the block list on their own.
@@ -144,7 +145,7 @@ async function routes(app: FastifyInstance) {
    */
   app.put<{
     Params: { siteId: string }
-    Body: { states: { id: string; isEnabled: boolean }[] }
+    Body: { states: BlockState[] }
   }>(
     '/sites/:siteId/blocks',
     {
@@ -152,8 +153,9 @@ async function routes(app: FastifyInstance) {
         permissions: ['manage:sites']
       },
       schema: {
-        summary: 'Enable or disable site blocks',
-        description: 'Only the blocks listed are affected; any others keep their current state.',
+        summary: 'Enable, disable and configure site blocks',
+        description:
+          "Only the blocks listed are affected; any others keep their current state. A block given a `config` has its prop settings replaced whole by it; one given none keeps the settings it has. A config naming a prop the block does not offer, or a value that prop cannot take, is refused and nothing is written.\n\nA locked prop is forced onto the block's elements as each page is rendered, so a change reaches a page that already embeds the block the next time that page is rendered.",
         tags: ['Blocks'],
         params: {
           type: 'object',
@@ -181,7 +183,8 @@ async function routes(app: FastifyInstance) {
                   },
                   isEnabled: {
                     type: 'boolean'
-                  }
+                  },
+                  config: { $ref: 'BlockConfig#' }
                 }
               }
             }
@@ -214,22 +217,28 @@ async function routes(app: FastifyInstance) {
         return reply.notFound('Site does not exist.')
       }
 
-      try {
-        const updated = await WIKI.models.blocks.setBlocksState(req.params.siteId, req.body.states)
+      // -> A config the block cannot take is a `CustomError` carrying its own status and a message the
+      //    administrator can act on, so it is left to the error handler like an import's refusals
+      const updated = await WIKI.models.blocks.setBlocksState(req.params.siteId, req.body.states)
 
-        await audit(req, 'admin', 'updateBlock', {
-          siteId: req.params.siteId,
-          states: req.body.states
-        })
+      await audit(req, 'admin', 'updateBlock', {
+        siteId: req.params.siteId,
+        // -> Which props were set and which locked, not what to: a configuration change records
+        //    the fields it touched
+        states: req.body.states.map(({ id, isEnabled, config }) => ({
+          id,
+          isEnabled,
+          ...(config && {
+            configured: Object.keys(config),
+            locked: Object.keys(config).filter((name) => config[name].locked)
+          })
+        }))
+      })
 
-        return {
-          ok: true,
-          message: 'Blocks state updated successfully.',
-          updated
-        }
-      } catch (err: any) {
-        WIKI.logger.warn(err)
-        return reply.internalServerError()
+      return {
+        ok: true,
+        message: 'Blocks state updated successfully.',
+        updated
       }
     }
   )

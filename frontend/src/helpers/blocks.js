@@ -48,24 +48,71 @@ export function blockAttributes(block, values = {}, quote = mdcQuoteValue) {
  * The props worth writing out, by name: anything given a value that is not already the block's own
  * default. A block reading its default from its own code does not need to be told it in every page.
  *
+ * A prop the site's administrator locked is written with the locked value whatever `values` says, so
+ * that every path that writes a block -- inserting one, editing one, a toolbar shortcut -- agrees with
+ * what the server will force onto it anyway (`sanitizeRender`).
+ *
  * The values as they are, for a caller that keeps attributes as an object rather than as markup --
  * the Visual editor's nodes.
  *
- * @param {{ props?: Array }} block A block as the API describes it.
+ * @param {{ props?: Array, config?: object }} block A block as the API describes it.
  * @param {Record<string, unknown>} [values] What the author filled in, by prop name.
  * @returns {Record<string, unknown>} In the order the block declares its props.
  */
 export function writtenProps(block, values = {}) {
+  const given = { ...values, ...lockedValues(block) }
   return Object.fromEntries(
     (block.props ?? [])
       .filter((prop) => {
-        const value = values[prop.name]
+        const value = given[prop.name]
         if (value === undefined || value === null || value === '') {
           return false
         }
         return String(value) !== String(prop.default ?? '')
       })
-      .map((prop) => [prop.name, values[prop.name]])
+      .map((prop) => [prop.name, given[prop.name]])
+  )
+}
+
+/**
+ * What a new block's form starts on, by prop name: what the site's administrator set for a prop, or
+ * else the block's own default -- so the form shows what the block would do if left alone, here.
+ *
+ * Also what `blockMarkdown` and `blockAsciidoc` write when given no values, which is how a block put
+ * in by a shortcut rather than the picker still arrives configured the way this site wants it.
+ *
+ * @param {{ props?: Array, config?: object }} block A block as the API describes it.
+ * @returns {Record<string, unknown>}
+ */
+export function initialValues(block) {
+  return Object.fromEntries(
+    (block.props ?? []).map((prop) => [prop.name, configuredValue(block, prop)])
+  )
+}
+
+/**
+ * What the site's administrator set for one prop, or the block's own default where they set nothing
+ * -- or set it empty, which is how a prop is locked to the value the block would take anyway.
+ */
+function configuredValue(block, prop) {
+  const value = block.config?.[prop.name]?.value
+  return value === undefined || value === '' ? (prop.default ?? '') : value
+}
+
+/**
+ * The props the site's administrator locked, with the value each is locked to.
+ *
+ * Child blocks have no row and so no settings, and neither does a definition an editor made up for a
+ * block the site does not list -- which is why `config` may be absent here.
+ *
+ * @param {{ props?: Array, config?: object }} block A block as the API describes it.
+ * @returns {Record<string, unknown>}
+ */
+export function lockedValues(block) {
+  return Object.fromEntries(
+    (block.props ?? [])
+      .filter((prop) => block.config?.[prop.name]?.locked)
+      .map((prop) => [prop.name, configuredValue(block, prop)])
   )
 }
 
@@ -90,13 +137,45 @@ export function snippetText(value) {
 }
 
 /**
+ * The attributes a block-name completion writes, as pieces of a Monaco snippet.
+ *
+ * Every prop the block insists on gets a tab stop, holding what the site's administrator set for it
+ * if they set anything; every other prop the site set, or locked, is written out as it is -- the same
+ * attributes the picker would have written for a block left alone. A locked prop is never a tab stop,
+ * since there is nothing to type into it.
+ *
+ * @param {{ props?: Array, config?: object }} block A block as the API describes it.
+ * @param {number} first The number of the first tab stop.
+ * @param {(value: unknown) => string} [quote] How to write one value -- see `blockAttributes`.
+ * @returns {string[]} One `name="value"` per attribute, in the order the block declares its props.
+ */
+export function snippetAttributes(block, first, quote = mdcQuoteValue) {
+  const preset = writtenProps(block, initialValues(block))
+  const locked = lockedValues(block)
+  let stop = first
+  return (block.props ?? []).flatMap((prop) => {
+    if (prop.required && !(prop.name in locked)) {
+      const n = stop++
+      const value = preset[prop.name]
+      // -> The quotes are the attribute's and the value goes between them, so only the inside of
+      //    what `quote` writes is a placeholder's default
+      return [
+        `${prop.name}="${value === undefined ? `$${n}` : `\${${n}:${snippetText(quote(value).slice(1, -1))}}`}"`
+      ]
+    }
+    return prop.name in preset ? [snippetText(`${prop.name}=${quote(preset[prop.name])}`)] : []
+  })
+}
+
+/**
  * A block, opening and closing lines included.
  *
  * @param {{ block: string, props?: Array, template?: string }} block A block as the API describes it.
- * @param {Record<string, unknown>} [values] What the author filled in, by prop name.
+ * @param {Record<string, unknown>} [values] What the author filled in, by prop name. Defaults to
+ *        what a new block starts on -- see `initialValues`.
  * @returns {string} The markup, opening and closing lines included.
  */
-export function blockMarkdown(block, values = {}) {
+export function blockMarkdown(block, values = initialValues(block)) {
   const attributes = blockAttributes(block, values).join(' ')
   const suffix = attributes ? `{${attributes}}` : ''
 
@@ -169,13 +248,14 @@ function asciidocTemplate(block, depth) {
  *
  * @param {{ block: string, props?: Array, template?: string, asciidocTemplate?: string }} block A
  *        block as the API describes it.
- * @param {Record<string, unknown>} [values] What the author filled in, by prop name.
+ * @param {Record<string, unknown>} [values] What the author filled in, by prop name. Defaults to
+ *        what a new block starts on -- see `initialValues`.
  * @param {number} [depth] How deeply this block is being inserted, which decides its delimiter. Zero
  *        at the top level, which is every insertion the editor makes -- a nested block comes from a
  *        parent's own template and carries the delimiter written into it.
  * @returns {string} The markup, attribute line and delimiters included.
  */
-export function blockAsciidoc(block, values = {}, depth = 0) {
+export function blockAsciidoc(block, values = initialValues(block), depth = 0) {
   const attributes = blockAttributes(block, values, asciidocQuoteValue)
 
   // -> An inline block is a macro, `block-color:[#ff6600, a="1"]`, the value its first positional

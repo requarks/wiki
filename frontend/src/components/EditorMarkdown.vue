@@ -420,7 +420,7 @@ import { useTableCellNavigation } from '@/composables/tableCellNavigation'
 import { useTagCompletions } from '@/composables/tagCompletions'
 import { apiErrorMessage } from '@/helpers/apiError'
 import { assetPath } from '@/helpers/assets'
-import { blockMarkdown, isCanvasBlock } from '@/helpers/blocks'
+import { blockMarkdown, isCanvasBlock, lockedValues } from '@/helpers/blocks'
 import {
   blockAttributeContext,
   blockNameContext,
@@ -1172,11 +1172,12 @@ function editBlockContent(line, name) {
       /*
         What the block declared, which is the key the overlay resolves to an editor component. The
         block's own parameters go with it, since an editor may be configured by them -- where the
-        drawing is edited, say -- and only the editor knows which of them it cares about.
+        drawing is edited, say -- and only the editor knows which of them it cares about. A locked
+        one is the administrator's value, whatever the page says, as it will be once rendered.
       */
       editor: definition.contentEditor,
       block: definition,
-      params: blockValues(found, definition),
+      params: { ...blockValues(found, definition), ...lockedValues(definition) },
       source: content.source,
       lang: content.language,
       // -> Where it goes back, and in what: the editor is handed text and hands text back, and the

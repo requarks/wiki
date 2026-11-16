@@ -1,4 +1,10 @@
-import { blockAttributes, blockFence, inlineMarkdownValue, snippetText } from '@/helpers/blocks'
+import {
+  blockAttributes,
+  blockFence,
+  inlineMarkdownValue,
+  snippetAttributes,
+  snippetText
+} from '@/helpers/blocks'
 import { FENCE, isOutsideFences, linesOutsideFences } from '@/helpers/markdownFences'
 
 /**
@@ -224,8 +230,9 @@ function inlineNameContext(source, column) {
  * A whole new block as a Monaco snippet: what picking a block from the name list writes, when the line
  * holds nothing else yet.
  *
- * The same markup as `blockMarkdown` with somewhere to type. Each REQUIRED prop is written with an empty
- * value and a tab stop in it — the block cannot draw without them — while the rest are left for the
+ * The same markup as `blockMarkdown` with somewhere to type. Each REQUIRED prop is written with a tab
+ * stop in it — the block cannot draw without them — and every prop the site's administrator set or
+ * locked as the picker would write it (`snippetAttributes`), while the rest are left for the
  * parameter list, which is where the caret ends up: inside the braces after them, or at the end of the
  * name where there are none. The fence is whichever is longer of the one typed and the one the block
  * needs, since an author who typed three colons did so to fit it inside something.
@@ -242,16 +249,10 @@ function inlineNameContext(source, column) {
 export function blockSnippet(definition, context) {
   if (context.inline) {
     const value = snippetText(inlineMarkdownValue(definition.template ?? ''))
-    const attributes = (definition.props ?? [])
-      .filter((prop) => prop.required)
-      .map((prop, index) => `${prop.name}="$${index + 2}"`)
-      .join(' ')
+    const attributes = snippetAttributes(definition, 2).join(' ')
     return `:block-${definition.block}[\${1:${value}}]${attributes ? `{${attributes}}` : ''}$0`
   }
-  const attributes = (definition.props ?? [])
-    .filter((prop) => prop.required)
-    .map((prop, index) => `${prop.name}="$${index + 1}"`)
-    .join(' ')
+  const attributes = snippetAttributes(definition, 1).join(' ')
   const needed = blockFence(definition)
   const fence = context.fence.length > needed.length ? context.fence : needed
   const body = definition.template ? `\n${snippetText(definition.template)}` : ''

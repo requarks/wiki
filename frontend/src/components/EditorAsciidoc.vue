@@ -356,7 +356,7 @@ import { useBlockFolding } from '@/composables/blockFolding'
 import { useImagePropertiesLens } from '@/composables/imagePropertiesLens'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
-import { blockAsciidoc, isCanvasBlock } from '@/helpers/blocks'
+import { blockAsciidoc, isCanvasBlock, lockedValues } from '@/helpers/blocks'
 import {
   blockAttributeContext,
   blockNameContext,
@@ -837,7 +837,8 @@ function editBlockContent(line, name) {
     overlayOpts: {
       editor: definition.contentEditor,
       block: definition,
-      params: blockValues(found, definition),
+      // -> A locked prop is the administrator's value, whatever the page says -- see EditorMarkdown
+      params: { ...blockValues(found, definition), ...lockedValues(definition) },
       source: content.source,
       lang: content.language,
       // -> Where it goes back, and in what: the editor is handed text and hands text back, and the

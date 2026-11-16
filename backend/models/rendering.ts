@@ -272,7 +272,12 @@ class Rendering {
    * through here.
    *
    * Child blocks are exempt, having no switch of their own: a tab is part of the tabs it sits in,
-   * and is gated by `unwrapOrphanedChildBlocks` once the parent's fate is known.
+   * and is gated by `unwrapOrphanedChildBlocks` once the parent's fate is known. Having no row, they
+   * have no settings either.
+   *
+   * Each carries what the administrator set on its props, so that a LOCKED prop is written onto the
+   * element whatever the source said — for the same reason as the switch: the picker's disabled field
+   * only covers the authors who use the picker.
    */
   private blockAllowances(siteBlocks: RenderableBlocks): SanitizableBlock[] {
     return [...WIKI.models.blocks.definitions, ...siteBlocks.custom]
@@ -280,7 +285,8 @@ class Rendering {
       .map((definition) => ({
         block: definition.block,
         attributes: (definition.props ?? []).map((prop) => prop.name),
-        urlAttributes: (definition.props ?? []).filter((prop) => prop.url).map((prop) => prop.name)
+        urlAttributes: (definition.props ?? []).filter((prop) => prop.url).map((prop) => prop.name),
+        config: siteBlocks.config.get(definition.block) ?? {}
       }))
   }
 

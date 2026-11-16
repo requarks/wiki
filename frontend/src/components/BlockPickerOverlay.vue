@@ -108,7 +108,8 @@
                 <block-props-form
                   class="px-4 pt-4"
                   :fields="state.selected.props"
-                  :values="state.values" />
+                  :values="state.values"
+                  :locked="Object.keys(lockedValues(state.selected))" />
                 <!-- -> The markup itself, since that is what lands in the page -- in whichever syntax is open -->
                 <div class="w-section-header mt-6">{{ t('editor.blockPicker.markdown') }}</div>
                 <!-- The same 16px all round, so it sits inside the panel the way the fields do -->
@@ -127,7 +128,13 @@ import { computed, onMounted, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { notify } from '@/composables/notify'
-import { blockAsciidoc, blockMarkdown, blockPropsFilled } from '@/helpers/blocks'
+import {
+  blockAsciidoc,
+  blockMarkdown,
+  blockPropsFilled,
+  initialValues,
+  lockedValues
+} from '@/helpers/blocks'
 
 import BlockPropsForm from '@/components/BlockPropsForm.vue'
 
@@ -234,8 +241,9 @@ watch(
 
 function select(block) {
   state.selected = block
-  // -> Started at the block's own defaults, so the form shows what it would do if left alone
-  state.values = Object.fromEntries(block.props.map((prop) => [prop.name, prop.default ?? '']))
+  // -> Started where the site's administrator set it, or else at the block's own defaults, so the
+  //    form shows what it would do if left alone
+  state.values = initialValues(block)
 }
 
 /**

@@ -465,7 +465,14 @@ import { dialog } from '@/composables/dialog'
 import { useImagePropertiesDialog } from '@/composables/imagePropertiesDialog'
 import { notify } from '@/composables/notify'
 import { assetPath } from '@/helpers/assets'
-import { blockMarkdown, blockPropsFilled, isCanvasBlock, writtenProps } from '@/helpers/blocks'
+import {
+  blockMarkdown,
+  blockPropsFilled,
+  initialValues,
+  isCanvasBlock,
+  lockedValues,
+  writtenProps
+} from '@/helpers/blocks'
 import { classValues } from '@/helpers/markdownImages'
 import { renderPermissionsOf, sanitizeRender } from '@/helpers/sanitizeRender'
 
@@ -926,10 +933,7 @@ function insertSiteBlock(definition) {
   if (node?.attrs.name !== definition.block) {
     return
   }
-  const defaults = Object.fromEntries(
-    (definition.props ?? []).map((prop) => [prop.name, prop.default ?? ''])
-  )
-  if (!blockPropsFilled(definition, defaults)) {
+  if (!blockPropsFilled(definition, initialValues(definition))) {
     editBlockParams(node, pos)
   } else if (isCanvasBlock(definition)) {
     editBlockContent(node, pos)
@@ -1477,7 +1481,8 @@ function editBlockContent(node, pos) {
     overlayOpts: {
       editor: definition.contentEditor,
       block: definition,
-      params: { ...node.attrs.blockAttrs },
+      // -> A locked prop is the administrator's value, whatever the page says -- see EditorMarkdown
+      params: { ...node.attrs.blockAttrs, ...lockedValues(definition) },
       source: body.source,
       lang: body.lang,
       // -> The Markdown editor puts a line range here; nothing on this side needs one, since the

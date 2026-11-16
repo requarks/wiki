@@ -108,6 +108,29 @@ export interface BlockDefinition {
   contentEditor?: string
 }
 
+/** What a site's administrator set for one prop of a block. */
+export interface BlockPropSetting {
+  /**
+   * What the editor starts the prop on when the block is inserted — or, when `locked`, the only value
+   * it may have. Empty means the block's own default, which is how a prop is locked to the value the
+   * block would take anyway.
+   */
+  value: string | number | boolean
+  /**
+   * Whether authors may change it. A lock is enforced where the render is sanitized, not only by the
+   * editor's form: the content is markdown, and an attribute is a thing anybody can type.
+   */
+  locked: boolean
+}
+
+/**
+ * A block row's `config`: the admin's settings for its props, by prop name.
+ *
+ * Only the props the administrator changed or locked have an entry, so `{}` — what every row is
+ * created with — is a block that is used exactly as its component declares it.
+ */
+export type BlockConfig = Record<string, BlockPropSetting>
+
 /** A block row as exposed by the API, with what its component says it can be given. */
 export interface SiteBlock {
   id: string
@@ -117,7 +140,7 @@ export interface SiteBlock {
   icon: string
   isEnabled: boolean
   isCustom: boolean
-  config: Record<string, any>
+  config: BlockConfig
   props: BlockProp[]
   /**
    * Every attribute the component reads, `internal` props included — what the sanitizer lets through
@@ -169,6 +192,19 @@ export interface RenderableBlocks {
    * query is not cached: a definition this misses is a block stripped out of somebody's page.
    */
   custom: BlockDefinition[]
+  /**
+   * What the administrator set on each enabled block's props, by block key — the locks among them
+   * are forced onto every element of that block (`sanitizeRender`). Same query, same reason.
+   */
+  config: Map<string, BlockConfig>
+}
+
+/** What `setBlocksState` is asked to write for one block. */
+export interface BlockState {
+  id: string
+  isEnabled: boolean
+  /** Replaces the block's settings whole. Absent leaves them as they are. */
+  config?: BlockConfig
 }
 
 const blockSelection = {
@@ -186,6 +222,61 @@ const blockSelection = {
 /** The props an author may set, which is every prop but the `internal` ones. */
 function authorableProps(props: BlockProp[] | undefined): BlockProp[] {
   return (props ?? []).filter((prop) => !prop.internal)
+}
+
+/** The value a `select` option is written as. */
+function optionValue(option: string | { label: string; value: string }): string {
+  return typeof option === 'string' ? option : option.value
+}
+
+/**
+ * An administrator's settings for a block, checked against what the block declares and stripped of
+ * entries that would change nothing.
+ *
+ * Refused outright for a prop the block does not offer an author (an `internal` one included) or a
+ * value that prop could never hold: either is a mistake to report rather than something to store and
+ * have every editor quietly ignore. An empty value stands for the block's own default, for any type
+ * but a boolean, whose default is one of its two values.
+ *
+ * Kept only where it says something: a prop left unlocked on the value the block would start on
+ * anyway has no entry, which is what lets `{}` mean "used as the component declares it".
+ */
+function normalizeConfig(block: SiteBlock, config: BlockConfig): BlockConfig {
+  const normalized: BlockConfig = {}
+  for (const [name, setting] of Object.entries(config)) {
+    const prop = block.props.find((entry) => entry.name === name)
+    if (!prop) {
+      throw new CustomError(
+        'blockConfigInvalid',
+        `${block.name} has no property called "${name}".`,
+        400
+      )
+    }
+    const { value, locked } = setting
+    const valid =
+      prop.type === 'boolean'
+        ? typeof value === 'boolean'
+        : value === '' ||
+          (prop.type === 'number'
+            ? typeof value === 'number' && Number.isFinite(value)
+            : typeof value === 'string' &&
+              (prop.type !== 'select' ||
+                (prop.options ?? []).some((o) => optionValue(o) === value)))
+    if (!valid) {
+      throw new CustomError(
+        'blockConfigInvalid',
+        `"${String(value)}" is not a value the ${prop.label ?? prop.name} property of ${block.name} can take.`,
+        400
+      )
+    }
+    // -> A boolean that declares no default is off, since an absent attribute reads as false
+    const blockDefault = prop.default ?? (prop.type === 'boolean' ? false : '')
+    if (!locked && (value === '' || String(value) === String(blockDefault))) {
+      continue
+    }
+    normalized[name] = { value, locked: locked === true }
+  }
+  return normalized
 }
 
 /**
@@ -514,7 +605,8 @@ class Blocks {
       .select({
         block: blocksTable.block,
         isCustom: blocksTable.isCustom,
-        definition: blocksTable.definition
+        definition: blocksTable.definition,
+        config: blocksTable.config
       })
       .from(blocksTable)
       .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.isEnabled, true)))
@@ -523,20 +615,34 @@ class Blocks {
       custom: rows
         .filter((row) => row.isCustom)
         .map((row) => row.definition as BlockDefinition)
-        .filter((definition) => definition?.block)
+        .filter((definition) => definition?.block),
+      config: new Map(rows.map((row) => [row.block, row.config as BlockConfig]))
     }
   }
 
   /**
-   * Enable or disable blocks in bulk.
+   * Enable or disable blocks in bulk, and replace the prop settings of those that are given some.
+   *
+   * Every config is checked against its block before anything is written, so a request that names a
+   * prop a block does not have changes nothing at all rather than half of what it asked for.
    *
    * @param states Block IDs with their desired state
    * @returns The number of block rows written — a block already in the requested state still counts
    */
-  async setBlocksState(
-    siteId: string,
-    states: { id: string; isEnabled: boolean }[]
-  ): Promise<number> {
+  async setBlocksState(siteId: string, states: BlockState[]): Promise<number> {
+    const configured = states.filter((s) => s.config !== undefined)
+    const configs = new Map<string, BlockConfig>()
+    if (configured.length > 0) {
+      const siteBlocks = await this.getSiteBlocks(siteId)
+      for (const state of configured) {
+        const block = siteBlocks.find((entry) => entry.id === state.id && !entry.isChild)
+        if (!block) {
+          throw new CustomError('blockNotFound', 'Block does not exist.', 404)
+        }
+        configs.set(state.id, normalizeConfig(block, state.config!))
+      }
+    }
+
     let changed = 0
     for (const isEnabled of [true, false]) {
       const ids = states.filter((s) => s.isEnabled === isEnabled).map((s) => s.id)
@@ -548,6 +654,12 @@ class Blocks {
         .set({ isEnabled })
         .where(and(eq(blocksTable.siteId, siteId), inArray(blocksTable.id, ids)))
       changed += result.rowCount ?? 0
+    }
+    for (const [id, config] of configs) {
+      await WIKI.db
+        .update(blocksTable)
+        .set({ config })
+        .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.id, id)))
     }
     return changed
   }

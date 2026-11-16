@@ -37,6 +37,13 @@ export interface SanitizableBlock {
   attributes: string[]
   /** Those of them that hold an address, which are scheme-checked — see `BlockProp.url`. */
   urlAttributes: string[]
+  /**
+   * The site's settings for the block's props — `BlockConfig` in `models/blocks.ts`, spelled out here
+   * because this file imports nothing. Only the locked entries matter to sanitizing: each is written
+   * onto every element of the block, replacing whatever the author gave it, and an empty one removes
+   * the attribute so that the block takes its own default.
+   */
+  config: Record<string, { value: string | number | boolean; locked: boolean }>
 }
 
 /**
@@ -392,8 +399,9 @@ export function sanitizeRender(
   const allowedTags = [...sanitizeHtml.defaults.allowedTags, ...BASE_ALLOWED_TAGS]
   const allowedAttributes: Record<string, string[]> = { ...BASE_ALLOWED_ATTRIBUTES }
   const urlAttributes = new Set(sanitizeHtml.defaults.allowedSchemesAppliedToAttributes)
+  const transformTags: Record<string, SanitizeHtml.Transformer> = {}
 
-  for (const { block, attributes, urlAttributes: blockUrlAttributes } of blocks) {
+  for (const { block, attributes, urlAttributes: blockUrlAttributes, config } of blocks) {
     const tag = `block-${block}`
     allowedTags.push(tag)
     /*
@@ -427,6 +435,29 @@ export function sanitizeRender(
       urlAttributes.add(name)
       urlAttributes.add(name.toLowerCase())
     }
+    /*
+      A locked prop is the administrator's, not the author's -- a private draw.io server, say, which
+      the point of locking is that no page can point somewhere else. Forced here rather than trusted
+      to the editor, since the source is text anybody can type an attribute into.
+
+      Done as a transform because the library applies those BEFORE it filters attributes, so a locked
+      value goes through the same allow list and scheme check as one an author wrote. Both spellings
+      of the name are cleared first, for the reason given above: what is stored is lowercased.
+    */
+    const locked = Object.entries(config).filter(([, setting]) => setting.locked)
+    if (locked.length > 0) {
+      transformTags[tag] = (tagName, attribs) => {
+        const forced = { ...attribs }
+        for (const [name, { value }] of locked) {
+          delete forced[name]
+          delete forced[name.toLowerCase()]
+          if (value !== '') {
+            forced[name] = String(value)
+          }
+        }
+        return { tagName, attribs: forced }
+      }
+    }
   }
 
   if (permissions.styles) {
@@ -457,6 +488,7 @@ export function sanitizeRender(
     allowVulnerableTags: permissions.styles,
     allowedSchemes: ALLOWED_SCHEMES,
     allowedSchemesAppliedToAttributes: [...urlAttributes],
+    transformTags,
     allowedSchemesByTag: {
       img: [...ALLOWED_SCHEMES, 'data', ...(blobImages ? ['blob'] : [])]
     },

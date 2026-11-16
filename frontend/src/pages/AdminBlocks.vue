@@ -61,9 +61,7 @@
           <w-item v-for="block of state.blocks" :key="block.id">
             <blueprint-icon :icon="block.isCustom ? `plugin` : block.icon" />
             <w-item-section>
-              <w-item-label
-                ><strong>{{ block.name }}</strong></w-item-label
-              >
+              <w-item-label><strong>{{ block.name }}</strong></w-item-label>
               <w-item-label caption>{{ block.description }}</w-item-label>
               <w-item-label class="flex items-center" caption>
                 <w-chip
@@ -77,6 +75,10 @@
                 <w-separator class="mx-2 my-1" vertical />
                 <em class="text-purple" v-if="block.isCustom">{{ t('admin.blocks.custom') }}</em>
                 <em class="text-teal-7" v-else>{{ t('admin.blocks.builtin') }}</em>
+                <template v-if="configSummary(block)">
+                  <w-separator class="mx-2 my-1" vertical />
+                  <em class="text-orange-8">{{ configSummary(block) }}</em>
+                </template>
               </w-item-label>
             </w-item-section>
             <template v-if="block.isCustom">
@@ -92,6 +94,26 @@
               </w-item-section>
               <w-separator class="ml-6" vertical />
             </template>
+            <w-item-section side>
+              <w-btn
+                icon="la:cog"
+                :label="t(`admin.blocks.configure`)"
+                :color="dark.isActive ? `blue-grey-3` : `blue-grey-8`"
+                outline
+                no-caps
+                padding="xs md"
+                :disable="block.props.length < 1"
+                @click="configureBlock(block)">
+                <w-tooltip>{{
+                  t(
+                    block.props.length > 0
+                      ? `admin.blocks.configureHint`
+                      : `admin.blocks.configureNoProps`
+                  )
+                }}</w-tooltip>
+              </w-btn>
+            </w-item-section>
+            <w-separator class="ml-4" vertical />
             <w-item-section side>
               <w-toggle
                 class="pr-2"
@@ -114,13 +136,13 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { defineAsyncComponent, onMounted, reactive, ref, watch } from 'vue'
 
 import { useDark } from '@/composables/dark'
 import { useMeta } from '@/composables/meta'
 import { notify } from '@/composables/notify'
 import { loading } from '@/composables/loading'
-import { confirm } from '@/composables/dialog'
+import { confirm, dialog } from '@/composables/dialog'
 
 import { useAdminStore } from '@/stores/admin'
 import { useSiteStore } from '@/stores/site'
@@ -193,7 +215,7 @@ async function save() {
   try {
     const resp = await API_CLIENT.put(`sites/${adminStore.currentSiteId}/blocks`, {
       json: {
-        states: state.blocks.map((bl) => pick(bl, ['id', 'isEnabled']))
+        states: state.blocks.map((bl) => pick(bl, ['id', 'isEnabled', 'config']))
       }
     }).json()
     if (!resp?.ok) {
@@ -214,7 +236,7 @@ async function save() {
     notify({
       type: 'negative',
       message: t('admin.blocks.saveFailed'),
-      caption: err.message
+      caption: apiErrorMessage(err)
     })
   }
   state.loading--
@@ -222,6 +244,36 @@ async function save() {
 
 async function refresh() {
   await load()
+}
+
+/**
+ * What a block starts on when inserted, and which of its props authors may not change.
+ *
+ * Staged on the row like the enabled switch beside it, and saved with it by Apply: the screen has one
+ * save, and a dialog that wrote on its own would leave it unclear whether a pending switch went too.
+ */
+function configureBlock(block) {
+  dialog({
+    component: defineAsyncComponent(() => import('@/components/BlockConfigDialog.vue')),
+    componentProps: { block }
+  }).onOk((config) => {
+    block.config = config
+  })
+}
+
+/** "2 defaults · 1 locked", or empty for a block used as its component declares it. */
+function configSummary(block) {
+  const settings = Object.values(block.config)
+  if (settings.length < 1) {
+    return ''
+  }
+  const locked = settings.filter((setting) => setting.locked).length
+  return [
+    settings.length > locked ? t('admin.blocks.configDefaults', settings.length - locked) : null,
+    locked > 0 ? t('admin.blocks.configLocked', locked) : null
+  ]
+    .filter(Boolean)
+    .join(' · ')
 }
 
 function pickPackage() {

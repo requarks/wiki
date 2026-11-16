@@ -2,6 +2,8 @@ import { useI18n } from 'vue-i18n'
 import * as monaco from 'monaco-editor'
 import { Range } from 'monaco-editor'
 
+import { lockedValues } from '@/helpers/blocks'
+
 /**
  * Completion of a block's name and of its parameters, for a source editor built on Monaco -- the
  * Markdown and the AsciiDoc editor both offer it.
@@ -126,7 +128,11 @@ export function useBlockCompletions({
           definition.isEnabled && !definition.isChild && Boolean(definition.inline) === inline
       )
       .map((definition) => {
-        const firstRequired = (definition.props ?? []).find((prop) => prop.required)
+        // -> The first tab stop, which a locked prop never is -- see `snippetAttributes`
+        const locked = lockedValues(definition)
+        const firstRequired = (definition.props ?? []).find(
+          (prop) => prop.required && !(prop.name in locked)
+        )
         return {
           label: { label: definition.block, description: definition.name },
           kind: monaco.languages.CompletionItemKind.Module,
