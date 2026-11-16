@@ -2067,12 +2067,30 @@
   // FIGURES, IMAGES AND DIAGRAMS
   // ---------------------------------------------------------------------------
 
+  /*
+    An image is part of the line it was written in. Tailwind's preflight declares `img { display:
+    block }`, which takes an image written mid-sentence -- an icon beside a word -- onto a line of its
+    own and the rest of the sentence under it. Markdown puts an image that is a paragraph of its own
+    in a `<p>` by itself, where an inline image is the whole line anyway, so nothing is lost by it.
+    A `figure` centres its picture by `text-align`, which is the other thing a block image ignored.
+
+    `align-left` / `align-right` / `align-center` below still win on specificity.
+  */
   img {
+    display: inline-block;
     max-width: 100%;
-    height: auto;
     border-radius: 4px;
-    /* -> An image is a block when it is the whole paragraph, and inline when it sits in a sentence */
     vertical-align: middle;
+  }
+
+  /*
+    `height: auto` keeps the picture's proportions when `max-width` narrows an image whose width the
+    author gave -- `=300x200` on a phone. It only ever overrides a `height` ATTRIBUTE (with none,
+    `auto` is what the height already is), so on an image sized by height alone (`=x24`) it would
+    throw away the only size the author asked for. Hence only where there is a width to scale from.
+  */
+  img[width] {
+    height: auto;
   }
 
   /*
@@ -2102,18 +2120,6 @@
     @at-root .body--dark & {
       filter: invert(93%) hue-rotate(180deg);
     }
-  }
-
-  /*
-    An image in a list item stays in the sentence. Tailwind's preflight declares `img { display:
-    block }`, so without this the image takes a line of its own and the item's own words go under it,
-    which reads as a broken item rather than as an illustrated one.
-
-    `align-left` / `align-right` / `align-center` still win on specificity, so an author who asks for
-    one of those in a list still gets it.
-  */
-  li img {
-    display: inline-block;
   }
 
   /* The alignment classes an author can attach through `markdown-it-attrs` */
