@@ -1,11 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Ask a Question
-    url: https://github.com/requarks/wiki/discussions/categories/3-x-help-questions
+  - name: Ask a question
+    url: https://github.com/requarks/wiki/discussions/new?category=3-x-help-questions
     about: Have questions? Not sure about some behavior? Need help with something?
   - name: Request a new feature / improvement
     url: https://feedback.js.wiki
     about: Submit ideas for new features or improvements.
-  - name: Report a Security Issue
-    url: https://github.com/Requarks/wiki/security/policy
-    about: Privately report security issues so they can be addressed quickly.

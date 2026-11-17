@@ -1,5 +1,5 @@
 name: Report a bug
-description: Only report actual bugs. If you're not sure, use the Ask a Question instead!
+description: Only report actual bugs. If you're not sure, use the "Ask a question" link instead!
 assignees:
   - ngpixel
 type: bug
@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please only use this form to report actual bugs and errors. If you're not sure or need more information about some unexpected behavior, use the Ask a Question link instead.
+        Please only use this form to report actual bugs and errors. If you're not sure or need more information about some unexpected behavior, use the [Ask a question](https://github.com/requarks/wiki/discussions/new?category=3-x-help-questions) link instead to create a discussion.
   - type: textarea
     id: body
     attributes:
