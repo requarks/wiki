@@ -1,0 +1,60 @@
+name: Report a bug
+description: Only report actual bugs. If you're not sure, use the Ask a Question instead!
+assignees:
+  - ngpixel
+type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please only use this form to report actual bugs and errors. If you're not sure or need more information about some unexpected behavior, use the Ask a Question link instead.
+  - type: textarea
+    id: body
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: |
+        **Describe the bug**
+        A clear and concise description of what the bug is.
+
+        **To Reproduce**
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+
+        **Expected behavior**
+        A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Wiki.js Version
+      description: Enter the version of Wiki.js you're currently running.
+      placeholder: e.g. 3.3.1
+    validations:
+      required: true
+      min_length: 5
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Deployment Platform
+      description: Which platform is Wiki.js deployed on.
+      multiple: false
+      options:
+        - Docker
+        - Kubernetes (Helm)
+        - Linux
+        - MacOS
+        - Windows
+    validations:
+      required: true
+  - type: upload
+    id: screenshots
+    attributes:
+      label: Upload screenshots
+      description: If applicable, add screenshots to help explain your problem.
+    validations:
+      required: false
