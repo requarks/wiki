@@ -1360,7 +1360,7 @@
   "admin.search.dictOverrides": "PostgreSQL Dictionary Mapping Overrides",
   "admin.search.dictOverridesHint": "JSON object of locale or language codes (e.g. pt-BR or pt) and the PostgreSQL dictionary each should use. e.g. {0}",
   "admin.search.dictOverridesInvalidJSON": "The dictionary mapping is not valid JSON. {reason}",
-  "admin.search.dictOverridesNotAnObject": "The dictionary mapping must be a JSON object, e.g. { \"en\": \"english\" }.",
+  "admin.search.dictOverridesNotAnObject": "The dictionary mapping must be a JSON object, e.g. {'{'} \"en\": \"english\" {'}'}.",
   "admin.search.dictOverridesUnknown": "{dictionary} is not a PostgreSQL dictionary available in this database (mapped to {locale}).",
   "admin.search.engineConfig": "Engine Configuration",
   "admin.search.engineNoConfig": "This engine has no configuration options you can modify.",

@@ -321,7 +321,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      return WIKI.models.locales.getStrings(req.params.code)
+      return WIKI.models.locales.interfaceStrings(req.params.code)
     }
   )
 }

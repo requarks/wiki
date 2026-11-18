@@ -54,6 +54,7 @@
     "@google-cloud/storage": "8.4.0",
     "@gquittet/graceful-server": "6.1.1",
     "@iconify/utils": "3.1.7",
+    "@intlify/message-compiler": "11.4.18",
     "@joplin/turndown-plugin-gfm": "1.0.68",
     "@node-saml/node-saml": "5.2.0",
     "@prometheus-io/client": "0.16.1",

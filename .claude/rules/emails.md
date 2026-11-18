@@ -1,5 +1,6 @@
 ---
 paths:
+  - "backend/api/locales.ts"
   - "backend/models/mail.ts"
   - "backend/models/locales.ts"
   - "backend/api/mail.ts"
@@ -52,10 +53,17 @@ anything else the wiki writes for a person rather than for a machine belongs in 
   the key asked for falls back to `en` for that key alone, because a translation lags the release
   that added a string and a half-translated locale must not emit raw keys at a reader.
 - **String sets are cached; locale metadata already was.** `getLocales` holds the rows, and
-  `#stringsFor` holds the blobs — a few thousand entries the interface re-fetches per request and
-  has no reason to keep, but which a mail reads a handful of keys out of. `reloadCache` drops them,
-  which every install and update already calls and which the `reloadLocales` event runs on the other
-  instances of an HA set.
+  `#stringsFor` holds the blobs, which both a mail and `GET /locales/:code/strings`
+  (`interfaceStrings`, installed locales only) read. `reloadCache` drops them, which every install
+  and update already calls and which the `reloadLocales` event runs on the other instances of an HA
+  set.
+- **A translation is cached only as far as vue-i18n can show it.** On the way in, `#stringsFor`
+  leaves out every translated string that does not compile under `@intlify/message-compiler` (pinned
+  to the frontend's `vue-i18n` version; move them together) or that references a `{name}`, `{0}` or
+  `@:key` its English source does not, or is plural where the source is not. The reader gets the
+  English for that key instead of a component that throws on render, and the log names each one.
+  It is judged at cache time rather than at install time because `en` changes with every build.
+  `en` itself is never filtered; a source string that does not compile is logged on load.
 
 **One description, two bodies.** A template returns a `MailContent` — subject, title, paragraphs, at
 most one action, footer — and `htmlShell` and `textBody` are two renderings of it. Each template

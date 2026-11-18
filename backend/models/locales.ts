@@ -10,6 +10,7 @@ import {
 } from '../db/schema.ts'
 import { and, count, eq, ne, sql } from 'drizzle-orm'
 import { CustomError } from '../helpers/common.ts'
+import { baseCompile } from '@intlify/message-compiler'
 
 /** Where the locale packages published for this major version live. */
 const REMOTE_BASE_URL = 'https://github.com/requarks/wiki-locales/raw/main'
@@ -36,6 +37,144 @@ const SOURCE_LOCALE = 'en'
  * visibly wrong in the place the mistake actually is, instead of quietly missing a word.
  */
 const INTERPOLATION = /\{([A-Za-z0-9_]+)\}/g
+
+/*
+  The node types of vue-i18n's message AST, from `NodeTypes` in `@intlify/message-compiler`. That is
+  an ambient const enum, which `isolatedModules` will not let this file read, so the four used below
+  are restated. They are not internal: they are the serialized form a precompiled message bundle
+  ships, so they cannot change without breaking every one of those.
+*/
+const AST_PLURAL = 1
+const AST_NAMED = 4
+const AST_LIST = 5
+const AST_LINKED = 6
+
+/** What a string asks vue-i18n to do besides showing text. See `syntaxOf`. */
+interface MessageSyntax {
+  /** Every compile error, as vue-i18n would throw the first of them. */
+  errors: string[]
+  /** `{name}`, `{0}` and `@:key` references, written out the way the source would spell them. */
+  references: Set<string>
+  /** Whether `|` splits it into plural forms. */
+  isPlural: boolean
+}
+
+/**
+ * Parse a locale string the way the interface will, and say what it references.
+ *
+ * It is vue-i18n's own compiler rather than a pattern for what a placeholder looks like, because the
+ * question is exactly "will the browser throw on this", and the grammar has more in it than braces:
+ * a bare `@` starts a linked message, so `a@b.com` throws as surely as `{дата}` does.
+ */
+function syntaxOf(message: string): MessageSyntax {
+  const errors: string[] = []
+  const { ast } = baseCompile(message, {
+    location: false,
+    jit: true,
+    onError: (err) => errors.push(err.message)
+  })
+  const references = new Set<string>()
+  const visit = (node: any) => {
+    if (!node || typeof node !== 'object') {
+      return
+    }
+    if (node.type === AST_NAMED) {
+      references.add(`{${node.key}}`)
+    } else if (node.type === AST_LIST) {
+      references.add(`{${node.index}}`)
+    } else if (node.type === AST_LINKED) {
+      const modifier = node.modifier?.value ? `.${node.modifier.value}` : ''
+      references.add(`@${modifier}:${node.key?.value ?? node.key?.key ?? node.key?.index}`)
+    }
+    for (const child of [node.body, ...(node.cases ?? []), ...(node.items ?? [])]) {
+      visit(child)
+    }
+  }
+  visit(ast)
+  return { errors, references, isPlural: ast.body?.type === AST_PLURAL }
+}
+
+/**
+ * Why a translated string cannot be shown in place of its English source, or `null` when it can.
+ *
+ * A translation is free to reword, reorder and repeat, but not to ask for anything its source does
+ * not: vue-i18n throws on a message it cannot parse, and a throw inside a component's render takes
+ * the whole component with it rather than the one label — which is how a placeholder renamed into
+ * Russian (`{дата}`) took away a feedback idea's entire header. A reference the source does not
+ * have is refused even when it parses, since nothing will ever be passed for it: the caller
+ * supplies the source's names. And `|` only where the source is plural, because anywhere else it
+ * quietly cuts the string down to whatever comes before it.
+ *
+ * Literal escapes (`{'@'}`) are not references and need no counterpart: they are how a translator
+ * writes a character the grammar would otherwise read as syntax.
+ */
+function translationProblem(translated: string, source: string): string | null {
+  const translation = syntaxOf(translated)
+  if (translation.errors.length > 0) {
+    return translation.errors[0]
+  }
+  const expected = syntaxOf(source)
+  const unknown = [...translation.references].filter((ref) => !expected.references.has(ref))
+  if (unknown.length > 0) {
+    return `references ${unknown.join(', ')}, which the English string does not have`
+  }
+  if (translation.isPlural && !expected.isPlural) {
+    return 'has plural forms, which the English string does not'
+  }
+  return null
+}
+
+/**
+ * The strings of a translation that can be shown, judged against the source locale.
+ *
+ * A string that cannot is left out rather than repaired, which is what makes the reader see the
+ * English for that one key: vue-i18n's `fallbackLocale` and `translator` both fall back per key. A
+ * key the source no longer has is left out too — nothing asks for it, and there is nothing to judge
+ * it against.
+ */
+function usableTranslations(
+  code: string,
+  strings: Record<string, string>,
+  source: Record<string, string>
+): Record<string, string> {
+  const usable: Record<string, string> = {}
+  const refused: string[] = []
+  for (const [key, translated] of Object.entries(strings)) {
+    if (!(key in source)) {
+      continue
+    }
+    const problem = translationProblem(translated, source[key])
+    if (problem) {
+      refused.push(`${key} (${problem})`)
+    } else {
+      usable[key] = translated
+    }
+  }
+  if (refused.length > 0) {
+    WIKI.logger.warn(
+      `Locale ${code}: ${refused.length} translated ${refused.length === 1 ? 'string is' : 'strings are'} not valid for vue-i18n and will be shown in English: ${refused.join('; ')}`
+    )
+  }
+  return usable
+}
+
+/**
+ * Report every source string vue-i18n cannot parse.
+ *
+ * Nothing can be done about one at runtime — it is the fallback, and it has none of its own — so
+ * this is for whoever added it: `locales/en.json` is loaded on every boot, which makes the log the
+ * first place a string written with a bare `{` or `@` shows up, rather than a page that throws.
+ */
+function reportUnparsableSource(strings: Record<string, string>): void {
+  for (const [key, message] of Object.entries(strings)) {
+    const { errors } = syntaxOf(message)
+    if (errors.length > 0) {
+      WIKI.logger.warn(
+        `Locale ${SOURCE_LOCALE}: ${key} is not valid vue-i18n syntax and will throw in the browser: ${errors[0]}`
+      )
+    }
+  }
+}
 
 /** One locale's strings, bound and ready to render with. See `translator`. */
 export interface Translator {
@@ -874,9 +1013,16 @@ class Locales {
    * One locale's string set, held in memory after the first read.
    *
    * Only the locale METADATA is cached by `getLocales`; the strings are a blob of a few thousand
-   * entries that the interface fetches from the db per request and has no reason to keep. What
-   * reads them here does: a mail is rendered from a handful of keys, and paying a query for each
-   * send — of a set that changes only when a locale is installed or updated — is the wrong trade.
+   * entries, read by the interface on every page load and by the mails a handful of keys at a time.
+   * Paying a query for each — of a set that changes only when a locale is installed or updated — is
+   * the wrong trade.
+   *
+   * **A translation is held only as far as it can be shown** (`usableTranslations`): a string
+   * vue-i18n cannot parse, or one asking for a placeholder its English source does not pass, is
+   * left out, so the browser and `translator` both show the English for that key. That is judged
+   * here, on the way into the cache, rather than when a locale is stored, because the answer depends
+   * on `en` as well — and `en` changes with every build, while the translation in the row does not.
+   * The source locale itself is never filtered, having nothing to fall back to; it is reported.
    *
    * Dropped by `reloadCache`, which is what every install and update already calls and what the
    * `reloadLocales` event runs on the other instances of an HA set.
@@ -889,9 +1035,29 @@ class Locales {
     }
     const strings = (await this.getStrings(code)) as Record<string, string>
     // -> `getStrings` answers `[]` for a locale that has no row at all
-    const resolved = Array.isArray(strings) ? {} : (strings ?? {})
+    const stored = Array.isArray(strings) ? {} : (strings ?? {})
+    let resolved: Record<string, string>
+    if (code === SOURCE_LOCALE) {
+      reportUnparsableSource(stored)
+      resolved = stored
+    } else {
+      resolved = usableTranslations(code, stored, await this.#stringsFor(SOURCE_LOCALE))
+    }
     WIKI.cache.set(cacheKey, resolved)
     return resolved
+  }
+
+  /**
+   * The strings the interface is drawn with in a locale, as `GET /locales/:code/strings` serves them.
+   *
+   * The same set `translator` reads, so the browser and the mails agree on which translations are
+   * shown. Only for an installed locale: the code is straight off a public URL, and anything else
+   * would be an entry in the string cache per name somebody thought to ask for. A locale that is not
+   * installed has no strings to give, which is what it always answered.
+   */
+  async interfaceStrings(code: string): Promise<Record<string, string>> {
+    const installed = this.#cachedLocales().some((lc) => lc.code === code && lc.isInstalled)
+    return installed ? this.#stringsFor(code) : {}
   }
 
   /**
