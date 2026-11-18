@@ -904,13 +904,20 @@ $bar-gradient-dark: linear-gradient(to bottom, $bar-gradient-top-dark, $bar-bg-d
   }
 
   /*
-    The tag list scrolls on its own rather than growing the card: a wiki can carry several hundred
-    tags, and a sidebar as tall as all of them leaves the results beside it starting level with the
-    last one. `max-height` rather than a fixed one so a site with a dozen tags gets a short list.
+    The tag list fills the column down to the bottom of the card and scrolls inside it, rather than
+    growing the card: a wiki can carry several hundred tags, and a sidebar as tall as all of them
+    leaves the results beside it starting level with the last one.
+
+    The card is as tall as the window (WPageContainer grows it) or as the results, whichever is more,
+    and the column is stretched to it. A basis of `0px` is what keeps the list's own length out of
+    that: the column's height comes from its items' flex bases, so with `0px` the list adds nothing to
+    it and takes only the height left after the header and the AND/OR bar. It has to be a length, not
+    the `0%` that `flex: 1` sets: an auto-height column treats a percentage basis as `auto`, and that
+    is the full list again.
   */
   &-groups {
-    flex: 1 1 auto;
-    max-height: 60vh;
+    flex: 1 1 0px;
+    min-height: 0;
     overflow-y: auto;
     padding-bottom: 0.5rem;
   }
@@ -1505,9 +1512,10 @@ $bar-gradient-dark: linear-gradient(to bottom, $bar-gradient-top-dark, $bar-bg-d
       }
     }
 
-    /* -> A list that is now a drawer over the results rather than a column beside them, so it gets
-          less of the window than it does as a sidebar */
+    /* -> A drawer over the results rather than a column beside them. Nothing stretches it here, so
+          the zero basis above would collapse it to nothing: it is sized by its content, up to a cap */
     &-groups {
+      flex: 0 1 auto;
       max-height: 40vh;
     }
 

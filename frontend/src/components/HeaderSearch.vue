@@ -192,7 +192,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { DEFAULT_PAGE_ICON } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
-import { orderBy } from 'es-toolkit/array'
 import { debounce } from 'es-toolkit/function'
 
 /** Characters typed before pages are suggested. One matches nearly every title on the wiki. */
@@ -200,6 +199,8 @@ const SUGGEST_MIN_LENGTH = 2
 const SUGGEST_LIMIT = 8
 /** Long enough that a word typed at speed is one request, short enough not to read as lag. */
 const SUGGEST_DEBOUNCE_MS = 150
+/** Tags offered in the empty panel. The rest are one click away in the tag browser. */
+const POPULAR_TAGS_LIMIT = 20
 
 // PROPS
 
@@ -283,14 +284,12 @@ const suggestionsAreShown = computed(() => {
   return searchPanelIsShown.value && !state.suggestionsDismissed && state.suggestions.length > 0
 })
 
+/** The most used tags, ties broken by name -- the same order as the tag browser's popularity sort. */
 const popularTags = computed(() => {
-  /*
-    FIXME: this sorts tags ASCENDING by usage, which is almost certainly not what was meant.
-    `['usageCount', 'desc']` was passed where lodash expects the list of KEYS to sort by, so it read
-    as "order by usageCount, then by a property named desc" -- both ascending. Carried across
-    unchanged, with the orders now written out, because fixing it is a behaviour change.
-  */
-  return orderBy(siteStore.tags, ['usageCount', 'desc'], ['asc', 'asc']).map((t) => t.tag)
+  return siteStore.tags
+    .toSorted((a, b) => b.usageCount - a.usageCount || a.tag.localeCompare(b.tag))
+    .slice(0, POPULAR_TAGS_LIMIT)
+    .map((t) => t.tag)
 })
 
 // WATCHERS
