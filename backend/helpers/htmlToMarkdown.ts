@@ -7,7 +7,7 @@ import {
   taskListItems
 } from '@joplin/turndown-plugin-gfm'
 
-import type { AnyNode } from 'domhandler'
+import type { AnyNode, Element } from 'domhandler'
 
 /**
  * HTML → markdown: for a page 2.x wrote in an editor 3.x does not have (`models/import.ts`), and for
@@ -119,6 +119,7 @@ export function htmlToMarkdown(html: string, report?: ConversionLosses): string 
     noteCodeFormatting($, report)
   }
   liftAlertTitles($)
+  unspanTables($)
   linkBareUrls($)
   return turndown.turndown($.html())
 }
@@ -277,6 +278,56 @@ function addWikiRules(service: TurndownService): void {
       return `![${alt}](${destination}${titlePart}${size})`
     }
   })
+
+  /*
+    Sub- and superscript, as `markdown-it-sub` and `markdown-it-sup` write them. Neither reads a space
+    inside unless it is escaped. Without these the tags were dropped and `H<sub>2</sub>O` read `H2O`.
+  */
+  for (const [tag, mark] of [
+    ['sub', '~'],
+    ['sup', '^']
+  ] as const) {
+    service.addRule(tag, {
+      filter: tag,
+      replacement: (content) => {
+        const text = content.trim()
+        return text ? `${mark}${text.replace(/\s+/g, '\\ ')}${mark}` : ''
+      }
+    })
+  }
+
+  /*
+    Footnotes, as `markdown-it-footnote` renders them: a reference is a `<sup class="footnote-ref">`
+    (added after the superscript rule, so it wins the node), and the notes are a list at the end
+    behind a rule of their own, each with a link back. Written back as `[^n]` and `[^n]: …`, a note's
+    later lines indented under it. Import from DokuWiki writes its `((…))` notes in this shape.
+  */
+  service.addRule('footnoteRef', {
+    filter: (node) => node.nodeName === 'SUP' && hasClass(node, 'footnote-ref'),
+    replacement: (_content, node) => {
+      const label = (node.textContent ?? '').replace(/^\[|\]$/g, '').replace(/:\d+$/, '')
+      return label ? `[^${label}]` : ''
+    }
+  })
+  service.addRule('footnoteItem', {
+    filter: (node) => node.nodeName === 'LI' && hasClass(node, 'footnote-item'),
+    replacement: (content, node) => {
+      const label = /^fn(.+)$/.exec(elementOf(node).getAttribute('id') ?? '')?.[1] ?? ''
+      const [first = '', ...rest] = content.trim().split('\n')
+      const body = [first, ...rest.map((line) => (line ? `    ${line}` : ''))].join('\n')
+      return `\n\n[^${label}]: ${body}\n\n`
+    }
+  })
+  service.addRule('footnoteChrome', {
+    filter: (node) =>
+      (node.nodeName === 'HR' && hasClass(node, 'footnotes-sep')) ||
+      (node.nodeName === 'A' && hasClass(node, 'footnote-backref')),
+    replacement: () => ''
+  })
+}
+
+function hasClass(node: TurndownService.Node, name: string): boolean {
+  return (elementOf(node).getAttribute('class') ?? '').split(/\s+/).includes(name)
 }
 
 /** A page index as markdown: the block's fences, with its props and no body. */
@@ -296,6 +347,65 @@ function liftAlertTitles($: cheerio.CheerioAPI): void {
     const title = $(element)
     title.parent().attr('data-alert-title', title.text())
     title.remove()
+  })
+}
+
+/**
+ * Write every merged cell out as the cells it covered, the first holding its content and the rest
+ * empty.
+ *
+ * A markdown table has no spans, and the table rule writes each `<td>` it finds as one cell — so a
+ * cell spanning two columns left its row a cell short, and one spanning two rows left every row
+ * below it a cell short at that point, which shifts the rest of the row into the wrong columns. Laid
+ * out on the grid first, each row has every column and its text stays under its heading; only the
+ * merging is lost.
+ */
+function unspanTables($: cheerio.CheerioAPI): void {
+  $('table').each((_, table) => {
+    const own = (el: AnyNode) => $(el).closest('table')[0] === table
+    if (
+      $(table)
+        .find('[colspan], [rowspan]')
+        .filter((_, el) => own(el)).length < 1
+    ) {
+      return
+    }
+    const pending: Array<{ left: number; tag: string } | undefined> = []
+    $(table)
+      .find('tr')
+      .filter((_, tr) => own(tr))
+      .each((_, tr) => {
+        const cells = $(tr).children('th, td').toArray()
+        const out: Array<AnyNode | string> = []
+        let column = 0
+        const fill = () => {
+          for (let held = pending[column]; held && held.left > 0; held = pending[column]) {
+            out.push(`<${held.tag}></${held.tag}>`)
+            held.left--
+            column++
+          }
+        }
+        for (const cell of cells) {
+          fill()
+          const tag = (cell as Element).name
+          const colspan = Math.max(1, Number.parseInt($(cell).attr('colspan') ?? '1', 10) || 1)
+          const rowspan = Math.max(1, Number.parseInt($(cell).attr('rowspan') ?? '1', 10) || 1)
+          $(cell).removeAttr('colspan').removeAttr('rowspan')
+          out.push(cell)
+          for (let n = 1; n < colspan; n++) {
+            out.push(`<${tag}></${tag}>`)
+          }
+          for (let n = 0; n < colspan; n++) {
+            pending[column + n] = rowspan > 1 ? { left: rowspan - 1, tag } : undefined
+          }
+          column += colspan
+        }
+        fill()
+        $(tr).empty()
+        for (const piece of out) {
+          $(tr).append(piece as any)
+        }
+      })
   })
 }
 

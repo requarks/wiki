@@ -7,6 +7,7 @@ import {
   comments as commentsTable,
   groups as groupsTable,
   importIdMap as importIdMapTable,
+  importRefs as importRefsTable,
   importSessions as importSessionsTable,
   navigation as navigationTable,
   pageHistory as pageHistoryTable,
@@ -83,11 +84,12 @@ const SUPPORTED_FORMAT_VERSION = 1
 const SUPPORTED_SOURCE = 'wikijs2'
 
 /**
- * What a session may be opened for. `confluence` is not a package at all — the browser reads a
- * Confluence backup itself and posts records of its own shape, which `models/importConfluence.ts`
- * writes. Everything else about a session (the batches, the blobs, the id map, finishing) is shared.
+ * What a session may be opened for. `confluence` and `dokuwiki` are not packages at all — the browser
+ * reads a Confluence backup or a DokuWiki data directory itself and posts records of its own shape,
+ * which `models/importConfluence.ts` and `models/importDokuwiki.ts` write. Everything else about a
+ * session (the batches, the blobs, the id map, the index, folders and files, finishing) is shared.
  */
-export const IMPORT_SOURCES = [SUPPORTED_SOURCE, 'confluence'] as const
+export const IMPORT_SOURCES = [SUPPORTED_SOURCE, 'confluence', 'dokuwiki'] as const
 
 /**
  * What the operator may tick, as the overlay names them.
@@ -130,8 +132,9 @@ const STREAM_REQUIRES: Record<string, ImportContentKind | null> = {
 const INSTANCE_STREAMS = new Set(['locales', 'groups', 'users'])
 
 /**
- * Streams that belong to a site, and are posted with the target site's id. `index` is a Confluence
- * session's alone: what its pages, files and people are called, ahead of the pages that link to them.
+ * Streams that belong to a site, and are posted with the target site's id. `index` is a Confluence or
+ * DokuWiki session's alone: what its pages, files and people are called, ahead of the pages that link
+ * to them.
  */
 const SITE_STREAMS = new Set([
   'index',
@@ -971,6 +974,171 @@ class Import {
     return WIKI.sites?.[siteId]?.config?.locales?.primary ?? 'en'
   }
 
+  // ==============================================================================================
+  // SHARED BY THE SOURCES THE BROWSER READS ITSELF (Confluence, DokuWiki)
+  // ==============================================================================================
+
+  /**
+   * Keep what a source's records refer to each other by, for the batches after (`importRefs`).
+   * Upserted, so a re-run that sends the index again is a no-op on what is already there.
+   */
+  async putRefs(
+    sessionId: string,
+    rows: Array<{ kind: string; key: string; value: unknown }>
+  ): Promise<void> {
+    // -> One key twice in an insert is an error to postgres, rather than the later one winning
+    const unique = new Map(rows.map((row) => [`${row.kind}:${row.key}`, row]))
+    if (unique.size < 1) {
+      return
+    }
+    await WIKI.db
+      .insert(importRefsTable)
+      .values([...unique.values()].map((row) => ({ sessionId, ...row })))
+      .onConflictDoUpdate({
+        target: [importRefsTable.sessionId, importRefsTable.kind, importRefsTable.key],
+        set: { value: sql`excluded."value"` }
+      })
+  }
+
+  /** Look several refs of one kind up at once — one query per kind per batch. */
+  async getRefs(sessionId: string, kind: string, keys: string[]): Promise<Map<string, any>> {
+    const wanted = [...new Set(keys)]
+    if (wanted.length < 1) {
+      return new Map()
+    }
+    const rows = await WIKI.db
+      .select({ key: importRefsTable.key, value: importRefsTable.value })
+      .from(importRefsTable)
+      .where(
+        and(
+          eq(importRefsTable.sessionId, sessionId),
+          eq(importRefsTable.kind, kind),
+          inArray(importRefsTable.key, wanted)
+        )
+      )
+    return new Map(rows.map((row) => [row.key, row.value]))
+  }
+
+  /**
+   * The accounts here whose address is one of these, for an overlay to suggest as the match for an
+   * author before the operator decides — a Confluence XML backup's, or a DokuWiki user file's. The guest
+   * account is never offered.
+   */
+  async matchUsers(emails: string[]): Promise<Array<{ email: string; id: string; name: string }>> {
+    const wanted = [...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean))]
+    if (wanted.length < 1) {
+      return []
+    }
+    const rows = await WIKI.db
+      .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email })
+      .from(usersTable)
+      .where(and(inArray(sql`lower(${usersTable.email})`, wanted), eq(usersTable.isSystem, false)))
+    return rows.map((row) => ({ email: row.email.toLowerCase(), id: row.id, name: row.name }))
+  }
+
+  /**
+   * `{ path, title }` — a folder, with the title it should be shown under. Sent before anything is
+   * filed in it, or the first file there would name the folder after its path segment.
+   */
+  async folderStream(target: ImportSessionSite, records: any[]): Promise<IngestResult> {
+    const warnings: string[] = []
+    const locale = this.primaryLocaleOf(target.siteId)
+    let imported = 0
+    let skipped = 0
+    for (const record of records) {
+      const folderPath = stringOf(record?.path).replace(/^\/+|\/+$/g, '')
+      if (!folderPath) {
+        skipped++
+        continue
+      }
+      try {
+        const folder = await WIKI.models.tree.getFolder({
+          path: folderPath,
+          locale,
+          siteId: target.siteId,
+          createIfMissing: true
+        })
+        const title = stringOf(record?.title).trim()
+        if (title && title !== folder.title) {
+          await WIKI.db
+            .update(treeTable)
+            .set({ title, updatedAt: sql`now()` })
+            .where(eq(treeTable.id, folder.id))
+        }
+        imported++
+      } catch (err: any) {
+        warnings.push(`The folder "${folderPath}" could not be created: ${err.message}`)
+        skipped++
+      }
+    }
+    return { imported, skipped, warnings }
+  }
+
+  /**
+   * `{ id, folder, fileName, blob, authorId }` — a file, filed in a folder, from the bytes staged under
+   * `blob` (`POST …/uploads`). The latest version only: a file here has one.
+   */
+  async fileStream(
+    session: ImportSession,
+    target: ImportSessionSite,
+    records: any[]
+  ): Promise<IngestResult> {
+    const warnings: string[] = []
+    const locale = this.primaryLocaleOf(target.siteId)
+    let imported = 0
+    let skipped = 0
+    for (const record of records) {
+      const fileName = stringOf(record?.fileName).trim()
+      const digest = stringOf(record?.blob).trim()
+      const data = digest ? await this.readBlob(session.id, digest) : null
+      if (!fileName || !data) {
+        warnings.push(
+          `The file "${fileName || record?.id}" is missing from the source and was not imported.`
+        )
+        skipped++
+        continue
+      }
+      try {
+        const asset = await WIKI.models.assets.adoptStoredFile({
+          siteId: target.siteId,
+          locale,
+          folderPath: stringOf(record?.folder),
+          fileName,
+          data,
+          authorId: await this.authorFor(session, record?.authorId),
+          overwrite: session.overwrite,
+          // -> As for a package's assets: the bytes exist nowhere on this instance yet
+          dispatch: true
+        })
+        if (asset) {
+          imported++
+        } else {
+          skipped++
+        }
+      } catch (err: any) {
+        warnings.push(`The file "${fileName}" could not be imported: ${err.message}`)
+        skipped++
+      }
+    }
+    return { imported, skipped, warnings }
+  }
+
+  /** The page at exactly this path, or null — what a page already there with overwrite off still means. */
+  async pageIdAt(siteId: string, locale: string, pagePath: string): Promise<string | null> {
+    const rows = await WIKI.db
+      .select({ id: pagesTable.id })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale),
+          eq(pagesTable.path, pagePath)
+        )
+      )
+      .limit(1)
+    return rows[0]?.id ?? null
+  }
+
   /**
    * What a batch's 2.x locale codes are filed under on this site — after making sure the site serves
    * each of them.
@@ -1145,10 +1313,10 @@ class Import {
         await this.#ingestSiteStream(session, stream, target, records)
       )
     }
-    if (session.source === 'confluence') {
+    if (session.source !== SUPPORTED_SOURCE) {
       throw new CustomError(
         'importUnknownStream',
-        `A Confluence import has no "${stream}" stream: its people are mapped onto accounts when the session is opened.`,
+        `A ${session.source} import has no "${stream}" stream: its people are mapped onto accounts when the session is opened.`,
         400
       )
     }
@@ -1182,9 +1350,12 @@ class Import {
     target: ImportSessionSite,
     records: any[]
   ): Promise<IngestResult> {
-    // -> Records of the browser's own shape, read out of a Confluence backup rather than a package
+    // -> Records of the browser's own shape, read out of the source rather than out of a package
     if (session.source === 'confluence') {
       return WIKI.models.confluenceImporter.ingest(session, stream, target, records)
+    }
+    if (session.source === 'dokuwiki') {
+      return WIKI.models.dokuwikiImporter.ingest(session, stream, target, records)
     }
     switch (stream) {
       case 'tree':

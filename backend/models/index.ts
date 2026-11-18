@@ -17,6 +17,7 @@ import { icons } from './icons.ts'
 import { importer } from './import.ts'
 import { hedgedocImporter } from './importHedgedoc.ts'
 import { confluenceImporter } from './importConfluence.ts'
+import { dokuwikiImporter } from './importDokuwiki.ts'
 import { jobs } from './jobs.ts'
 import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
@@ -71,6 +72,7 @@ export default {
   importer,
   hedgedocImporter,
   confluenceImporter,
+  dokuwikiImporter,
   jobs,
   liveNotes,
   locales,

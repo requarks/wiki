@@ -72,8 +72,9 @@ before working in an area — and add to it there, not here:
   `personal-access-tokens` (`config.scope`, `requestUser(req)`), `image-editor` (the file
   manager's image editor and resize), `maintenance` (a site's read-only / restricted mode,
   `config.maintenance` on routes), `block-config` (an admin's per-site block defaults and locks)
-  `cli` (the management CLI, `backend/cli.ts`) and `confluence-import` (Import from Confluence:
-  both backup formats, who decides paths and who decides content).
+  `cli` (the management CLI, `backend/cli.ts`), `confluence-import` (Import from Confluence:
+  both backup formats, who decides paths and who decides content) and `dokuwiki-import` (Import from
+  DokuWiki: the data directory as the source, namespaces as folders).
 - **Procedures** — `.claude/skills/`: `throwaway-instance` boots, scripts and tears down a
   disposable instance.
 

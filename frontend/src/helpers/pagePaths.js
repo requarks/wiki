@@ -186,3 +186,23 @@ export function isPagePath(urlPath) {
   const firstSegment = (urlPath.split('/')[1] ?? '').toLowerCase()
   return !firstSegment.startsWith('_') && !RESERVED_ROOT.has(firstSegment)
 }
+
+/**
+ * Whether a path an import puts content under is one it may, as an error key or null: `invalid` for
+ * a segment no path may hold, `reserved` for one the app owns. Blank is the site root, and fine.
+ * Shared by the imports that ask for one (Confluence's per space, DokuWiki's for the whole wiki).
+ */
+export function prefixError(prefix) {
+  const normalized = normalizeNewPagePath(prefix)
+  if (!normalized) {
+    return null
+  }
+  const segments = normalized.split('/')
+  if (!segments.every(isValidPathSegment)) {
+    return 'invalid'
+  }
+  if (!isPagePath(`/${normalized}`)) {
+    return 'reserved'
+  }
+  return null
+}

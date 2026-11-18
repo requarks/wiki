@@ -25,10 +25,11 @@ real files. The points worth knowing before touching any of it:
   per batch — never send a whole map with every batch.
 - **A Confluence session has its own streams** (`index`, `tree`, `assets`, `pages`, `page-history`,
   `comments`), dispatched on `session.source` in `models/import.ts`. Everything else — batching, staged
-  blobs, the id map, `authorFor`, finishing — is the shared import's.
+  blobs, the id map, `authorFor`, finishing, and the pieces Import from DokuWiki uses too (`putRefs` /
+  `getRefs`, `folderStream`, `fileStream`, `matchUsers`, `pageIdAt`) — is the shared import's.
 - **Authors come from the session, not a stream.** The operator's mapping is passed as `users` when the
   session is opened and stored as the `user` id map; anybody unmapped is the importer. A CSV backup
-  has no addresses at all, so matching by email is an XML-only convenience.
+  has no addresses at all, so matching by email (`POST /import/match-users`) is an XML-only convenience.
 - **Attachments are uploaded through `POST …/uploads`**, which hashes on the server: the browser cannot
   hash outside a secure context, and a Confluence backup does not name files by content.
 - **The `htmlToMarkdown` rules added for this are inverses of renders** (alert, `<details>`, inline

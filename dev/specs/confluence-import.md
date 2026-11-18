@@ -91,7 +91,7 @@ Read into one index (`readIndex`), so nothing after `confluenceBackup.js` asks w
 | --- | --- |
 | Which formats | Both, detected from what is in the ZIP. |
 | Where a space goes | Under a path prefix per space, the space key by default (a personal space's owner name), editable; empty is the site root. Its home page is the page AT the prefix (`home` at the root). |
-| Authors | The operator maps each one onto an account here, in the overlay. An XML backup's are pre-matched by email (`POST /import/confluence/match-users`). Anybody left unmapped is attributed to whoever runs the import. The mapping is the session's `user` id map, which `authorFor` already resolves through. |
+| Authors | The operator maps each one onto an account here, in the overlay. An XML backup's are pre-matched by email (`POST /import/match-users`). Anybody left unmapped is attributed to whoever runs the import. The mapping is the session's `user` id map, which `authorFor` already resolves through. |
 | Blog posts | Not imported (counted). Blog posts could not be created on the test site, so there was nothing to build against. |
 | Drafts | Not imported (counted): private in Confluence, while an unpublished page here is visible to every editor. |
 | Permissions and restrictions | Not imported; the log says so before anything is written. |

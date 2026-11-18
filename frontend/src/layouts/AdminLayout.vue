@@ -534,6 +534,10 @@ const overlays = {
     loader: () => import('../components/ImportConfluenceOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  ImportDokuwikiOverlay: defineAsyncComponent({
+    loader: () => import('../components/ImportDokuwikiOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   ImportHedgedocOverlay: defineAsyncComponent({
     loader: () => import('../components/ImportHedgedocOverlay.vue'),
     loadingComponent: LoadingGeneric

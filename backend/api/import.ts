@@ -100,7 +100,7 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               enum: [...IMPORT_SOURCES],
               description:
-                '`wikijs2` for a `.wkbackup` package (`manifest.source.kind`), or `confluence` for a Confluence backup read by the browser — whose site streams are `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, in that order, in the record shapes documented in `models/importConfluence.ts`.'
+                '`wikijs2` for a `.wkbackup` package (`manifest.source.kind`); `confluence` for a Confluence backup read by the browser — whose site streams are `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, in that order, in the record shapes documented in `models/importConfluence.ts`; or `dokuwiki` for a DokuWiki data directory read by the browser — `index`, `tree`, `assets`, `pages` and `page-history`, documented in `models/importDokuwiki.ts`.'
             },
             sourceInstanceId: {
               type: 'string',
@@ -130,7 +130,7 @@ async function routes(app: FastifyInstance) {
               enum: ['markdown', 'html'],
               default: 'markdown',
               description:
-                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of — or with every page of a Confluence import. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
+                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of — or with every page of a Confluence or DokuWiki import, which arrives as HTML once converted. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
             },
             users: {
               type: 'array',
@@ -144,7 +144,7 @@ async function routes(app: FastifyInstance) {
                 required: ['sourceId', 'userId']
               },
               description:
-                'For a source that brings no accounts of its own (Confluence): which account here each of its authors is, by the id the source knows them by. An author left out is attributed to whoever runs the import.'
+                'For a source that brings no accounts of its own (Confluence, DokuWiki): which account here each of its authors is, by the id the source knows them by — a DokuWiki login name. An author left out is attributed to whoever runs the import.'
             }
           },
           required: ['source', 'sites', 'includes']
@@ -294,16 +294,16 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
-   * MATCH CONFLUENCE AUTHORS BY EMAIL
+   * MATCH AUTHORS BY EMAIL
    */
   app.post<{ Body: { emails: string[] } }>(
-    '/import/confluence/match-users',
+    '/import/match-users',
     {
       config: { permissions: ['manage:system'] },
       schema: {
-        summary: "Find the accounts that match a Confluence backup's authors",
+        summary: "Find the accounts that match a source's authors",
         description:
-          "The accounts here whose email address is one of those given, for **Import from Confluence** to suggest as each author's match before the operator decides. Only an XML backup carries addresses; a Cloud (CSV) backup names its people by account id alone, and its authors are matched by hand. The guest account is never matched.",
+          "The accounts here whose email address is one of those given, for **Import from Confluence** and **Import from DokuWiki** to suggest as each author's match before the operator decides. A Confluence XML backup and a DokuWiki user file carry addresses; a Confluence Cloud (CSV) backup names its people by account id alone, and its authors are matched by hand. The guest account is never matched.",
         tags: ['Import'],
         body: {
           type: 'object',
@@ -332,7 +332,7 @@ async function routes(app: FastifyInstance) {
       }
     },
     async (req) => {
-      return WIKI.models.confluenceImporter.matchUsers(req.body.emails)
+      return WIKI.models.importer.matchUsers(req.body.emails)
     }
   )
 

@@ -678,8 +678,8 @@ export const icons = pgTable(
 
 // IMPORT SESSIONS ---------------------
 /**
- * One run of **Administration → Utilities → Import from Wiki.js 2.x** (or **Import from Confluence**),
- * from the moment the operator
+ * One run of **Administration → Utilities → Import from Wiki.js 2.x** (or **Import from Confluence**,
+ * or **Import from DokuWiki**), from the moment the operator
  * presses Start until the package has been walked.
  *
  * A row rather than memory, for two reasons that both come from the import living in a browser tab:
@@ -707,8 +707,9 @@ export const importSessions = pgTable(
      */
     namespace: uuid().notNull(),
     /**
-     * `wikijs2` (`manifest.source.kind` of a `.wkbackup`), or `confluence` for a Confluence backup the
-     * browser reads itself — whose streams `models/importConfluence.ts` writes.
+     * `wikijs2` (`manifest.source.kind` of a `.wkbackup`), `confluence` for a Confluence backup the
+     * browser reads itself — whose streams `models/importConfluence.ts` writes — or `dokuwiki` for a
+     * DokuWiki data directory read the same way, written by `models/importDokuwiki.ts`.
      */
     source: varchar({ length: 32 }).notNull(),
     /** `[{ sourceId, siteId }]` — each package site paired with the target site it lands in. */
@@ -779,10 +780,11 @@ export const importIdMap = pgTable(
 /**
  * What an import's records refer to each other by, when that is not an id of this wiki.
  *
- * Written by **Import from Confluence** (`models/importConfluence.ts`), whose page bodies name a page
- * by its space and title, an attachment by its file name, a person by their account id — and whose
- * inline comments are anchored by a marker inside a page body that the comments stream never sees.
- * `importIdMap` cannot hold any of that: its target is a row id here, and these answers are a path, a
+ * Written by **Import from Confluence** (`models/importConfluence.ts`) and **Import from DokuWiki**
+ * (`models/importDokuwiki.ts`). A Confluence body names a page by its space and title, an attachment
+ * by its file name, a person by their account id, and its inline comments are anchored by a marker
+ * inside a page body that the comments stream never sees; a DokuWiki body names a page or a file by
+ * an id relative to its own namespace. `importIdMap` cannot hold any of that: its target is a row id here, and these answers are a path, a
  * display name, a described passage.
  *
  * The browser uploads the whole index before the first page, since a link points forward as often as
@@ -797,7 +799,10 @@ export const importRefs = pgTable(
     sessionId: uuid()
       .notNull()
       .references(() => importSessions.id, { onDelete: 'cascade' }),
-    /** `page`, `pageId`, `file`, `user`, `space` or `anchor` — see `models/importConfluence.ts`. */
+    /**
+     * Confluence: `page`, `pageId`, `file`, `user`, `space` or `anchor` (`models/importConfluence.ts`).
+     * DokuWiki: `page`, `namespace`, `file` or `interwiki` (`models/importDokuwiki.ts`).
+     */
     kind: varchar({ length: 32 }).notNull(),
     key: text().notNull(),
     value: jsonb().notNull()

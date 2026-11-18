@@ -1,13 +1,10 @@
 import { zstdDecompressSync } from 'node:zlib'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 
 import {
   commentAnnotations as annotationsTable,
   comments as commentsTable,
-  importRefs as importRefsTable,
   pageHistory as pageHistoryTable,
-  pages as pagesTable,
-  tree as treeTable,
   users as usersTable
 } from '../db/schema.ts'
 import {
@@ -101,9 +98,9 @@ class ConfluenceImport {
       case 'index':
         return this.#indexStream(session, records)
       case 'tree':
-        return this.#treeStream(target, records)
+        return WIKI.models.importer.folderStream(target, records)
       case 'assets':
-        return this.#assetsStream(session, target, records)
+        return WIKI.models.importer.fileStream(session, target, records)
       case 'pages':
         return this.#pagesStream(session, target, records)
       case 'page-history':
@@ -117,23 +114,6 @@ class ConfluenceImport {
           400
         )
     }
-  }
-
-  /**
-   * The accounts here whose address is one of these, for the overlay to suggest as the match for a
-   * Confluence author before the operator decides. Only an XML backup carries addresses; the guest
-   * account is never offered.
-   */
-  async matchUsers(emails: string[]): Promise<Array<{ email: string; id: string; name: string }>> {
-    const wanted = [...new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean))]
-    if (wanted.length < 1) {
-      return []
-    }
-    const rows = await WIKI.db
-      .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email })
-      .from(usersTable)
-      .where(and(inArray(sql`lower(${usersTable.email})`, wanted), eq(usersTable.isSystem, false)))
-    return rows.map((row) => ({ email: row.email.toLowerCase(), id: row.id, name: row.name }))
   }
 
   // ==============================================================================================
@@ -178,44 +158,8 @@ class ConfluenceImport {
         skipped++
       }
     }
-    await this.#putRefs(session.id, rows)
+    await WIKI.models.importer.putRefs(session.id, rows)
     return { imported: records.length - skipped, skipped, warnings: [] }
-  }
-
-  async #putRefs(
-    sessionId: string,
-    rows: Array<{ kind: RefKind; key: string; value: any }>
-  ): Promise<void> {
-    // -> One key twice in an insert is an error to postgres, rather than the later one winning
-    const unique = new Map(rows.map((row) => [`${row.kind}:${row.key}`, row]))
-    if (unique.size < 1) {
-      return
-    }
-    await WIKI.db
-      .insert(importRefsTable)
-      .values([...unique.values()].map((row) => ({ sessionId, ...row })))
-      .onConflictDoUpdate({
-        target: [importRefsTable.sessionId, importRefsTable.kind, importRefsTable.key],
-        set: { value: sql`excluded."value"` }
-      })
-  }
-
-  async #getRefs(sessionId: string, kind: RefKind, keys: string[]): Promise<Map<string, any>> {
-    const wanted = [...new Set(keys)]
-    if (wanted.length < 1) {
-      return new Map()
-    }
-    const rows = await WIKI.db
-      .select({ key: importRefsTable.key, value: importRefsTable.value })
-      .from(importRefsTable)
-      .where(
-        and(
-          eq(importRefsTable.sessionId, sessionId),
-          eq(importRefsTable.kind, kind),
-          inArray(importRefsTable.key, wanted)
-        )
-      )
-    return new Map(rows.map((row) => [row.key, row.value]))
   }
 
   /**
@@ -224,19 +168,19 @@ class ConfluenceImport {
    * mapped onto here.
    */
   async #resolverFor(session: ImportSession, refs: StorageRefs): Promise<StorageResolver> {
-    const pages = await this.#getRefs(
+    const pages = await WIKI.models.importer.getRefs(
       session.id,
       'page',
       refs.pages.map((ref) => keyOf(ref.spaceKey, ref.title))
     )
-    const pageIds = await this.#getRefs(session.id, 'pageId', refs.pageIds)
-    const files = await this.#getRefs(
+    const pageIds = await WIKI.models.importer.getRefs(session.id, 'pageId', refs.pageIds)
+    const files = await WIKI.models.importer.getRefs(
       session.id,
       'file',
       refs.files.map((ref) => keyOf(ref.spaceKey, ref.title, ref.fileName))
     )
-    const users = await this.#getRefs(session.id, 'user', refs.users)
-    const spaces = await this.#getRefs(session.id, 'space', refs.spaces)
+    const users = await WIKI.models.importer.getRefs(session.id, 'user', refs.users)
+    const spaces = await WIKI.models.importer.getRefs(session.id, 'space', refs.spaces)
 
     const mapped = await WIKI.models.importer.resolveIds(session.id, 'user', refs.users)
     const accountNames = new Map<string, string>()
@@ -279,104 +223,6 @@ class ConfluenceImport {
         return found ? href(found.path) : null
       }
     }
-  }
-
-  // ==============================================================================================
-  // FOLDERS
-  // ==============================================================================================
-
-  /**
-   * `{ path, title }` — a folder, with the title it should be shown under: a Confluence folder, a
-   * page that has children or attachments (the folder they sit in is named after it), and each space's
-   * own folder. Sent before anything is filed in them, or the first file there would name the folder
-   * after its path segment.
-   */
-  async #treeStream(target: ImportSessionSite, records: any[]): Promise<IngestResult> {
-    const warnings: string[] = []
-    const locale = WIKI.models.importer.primaryLocaleOf(target.siteId)
-    let imported = 0
-    let skipped = 0
-    for (const record of records) {
-      const folderPath = stringOf(record?.path).replace(/^\/+|\/+$/g, '')
-      if (!folderPath) {
-        skipped++
-        continue
-      }
-      try {
-        const folder = await WIKI.models.tree.getFolder({
-          path: folderPath,
-          locale,
-          siteId: target.siteId,
-          createIfMissing: true
-        })
-        const title = stringOf(record?.title).trim()
-        if (title && title !== folder.title) {
-          await WIKI.db
-            .update(treeTable)
-            .set({ title, updatedAt: sql`now()` })
-            .where(eq(treeTable.id, folder.id))
-        }
-        imported++
-      } catch (err: any) {
-        warnings.push(`The folder "${folderPath}" could not be created: ${err.message}`)
-        skipped++
-      }
-    }
-    return { imported, skipped, warnings }
-  }
-
-  // ==============================================================================================
-  // ATTACHMENTS
-  // ==============================================================================================
-
-  /**
-   * `{ id, folder, fileName, blob, authorId }` — an attachment, filed in the folder of the page it is
-   * on, from the bytes staged under `blob`. The latest version only: Confluence keeps every version
-   * of a file, and a file here has one.
-   */
-  async #assetsStream(
-    session: ImportSession,
-    target: ImportSessionSite,
-    records: any[]
-  ): Promise<IngestResult> {
-    const warnings: string[] = []
-    const locale = WIKI.models.importer.primaryLocaleOf(target.siteId)
-    let imported = 0
-    let skipped = 0
-    for (const record of records) {
-      const fileName = stringOf(record?.fileName).trim()
-      const digest = stringOf(record?.blob).trim()
-      const data = digest ? await WIKI.models.importer.readBlob(session.id, digest) : null
-      if (!fileName || !data) {
-        warnings.push(
-          `The attachment "${fileName || record?.id}" is missing from the backup and was not imported.`
-        )
-        skipped++
-        continue
-      }
-      try {
-        const asset = await WIKI.models.assets.adoptStoredFile({
-          siteId: target.siteId,
-          locale,
-          folderPath: stringOf(record?.folder),
-          fileName,
-          data,
-          authorId: await WIKI.models.importer.authorFor(session, record?.authorId),
-          overwrite: session.overwrite,
-          // -> As for a package's assets: the bytes exist nowhere on this instance yet
-          dispatch: true
-        })
-        if (asset) {
-          imported++
-        } else {
-          skipped++
-        }
-      } catch (err: any) {
-        warnings.push(`The attachment "${fileName}" could not be imported: ${err.message}`)
-        skipped++
-      }
-    }
-    return { imported, skipped, warnings }
   }
 
   // ==============================================================================================
@@ -516,7 +362,7 @@ class ConfluenceImport {
           page?.id ??
           // -> Already here with overwrite off: still what this Confluence page means, for its
           //    history and comments
-          (await this.#pageAt(target.siteId, locale, pagePath))
+          (await WIKI.models.importer.pageIdAt(target.siteId, locale, pagePath))
         if (pageId) {
           await WIKI.models.importer.remember(session.id, 'page', [
             { sourceId: record?.id, targetId: pageId }
@@ -534,7 +380,7 @@ class ConfluenceImport {
         skipped++
       }
     }
-    await this.#putRefs(session.id, anchors)
+    await WIKI.models.importer.putRefs(session.id, anchors)
     warnings.push(...this.#describeLosses(losses, codeLosses))
     return { imported, skipped, warnings }
   }
@@ -555,21 +401,6 @@ class ConfluenceImport {
     return markdown
       ? '*This page had no content in Confluence.*\n'
       : '<p><em>This page had no content in Confluence.</em></p>\n'
-  }
-
-  async #pageAt(siteId: string, locale: string, pagePath: string): Promise<string | null> {
-    const rows = await WIKI.db
-      .select({ id: pagesTable.id })
-      .from(pagesTable)
-      .where(
-        and(
-          eq(pagesTable.siteId, siteId),
-          eq(pagesTable.locale, locale),
-          eq(pagesTable.path, pagePath)
-        )
-      )
-      .limit(1)
-    return rows[0]?.id ?? null
   }
 
   /** One line per kind of loss in a batch, for the log. */
@@ -703,7 +534,7 @@ class ConfluenceImport {
       'page',
       records.map((record) => record?.pageId)
     )
-    const anchorRefs = await this.#getRefs(
+    const anchorRefs = await WIKI.models.importer.getRefs(
       session.id,
       'anchor',
       records.map((record) => stringOf(record?.inline?.markerRef)).filter(Boolean)

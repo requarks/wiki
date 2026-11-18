@@ -28,7 +28,7 @@
         :value="state.progress"
         :aria-label="t('admin.utilities.confluenceImport.progress')" />
     </w-header>
-    <w-page-container>
+    <w-page-container ref="pageContainer">
       <w-page class="p-4">
         <div class="grid grid-cols-12 gap-4 items-start">
           <!-- ----------------------- -->
@@ -380,6 +380,7 @@ import { useI18n } from 'vue-i18n'
 import ProgressLog from '@/components/ProgressLog.vue'
 import UserSearchDialog from '@/components/UserSearchDialog.vue'
 import { dialog } from '@/composables/dialog'
+import { scrollBehavior } from '@/helpers/motion'
 import { normalizeNewPagePath } from '@/helpers/pagePaths'
 
 import { useAdminStore } from '@/stores/admin'
@@ -586,7 +587,7 @@ async function matchAuthorsByEmail() {
   if (emails.length < 1) {
     return
   }
-  const matches = await API_CLIENT.post('import/confluence/match-users', {
+  const matches = await API_CLIENT.post('import/match-users', {
     json: { emails }
   }).json()
   const byEmail = new Map(matches.map((match) => [match.email, match]))
@@ -659,12 +660,25 @@ function formatBytes(bytes) {
   return `${value.toFixed(1)} ${units[unit]}`
 }
 
+/** The overlay's scrolling box -- `WPageContainer`, not the page inside it. */
+const pageContainer = ref(null)
+
+/**
+ * Back to the top of the overlay, where the progress bar and the start of the log are: the button
+ * that starts an import is at the bottom of the form, and a long form leaves both out of view, so
+ * the import would start without anything visibly happening.
+ */
+function scrollToTop() {
+  pageContainer.value?.$el?.scrollTo({ top: 0, behavior: scrollBehavior() })
+}
+
 /**
  * Run the import. A failure unlocks the form: every record is keyed so that writing it twice
  * replaces it, so starting again after fixing what went wrong carries on rather than duplicating.
  */
 async function startImport() {
   state.phase = 'running'
+  scrollToTop()
   state.progress = 0
   addLog('info', t('admin.utilities.confluenceImport.logStarted'))
   try {

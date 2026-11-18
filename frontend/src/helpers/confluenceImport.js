@@ -1,12 +1,7 @@
 import { inBatches } from './wkbackup'
 import { LONG_REQUEST, postBatch } from './wkbackupImport'
 import { attachmentEntry, readAttachment, readBodies } from './confluenceBackup'
-import {
-  isPagePath,
-  isValidPathSegment,
-  normalizeNewPagePath,
-  pathSegmentFromTitle
-} from './pagePaths'
+import { isPagePath, normalizeNewPagePath, pathSegmentFromTitle, prefixError } from './pagePaths'
 
 /**
  * Driving an Import from Confluence, once `helpers/confluenceBackup.js` has read the backup.
@@ -87,23 +82,8 @@ export function describeSpaces(index) {
     })
 }
 
-/**
- * Whether a prefix is one a space may go under, as an error message or null. Blank is the site root.
- */
-export function prefixError(prefix) {
-  const normalized = normalizeNewPagePath(prefix)
-  if (!normalized) {
-    return null
-  }
-  const segments = normalized.split('/')
-  if (!segments.every(isValidPathSegment)) {
-    return 'invalid'
-  }
-  if (!isPagePath(`/${normalized}`)) {
-    return 'reserved'
-  }
-  return null
-}
+// -> Shared with the DokuWiki import, which asks for a path too; the overlay reaches it through here
+export { prefixError }
 
 /**
  * Who wrote what in the chosen spaces, for the overlay to map onto accounts here: each author with an
