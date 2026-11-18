@@ -39,7 +39,7 @@ const BATCH_BYTES = 4 * 1024 * 1024
   not stop the server either — it carries on writing the batch while this side abandons the session
   under it. Nothing on this side gives up on one, since the server does not.
 */
-const LONG_REQUEST = { timeout: false }
+export const LONG_REQUEST = { timeout: false }
 
 /** What a blob is named by — the route's own pattern, since a record's digest is interpolated into its URL. */
 const DIGEST_PATTERN = /^[0-9a-f]{64}$/
@@ -432,7 +432,7 @@ async function stageBlobsFor({ pkg, session, batch, staged, log }) {
  * is a page to go and look at, not a reason to abandon the other eleven thousand. It is named in the
  * log, which is the only place anybody could act on it.
  */
-async function postBatch(url, records, label, log) {
+export async function postBatch(url, records, label, log) {
   try {
     return await API_CLIENT.post(url, { ...LONG_REQUEST, json: { records } }).json()
   } catch (err) {

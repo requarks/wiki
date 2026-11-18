@@ -530,6 +530,10 @@ const overlays = {
     loader: () => import('../components/GroupEditOverlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  ImportConfluenceOverlay: defineAsyncComponent({
+    loader: () => import('../components/ImportConfluenceOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   ImportHedgedocOverlay: defineAsyncComponent({
     loader: () => import('../components/ImportHedgedocOverlay.vue'),
     loadingComponent: LoadingGeneric

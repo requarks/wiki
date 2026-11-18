@@ -121,7 +121,13 @@ async function routes(app: FastifyInstance) {
   )
 
   app.get<{
-    Querystring: { page?: number; limit?: number; filter?: string; assignableToGroupId?: string }
+    Querystring: {
+      page?: number
+      limit?: number
+      filter?: string
+      assignableToGroupId?: string
+      excludeSystem?: boolean
+    }
   }>(
     '/',
     {
@@ -144,6 +150,12 @@ async function routes(app: FastifyInstance) {
               format: 'uuid',
               description:
                 'Keep only the users that may be assigned to this group, i.e. omit its current members and any system user. Intended for pickers offering users to assign.'
+            },
+            excludeSystem: {
+              type: 'boolean',
+              default: false,
+              description:
+                'Omit system users (the guest account). Intended for pickers choosing an account to act as, which a system user cannot be.'
             },
             page: { type: 'integer', minimum: 1, default: 1 },
             limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
@@ -172,6 +184,7 @@ async function routes(app: FastifyInstance) {
       const { total, users } = await WIKI.models.users.getUsers({
         filter: req.query.filter ?? '',
         assignableToGroupId: req.query.assignableToGroupId ?? '',
+        excludeSystem: req.query.excludeSystem ?? false,
         page,
         limit
       })

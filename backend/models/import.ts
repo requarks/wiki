@@ -83,6 +83,13 @@ const SUPPORTED_FORMAT_VERSION = 1
 const SUPPORTED_SOURCE = 'wikijs2'
 
 /**
+ * What a session may be opened for. `confluence` is not a package at all — the browser reads a
+ * Confluence backup itself and posts records of its own shape, which `models/importConfluence.ts`
+ * writes. Everything else about a session (the batches, the blobs, the id map, finishing) is shared.
+ */
+export const IMPORT_SOURCES = [SUPPORTED_SOURCE, 'confluence'] as const
+
+/**
  * What the operator may tick, as the overlay names them.
  *
  * A stream whose content kind is not in the session's `includes` is refused rather than ignored, so a
@@ -115,14 +122,19 @@ const STREAM_REQUIRES: Record<string, ImportContentKind | null> = {
   'page-history': 'history',
   assets: 'assets',
   comments: 'comments',
-  navigation: 'navigation'
+  navigation: 'navigation',
+  index: null
 }
 
 /** Streams that belong to the wiki rather than to any one site. */
 const INSTANCE_STREAMS = new Set(['locales', 'groups', 'users'])
 
-/** Streams that belong to a site, and are posted with the target site's id. */
+/**
+ * Streams that belong to a site, and are posted with the target site's id. `index` is a Confluence
+ * session's alone: what its pages, files and people are called, ahead of the pages that link to them.
+ */
 const SITE_STREAMS = new Set([
+  'index',
   'tree',
   'site',
   'pages',
@@ -690,6 +702,7 @@ class Import {
     includes,
     overwrite,
     htmlConversion,
+    users,
     actorId
   }: {
     source: string
@@ -698,12 +711,18 @@ class Import {
     includes: string[]
     overwrite: boolean
     htmlConversion?: string
+    /**
+     * Which account here each author in the source is, as the operator settled it — for a source
+     * that brings no accounts of its own (Confluence). Remembered as the `user` id map, which is what
+     * every stream already resolves an author through.
+     */
+    users?: Array<{ sourceId: string; userId: string }>
     actorId: string | null
   }): Promise<ImportSession> {
-    if (source !== SUPPORTED_SOURCE) {
+    if (!(IMPORT_SOURCES as readonly string[]).includes(source)) {
       throw new CustomError(
         'importUnsupportedSource',
-        `Only ${SUPPORTED_SOURCE} packages can be imported.`,
+        `Only ${IMPORT_SOURCES.join(' and ')} imports are supported.`,
         400
       )
     }
@@ -761,7 +780,34 @@ class Import {
         actorId
       })
       .returning()
-    return rows[0] as unknown as ImportSession
+    const session = rows[0] as unknown as ImportSession
+
+    /*
+      Only accounts that exist, and never the guest account: an author mapped onto nobody falls back
+      to whoever runs the import (`authorFor`), which is the operator's stated default, rather than
+      failing the session over one stale pick.
+    */
+    const mapping = (users ?? []).filter((entry) => entry.sourceId && entry.userId)
+    if (mapping.length > 0) {
+      const existing = await WIKI.db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(
+          and(
+            inArray(usersTable.id, [...new Set(mapping.map((entry) => entry.userId))]),
+            eq(usersTable.isSystem, false)
+          )
+        )
+      const known = new Set(existing.map((row) => row.id))
+      await this.remember(
+        session.id,
+        'user',
+        mapping
+          .filter((entry) => known.has(entry.userId))
+          .map((entry) => ({ sourceId: entry.sourceId, targetId: entry.userId }))
+      )
+    }
+    return session
   }
 
   async getSession(id: string): Promise<ImportSession | null> {
@@ -823,8 +869,21 @@ class Import {
     return { bytes: data.length }
   }
 
+  /**
+   * Take one file whose digest the sender does not know, and say what it is.
+   *
+   * For a source that does not name its files by their contents — a Confluence backup names an
+   * attachment by its file-store id. Hashing in the browser needs `crypto.subtle`, which exists only
+   * in a secure context, so a wiki served over plain HTTP could not; hashed here, it is staged exactly
+   * as `putBlob` stages one, and a record then refers to it by the digest this answers with.
+   */
+  async stageUpload(sessionId: string, data: Buffer): Promise<{ digest: string; bytes: number }> {
+    const digest = crypto.createHash('sha256').update(data).digest('hex')
+    return { digest, ...(await this.putBlob(sessionId, digest, data)) }
+  }
+
   /** The staged bytes of a blob, or null when nothing uploaded it. */
-  async #readBlob(sessionId: string, digest: string): Promise<Buffer | null> {
+  async readBlob(sessionId: string, digest: string): Promise<Buffer | null> {
     if (!/^[0-9a-f]{64}$/.test(digest)) {
       return null
     }
@@ -842,7 +901,7 @@ class Import {
    * which is what makes a batch safe to retry — while two sessions importing two different packages
    * cannot collide. See `dev/specs/wkbackup.md` §4.
    */
-  #derive(session: ImportSession, site: string, entity: string, sourceId: unknown): string {
+  derive(session: ImportSession, site: string, entity: string, sourceId: unknown): string {
     return uuidv5(`${site}:${entity}:${String(sourceId)}`, session.namespace)
   }
 
@@ -854,7 +913,7 @@ class Import {
    * page's author, a comment's page, a user's groups. Written as the owning stream runs, read by the
    * streams that come after it.
    */
-  async #remember(
+  async remember(
     sessionId: string,
     entity: string,
     pairs: Array<{ sourceId: unknown; targetId: string }>
@@ -885,7 +944,7 @@ class Import {
    * Per batch rather than per record: a batch of 500 comments names at most 500 pages and usually far
    * fewer, and one indexed read answers all of them.
    */
-  async #resolveIds(
+  async resolveIds(
     sessionId: string,
     entity: string,
     sourceIds: unknown[]
@@ -908,7 +967,7 @@ class Import {
   }
 
   /** The locale a site files content under when the package does not say — 2.x assets have none. */
-  #primaryLocaleOf(siteId: string): string {
+  primaryLocaleOf(siteId: string): string {
     return WIKI.sites?.[siteId]?.config?.locales?.primary ?? 'en'
   }
 
@@ -1086,6 +1145,13 @@ class Import {
         await this.#ingestSiteStream(session, stream, target, records)
       )
     }
+    if (session.source === 'confluence') {
+      throw new CustomError(
+        'importUnknownStream',
+        `A Confluence import has no "${stream}" stream: its people are mapped onto accounts when the session is opened.`,
+        400
+      )
+    }
     return this.#record(session, stream, await this.#ingestInstanceStream(session, stream, records))
   }
 
@@ -1116,6 +1182,10 @@ class Import {
     target: ImportSessionSite,
     records: any[]
   ): Promise<IngestResult> {
+    // -> Records of the browser's own shape, read out of a Confluence backup rather than a package
+    if (session.source === 'confluence') {
+      return WIKI.models.confluenceImporter.ingest(session, stream, target, records)
+    }
     switch (stream) {
       case 'tree':
         return this.#treeStream(session, target, records)
@@ -1247,7 +1317,7 @@ class Import {
         continue
       }
 
-      const id = this.#derive(session, '', 'group', sourceId)
+      const id = this.derive(session, '', 'group', sourceId)
       await WIKI.db
         .insert(groupsTable)
         .values({
@@ -1266,7 +1336,7 @@ class Import {
       imported++
     }
 
-    await this.#remember(session.id, 'group', mapped)
+    await this.remember(session.id, 'group', mapped)
     // -> The rules cache is what `checkAccess` reads, so it has to be told once per batch rather than
     //    once per group
     await WIKI.models.groups.reloadCache()
@@ -1396,7 +1466,7 @@ class Import {
           would fall through to "whoever ran the import", which is only the same person by luck.
         */
         if (session.actorId) {
-          await this.#remember(session.id, 'user', [
+          await this.remember(session.id, 'user', [
             { sourceId: record?.id, targetId: session.actorId }
           ])
         }
@@ -1454,7 +1524,7 @@ class Import {
         if (!session.overwrite) {
           warnings.push(`"${email}" already has an account here and was left alone.`)
           // -> Still the account that 2.x user id means, so anything they authored is still theirs
-          await this.#remember(session.id, 'user', [{ sourceId: record?.id, targetId: userId }])
+          await this.remember(session.id, 'user', [{ sourceId: record?.id, targetId: userId }])
           skipped++
           continue
         }
@@ -1471,7 +1541,7 @@ class Import {
           })
           .where(eq(usersTable.id, userId))
       } else {
-        userId = this.#derive(session, '', 'user', record?.id ?? email)
+        userId = this.derive(session, '', 'user', record?.id ?? email)
         await WIKI.db
           .insert(usersTable)
           .values({
@@ -1499,7 +1569,7 @@ class Import {
       // -> Remembered whether created or matched: the pages, history, assets and comments that follow
       //    name their author by the 2.x user id, and an account that was already here is still the
       //    answer to it
-      await this.#remember(session.id, 'user', [{ sourceId: record?.id, targetId: userId }])
+      await this.remember(session.id, 'user', [{ sourceId: record?.id, targetId: userId }])
       imported++
     }
 
@@ -1514,7 +1584,7 @@ class Import {
     subject: string
   ): Promise<string[]> {
     const sourceIds = Array.isArray(value) ? value : []
-    const map = await this.#resolveIds(session.id, 'group', sourceIds)
+    const map = await this.resolveIds(session.id, 'group', sourceIds)
     const ids: string[] = []
     for (const entry of sourceIds) {
       const mapped = map.get(String(entry))
@@ -1892,7 +1962,7 @@ class Import {
       const source = editor === 'visual' ? htmlToMarkdown(body, losses) : body
 
       try {
-        const authorId = await this.#authorFor(session, record?.authorId)
+        const authorId = await this.authorFor(session, record?.authorId)
         // -> A restore, not a person writing pages: nobody who asked about new pages hears of these
         const page = await WIKI.models.notifications.withOrigin('import', () =>
           WIKI.models.pages.adoptStoredPage({
@@ -1928,22 +1998,22 @@ class Import {
           */
           const existing = await this.#pageAt(target.siteId, locale, pagePath)
           if (existing) {
-            await this.#remember(session.id, 'page', [
+            await this.remember(session.id, 'page', [
               { sourceId: record?.id, targetId: existing.id }
             ])
           }
           skipped++
           continue
         }
-        await this.#markPendingRender(target.siteId, page.id, editor)
+        await this.markPendingRender(target.siteId, page.id, editor)
         if (icon) {
           await WIKI.db.update(pagesTable).set({ icon }).where(eq(pagesTable.id, page.id))
           icons++
         }
         // -> The comments stream names its page by the 2.x page id and has nothing else to go on
-        await this.#remember(session.id, 'page', [{ sourceId: record?.id, targetId: page.id }])
+        await this.remember(session.id, 'page', [{ sourceId: record?.id, targetId: page.id }])
         // -> And `finishSession` rewrites the links of exactly the pages this import wrote
-        await this.#remember(session.id, 'writtenPage', [
+        await this.remember(session.id, 'writtenPage', [
           { sourceId: record?.id, targetId: page.id }
         ])
         if (losses.codeFormatting.size > 0) {
@@ -1996,7 +2066,7 @@ class Import {
    * blank with nothing saying why. Written only over an empty render, so the first real one replaces
    * it and nothing here can overwrite a page that already has HTML.
    */
-  async #markPendingRender(siteId: string, pageId: string, editor: string): Promise<void> {
+  async markPendingRender(siteId: string, pageId: string, editor: string): Promise<void> {
     if (BODYLESS_EDITORS.has(editor)) {
       return
     }
@@ -2032,7 +2102,7 @@ class Import {
   async #contentOf(session: ImportSession, record: any): Promise<string | null> {
     const blob = stringOf(record?.contentBlob).trim()
     if (blob) {
-      const data = await this.#readBlob(session.id, blob)
+      const data = await this.readBlob(session.id, blob)
       return data ? data.toString('utf8') : null
     }
     return stringOf(record?.content)
@@ -2047,9 +2117,9 @@ class Import {
    * account may have been deleted from the old wiki years ago. Whoever is running the import is the
    * honest answer then: they are who caused the row to exist here.
    */
-  async #authorFor(session: ImportSession, sourceUserId: unknown): Promise<string> {
+  async authorFor(session: ImportSession, sourceUserId: unknown): Promise<string> {
     if (sourceUserId !== undefined && sourceUserId !== null) {
-      const map = await this.#resolveIds(session.id, 'user', [sourceUserId])
+      const map = await this.resolveIds(session.id, 'user', [sourceUserId])
       const mapped = map.get(String(sourceUserId))
       if (mapped) {
         return mapped
@@ -2257,7 +2327,7 @@ class Import {
         }
 
         try {
-          const authorId = page.authorId ?? (await this.#authorFor(session, null))
+          const authorId = page.authorId ?? (await this.authorFor(session, null))
           await WIKI.models.notifications.withOrigin('import', () =>
             WIKI.models.pages.adoptStoredPage({
               siteId: page.siteId,
@@ -2336,7 +2406,7 @@ class Import {
       The path is still what gets STORED, since "where was this page when this version was written"
       is what a history list shows and what finding a deleted page again depends on.
     */
-    const pageMap = await this.#resolveIds(
+    const pageMap = await this.resolveIds(
       session.id,
       'page',
       records.map((record) => record?.pageId)
@@ -2392,7 +2462,7 @@ class Import {
       const versionEditor = targetEditorFor(sourceEditor, session.htmlConversion !== 'html')
       const body = versionEditor === 'visual' ? htmlToMarkdown(stripped) : stripped
 
-      const id = this.#derive(session, target.sourceId, 'pageHistory', record?.id)
+      const id = this.derive(session, target.sourceId, 'pageHistory', record?.id)
       const values = {
         id,
         pageId,
@@ -2409,7 +2479,7 @@ class Import {
         },
         // -> 2.x stamps a version with `versionDate`, falling back to when the row was written
         versionDate: dateOf(record?.versionDate) ?? dateOf(record?.createdAt) ?? new Date(),
-        authorId: await this.#authorFor(session, record?.authorId),
+        authorId: await this.authorFor(session, record?.authorId),
         siteId: target.siteId
       }
       await WIKI.db
@@ -2455,8 +2525,8 @@ class Import {
         the record to read and nothing to guess: they go in the site's primary locale, which is where
         a 3.x site with one locale keeps everything anyway.
       */
-      const locale = this.#primaryLocaleOf(target.siteId)
-      const data = await this.#readBlob(session.id, digest)
+      const locale = this.primaryLocaleOf(target.siteId)
+      const data = await this.readBlob(session.id, digest)
       if (!data) {
         warnings.push(`The file "${fileName}" is missing from the package.`)
         skipped++
@@ -2469,7 +2539,7 @@ class Import {
           folderPath: folderPathOf(record?.folderPath),
           fileName,
           data,
-          authorId: await this.#authorFor(session, record?.authorId),
+          authorId: await this.authorFor(session, record?.authorId),
           overwrite: session.overwrite,
           /*
             The bytes came out of a ZIP in somebody's browser and nothing on this instance has them,
@@ -2516,12 +2586,12 @@ class Import {
       have run and remembered what each one became. Resolved for the whole batch in one read rather
       than per comment.
     */
-    const pageMap = await this.#resolveIds(
+    const pageMap = await this.resolveIds(
       session.id,
       'page',
       records.map((record) => record?.pageId)
     )
-    const authorMap = await this.#resolveIds(
+    const authorMap = await this.resolveIds(
       session.id,
       'user',
       records.map((record) => record?.authorId)
@@ -2549,7 +2619,7 @@ class Import {
       const authorId = authorMap.get(String(record?.authorId)) ?? null
       const email = emailOf(record?.email)
 
-      const id = this.#derive(session, target.sourceId, 'comment', record?.id)
+      const id = this.derive(session, target.sourceId, 'comment', record?.id)
       const values = {
         id,
         pageId,

@@ -16,6 +16,7 @@ import { hooks } from './hooks.ts'
 import { icons } from './icons.ts'
 import { importer } from './import.ts'
 import { hedgedocImporter } from './importHedgedoc.ts'
+import { confluenceImporter } from './importConfluence.ts'
 import { jobs } from './jobs.ts'
 import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
@@ -69,6 +70,7 @@ export default {
   icons,
   importer,
   hedgedocImporter,
+  confluenceImporter,
   jobs,
   liveNotes,
   locales,

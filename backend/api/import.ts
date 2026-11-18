@@ -7,6 +7,7 @@ import {
   MAX_BATCH_BYTES,
   MAX_BATCH_RECORDS,
   MAX_BLOB_BYTES,
+  IMPORT_SOURCES,
   type ImportSessionSite
 } from '../models/import.ts'
 
@@ -81,6 +82,7 @@ async function routes(app: FastifyInstance) {
       includes: string[]
       overwrite?: boolean
       htmlConversion?: string
+      users?: Array<{ sourceId: string; userId: string }>
     }
   }>(
     '/import/sessions',
@@ -96,7 +98,9 @@ async function routes(app: FastifyInstance) {
           properties: {
             source: {
               type: 'string',
-              description: '`manifest.source.kind`. Only `wikijs2` is implemented.'
+              enum: [...IMPORT_SOURCES],
+              description:
+                '`wikijs2` for a `.wkbackup` package (`manifest.source.kind`), or `confluence` for a Confluence backup read by the browser — whose site streams are `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, in that order, in the record shapes documented in `models/importConfluence.ts`.'
             },
             sourceInstanceId: {
               type: 'string',
@@ -126,7 +130,21 @@ async function routes(app: FastifyInstance) {
               enum: ['markdown', 'html'],
               default: 'markdown',
               description:
-                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
+                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of — or with every page of a Confluence import. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
+            },
+            users: {
+              type: 'array',
+              maxItems: 100000,
+              items: {
+                type: 'object',
+                properties: {
+                  sourceId: { type: 'string', minLength: 1, maxLength: 255 },
+                  userId: { type: 'string', format: 'uuid' }
+                },
+                required: ['sourceId', 'userId']
+              },
+              description:
+                'For a source that brings no accounts of its own (Confluence): which account here each of its authors is, by the id the source knows them by. An author left out is attributed to whoever runs the import.'
             }
           },
           required: ['source', 'sites', 'includes']
@@ -144,6 +162,7 @@ async function routes(app: FastifyInstance) {
         includes: req.body.includes,
         overwrite: req.body.overwrite === true,
         htmlConversion: req.body.htmlConversion,
+        users: req.body.users,
         actorId: req.session?.user?.id ?? null
       })
       await audit(req, 'admin', 'startImport', {
@@ -236,6 +255,88 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * UPLOAD A FILE BY ITS CONTENTS
+   */
+  app.post<{ Params: { sessionId: string } }>(
+    '/import/sessions/:sessionId/uploads',
+    {
+      config: { permissions: ['manage:system'] },
+      schema: {
+        summary: 'Upload a file the sender has not hashed',
+        description: `For a source that names its files by something other than their contents — a Confluence backup names an attachment by its file-store id. The body is the file itself, sent with \`Content-Type: application/octet-stream\`, at most ${MAX_BLOB_BYTES / 1024 / 1024 / 1024} GB.\n\nThe server hashes it and stages it exactly as the blob route does, and answers with the SHA-256 a record then refers to it by. Hashing in the browser needs \`crypto.subtle\`, which only exists in a secure context, so a wiki served over plain HTTP could not use the other route for this.`,
+        tags: ['Import'],
+        consumes: ['application/octet-stream'],
+        params: {
+          type: 'object',
+          properties: { sessionId: { type: 'string', format: 'uuid' } },
+          required: ['sessionId']
+        },
+        response: {
+          200: {
+            description: 'File staged',
+            type: 'object',
+            properties: {
+              digest: { type: 'string' },
+              bytes: { type: 'integer' }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      await WIKI.models.importer.requireOpenSession(req.params.sessionId)
+      const data = req.body
+      if (!Buffer.isBuffer(data) || data.length < 1) {
+        return reply.badRequest('No file was sent.')
+      }
+      return WIKI.models.importer.stageUpload(req.params.sessionId, data)
+    }
+  )
+
+  /**
+   * MATCH CONFLUENCE AUTHORS BY EMAIL
+   */
+  app.post<{ Body: { emails: string[] } }>(
+    '/import/confluence/match-users',
+    {
+      config: { permissions: ['manage:system'] },
+      schema: {
+        summary: "Find the accounts that match a Confluence backup's authors",
+        description:
+          "The accounts here whose email address is one of those given, for **Import from Confluence** to suggest as each author's match before the operator decides. Only an XML backup carries addresses; a Cloud (CSV) backup names its people by account id alone, and its authors are matched by hand. The guest account is never matched.",
+        tags: ['Import'],
+        body: {
+          type: 'object',
+          properties: {
+            emails: {
+              type: 'array',
+              maxItems: 10000,
+              items: { type: 'string', maxLength: 255 }
+            }
+          },
+          required: ['emails']
+        },
+        response: {
+          200: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                email: { type: 'string' },
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      return WIKI.models.confluenceImporter.matchUsers(req.body.emails)
+    }
+  )
+
+  /**
    * INGEST AN INSTANCE-WIDE STREAM
    */
   app.post<{ Params: { sessionId: string; stream: string }; Body: { records: any[] } }>(
@@ -304,7 +405,16 @@ async function routes(app: FastifyInstance) {
             siteId: { type: 'string', format: 'uuid' },
             stream: {
               type: 'string',
-              enum: ['tree', 'site', 'pages', 'page-history', 'assets', 'comments', 'navigation']
+              enum: [
+                'index',
+                'tree',
+                'site',
+                'pages',
+                'page-history',
+                'assets',
+                'comments',
+                'navigation'
+              ]
             }
           },
           required: ['sessionId', 'siteId', 'stream']

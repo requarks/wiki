@@ -126,6 +126,19 @@ const props = defineProps({
     type: String,
     required: false,
     default: ''
+  },
+  /**
+   * Pick one account rather than several: ticking a second replaces the first. What comes back is
+   * still a list, of one, so a caller reads it the same way either way.
+   */
+  single: {
+    type: Boolean,
+    default: false
+  },
+  /** Leave out system users (the guest account), for picking an account somebody is to act as. */
+  excludeSystem: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -178,6 +191,7 @@ async function load() {
       searchParams: {
         ...(state.search ? { filter: state.search } : {}),
         ...(props.assignableToGroupId ? { assignableToGroupId: props.assignableToGroupId } : {}),
+        ...(props.excludeSystem ? { excludeSystem: true } : {}),
         page: state.currentPage,
         limit: state.pageSize
       }
@@ -200,9 +214,11 @@ function isSelected(id) {
 
 /** Selection survives filtering and paging, so users from several pages can be picked at once. */
 function toggle(usr) {
-  state.selected = isSelected(usr.id)
-    ? state.selected.filter((sel) => sel.id !== usr.id)
-    : [...state.selected, usr]
+  if (isSelected(usr.id)) {
+    state.selected = state.selected.filter((sel) => sel.id !== usr.id)
+  } else {
+    state.selected = props.single ? [usr] : [...state.selected, usr]
+  }
 }
 
 function confirm() {

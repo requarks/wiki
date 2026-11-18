@@ -303,20 +303,13 @@
               <w-item-label caption>{{ t(`admin.utilities.importConfluenceHint`) }}</w-item-label>
             </w-item-section>
             <w-item-section side>
-              <!--
-                The wrapper is what carries the tooltip: a disabled button is transparent to the
-                hit test, so a tooltip written inside it would never be shown. See WTooltip.
-              -->
-              <span data-tooltip-anchor class="inline-flex">
-                <w-btn
-                  class="acrylic-btn"
-                  flat
-                  icon="la:arrow-circle-right"
-                  color="primary"
-                  disabled
-                  :label="t(`common.actions.proceed`)" />
-                <w-tooltip>{{ t(`common.comingSoon`) }}</w-tooltip>
-              </span>
+              <w-btn
+                class="acrylic-btn"
+                flat
+                icon="la:arrow-circle-right"
+                color="primary"
+                @click="openConfluenceImport"
+                :label="t(`common.actions.proceed`)" />
             </w-item-section>
           </w-item>
           <w-item>
@@ -513,6 +506,10 @@ const purgeHistoryTimeframes = computed(() => [
  */
 function openWikijs2Import() {
   adminStore.$patch({ overlay: 'ImportWikijs2Overlay' })
+}
+
+function openConfluenceImport() {
+  adminStore.$patch({ overlay: 'ImportConfluenceOverlay' })
 }
 
 function openHedgedocImport() {

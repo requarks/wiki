@@ -678,7 +678,8 @@ export const icons = pgTable(
 
 // IMPORT SESSIONS ---------------------
 /**
- * One run of **Administration → Utilities → Import from Wiki.js 2.x**, from the moment the operator
+ * One run of **Administration → Utilities → Import from Wiki.js 2.x** (or **Import from Confluence**),
+ * from the moment the operator
  * presses Start until the package has been walked.
  *
  * A row rather than memory, for two reasons that both come from the import living in a browser tab:
@@ -705,7 +706,10 @@ export const importSessions = pgTable(
      * with no natural key to match on. See `dev/specs/wkbackup.md` §4.
      */
     namespace: uuid().notNull(),
-    /** `manifest.source.kind`. Only `wikijs2` is implemented. */
+    /**
+     * `wikijs2` (`manifest.source.kind` of a `.wkbackup`), or `confluence` for a Confluence backup the
+     * browser reads itself — whose streams `models/importConfluence.ts` writes.
+     */
     source: varchar({ length: 32 }).notNull(),
     /** `[{ sourceId, siteId }]` — each package site paired with the target site it lands in. */
     sites: jsonb().notNull().default([]),
@@ -770,6 +774,35 @@ export const importIdMap = pgTable(
     targetId: uuid().notNull()
   },
   (table) => [primaryKey({ columns: [table.sessionId, table.entity, table.sourceId] })]
+)
+
+/**
+ * What an import's records refer to each other by, when that is not an id of this wiki.
+ *
+ * Written by **Import from Confluence** (`models/importConfluence.ts`), whose page bodies name a page
+ * by its space and title, an attachment by its file name, a person by their account id — and whose
+ * inline comments are anchored by a marker inside a page body that the comments stream never sees.
+ * `importIdMap` cannot hold any of that: its target is a row id here, and these answers are a path, a
+ * display name, a described passage.
+ *
+ * The browser uploads the whole index before the first page, since a link points forward as often as
+ * back and every path is known before anything is written. Then each batch of pages reads only the
+ * keys its own bodies mention, in one query per kind.
+ *
+ * Rows go with the session, as `importIdMap`'s do.
+ */
+export const importRefs = pgTable(
+  'importRefs',
+  {
+    sessionId: uuid()
+      .notNull()
+      .references(() => importSessions.id, { onDelete: 'cascade' }),
+    /** `page`, `pageId`, `file`, `user`, `space` or `anchor` — see `models/importConfluence.ts`. */
+    kind: varchar({ length: 32 }).notNull(),
+    key: text().notNull(),
+    value: jsonb().notNull()
+  },
+  (table) => [primaryKey({ columns: [table.sessionId, table.kind, table.key] })]
 )
 
 // JOB HISTORY -------------------------

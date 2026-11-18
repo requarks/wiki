@@ -449,6 +449,7 @@ class Users {
    *
    * @param filter Matched literally against name and email, case-insensitively
    * @param assignableToGroupId Keep only the users that may be assigned to this group
+   * @param excludeSystem Leave out system users (the guest account)
    * @returns The page of users plus the total number matching the filter
    */
   /**
@@ -501,11 +502,13 @@ class Users {
   async getUsers({
     filter = '',
     assignableToGroupId = '',
+    excludeSystem = false,
     page = 1,
     limit = 20
   }: {
     filter?: string
     assignableToGroupId?: string
+    excludeSystem?: boolean
     page?: number
     limit?: number
   } = {}): Promise<UserPage> {
@@ -514,10 +517,13 @@ class Users {
       const pattern = `%${escapeLikePattern(filter)}%`
       conditions.push(or(ilike(usersTable.name, pattern), ilike(usersTable.email, pattern))!)
     }
-    if (assignableToGroupId) {
-      // -> Members of the group have nothing left to assign, and system users (the guest account)
-      //    have a fixed membership that `POST /groups/:id/users/:id` refuses to change
+    // -> System users (the guest account) have a fixed membership that `POST /groups/:id/users/:id`
+    //    refuses to change, and are nobody a picker could hand anything to
+    if (excludeSystem || assignableToGroupId) {
       conditions.push(eq(usersTable.isSystem, false))
+    }
+    if (assignableToGroupId) {
+      // -> Members of the group have nothing left to assign
       conditions.push(
         notExists(
           WIKI.db
