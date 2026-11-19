@@ -11,6 +11,9 @@
  * attempt still lands where the first was going.
  */
 
+import { splitLocalePath } from '@/helpers/pagePaths'
+import { useSiteStore } from '@/stores/site'
+
 /**
  * Whether a value is a path on this wiki and so safe to send the browser to. Mirrors
  * `isLocalRedirectPath` in the backend's `helpers/common.ts`: the destination comes off a URL anybody
@@ -53,7 +56,9 @@ export function redirectTargetOr(value) {
  * The login route for a reader on their way to `destination`.
  *
  * The site root carries nothing: it is where a login lands by default anyway, and saying so would
- * override the settings that exist to send it somewhere better.
+ * override the settings that exist to send it somewhere better. That includes the root under a locale
+ * prefix -- `/en` -- which is where a site with Force Locale Prefix on sends `/`, so a reader logged
+ * out to the root and refused there arrives at `/en` rather than `/`.
  */
 export function loginLocation(destination) {
   return isDestination(destination)
@@ -72,5 +77,11 @@ export function loginDestination() {
  * screen itself, which would only nest one destination inside another.
  */
 function isDestination(value) {
-  return isLocalRedirectPath(value ?? '') && value !== '/' && !/^\/login(?:[/?#]|$)/.test(value)
+  return isLocalRedirectPath(value ?? '') && !isRoot(value) && !/^\/login(?:[/?#]|$)/.test(value)
+}
+
+/** The site root, bare or under a locale prefix, ignoring a query or a fragment. */
+function isRoot(value) {
+  const path = value.replace(/[?#].*$/, '')
+  return path === '/' || splitLocalePath(path, useSiteStore().localePrefixes)?.path === '/'
 }
