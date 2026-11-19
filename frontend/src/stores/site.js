@@ -282,7 +282,8 @@ export const useSiteStore = defineStore('site', {
       them; the automations are the server's business alone. Off until the site says otherwise.
     */
     navigation: {
-      showParentLink: false
+      showParentLink: false,
+      showFolderPages: false
     },
     /*
       Where "Go up" leads from the base menu on screen -- `{ locale, path }`, or null where there is
@@ -604,7 +605,8 @@ export const useSiteStore = defineStore('site', {
           ...siteInfo.uploads
         },
         navigation: {
-          showParentLink: Boolean(siteInfo.navigation.showParentLink)
+          showParentLink: Boolean(siteInfo.navigation.showParentLink),
+          showFolderPages: Boolean(siteInfo.navigation.showFolderPages)
         },
         /*
           Flattened to one boolean apiece: what this store is asked is whether an editor is on, and

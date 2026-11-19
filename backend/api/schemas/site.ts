@@ -382,6 +382,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
             description:
               'Show a "Go up" link at the top of every menu that is not a locale\'s root menu, to the page or folder above the one owning it — unless the menu was opened from a menu item, where "Go back" takes its place.'
           },
+          showFolderPages: {
+            type: 'boolean',
+            description:
+              'Show an "In this folder" section at the top of the sidebar of a page that has a folder of pages at its own path, listing the pages in that folder the reader may open.'
+          },
           includeStorageOperations: {
             type: 'boolean',
             description:

@@ -146,6 +146,13 @@ body.body--dark,
   --color-sidebar-light: color-mix(in srgb, var(--color-sidebar) 88%, white);
 
   /*
+    And a shade darker, for a band of the sidebar that has to read as a panel of its own while staying
+    the sidebar's colour: the "In this folder" list `NavSidebar` draws above the menu. Mixed towards
+    black for the same reason the step above is mixed towards white.
+  */
+  --color-sidebar-dark: color-mix(in srgb, var(--color-sidebar) 78%, black);
+
+  /*
     Restated here rather than inherited from Tailwind's default theme: the defaults live in a
     prunable block, and components resolve `var(--color-white)` at runtime where the scanner cannot
     prove the variable is needed.

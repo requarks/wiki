@@ -6,6 +6,27 @@
     :class="siteStore.sidebarSide(commonStore.locale) === `right` ? `sidebar-nav--flipped` : ``"
     :thumb-style="thumbStyle"
     :bar-style="barStyle">
+    <!--
+      The pages in the folder sharing this page's path, when there is one: a reader on `/foo/bar` sees
+      what is under `/foo/bar/`. Not part of the menu and not editable -- like the Browse menu, it is
+      the tree as this reader may see it, so it has nothing to show where they may open nothing there.
+    -->
+    <nav
+      v-if="isFolderSectionOn && folderPages.length > 0"
+      class="sidebar-nav-folder"
+      :aria-label="t(`common.sidebar.inThisFolder`)">
+      <w-list clickable dense dark>
+        <w-item-label class="sidebar-nav-header sidebar-nav-folder__header text-caption" header>{{
+          t('common.sidebar.inThisFolder')
+        }}</w-item-label>
+        <w-item v-for="page of folderPages" :key="page.id" :to="pageHref(page.path)">
+          <w-item-section side
+            ><w-icon :name="page.icon || `la:file-alt`" color="white"
+          /></w-item-section>
+          <w-item-section class="wrap-anywhere text-white">{{ page.title }}</w-item-section>
+        </w-item>
+      </w-list>
+    </nav>
     <w-list class="sidebar-nav-list" clickable dense dark>
       <!-- -> Only in a menu opened from a `menu` item: back to the one it was opened from -->
       <template v-if="siteStore.nav.stack.length > 0">
@@ -144,7 +165,67 @@ const barStyle = {
   opacity: 0.1
 }
 
+/**
+ * How many of a folder's pages are listed above the menu. A sidebar is not a file browser: past this
+ * many the list would push the menu out of reach, and the Browse menu is there for the rest.
+ */
+const FOLDER_PAGES_LIMIT = 50
+
+/**
+ * Whether this page gets an "In this folder" section at all: where the site has it on, and on a page
+ * that is not a blog or a feedback board. Those two are folders of pages drawn as the page itself --
+ * the blog's posts, the board's ideas -- so listing the same pages again beside it would only repeat
+ * what the reader is already looking at.
+ */
+const isFolderSectionOn = computed(
+  () => siteStore.navigation.showFolderPages && !['blog', 'feedback'].includes(pageStore.editor)
+)
+
+/** The pages directly in the folder at the current page's path, as `tree/pages` lists them. */
+const folderPages = ref([])
+
 // METHODS
+
+/*
+  Which fetch is the current one: the reader can move on before an answer lands, and a late answer
+  for the page they left must not replace the list for the page they are on.
+*/
+let latestFolderRequest = 0
+
+/**
+ * Fetch the pages in the folder at the current page's path.
+ *
+ * `tree/pages` rather than `tree/browse`: this lists pages and never folders, and it is not gated on
+ * the site's `browse` feature, which is about the Browse menu. It answers only what the reader may
+ * open -- `read:pages` on each page, and a page that is not live only for whoever may edit it -- so
+ * nothing here filters. A path with no folder under it lists nothing, which hides the section.
+ */
+async function loadFolderPages() {
+  const request = ++latestFolderRequest
+  // -> Nothing to fetch where the section is off for this page, or where there is no page here (the
+  //    missing-page screen) and so no folder of its to list
+  if (!isFolderSectionOn.value || !siteStore.id || !pageStore.id || !pageStore.path) {
+    folderPages.value = []
+    return
+  }
+  try {
+    const pages = await API_CLIENT.get(`sites/${siteStore.id}/tree/pages`, {
+      searchParams: {
+        path: pageStore.path,
+        locale: pageStore.locale,
+        limit: FOLDER_PAGES_LIMIT
+      }
+    }).json()
+    if (request === latestFolderRequest) {
+      folderPages.value = pages ?? []
+    }
+  } catch {
+    // -> A list beside the menu, not the page: failing to fetch it is not worth interrupting a read
+    if (request === latestFolderRequest) {
+      folderPages.value = []
+    }
+  }
+}
 
 /**
  * Where a nav item points, as the props that take a reader there.
@@ -254,7 +335,22 @@ watch(
   the site's navigation automations -- see `contentChanged` in `boot/api.js`. Debounced, because one
   action is often several writes: a move with its links updated, a folder rename with its title.
 */
-const onContentChanged = debounce(() => siteStore.refreshNavigation(), 300)
+const onContentChanged = debounce(() => {
+  siteStore.refreshNavigation()
+  // -> A page created, moved, retitled or deleted under this one changes the folder list too
+  loadFolderPages()
+}, 300)
+
+/*
+  Per page and per locale: the path alone is not enough, since the same path names a different page,
+  and so a different folder, in each locale. And when the site's setting changes, so that turning it on
+  in the admin area fills the section in without a reload.
+*/
+watch(
+  () => [isFolderSectionOn.value, siteStore.id, pageStore.id, pageStore.path, pageStore.locale],
+  () => loadFolderPages(),
+  { immediate: true }
+)
 
 onMounted(() => {
   EVENT_BUS.on('contentChanged', onContentChanged)
@@ -286,6 +382,87 @@ $sidebar-overlay-max: 1199.98px;
   &-list > .w-separator {
     margin-top: 10px;
     margin-bottom: 10px;
+  }
+
+  /*
+    The "In this folder" band above the menu: the sidebar's own colour a shade darker, so it reads as a
+    panel of its own without bringing a second colour into the column. `--color-sidebar-dark` is mixed
+    from the site's sidebar colour, so a re-themed site gets its own darker shade.
+  */
+  &-folder {
+    /* -> The radius of both turns in the edge below the band */
+    --sidebar-folder-curve: 20px;
+
+    position: relative;
+    background-color: var(--color-sidebar-dark);
+    /* -> Half the radius keeps the last row's hover tint inside the rounded corner, give or take a
+       pixel or so, rather than poking out past the curve */
+    padding-bottom: calc(var(--sidebar-folder-curve) / 2);
+    /* -> Room for the second turn, which hangs below the band rather than over the menu's first row */
+    margin-bottom: var(--sidebar-folder-curve);
+
+    /*
+      The band ends in an S rather than a straight rule: its edge turns UP into the sidebar's outer
+      side, runs across, and turns DOWN into the side facing the page. The colour change IS the
+      divider, so there is no line drawn along it.
+
+      The first turn is the band's own corner, rounded off.
+    */
+    border-bottom-left-radius: var(--sidebar-folder-curve);
+
+    /*
+      The second is the menu's corner rounded off instead, with the band's colour filling in behind it:
+      a square hung under the band, dark everywhere except a quarter circle centred on its far bottom
+      corner. Transparent there rather than painted, so the sidebar's own colour shows through and a
+      re-themed site needs nothing here. Half a pixel of blend at the stop keeps the arc from stepping.
+    */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: var(--sidebar-folder-curve);
+      height: var(--sidebar-folder-curve);
+      background: radial-gradient(
+        circle at 0 100%,
+        transparent calc(var(--sidebar-folder-curve) - 0.5px),
+        var(--color-sidebar-dark) var(--sidebar-folder-curve)
+      );
+      pointer-events: none;
+    }
+
+    /* -> A small header: WItemLabel's 16px top is for a heading between groups, and this one opens
+       the band */
+    &__header {
+      padding-top: 10px;
+    }
+
+    /* -> A step below the menu's 14px, the size the Browse menu lists the same pages at: this is a
+       listing beside the menu rather than the menu itself */
+    .w-item {
+      font-size: 13px;
+    }
+  }
+
+  /*
+    With the sidebar on the right the page is on its left, so the S mirrors: up into the window's edge,
+    now the right, and down into the side facing the page. Physical sides throughout, like the notch --
+    which side faces the page is the theme's to say, and `--flipped` already accounts for a
+    right-to-left interface.
+  */
+  &--flipped &-folder {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: var(--sidebar-folder-curve);
+
+    &::after {
+      right: auto;
+      left: 0;
+      background: radial-gradient(
+        circle at 100% 100%,
+        transparent calc(var(--sidebar-folder-curve) - 0.5px),
+        var(--color-sidebar-dark) var(--sidebar-folder-curve)
+      );
+    }
   }
 
   /*

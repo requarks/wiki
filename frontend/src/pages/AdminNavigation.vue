@@ -198,6 +198,19 @@
             <template #hint>{{ t('admin.navigation.generalHint') }}</template>
           </w-card-header>
           <w-item tag="label">
+            <blueprint-icon class="self-start" icon="opened-folder" />
+            <w-item-section>
+              <w-item-label>{{ t(`admin.navigation.showFolderPages`) }}</w-item-label>
+              <w-item-label caption>{{ t(`admin.navigation.showFolderPagesHint`) }}</w-item-label>
+            </w-item-section>
+            <w-item-section avatar>
+              <w-toggle
+                v-model="state.config.showFolderPages"
+                :aria-label="t(`admin.navigation.showFolderPages`)" />
+            </w-item-section>
+          </w-item>
+          <w-separator class="my-2" inset />
+          <w-item tag="label">
             <blueprint-icon class="self-start" icon="arrow-up" />
             <w-item-section>
               <w-item-label>{{ t(`admin.navigation.showParentLink`) }}</w-item-label>
@@ -321,7 +334,8 @@ const state = reactive({
     createFolderMenus: false,
     deleteOrphanedMenus: false,
     includeStorageOperations: false,
-    showParentLink: false
+    showParentLink: false,
+    showFolderPages: false
   }
 })
 
@@ -492,9 +506,11 @@ async function saveConfig() {
     if (!resp?.ok) {
       throw new Error(resp?.message || 'An unexpected error occured.')
     }
-    // -> The sidebar draws "Go up" off this, so the site being read follows the save at once
+    // -> The sidebar draws "Go up" and "In this folder" off these, so the site being read follows
+    //    the save at once
     if (adminStore.currentSiteId === siteStore.id) {
       siteStore.navigation.showParentLink = Boolean(state.config.showParentLink)
+      siteStore.navigation.showFolderPages = Boolean(state.config.showFolderPages)
     }
     notify({
       type: 'positive',

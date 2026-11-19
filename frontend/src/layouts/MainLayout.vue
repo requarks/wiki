@@ -411,15 +411,21 @@ function openSidebar() {
   this bar's border plus `.sidebar-nav`'s top border: a border stays a whole CSS pixel on a scaled
   display, which put it at twice the weight of the separator between the buttons. The light half has
   to be drawn from this side because the nav below is its own scroll container, and anything it
-  drew would scroll away with the list. 39px and the 2px of padding are the old 38px bar plus the
-  nav's 1px border, so neither the buttons nor the list move. The pair is thinned towards the TOP of
-  that padding, so on a scaled display the separator still runs down into it without a gap.
+  drew would scroll away with the list. 39px is the old 38px bar plus the nav's 1px border, so the
+  list does not move.
+
+  The padding is exactly the pair's height -- two DEVICE pixels -- rather than a fixed 2px. At 2px the
+  pair, thinned towards the top, left the rest of the padding showing the bar's own colour beneath it
+  on a scaled display: a fractional strip that read as a heavier light line wherever what follows is
+  darker than the bar (the nav's "In this folder" band). Sized to the pair, the light hairline is the
+  last thing the bar paints, and the buttons, and the separator running down to the pair, take up the
+  fraction of a pixel instead.
 */
 .sidebar-actions {
   position: relative;
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
   height: 39px;
-  padding-bottom: 2px;
+  padding-bottom: calc(2px / var(--w-dpr, 1));
 
   &::after {
     content: '';
