@@ -245,8 +245,11 @@ watch(
     The card's own ink, named so the arrow below can mix against it. `currentColor` would not do the
     job there -- the arrow sets a colour of its own for its resting state, so `currentColor` inside it
     resolves to that grey rather than to the card's.
+
+    The custom property rather than the compiled `$primary`: the property is the site's own brand
+    colour, set at runtime from its theme, where `$primary` is the default it was built with.
   */
-  --page-links-ink: #{$primary};
+  --page-links-ink: var(--color-primary);
   color: var(--page-links-ink);
   text-decoration: none;
   font-weight: 500;
@@ -264,7 +267,7 @@ watch(
 
     &:hover {
       background-image: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.95));
-      border-left-color: $primary;
+      border-left-color: var(--color-primary);
     }
   }
   @at-root .body--dark & {
@@ -280,7 +283,7 @@ watch(
 
     &:hover {
       background-image: linear-gradient(to bottom, #1e232a, #161b22);
-      border-left-color: $primary;
+      border-left-color: var(--color-primary);
     }
   }
 }
