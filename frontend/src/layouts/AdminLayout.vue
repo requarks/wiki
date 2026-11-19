@@ -546,6 +546,10 @@ const overlays = {
     loader: () => import('../components/ImportWikijs2Overlay.vue'),
     loadingComponent: LoadingGeneric
   }),
+  ImportXwikiOverlay: defineAsyncComponent({
+    loader: () => import('../components/ImportXwikiOverlay.vue'),
+    loadingComponent: LoadingGeneric
+  }),
   // -> The same editor a page opens from its sidebar, keyed as the page view keys it
   NavEdit: defineAsyncComponent({
     loader: () => import('../components/NavEditOverlay.vue'),

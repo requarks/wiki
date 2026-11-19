@@ -100,7 +100,7 @@ async function routes(app: FastifyInstance) {
               type: 'string',
               enum: [...IMPORT_SOURCES],
               description:
-                '`wikijs2` for a `.wkbackup` package (`manifest.source.kind`); `confluence` for a Confluence backup read by the browser — whose site streams are `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, in that order, in the record shapes documented in `models/importConfluence.ts`; or `dokuwiki` for a DokuWiki data directory read by the browser — `index`, `tree`, `assets`, `pages` and `page-history`, documented in `models/importDokuwiki.ts`.'
+                '`wikijs2` for a `.wkbackup` package (`manifest.source.kind`); `confluence` for a Confluence backup read by the browser — whose site streams are `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, in that order, in the record shapes documented in `models/importConfluence.ts`; `dokuwiki` for a DokuWiki data directory read by the browser — `index`, `tree`, `assets`, `pages` and `page-history`, documented in `models/importDokuwiki.ts`; or `xwiki` for an XWiki XAR export read by the browser — `index`, `tree`, `assets`, `pages`, `page-history` and `comments`, documented in `models/importXwiki.ts`.'
             },
             sourceInstanceId: {
               type: 'string',
@@ -130,7 +130,7 @@ async function routes(app: FastifyInstance) {
               enum: ['markdown', 'html'],
               default: 'markdown',
               description:
-                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of — or with every page of a Confluence or DokuWiki import, which arrives as HTML once converted. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
+                'What to do with a page 2.x wrote as HTML — its WYSIWYG and code editors, which 3.x has no equivalent of — or with every page of a Confluence, DokuWiki or XWiki import, which arrives as HTML once converted. `markdown` converts it and files it under the visual editor, so it stays editable the way it was written. `html` keeps the HTML exactly as it stands: it renders identically, but the page is only editable as source.'
             },
             users: {
               type: 'array',
@@ -144,7 +144,7 @@ async function routes(app: FastifyInstance) {
                 required: ['sourceId', 'userId']
               },
               description:
-                'For a source that brings no accounts of its own (Confluence, DokuWiki): which account here each of its authors is, by the id the source knows them by — a DokuWiki login name. An author left out is attributed to whoever runs the import.'
+                'For a source that brings no accounts of its own (Confluence, DokuWiki, XWiki): which account here each of its authors is, by the id the source knows them by — a DokuWiki login name, the profile document of an XWiki user (`XWiki.jdoe`). An author left out is attributed to whoever runs the import.'
             }
           },
           required: ['source', 'sites', 'includes']

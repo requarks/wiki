@@ -84,12 +84,13 @@ const SUPPORTED_FORMAT_VERSION = 1
 const SUPPORTED_SOURCE = 'wikijs2'
 
 /**
- * What a session may be opened for. `confluence` and `dokuwiki` are not packages at all — the browser
- * reads a Confluence backup or a DokuWiki data directory itself and posts records of its own shape,
- * which `models/importConfluence.ts` and `models/importDokuwiki.ts` write. Everything else about a
- * session (the batches, the blobs, the id map, the index, folders and files, finishing) is shared.
+ * What a session may be opened for. `confluence`, `dokuwiki` and `xwiki` are not packages at all — the
+ * browser reads a Confluence backup, a DokuWiki data directory or an XWiki XAR itself and posts records
+ * of its own shape, which `models/importConfluence.ts`, `models/importDokuwiki.ts` and
+ * `models/importXwiki.ts` write. Everything else about a session (the batches, the blobs, the id map,
+ * the index, folders and files, finishing) is shared.
  */
-export const IMPORT_SOURCES = [SUPPORTED_SOURCE, 'confluence', 'dokuwiki'] as const
+export const IMPORT_SOURCES = [SUPPORTED_SOURCE, 'confluence', 'dokuwiki', 'xwiki'] as const
 
 /**
  * What the operator may tick, as the overlay names them.
@@ -132,8 +133,8 @@ const STREAM_REQUIRES: Record<string, ImportContentKind | null> = {
 const INSTANCE_STREAMS = new Set(['locales', 'groups', 'users'])
 
 /**
- * Streams that belong to a site, and are posted with the target site's id. `index` is a Confluence or
- * DokuWiki session's alone: what its pages, files and people are called, ahead of the pages that link
+ * Streams that belong to a site, and are posted with the target site's id. `index` is a Confluence,
+ * DokuWiki or XWiki session's alone: what its pages, files and people are called, ahead of the pages that link
  * to them.
  */
 const SITE_STREAMS = new Set([
@@ -975,7 +976,7 @@ class Import {
   }
 
   // ==============================================================================================
-  // SHARED BY THE SOURCES THE BROWSER READS ITSELF (Confluence, DokuWiki)
+  // SHARED BY THE SOURCES THE BROWSER READS ITSELF (Confluence, DokuWiki, XWiki)
   // ==============================================================================================
 
   /**
@@ -1356,6 +1357,9 @@ class Import {
     }
     if (session.source === 'dokuwiki') {
       return WIKI.models.dokuwikiImporter.ingest(session, stream, target, records)
+    }
+    if (session.source === 'xwiki') {
+      return WIKI.models.xwikiImporter.ingest(session, stream, target, records)
     }
     switch (stream) {
       case 'tree':

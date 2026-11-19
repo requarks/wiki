@@ -73,8 +73,9 @@ before working in an area — and add to it there, not here:
   manager's image editor and resize), `maintenance` (a site's read-only / restricted mode,
   `config.maintenance` on routes), `block-config` (an admin's per-site block defaults and locks)
   `cli` (the management CLI, `backend/cli.ts`), `confluence-import` (Import from Confluence:
-  both backup formats, who decides paths and who decides content) and `dokuwiki-import` (Import from
-  DokuWiki: the data directory as the source, namespaces as folders).
+  both backup formats, who decides paths and who decides content), `dokuwiki-import` (Import from
+  DokuWiki: the data directory as the source, namespaces as folders) and `xwiki-import` (Import from
+  XWiki: the XAR as the source, spaces as folders, references keyed alike on both sides).
 - **Procedures** — `.claude/skills/`: `throwaway-instance` boots, scripts and tears down a
   disposable instance.
 

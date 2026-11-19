@@ -18,6 +18,7 @@ import { importer } from './import.ts'
 import { hedgedocImporter } from './importHedgedoc.ts'
 import { confluenceImporter } from './importConfluence.ts'
 import { dokuwikiImporter } from './importDokuwiki.ts'
+import { xwikiImporter } from './importXwiki.ts'
 import { jobs } from './jobs.ts'
 import { liveNotes } from './liveNotes.ts'
 import { locales } from './locales.ts'
@@ -73,6 +74,7 @@ export default {
   hedgedocImporter,
   confluenceImporter,
   dokuwikiImporter,
+  xwikiImporter,
   jobs,
   liveNotes,
   locales,
