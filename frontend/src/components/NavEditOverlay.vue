@@ -207,6 +207,32 @@
               auto-close>
               <w-card class="p-2">
                 <w-list dense style="min-width: 150px">
+                  <w-item clickable @click="sortItems" :disable="state.items.length < 2">
+                    <w-item-section side>
+                      <w-icon name="mdi:sort-alphabetical-ascending" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.sortItems') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-separator class="my-1" />
+                  <w-item clickable @click="exportItems" :disable="state.items.length < 1">
+                    <w-item-section side>
+                      <w-icon name="mdi:export" color="indigo" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.export') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-item clickable @click="importItems">
+                    <w-item-section side>
+                      <w-icon name="mdi:import" color="indigo" />
+                    </w-item-section>
+                    <w-item-section>
+                      <w-item-label>{{ t('navEdit.import') }}</w-item-label>
+                    </w-item-section>
+                  </w-item>
+                  <w-separator class="my-1" />
                   <w-item clickable @click="clearItems" :disable="state.items.length < 1">
                     <w-item-section side>
                       <w-icon name="la:trash-alt" color="negative" />
@@ -215,11 +241,6 @@
                       <w-item-label>{{ t('navEdit.clearItems') }}</w-item-label>
                     </w-item-section>
                   </w-item>
-                  <!-- q-item(clickable) -->
-                  <!-- q-item-section(side) -->
-                  <!-- q-icon(name='mdi:import') -->
-                  <!-- q-item-section -->
-                  <!-- q-item-label Copy from... -->
                 </w-list>
               </w-card>
             </w-menu>
@@ -735,7 +756,7 @@
 import { useI18n } from 'vue-i18n'
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 
-import { dialog } from '@/composables/dialog'
+import { confirm, dialog } from '@/composables/dialog'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 
@@ -744,7 +765,9 @@ import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 
 import { v4 as uuid } from 'uuid'
+import { chunk, uniq } from 'es-toolkit/array'
 import { pick } from 'es-toolkit/object'
+import { fileOpen, fileSave } from 'browser-fs-access'
 import { Sortable } from 'sortablejs-vue3'
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
 import NavEditItemMenu from '@/components/NavEditItemMenu.vue'
@@ -803,6 +826,16 @@ const DEFAULT_LINK_ICON = 'mdi:text-box-outline'
 
 /** The icon a new menu item starts with: a folder, which is what such a menu nearly always belongs to. */
 const DEFAULT_MENU_ICON = 'mdi:folder-outline'
+
+/**
+ * What a menu export calls itself, and the version of its shape. An import refuses anything else.
+ * The format is specified in `dev/specs/navigation-export.md`.
+ */
+const EXPORT_FORMAT = 'wikijs-navigation'
+const EXPORT_VERSION = 1
+
+/** An Iconify reference, as `WIcon` reads one — the only kind of icon that has to be materialized. */
+const ICONIFY_REF = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:[-.][a-z0-9]+)*$/
 
 const sortableOptions = {
   handle: '.handle',
@@ -1040,10 +1073,375 @@ function toggleNesting(item) {
   }
 }
 
+/** Empties the list, after asking. Like any other edit here, nothing is stored until Save. */
 function clearItems() {
-  state.items = []
-  state.selected = null
-  state.current = {}
+  confirm({
+    title: t('navEdit.clearItems'),
+    icon: 'img:/_assets/icons/fluent-delete-bin.svg',
+    message: t('navEdit.clearItemsConfirm'),
+    cancel: true,
+    color: 'negative',
+    okLabel: t('common.actions.clear')
+  }).onOk(() => {
+    state.items = []
+    state.selected = null
+    state.current = {}
+  })
+}
+
+/**
+ * Puts the menu's items in alphabetical order by label, after asking.
+ *
+ * Headers and separators stay where they are: they split the list into sections, and each section is
+ * sorted on its own. Inside one, a top-level link moves together with the nested links under it, which
+ * are sorted among themselves; a `menu` item sorts like any top-level link.
+ *
+ * A nested row with no link above it in its section (straight under a header, or under a `menu` item,
+ * both of which the editor already marks as invalid) is kept where it is relative to what precedes it:
+ * at the head of the section, or attached to that `menu` item. Sorting is not the place to settle what
+ * such a row belongs to.
+ */
+function sortItems() {
+  confirm({
+    title: t('navEdit.sortItems'),
+    icon: 'mdi:sort-alphabetical-ascending',
+    message: t('navEdit.sortItemsConfirm'),
+    cancel: true,
+    okLabel: t('navEdit.sortItemsAction')
+  }).onOk(() => {
+    let collator
+    try {
+      collator = new Intl.Collator(menuLocale.value, { numeric: true, sensitivity: 'base' })
+    } catch {
+      // -> A wiki locale code the browser does not accept as a language tag
+      collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+    }
+    const byLabel = (a, b) => collator.compare(a.label ?? '', b.label ?? '')
+    const byHead = (a, b) => byLabel(a[0], b[0])
+
+    const sorted = []
+    let units = []
+    // -> Rows at the head of a section that have nothing to hang off: they keep their place
+    let lead = []
+    const flush = () => {
+      sorted.push(...lead)
+      for (const [head, ...children] of units.sort(byHead)) {
+        sorted.push(head, ...children.sort(byLabel))
+      }
+      units = []
+      lead = []
+    }
+    for (const item of state.items) {
+      if (item.type === 'header' || item.type === 'separator') {
+        flush()
+        sorted.push(item)
+      } else if (item.isNested) {
+        if (units.length > 0) {
+          units.at(-1).push(item)
+        } else {
+          lead.push(item)
+        }
+      } else {
+        units.push([item])
+      }
+    }
+    flush()
+    state.items = sorted
+  })
+}
+
+/**
+ * Saves the menu as it stands in the editor -- saved or not -- to a JSON file another menu can import,
+ * on this site or another. The shape is `dev/specs/navigation-export.md`.
+ *
+ * Item ids are left out: an import always mints its own, or importing a menu twice into one list would
+ * put the same id on two rows. What only makes sense on this wiki goes out together with what can find
+ * it again elsewhere -- a `menu` item's target with the path of the menu's owner, and each visibility
+ * group with its name.
+ */
+async function exportItems() {
+  let items
+  try {
+    items = buildItems()
+  } catch (err) {
+    return notify({ type: 'negative', message: err.message })
+  }
+  const toExport = ({ id, children, ...item }) => ({
+    ...item,
+    ...(item.type === 'menu' && {
+      targetPath: state.items.find((it) => it.id === id)?.targetPath ?? null
+    }),
+    ...(children && { children: children.map(toExport) })
+  })
+  const groupIds = new Set(
+    items
+      .flatMap((item) => [item, ...(item.children ?? [])])
+      .flatMap((item) => item.visibilityGroups)
+  )
+  const doc = {
+    format: EXPORT_FORMAT,
+    version: EXPORT_VERSION,
+    groups: state.groups.filter((g) => groupIds.has(g.id)),
+    items: items.map(toExport)
+  }
+  try {
+    await fileSave(new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' }), {
+      fileName: 'navigation.json',
+      extensions: ['.json']
+    })
+  } catch (err) {
+    // -> Dismissing the file picker is not a failure
+    if (err.name !== 'AbortError') {
+      notify({ type: 'negative', message: err.message })
+    }
+  }
+}
+
+/**
+ * Reads a menu export into the editor, replacing the items on screen or adding after them. Nothing is
+ * stored until Save, like any other change made here.
+ *
+ * What pointed at something on the wiki the file came from is looked for again here, and whatever is
+ * not found is left in a state the editor already marks and that cannot reach a reader by accident:
+ * a `menu` item with no target, which Save refuses until one is picked, and an item restricted to
+ * groups none of which exist here, which keeps those ids and so stays hidden from everyone rather than
+ * becoming visible to everyone.
+ */
+async function importItems() {
+  let parsed
+  try {
+    const blob = await fileOpen({
+      mimeTypes: ['application/json'],
+      extensions: ['.json'],
+      startIn: 'downloads',
+      excludeAcceptAllOption: true
+    })
+    parsed = parseExport(JSON.parse(await blob.text()))
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return
+    }
+    return notify({
+      type: 'negative',
+      message: t('navEdit.importFailed'),
+      caption: err.message
+    })
+  }
+  if (state.items.length < 1) {
+    return applyImport(parsed, 'replace')
+  }
+  confirm({
+    title: t('navEdit.importModeTitle'),
+    message: t('navEdit.importModeText'),
+    options: {
+      model: 'replace',
+      type: 'radio',
+      items: [
+        { label: t('navEdit.importModeReplace'), value: 'replace' },
+        { label: t('navEdit.importModeAppend'), value: 'append' }
+      ]
+    },
+    cancel: true
+  }).onOk((mode) => applyImport(parsed, mode))
+}
+
+/**
+ * Turns an export into the editor's flat rows, each with a fresh id, refusing a file that is not one.
+ *
+ * Strict about structure -- a type the editor does not know, a non-link nested under a link -- since a
+ * row the editor cannot draw is one nobody could fix before saving. Lenient about values, which fall
+ * back to what a newly added item of that type starts with.
+ */
+function parseExport(doc) {
+  if (doc?.format !== EXPORT_FORMAT || !Array.isArray(doc.items)) {
+    throw new Error(t('navEdit.importNotExport'))
+  }
+  if (doc.version !== EXPORT_VERSION) {
+    throw new Error(t('navEdit.importVersion', { version: String(doc.version) }))
+  }
+  if (doc.items.length < 1) {
+    throw new Error(t('navEdit.importEmpty'))
+  }
+  const text = (value, fallback) => (typeof value === 'string' ? value : fallback)
+  const toRow = (raw, isNested) => {
+    if (!['header', 'link', 'menu', 'separator'].includes(raw?.type)) {
+      throw new Error(t('navEdit.importNotExport'))
+    }
+    if ((isNested || raw.type !== 'link') && raw.children !== undefined) {
+      throw new Error(t('navEdit.importNotExport'))
+    }
+    const visibilityGroups = Array.isArray(raw.visibilityGroups)
+      ? uniq(raw.visibilityGroups.filter((g) => typeof g === 'string' && g))
+      : []
+    const row = {
+      id: uuid(),
+      type: raw.type,
+      visibilityGroups,
+      visibilityLimited: visibilityGroups.length > 0
+    }
+    switch (raw.type) {
+      case 'header': {
+        row.label = text(raw.label, t('navEdit.header'))
+        break
+      }
+      case 'link': {
+        row.label = text(raw.label, t('navEdit.link'))
+        row.icon = text(raw.icon, DEFAULT_LINK_ICON)
+        row.target = text(raw.target, '/')
+        row.openInNewWindow = Boolean(raw.openInNewWindow)
+        row.expandByDefault = !isNested && Boolean(raw.expandByDefault)
+        row.isNested = isNested
+        break
+      }
+      case 'menu': {
+        row.label = text(raw.label, t('navEdit.menu'))
+        row.icon = text(raw.icon, DEFAULT_MENU_ICON)
+        row.targetNavId = text(raw.targetNavId, null)
+        row.targetPath = text(raw.targetPath, null)
+        row.targetMissing = false
+        row.targetHasPage = false
+        row.showLink = typeof raw.showLink === 'boolean' ? raw.showLink : true
+        break
+      }
+    }
+    return row
+  }
+
+  const rows = []
+  for (const raw of doc.items) {
+    rows.push(toRow(raw, false))
+    for (const child of Array.isArray(raw.children) ? raw.children : []) {
+      if (child?.type !== 'link') {
+        throw new Error(t('navEdit.importNotExport'))
+      }
+      rows.push(toRow(child, true))
+    }
+  }
+  const groupNames = new Map(
+    (Array.isArray(doc.groups) ? doc.groups : [])
+      .filter((g) => typeof g?.id === 'string' && typeof g?.name === 'string')
+      .map((g) => [g.id, g.name])
+  )
+  return { rows, groupNames }
+}
+
+/**
+ * Points each imported `menu` item at a menu of this editor's site and locale: the same menu by id
+ * (an import into the site it came from), else the one whose owner sits at the same path. Only among
+ * those the server lets this editor pick -- what `navigation/targets` answers, minus the menu being
+ * edited -- since Save refuses any other. Returns how many found nothing, which are left without a
+ * target.
+ */
+async function resolveMenuTargets(rows) {
+  const menuRows = rows.filter((row) => row.type === 'menu')
+  if (menuRows.length < 1) {
+    return 0
+  }
+  let targets = []
+  try {
+    const resp = await API_CLIENT.get(`sites/${siteId}/navigation/targets`, {
+      searchParams: { locale: menuLocale.value }
+    }).json()
+    targets = (resp?.menus ?? []).filter((menu) => menu.id !== navId.value)
+  } catch {
+    // -> Nothing can be matched; every menu item is left for a target to be picked
+  }
+  const trimSlashes = (path) => path.replace(/^\/+|\/+$/g, '')
+  let unresolved = 0
+  for (const row of menuRows) {
+    const match =
+      targets.find((menu) => menu.id === row.targetNavId) ??
+      (row.targetPath === null
+        ? undefined
+        : targets.find((menu) => menu.path === trimSlashes(row.targetPath)))
+    if (match) {
+      row.targetNavId = match.id
+      row.targetPath = match.path
+      row.targetHasPage = match.hasPage
+    } else {
+      row.targetNavId = null
+      row.targetPath = null
+      unresolved++
+    }
+  }
+  return unresolved
+}
+
+/**
+ * Maps each imported row's visibility groups onto the groups of this wiki: by id (the same instance),
+ * else by the name the export recorded for it. Groups found nowhere are dropped, which only narrows who
+ * sees the item -- unless none of its groups are found, in which case it keeps the ids it came with and
+ * is shown to nobody, rather than having its restriction quietly removed. Returns how many rows that
+ * happened to.
+ */
+function resolveVisibilityGroups(rows, groupNames) {
+  const known = new Set(state.groups.map((g) => g.id))
+  const byName = new Map(state.groups.map((g) => [g.name.trim().toLowerCase(), g.id]))
+  let unresolved = 0
+  for (const row of rows) {
+    if (row.visibilityGroups.length < 1) {
+      continue
+    }
+    const resolved = uniq(
+      row.visibilityGroups
+        .map((id) => (known.has(id) ? id : byName.get(groupNames.get(id)?.trim().toLowerCase())))
+        .filter(Boolean)
+    )
+    if (resolved.length > 0) {
+      row.visibilityGroups = resolved
+    } else {
+      unresolved++
+    }
+  }
+  return unresolved
+}
+
+/**
+ * Stores the imported icons on this wiki, as the icon picker does for one it picks, so that they are
+ * served without the Iconify API. An icon that cannot be stored is still imported; it may just not
+ * render.
+ */
+async function materializeIcons(rows) {
+  const icons = uniq(rows.map((row) => row.icon).filter((icon) => ICONIFY_REF.test(icon ?? '')))
+  let failed = 0
+  for (const batch of chunk(icons, 128)) {
+    try {
+      const resp = await API_CLIENT.post('icons/materialize', { json: { icons: batch } }).json()
+      failed += resp?.failed?.length ?? (resp?.ok === false ? batch.length : 0)
+    } catch {
+      failed += batch.length
+    }
+  }
+  if (failed > 0) {
+    notify({ type: 'warning', message: t('navEdit.importIconsFailed', failed) })
+  }
+}
+
+async function applyImport({ rows, groupNames }, mode) {
+  state.loading++
+  loading.show()
+  try {
+    const unresolvedTargets = await resolveMenuTargets(rows)
+    const unresolvedGroups = resolveVisibilityGroups(rows, groupNames)
+    if (mode === 'replace') {
+      state.items = rows
+      state.selected = null
+      state.current = {}
+    } else {
+      state.items.push(...rows)
+    }
+    notify({ type: 'positive', message: t('navEdit.importSuccess', rows.length) })
+    if (unresolvedTargets > 0) {
+      notify({ type: 'warning', message: t('navEdit.importTargetsUnresolved', unresolvedTargets) })
+    }
+    if (unresolvedGroups > 0) {
+      notify({ type: 'warning', message: t('navEdit.importGroupsUnresolved', unresolvedGroups) })
+    }
+  } finally {
+    loading.hide()
+    state.loading--
+  }
+  materializeIcons(rows)
 }
 
 function updateItemPosition(ev) {
@@ -1165,6 +1563,25 @@ function cleanMenuItem(item, isNested = false) {
   }
 }
 
+/**
+ * The editor's flat list as the menu is stored: nested rows folded into the `children` of the link
+ * above them. Throws where a nested row has no link to belong to.
+ */
+function buildItems() {
+  const items = []
+  for (const item of state.items) {
+    if (item.isNested) {
+      if (items.length < 1 || items.at(-1)?.type !== 'link') {
+        throw new Error('One or more nested link items are not under a parent link!')
+      }
+      items[items.length - 1].children.push(cleanMenuItem(item, true))
+    } else {
+      items.push(cleanMenuItem(item))
+    }
+  }
+  return items
+}
+
 async function save() {
   state.loading++
   loading.show()
@@ -1174,17 +1591,7 @@ async function save() {
     if (state.items.some((item) => item.type === 'menu' && !item.targetNavId)) {
       throw new Error(t('navEdit.menuTargetRequired'))
     }
-    const items = []
-    for (const item of state.items) {
-      if (item.isNested) {
-        if (items.length < 1 || items.at(-1)?.type !== 'link') {
-          throw new Error('One or more nested link items are not under a parent link!')
-        }
-        items[items.length - 1].children.push(cleanMenuItem(item, true))
-      } else {
-        items.push(cleanMenuItem(item))
-      }
-    }
+    const items = buildItems()
 
     if (fromAdmin) {
       await saveFromAdmin(items)

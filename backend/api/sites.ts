@@ -307,8 +307,10 @@ async function routes(app: FastifyInstance) {
       features?: Record<string, any>
       navigation?: {
         addPagesToParentMenu?: boolean
+        addPagesPlacement?: 'alphabetical' | 'end'
         removePagesFromParentMenu?: boolean
         migrateLinksOnMove?: boolean
+        migrateLinksPlacement?: 'alphabetical' | 'end'
         updateLabelsOnRename?: boolean
         createFolderMenus?: boolean
         deleteOrphanedMenus?: boolean

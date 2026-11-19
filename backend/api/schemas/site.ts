@@ -338,7 +338,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           addPagesToParentMenu: {
             type: 'boolean',
             description:
-              "Add a link to a new page at the end of the menu owned by its folder — the locale's own menu at the site root. With `createFolderMenus` as well, a new folder's menu is added there as a menu item."
+              "Add a link to a new page to the menu owned by its folder — the locale's own menu at the site root — placed as `addPagesPlacement` says. With `createFolderMenus` as well, a new folder's menu is added there as a menu item."
+          },
+          addPagesPlacement: {
+            type: 'string',
+            enum: ['alphabetical', 'end'],
+            description:
+              "Where `addPagesToParentMenu` puts what it adds. `alphabetical`: among the top-level items of the menu's last section (after its last header or separator), before the first whose label sorts after the new one's — the order the navigation editor's Smart Sort gives. `end`: after every other item."
           },
           removePagesFromParentMenu: {
             type: 'boolean',
@@ -348,7 +354,13 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
           migrateLinksOnMove: {
             type: 'boolean',
             description:
-              "Move a moved page's link from the menu of the folder it left to the menu of the folder it arrived in (not put back where that folder owns none), and point every other link to it — or, for a moved or renamed folder, to anything under it — at where it now is."
+              "Move a moved page's link from the menu of the folder it left to the menu of the folder it arrived in (not put back where that folder owns none), placed as `migrateLinksPlacement` says, and point every other link to it — or, for a moved or renamed folder, to anything under it — at where it now is."
+          },
+          migrateLinksPlacement: {
+            type: 'string',
+            enum: ['alphabetical', 'end'],
+            description:
+              "Where `migrateLinksOnMove` puts what it carries into the menu of the folder arrived in: a moved page's link, or the menu items opening a moved folder's menu. Same choices as `addPagesPlacement`."
           },
           updateLabelsOnRename: {
             type: 'boolean',

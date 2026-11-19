@@ -7,14 +7,24 @@ import { relinkHref, resolveLink } from '../helpers/pageLinks.ts'
 import type { NavigationItem } from './navigation.ts'
 
 /**
+ * Where an automation puts an item it adds to a menu: in label order among the last section's items
+ * (see `placeItems`), or after everything else.
+ */
+export type LinkPlacement = 'alphabetical' | 'end'
+
+/**
  * The site settings this model answers to, under `navigation` in a site's config — the Automations
  * card of the admin area's Navigation screen. All on for a site created since they exist, all off
  * on one that predates them.
  */
 export interface NavigationAutomationSettings {
   addPagesToParentMenu: boolean
+  /** Where `addPagesToParentMenu` puts what it adds. */
+  addPagesPlacement: LinkPlacement
   removePagesFromParentMenu: boolean
   migrateLinksOnMove: boolean
+  /** Where `migrateLinksOnMove` puts what it carries into the menu of the folder arrived in. */
+  migrateLinksPlacement: LinkPlacement
   updateLabelsOnRename: boolean
   createFolderMenus: boolean
   deleteOrphanedMenus: boolean
@@ -119,6 +129,45 @@ function mapItems(
   return changed ? out : null
 }
 
+/**
+ * A menu with more top-level items, each put where `placement` says — `addPagesPlacement` or
+ * `migrateLinksPlacement`, depending on which automation is adding them.
+ *
+ * Alphabetically means where the navigation editor's Smart Sort (`sortItems` in `NavEditOverlay.vue`)
+ * would have it: headers and separators divide a menu into sections, a new item belongs to the LAST
+ * one, and it goes before the first top-level item of that section whose label sorts after its own —
+ * after any it ties with. A link's children stay under it, so only top-level labels are compared; a
+ * `menu` item counts as a link. The comparison is the editor's: in the menu's locale, numbers by value,
+ * case and accents ignored. A section that is not in order is not reordered: the item takes the first
+ * place that suits it, as it would in a sorted one.
+ */
+function placeItems(
+  items: NavigationItem[],
+  added: NavigationItem[],
+  placement: LinkPlacement | undefined,
+  locale: string
+): NavigationItem[] {
+  if (placement !== 'alphabetical') {
+    return [...items, ...added]
+  }
+  let collator: Intl.Collator
+  try {
+    collator = new Intl.Collator(locale, { numeric: true, sensitivity: 'base' })
+  } catch {
+    // -> A wiki locale code that is not a valid language tag
+    collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
+  }
+  const start = items.findLastIndex((it) => it.type === 'header' || it.type === 'separator') + 1
+  let next = items
+  for (const item of added) {
+    const at = next.findIndex(
+      (it, idx) => idx >= start && collator.compare(it.label ?? '', item.label ?? '') > 0
+    )
+    next = at < 0 ? [...next, item] : next.toSpliced(at, 0, item)
+  }
+  return next
+}
+
 /** Whether any item of a menu, top level or nested, answers to `test`. */
 function someItem(items: NavigationItem[], test: (item: NavigationItem) => boolean): boolean {
   return items.some((item) => test(item) || (item.children ?? []).some(test))
@@ -155,7 +204,10 @@ class NavigationAutomation {
    */
   isOn(
     siteId: string,
-    key: Exclude<keyof NavigationAutomationSettings, 'includeStorageOperations'>
+    key: Exclude<
+      keyof NavigationAutomationSettings,
+      'includeStorageOperations' | 'addPagesPlacement' | 'migrateLinksPlacement'
+    >
   ) {
     const settings = this.settingsFor(siteId)
     if (!settings[key]) {
@@ -388,13 +440,14 @@ class NavigationAutomation {
   /**
    * A page has been created — or restored, which puts it back where its link was taken from.
    *
-   * Add New Pages to Direct Parent Menu: a link to it at the end of the menu owned by the folder it
-   * is in, unless that menu already links to it.
+   * Add New Pages to Direct Parent Menu: a link to it in the menu owned by the folder it is in —
+   * alphabetically or at the end, as `addPagesPlacement` says — unless that menu already links to it.
    */
   async pageCreated(siteId: string, page: AutomatedPage): Promise<void> {
     if (!this.isOn(siteId, 'addPagesToParentMenu')) {
       return
     }
+    const { addPagesPlacement } = this.settingsFor(siteId)
     await this.guarded('add page to parent menu', async () => {
       const navId = await this.parentMenuAt(siteId, page.locale, parentOf(page.path))
       if (!navId) {
@@ -411,7 +464,7 @@ class NavigationAutomation {
             (item.type === 'menu' && item.showLink === true && item.targetNavId === folderId)
         )
           ? null
-          : [...items, this.linkTo(siteId, page)]
+          : placeItems(items, [this.linkTo(siteId, page)], addPagesPlacement, page.locale)
       )
     })
   }
@@ -442,8 +495,9 @@ class NavigationAutomation {
    *
    * Migrate Link from Direct Parent Menu on Page Move:
    * - Within the same menu, every link to it is pointed at where it now is.
-   * - Into another, the link is taken out of the menu of the folder it left and put at the end of the
-   *   menu of the folder it arrived in, keeping its label, icon and visibility. Where that folder owns
+   * - Into another, the link is taken out of the menu of the folder it left and put in the menu of
+   *   the folder it arrived in — alphabetically or at the end, as `migrateLinksPlacement` says —
+   *   keeping its label, icon and visibility. Where that folder owns
    *   no menu it is not put back anywhere. Where there was no link to take, a new one is added there,
    *   as for a page created in that folder.
    * - And any link to it in any other menu of the site is pointed at where it now is, since a link
@@ -453,6 +507,7 @@ class NavigationAutomation {
     if (!this.isOn(siteId, 'migrateLinksOnMove')) {
       return
     }
+    const { migrateLinksPlacement } = this.settingsFor(siteId)
     await this.guarded('migrate page link', async () => {
       const to: Location = { locale: page.locale, path: page.path }
       const oldNavId = await this.parentMenuAt(siteId, from.locale, parentOf(from.path))
@@ -478,7 +533,9 @@ class NavigationAutomation {
           // -> It may have been nested where it was, and arrives at the top level of its new menu
           children: (carried as NavigationItem).children ?? []
         }
-        await this.editMenu(siteId, newNavId, (items) => [...items, moved])
+        await this.editMenu(siteId, newNavId, (items) =>
+          placeItems(items, [moved], migrateLinksPlacement, to.locale)
+        )
       } else if (newNavId && newNavId !== oldNavId) {
         // -> Nothing to carry — it was never in the menu it left, or the setting came on after it was
         //    created — so it arrives as a new page would, unless its new menu already reaches it: by
@@ -494,7 +551,7 @@ class NavigationAutomation {
               (item.type === 'menu' && item.showLink === true && item.targetNavId === folderId)
           )
             ? null
-            : [...items, this.linkTo(siteId, page)]
+            : placeItems(items, [this.linkTo(siteId, page)], migrateLinksPlacement, to.locale)
         )
       }
 
@@ -617,7 +674,7 @@ class NavigationAutomation {
           made the folder -- is what this item now is, link half and all. It takes that link's place,
           and keeps how it was labelled, drawn and shown, since it goes to the same page. Only a link at
           the top level can be replaced where it stands: a menu item cannot be nested, so one under a
-          parent link gives way and the item goes at the end.
+          parent link gives way and the item is placed as a new one would be.
         */
         const besidePage = { locale: folder.locale, path: folder.path }
         const at = items.findIndex((item) => this.pointsAt(siteId, item, folder.locale, besidePage))
@@ -647,7 +704,12 @@ class NavigationAutomation {
           }
           return item
         })
-        return [...(without ?? items), nested ? standIn(nested) : menuItem]
+        return placeItems(
+          without ?? items,
+          [nested ? standIn(nested) : menuItem],
+          this.settingsFor(siteId).addPagesPlacement,
+          folder.locale
+        )
       })
     })
   }
@@ -684,13 +746,14 @@ class NavigationAutomation {
    *   and those below it moved with it — they are keyed by entry — so it is the links inside them,
    *   and in any other menu, that have to follow.
    * - With a new parent, the menu items opening its menu are taken out of the menu of the folder it
-   *   left and put at the end of the one it arrived in, as a page's link is. Where that folder owns no
+   *   left and put in the one it arrived in, placed as a page's link is (`migrateLinksPlacement`). Where that folder owns no
    *   menu they are not put back.
    */
   async folderMoved(siteId: string, folder: AutomatedFolder, from: Location): Promise<void> {
     if (!this.isOn(siteId, 'migrateLinksOnMove')) {
       return
     }
+    const { migrateLinksPlacement } = this.settingsFor(siteId)
     await this.guarded('migrate folder links', async () => {
       const to: Location = { locale: folder.locale, path: folder.path }
       for (const menu of await this.menusOf(siteId)) {
@@ -718,7 +781,9 @@ class NavigationAutomation {
         })
       )
       if (newNavId && carried.length > 0) {
-        await this.editMenu(siteId, newNavId, (items) => [...items, ...carried])
+        await this.editMenu(siteId, newNavId, (items) =>
+          placeItems(items, carried, migrateLinksPlacement, to.locale)
+        )
       }
     })
   }

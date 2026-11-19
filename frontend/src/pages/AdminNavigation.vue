@@ -235,6 +235,29 @@
                   :aria-label="t(`admin.navigation.${automation.key}`)" />
               </w-item-section>
             </w-item>
+            <!-- -> Where the links it adds go, which only means something while it is on -->
+            <template v-if="automation.placement && state.config[automation.key]">
+              <w-separator class="my-2" inset />
+              <w-item>
+                <blueprint-icon class="self-start" icon="sort" />
+                <w-item-section>
+                  <w-item-label>{{ t(`admin.navigation.${automation.placement}`) }}</w-item-label>
+                  <w-item-label caption>{{
+                    t(`admin.navigation.${automation.placement}Hint`)
+                  }}</w-item-label>
+                </w-item-section>
+                <w-item-section avatar>
+                  <w-btn-toggle
+                    v-model="state.config[automation.placement]"
+                    push
+                    glossy
+                    no-caps
+                    toggle-color="primary"
+                    :options="placementOptions"
+                    :aria-label="t(`admin.navigation.${automation.placement}`)" />
+                </w-item-section>
+              </w-item>
+            </template>
           </template>
         </w-card>
       </div>
@@ -290,8 +313,10 @@ const state = reactive({
   // -> The site's `navigation` settings, as the Configuration view edits them
   config: {
     addPagesToParentMenu: false,
+    addPagesPlacement: 'alphabetical',
     removePagesFromParentMenu: false,
     migrateLinksOnMove: false,
+    migrateLinksPlacement: 'alphabetical',
     updateLabelsOnRename: false,
     createFolderMenus: false,
     deleteOrphanedMenus: false,
@@ -302,17 +327,24 @@ const state = reactive({
 
 /**
  * The Automations card, in the order it is drawn: what happens to a page, then to a folder, then the
- * sweep -- and last the switch that says whose changes the others answer to.
+ * sweep -- and last the switch that says whose changes the others answer to. An automation with a
+ * `placement` key adds links to a menu, and is followed, while it is on, by the choice of where they go.
  */
 const automations = [
-  { key: 'addPagesToParentMenu', icon: 'new-document' },
+  { key: 'addPagesToParentMenu', icon: 'new-document', placement: 'addPagesPlacement' },
   { key: 'removePagesFromParentMenu', icon: 'eraser' },
-  { key: 'migrateLinksOnMove', icon: 'move-stock' },
+  { key: 'migrateLinksOnMove', icon: 'move-stock', placement: 'migrateLinksPlacement' },
   { key: 'updateLabelsOnRename', icon: 'rename' },
   { key: 'createFolderMenus', icon: 'add-folder' },
   { key: 'deleteOrphanedMenus', icon: 'trash' },
   { key: 'includeStorageOperations', icon: 'synchronize' }
 ]
+
+/** A computed so that the labels follow the locale strings, which can land after `setup()` has run. */
+const placementOptions = computed(() => [
+  { value: 'alphabetical', label: t('admin.navigation.placementAlphabetical') },
+  { value: 'end', label: t('admin.navigation.placementEnd') }
+])
 
 /*
   A computed for the same reason as on the Users page: the locale strings can land after `setup()`

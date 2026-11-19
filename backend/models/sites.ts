@@ -281,8 +281,10 @@ class Sites {
         //    migrations set them, rather than starting to rewrite menus nobody asked it to touch
         navigation: {
           addPagesToParentMenu: true,
+          addPagesPlacement: 'alphabetical',
           removePagesFromParentMenu: true,
           migrateLinksOnMove: true,
+          migrateLinksPlacement: 'alphabetical',
           updateLabelsOnRename: true,
           createFolderMenus: true,
           deleteOrphanedMenus: true,
@@ -716,8 +718,10 @@ class Sites {
         //    migrations set them, rather than starting to rewrite menus nobody asked it to touch
         navigation: {
           addPagesToParentMenu: true,
+          addPagesPlacement: 'alphabetical',
           removePagesFromParentMenu: true,
           migrateLinksOnMove: true,
+          migrateLinksPlacement: 'alphabetical',
           updateLabelsOnRename: true,
           createFolderMenus: true,
           deleteOrphanedMenus: true,
