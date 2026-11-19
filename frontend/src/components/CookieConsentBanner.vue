@@ -46,7 +46,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { consent, consentPromptReopened, setConsent } from '@/composables/cookieConsent'
+import { consent, consentPromptReopened, setConsent } from '@/composables/consent'
 
 import { useSiteStore } from '@/stores/site'
 
@@ -57,7 +57,7 @@ import { useSiteStore } from '@/stores/site'
  * analytics (`siteStore.hasAnalytics`): with none, there is nothing to choose — the wiki sets only its
  * strictly necessary session cookie — so the reader acknowledges the message; with some, they choose
  * between necessary cookies only and necessary plus tracking. The answer is a cookie the server reads
- * to decide whether to serve the tags at all (see `composables/cookieConsent.js`), so declining is
+ * to decide whether to serve the tags at all (see `composables/consent.js`), so declining is
  * what keeps the scripts from ever loading rather than a request to them to behave.
  *
  * The message is markdown, rendered the way the site banner's is (`SiteBanner.vue`): markdown-it with

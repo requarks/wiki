@@ -106,7 +106,7 @@ const THEME_CSS_ID = 'theme-css-override'
 
 /**
  * The cookie a reader's answer to the site's cookie consent banner is kept in, and the name BOTH
- * sides use for it: `frontend/src/composables/cookieConsent.js` writes it, and only `all` — tracking
+ * sides use for it: `frontend/src/composables/consent.js` writes it, and only `all` — tracking
  * accepted — lets `analyticsInjections` serve a tag. Strictly necessary itself, since it is what
  * remembers that the reader said no.
  */

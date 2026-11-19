@@ -6,7 +6,7 @@ paths:
   - "backend/helpers/appShell.ts"
   - "frontend/src/pages/AdminAnalytics.vue"
   - "frontend/src/components/CookieConsentBanner.vue"
-  - "frontend/src/composables/cookieConsent.js"
+  - "frontend/src/composables/consent.js"
 ---
 
 # Analytics
@@ -44,7 +44,7 @@ taking that back without the per-provider client-side layer described below.
 tracking.** The banner is `cookieConsent` in the site config (**Admin → General**, off by default —
 the wiki itself sets only its strictly necessary session cookie). The reader's answer is the
 `wikiConsent` cookie (`acknowledged` / `necessary` / `all`), written by
-`frontend/src/composables/cookieConsent.js` and read by `analyticsInjections`, which leaves both slots
+`frontend/src/composables/consent.js` and read by `analyticsInjections`, which leaves both slots
 empty unless it says `all`. A cookie and not local storage, because the server is what acts on it:
 declining keeps the scripts out of the document rather than asking them to behave. Accepting reloads
 the page so the server serves the tags, and withdrawing reloads it too, since a running tag cannot be

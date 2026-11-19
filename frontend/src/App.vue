@@ -7,7 +7,7 @@
   <w-loading-overlay />
   <page-progress-bar />
   <!-- -> Not in the admin area, which is never served an analytics tag to consent to -->
-  <cookie-consent-banner v-if="!isAdminArea()" />
+  <cookie-consent-banner v-if="siteStore.cookieConsent.isEnabled && !isAdminArea()" />
   <w-dialog-host />
   <component :is="DevQuickMenu" v-if="DevQuickMenu" />
 </template>
@@ -25,7 +25,6 @@ import { useDark } from '@/composables/dark'
 import { notify } from '@/composables/notify'
 import { pageProgress } from '@/composables/pageProgress'
 
-import CookieConsentBanner from '@/components/CookieConsentBanner.vue'
 import MaintenancePage from '@/components/MaintenancePage.vue'
 import PageProgressBar from '@/components/PageProgressBar.vue'
 
@@ -54,6 +53,21 @@ import { useUserStore } from '@/stores/user'
 const DevQuickMenu = import.meta.env.DEV
   ? defineAsyncComponent(() => import('@/components/DevQuickMenu.vue'))
   : null
+
+// COOKIE CONSENT
+
+/*
+  The cookie consent banner, loaded only on a site that has it turned on, and never on the main
+  bundle's static import graph: cookie-notice filter lists block requests by file name, and a blocked
+  static import leaves the whole app on its loading screen (#8297). A blocked load here costs the
+  banner and nothing else — the loader settles on an empty component rather than an error.
+*/
+const CookieConsentBanner = defineAsyncComponent(() =>
+  import('@/components/CookieConsentBanner.vue').catch((err) => {
+    console.warn('Cookie consent banner could not be loaded:', err)
+    return { render: () => null }
+  })
+)
 
 // DARK MODE
 

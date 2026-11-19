@@ -44,7 +44,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { reopenConsentPrompt } from '@/composables/cookieConsent'
 import { renderFooter } from '@/renderers/footer'
 import { useSiteStore } from '@/stores/site'
 
@@ -89,6 +88,21 @@ const canChangeConsent = computed(() => {
 const isCopyright = computed(() => {
   return siteStore.contentLicense === 'alr'
 })
+
+// METHODS
+
+/**
+ * Imported on click rather than up front, to keep `composables/consent.js` off the main bundle's
+ * static import graph (see the banner in `App.vue`). A blocked load leaves the link doing nothing.
+ */
+async function reopenConsentPrompt() {
+  try {
+    const { reopenConsentPrompt: reopen } = await import('@/composables/consent')
+    reopen()
+  } catch (err) {
+    console.warn('Cookie preferences could not be loaded:', err)
+  }
+}
 </script>
 
 <style scoped>

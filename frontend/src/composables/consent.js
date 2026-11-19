@@ -13,6 +13,13 @@ import { ref } from 'vue'
  *   analytics. Asked again once it does, since nobody has said yes or no to tracking yet.
  * - `necessary` — strictly necessary cookies only. No tag is served.
  * - `all` — necessary and tracking cookies. The tags are served.
+ *
+ * Cookie-notice filter lists block requests by file name (AdGuard Cookie Notices has
+ * `/cookieConsent-`), and Vite names this file's chunk after it. When the main bundle imported it
+ * statically, a blocked chunk left the whole app on its loading screen, banner on or off (#8297). So
+ * two things hold: it is only ever imported dynamically (the banner is an async component in
+ * `App.vue`, the footer's link imports it on click), so a block costs the banner and nothing else;
+ * and it is named `consent.js`, not `cookieConsent.js`, so that it is not blocked in the first place.
  */
 export const CONSENT_COOKIE = 'wikiConsent'
 
