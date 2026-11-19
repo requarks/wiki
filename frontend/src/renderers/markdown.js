@@ -149,6 +149,12 @@ export function twemojiHtml(char) {
   })
 }
 
+/**
+ * A backslash escape: a backslash before one of the ASCII punctuation characters CommonMark lets it
+ * escape. Captures the character, so replacing with `$1` resolves the escape.
+ */
+const BACKSLASH_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -324,6 +330,43 @@ export class MarkdownRenderer {
         return false
       }
       return inlineProps(state, silent)
+    })
+
+    /*
+      A bare URL with a backslash escape in it, `https://example.com/\_files/a.pdf`, linked to where
+      the escape says it goes rather than to `/%5C_files/a.pdf`.
+
+      Since markdown-it 14, linkify is an inline rule that reads the URL straight from the SOURCE, so
+      the escape is still in it: the backslash lands in the href, percent-encoded, and in the link text.
+      Every other place in markdown resolves the escape first (a core rule over text tokens did, up to
+      markdown-it 13). The Visual editor escapes every `_` and `*` it writes, so a URL pasted into it
+      as text came back as a link to a file that does not exist -- and the link it then parsed back
+      carried the backslash in its TEXT, which the next save escaped once more (`\\\_`).
+
+      Wrapped rather than replaced, so that what counts as a URL and where it ends stays linkify's
+      call; only the link it built is corrected. Corrected from the SOURCE, not from the link text,
+      which is percent-decoded: read off the text, a `%5C_` that was written as such would pass for an
+      escape. No new `validateLink` check is needed: an escape cannot sit in the scheme, which is all
+      it looks at.
+    */
+    const linkifyRule = this.md.inline.ruler.__rules__.find((rule) => rule.name === 'linkify')
+    const inlineLinkify = linkifyRule.fn
+    this.md.inline.ruler.at('linkify', (state, silent) => {
+      const start = state.pos
+      // -> The scheme in front of `://`, which the rule finds at the end of `pending` the same way
+      const scheme = state.pending.slice(-10).match(/[a-z\d+.-]*$/i)[0]
+      const matched = inlineLinkify(state, silent)
+      if (!matched || silent) {
+        return matched
+      }
+      const source = state.src.slice(start - scheme.length, state.pos)
+      const url = source.replace(BACKSLASH_ESCAPE, '$1')
+      if (url !== source) {
+        const [open, text] = state.tokens.slice(-3)
+        open.attrs = [['href', state.md.normalizeLink(url)]]
+        text.content = state.md.normalizeLinkText(url)
+      }
+      return true
     })
 
     /*

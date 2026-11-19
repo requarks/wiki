@@ -124,6 +124,9 @@ const CONSTRUCTS = {
   // -> A citation written as a link, which crashed the renderer before MDC's span stopped claiming
   //    the brackets inside it
   'link whose text is bracketed': 'See [[1]](https://example.com) here.',
+  // -> A bare URL as this editor writes one that was pasted as text: escaped, which linkify read
+  //    into the href as `%5C` until the renderer resolved the escapes in it
+  'bare URL with escapes': 'File: https://example.com/\\_files/a\\_b.pdf here.',
   'link with a span in its text': 'A [text with [a span]{.x} in it](https://example.com) here.',
   'link with a title and a target': 'A [both](https://example.com "Tip"){target="_blank"} here.',
   // -> A shortcut reference, which MDC's span took for itself until the definition was looked up
