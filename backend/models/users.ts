@@ -246,6 +246,23 @@ function strategyEnrollGroups(strategy: AuthStrategy): string[] {
 }
 
 /**
+ * Turn 2FA off and forget the secret under every strategy of a user's `auth`, in place — a
+ * half-finished setup (a secret never activated) included.
+ *
+ * @returns Whether 2FA had been active under any of them
+ */
+function clearTfa(auth: Record<string, any>): boolean {
+  let wasActive = false
+  for (const [strategyId, config] of Object.entries(auth)) {
+    if (config?.tfaIsActive || config?.tfaSecret) {
+      wasActive = wasActive || Boolean(config.tfaIsActive)
+      auth[strategyId] = { ...config, tfaIsActive: false, tfaSecret: '' }
+    }
+  }
+  return wasActive
+}
+
+/**
  * Count a wrong 2FA code against a continuation token, destroying the token once `maxTfaAttempts`
  * have been used up — the client then has nothing left to continue with and has to start over.
  *
@@ -1315,13 +1332,7 @@ class Users {
 
     const localStrategyId = WIKI.data.systemIds.localAuthId
     const auth = (user.auth ?? {}) as Record<string, any>
-    let tfaDisabled = false
-    for (const [strategyId, config] of Object.entries(auth)) {
-      if (config?.tfaIsActive || config?.tfaSecret) {
-        tfaDisabled = tfaDisabled || Boolean(config.tfaIsActive)
-        auth[strategyId] = { ...config, tfaIsActive: false, tfaSecret: '' }
-      }
-    }
+    const tfaDisabled = clearTfa(auth)
     auth[localStrategyId] = {
       tfaRequired: false,
       ...auth[localStrategyId],
@@ -1340,6 +1351,34 @@ class Users {
       .where(eq(usersTable.id, id))
     await WIKI.models.sessions.clearSessionsFromUser(id)
     return { tfaDisabled, passkeysRemoved }
+  }
+
+  /**
+   * An administrator's reset of a user's two-factor authentication: the secret is forgotten under
+   * EVERY strategy, so the authenticator the user enrolled no longer works anywhere.
+   *
+   * Unlike `disableTfa`, nothing here asks whether 2FA is enforced — that is the point. Where a
+   * group, the strategy or the account itself requires 2FA, the next login asks the user to enrol
+   * again with a new QR code; where nothing does, the account simply signs in without it.
+   *
+   * Sessions are left alone: a reset is about the next login, not about who is signed in now.
+   *
+   * @returns Whether 2FA had been active under any strategy, or null if the user does not exist
+   */
+  async resetTfa(id: string): Promise<{ tfaDisabled: boolean } | null> {
+    const user = await this.getById(id)
+    if (!user) {
+      return null
+    }
+
+    const auth = (user.auth ?? {}) as Record<string, any>
+    const tfaDisabled = clearTfa(auth)
+    await WIKI.db
+      .update(usersTable)
+      .set({ auth, updatedAt: sql`now()` })
+      .where(eq(usersTable.id, id))
+    WIKI.models.flags.authDebug(`User ${id} <${user.email}> had 2FA reset by an administrator`)
+    return { tfaDisabled }
   }
 
   /**

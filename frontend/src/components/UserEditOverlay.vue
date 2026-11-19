@@ -1172,12 +1172,29 @@ function invalidateTFA() {
     cancel: true,
     persistent: true,
     okLabel: t('common.actions.confirm')
-  }).onOk(() => {
-    // TODO: invalidate user 2FA
-    notify({
-      type: 'positive',
-      message: t('admin.users.tfaInvalidateSuccess')
-    })
+  }).onOk(async () => {
+    loading.show()
+    try {
+      const resp = await API_CLIENT.delete(`users/${adminStore.overlayOpts.id}/tfa`).json()
+      if (!resp?.ok) {
+        throw new Error(resp?.message || 'An unexpected error occured.')
+      }
+      // -> Every strategy's secret is gone, the local one shown here included
+      localAuth.value = {
+        ...localAuth.value,
+        isTfaSetup: false
+      }
+      notify({
+        type: 'positive',
+        message: t('admin.users.tfaInvalidateSuccess')
+      })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: apiErrorMessage(err, 'An unexpected error occured.')
+      })
+    }
+    loading.hide()
   })
 }
 

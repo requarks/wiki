@@ -185,6 +185,7 @@ export const AUDIT_ACTIONS = {
     'createUser',
     'updateUser',
     'resetUserPassword',
+    'resetUserTfa',
     'sendWelcomeEmail',
     'deleteUser',
     'updateUserDefaults',

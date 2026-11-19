@@ -217,6 +217,7 @@
   "admin.audit.actions.rerenderPages": "Re-rendered every page",
   "admin.audit.actions.resetPassword": "Reset a password from an emailed link",
   "admin.audit.actions.resetUserPassword": "Set a user's password",
+  "admin.audit.actions.resetUserTfa": "Reset a user's 2FA",
   "admin.audit.actions.resizeAsset": "Resized an image",
   "admin.audit.actions.resolveAnnotation": "Resolved an annotation",
   "admin.audit.actions.restorePage": "Restored a deleted page",

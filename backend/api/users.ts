@@ -2033,6 +2033,69 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * RESET A USER'S 2FA
+   */
+  app.delete<{ Params: { userId: string } }>(
+    '/:userId/tfa',
+    {
+      config: {
+        permissions: ['manage:users']
+      },
+      schema: {
+        summary: "Reset a user's 2FA",
+        description:
+          'Forgets the 2FA secret under every authentication strategy, so the enrolled authenticator no longer works. Where 2FA is required — by the account, a group or the strategy — the next login asks the user to set it up again; otherwise they sign in without it. Sessions are not ended.',
+        tags: ['Users'],
+        params: {
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              format: 'uuid'
+            }
+          },
+          required: ['userId']
+        },
+        response: {
+          200: {
+            description: '2FA reset successfully',
+            type: 'object',
+            properties: {
+              ok: {
+                type: 'boolean'
+              },
+              message: {
+                type: 'string'
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req, reply) => {
+      const systemUserRefusal = await systemUserGuard(req, req.params.userId)
+      if (systemUserRefusal) {
+        throw systemUserRefusal
+      }
+
+      const result = await WIKI.models.users.resetTfa(req.params.userId)
+      if (!result) {
+        return reply.notFound('User does not exist.')
+      }
+
+      await audit(req, 'admin', 'resetUserTfa', {
+        targetUserId: req.params.userId,
+        tfaDisabled: result.tfaDisabled
+      })
+
+      return {
+        ok: true,
+        message: 'User 2FA has been reset.'
+      }
+    }
+  )
+
+  /**
    * SEND A WELCOME EMAIL
    *
    * The same mail `POST /users` offers to send on create, available afterwards — for an account
