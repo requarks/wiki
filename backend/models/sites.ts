@@ -2,14 +2,20 @@ import { mergeWith, toMerged } from 'es-toolkit/object'
 import { keyBy } from 'es-toolkit/array'
 import {
   approvalRules as approvalRulesTable,
+  assets as assetsTable,
   blocks as blocksTable,
   navigation as navigationTable,
+  pageEditSubmissions as pageEditSubmissionsTable,
   pageHistory as pageHistoryTable,
   pageLinks as pageLinksTable,
+  pageRenderQueue as pageRenderQueueTable,
+  pages as pagesTable,
+  pageWatching as pageWatchingTable,
   siteAssets as siteAssetsTable,
   sites as sitesTable,
   storage as storageTable,
-  tags as tagsTable
+  tags as tagsTable,
+  tree as treeTable
 } from '../db/schema.ts'
 import { and, eq, inArray } from 'drizzle-orm'
 import { invalidateAppShellCache } from '../helpers/appShell.ts'
@@ -596,14 +602,48 @@ class Sites {
     })
   }
 
-  async deleteSite(id: string): Promise<boolean> {
+  /**
+   * Delete a site and its configuration.
+   *
+   * @param opts.force Delete its content too — every page, asset and tree entry. Without it, a site
+   *        still holding any of them is refused by the database (see the route's conflict handling).
+   *        Content is removed as rows only: nothing is sent to the site's storage targets, which go
+   *        with it, so whatever they hold (a disk folder, a git remote, a bucket) is left as it is.
+   *        The edit lock is not consulted either, since the site it guards against edits is going.
+   * @returns Whether a site was deleted
+   */
+  async deleteSite(id: string, { force = false }: { force?: boolean } = {}): Promise<boolean> {
     // -> Block, storage, uploaded image, navigation, approval rule and tag rows belong to the site
     //    rather than to its content, and their FK has no cascade, so they would otherwise block the
     //    delete — `createSite` itself writes the site's menu, so not even an empty site could go.
-    //    Content tables (pages, assets, the tree) deliberately still do — see the conflict handling
-    //    in the route — and one transaction is what keeps a refused delete from having already wiped
-    //    the site's configuration, or its deleted pages' history, on its way to the refusal.
+    //    Content tables (pages, assets, the tree) deliberately still do unless forced — see the
+    //    conflict handling in the route — and one transaction is what keeps a refused delete from
+    //    having already wiped the site's configuration, or its deleted pages' history, on its way
+    //    to the refusal.
     const deleted = await WIKI.db.transaction(async (tx) => {
+      let assetIds: string[] = []
+      let pageCount = 0
+      if (force) {
+        // -> Rows keyed by the site that may not name a page — a suggestion for a page not yet
+        //    written, a queued render, a watch — and so would not go with the pages below
+        await tx.delete(pageEditSubmissionsTable).where(eq(pageEditSubmissionsTable.siteId, id))
+        await tx.delete(pageRenderQueueTable).where(eq(pageRenderQueueTable.siteId, id))
+        await tx.delete(pageWatchingTable).where(eq(pageWatchingTable.siteId, id))
+        await tx.delete(pageLinksTable).where(eq(pageLinksTable.siteId, id))
+        // -> Comments, ratings, owners, lifecycle rules and the rest cascade from the page
+        const pages = await tx
+          .delete(pagesTable)
+          .where(eq(pagesTable.siteId, id))
+          .returning({ id: pagesTable.id })
+        pageCount = pages.length
+        assetIds = (
+          await tx
+            .delete(assetsTable)
+            .where(eq(assetsTable.siteId, id))
+            .returning({ id: assetsTable.id })
+        ).map((row) => row.id)
+        await tx.delete(treeTable).where(eq(treeTable.siteId, id))
+      }
       await tx.delete(blocksTable).where(eq(blocksTable.siteId, id))
       await tx.delete(storageTable).where(eq(storageTable.siteId, id))
       await tx.delete(siteAssetsTable).where(eq(siteAssetsTable.siteId, id))
@@ -623,12 +663,21 @@ class Sites {
       //    would leave too, rather than this site staying undeletable while anybody links to it
       await tx.delete(pageLinksTable).where(eq(pageLinksTable.targetSiteId, id))
       const result = await tx.delete(sitesTable).where(eq(sitesTable.id, id))
-      return (result.rowCount ?? 0) > 0
+      return (result.rowCount ?? 0) > 0 ? { assetIds, pageCount } : null
     })
     if (!deleted) {
       return false
     }
 
+    if (deleted.assetIds.length > 0) {
+      WIKI.models.assets.forgetAllPaths()
+      await WIKI.models.assets.dropCachedContent(deleted.assetIds)
+    }
+    // -> Any of the pages may have been a feedback board, which is what page access on everything
+    //    under it was resolved against
+    if (deleted.pageCount > 0) {
+      await WIKI.models.feedback.reloadBoardsEverywhere()
+    }
     await WIKI.models.sites.reloadCacheEverywhere()
     return true
   }

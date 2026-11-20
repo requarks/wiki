@@ -857,7 +857,7 @@ async function routes(app: FastifyInstance) {
   /**
    * DELETE SITE
    */
-  app.delete<{ Params: { siteId: string } }>(
+  app.delete<{ Params: { siteId: string }; Querystring: { force?: boolean } }>(
     '/:siteId',
     {
       config: {
@@ -865,6 +865,8 @@ async function routes(app: FastifyInstance) {
       },
       schema: {
         summary: 'Delete a site',
+        description:
+          'A site still holding pages or assets is refused with 409, unless `force` is set — which takes `manage:system`, and deletes all of its content with it.',
         tags: ['Sites'],
         params: {
           type: 'object',
@@ -875,6 +877,17 @@ async function routes(app: FastifyInstance) {
             }
           },
           required: ['siteId']
+        },
+        querystring: {
+          type: 'object',
+          properties: {
+            force: {
+              type: 'boolean',
+              default: false,
+              description:
+                'Delete the site along with all of its content: pages, their history and comments, assets and the page tree. Requires `manage:system`.'
+            }
+          }
         },
         response: {
           204: {
@@ -887,14 +900,21 @@ async function routes(app: FastifyInstance) {
       // -> Read before it goes, so that the entry can say which site this was rather than only which
       //    id it had
       const doomed = await WIKI.models.sites.getSiteById({ id: req.params.siteId })
+      const force = req.query.force === true
+      // -> Deleting every page and file on a site is not a site setting, so `manage:sites` alone
+      //    does not buy it
+      if (force && !WIKI.models.groups.actorForRequest(req).permissions.includes('manage:system')) {
+        return reply.forbidden('Only an administrator with manage:system may force a site delete.')
+      }
       try {
         if ((await WIKI.models.sites.countSites()) <= 1) {
           reply.conflict('Cannot delete the last site. At least 1 site must exist at all times.')
-        } else if (await WIKI.models.sites.deleteSite(req.params.siteId)) {
+        } else if (await WIKI.models.sites.deleteSite(req.params.siteId, { force })) {
           await audit(req, 'admin', 'deleteSite', {
             siteId: req.params.siteId,
             hostname: doomed?.hostname ?? null,
-            title: doomed?.config?.title ?? null
+            title: doomed?.config?.title ?? null,
+            force
           })
           reply.code(204)
         } else {
