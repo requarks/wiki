@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { and, count, eq, inArray } from 'drizzle-orm'
+import { and, count, eq, inArray, sql } from 'drizzle-orm'
+import { chunk } from 'es-toolkit/array'
 import { getIconData, iconToHTML, iconToSVG, replaceIDs } from '@iconify/utils'
 import { icons as iconsTable, iconSets as iconSetsTable } from '../db/schema.ts'
 import type { IconifyIconCustomisations } from '@iconify/utils'
@@ -65,6 +66,14 @@ const CATALOG_TTL_MS = 60 * 60 * 1000
  * stream of requests to the Iconify API. Icons already stored are unaffected — they never go upstream.
  */
 const UPSTREAM_BUDGET_PER_MINUTE = 60
+
+/**
+ * How many icon names to ask upstream for in one request.
+ *
+ * The names go in the URL, and the Iconify API refuses one much past 8 kB with a 431. A name runs to a
+ * few dozen characters at most, so this stays well under it.
+ */
+const UPSTREAM_NAMES_PER_REQUEST = 100
 
 /** How long a name that upstream does not know stays remembered as missing. */
 const NOT_FOUND_TTL_MS = 60 * 60 * 1000
@@ -330,7 +339,7 @@ class Icons {
   }
 
   /**
-   * Search icons upstream, within the sets that are enabled here.
+   * Search icons upstream, within the sets that are enabled here, and store what it finds.
    *
    * @returns References shaped `prefix:name`
    */
@@ -355,7 +364,44 @@ class Icons {
       prefixes: searchIn.join(',')
     })
     const result = await this.apiFetch(`/search?${params}`)
-    return (result.icons ?? []) as string[]
+    const refs = (result.icons ?? []) as string[]
+    await this.storeSearchResults(refs)
+    return refs
+  }
+
+  /**
+   * Store the icons a search found, so that the picker's previews of them come from the database.
+   *
+   * The picker draws every result through `/_icons`, which fills a miss from upstream under the
+   * per-minute budget. Left to that, one search for icons nobody has used yet cost four or five
+   * budgeted requests — `iconify-icon` splits its batches to fit a 500-character URL — so a minute at
+   * the picker exhausted the budget, and every icon refused after that stayed blank: `iconify-icon`
+   * holds a `not_found` as missing until the page is reloaded.
+   *
+   * Fetched here instead, it is a request per set (per `UPSTREAM_NAMES_PER_REQUEST` names) outside
+   * the budget. The caller is an author at the picker who has just made an unbudgeted upstream call by
+   * searching, not the anonymous traffic the budget exists for.
+   *
+   * Best effort: an icon that could not be stored here is still drawn through `/_icons`.
+   */
+  async storeSearchResults(refs: string[]): Promise<void> {
+    const byPrefix = new Map<string, string[]>()
+    for (const ref of refs) {
+      const parsed = this.parseRef(ref)
+      if (parsed) {
+        byPrefix.set(parsed.prefix, [...(byPrefix.get(parsed.prefix) ?? []), parsed.name])
+      }
+    }
+    try {
+      for (const [prefix, names] of byPrefix) {
+        for (const batch of chunk(names, UPSTREAM_NAMES_PER_REQUEST)) {
+          await this.resolveIcons(prefix, batch, { budgeted: false })
+        }
+      }
+    } catch (err: any) {
+      WIKI.logger.warn(`Could not store icon search results [ SKIPPED ]`)
+      WIKI.logger.warn(err.message)
+    }
   }
 
   /**
@@ -380,11 +426,13 @@ class Icons {
    *
    * @param allowUpstream Whether a miss may be fetched upstream. False for callers that must not
    *   cause outbound traffic, e.g. a bulk render.
+   * @param budgeted Whether fetching upstream counts against `UPSTREAM_BUDGET_PER_MINUTE`. See
+   *   `fetchIconsUpstream`.
    */
   async resolveIcons(
     prefix: string,
     names: string[],
-    { allowUpstream = true }: { allowUpstream?: boolean } = {}
+    { allowUpstream = true, budgeted = true }: { allowUpstream?: boolean; budgeted?: boolean } = {}
   ): Promise<ResolvedIcons> {
     const wanted = [...new Set(names)].filter((name) => this.isValidRef(prefix, name))
     const icons: Record<string, IconifyIcon> = {}
@@ -438,7 +486,7 @@ class Icons {
       return { icons, notFound: stillMissing }
     }
 
-    const fetched = await this.fetchIconsUpstream(prefix, stillMissing)
+    const fetched = await this.fetchIconsUpstream(prefix, stillMissing, { budgeted })
     return {
       icons: { ...icons, ...fetched.icons },
       notFound: fetched.notFound
@@ -450,8 +498,15 @@ class Icons {
    *
    * Refuses for a set that is not enabled, so that a disabled set cannot grow, and holds to the
    * upstream budget so that requests for icons that do not exist cannot be amplified.
+   *
+   * @param budgeted False only for a caller behind the picker's permission guard, never one that
+   *   anyone who can read a page can reach — see `storeSearchResults`.
    */
-  async fetchIconsUpstream(prefix: string, names: string[]): Promise<ResolvedIcons> {
+  async fetchIconsUpstream(
+    prefix: string,
+    names: string[],
+    { budgeted = true }: { budgeted?: boolean } = {}
+  ): Promise<ResolvedIcons> {
     const set = await this.getSet(prefix)
     if (!set?.isEnabled) {
       return { icons: {}, notFound: names }
@@ -462,7 +517,7 @@ class Icons {
     if (asking.length < 1) {
       return { icons: {}, notFound: names }
     }
-    if (!this.claimUpstreamBudget()) {
+    if (budgeted && !this.claimUpstreamBudget()) {
       WIKI.logger.warn(
         `Upstream icon request budget exhausted, not fetching ${prefix}:${asking.join(',')} [ SKIPPED ]`
       )
@@ -496,7 +551,11 @@ class Icons {
         continue
       }
       icons[name] = data
-      await this.storeIcon(prefix, name, data)
+    }
+
+    // -> Stored before they are cached or answered, so that nothing is served the database lacks
+    await this.storeIcons(prefix, icons)
+    for (const [name, data] of Object.entries(icons)) {
       await this.writeDiskCache(prefix, name, data)
       this.remember(prefix, name, data)
     }
@@ -508,10 +567,10 @@ class Icons {
   }
 
   /**
-   * Write an icon to the permanent record
+   * Write icons of one set to the permanent record, in one statement
    */
-  async storeIcon(prefix: string, name: string, icon: IconifyIcon): Promise<void> {
-    const values = {
+  async storeIcons(prefix: string, icons: Record<string, IconifyIcon>): Promise<void> {
+    const values = Object.entries(icons).map(([name, icon]) => ({
       prefix,
       name,
       body: icon.body,
@@ -522,13 +581,25 @@ class Icons {
       rotate: icon.rotate ?? 0,
       hFlip: icon.hFlip ?? false,
       vFlip: icon.vFlip ?? false
+    }))
+    if (values.length < 1) {
+      return
     }
     await WIKI.db
       .insert(iconsTable)
       .values(values)
       .onConflictDoUpdate({
         target: [iconsTable.prefix, iconsTable.name],
-        set: values
+        set: {
+          body: sql`excluded.body`,
+          width: sql`excluded.width`,
+          height: sql`excluded.height`,
+          left: sql`excluded."left"`,
+          top: sql`excluded.top`,
+          rotate: sql`excluded.rotate`,
+          hFlip: sql`excluded."hFlip"`,
+          vFlip: sql`excluded."vFlip"`
+        }
       })
   }
 

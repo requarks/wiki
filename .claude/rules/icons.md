@@ -37,5 +37,11 @@ store; no SVG is ever written into content.
     before. A name assembled by concatenation is therefore a bug: make it a literal.
   - `img:…` renders as an `<img>`. Legacy `las la-cog` / `mdi-check` webfont names are mapped onto
     their Iconify equivalents for data written before the fonts were dropped; do not write new ones.
+- **The picker's search stores what it finds** (`storeSearchResults`) before answering, outside the
+  per-minute budget. Left to `/_icons`, its previews spent that budget in about a minute of searching —
+  `iconify-icon` splits a batch to fit a 500-character URL, so one search was four or five upstream
+  requests — and an icon refused for budget is held as missing by `iconify-icon` until the page
+  reloads: a blank choice. Only an author at the picker may skip the budget; anything reachable from
+  a public route keeps it.
 - Picking an icon calls `POST /_api/icons/materialize`, which is what guarantees the wiki can serve it
   afterwards without the Iconify API.

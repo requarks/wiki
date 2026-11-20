@@ -367,7 +367,7 @@ async function routes(app: FastifyInstance) {
       schema: {
         summary: 'Search icons across the enabled icon sets',
         description:
-          'Searched upstream, then narrowed to the sets enabled here — so results are always icons that can actually be used. Returns references shaped `prefix:name`, which is what content stores.' +
+          'Searched upstream, then narrowed to the sets enabled here — so results are always icons that can actually be used. Returns references shaped `prefix:name`, which is what content stores. The icons found are stored before answering, so that drawing them from `/_icons` reads the database rather than asking upstream.' +
           PICKER_ACCESS,
         tags: ['Icons'],
         querystring: {

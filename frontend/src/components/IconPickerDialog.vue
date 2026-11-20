@@ -264,7 +264,7 @@ const queueSearch = debounce(search, 350)
 /**
  * Hand the reference back, having made sure the wiki can serve it.
  *
- * Drawing the results already stored the ones that were previewed; this covers a reference that was
+ * The search already stored the results it previewed; this covers a reference that was
  * typed rather than picked, and makes the guarantee explicit at the moment content starts pointing at
  * it — from here on the icon is served from the wiki, with or without the Iconify API.
  */
