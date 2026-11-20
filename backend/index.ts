@@ -421,12 +421,22 @@ async function initHTTPServer() {
     path: path.join(WIKI.ROOTPATH, 'assets'),
     name: 'favicon.ico'
   })
+  const assetsRoot = path.join(WIKI.ROOTPATH, 'assets/_assets')
+  // -> The frontend's renderer entry keeps a fixed name (see `frontend/vite.config.js`) but does
+  //    nothing except import a hashed chunk, so a copy held across an upgrade names a chunk that is
+  //    gone. It is revalidated on every use instead; it is a few bytes and answers 304 by ETag.
+  const rendererEntry = path.join(assetsRoot, 'renderer.js')
   app.register(fastifyStatic, {
     prefix: '/_assets/',
-    root: path.join(WIKI.ROOTPATH, 'assets/_assets'),
+    root: assetsRoot,
     index: false,
     maxAge: '7d',
-    decorateReply: false
+    decorateReply: false,
+    setHeaders: (reply, filePath) => {
+      if (filePath === rendererEntry) {
+        reply.header('Cache-Control', 'no-cache')
+      }
+    }
   })
 
   // ----------------------------------------

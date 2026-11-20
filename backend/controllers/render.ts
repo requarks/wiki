@@ -28,8 +28,9 @@ const SHELL = `<!doctype html>
  */
 async function routes(app: FastifyInstance) {
   app.get('/', async (_req, reply) => {
-    // -> The bundle it pulls in is hashed and immutable, but this page must not be, or a rebuilt
-    //    frontend would keep rendering through the previous one
+    // -> The chunks it pulls in are hashed and immutable, but this page must not be, or a rebuilt
+    //    frontend would keep rendering through the previous one. `renderer.js` itself is unhashed and
+    //    revalidated on every load (`index.ts`) for the same reason.
     reply.header('Cache-Control', 'no-store')
     return reply.type('text/html; charset=utf-8').send(SHELL)
   })
