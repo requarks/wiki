@@ -76,6 +76,7 @@ export class BlockGalleryElement extends LitElement {
    */
   static definition = {
     block: 'gallery',
+    version: '1.0.0',
     name: 'Image Gallery',
     description: 'Displays a grid of images, each opening full size in a lightbox.',
     icon: 'image',

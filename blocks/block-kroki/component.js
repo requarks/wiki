@@ -81,6 +81,7 @@ export class BlockKrokiElement extends LitElement {
    */
   static definition = {
     block: 'kroki',
+    version: '1.0.0',
     name: 'Kroki',
     description:
       'Draws a diagram through a Kroki server — Graphviz, D2, BPMN, Vega, Structurizr, TikZ and two dozen more.',

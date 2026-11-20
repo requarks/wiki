@@ -72,6 +72,7 @@ export class BlockTimestampElement extends LitElement {
    */
   static definition = {
     block: 'timestamp',
+    version: '1.0.0',
     name: 'Timestamp',
     description: "A date and time in a line of text, shown in the reader's own timezone.",
     icon: 'timezone',

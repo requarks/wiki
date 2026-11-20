@@ -30,6 +30,7 @@ export class BlockStepsElement extends HTMLElement {
    */
   static definition = {
     block: 'steps',
+    version: '1.0.0',
     name: 'Steps',
     description: 'Draws a numbered list as a sequence of steps.',
     icon: 'list',

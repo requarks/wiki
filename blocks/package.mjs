@@ -179,7 +179,7 @@ async function main () {
   fs.rmSync(STAGING_DIR, { recursive: true, force: true })
 
   const uncompressed = entries.reduce((total, entry) => total + entry.size, 0)
-  console.log(`  ${definition.name} — <block-${definition.block}>`)
+  console.log(`  ${definition.name} ${definition.version} — <block-${definition.block}>`)
   console.log(`  ${entries.length} file(s), ${formatSize(uncompressed)} uncompressed`)
   console.log(`\n  → ${packagePath} (${formatSize(fs.statSync(packagePath).size)})\n`)
   console.log('  Install it from Administration → Content Blocks → Install Block...\n')

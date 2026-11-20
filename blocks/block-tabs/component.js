@@ -37,6 +37,7 @@ export class BlockTabsElement extends LitElement {
    */
   static definition = {
     block: 'tabs',
+    version: '1.0.0',
     name: 'Tabs',
     description: 'Groups content into tabbed panels.',
     icon: 'resume-template',

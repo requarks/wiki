@@ -297,6 +297,14 @@ async function routes(app: FastifyInstance) {
                 type: 'boolean',
                 description: 'False when the package replaced a block this site already had.'
               },
+              version: {
+                type: 'string',
+                description: 'The version the package declares.'
+              },
+              previousVersion: {
+                type: 'string',
+                description: 'The version of the block it replaced, or empty when the block is new.'
+              },
               fileCount: {
                 type: 'integer',
                 description: 'How many compiled files the package brought.'
@@ -335,6 +343,8 @@ async function routes(app: FastifyInstance) {
         block: result.block,
         name: result.name,
         isNew: result.isNew,
+        version: result.version,
+        previousVersion: result.previousVersion,
         packagedWith: result.packagedWith
       })
 

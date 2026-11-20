@@ -61,6 +61,13 @@ const BLOCK_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{0,62}$/
  */
 const PROP_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9-]{0,63}$/
 
+/**
+ * A block's version: semantic versioning, `MAJOR.MINOR.PATCH` with an optional pre-release and build
+ * suffix. The packager's build refuses a definition without one, with the same pattern.
+ */
+const VERSION_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/
+
 const PROP_TYPES = new Set(['string', 'number', 'boolean', 'select', 'icon'])
 
 interface PackageFileEntry {
@@ -145,8 +152,18 @@ function readDefinition(raw: any, block: string): BlockDefinition {
     }
     return value
   }
+  if (
+    typeof raw.version !== 'string' ||
+    raw.version.length > 64 ||
+    !VERSION_PATTERN.test(raw.version)
+  ) {
+    refuse(
+      'The package\'s definition declares no usable "version" (such as 1.0.0). Packages built before blocks were versioned have to be packaged again.'
+    )
+  }
   const definition: BlockDefinition = {
     block,
+    version: raw.version,
     name: text(raw.name, 'name', 255),
     description: text(raw.description ?? '', 'description', 255),
     icon: text(raw.icon ?? '', 'icon', 255),

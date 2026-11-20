@@ -84,7 +84,7 @@ Gzipped UTF-8 JSON:
 ```json
 {
   "block": "xyz",
-  "definition": { "block": "xyz", "name": "…", "description": "…", "icon": "…", "props": [] },
+  "definition": { "block": "xyz", "version": "1.0.0", "name": "…", "description": "…", "icon": "…", "props": [] },
   "packagedAt": "2026-09-19T12:00:00.000Z",
   "packagedWith": "3.0.0",
   "files": [
@@ -150,6 +150,7 @@ tag — an unknown key would travel all of that way meaning nothing.
 | Key | Rule |
 | --- | --- |
 | `block` | Must equal the header's `block`. |
+| `version` | Required. Semantic versioning, ≤ 64: `MAJOR.MINOR.PATCH` with an optional `-pre.release` and `+build` suffix (`/^(0\|[1-9]\d*)\.(0\|[1-9]\d*)\.(0\|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/`). Shown beside the block under **Content Blocks**, which is how an administrator tells whether the installed copy is the latest. The writer's build refuses a definition without one (the manifest plugin in `rollup.config.mjs`), and the reader refuses a package without one. |
 | `name` | String, ≤ 255. Required. |
 | `description` | String, ≤ 255. Defaults to `''`. |
 | `icon` | String, ≤ 255. Defaults to `''`. |
@@ -236,7 +237,9 @@ file, and the namespace check on every path.
 `application/octet-stream` — not a multipart form.
 
 - **Re-importing the same key is an upgrade, not a second block.** The row is updated, so what the
-  site had switched on and configured on it survives. The reply says `isNew: false`.
+  site had switched on and configured on it survives. The reply says `isNew: false`, and carries the
+  package's `version` beside the `previousVersion` it replaced. Nothing refuses an older version:
+  installing one is how a bad release is rolled back.
 - **A key a built-in block already uses is refused with 409** (`blockPackageConflict`), since both
   would be served from the same address. Two conditions raise it: the key belongs to a block compiled
   into this wiki, or the site already has a non-custom row under it.
@@ -330,6 +333,10 @@ drifting from a file the writer actually produced, which is the failure that mat
   readers' browsers — but it means there is no way to distribute a block with any assurance attached.
   A signature would be a meaningful addition *only* alongside a notion of trusted publishers; on its
   own it proves nothing useful.
+- **`version` was added to the definition without a format bump.** A reader that predates it reads a
+  versioned package correctly (the definition is read key by key, so it ignores the key), which is
+  what a bump would have cost; the current reader refuses an unversioned package with a message saying
+  to package it again. Blocks imported before then were given `0.0.0` by a migration.
 - **No dependency or compatibility declaration.** A package does not say which wiki versions it works
   with. `packagedWith` is recorded but never acted on.
 - **One block per file.** A suite of related blocks is *n* uploads. This is a consequence of the key

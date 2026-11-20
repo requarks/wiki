@@ -47,6 +47,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'string',
         description: 'Element suffix — the block renders as `<block-{block}>`.'
       },
+      version: {
+        type: 'string',
+        description:
+          "The block's version, `MAJOR.MINOR.PATCH`, as the installed code declares it: from the compiled manifest for a built-in block, which is always `1.0.0` since it ships with the wiki, and from the imported package for a custom one."
+      },
       name: {
         type: 'string'
       },

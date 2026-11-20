@@ -82,6 +82,7 @@ export class BlockIndexElement extends LitElement {
    */
   static definition = {
     block: 'index',
+    version: '1.0.0',
     name: 'Index',
     description: 'Displays a list of pages contained in a folder.',
     icon: 'index',

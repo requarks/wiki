@@ -23,6 +23,7 @@ export class BlockIncludeElement extends LitElement {
    */
   static definition = {
     block: 'include',
+    version: '1.0.0',
     name: 'Include',
     description: 'Transclude the contents of another page inside this one.',
     icon: 'duplicate',

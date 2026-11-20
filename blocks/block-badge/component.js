@@ -19,6 +19,7 @@ export class BlockBadgeElement extends LitElement {
    */
   static definition = {
     block: 'badge',
+    version: '1.0.0',
     name: 'Badge',
     description: 'A short status label in a line of text, such as Beta, New or Deprecated.',
     icon: 'tags',

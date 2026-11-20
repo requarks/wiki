@@ -120,6 +120,7 @@ export class BlockYoutubeElement extends LitElement {
    */
   static definition = {
     block: 'youtube',
+    version: '1.0.0',
     name: 'YouTube Player',
     description: 'Embeds a YouTube video.',
     icon: 'youtube',

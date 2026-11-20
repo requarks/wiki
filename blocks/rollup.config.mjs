@@ -113,6 +113,13 @@ function cssAsString() {
 }
 
 /**
+ * A block's `version`: semantic versioning, `MAJOR.MINOR.PATCH` with an optional pre-release and
+ * build suffix. The backend's package reader checks the same pattern (`dev/specs/wkblock.md` §5).
+ */
+const VERSION_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/
+
+/**
  * Collects each block's `static definition` into `compiled/blocks.manifest.json`.
  *
  * The definitions are read from the AST rather than by importing the modules, since a component
@@ -150,7 +157,19 @@ function blocksManifest(only) {
             member.key.name === 'definition'
         )
         if (definitionNode) {
-          definitions.set(blockDir, literalToValue(definitionNode.value, blockDir))
+          const definition = literalToValue(definitionNode.value, blockDir)
+          // -> Refused here rather than by the backend, so that a block without one never builds
+          //    and never packages: what an administrator is shown is the version the code says it is
+          if (
+            typeof definition.version !== 'string' ||
+            definition.version.length > 64 ||
+            !VERSION_PATTERN.test(definition.version)
+          ) {
+            this.error(
+              `${blockDir}: "static definition" needs a "version" such as '1.0.0' (MAJOR.MINOR.PATCH), got ${JSON.stringify(definition.version)}.`
+            )
+          }
+          definitions.set(blockDir, definition)
         }
       }
       if (!definitions.has(blockDir)) {

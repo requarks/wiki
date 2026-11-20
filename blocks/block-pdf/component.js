@@ -109,6 +109,7 @@ export class BlockPdfElement extends LitElement {
    */
   static definition = {
     block: 'pdf',
+    version: '1.0.0',
     name: 'PDF Viewer',
     description: 'Displays a PDF document in a viewer, page by page.',
     icon: 'pdf',

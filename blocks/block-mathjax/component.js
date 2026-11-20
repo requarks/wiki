@@ -137,6 +137,7 @@ export class BlockMathjaxElement extends LitElement {
    */
   static definition = {
     block: 'mathjax',
+    version: '1.0.0',
     name: 'MathJax',
     description:
       'Typesets a TeX formula, including chemical equations written with mhchem — \\ce{} and \\pu{}.',

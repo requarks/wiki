@@ -126,6 +126,7 @@ export class BlockInfoboxElement extends LitElement {
    */
   static definition = {
     block: 'infobox',
+    version: '1.0.0',
     name: 'Infobox',
     description: 'A summary box beside the text, filled in from a list of facts.',
     icon: 'activity-feed',

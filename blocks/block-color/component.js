@@ -19,6 +19,7 @@ export class BlockColorElement extends LitElement {
    */
   static definition = {
     block: 'color',
+    version: '1.0.0',
     name: 'Color',
     description: 'A colour code in a line of text, with a swatch of the colour beside it.',
     icon: 'fill-color',

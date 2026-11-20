@@ -14,6 +14,7 @@ export class BlockQrCodeElement extends LitElement {
    */
   static definition = {
     block: 'qr-code',
+    version: '1.0.0',
     name: 'QR Code',
     description: 'Shows a QR code for a link or a piece of text.',
     icon: 'qr',

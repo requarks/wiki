@@ -56,6 +56,13 @@ export interface BlockProp {
 /** A block as declared by its component's `static definition`. */
 export interface BlockDefinition {
   block: string
+  /**
+   * The block's version, `MAJOR.MINOR.PATCH` (semantic versioning). Shown beside the block under
+   * Admin → Content Blocks, which is how an administrator tells whether an imported block is the
+   * latest release of it. Every built-in block says `1.0.0`: it ships with the wiki and changes with
+   * the wiki's own version, never on its own.
+   */
+  version: string
   name: string
   description: string
   icon: string
@@ -135,6 +142,8 @@ export type BlockConfig = Record<string, BlockPropSetting>
 export interface SiteBlock {
   id: string
   block: string
+  /** What the installed code declares — the manifest for a built-in, the stored package for a custom one. */
+  version: string
   name: string
   description: string
   icon: string
@@ -175,6 +184,10 @@ export interface BlockImportResult {
   name: string
   /** False when the package replaced a block this site already had — an upgrade rather than a new one. */
   isNew: boolean
+  /** The version the package declares. */
+  version: string
+  /** The version of the block it replaced, or empty when it is new. */
+  previousVersion: string
   fileCount: number
   /** When the package was built, and by which version of the wiki. Empty if it did not say. */
   packagedAt: string
@@ -539,6 +552,7 @@ class Blocks {
         : this.definitions.find((d) => d.block === row.block)
       return {
         ...row,
+        version: definition?.version ?? '',
         props: authorableProps(definition?.props),
         attributes: (definition?.props ?? []).map((prop) => prop.name),
         urlAttributes: (definition?.props ?? [])
@@ -581,7 +595,8 @@ class Blocks {
         asciidocTemplate: definition.asciidocTemplate ?? '',
         contentEditor: definition.contentEditor ?? '',
         isChild: true,
-        inline: definition.inline === true
+        inline: definition.inline === true,
+        version: definition.version
       }))
 
     return [...listed, ...children]
@@ -715,7 +730,11 @@ class Blocks {
     }
 
     const [existing] = await WIKI.db
-      .select({ id: blocksTable.id, isCustom: blocksTable.isCustom })
+      .select({
+        id: blocksTable.id,
+        isCustom: blocksTable.isCustom,
+        definition: blocksTable.definition
+      })
       .from(blocksTable)
       .where(and(eq(blocksTable.siteId, siteId), eq(blocksTable.block, pkg.block)))
     if (existing && !existing.isCustom) {
@@ -771,6 +790,8 @@ class Blocks {
       block: pkg.block,
       name: pkg.definition.name,
       isNew: !existing,
+      version: pkg.definition.version,
+      previousVersion: existing ? (existing.definition as BlockDefinition).version : '',
       fileCount: pkg.files.size,
       packagedAt: pkg.packagedAt,
       packagedWith: pkg.packagedWith

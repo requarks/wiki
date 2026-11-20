@@ -49,6 +49,7 @@ export class BlockDiagramElement extends LitElement {
    */
   static definition = {
     block: 'diagram',
+    version: '1.0.0',
     name: 'Diagram',
     description: 'Draws a Mermaid diagram — flowchart, sequence, class, state, ER, gantt and more.',
     icon: 'workflow',

@@ -29,6 +29,7 @@ export class BlockMapElement extends LitElement {
    */
   static definition = {
     block: 'map',
+    version: '1.0.0',
     name: 'Map',
     description: 'Shows a location on an OpenStreetMap map.',
     icon: 'geography',

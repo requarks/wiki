@@ -12,6 +12,7 @@ export class BlockCountdownElement extends LitElement {
    */
   static definition = {
     block: 'countdown',
+    version: '1.0.0',
     name: 'Countdown',
     description: 'Counts down to a date and time.',
     icon: 'timer',

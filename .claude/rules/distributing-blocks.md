@@ -42,9 +42,15 @@ written — so a change to the format is a change to the spec first, then both f
 - **The package is the only copy.** It is stored verbatim on the block's row (`packageData`) with its
   definition and a `checksum`. Nothing is written to `blocks/` on the server, which is a build output
   and in a container is part of the image.
+- **Every block declares a `version`** (`MAJOR.MINOR.PATCH`) in its `static definition`, shown beside
+  it under **Admin → Content Blocks**: the build (the manifest plugin in `rollup.config.mjs`) and the
+  package reader both refuse a block without one. **Built-in blocks all say `1.0.0` and stay there** —
+  they ship with the wiki and change with its version, so don't bump one when editing it. The version
+  is for a block distributed on its own, whose author bumps it on each release.
 - **Re-importing the same key is an upgrade, not a second block.** The row is updated, so what the
-  site had switched on and configured on it survives; the reply says `isNew: false`. A key a built-in
-  block already uses is refused with 409 rather than shadowing it.
+  site had switched on and configured on it survives; the reply says `isNew: false`, with the
+  `previousVersion` it replaced. An older version is accepted — that is how a release is rolled back.
+  A key a built-in block already uses is refused with 409 rather than shadowing it.
 - **`manage:sites` is what it takes**, the same permission the screen already needs — and deliberately
   not something stricter. A block is code that runs in every reader's browser on that site, which is
   exactly what the raw head and body fields under **Admin → Theme** already are. It is not a new kind

@@ -26,6 +26,7 @@ export class BlockTabElement extends HTMLElement {
    */
   static definition = {
     block: 'tab',
+    version: '1.0.0',
     name: 'Tab',
     description: 'One panel of a set of tabs.',
     icon: 'subtitles',

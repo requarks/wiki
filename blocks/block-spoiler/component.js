@@ -21,6 +21,7 @@ export class BlockSpoilerElement extends LitElement {
    */
   static definition = {
     block: 'spoiler',
+    version: '1.0.0',
     name: 'Spoiler',
     description: 'Hides content behind a cover until it is clicked.',
     icon: 'visualy-impaired',

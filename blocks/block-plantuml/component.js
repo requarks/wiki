@@ -50,6 +50,7 @@ export class BlockPlantumlElement extends LitElement {
    */
   static definition = {
     block: 'plantuml',
+    version: '1.0.0',
     name: 'PlantUML',
     description:
       'Draws a PlantUML diagram — sequence, class, state, activity, mindmap, gantt and the rest.',

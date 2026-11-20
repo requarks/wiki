@@ -75,6 +75,8 @@
                 <w-separator class="mx-2 my-1" vertical />
                 <em class="text-purple" v-if="block.isCustom">{{ t('admin.blocks.custom') }}</em>
                 <em class="text-teal-7" v-else>{{ t('admin.blocks.builtin') }}</em>
+                <w-separator class="mx-2 my-1" vertical />
+                <span class="text-grey">{{ block.version }}</span>
                 <template v-if="configSummary(block)">
                   <w-separator class="mx-2 my-1" vertical />
                   <em class="text-orange-8">{{ configSummary(block) }}</em>
@@ -306,8 +308,10 @@ async function importPackage() {
     }
     notify({
       type: 'positive',
-      message: t(resp.isNew ? 'admin.blocks.importSuccess' : 'admin.blocks.importUpdated', {
-        blockName: resp.name
+      message: t(importMessageKey(resp), {
+        blockName: resp.name,
+        version: resp.version,
+        previousVersion: resp.previousVersion
       })
     })
     await load()
@@ -320,6 +324,16 @@ async function importPackage() {
   }
   packageFileIpt.value.value = null
   state.importing = false
+}
+
+/** Whether an import installed a block, moved it to another version, or put the same one back. */
+function importMessageKey(resp) {
+  if (resp.isNew) {
+    return 'admin.blocks.importSuccess'
+  }
+  return resp.previousVersion === resp.version
+    ? 'admin.blocks.importReinstalled'
+    : 'admin.blocks.importUpdated'
 }
 
 function deleteBlock(id) {

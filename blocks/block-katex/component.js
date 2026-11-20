@@ -43,6 +43,7 @@ export class BlockKatexElement extends LitElement {
    */
   static definition = {
     block: 'katex',
+    version: '1.0.0',
     name: 'KaTeX',
     description:
       'Typesets a TeX formula with KaTeX, including chemical equations written with mhchem — \\ce{} and \\pu{}.',

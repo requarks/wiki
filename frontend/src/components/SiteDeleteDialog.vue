@@ -40,7 +40,7 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { apiFailureMessage } from '@/helpers/apiError'
+import { apiErrorMessage, apiFailureMessage } from '@/helpers/apiError'
 
 import { dialogComponentEmits, useDialogComponent } from '@/composables/dialog'
 import { notify } from '@/composables/notify'
@@ -107,7 +107,7 @@ async function confirm() {
   } catch (err) {
     notify({
       type: 'negative',
-      message: err.message
+      message: apiErrorMessage(err)
     })
   }
   state.isLoading = false

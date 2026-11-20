@@ -62,6 +62,7 @@ export class BlockDrawioElement extends LitElement {
    */
   static definition = {
     block: 'drawio',
+    version: '1.0.0',
     name: 'Draw.io',
     description: 'A diagram drawn in draw.io, stored as its own XML and edited on a canvas.',
     icon: 'web-design',

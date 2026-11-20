@@ -85,6 +85,7 @@ export class BlockKbdElement extends LitElement {
    */
   static definition = {
     block: 'kbd',
+    version: '1.0.0',
     name: 'Keyboard Shortcut',
     description:
       "A keyboard shortcut in a line of text, drawn as keys for the reader's own keyboard.",

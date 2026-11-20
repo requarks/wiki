@@ -113,6 +113,7 @@ export class BlockLinksGridElement extends LitElement {
    */
   static definition = {
     block: 'links-grid',
+    version: '1.0.0',
     name: 'Links Grid',
     description: 'A custom grid of cards, each linking to a page or an external URL.',
     icon: 'grid',

@@ -11,6 +11,7 @@ export class BlockMediaPlayerElement extends LitElement {
    */
   static definition = {
     block: 'media-player',
+    version: '1.0.0',
     name: 'Media Player',
     description: 'Plays an audio or video file inline.',
     icon: 'video-playlist',

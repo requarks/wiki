@@ -29,6 +29,7 @@ export class BlockAsciinemaElement extends LitElement {
    */
   static definition = {
     block: 'asciinema',
+    version: '1.0.0',
     name: 'Terminal Recording',
     description: 'Plays an asciinema recording — a .cast file — in a terminal player.',
     icon: 'run-command',

@@ -41,6 +41,7 @@ export class BlockProgressElement extends LitElement {
    */
   static definition = {
     block: 'progress',
+    version: '1.0.0',
     name: 'Progress',
     description: 'A small progress bar in a line of text, from a percentage or a count like 7/10.',
     icon: 'todo-list',

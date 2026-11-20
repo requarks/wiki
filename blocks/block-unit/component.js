@@ -176,6 +176,7 @@ export class BlockUnitElement extends LitElement {
    */
   static definition = {
     block: 'unit',
+    version: '1.0.0',
     name: 'Measurement',
     description:
       "A distance, weight, volume, speed or temperature in a line of text, shown in the reader's own units.",
