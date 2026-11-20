@@ -67,6 +67,8 @@ registerHooks({
 const { MarkdownRenderer } = await import('../src/renderers/markdown.js')
 const { createParser } = await import('../src/editor/visual/parse.js')
 const { serialize } = await import('../src/editor/visual/serialize.js')
+// -> The same reduction the editor's own conversion check compares, so the two cannot drift apart
+const { meaningOf } = await import('../src/editor/visual/convert.js')
 const { buildSeed, collabFragment } = await import('../src/editor/visual/collab.js')
 const Y = await import('yjs')
 const { yXmlFragmentToProseMirrorRootNode } = await import('y-prosemirror')
@@ -124,6 +126,8 @@ const CONSTRUCTS = {
   // -> A citation written as a link, which crashed the renderer before MDC's span stopped claiming
   //    the brackets inside it
   'link whose text is bracketed': 'See [[1]](https://example.com) here.',
+  // -> A bare URL as this editor writes one pasted as text, escaped -- see `LINKIFY_RENDERS` below
+  'bare URL with escapes': 'File: https://example.com/\\_files/a\\_b.pdf here.',
   'link with a span in its text': 'A [text with [a span]{.x} in it](https://example.com) here.',
   'link with a title and a target': 'A [both](https://example.com "Tip"){target="_blank"} here.',
   // -> A shortcut reference, which MDC's span took for itself until the definition was looked up
@@ -202,19 +206,35 @@ const WIKILINK_CONSTRUCTS = {
 }
 
 /**
- * A render reduced to what it says.
+ * Bare URLs whose render is pinned, under every config that turns `linkify` on.
  *
- * The preview's line markers go — they are scaffolding the server strips before storing anything — and
- * whitespace between tags is collapsed, since the serialiser may put a construct on a different line
- * without changing a word of the page.
+ * The round trip cannot catch a renderer that is wrong on its own: both sides of its comparison go
+ * through the same renderer, so a link that points at the wrong place before the save and after it
+ * passes. Bare URLs linked to `%5C_files/…` -- the backslash of an escape, which linkify reads
+ * straight from the source -- and the case above passed regardless. Matched against the render with
+ * every attribute of a link but its `href` dropped.
  */
-function meaningOf(html) {
-  return html
-    .replace(/\s*data-line="\d+"/g, '')
-    .replace(/\bclass="line"/g, '')
-    .replace(/\bline\b ?/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
+const LINKIFY_RENDERS = {
+  'bare URL with escapes': [
+    'File: https://example.com/\\_files/a\\_b.pdf here.',
+    'File: <a href="https://example.com/_files/a_b.pdf">https://example.com/_files/a_b.pdf</a> here.'
+  ],
+  'bare URL with an escaped backslash': [
+    'https://x.dev/a\\\\b',
+    '<a href="https://x.dev/a%5Cb">https://x.dev/a\\b</a>'
+  ],
+  'bare URL with a percent-encoded backslash': [
+    'https://x.dev/%5C_f',
+    '<a href="https://x.dev/%5C_f">https://x.dev/\\_f</a>'
+  ],
+  'bare URL ending before an escape': [
+    'See https://x.dev/a\\).',
+    'See <a href="https://x.dev/a">https://x.dev/a</a>).'
+  ],
+  'bare URL ending in a hard break': [
+    'https://x.dev/a\\\nnext',
+    '<a href="https://x.dev/a">https://x.dev/a</a><br'
+  ]
 }
 
 /**
@@ -240,7 +260,7 @@ function check(name, source, config) {
 
   let rewritten
   try {
-    rewritten = serialize(parser.parse(source, 'demo/page'))
+    rewritten = serialize(parser.parse(source, 'demo/page'), config)
   } catch (err) {
     return { ok: false, why: `threw while round-tripping: ${err.message}` }
   }
@@ -251,19 +271,27 @@ function check(name, source, config) {
   */
   let again
   try {
-    again = serialize(parser.parse(rewritten, 'demo/page'))
+    again = serialize(parser.parse(rewritten, 'demo/page'), config)
   } catch (err) {
     return { ok: false, why: `threw on a second round trip: ${err.message}`, rewritten }
   }
   let shared
   try {
-    shared = serialize(throughCollab(parser.parse(source, 'demo/page')))
+    shared = serialize(throughCollab(parser.parse(source, 'demo/page')), config)
   } catch (err) {
     return {
       ok: false,
       why: `threw passing through the shared document: ${err.message}`,
       rewritten
     }
+  }
+  /*
+    Nor may a save write the preview's line stamps into the source. The render comparison below strips
+    them, so it cannot see them arrive; a second save sees them only when their numbers move, which a
+    block on the same lines every time never does.
+  */
+  if (/\bdata-line(?:-end)?=/.test(rewritten) && !/\bdata-line(?:-end)?=/.test(source)) {
+    return { ok: false, why: "writes the preview's line stamps into the source", rewritten }
   }
   if (shared !== rewritten) {
     return {
@@ -334,6 +362,26 @@ for (const [configName, config] of Object.entries(CONFIGS)) {
       console.error(`--- renders as ---\n${result.before}`)
       console.error(`--- would render as ---\n${result.after}`)
     }
+  }
+  if (!config.linkify) {
+    continue
+  }
+  for (const [name, [source, expected]] of Object.entries(LINKIFY_RENDERS)) {
+    checked++
+    const html = new MarkdownRenderer(config)
+      .render(source, { pagePath: 'demo/page' })
+      .replace(/<a href="([^"]*)"[^>]*>/g, '<a href="$1">')
+    if (html.includes(expected)) {
+      if (VERBOSE) {
+        console.log(`  ok   [${configName}] render: ${name}`)
+      }
+      continue
+    }
+    failures++
+    console.error(`\nFAIL [${configName}] render: ${name}`)
+    console.error(`--- source ---\n${source}`)
+    console.error(`--- expected to contain ---\n${expected}`)
+    console.error(`--- renders as ---\n${html}`)
   }
 }
 

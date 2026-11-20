@@ -29,7 +29,7 @@ const PREVIEW_ARTIFACTS = /\s*data-line(?:-end)?="\d+"/g
  * serialiser may put a construct on a different line from where the author had it without changing a
  * word of the page.
  */
-function meaningOf(html) {
+export function meaningOf(html) {
   return html.replace(PREVIEW_ARTIFACTS, '').replace(/\s+/g, ' ').trim()
 }
 

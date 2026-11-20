@@ -149,6 +149,36 @@ export function twemojiHtml(char) {
   })
 }
 
+/**
+ * A backslash escape: a backslash before one of the ASCII punctuation characters CommonMark lets it
+ * escape. Captures the character, so replacing with `$1` resolves the escape.
+ */
+const BACKSLASH_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** What a backslash takes as its own when it comes next: punctuation to escape, or a hard break. */
+const BACKSLASH_TAKES = /[\n!-/:-@[-`{-~]/
+
+/**
+ * Where a bare URL linkify matched really ends.
+ *
+ * linkify-it knows nothing of backslash escapes, and often ends a URL between a backslash and the
+ * character it escapes: `https://x.dev/a\)`, `https://x.dev/a\.`, or `https://x.dev/a\` at the end of a
+ * line, which is a hard break. That backslash belongs to what follows, so the URL ends before it. An
+ * even run of them is escaped backslashes, and stays in the URL.
+ *
+ * @param {string} src
+ * @param {number} start Where the match can begin at the earliest: no backslash comes before it.
+ * @param {number} end Where linkify ended it.
+ * @returns {number}
+ */
+function linkifyEnd(src, start, end) {
+  let backslashes = 0
+  while (end - backslashes > start && src.charCodeAt(end - backslashes - 1) === 0x5c) {
+    backslashes++
+  }
+  return backslashes % 2 === 1 && BACKSLASH_TAKES.test(src[end] ?? '') ? end - 1 : end
+}
+
 export class MarkdownRenderer {
   constructor(config = {}) {
     this.md = new MarkdownIt({
@@ -324,6 +354,49 @@ export class MarkdownRenderer {
         return false
       }
       return inlineProps(state, silent)
+    })
+
+    /*
+      A bare URL with a backslash escape in it, `https://example.com/\_files/a.pdf`, links to where the
+      escape says it goes rather than to `/%5C_files/a.pdf`.
+
+      Since markdown-it 14, linkify is an inline rule that reads the URL straight from the SOURCE, where
+      the escape still stands: the backslash went into the href, percent-encoded, and into the link
+      text. The Visual editor escapes every `_` it writes, so a file URL pasted into it as text was
+      saved escaped and rendered as a link to nothing -- and the link it parsed back on the next open
+      carried the backslash in its text, which the next save escaped again.
+
+      Wrapped rather than replaced, so that what is a URL stays linkify's call; this only moves the end
+      off a backslash (`linkifyEnd`, in silent mode too, so a link label is measured the same way) and
+      resolves the escapes in what it matched. Resolved from the source rather than from the link text,
+      which is percent-decoded: read off the text, `%5C_` as written would pass for an escape. The
+      rule's `validateLink` needs no second look, since it reads only the scheme, where no escape can
+      stand.
+    */
+    const linkifyRule = this.md.inline.ruler.__rules__.find((rule) => rule.name === 'linkify')
+    const inlineLinkify = linkifyRule.fn
+    this.md.inline.ruler.at('linkify', (state, silent) => {
+      // -> The rule only ever matches at the `:` of `://`
+      if (state.src.charCodeAt(state.pos) !== 0x3a) {
+        return false
+      }
+      const start = state.pos
+      // -> The scheme in front of the `:`, which the rule finds at the end of `pending` the same way
+      //    and then flushes, so it has to be read now
+      const scheme = state.pending.slice(-10).match(/[a-z\d+.-]*$/i)[0]
+      if (!inlineLinkify(state, silent)) {
+        return false
+      }
+      const end = linkifyEnd(state.src, start, state.pos)
+      const source = state.src.slice(start - scheme.length, end)
+      const url = source.replace(BACKSLASH_ESCAPE, '$1')
+      if (!silent && (url !== source || end !== state.pos)) {
+        const [open, text] = state.tokens.slice(-3)
+        open.attrs = [['href', state.md.normalizeLink(url)]]
+        text.content = state.md.normalizeLinkText(url)
+      }
+      state.pos = end
+      return true
     })
 
     /*

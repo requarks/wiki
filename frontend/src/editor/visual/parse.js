@@ -130,12 +130,22 @@ function blockBody(lines, map) {
     .replace(/\s+$/, '')
 }
 
-/** A token's attribute list as a plain object, for the block attributes MDC puts on the open token. */
+/**
+ * The source lines the renderer stamps on every block token for the preview's scroll sync (its
+ * `source_lines` rule), which are not the author's to keep.
+ */
+const SOURCE_LINE_ATTRS = ['data-line', 'data-line-end']
+
+/**
+ * A token's attribute list as a plain object, for the block attributes MDC puts on the open token.
+ *
+ * Without the renderer's line stamps, which share the token with what the author wrote: kept, every
+ * save of a page wrote them into each block's `{…}` as if the author had, with the numbers of the
+ * lines it was parsed from.
+ */
 function attrObject(attrs) {
-  if (!attrs || attrs.length === 0) {
-    return null
-  }
-  return Object.fromEntries(attrs)
+  const own = (attrs ?? []).filter(([name]) => !SOURCE_LINE_ATTRS.includes(name))
+  return own.length > 0 ? Object.fromEntries(own) : null
 }
 
 /**
