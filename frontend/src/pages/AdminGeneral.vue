@@ -282,8 +282,7 @@
             <w-item-section class="flex-none">
               <w-btn-toggle
                 v-model="state.config.features.ratingsMode"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="ratingsModes" />
@@ -358,8 +357,7 @@
             <w-item-section avatar>
               <w-btn-toggle
                 v-model="state.config.features.reasonForChange"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="reasonForChangeModes" />
@@ -604,8 +602,7 @@
             <w-item-section class="flex-none">
               <w-btn-toggle
                 v-model="state.config.maintenance.mode"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="maintenanceModes" />

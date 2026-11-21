@@ -14,8 +14,7 @@
         <div>
           <w-btn-toggle
             v-model="state.pos"
-            push
-            glossy
+            depth
             no-caps
             toggle-color="primary"
             :options="[

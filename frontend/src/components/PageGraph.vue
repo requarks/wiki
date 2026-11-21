@@ -15,11 +15,11 @@
       </w-btn>
       <w-separator vertical class="page-graph-sep mr-2" />
       <w-btn-toggle
+        class="page-graph-views"
         :model-value="state.view"
         :options="viewOptions"
         :aria-label="t('fileman.graph.views')"
-        push
-        glossy
+        depth
         no-caps
         toggle-color="primary"
         @update:model-value="switchView" />
@@ -504,6 +504,14 @@ onBeforeUnmount(() => {
   &-toolbar {
     flex: 0 0 auto;
     min-height: 50px;
+    /*
+      Optical centring, the same correction WInput makes: Roboto's ascent exceeds its descent, so
+      labels centred by their boxes render 1-3px above the bar's middle (more at 125% scaling, and
+      icons follow the text they sit in). The keycaps, which fill the bar down to its border, made
+      it plain. Four pixels on top move every control down two; the bar does not grow, since its
+      min-height already leaves the room.
+    */
+    padding-top: 4px;
 
     @at-root .body--light & {
       background-color: $grey-1;
@@ -520,6 +528,15 @@ onBeforeUnmount(() => {
     flex: 0 0 auto;
     align-self: center;
     height: 24px;
+  }
+
+  /*
+    The keycaps' 3px skirt hangs below the toggle's box, so centring the box alone left the caps
+    riding low against every other control in the bar. Reserving the skirt's height makes the whole
+    cap, skirt included, what gets centred.
+  */
+  &-views {
+    margin-bottom: 3px;
   }
 
   &-matches,

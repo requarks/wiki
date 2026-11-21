@@ -2,8 +2,7 @@
   <div class="mcp-connect-snippets">
     <w-btn-toggle
       v-model="state.client"
-      push
-      glossy
+      depth
       no-caps
       toggle-color="primary"
       :aria-label="t('profile.mcpClient')"

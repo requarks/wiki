@@ -271,8 +271,7 @@
                     <w-btn-toggle
                       v-model="state.user.prefs.timeFormat"
                       :disable="!canManage"
-                      push
-                      glossy
+                      depth
                       no-caps
                       toggle-color="primary"
                       :options="[
@@ -292,8 +291,7 @@
                     <w-btn-toggle
                       v-model="state.user.prefs.appearance"
                       :disable="!canManage"
-                      push
-                      glossy
+                      depth
                       no-caps
                       toggle-color="primary"
                       :options="[
@@ -314,8 +312,7 @@
                     <w-btn-toggle
                       v-model="state.user.prefs.cvd"
                       :disable="!canManage"
-                      push
-                      glossy
+                      depth
                       no-caps
                       toggle-color="primary"
                       :options="[
@@ -365,8 +362,7 @@
                     <w-btn-toggle
                       v-model="state.user.prefs.contentTextSize"
                       :disable="!canManage"
-                      push
-                      glossy
+                      depth
                       no-caps
                       toggle-color="primary"
                       :options="[

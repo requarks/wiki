@@ -263,8 +263,7 @@
             <w-item-section class="flex-none">
               <w-btn-toggle
                 v-model="state.config.contentWidth"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="widthOptions" />
@@ -280,8 +279,7 @@
             <w-item-section class="flex-none">
               <w-btn-toggle
                 v-model="state.config.sidebarPosition"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="rightLeftOptions" />
@@ -297,8 +295,7 @@
             <w-item-section class="flex-none">
               <w-btn-toggle
                 v-model="state.config.tocPosition"
-                push
-                glossy
+                depth
                 no-caps
                 toggle-color="primary"
                 :options="rightLeftOptions" />

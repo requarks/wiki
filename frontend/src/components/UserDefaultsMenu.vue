@@ -59,8 +59,7 @@
           <w-item-section class="flex-none">
             <w-btn-toggle
               v-model="state.timeFormat"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="primary"
               :options="timeFormats" />

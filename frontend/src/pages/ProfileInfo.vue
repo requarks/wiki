@@ -171,8 +171,7 @@
       <w-item-section side>
         <w-btn-toggle
           v-model="state.config.timeFormat"
-          push
-          glossy
+          depth
           no-caps
           toggle-color="primary"
           :options="timeFormats"
@@ -189,8 +188,7 @@
       <w-item-section side>
         <w-btn-toggle
           v-model="state.config.appearance"
-          push
-          glossy
+          depth
           no-caps
           toggle-color="primary"
           :options="appearances"
@@ -227,8 +225,7 @@
       <w-item-section side>
         <w-btn-toggle
           v-model="state.config.cvd"
-          push
-          glossy
+          depth
           no-caps
           toggle-color="primary"
           :options="cvdChoices"
@@ -267,8 +264,7 @@
       <w-item-section side>
         <w-btn-toggle
           v-model="state.config.contentTextSize"
-          push
-          glossy
+          depth
           no-caps
           toggle-color="primary"
           :options="contentTextSizes"

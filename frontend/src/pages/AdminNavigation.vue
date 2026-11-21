@@ -262,8 +262,7 @@
                 <w-item-section avatar>
                   <w-btn-toggle
                     v-model="state.config[automation.placement]"
-                    push
-                    glossy
+                    depth
                     no-caps
                     toggle-color="primary"
                     :options="placementOptions"

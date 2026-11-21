@@ -295,8 +295,7 @@
               <w-item-section avatar>
                 <w-btn-toggle
                   v-model="state.current.visibilityLimited"
-                  push
-                  glossy
+                  depth
                   no-caps
                   toggle-color="primary"
                   :options="visibilityOptions" />
@@ -479,8 +478,7 @@
               <w-item-section avatar>
                 <w-btn-toggle
                   v-model="state.current.visibilityLimited"
-                  push
-                  glossy
+                  depth
                   no-caps
                   toggle-color="primary"
                   :options="visibilityOptions" />
@@ -661,8 +659,7 @@
               <w-item-section avatar>
                 <w-btn-toggle
                   v-model="state.current.visibilityLimited"
-                  push
-                  glossy
+                  depth
                   no-caps
                   toggle-color="primary"
                   :options="visibilityOptions" />
@@ -711,8 +708,7 @@
               <w-item-section avatar>
                 <w-btn-toggle
                   v-model="state.current.visibilityLimited"
-                  push
-                  glossy
+                  depth
                   no-caps
                   toggle-color="primary"
                   :options="visibilityOptions" />

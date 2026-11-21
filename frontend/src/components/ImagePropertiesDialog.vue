@@ -85,8 +85,7 @@
           <div>
             <w-btn-toggle
               v-model="state.alignment"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="primary"
               :aria-label="t('editor.markup.image.alignment')"

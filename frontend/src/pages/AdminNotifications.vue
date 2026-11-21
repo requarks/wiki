@@ -124,8 +124,7 @@
               <w-item-section class="flex-none">
                 <w-btn-toggle
                   v-model="state.config.sections[section]"
-                  push
-                  glossy
+                  depth
                   no-caps
                   toggle-color="primary"
                   :aria-label="t(`notifications.sections.${section}`)"

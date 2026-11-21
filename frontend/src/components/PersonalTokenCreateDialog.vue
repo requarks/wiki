@@ -56,8 +56,7 @@
           <w-item-section side>
             <w-btn-toggle
               v-model="state.scopes[cat.key]"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="primary"
               :aria-label="t(`profile.tokensScope.${cat.key}`)"
@@ -84,8 +83,7 @@
             <w-btn-toggle
               v-model="state.scopes.mcp"
               class="ml-3"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="secondary"
               :disable="!props.mcp.mayUse"

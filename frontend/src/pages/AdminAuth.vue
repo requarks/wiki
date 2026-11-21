@@ -337,8 +337,7 @@
                       <w-btn-toggle
                         v-if="cfg.enum && cfg.enumDisplay === `buttons`"
                         v-model="cfg.value"
-                        push
-                        glossy
+                        depth
                         no-caps
                         toggle-color="primary"
                         :options="cfg.enum"

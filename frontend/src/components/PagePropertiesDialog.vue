@@ -203,8 +203,7 @@
           <div>
             <w-btn-toggle
               :model-value="ownership.mode"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="primary"
               :options="ownershipModes"
@@ -285,8 +284,7 @@
           <div>
             <w-btn-toggle
               v-model="pageStore.publishState"
-              push
-              glossy
+              depth
               no-caps
               toggle-color="primary"
               :options="[
