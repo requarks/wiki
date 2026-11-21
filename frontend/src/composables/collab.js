@@ -361,6 +361,14 @@ export async function bindCollabEditor(editor) {
     return
   }
   binding = new MonacoBinding(doc.getText('content'), model, new Set([editor]), provider.awareness)
+  /*
+    Back to line feeds: the binding has just put the room's text in with `setValue`, which takes the
+    line ending from that text, and a room started from a page saved with CRLF would hand the editor
+    CRLF again -- see the editor's own `setEOL`. Bound now, so the conversion reaches the room and every
+    peer reads the same text. `0` is `EndOfLineSequence.LF`, named by number because importing Monaco
+    here is what the dynamic import above avoids.
+  */
+  model.setEOL(0)
   editDecorations = editor.createDecorationsCollection()
   renderRecentEdits()
 }

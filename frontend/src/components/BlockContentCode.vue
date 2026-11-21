@@ -206,6 +206,9 @@ onMounted(() => {
     //    where the pane happens to end reads as a line of its own
     wordWrap: 'off'
   })
+  // -> Line feeds only, as the page editors keep theirs: Monaco would otherwise give an empty body
+  //    CRLF on Windows, and the body is written back into the page as it reads here
+  editor.getModel().setEOL(monaco.editor.EndOfLineSequence.LF)
 
   editor.onDidChangeModelContent(() => {
     emit('update:modelValue', editor.getValue())

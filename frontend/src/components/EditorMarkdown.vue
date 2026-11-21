@@ -2269,6 +2269,15 @@ onMounted(async () => {
     }
   })
 
+  /*
+    Line feeds only, regardless of what the platform or the loaded text uses. Monaco takes a model's
+    line ending from its text, and falls back to CRLF on Windows when the text has none to go by -- a
+    new page. Every parser reading `getValue()` splits on `\n` and anchors on `$`, so a `\r` left at
+    the end of each line hid every block's lenses from an author on Windows. Done before the change
+    listener is attached, so that loading a page does not count as an edit.
+  */
+  editor.getModel().setEOL(monaco.editor.EndOfLineSequence.LF)
+
   // -> Handle content change
   editor.onDidChangeModelContent(syncContentToStore)
 
