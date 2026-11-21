@@ -176,6 +176,7 @@ import { apiErrorMessage } from '@/helpers/apiError'
 import { scrollToAnchor } from '@/helpers/anchors'
 import { enhanceRenderedContent, resolveContentClick } from '@/helpers/renderedContent'
 import { renderVersionSource, saveVersionSource, versionPageProps } from '@/helpers/pageVersions'
+import { sanitizeRender } from '@/helpers/sanitizeRender'
 import { flattenToc } from '@/helpers/toc'
 
 import { useEditorStore } from '@/stores/editor'
@@ -210,7 +211,7 @@ const { restoreDeletedPage } = useDeletedPages()
 const state = reactive({
   /** The version as the API answered it, or null while it is on its way — and after it fails. */
   version: null,
-  /** The version's source, rendered here. See `renderFor`. */
+  /** The version's source, rendered and sanitized here. See `loadVersion`. */
   render: '',
   /**
    * Whether the version could not be loaded — gone, never there, or not this reader's to see. One flag
@@ -224,6 +225,12 @@ const state = reactive({
 })
 
 const pageContents = ref(null)
+
+/**
+ * The site's blocks, every one of which the render may keep -- see `loadVersion`. Asked for once, on
+ * the first version shown, and null until then.
+ */
+let siteBlocks = null
 
 // META
 
@@ -360,7 +367,16 @@ async function loadVersion(versionId) {
     if (!version?.id) {
       throw new Error('ERR_VERSION_NOT_FOUND')
     }
-    state.render = await renderFor(version, version.path)
+    /*
+      Sanitized before it goes anywhere near the screen. A version records its SOURCE and not the
+      render the server cleaned, so what comes out of the renderer here is whatever its author
+      typed -- an `<img onerror>` in it would run in the session of everybody reading the history.
+      With nothing to embed: this screen is read, never saved from, and what the reader may write
+      says nothing about what the version's author was allowed to.
+    */
+    state.render = sanitizeRender(await renderFor(version, version.path), {
+      blocks: await loadSiteBlocks()
+    })
     state.version = version
     state.failed = false
     state.tocPanelOpen = false
@@ -378,7 +394,28 @@ async function loadVersion(versionId) {
 }
 
 /**
- * The HTML for a version's source.
+ * The blocks a version's render may keep, as `sites/:siteId/blocks` lists them -- every one, disabled
+ * ones included, as an editor's preview does.
+ *
+ * Not every reader of a page's history may list them (`mayListBlocks` on the server). For one who may
+ * not, the list stays empty, which strips every block: the failure that runs nothing.
+ */
+async function loadSiteBlocks() {
+  if (siteBlocks === null) {
+    try {
+      siteBlocks = (await API_CLIENT.get(`sites/${siteStore.id}/blocks`).json()) ?? []
+    } catch (err) {
+      console.warn(`Could not read this site's blocks: ${err.message}`)
+      siteBlocks = []
+    }
+  }
+  return siteBlocks
+}
+
+/**
+ * The HTML for a version's source -- UNSANITIZED. Restoring and branching send it to the server,
+ * which sanitizes it against the permissions of whoever is saving; anything putting it on screen
+ * sanitizes it first, as `loadVersion` does.
  *
  * @param version The version to render.
  * @param pagePath The page the HTML is FOR, which is what a relative image in it resolves against.

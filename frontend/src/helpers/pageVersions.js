@@ -110,6 +110,9 @@ export async function saveVersionSource(version) {
  * @param {string[]} options.pageExtensions The site's page extensions, which tell a link to a page from
  *   one to a file -- see `fileHref`.
  * @returns {Promise<string>} The HTML, or the source unchanged for a format this does not render.
+ *   UNSANITIZED either way: a version's source is whatever its author typed, so anything putting this
+ *   on screen runs it through `sanitizeRender` first (`PageVersion.vue`). Sending it to the server to
+ *   save, as a restore does, needs nothing more -- the server sanitizes every render it stores.
  */
 export async function renderVersionSource(
   version,
