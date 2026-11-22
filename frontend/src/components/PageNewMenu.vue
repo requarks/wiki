@@ -22,6 +22,18 @@
           <w-item-section class="pr-2">{{ t(`common.createPage.${editor}`) }}</w-item-section>
         </w-item>
       </template>
+      <!--
+        After the editors rather than among them: a template is a page in one of them already, so this
+        is a second way to start any of the above rather than another kind of page. Only where there
+        are editors on offer -- a notes-only menu has none to start a template in.
+      -->
+      <template v-if="offeredEditors.length > 0">
+        <w-separator class="my-2" inset />
+        <w-item clickable @click="createFromTemplate">
+          <blueprint-icon icon="template" />
+          <w-item-section class="pr-2">{{ t('common.createPage.fromTemplate') }}</w-item-section>
+        </w-item>
+      </template>
       <template v-if="props.hideAssetBtn === false && !notesOnly">
         <w-separator class="my-2" inset />
         <w-item clickable @click="openFileManager">
@@ -41,13 +53,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import { dialog } from '@/composables/dialog'
 import { loading } from '@/composables/loading'
 import { notify } from '@/composables/notify'
 import { apiErrorMessage } from '@/helpers/apiError'
+import { templateErrorMessage } from '@/helpers/pageTemplates'
 /*
   The icons, shared with the other two screens that offer editors. WHICH are offered, and in what
   order, is still `siteStore.activeEditors` alone. The wording lives in the locale file as
@@ -212,6 +226,36 @@ async function create(editor) {
   emit('newPage')
   await pageStore.pageCreate({ editor, basePath: props.basePath, locale: props.locale })
   loading.hide()
+}
+
+/**
+ * A new page from a template, picked from a dialog listing the ones this reader may use.
+ *
+ * The page goes where one from the editors above would -- `basePath`, else beside the page being
+ * read -- and in the same locale, whose templates are the ones listed. `newPage` is only emitted
+ * once a template is picked, since it is what closes a caller like the file manager, and backing out
+ * of the dialog should leave it where it was.
+ */
+function createFromTemplate() {
+  const locale = props.locale || pageStore.locale
+  dialog({
+    component: defineAsyncComponent(() => import('./PageTemplateDialog.vue')),
+    componentProps: { locale, only: props.only }
+  }).onOk(async (template) => {
+    loading.show()
+    emit('newPage')
+    try {
+      await pageStore.pageFromTemplate({ template: template.id, basePath: props.basePath, locale })
+    } catch (err) {
+      notify({
+        type: 'negative',
+        message: t('editor.template.failed'),
+        caption: templateErrorMessage(err, t)
+      })
+    } finally {
+      loading.hide()
+    }
+  })
 }
 
 /**

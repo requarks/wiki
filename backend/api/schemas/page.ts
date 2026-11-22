@@ -89,6 +89,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
       isSearchable: {
         type: 'boolean'
       },
+      isTemplate: {
+        type: 'boolean',
+        description:
+          'Offer the page as a template. Ignored unless the author holds `manage:pages` on the page: the page is saved, and the flag stays as it was (a new page is not a template).'
+      },
       password: {
         type: 'string',
         maxLength: 255
@@ -219,6 +224,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description:
           'The page is locked against edits — unrelated to `isLocked`, which is about its password. While set, saving, converting, moving or deleting the page, and changing its owners or lifecycle rules, answers 423, as does suggesting an edit to it. Set and cleared with `PUT …/edit-lock`, which needs `manage:pages` on the page.'
+      },
+      isTemplate: {
+        type: 'boolean',
+        description:
+          'The page is a template: listed by `GET …/pages/templates`, and the only kind of page the editor will start a new page from by link. Set with the page save by an author holding `manage:pages` on it. Not part of a version, so restoring one leaves it as it is.'
       },
       relations: {
         type: 'array',

@@ -705,6 +705,7 @@ import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { usePageScripts } from '@/composables/pageScripts'
 import { notify } from '@/composables/notify'
+import { templateErrorMessage } from '@/helpers/pageTemplates'
 import { withViewTransition } from '@/composables/viewTransition'
 import { loading } from '@/composables/loading'
 import { pageProgress } from '@/composables/pageProgress'
@@ -2199,7 +2200,7 @@ async function openCreateRoute() {
       }
     }
     if (template) {
-      await pageStore.pageFromTemplate({ template, editor, ...args })
+      await pageStore.pageFromTemplate({ template, editor, ...args, fromNavigate: true })
     } else {
       await pageStore.pageCreate({ editor, ...args, fromNavigate: true })
     }
@@ -2208,27 +2209,11 @@ async function openCreateRoute() {
     notify({
       type: 'negative',
       message: template ? t('editor.template.failed') : t('editor.openFailed'),
-      caption: templateFailureCaption(err, editor)
+      caption: templateErrorMessage(err, t, editor)
     })
     router.replace('/')
   } finally {
     loading.hide()
-  }
-}
-
-/** What went wrong starting a page from a template, in words the person who followed the link can use. */
-function templateFailureCaption(err, editor) {
-  switch (err.message) {
-    case 'ERR_TEMPLATE_NOT_FOUND':
-      return t('editor.template.notFound')
-    case 'ERR_TEMPLATE_LOCKED':
-      return t('editor.template.locked')
-    case 'ERR_TEMPLATE_NO_SOURCE':
-      return t('editor.template.noSource')
-    case 'ERR_TEMPLATE_EDITOR_MISMATCH':
-      return t('editor.template.editorMismatch', { editor, templateEditor: err.templateEditor })
-    default:
-      return err.message
   }
 }
 

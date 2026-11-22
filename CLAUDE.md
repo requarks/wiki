@@ -67,7 +67,7 @@ before working in an area — and add to it there, not here:
 - **Per subsystem** — `.claude/rules/*.md`, each loaded when a file matching its `paths:` is read:
   `storage` (storage targets, delivery, the git sync), `comments`, `app-shell-seo`,
   `distributing-blocks` (the `.wkblock` package), `emails`, `excalidraw`, `analytics`,
-  `live-notes`, `audit-log`, `notifications`, `mcp`, `page-lifecycle`, `glossary`,
+  `live-notes`, `audit-log`, `notifications`, `mcp`, `page-lifecycle`, `page-templates`, `glossary`,
   `feedback-boards`, `metrics`, `icons`, `page-paths` (path segments, the ltree encoding),
   `personal-access-tokens` (`config.scope`, `requestUser(req)`), `image-editor` (the file
   manager's image editor and resize), `maintenance` (a site's read-only / restricted mode,

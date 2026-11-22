@@ -350,6 +350,8 @@ export interface Page {
    * `manage:pages` sets or clears it (`setEditLock`), and every write here refuses a locked page.
    */
   isEditLocked: boolean
+  /** Whether the page is a template — see `pages.isTemplate` in the schema. */
+  isTemplate: boolean
   /** Whether this page shows what links to it. The site-wide switch is `features.backlinks`. */
   allowBacklinks: boolean
   relations: any[]
@@ -406,6 +408,23 @@ export interface Page {
   lifecycleBanner: LifecycleBanner | null
 }
 
+/** A template as `listTemplates` reads it: what the From Template dialog lists, and what decides who sees it. */
+export interface TemplatePage {
+  id: string
+  siteId: string
+  locale: string
+  path: string
+  title: string
+  description: string
+  icon: string
+  iconColor: string
+  editor: string
+  tags: string[]
+  updatedAt: Date
+  hasPassword: boolean
+  isLive: boolean
+}
+
 /** Everything a page can be created with. */
 export interface PageInput {
   path: string
@@ -424,6 +443,8 @@ export interface PageInput {
   publishEndDate?: string | null
   isBrowsable?: boolean
   isSearchable?: boolean
+  /** Ignored unless the author holds `manage:pages` on the page — see `templateFlagFor`. */
+  isTemplate?: boolean
   password?: string
   allowBacklinks?: boolean
   relations?: any[]
@@ -635,6 +656,28 @@ function renderPermissionsFor(actor: PageActor, page: RulePageRef): RenderPermis
     scripts: WIKI.models.groups.checkAccess(actor, 'write:scripts', page),
     styles: WIKI.models.groups.checkAccess(actor, 'write:styles', page)
   }
+}
+
+/**
+ * What a save writes to `isTemplate`: the author's value when they hold `manage:pages` on the page,
+ * and otherwise nothing at all -- undefined, which leaves an existing page as it is and a new one at
+ * the column's default.
+ *
+ * Ignored rather than refused, as a script is from an author without `write:scripts`: the editor
+ * sends every field on every save, so a page saved by somebody who may not change the flag still
+ * carries the value they were shown, and refusing would refuse their edit over a field they never
+ * touched. It is also what lets a copy carry the flag without a check of its own -- a copy made by
+ * somebody who may not mark templates is simply not one.
+ */
+function templateFlagFor(
+  actor: PageActor,
+  page: RulePageRef,
+  input: { isTemplate?: boolean }
+): boolean | undefined {
+  if (input.isTemplate === undefined) {
+    return undefined
+  }
+  return WIKI.models.groups.checkAccess(actor, 'manage:pages', page) ? input.isTemplate : undefined
 }
 
 /**
@@ -1148,6 +1191,7 @@ class Pages {
       ...(withPassword ? { password: row.password } : {}),
       isLocked: locked,
       isEditLocked: row.isEditLocked,
+      isTemplate: row.isTemplate,
       relations: locked ? [] : (row.relations ?? []),
       // -> Not withheld from a locked page: which languages a page exists in is not what a password
       //    covers, and the lock screen is where a reader most needs to be able to switch to one
@@ -1841,6 +1885,52 @@ class Pages {
     return build
   }
 
+  /**
+   * Every template of a site in one locale, title order, for the From Template dialog to cut down to
+   * what its requester may use — which no query can express, the rules being resolved a page at a
+   * time. Answered regardless of who is asking: `isLive` and `hasPassword` are here so that the caller
+   * can apply the publish rule and the password the way every other read of a page does.
+   *
+   * A template is a handful of rows, so the whole list is read and filtered rather than paged.
+   */
+  async listTemplates(siteId: string, locale: string): Promise<TemplatePage[]> {
+    const rows = await WIKI.db
+      .select({
+        id: pagesTable.id,
+        locale: pagesTable.locale,
+        path: pagesTable.path,
+        title: pagesTable.title,
+        description: pagesTable.description,
+        icon: pagesTable.icon,
+        config: pagesTable.config,
+        editor: pagesTable.editor,
+        tags: pagesTable.tags,
+        updatedAt: pagesTable.updatedAt,
+        hasPassword:
+          sql<boolean>`${pagesTable.password} IS NOT NULL AND ${pagesTable.password} <> ''`.mapWith(
+            Boolean
+          ),
+        isLive: sql<boolean>`${liveCondition(pagesTable)}`.mapWith(Boolean)
+      })
+      .from(pagesTable)
+      .where(
+        and(
+          eq(pagesTable.siteId, siteId),
+          eq(pagesTable.locale, locale),
+          eq(pagesTable.isTemplate, true)
+        )
+      )
+      .orderBy(pagesTable.title)
+    return rows.map(({ config, ...row }) => ({
+      ...row,
+      siteId,
+      description: row.description ?? '',
+      icon: row.icon ?? '',
+      iconColor: (config as Record<string, any>)?.iconColor ?? '',
+      tags: row.tags ?? []
+    }))
+  }
+
   /** Drop every site's cached sitemap list, for a change that could have altered any of them. */
   invalidateSitemaps(): void {
     WIKI.cache.del(WIKI.cache.keys().filter((key) => key.startsWith(SITEMAP_CACHE_PREFIX)))
@@ -2343,6 +2433,7 @@ class Pages {
         // -> A redirection has nothing to find: a result for it would be a result whose page is a
         //    doorway to the page the reader actually wanted, which is the one search should offer
         isSearchable: isRedirect ? false : (input.isSearchable ?? true),
+        isTemplate: templateFlagFor(actor, { siteId, locale, path, tags: input.tags ?? [] }, input),
         locale,
         password: input.password || null,
         path,
@@ -2602,6 +2693,11 @@ class Pages {
     }
     if (patch.password !== undefined) {
       values.password = patch.password || null
+    }
+    // -> Asked of the page as it stands, as every permission a save carries is
+    const isTemplate = templateFlagFor(actor, existing, patch)
+    if (isTemplate !== undefined) {
+      values.isTemplate = isTemplate
     }
     if (patch.relations !== undefined) {
       values.relations = patch.relations

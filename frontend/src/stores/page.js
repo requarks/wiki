@@ -35,6 +35,8 @@ const DUPLICATED_PAGE_PROPS = [
   'iconColor',
   'isBrowsable',
   'isSearchable',
+  // -> A copy of a template is a template, where its author may mark one; see `isTemplate` below
+  'isTemplate',
   'password',
   'publishEndDate',
   'publishStartDate',
@@ -99,6 +101,7 @@ export const SAVED_PAGE_FIELDS = [
   'iconColor',
   'isBrowsable',
   'isSearchable',
+  'isTemplate',
   'localeRelations',
   'password',
   'publishEndDate',
@@ -229,6 +232,13 @@ export const usePageStore = defineStore('page', {
      */
     isEditLocked: false,
     isSearchable: true,
+    /**
+     * Whether the page is offered as a template: listed by the From Template dialog, and what a
+     * `/_create?template=` link may start a page from. Saved with the page like the toggles beside it,
+     * but only an author holding `manage:pages` on it can change it -- the server keeps the stored
+     * value for anybody else, and the properties panel shows it read-only to them.
+     */
+    isTemplate: false,
     locale: 'en',
     navigationId: null,
     navigationMode: 'inherit',
@@ -896,6 +906,7 @@ export const usePageStore = defineStore('page', {
         */
         isBrowsable: props.isBrowsable ?? editor !== 'redirect',
         isSearchable: props.isSearchable ?? editor !== 'redirect',
+        isTemplate: props.isTemplate ?? false,
         /*
           A page being created is not a post of anything yet: it has not been saved, so no blog has it
           under its path. Cleared rather than left at whatever the page this one was started from
@@ -995,10 +1006,10 @@ export const usePageStore = defineStore('page', {
     /**
      * PAGE - CREATE FROM TEMPLATE
      *
-     * What `/_create?template=` opens: a new page whose text and visible properties come from another
-     * page, so that a link -- from an issue tracker, say -- can start every page of a kind from the
-     * same structure. Not a duplicate: see `TEMPLATE_PAGE_PROPS` for what is carried and why less is
-     * carried than a copy takes.
+     * A new page whose text and visible properties come from a template, so that every page of a kind
+     * starts from the same structure. What the From Template dialog opens, and what a
+     * `/_create?template=` link does -- from an issue tracker, say. Not a duplicate: see
+     * `TEMPLATE_PAGE_PROPS` for what is carried and why less is carried than a copy takes.
      *
      * The template is read with the reader's own permissions, through the same request a page view
      * makes, so a link can never put in front of somebody a source they could not have opened
@@ -1009,10 +1020,21 @@ export const usePageStore = defineStore('page', {
      * @param editor The editor the link named, if it named one. It has to be the template's: a
      *   markdown template cannot open in another editor, and picking one of the two silently would
      *   leave the link's author not knowing which they got.
-     * @throws `ERR_TEMPLATE_NOT_FOUND`, `ERR_TEMPLATE_LOCKED`, `ERR_TEMPLATE_NO_SOURCE`, or
-     *   `ERR_TEMPLATE_EDITOR_MISMATCH` with `templateEditor` set on the error.
+     * @param basePath, fromNavigate As for `pageCreate`: the folder a menu was opened on, and whether
+     *   the route is already `/_create`.
+     * @throws `ERR_TEMPLATE_NOT_FOUND`, `ERR_TEMPLATE_NOT_TEMPLATE`, `ERR_TEMPLATE_LOCKED`,
+     *   `ERR_TEMPLATE_NO_SOURCE`, or `ERR_TEMPLATE_EDITOR_MISMATCH` with `templateEditor` set on the
+     *   error.
      */
-    async pageFromTemplate({ template, editor, path, locale, title }) {
+    async pageFromTemplate({
+      template,
+      editor,
+      path,
+      basePath,
+      locale,
+      title,
+      fromNavigate = false
+    }) {
       const siteStore = useSiteStore()
       const isId = uuidValidate(template)
       let pageData
@@ -1036,6 +1058,14 @@ export const usePageStore = defineStore('page', {
       if (!pageData?.id) {
         throw new Error('ERR_TEMPLATE_NOT_FOUND')
       }
+      /*
+        Only a page somebody holding `manage:pages` on it marked as one. A link names its template, and
+        the person following it did not choose it: what it may name is held to the pages that were put
+        forward for exactly this.
+      */
+      if (!pageData.isTemplate) {
+        throw new Error('ERR_TEMPLATE_NOT_TEMPLATE')
+      }
       // -> Both answer without the body, which is the one thing a template is for
       if (pageData.isLocked) {
         throw new Error('ERR_TEMPLATE_LOCKED')
@@ -1051,6 +1081,7 @@ export const usePageStore = defineStore('page', {
       await this.pageCreate({
         editor: pageData.editor,
         path,
+        basePath,
         locale,
         title,
         description: pageData.description,
@@ -1059,7 +1090,7 @@ export const usePageStore = defineStore('page', {
           ...pick(pageData, TEMPLATE_PAGE_PROPS),
           tocDepth: pick(pageData.tocDepth, ['min', 'max'])
         },
-        fromNavigate: true
+        fromNavigate
       })
     },
     /**

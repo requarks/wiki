@@ -78,6 +78,9 @@ const EXCLUDED_FROM_META = new Set([
   // -> Not something a version records either: restoring one from before the page was locked must
   //    not unlock it, nor one from before it was unlocked lock it again
   'isEditLocked',
+  // -> Nor this: whether the wiki offers the page as a template is not what the page says, and
+  //    restoring an old version must not take it off the From Template list or put it back on
+  'isTemplate',
   // -> Held in columns of their own
   'locale',
   'path',

@@ -1571,6 +1571,8 @@ class Tree {
               publishEndDate: page.publishEndDate?.toISOString() ?? null,
               isBrowsable: page.isBrowsable,
               isSearchable: page.isSearchable,
+              // -> Kept only where the copier holds `manage:pages` at the destination
+              isTemplate: page.isTemplate,
               password: page.password ?? '',
               relations: page.relations,
               tags: page.tags,

@@ -1256,6 +1256,16 @@ export const pages = pgTable(
      */
     isEditLocked: boolean().notNull().default(false),
     /**
+     * Whether the page is a template: offered by the New Page menu's From Template dialog, and the only
+     * kind of page a `/_create?template=` link may start a page from. Set and cleared only by an author
+     * holding `manage:pages` on the page, with the page save; any other author's value is ignored
+     * (`models/pages.ts`).
+     *
+     * Not part of a version, like the edit lock: whether a page is offered as a template is about how
+     * the wiki uses it, not about what it says, so restoring an old version leaves it as it is.
+     */
+    isTemplate: boolean().notNull().default(false),
+    /**
      * How readers have rated the page, per scale: `{ thumbs?: { count, sum, up, down }, stars?: … }`.
      * A cache of the `pageRatings` rows, rewritten by every rating and withdrawal (`models/pageRatings.ts`)
      * so that a page view reads it off the row it already loads instead of aggregating per view.
@@ -1316,7 +1326,12 @@ export const pages = pgTable(
     //    read again whenever one changes (`models/feedback.ts`). A handful of rows out of every page
     index('pages_feedback_boards_idx')
       .on(table.siteId)
-      .where(sql`"editor" = 'feedback'`)
+      .where(sql`"editor" = 'feedback'`),
+    // -> The templates of a site and locale, which the From Template dialog lists: a few rows out of
+    //    every page
+    index('pages_templates_idx')
+      .on(table.siteId, table.locale)
+      .where(sql`"isTemplate"`)
   ]
 )
 

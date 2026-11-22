@@ -748,6 +748,91 @@ async function routes(app: FastifyInstance) {
   )
 
   /**
+   * LIST TEMPLATES
+   *
+   * No route-level permissions: which templates a requester may start a page from is decided per
+   * template, by the page rules on each one.
+   */
+  app.get<{ Params: { siteId: string }; Querystring: { locale?: string } }>(
+    '/sites/:siteId/pages/templates',
+    {
+      config: {
+        scope: 'pages'
+      },
+      schema: {
+        summary: 'List the templates a new page can be started from',
+        description:
+          "The pages marked as templates in one locale, title order — what the New Page menu's From Template dialog lists.\n\nOnly the templates this requester could start a page from, which is the templates whose source they could open themselves: `read:pages` and `read:source` (or `write:pages` / `manage:pages`) on the template, a template that is not live only for a signed-in session that may edit it, and a password-protected one only once this session has unlocked it or for a requester who may edit it. The source itself is not in the answer; the editor reads it from `GET …/pages/{id}` once a template is picked.",
+        tags: ['Pages'],
+        params: siteIdParam,
+        querystring: {
+          type: 'object',
+          properties: {
+            locale: {
+              type: 'string',
+              maxLength: 10,
+              description: "The site's primary locale when absent."
+            }
+          }
+        },
+        response: {
+          200: {
+            description: 'The templates, title order',
+            type: 'object',
+            properties: {
+              templates: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    path: { type: 'string' },
+                    locale: { type: 'string' },
+                    title: { type: 'string' },
+                    description: { type: 'string' },
+                    icon: { type: 'string' },
+                    iconColor: { type: 'string' },
+                    editor: { type: 'string' },
+                    updatedAt: { type: 'string', format: 'date-time' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    async (req) => {
+      const locale = req.query.locale || WIKI.models.pages.defaultLocale(req.params.siteId)
+      const candidates = await WIKI.models.pages.listTemplates(req.params.siteId, locale)
+      /*
+        The three questions `GET …/pages/{id}?withContent=true` asks before handing over a source,
+        asked here so that nothing is listed that would then fail to open: may they know of the page,
+        may they read its source, and is its password behind them.
+      */
+      const templates = candidates.filter(
+        (template) =>
+          mayKnowOfPage(req, template) &&
+          mayReadSource(req, template) &&
+          (!template.hasPassword || unlockedFor(req, template))
+      )
+      return {
+        templates: templates.map((template) => ({
+          id: template.id,
+          path: template.path,
+          locale: template.locale,
+          title: template.title,
+          description: template.description,
+          icon: template.icon,
+          iconColor: template.iconColor,
+          editor: template.editor,
+          updatedAt: template.updatedAt.toISOString()
+        }))
+      }
+    }
+  )
+
+  /**
    * SUGGEST PAGE PATHS
    */
   app.get<{

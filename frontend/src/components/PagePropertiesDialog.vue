@@ -553,6 +553,21 @@
               checked-icon="la:check"
               unchecked-icon="la:times" />
           </div>
+          <!--
+            Saved with the page like the two above, but only `manage:pages` here changes it -- the
+            server keeps the stored value for anybody else -- so everybody else sees it read-only.
+          -->
+          <div>
+            <w-toggle
+              :model-value="pageStore.isTemplate"
+              @update:model-value="setTemplate"
+              dense
+              :disable="!mayManagePage"
+              :label="$t(`editor.props.isTemplate`)"
+              color="primary"
+              checked-icon="la:check"
+              unchecked-icon="la:times" />
+          </div>
           <div>
             <w-toggle
               v-model="state.requirePassword"
@@ -1012,6 +1027,23 @@ function jumpToSection(id) {
     behavior: scrollBehavior()
   })
 }
+/**
+ * Mark the page as a template, or not.
+ *
+ * Marking one also takes it out of the site navigation and search, since a template is scaffolding
+ * for other pages rather than one to land on. Only as a starting point: both toggles stay where they
+ * are for the author to turn back on, and nothing is enforced -- a wiki that wants its templates
+ * browsable can have that. Unmarking one leaves them alone, since there is no telling what the author
+ * wants the page to be next.
+ */
+function setTemplate(value) {
+  pageStore.isTemplate = value
+  if (value) {
+    pageStore.isBrowsable = false
+    pageStore.isSearchable = false
+  }
+}
+
 function toggleRequirePassword(newValue) {
   if (newValue) {
     nextTick(() => {
