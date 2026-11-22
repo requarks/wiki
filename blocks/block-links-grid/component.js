@@ -102,8 +102,13 @@ function tagsOf(value) {
  *     ```yaml
  *     - title: Page A
  *       url: /page-a
+ *     - title: Example
+ *       url: https://example.com
+ *       openInNewTab: true
  *     ```
  *     ::
+ *
+ * `openInNewTab: true` opens the card's link in a new tab, page of this wiki or not.
  */
 export class BlockLinksGridElement extends LitElement {
   /**
@@ -442,6 +447,8 @@ export class BlockLinksGridElement extends LitElement {
         image: entry.image ? resolveFilePath(textOf(entry.image)) : '',
         icon: textOf(entry.icon),
         tags: tagsOf(entry.tags),
+        // -> Only a real boolean: YAML reads an unquoted `true` as one, and anything else is a typo
+        openInNewTab: entry.openInNewTab === true,
         accent: COLORS[textOf(entry.color).trim().toLowerCase()] ?? null
       })
     })
@@ -493,6 +500,8 @@ export class BlockLinksGridElement extends LitElement {
       style="${styleMap(card.accent ? { '--card-accent': card.accent } : {})}">
       <a
         href="${card.href}"
+        target="${card.openInNewTab ? '_blank' : nothing}"
+        rel="${card.openInNewTab ? 'noopener' : nothing}"
         aria-label="${hasBody ? nothing : card.href}"
         @click="${this._navigate}">
         ${card.image ? html`<img class="cover" src="${card.image}" alt="" />` : null}
@@ -551,10 +560,14 @@ export class BlockLinksGridElement extends LitElement {
 
   /**
    * A page of this wiki opens through the router, as a link in the article would. Anything else —
-   * another site, a file, a click with a modifier asking for a new tab — is left to the browser.
+   * another site, a file, a card asking for a new tab, a click with a modifier asking for one — is
+   * left to the browser.
    */
   _navigate(e) {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      return
+    }
+    if (e.currentTarget.target === '_blank') {
       return
     }
     const href = e.currentTarget.getAttribute('href')
