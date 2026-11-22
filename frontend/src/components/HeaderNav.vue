@@ -144,6 +144,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 
+import { holdChromeWhile } from '@/composables/collapsingChrome'
 import { confirmDiscardUnsaved } from '@/composables/editorBuffer'
 import { useMinWidth } from '@/composables/screen'
 import { splitLocalePath } from '@/helpers/pagePaths'
@@ -196,6 +197,13 @@ const searchRow = ref(null)
 
 /** Whether the phone search row is down. Never consulted above the breakpoint. */
 const searchRowIsOpen = ref(false)
+
+/*
+  The header stays out while the row is down, page scrolled or not: the row and the suggestions under
+  it are part of this header, and collapsing it would take the field away while it is being typed into.
+  See `composables/collapsingChrome.js`.
+*/
+holdChromeWhile(() => searchRowIsOpen.value)
 
 // COMPUTED
 

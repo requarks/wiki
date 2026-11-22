@@ -184,6 +184,11 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean',
         description: 'Underline every link in page content, rather than only on hover.'
       },
+      collapseHeaderOnScroll: {
+        type: 'boolean',
+        description:
+          'On a desktop-width window, put the breadcrumbs away and shrink the page header while scrolling down a page. Phones and tablets always do.'
+      },
       contentTextSize: {
         type: 'string',
         description: 'How large page content is set. The interface around it is unaffected.'
@@ -305,6 +310,9 @@ export async function registerSchemas(app: FastifyInstance): Promise<void> {
         type: 'boolean'
       },
       underlineLinks: {
+        type: 'boolean'
+      },
+      collapseHeaderOnScroll: {
         type: 'boolean'
       },
       contentTextSize: {

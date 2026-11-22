@@ -605,6 +605,7 @@ class HedgedocImport {
               cvd: 'none',
               reduceMotion: false,
               underlineLinks: false,
+              collapseHeaderOnScroll: false,
               contentTextSize: 'default'
             },
             createdAt: entry.createdAt

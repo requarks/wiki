@@ -13,8 +13,13 @@
     <!-- -> `py-1` on a phone: with the date gone the bar holds one line of small type, and 8px above and
             below it made a strip nearly as tall as the crumbs themselves -->
     <!-- -> Chrome, so in the interface's language and direction, as the header below it is -->
+    <!-- -> Put away entirely as the article is scrolled, and brought back for keyboard focus arriving
+            in it -- see `composables/collapsingChrome.js` -->
     <div
+      ref="breadcrumbBar"
       class="page-breadcrumbs py-1 px-4 sm:py-2 flex flex-wrap"
+      :class="{ 'chrome-collapsible': isChromeActive, 'is-collapsed': isChromeCollapsed }"
+      @focusin="expandChrome"
       :lang="commonStore.locale"
       :dir="siteStore.localeDir(commonStore.locale)"
       v-if="!editorStore.isActive && !pageStore.notFound">
@@ -55,9 +60,17 @@
         </div>
       </div>
     </div>
+    <!-- -> Shrunk rather than put away like the bars above it: it is what says which page this is.
+            How far is the tier's, in `_page-chrome.scss`. Same state, same file -->
     <page-header
       v-if="!pageStore.notFound"
-      :class="{ 'is-aligned': headerBounds !== null }"
+      :class="{
+        'is-aligned': headerBounds !== null,
+        'is-collapsible': isChromeActive,
+        'is-compact': isChromeActive && isChromeCollapsed
+      }"
+      :data-chrome-tier="chromeTier"
+      @focusin="expandChrome"
       :style="
         headerBounds !== null
           ? {
@@ -701,6 +714,11 @@ import { useI18n } from 'vue-i18n'
 import { useDark } from '@/composables/dark'
 import { dialog } from '@/composables/dialog'
 import { confirmDiscardUnsaved, useEditorBuffer } from '@/composables/editorBuffer'
+import {
+  exposeChromeHeight,
+  trackChromeScroll,
+  useCollapsingChrome
+} from '@/composables/collapsingChrome'
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { usePageScripts } from '@/composables/pageScripts'
@@ -1362,6 +1380,32 @@ const activeView = computed(() => {
   }
   return 'article'
 })
+
+/*
+  -> Collapsing chrome
+  The breadcrumbs and the page header giving way to the article as it is scrolled, along with the
+  layout's site header below desktop width -- `composables/collapsingChrome.js` has the why, the how,
+  and what goes at which size. Driven by the article column, which is what scrolls. Not in the editor,
+  which has a toolbar of its own to keep in view and no article column for this to follow.
+
+  Back out on every page and every switch of view: what was scrolled to is gone, and the reader arriving
+  at the top of something new should see what it is and where it sits.
+*/
+const {
+  tier: chromeTier,
+  isCollapsed: isChromeCollapsed,
+  expand: expandChrome
+} = useCollapsingChrome()
+const isChromeActive = computed(() => !editorStore.isActive)
+const breadcrumbBar = ref(null)
+
+trackChromeScroll(() => pageScroller.value?.$el)
+exposeChromeHeight(() => breadcrumbBar.value)
+
+watch(
+  () => [route.path, activeView.value, editorStore.isActive],
+  () => expandChrome()
+)
 
 /*
   An idea's discussion, drawn under its article: the Talk tab's conditions, with the idea in place of

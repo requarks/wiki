@@ -36,12 +36,14 @@
           <icon-picker-dialog :model-value="pageStore.icon" @update:model-value="setIcon" />
         </w-menu>
       </w-btn>
+      <!-- -> Through `--page-header-icon-compact`, which the collapsed header sets to shrink the icon's
+              box and not only its drawing; see `_page-chrome.scss` -->
       <w-icon
         class="rounded"
         :class="iconColorClass"
         v-else
         :name="pageStore.icon"
-        :size="iconSize" />
+        :size="`var(--page-header-icon-compact, ${iconSize})`" />
     </div>
     <!-- PAGE HEADER -->
     <!--

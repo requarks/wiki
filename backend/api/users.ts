@@ -102,6 +102,7 @@ const PERSONAL_PROFILE_FIELDS = [
   'cvd',
   'reduceMotion',
   'underlineLinks',
+  'collapseHeaderOnScroll',
   'contentTextSize'
 ] as const
 
@@ -476,6 +477,7 @@ async function routes(app: FastifyInstance) {
           cvd: profile.cvd,
           reduceMotion: profile.reduceMotion,
           underlineLinks: profile.underlineLinks,
+          collapseHeaderOnScroll: profile.collapseHeaderOnScroll,
           contentTextSize: profile.contentTextSize
         }
       }

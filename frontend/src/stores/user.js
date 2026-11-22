@@ -105,6 +105,7 @@ export const useUserStore = defineStore('user', {
     cvd: 'none',
     reduceMotion: false,
     underlineLinks: false,
+    collapseHeaderOnScroll: false,
     contentTextSize: 'default',
     permissions: [],
     pagePermissions: [],
@@ -160,6 +161,7 @@ export const useUserStore = defineStore('user', {
         cvd: resp.cvd || 'none',
         reduceMotion: resp.reduceMotion ?? false,
         underlineLinks: resp.underlineLinks ?? false,
+        collapseHeaderOnScroll: resp.collapseHeaderOnScroll ?? false,
         contentTextSize: resp.contentTextSize || 'default',
         permissions: resp.permissions || [],
         authenticated: true,
@@ -200,6 +202,7 @@ export const useUserStore = defineStore('user', {
         cvd: 'none',
         reduceMotion: false,
         underlineLinks: false,
+        collapseHeaderOnScroll: false,
         contentTextSize: 'default',
         permissions: [],
         // -> Page permissions arrive with the page, so leaving them would keep edit buttons on screen

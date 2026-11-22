@@ -1,6 +1,12 @@
 <template>
   <w-layout>
-    <w-header class="site-header-wrap">
+    <!-- -> Gives way to the article as the page is scrolled, below desktop width, and comes back for
+            focus arriving in it from the keyboard -- see `composables/collapsingChrome.js` -->
+    <w-header
+      ref="siteHeader"
+      class="site-header-wrap chrome-collapsible"
+      :class="{ 'is-collapsed': isSiteHeaderCollapsed }"
+      @focusin="expandChrome">
       <header-nav />
     </w-header>
     <!--
@@ -178,6 +184,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
+import { exposeChromeHeight, useCollapsingChrome } from '@/composables/collapsingChrome'
 import { useMeta } from '@/composables/meta'
 import { useMinWidth } from '@/composables/screen'
 import { useI18n } from 'vue-i18n'
@@ -236,6 +243,12 @@ useMeta(() => {
 
 const navEditMenu = ref(null)
 const navEditMenuMini = ref(null)
+const siteHeader = ref(null)
+
+// COLLAPSING CHROME
+
+const { isSiteHeaderCollapsed, expand: expandChrome } = useCollapsingChrome()
+exposeChromeHeight(() => siteHeader.value?.$el)
 
 // DATA
 

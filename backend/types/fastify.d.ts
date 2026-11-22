@@ -37,6 +37,7 @@ declare module 'fastify' {
       cvd?: string
       reduceMotion?: boolean
       underlineLinks?: boolean
+      collapseHeaderOnScroll?: boolean
       contentTextSize?: string
     }
     /** Flattened, de-duplicated permissions of every group the user belongs to. */

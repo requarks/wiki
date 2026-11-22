@@ -194,26 +194,6 @@
               <w-card class="shadow-1 pb-2 mt-4" v-if="state.user.meta">
                 <w-card-header>{{ t('admin.users.preferences') }}</w-card-header>
                 <w-item>
-                  <blueprint-icon icon="translation" />
-                  <w-item-section>
-                    <w-item-label>{{ t(`admin.users.language`) }}</w-item-label>
-                    <w-item-label caption>{{ t(`admin.users.languageHint`) }}</w-item-label>
-                  </w-item-section>
-                  <w-item-section>
-                    <w-select
-                      outlined
-                      v-model="state.user.prefs.locale"
-                      :disable="!canManage"
-                      :options="languages"
-                      emit-value
-                      map-options
-                      dense
-                      options-dense
-                      :aria-label="t(`admin.users.language`)" />
-                  </w-item-section>
-                </w-item>
-                <w-separator class="my-2" inset />
-                <w-item>
                   <blueprint-icon icon="timezone" />
                   <w-item-section>
                     <w-item-label>{{ t(`admin.users.timezone`) }}</w-item-label>
@@ -303,6 +283,45 @@
                 </w-item>
                 <w-separator class="my-2" inset />
                 <w-item>
+                  <blueprint-icon icon="translation" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`admin.users.language`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`admin.users.languageHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section>
+                    <w-select
+                      outlined
+                      v-model="state.user.prefs.locale"
+                      :disable="!canManage"
+                      :options="languages"
+                      emit-value
+                      map-options
+                      dense
+                      options-dense
+                      :aria-label="t(`admin.users.language`)" />
+                  </w-item-section>
+                </w-item>
+              </w-card>
+              <!-- -> The same `prefs` as the card above, split off as the Profile page splits them -->
+              <w-card class="shadow-1 pb-2 mt-4" v-if="state.user.meta">
+                <w-card-header>{{ t('profile.accessibility') }}</w-card-header>
+                <w-item tag="label">
+                  <blueprint-icon icon="navigation-toolbar-top" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`profile.collapseHeaderOnScroll`) }}</w-item-label>
+                    <w-item-label caption>{{
+                      t(`profile.collapseHeaderOnScrollHint`)
+                    }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section avatar>
+                    <w-toggle
+                      v-model="state.user.prefs.collapseHeaderOnScroll"
+                      :disable="!canManage"
+                      :aria-label="t(`profile.collapseHeaderOnScroll`)" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
                   <blueprint-icon icon="visualy-impaired" />
                   <w-item-section>
                     <w-item-label>{{ t(`profile.cvd`) }}</w-item-label>
@@ -320,6 +339,27 @@
                         { value: 'protanopia', label: t('profile.cvdProtanopia') },
                         { value: 'deuteranopia', label: t('profile.cvdDeuteranopia') },
                         { value: 'tritanopia', label: t('profile.cvdTritanopia') }
+                      ]" />
+                  </w-item-section>
+                </w-item>
+                <w-separator class="my-2" inset />
+                <w-item>
+                  <blueprint-icon icon="typography" />
+                  <w-item-section>
+                    <w-item-label>{{ t(`profile.contentTextSize`) }}</w-item-label>
+                    <w-item-label caption>{{ t(`profile.contentTextSizeHint`) }}</w-item-label>
+                  </w-item-section>
+                  <w-item-section class="flex-none">
+                    <w-btn-toggle
+                      v-model="state.user.prefs.contentTextSize"
+                      :disable="!canManage"
+                      depth
+                      no-caps
+                      toggle-color="primary"
+                      :options="[
+                        { value: 'default', label: t('profile.contentTextSizeDefault') },
+                        { value: 'large', label: t('profile.contentTextSizeLarge') },
+                        { value: 'larger', label: t('profile.contentTextSizeLarger') }
                       ]" />
                   </w-item-section>
                 </w-item>
@@ -349,27 +389,6 @@
                       v-model="state.user.prefs.underlineLinks"
                       :disable="!canManage"
                       :aria-label="t(`profile.underlineLinks`)" />
-                  </w-item-section>
-                </w-item>
-                <w-separator class="my-2" inset />
-                <w-item>
-                  <blueprint-icon icon="typography" />
-                  <w-item-section>
-                    <w-item-label>{{ t(`profile.contentTextSize`) }}</w-item-label>
-                    <w-item-label caption>{{ t(`profile.contentTextSizeHint`) }}</w-item-label>
-                  </w-item-section>
-                  <w-item-section class="flex-none">
-                    <w-btn-toggle
-                      v-model="state.user.prefs.contentTextSize"
-                      :disable="!canManage"
-                      depth
-                      no-caps
-                      toggle-color="primary"
-                      :options="[
-                        { value: 'default', label: t('profile.contentTextSizeDefault') },
-                        { value: 'large', label: t('profile.contentTextSizeLarge') },
-                        { value: 'larger', label: t('profile.contentTextSizeLarger') }
-                      ]" />
                   </w-item-section>
                 </w-item>
               </w-card>

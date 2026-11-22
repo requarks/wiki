@@ -4452,6 +4452,8 @@
   "profile.avatarUploadInvalidType": "Must be a PNG, JPEG, WebP or GIF image.",
   "profile.avatarUploadSuccess": "Profile picture uploaded successfully.",
   "profile.avatarUploadTitle": "Upload your user profile picture.",
+  "profile.collapseHeaderOnScroll": "Collapse Header on Scroll",
+  "profile.collapseHeaderOnScrollHint": "Hide the breadcrumbs and shrink the page title while scrolling down a page, for more room to read. Scroll back up to bring them back. On a phone or tablet this is always on.",
   "profile.contentTextSize": "Content Text Size",
   "profile.contentTextSizeDefault": "Default",
   "profile.contentTextSizeHint": "Enlarge the text of page content. The rest of the interface keeps its size.",

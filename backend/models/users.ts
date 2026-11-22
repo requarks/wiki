@@ -145,6 +145,11 @@ export interface UserProfile {
   reduceMotion: boolean
   /** Underline every link in page content, rather than only on hover. */
   underlineLinks: boolean
+  /**
+   * Collapse the chrome above a page as it is scrolled on a desktop-width window. Phones and tablets
+   * always do, regardless of what this says -- see `composables/collapsingChrome.js` in the frontend.
+   */
+  collapseHeaderOnScroll: boolean
   /** How large page content is set: `default`, `large` or `larger`. The interface around it is not. */
   contentTextSize: string
 }
@@ -185,6 +190,7 @@ export interface UserProfilePatch {
   cvd?: string
   reduceMotion?: boolean
   underlineLinks?: boolean
+  collapseHeaderOnScroll?: boolean
   contentTextSize?: string
 }
 
@@ -202,6 +208,7 @@ const profilePrefsKeys = [
   'cvd',
   'reduceMotion',
   'underlineLinks',
+  'collapseHeaderOnScroll',
   'contentTextSize'
 ] as const
 
@@ -730,6 +737,7 @@ class Users {
           cvd: 'none',
           reduceMotion: false,
           underlineLinks: false,
+          collapseHeaderOnScroll: false,
           contentTextSize: 'default'
         }
       })
@@ -834,6 +842,7 @@ class Users {
       cvd: prefs.cvd ?? 'none',
       reduceMotion: prefs.reduceMotion ?? false,
       underlineLinks: prefs.underlineLinks ?? false,
+      collapseHeaderOnScroll: prefs.collapseHeaderOnScroll ?? false,
       contentTextSize: prefs.contentTextSize ?? 'default'
     }
   }
@@ -1777,6 +1786,7 @@ class Users {
           cvd: 'none',
           reduceMotion: false,
           underlineLinks: false,
+          collapseHeaderOnScroll: false,
           contentTextSize: 'default'
         }
       },
@@ -1797,6 +1807,7 @@ class Users {
           cvd: 'none',
           reduceMotion: false,
           underlineLinks: false,
+          collapseHeaderOnScroll: false,
           contentTextSize: 'default'
         }
       }
@@ -3005,6 +3016,7 @@ class Users {
       cvd: user.prefs?.cvd,
       reduceMotion: user.prefs?.reduceMotion,
       underlineLinks: user.prefs?.underlineLinks,
+      collapseHeaderOnScroll: user.prefs?.collapseHeaderOnScroll,
       contentTextSize: user.prefs?.contentTextSize
     }
     req.session.permissions = uniq(flatten(user.groups?.map((g: any) => g.permissions)))

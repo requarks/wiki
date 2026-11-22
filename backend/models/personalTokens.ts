@@ -346,6 +346,7 @@ class PersonalTokens {
         cvd: prefs.cvd,
         reduceMotion: prefs.reduceMotion,
         underlineLinks: prefs.underlineLinks,
+        collapseHeaderOnScroll: prefs.collapseHeaderOnScroll,
         contentTextSize: prefs.contentTextSize
       },
       scopes: normalizeScopes((row.scopes ?? []) as string[]),

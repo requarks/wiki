@@ -399,6 +399,149 @@ $toc-overlay-max: 749.98px;
   }
 }
 /*
+  The chrome giving way to the article as it is scrolled -- `composables/collapsingChrome.js` decides
+  when and which bars at which size, and says why the bars collapse rather than slide over the article.
+
+  A bar that is put away entirely (the site header, the breadcrumbs) pulls itself up by its own height,
+  which it is handed as `--chrome-h` because the breadcrumbs wrap onto as many lines as the path needs.
+  A negative margin leaves the box its full size, so nothing inside it reflows on the way out, and the
+  row it was in closes up behind it; the part above the top of its container is clipped there -- the
+  layout for the site header, the page container for the breadcrumbs, both of which hide overflow.
+
+  Global rather than in either component, because one rule serves a bar in the layout and one in the
+  page view.
+*/
+.chrome-collapsible {
+  transition: margin-top 0.2s var(--ease-standard);
+
+  &.is-collapsed {
+    margin-top: calc(-1 * var(--chrome-h, 0px));
+  }
+}
+
+/*
+  The page header, which is not put away but shrunk: it is the one bar that says which page this is.
+  By how much is the size's (`data-chrome-tier`), through the custom properties at the end of this
+  block -- the title always comes down to one line, and below desktop width the description goes too.
+
+  - Height: from 600px up the header is 95px. Here that is a MINIMUM instead, which draws the same at
+    rest and is what lets the collapse animate everywhere: a min-height animates from 95px to 0 while the
+    height follows the contents down, where a fixed height going to `auto` animates in Chromium alone.
+    Below 600px it is sized by its contents in any case (see `.page-header` above). A title or a
+    description long enough to need more than 95px now grows the bar rather than spilling out of it,
+    as `.is-aligned` already did.
+  - The description folds away through a one-track grid going from `1fr` to `0fr`, which unlike a
+    height can be animated without knowing how many lines it wraps onto. The text inside is the grid
+    item, and `min-height: 0` is what lets it go below its content. Kept on a desktop, on one line.
+  - The title goes to one line, cut short with an ellipsis -- a title that wrapped is otherwise the
+    tallest thing left.
+  - The icon is resized through `--page-header-icon-compact`, which `PageHeader.vue` puts in front of
+    its own size: its box shrinks with it, rather than a scaled drawing leaving a gap beside the title.
+  - The actions, shown from 600px up, lose their vertical padding, which was most of the row's height.
+*/
+.page-header.is-collapsible {
+  height: auto;
+  min-height: 95px;
+  /*
+    Never squeezed by the page view's column, whose article row asks for all of it (`flex: 1 1 100%`).
+    The header was held at its content height by flexbox's automatic minimum, which the min-height
+    here replaces -- and its own minimum is near nothing, the description's grid being allowed to fold
+    to 0 -- so without this the header gave the article its description's second line.
+  */
+  flex-shrink: 0;
+  transition: min-height 0.2s var(--ease-standard);
+
+  @media (max-width: $breakpoint-xs-max) {
+    min-height: 0;
+  }
+
+  .page-header-text,
+  .page-header-actions {
+    transition: padding 0.2s var(--ease-standard);
+  }
+  .page-header-title {
+    transition:
+      font-size 0.2s var(--ease-standard),
+      line-height 0.2s var(--ease-standard);
+  }
+  .page-header-subtitle {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows 0.2s var(--ease-standard),
+      opacity 0.2s var(--ease-standard);
+
+    > * {
+      min-height: 0;
+      overflow: hidden;
+    }
+  }
+  .page-header-icon > * {
+    transition: font-size 0.2s var(--ease-standard);
+  }
+
+  &.is-compact {
+    min-height: 0;
+
+    .page-header-text {
+      padding-block: var(--page-header-compact-pad);
+    }
+    .page-header-actions {
+      padding-block: 0;
+    }
+    .page-header-title {
+      font-size: var(--page-header-compact-title);
+      line-height: var(--page-header-compact-line);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .page-header-subtitle > * {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &.is-compact:not([data-chrome-tier='desktop']) .page-header-subtitle {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  // -> Each size's compact header. The phone's is a line of small type; the desktop's a size down from
+  //    the full 34px title, with the description still under it
+  &[data-chrome-tier='phone'] {
+    --page-header-compact-title: 1.125rem;
+    --page-header-compact-line: 1.75rem;
+    --page-header-compact-pad: 4px;
+    --page-header-compact-icon: 24px;
+  }
+  &[data-chrome-tier='tablet'] {
+    --page-header-compact-title: 1.25rem;
+    --page-header-compact-line: 1.75rem;
+    --page-header-compact-pad: 6px;
+    --page-header-compact-icon: 28px;
+  }
+  &[data-chrome-tier='desktop'] {
+    --page-header-compact-title: 1.5rem;
+    --page-header-compact-line: 2rem;
+    --page-header-compact-pad: 8px;
+    --page-header-compact-icon: 40px;
+  }
+  &.is-compact {
+    --page-header-icon-compact: var(--page-header-compact-icon);
+  }
+}
+
+// -> The Reduce Motion profile setting is twinned for transitions once, in `_animation.scss`
+@media (prefers-reduced-motion: reduce) {
+  .chrome-collapsible,
+  .page-header.is-collapsible,
+  .page-header.is-collapsible * {
+    transition-duration: 0.01ms;
+  }
+}
+
+/*
   The article and the footer under it, stacked inside the one box that scrolls.
 
   `flex: 1 0 auto` on the article is what keeps the footer at the BOTTOM of a short page instead of
