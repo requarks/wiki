@@ -63,7 +63,14 @@ export const useEditorStore = defineStore('editor', {
      * room's binding replaces whatever the editor was holding. Set by the editor itself, since only it
      * knows when that is; see `restoreEditorContent` in each one and `composables/editorBuffer.js`.
      */
-    isReady: false
+    isReady: false,
+    /**
+     * Where the last thing inserted through the file manager came from, `{ folderPath, locale }`, so
+     * that the next Insert Asset opens there rather than on the page's folder again. Null until
+     * something is inserted. Kept for the one editing session only -- `closeEditor` drops it -- since
+     * the folder an author was drawing from for one page says little about the next.
+     */
+    lastInsertFolder: null
   }),
   getters: {
     hasPendingChanges: (state) => {
@@ -115,7 +122,8 @@ export const useEditorStore = defineStore('editor', {
         mode: 'edit',
         // -> Only ever meaningful while a page is being created: it is where Discard goes back to
         originPageId: '',
-        pathChosen: false
+        pathChosen: false,
+        lastInsertFolder: null
       })
     },
     /**

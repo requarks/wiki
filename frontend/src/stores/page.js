@@ -798,7 +798,9 @@ export const usePageStore = defineStore('page', {
         isActive: true,
         mode: 'create',
         editor,
-        pathChosen: Boolean(path)
+        pathChosen: Boolean(path),
+        // -> A new page is a new edit, even when it is started from inside an open editor
+        lastInsertFolder: null
       })
 
       /*

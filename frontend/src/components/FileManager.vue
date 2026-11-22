@@ -830,6 +830,7 @@ import { useMinWidth, useScreen } from '@/composables/screen'
 import { useDark } from '@/composables/dark'
 import { useDeletedPages } from '@/composables/deletedPages'
 
+import { useEditorStore } from '@/stores/editor'
 import { usePageStore } from '@/stores/page'
 import { useSiteStore } from '@/stores/site'
 import { useUserStore } from '@/stores/user'
@@ -861,6 +862,7 @@ const { restoreDeletedPage } = useDeletedPages()
 
 // STORES
 
+const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
@@ -1394,6 +1396,8 @@ function insertItem(item) {
   if (!item) {
     item = state.fileList.find((f) => f.id === state.currentFileId)
   }
+  // -> The item's own folder rather than the one selected: a search lists matches from anywhere
+  editorStore.lastInsertFolder = { folderPath: item.folderPath ?? '', locale: state.locale }
   EVENT_BUS.emit('insertAsset', toRaw(item))
   close()
 }
@@ -2676,11 +2680,22 @@ onMounted(async () => {
 
   /*
     The folder whoever opened the manager asked for -- the Image Properties dialog asks for the one the
-    image is in -- and otherwise the folder of the page being viewed. Empty is the site root, which is
-    an answer of its own and not the same as not asking.
+    image is in. Otherwise, picking for an editor, the folder this editing session last inserted
+    from, in its locale; and failing that the folder of the page being viewed. Empty is the site
+    root, which is an answer of its own and not the same as not asking. A remembered folder that has
+    since gone needs no check: no node is found for it and the manager stays at the root.
   */
+  const lastInsert =
+    insertMode.value && siteStore.overlayOpts?.folderPath == null
+      ? editorStore.lastInsertFolder
+      : null
+  if (lastInsert) {
+    state.locale = lastInsert.locale
+  }
   const startPath =
-    siteStore.overlayOpts?.folderPath ?? pageStore.path.split('/').slice(0, -1).join('/')
+    siteStore.overlayOpts?.folderPath ??
+    lastInsert?.folderPath ??
+    pageStore.path.split('/').slice(0, -1).join('/')
   const startParts = startPath ? startPath.split('/') : []
 
   await loadTree({

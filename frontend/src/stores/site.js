@@ -504,7 +504,8 @@ export const useSiteStore = defineStore('site', {
      * @param {object} [opts]
      * @param {boolean} [opts.insertMode] Pick something for the editor rather than browse.
      * @param {?string} [opts.folderPath] The folder to open on, slash-separated and empty for the
-     *        site root. Absent, the manager opens on the folder of the page being viewed.
+     *        site root. Absent, the manager opens on the folder of the page being viewed -- or, in
+     *        insert mode, on the folder this editing session last inserted from.
      */
     openFileManager(opts) {
       this.$patch({
