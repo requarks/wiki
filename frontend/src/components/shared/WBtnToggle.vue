@@ -1,6 +1,12 @@
 <template>
+  <!--
+    `w-fit`: as a flex item -- the admin rows put one in a column-flex section -- the group is
+    blockified and stretched across the row, which a depth group shows as its skirt and shadow running
+    the full width under caps that stop short, and a framed one as a border round empty space. A
+    definite width is not stretched, so the group is as wide as its segments wherever it sits.
+  -->
   <div
-    class="w-btn-toggle inline-flex flex-nowrap align-middle"
+    class="w-btn-toggle inline-flex w-fit flex-nowrap align-middle"
     :class="[
       isDisabled ? 'pointer-events-none opacity-60' : '',
       /*
@@ -39,8 +45,7 @@
         v-if="opt.icon"
         :name="opt.icon"
         class="align-middle"
-        :class="opt.label !== undefined ? 'mr-1' : ''"
-        :size="depth && opt.label === undefined ? '17px' : undefined" />
+        :class="opt.label !== undefined ? 'mr-1' : ''" />
       <span v-if="opt.label !== undefined">{{ opt.label }}</span>
       <!--
         Inside the segment, so WTooltip's climb to `closest('button, ...)` lands on THIS segment and
@@ -372,6 +377,16 @@ function segmentStyle(opt) {
 
 .w-depth--icon {
   padding: 0 12px;
+}
+
+/*
+  An icon-only cap's icon, at the design's size scaled with the cap. A stylesheet default rather than
+  the icon's `size` prop: that is an inline style, which no stylesheet can outrank, and a page that
+  sizes its own toolbar icons -- the tags page sets its sort pair a size up -- was silently overruled.
+  `:where()` keeps this rule's weight down to the icon's own class, so any such rule wins.
+*/
+:where(.w-depth--icon) .w-icon {
+  font-size: 17px;
 }
 
 /*

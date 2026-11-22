@@ -27,16 +27,18 @@
         :style="{ backgroundColor: hex }" />
     </div>
 
-    <div class="px-2 pb-2">
-      <input
-        class="w-unstyled w-full rounded px-2 py-1 text-center font-mono text-body2 uppercase"
-        :class="inputRing"
-        :value="hex"
-        maxlength="7"
-        spellcheck="false"
-        aria-label="Hex color"
-        @change="onHexInput"
-        @blur="onHexInput" />
+    <!-- -> WInput's recessed well, at the size of a swatch row rather than a form field -->
+    <div class="w-field px-2 pb-2">
+      <div class="w-field-well min-h-8 px-2">
+        <input
+          class="w-unstyled w-field-input w-full py-1 text-center font-mono text-body2 uppercase"
+          :value="hex"
+          maxlength="7"
+          spellcheck="false"
+          aria-label="Hex color"
+          @change="onHexInput"
+          @blur="onHexInput" />
+      </div>
     </div>
   </div>
 </template>
@@ -82,8 +84,6 @@ const fieldStyle = computed(() => ({
 const hueStyle = {
   backgroundImage: 'linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)'
 }
-
-const inputRing = 'w-input-control shadow-[inset_0_0_0_1px_var(--w-input-ring)]'
 
 // -> Track outside edits (a different swatch being picked), but ignore our own emissions
 watch(

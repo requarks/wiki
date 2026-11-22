@@ -90,7 +90,6 @@
           <w-input
             ref="iptUrl"
             v-model="state.url"
-            outlined
             dense
             hide-bottom-space
             :label="t(`linkPicker.linkUrl`)"

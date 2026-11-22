@@ -113,9 +113,9 @@
       <div class="glossary-sidebar-inner">
         <div class="glossary-sidebar-tools">
           <w-btn-toggle
-            class="glossary-toggle glossary-grouping"
+            class="glossary-grouping"
             v-model="state.grouping"
-            push
+            depth
             no-caps
             toggle-color="primary"
             :options="groupingOptions"
@@ -365,7 +365,6 @@
                 <w-input
                   ref="iptTerm"
                   v-model="state.form.term"
-                  outlined
                   required
                   hide-bottom-space
                   :label="t(`glossary.form.term`)" />
@@ -380,7 +379,6 @@
               <!-- EXPANSION -->
               <w-input
                 v-model="state.form.expansion"
-                outlined
                 :label="t(`glossary.form.expansion`)"
                 :hint="t(`glossary.form.expansionHint`)" />
 
@@ -402,7 +400,6 @@
                   v-if="state.definitionTab === `write`"
                   v-model="state.form.definition"
                   type="textarea"
-                  outlined
                   :rows="8"
                   :aria-label="t(`glossary.form.definition`)"
                   :hint="t(`glossary.form.definitionHint`)" />
@@ -416,7 +413,6 @@
               <div>
                 <w-select
                   v-model="state.form.aliases"
-                  outlined
                   multiple
                   use-input
                   use-chips
@@ -432,7 +428,6 @@
               <!-- RELATED TERMS -->
               <w-select
                 v-model="state.form.relatedTerms"
-                outlined
                 multiple
                 use-input
                 use-chips
@@ -451,7 +446,6 @@
             -->
               <w-select
                 v-model="state.form.category"
-                outlined
                 use-input
                 use-chips
                 create
@@ -497,7 +491,6 @@
                 <w-input
                   class="mt-5"
                   v-model="state.form.documentationLabel"
-                  outlined
                   dense
                   :disable="!state.form.documentationPath"
                   :label="t(`glossary.form.documentationLabel`)"
@@ -514,7 +507,6 @@
                   <w-input
                     class="flex-1"
                     v-model="ref.url"
-                    outlined
                     dense
                     hide-bottom-space
                     placeholder="https://"
@@ -523,7 +515,6 @@
                   <w-input
                     class="flex-1"
                     v-model="ref.label"
-                    outlined
                     dense
                     hide-bottom-space
                     :placeholder="t(`glossary.form.referenceLabel`)"
@@ -1633,9 +1624,13 @@ $glossary-hdr-wrap-max: 899.98px;
     }
   }
 
-  /* -> The switch spans the column, its two halves sharing it evenly */
+  /*
+    -> The switch spans the column, its two halves sharing it evenly. The width is stated because
+       WBtnToggle is otherwise as wide as its segments (`w-fit`), wherever it sits.
+  */
   &-grouping {
     display: flex;
+    width: 100%;
 
     > * {
       flex: 1;

@@ -96,7 +96,6 @@
               v-model="state.title"
               :label="t(`fileman.folderTitle`)"
               dense
-              outlined
               autofocus
               @keyup:enter="save" />
           </w-item-section>
@@ -112,7 +111,6 @@
               v-model="state.title"
               :label="t(`pageSaveDialog.pageTitle`)"
               dense
-              outlined
               autofocus
               @focus="state.currentFileId = null"
               @keyup:enter="save" />
@@ -126,7 +124,6 @@
               :label="t(pathField.label)"
               :hint="pathField.hint ? t(pathField.hint) : undefined"
               dense
-              outlined
               :autofocus="isAssetMode"
               @focus="onPathFocus"
               @keyup:enter="save" />

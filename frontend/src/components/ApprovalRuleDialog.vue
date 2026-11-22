@@ -7,10 +7,8 @@
       </w-card-section>
       <w-form ref="ruleForm" class="py-2" @submit="save">
         <!--
-          No `self-start` on these icons. A field's control carries a symmetric `my-2` -- room for the
-          floated label, matched underneath precisely so the box stays centred on the control -- so
-          letting both sections centre in the row is what lines the icon up with the field. Pinning
-          the icon to the top instead put it 6px above the control it belongs to.
+          No alignment classes on these icons: a row with a labelled field centres its icon on the
+          field's box by itself (`.w-field-label` in `tailwind.css`), hint line or not.
         -->
         <w-item>
           <blueprint-icon icon="rename" />
@@ -18,7 +16,6 @@
             <w-input
               ref="iptName"
               v-model="state.name"
-              outlined
               dense
               :rules="nameValidation"
               hide-bottom-space
@@ -33,7 +30,6 @@
           <w-item-section>
             <w-select
               v-model="state.match"
-              outlined
               dense
               :options="matchOptions"
               map-options
@@ -55,7 +51,6 @@
             -->
             <w-input
               v-model="state.path"
-              outlined
               dense
               :prefix="isTagMatch ? null : `/`"
               :suffix="state.match === `REGEX` ? `/` : null"
@@ -72,7 +67,6 @@
           <w-item-section>
             <w-select
               v-model="state.submitterGroups"
-              outlined
               dense
               :options="props.groups"
               multiple
@@ -93,7 +87,6 @@
           <w-item-section>
             <w-select
               v-model="state.reviewerGroups"
-              outlined
               dense
               :options="props.groups"
               multiple

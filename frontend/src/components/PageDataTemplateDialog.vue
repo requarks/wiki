@@ -11,7 +11,6 @@
           class="min-w-0 flex-1"
           v-model="state.selectedTemplateId"
           :options="siteStore.pageDataTemplates"
-          standout
           :label="t(`editor.pageData.template`)"
           dense
           dark
@@ -94,7 +93,6 @@
               class="min-w-0 flex-1"
               ref="tmplTitleIpt"
               :label="t(`editor.pageData.templateTitle`)"
-              outlined
               dense
               v-model="state.tmpl.label" />
             <w-btn
@@ -142,14 +140,12 @@
                       <w-input
                         :label="t(`editor.pageData.label`)"
                         v-model="element.label"
-                        outlined
                         dense />
                     </w-item-section>
                     <w-item-section v-if="element.type !== `header`">
                       <w-input
                         :label="t(`editor.pageData.uniqueKey`)"
                         v-model="element.key"
-                        outlined
                         dense />
                     </w-item-section>
                     <w-item-section side>

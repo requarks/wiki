@@ -53,7 +53,6 @@
             <w-item-section avatar>
               <w-input
                 style="width: 200px"
-                outlined
                 dense
                 hide-bottom-space
                 v-model="state.config.submissionInterval"

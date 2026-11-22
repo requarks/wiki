@@ -12,7 +12,6 @@
             <w-input
               ref="iptName"
               v-model="state.userName"
-              outlined
               dense
               :rules="userNameValidation"
               hide-bottom-space
@@ -25,7 +24,6 @@
           <w-item-section>
             <w-input
               v-model="state.userEmail"
-              outlined
               dense
               type="email"
               :rules="userEmailValidation"
@@ -39,21 +37,17 @@
           <w-item-section>
             <w-input
               v-model="state.userPassword"
-              outlined
               dense
               :rules="userPasswordValidation"
               hide-bottom-space
               :label="t(`admin.users.password`)"
               lazy-rules="ondemand">
               <template #append>
-                <div class="flex flex-nowrap items-center">
-                  <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
-                  <w-separator vertical class="mx-2 self-stretch" />
-                  <w-btn flat dense padding="none xs" color="brown" @click="randomizePassword">
-                    <w-icon name="la:dice-d6" />
-                    <div class="pl-1 text-caption"><strong>Generate</strong></div>
-                  </w-btn>
-                </div>
+                <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
+                <w-field-cap
+                  icon="la:dice-d6"
+                  :label="t(`common.actions.generate`)"
+                  @click="randomizePassword" />
               </template>
             </w-input>
           </w-item-section>
@@ -63,7 +57,6 @@
           <w-item-section>
             <w-select
               v-model="state.userGroups"
-              outlined
               :options="state.groups"
               multiple
               map-options
@@ -92,7 +85,6 @@
                     </template>
                   </i18n-t>
                 </span>
-                <span v-else />
               </template>
             </w-select>
           </w-item-section>
@@ -130,7 +122,6 @@
                     the endpoint takes a single ID -->
             <w-select
               v-model="state.userSendWelcomeEmailFromSiteId"
-              outlined
               :options="adminStore.sites"
               map-options
               emit-value

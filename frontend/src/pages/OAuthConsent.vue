@@ -79,7 +79,6 @@
           <w-card-section class="pt-0">
             <w-select
               v-model="state.expiration"
-              outlined
               dense
               :options="expirations"
               map-options

@@ -30,7 +30,6 @@
           ref="iptSearch"
           v-model="state.search"
           dense
-          outlined
           transparent
           clearable
           hide-bottom-space

@@ -30,7 +30,6 @@
                 ref="iptFileName"
                 class="flex-1"
                 v-model="fileName"
-                outlined
                 dense
                 :label="t(`fileman.resizeImageFileName`)"
                 :hint="t(`fileman.resizeImageFileNameHint`)"
@@ -43,7 +42,6 @@
                 :options="FORMAT_OPTIONS"
                 emit-value
                 map-options
-                outlined
                 dense
                 :label="t(`fileman.imageEditorFormat`)"
                 @update:model-value="setFormat" />

@@ -12,7 +12,6 @@
           <w-item-section>
             <w-input
               v-model="state.name"
-              outlined
               dense
               hide-bottom-space
               :label="t(`profile.passkeysName`)"

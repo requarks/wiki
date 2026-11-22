@@ -122,7 +122,6 @@
                   <w-item-section :style="cfg.type === `number` ? `flex: 0 0 150px;` : ``">
                     <w-select
                       v-if="cfg.enum"
-                      outlined
                       v-model="cfg.value"
                       :options="cfg.enum"
                       emit-value
@@ -135,7 +134,6 @@
                          tracking ID beside a server URL is exactly that shape. -->
                     <w-input
                       v-else
-                      outlined
                       v-model="cfg.value"
                       dense
                       no-autofill

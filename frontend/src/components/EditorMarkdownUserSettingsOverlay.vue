@@ -79,7 +79,6 @@
                 min="10"
                 max="32"
                 style="width: 100px"
-                outlined
                 v-model="state.config.fontSize"
                 dense
                 :aria-label="t(`editor.settings.markdownFontSize`)" />

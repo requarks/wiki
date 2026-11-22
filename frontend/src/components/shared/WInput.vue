@@ -6,56 +6,13 @@
     pushed the field past the section and out of the card. The cap does the shrinking, and stretch
     still handles the growing.
   -->
-  <div class="w-input max-w-full min-w-0">
-    <!-- -> Only the non-outlined variant still labels from above; see `hasFloatingLabel` -->
-    <label
-      v-if="label && !hasFloatingLabel"
-      :for="inputId"
-      class="mb-1 block text-caption text-black/60 dark:text-white/70">
+  <div class="w-input w-field max-w-full min-w-0">
+    <label v-if="label" :for="inputId" class="w-field-label">
       {{ label }}
       <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
     </label>
 
-    <div
-      @pointerenter="isHovered = true"
-      @pointerleave="isHovered = false"
-      class="w-input-control flex flex-nowrap items-center gap-2 rounded"
-      :class="controlClasses"
-      :style="controlStyle">
-      <!--
-        The outline, as a fieldset whose legend cuts the notch the floated label sits in.
-
-        A fieldset is the only element that interrupts its own top border for a child, which is what
-        makes a real gap rather than a patch: the label needs no background of its own, so it works
-        over a white card, a grey `alt-card` section or a dark surface alike. The legend widens from
-        nothing to the label's width, and that transition IS the notch opening.
-
-        `aria-hidden`, and the accessible name stays on the real <label> below.
-      -->
-      <fieldset
-        v-if="hasFloatingLabel"
-        aria-hidden="true"
-        class="w-input-outline"
-        :style="outlineStyle">
-        <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
-          <span
-            >{{ label
-            }}<span v-if="required" class="text-negative pr-1" aria-hidden="true"
-              >&nbsp;*</span
-            ></span
-          >
-        </legend>
-      </fieldset>
-
-      <label
-        v-if="hasFloatingLabel"
-        :for="inputId"
-        class="w-input-float"
-        :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
-        {{ label }}
-        <span v-if="required" class="text-negative pr-1" aria-hidden="true">&nbsp;*</span>
-      </label>
-
+    <div class="w-field-well" :class="controlClasses">
       <slot name="prepend" />
 
       <!--
@@ -63,10 +20,7 @@
         aria-hidden and paired with a `pt-0.5` so it sits on the same optical baseline as the input:
         it is decoration around the field, not part of what has been typed.
       -->
-      <span
-        v-if="prefix"
-        aria-hidden="true"
-        class="shrink-0 pt-0.5 text-black/54 select-none dark:text-white/60">
+      <span v-if="prefix" aria-hidden="true" class="w-field-affix shrink-0 pt-0.5 select-none">
         {{ prefix }}
       </span>
 
@@ -80,13 +34,13 @@
         :min="min ?? undefined"
         :max="max ?? undefined"
         :readonly="readonly"
-        :disabled="disable || disabled"
+        :disabled="isDisabled"
         v-bind="autofillAttrs"
         :rows="type === 'textarea' ? rows : undefined"
         :aria-invalid="hasError || undefined"
         :aria-required="required || undefined"
         :aria-describedby="describedBy"
-        class="w-unstyled min-w-0 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
+        class="w-unstyled w-field-input min-w-0 flex-1 bg-transparent pt-0.5 outline-none"
         :class="[
           monospaced ? 'font-mono text-[13px] leading-[1.4] font-semibold' : '',
           isAutogrow ? 'resize-none overflow-hidden' : ''
@@ -101,10 +55,7 @@
         them: it belongs to the value -- the closing `/` of a regex, a unit after a number -- so it
         has to sit against the text, not beyond the clear cross.
       -->
-      <span
-        v-if="suffix"
-        aria-hidden="true"
-        class="shrink-0 pt-0.5 text-black/54 select-none dark:text-white/60">
+      <span v-if="suffix" aria-hidden="true" class="w-field-affix shrink-0 pt-0.5 select-none">
         {{ suffix }}
       </span>
 
@@ -151,28 +102,22 @@
     <div
       v-if="showsBottom"
       :id="`${inputId}-desc`"
-      class="min-h-5 px-1 pt-1 text-caption"
-      :class="hasError ? 'text-negative' : 'text-black/54 dark:text-white/60'">
+      class="w-field-help"
+      :class="hasError ? 'w-field-help--error' : ''">
       {{ errorMessage || hint }}
     </div>
   </div>
 </template>
 
 <script setup>
-import {
-  computed,
-  inject,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  useId,
-  useSlots,
-  watch
-} from 'vue'
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 
 /**
  * Text input.
+ *
+ * A recessed well with its label above it: sunk into the surface, and lit in the site's primary
+ * colour -- floor, edge and halo -- while it has focus. The well and its palette are `.w-field-*` in
+ * `tailwind.css`, shared with WSelect.
  *
  * Validation follows the `rules` convention already in the codebase: an array of functions taking
  * the value and returning `true` when valid, or a message string when not.
@@ -233,23 +178,11 @@ const props = defineProps({
     default: null
   },
   /**
-   * The field on a white surface, with its label riding the border. Without it the field is FILLED: a
-   * light grey surface, for contrast against the white card it usually sits on, with the label above.
-   * Both are framed all the way round.
-   */
-  outlined: {
-    type: Boolean,
-    default: false
-  },
-  /**
-   * Drop the field's own surface and let whatever is behind it show through.
+   * Drop the well's floor and let whatever is behind it show through.
    *
-   * For a field on a surface that is not flat: a translucent (acrylic) menu, where the field's white
-   * would sit as an opaque slab on a panel meant to be see-through — and where the floating label,
-   * riding the top border, would have that slab on one side of it and the blur on the other.
-   *
-   * Only the fill goes. The border, the focus ring and the label's notch are untouched, so the field is
-   * still obviously a field.
+   * For a field on a surface that is not flat: a translucent (acrylic) menu, where the floor would sit
+   * as an opaque slab on a panel meant to be see-through. Only the floor goes. The edges and the focus
+   * ring are untouched, so the field is still obviously a field.
    */
   transparent: {
     type: Boolean,
@@ -375,8 +308,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'keyup:enter', 'focus', 'blur'])
 
-const slots = useSlots()
-
 const inputEl = ref(null)
 
 const isAutogrow = computed(() => props.autogrow && props.type === 'textarea')
@@ -385,9 +316,6 @@ let resizeObserver = null
 const inputId = useId()
 const errorMessage = ref(null)
 const hasBlurred = ref(false)
-const hasFocus = ref(false)
-/** Pointer-over, for the ring: the ring is an inline style, so CSS `:hover` cannot reach it. */
-const isHovered = ref(false)
 const isRevealed = ref(false)
 
 // COMPUTED
@@ -426,7 +354,7 @@ const effectiveType = computed(() =>
 )
 
 /*
-  `pt-0.5` on the control is optical centring, not padding.
+  `pt-0.5` on the input is optical centring, not padding.
 
   Roboto's ascent exceeds its descent, so a line box centred by geometry renders its glyphs above
   the optical centre -- measured at 2px high in both field sizes, with the input's own box exactly
@@ -443,139 +371,17 @@ const showsBottom = computed(
 
 const describedBy = computed(() => (showsBottom.value ? `${inputId}-desc` : undefined))
 
-/*
-  A label on an outlined field rides the outline, Material-style, instead of sitting above it: at rest
-  it stands in the middle of the field, and on focus or once there is a value it rises into the top
-  border. The filled variant keeps its label above, where it reads against the grey surface rather
-  than interrupting the frame -- only a handful of call sites in the app are labelled and filled.
-*/
-const hasFloatingLabel = computed(() => Boolean(props.label) && props.outlined)
+const isDisabled = computed(() => props.disable || props.disabled)
 
-const hasValue = computed(() => String(props.modelValue ?? '').length > 0)
-
-/*
-  Floated whenever the resting position is unavailable or would collide.
-
-  A leading icon or prefix keeps it floated permanently: the resting label occupies the same place as
-  the field's text, which begins after those, so the two would overlap. MUI resolves this the same
-  way -- it asks the caller to pin the label up whenever there is a start adornment.
-
-  A placeholder likewise: it renders in the resting position the moment the field is empty.
-
-  And so do the date and time types, which are never visually empty: the browser draws its own format
-  hint (`mm/dd/yyyy, --:--`) in the resting position whatever the value is, and there is no attribute
-  that suppresses it. An empty one would otherwise be a label printed over a format hint.
-*/
-const hasLeadingAdornment = computed(() => Boolean(slots.prepend || props.prefix))
-
-/** Types whose control paints its own format hint, so the resting position is never free. */
-const SELF_LABELLING_TYPES = ['date', 'datetime-local', 'month', 'time', 'week']
-
-const isFloating = computed(
-  () =>
-    hasFocus.value ||
-    hasValue.value ||
-    Boolean(props.placeholder) ||
-    hasLeadingAdornment.value ||
-    SELF_LABELLING_TYPES.includes(props.type)
-)
-
-const floatColorClass = computed(() => {
-  if (hasError.value) {
-    return 'text-negative'
-  }
-  // -> `primary` is picked to read on white; on a dark field it needs the lightened mix
-  return hasFocus.value
-    ? 'text-primary dark:text-primary-light'
-    : 'text-black/60 dark:text-white/70'
-})
-
+/** The well's states; what each one looks like is in `tailwind.css`, under `.w-field-well`. */
 const controlClasses = computed(() => [
-  props.dense ? 'w-input-control--dense min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
-  /*
-    An outlined field carries its own surface rather than borrowing whatever it sits on: white in
-    light mode, a darker well in dark mode. Transparent read fine on a white card and wrong
-    everywhere else -- a grey `alt-card` section, the admin page background, the profile card -- where
-    the field dissolved into its surroundings.
-
-    The dark value is translucent black rather than a fixed tone so it holds up on each of those
-    surfaces; the light one can be flat white because that IS the surface a field should present.
-
-    `transparent` opts out, for the surfaces where that reasoning inverts -- see the prop.
-  */
-  props.transparent
-    ? ''
-    : props.outlined
-      ? 'bg-white dark:bg-black/20'
-      : 'bg-black/4 dark:bg-white/6',
-  props.disable || props.disabled ? 'pointer-events-none opacity-60' : '',
-  // -> Says the field is not the reader's to change; see the stripe rule in `tailwind.css`
-  props.readonly || props.disable || props.disabled ? 'w-input-control--locked' : '',
-  /*
-    `relative` for the outline and the label. The margin is the room the floated label needs above the
-    control, and it is matched below so the field's box stays symmetric about the control -- otherwise
-    a top margin alone drops the control below the centre of whatever row it sits in, out of line with
-    a leading icon beside it.
-
-    Skipped underneath when a message line follows, since that already occupies the space and the gap
-    would only push the message away from the field it belongs to.
-  */
-  hasFloatingLabel.value ? (showsBottom.value ? 'relative mt-2' : 'relative my-2') : ''
+  props.dense ? 'w-field-well--dense' : '',
+  props.type === 'textarea' ? 'w-field-well--multiline' : '',
+  props.transparent ? 'w-field-well--transparent' : '',
+  hasError.value ? 'w-field-well--error' : '',
+  // -> Disabled and readonly alike: not the reader's to change
+  props.readonly || isDisabled.value ? 'w-field-well--locked' : ''
 ])
-
-/**
- * The field frame, drawn as an inset ring rather than a border.
- *
- * Ports what Quasar did with two stacked pseudo-elements: a 1px resting frame and a 2px focus
- * frame occupying the same rectangle, so the thicker one covers the thinner one. Insets do not
- * take part in layout, so thickening on focus cannot nudge the content -- which a real border
- * would. `--w-input-ring` carries the resting colour so dark mode can swap it in CSS.
- *
- * Built as an inline style on purpose: the colour depends on three pieces of state, and an
- * arbitrary Tailwind class would be one more thing that has to survive the scanner and the
- * Quasar cascade.
- */
-const frameColor = computed(() =>
-  hasError.value
-    ? 'var(--color-negative)'
-    : hasFocus.value
-      ? 'var(--color-primary)'
-      : isHovered.value && !props.disable && !props.disabled && !props.readonly
-        ? 'var(--w-input-ring-hover)'
-        : 'var(--w-input-ring)'
-)
-
-// -> Error and focus both read as "active", and get the heavier 2px frame
-const frameWidth = computed(() => (hasError.value || hasFocus.value ? 2 : 1))
-
-const controlStyle = computed(() => {
-  // -> A floating label needs a frame that can be interrupted, which the fieldset draws instead
-  if (hasFloatingLabel.value) {
-    return undefined
-  }
-  /*
-    All the way round for both variants. The filled one used to draw only its bottom edge, Material's
-    underline, which on a grey surface inside a white dialog read as a smudge with a line under it
-    rather than as a box to type in.
-
-    A filled field also gets a 2px band of the card's surface just inside the frame, so the grey sits
-    inset from its border rather than running up against it. A second inset shadow, listed after the
-    frame so the frame paints over it, and widened with the frame on focus so the band stays 2px.
-    Not on a `transparent` field, which has no fill to set apart.
-  */
-  const frame = `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
-  const hasInset = !props.outlined && !props.transparent
-  return {
-    boxShadow: hasInset
-      ? `${frame}, inset 0 0 0 ${frameWidth.value + 2}px var(--w-input-inset)`
-      : frame
-  }
-})
-
-const outlineStyle = computed(() => ({
-  borderColor: frameColor.value,
-  borderWidth: `${frameWidth.value}px`
-}))
 
 // LIFECYCLE
 
@@ -647,12 +453,10 @@ function onInput(ev) {
 }
 
 function onFocus(ev) {
-  hasFocus.value = true
   emit('focus', ev)
 }
 
 function onBlur(ev) {
-  hasFocus.value = false
   emit('blur', ev)
   hasBlurred.value = true
   if (props.rules.length && props.lazyRules !== 'ondemand') {

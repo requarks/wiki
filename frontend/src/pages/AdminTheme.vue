@@ -135,7 +135,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.codeBlocksTheme"
                 :options="codeThemes"
                 emit-value
@@ -222,7 +221,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.baseFont"
                 :options="fonts"
                 emit-value
@@ -239,7 +237,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.contentFont"
                 :options="fonts"
                 emit-value

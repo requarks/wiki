@@ -62,7 +62,6 @@
                 </w-item-section>
                 <w-item-section side>
                   <w-select
-                    outlined
                     dense
                     emit-value
                     map-options
@@ -164,7 +163,6 @@
                 </w-item-section>
                 <w-item-section side>
                   <w-select
-                    outlined
                     dense
                     emit-value
                     map-options

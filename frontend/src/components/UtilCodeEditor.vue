@@ -292,7 +292,7 @@ defineExpose({
   position: relative;
   overflow: hidden;
   border-radius: 5px;
-  /* -> Same resting and focus edge as the other form controls; see `.w-input-control` */
+  /* -> A ruled frame, lit in the primary colour while focused */
   border: 1px solid rgb(0 0 0 / 0.24);
   background-color: #fff;
   transition: border-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);

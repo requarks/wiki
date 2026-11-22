@@ -17,7 +17,6 @@
           :options="field.options ?? []"
           :emit-value="hasValueOptions(field)"
           :map-options="hasValueOptions(field)"
-          outlined
           dense
           options-dense
           :disable="isLocked(field)"
@@ -39,7 +38,6 @@
         <w-input
           v-else-if="field.type === `icon`"
           v-model="values[field.name]"
-          outlined
           dense
           :disable="isLocked(field)"
           :label="field.label ?? field.name"
@@ -59,24 +57,17 @@
               body is set through `v-html`, which renders no slot — so a menu inside one never exists.
               The same note as in `PagePropertiesDialog`, where that was found the hard way.
             -->
-            <w-btn
-              flat
-              dense
-              round
-              icon="la:icons"
-              color="primary"
-              :aria-label="t(`iconPicker.open`)">
+            <w-field-cap icon="la:icons" :aria-label="t(`iconPicker.open`)">
               <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
               <w-menu content-class="shadow-7" anchor="bottom right" self="top right">
                 <icon-picker-dialog v-model="values[field.name]" />
               </w-menu>
-            </w-btn>
+            </w-field-cap>
           </template>
         </w-input>
         <w-input
           v-else
           v-model="values[field.name]"
-          outlined
           dense
           :disable="isLocked(field)"
           :type="field.type === `number` ? `number` : `text`"
@@ -86,15 +77,15 @@
           :hint="field.hint" />
       </div>
       <!--
-        -> Centred on the field's box rather than on the row, which also holds the hint under it. An
-           outlined field's box is 36px tall (`dense`) and 8px down, its top margin making room for the
-           floated label, so this takes the same 8px and 36px. A toggle has neither margin nor hint,
-           so beside one it is centred on the row.
+        -> Centred on the field's box rather than on the row, which also holds the label above it and
+           the hint under it. A field's box is 36px tall (`dense`) and 20px down, under its label's 16px
+           line and 4px gap (`.w-field-label`), so this takes the same 20px and 36px. A toggle has
+           neither label line nor hint, so beside one it is centred on the row.
       -->
       <div
         v-if="locks || isLocked(field)"
         class="flex shrink-0 items-center"
-        :class="field.type === `boolean` ? `self-center` : `mt-2 h-9`">
+        :class="field.type === `boolean` ? `self-center` : `mt-5 h-9`">
         <!-- -> The administrator's switch, beside the value it fixes -->
         <w-btn
           v-if="locks"

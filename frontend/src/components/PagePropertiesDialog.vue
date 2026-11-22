@@ -77,14 +77,12 @@
             ref="iptTitle"
             v-model="pageStore.title"
             :label="t(`editor.props.title`)"
-            outlined
             dense />
           <w-input
             v-model="pageStore.description"
             :label="t(`editor.props.shortDescription`)"
-            outlined
             dense />
-          <w-input v-model="pageStore.icon" :label="t(`editor.props.icon`)" outlined dense>
+          <w-input v-model="pageStore.icon" :label="t(`editor.props.icon`)" dense>
             <template #prepend>
               <w-icon
                 :class="pageIconColorClass(pageStore.iconColor)"
@@ -97,19 +95,13 @@
                 set through `v-html`, which renders no slot -- so the menu inside it never existed and
                 the control did nothing. It was also just the 14px glyph, with no hit area of its own.
               -->
-              <w-btn
-                flat
-                dense
-                round
-                icon="la:icons"
-                color="primary"
-                :aria-label="t(`iconPicker.open`)">
+              <w-field-cap icon="la:icons" :aria-label="t(`iconPicker.open`)">
                 <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                 <!-- The properties panel is docked to the right edge, so the picker has to grow leftwards -->
                 <w-menu content-class="shadow-7" anchor="bottom right" self="top right">
                   <icon-picker-dialog v-model="pageStore.icon" />
                 </w-menu>
-              </w-btn>
+              </w-field-cap>
             </template>
           </w-input>
           <!--
@@ -125,7 +117,6 @@
             :hint="isColorableIcon ? null : t(`editor.props.iconColorImageHint`)"
             emit-value
             map-options
-            outlined
             dense>
             <template #prepend>
               <span class="size-4 shrink-0 rounded-full" :class="selectedIconColorSwatch" />
@@ -141,7 +132,6 @@
             v-if="pageStore.path !== `home`"
             v-model="pageStore.alias"
             :label="t(`editor.props.alias`)"
-            outlined
             dense
             prefix="/a/" />
         </w-form>
@@ -232,7 +222,6 @@
               use-input
               use-chips
               remote-filter
-              outlined
               dense
               @filter="lookupUsers"
               @update:model-value="updateOwnership({ users: $event })">
@@ -268,7 +257,6 @@
               use-input
               use-chips
               remote-filter
-              outlined
               dense
               @filter="lookupGroups"
               @update:model-value="updateOwnership({ groups: $event })" />
@@ -589,7 +577,6 @@
               autocomplete="off"
               :label="t(`editor.props.password`)"
               :hint="t(`editor.props.passwordHint`)"
-              outlined
               dense />
           </div>
         </w-form>

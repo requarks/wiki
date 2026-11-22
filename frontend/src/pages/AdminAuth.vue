@@ -164,7 +164,6 @@
                 </w-item-section>
                 <w-item-section>
                   <w-input
-                    outlined
                     v-model="state.strategy.displayName"
                     dense
                     hide-bottom-space
@@ -218,7 +217,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-select
-                      outlined
                       :options="state.groups"
                       v-model="state.strategy.autoEnrollGroups"
                       multiple
@@ -250,20 +248,6 @@
                             >
                           </i18n-t>
                         </div>
-                        <span v-else />
-                      </template>
-                      <template #option="{ itemProps, opt, selected, toggleOption }">
-                        <w-item v-bind="itemProps">
-                          <w-item-section side>
-                            <w-checkbox
-                              size="sm"
-                              :model-value="selected"
-                              @update:model-value="toggleOption(opt)" />
-                          </w-item-section>
-                          <w-item-section
-                            ><w-item-label>{{ opt.name }}</w-item-label></w-item-section
-                          >
-                        </w-item>
                       </template>
                     </w-select>
                   </w-item-section>
@@ -277,7 +261,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.strategy.allowedEmailRegex"
                       dense
                       hide-bottom-space
@@ -344,7 +327,6 @@
                         :disable="cfg.readOnly" />
                       <w-select
                         v-else-if="cfg.enum"
-                        outlined
                         v-model="cfg.value"
                         :options="cfg.enum"
                         emit-value
@@ -360,7 +342,6 @@
                            operator's own. -->
                       <w-input
                         v-else
-                        outlined
                         v-model="cfg.value"
                         dense
                         no-autofill
@@ -415,7 +396,6 @@
                   </w-item-label>
                   <w-input
                     v-else
-                    outlined
                     v-model="strRef.value"
                     dense
                     :aria-label="strRef.title"
@@ -489,7 +469,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.passkeyRpId"
                 dense
                 no-autofill

@@ -6,11 +6,8 @@
         <span>{{ t(`admin.api.newKeyTitle`) }}</span>
       </w-card-section>
       <!--
-        No `self-start` on the icons. Top-aligning one is for a row whose main section is TALLER than the
-        field it holds -- a field showing a hint line underneath, or a stack of several controls -- where
-        the icon belongs against the first of them. Every field here passes `hide-bottom-space`, which
-        suppresses that hint line, so each row is the field alone and `self-start` lifted the icon 8px
-        above the field it labels. Centred is what lines the two up, as in `UserCreateDialog`.
+        No alignment classes on the icons: a row with a labelled field centres its icon on the field's
+        box by itself (`.w-field-label` in `tailwind.css`), hint line or not.
       -->
       <w-form ref="createKeyForm" class="py-2" @submit="create">
         <w-item>
@@ -19,7 +16,6 @@
             <w-input
               ref="iptName"
               v-model="state.keyName"
-              outlined
               dense
               :rules="keyNameValidation"
               hide-bottom-space
@@ -38,7 +34,6 @@
             -->
             <w-select
               v-model="state.keyExpiration"
-              outlined
               :options="expirations"
               map-options
               option-value="value"
@@ -56,7 +51,6 @@
           <w-item-section>
             <w-select
               v-model="state.keyGroups"
-              outlined
               :options="state.groups"
               multiple
               map-options
@@ -86,7 +80,6 @@
                     </template>
                   </i18n-t>
                 </span>
-                <span v-else />
               </template>
             </w-select>
           </w-item-section>

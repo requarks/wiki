@@ -10,7 +10,6 @@
         <w-input
           ref="iptSearch"
           v-model="state.query"
-          outlined
           dense
           clearable
           :label="t('pageTemplateDialog.search')"

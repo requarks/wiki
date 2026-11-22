@@ -11,7 +11,6 @@
           <w-item-section>
             <w-input
               v-model="state.currentPassword"
-              outlined
               dense
               type="password"
               autocomplete="current-password"
@@ -28,7 +27,6 @@
             <w-input
               ref="newPasswordIpt"
               v-model="state.newPassword"
-              outlined
               dense
               type="password"
               autocomplete="new-password"
@@ -38,14 +36,11 @@
               :label="t(`auth.changePwd.newPassword`)"
               lazy-rules="ondemand">
               <template #append>
-                <div class="flex flex-nowrap items-center">
-                  <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
-                  <w-separator vertical class="mx-2 self-stretch" />
-                  <w-btn flat dense padding="none xs" color="brown" @click="randomizePassword">
-                    <w-icon name="la:dice-d6" />
-                    <div class="pl-1 text-caption"><strong>Generate</strong></div>
-                  </w-btn>
-                </div>
+                <w-badge :color="passwordStrength.color" :label="passwordStrength.label" />
+                <w-field-cap
+                  icon="la:dice-d6"
+                  :label="t(`common.actions.generate`)"
+                  @click="randomizePassword" />
               </template>
             </w-input>
           </w-item-section>
@@ -55,7 +50,6 @@
           <w-item-section>
             <w-input
               v-model="state.verifyPassword"
-              outlined
               dense
               type="password"
               autocomplete="new-password"

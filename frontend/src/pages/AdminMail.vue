@@ -58,7 +58,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.senderName"
                 dense
                 hide-bottom-space
@@ -74,7 +73,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.senderEmail"
                 dense
                 :aria-label="t(`admin.mail.senderEmail`)" />
@@ -89,7 +87,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.defaultBaseURL"
                 dense
                 placeholder="https://wiki.example.com"
@@ -110,7 +107,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.host"
                 dense
                 no-autofill
@@ -127,7 +123,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 120px">
               <w-input
-                outlined
                 v-model="state.config.port"
                 dense
                 no-autofill
@@ -167,7 +162,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 :model-value="state.config.authType"
                 :options="authTypeOptions"
                 emit-value
@@ -191,7 +185,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.user"
                 dense
                 no-autofill
@@ -209,7 +202,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.msTenantId"
                   dense
                   no-autofill
@@ -225,7 +217,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.msClientId"
                   dense
                   no-autofill
@@ -242,7 +233,6 @@
               <w-item-section>
                 <!-- -> Arrives masked, as the password does; see below -->
                 <w-input
-                  outlined
                   v-model="state.config.msClientSecret"
                   dense
                   type="password"
@@ -262,7 +252,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.googleServiceAccount"
                   dense
                   no-autofill
@@ -279,7 +268,6 @@
               <w-item-section>
                 <!-- -> Arrives masked like the password; the mask posted back keeps the stored key -->
                 <w-input
-                  outlined
                   v-model="state.config.googlePrivateKey"
                   dense
                   no-autofill
@@ -301,7 +289,6 @@
                         rather than the password, so the only value ever readable here is one the
                         operator is typing at that moment and may want to check -->
                 <w-input
-                  outlined
                   v-model="state.config.pass"
                   dense
                   type="password"
@@ -320,7 +307,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.name"
                 dense
                 no-autofill
@@ -368,7 +354,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.dkimDomainName"
                   dense
                   :aria-label="t(`admin.mail.dkimDomainName`)" />
@@ -383,7 +368,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.dkimKeySelector"
                   dense
                   :aria-label="t(`admin.mail.dkimKeySelector`)" />
@@ -399,7 +383,6 @@
               <w-item-section>
                 <!-- -> Arrives masked like the password; the mask posted back keeps the stored key -->
                 <w-input
-                  outlined
                   v-model="state.config.dkimPrivateKey"
                   dense
                   no-autofill
@@ -423,7 +406,6 @@
               <w-item-label caption>{{ t(`admin.mail.testRecipientHint`) }}</w-item-label>
               <w-input
                 class="mt-4"
-                outlined
                 v-model="state.testEmail"
                 dense
                 :aria-label="t(`admin.mail.testRecipient`)" />

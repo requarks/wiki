@@ -112,7 +112,6 @@
                 min="1"
                 max="8"
                 style="width: 100px"
-                outlined
                 v-model="state.config.tabWidth"
                 dense
                 :aria-label="t(`admin.editors.markdown.tabWidth`)" />
@@ -128,7 +127,6 @@
             <w-item-section avatar>
               <w-select
                 style="width: 200px"
-                outlined
                 v-model="state.config.inlineMath"
                 :options="inlineMathEngines"
                 emit-value
@@ -199,7 +197,6 @@
               <w-item-section avatar>
                 <w-select
                   style="width: 200px"
-                  outlined
                   v-model="state.config.quotes"
                   :options="quoteStyles"
                   emit-value

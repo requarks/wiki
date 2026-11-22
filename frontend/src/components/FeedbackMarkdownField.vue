@@ -33,7 +33,6 @@
       v-show="state.tab === `write`"
       ref="inputEl"
       type="textarea"
-      outlined
       hide-bottom-space
       :rows="rows"
       :model-value="modelValue"

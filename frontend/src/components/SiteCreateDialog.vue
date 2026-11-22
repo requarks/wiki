@@ -16,7 +16,6 @@
           <w-item-section>
             <w-input
               v-model="state.siteName"
-              outlined
               dense
               :rules="siteNameValidation"
               hide-bottom-space
@@ -30,7 +29,6 @@
           <w-item-section>
             <w-input
               v-model="state.siteHostname"
-              outlined
               dense
               :rules="siteHostnameValidation"
               :hint="t(`admin.sites.hostnameHint`)"

@@ -10,32 +10,24 @@
           <w-input
             v-model="state.title"
             :label="t(`editor.props.title`)"
-            outlined
             dense
             autofocus />
           <w-input
             v-model="state.description"
             :label="t(`editor.props.shortDescription`)"
-            outlined
             dense />
           <!-- -> The properties panel's icon field, picker and all -->
-          <w-input v-model="state.icon" :label="t(`editor.props.icon`)" outlined dense>
+          <w-input v-model="state.icon" :label="t(`editor.props.icon`)" dense>
             <template #prepend>
               <w-icon :name="state.icon" size="20px" />
             </template>
             <template #append>
-              <w-btn
-                flat
-                dense
-                round
-                icon="la:icons"
-                color="primary"
-                :aria-label="t(`iconPicker.open`)">
+              <w-field-cap icon="la:icons" :aria-label="t(`iconPicker.open`)">
                 <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                 <w-menu content-class="shadow-7" anchor="bottom right" self="top right">
                   <icon-picker-dialog v-model="state.icon" />
                 </w-menu>
-              </w-btn>
+              </w-field-cap>
             </template>
           </w-input>
           <!-- -> As in `PageTags.vue`: the field adds, and the chips under it are what was added -->
@@ -45,7 +37,6 @@
             :label="t(`editor.props.tags`)"
             :placeholder="t(`editor.props.tagsPlaceholder`)"
             :loading="state.tagsLoading"
-            outlined
             dense
             options-dense
             use-input

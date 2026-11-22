@@ -19,7 +19,6 @@
                 type it: both write to the store, and the header's watcher follows what is typed here.
               -->
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 :model-value="pageStore.title"
@@ -41,7 +40,6 @@
                 blog's name and an author on this screen should not have to go looking for it.
               -->
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 :model-value="pageStore.description"
@@ -58,7 +56,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 type="textarea"
@@ -92,7 +89,6 @@
             <w-item-section side>
               <w-input
                 class="editor-blog-number"
-                outlined
                 dense
                 hide-bottom-space
                 type="number"
@@ -114,7 +110,6 @@
             <w-item-section side>
               <w-select
                 class="editor-blog-select"
-                outlined
                 dense
                 emit-value
                 map-options
@@ -139,7 +134,6 @@
             <w-item-section side>
               <w-select
                 class="editor-blog-select"
-                outlined
                 dense
                 emit-value
                 map-options
@@ -159,7 +153,6 @@
             <w-item-section side>
               <w-input
                 class="editor-blog-number"
-                outlined
                 dense
                 hide-bottom-space
                 type="number"

@@ -23,7 +23,6 @@
             <w-input
               type="textarea"
               autogrow
-              outlined
               :model-value="props.keyValue"
               readonly
               dense

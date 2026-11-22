@@ -7,12 +7,10 @@
     pushed the field past the section and out of the card. The cap does the shrinking, and stretch
     still handles the growing.
   -->
-  <div class="w-select max-w-full min-w-0">
-    <!-- -> Only variants without an outline to rise into still label from above; see WInput -->
-    <label
-      v-if="label && !hasFloatingLabel"
-      :for="selectId"
-      class="mb-1 block text-caption text-black/60 dark:text-white/70">
+  <div
+    class="w-select w-field w-select-theme max-w-full min-w-0"
+    :class="dark ? 'w-field--dark' : ''">
+    <label v-if="label" :for="selectId" class="w-field-label">
       {{ label }}
       <span v-if="required" class="text-negative pe-1" aria-hidden="true">&nbsp;*</span>
     </label>
@@ -31,51 +29,16 @@
       :aria-expanded="useInput ? undefined : String(isOpen)"
       :aria-haspopup="useInput ? undefined : 'listbox'"
       :aria-label="useInput || label ? undefined : ariaLabel"
-      :aria-labelledby="hasFloatingLabel && !useInput ? `${selectId}-label` : undefined"
       :aria-readonly="!useInput && readonly ? true : undefined"
       :aria-controls="!useInput && isOpen ? `${selectId}-listbox` : undefined"
       :aria-activedescendant="
         !useInput && isOpen && activeIndex >= 0 ? optionId(activeIndex) : undefined
       "
       :disabled="useInput ? undefined : isDisabled"
-      class="w-unstyled w-input-control flex w-full flex-nowrap items-center gap-2 rounded text-start"
+      class="flex w-full flex-nowrap items-center text-start"
       :class="controlClasses"
-      :style="controlStyle"
       @click="onControlClick"
-      @pointerenter="isHovered = true"
-      @pointerleave="isHovered = false"
       @keydown="useInput || onKeydown($event)">
-      <!-- -> The notched outline and its label, exactly as WInput draws them; CSS is shared -->
-      <fieldset
-        v-if="hasFloatingLabel"
-        aria-hidden="true"
-        class="w-input-outline"
-        :style="outlineStyle">
-        <legend :class="isFloating ? 'w-input-outline-notch--open' : ''">
-          <span
-            >{{ label
-            }}<span v-if="required" class="text-negative pe-1" aria-hidden="true"
-              >&nbsp;*</span
-            ></span
-          >
-        </legend>
-      </fieldset>
-
-      <!--
-        A <span>, not a <label>: the control it names IS this element's ancestor for the plain
-        variant (a <button>), and a label cannot sit inside the thing it labels. The control points
-        at it with `aria-labelledby` instead, which names it without displacing the selected value
-        the way an `aria-label` would.
-      -->
-      <span
-        v-if="hasFloatingLabel"
-        :id="`${selectId}-label`"
-        class="w-input-float"
-        :class="[isFloating ? 'w-input-float--up' : '', floatColorClass]">
-        {{ label }}
-        <span v-if="required" class="text-negative pe-1" aria-hidden="true">&nbsp;*</span>
-      </span>
-
       <slot name="prepend" />
 
       <!--
@@ -94,9 +57,8 @@
       </span>
 
       <!--
-        `outline-none` because the FIELD is what shows focus, with its ring: the user agent's own
-        outline drew a second, black one inside the rounded frame. Placeholder colour matched to
-        WInput's, which this had been leaving to the browser as well.
+        `outline-none` because the WELL is what shows focus, with its ring: the user agent's own
+        outline drew a second one inside it. Typed text and placeholder as WInput's.
       -->
       <input
         v-if="useInput"
@@ -110,19 +72,18 @@
         :aria-required="required || undefined"
         aria-haspopup="listbox"
         :aria-label="label ? undefined : ariaLabel"
-        :aria-labelledby="hasFloatingLabel ? `${selectId}-label` : undefined"
         :aria-controls="isOpen ? `${selectId}-listbox` : undefined"
         :aria-activedescendant="isOpen && activeIndex >= 0 ? optionId(activeIndex) : undefined"
         :disabled="isDisabled"
         :readonly="readonly"
         :placeholder="showsChips ? '' : placeholder"
-        class="w-unstyled min-w-8 flex-1 bg-transparent pt-0.5 outline-none placeholder:text-black/40 dark:placeholder:text-white/40"
+        class="w-unstyled w-field-input min-w-8 flex-1 bg-transparent pt-0.5 outline-none"
         @focus="readonly || open(0)"
         @keydown="onKeydown" />
       <span
         v-else
         class="min-w-0 flex-1 truncate pt-0.5"
-        :class="hasSelection || displayValue ? '' : 'text-black/40 dark:text-white/40'">
+        :class="hasSelection || displayValue ? '' : 'w-select-placeholder'">
         <!--
           `selected` lets a caller summarise the selection instead of listing it -- e.g. "3 groups
           selected" rather than three comma-joined names.
@@ -130,23 +91,51 @@
           Empty once the chips above are drawing the selection: the comma-joined text is what chips
           REPLACE, and rendering both said the same thing twice, side by side. The element stays for
           the layout -- it is what holds the row open and pushes the dropdown arrow to the end.
+
+          With nothing chosen the placeholder takes the slot's place, so a caller summarising a
+          selection has no empty case of its own to draw.
         -->
-        <slot name="selected">{{ showsChips ? '' : displayText }}</slot>
+        <template v-if="!hasSelection && !displayValue">{{ placeholderText }}</template>
+        <slot v-else name="selected">{{ showsChips ? '' : displayText }}</slot>
       </span>
       <w-spinner v-if="loading" size="1em" class="shrink-0" />
-      <w-icon
+      <!--
+        Drawn inline rather than through WIcon: a 2px stroked chevron, and none of the bundled icon
+        sets has one -- `mdi:chevron-down` is a filled shape at a different weight.
+      -->
+      <span
         v-else-if="!readonly && !hideDropdownIcon"
-        name="mdi:menu-down"
-        size="1.2em"
-        class="shrink-0 transition-transform"
-        :class="isOpen ? 'rotate-180' : ''" />
+        class="w-select-chevron"
+        :class="isOpen ? 'w-select-chevron--open' : ''"
+        aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </span>
 
-      <w-menu v-model="isOpen" :dark="dark" fit anchor="bottom left" self="top left">
+      <!--
+        The panel is WMenu's own element, so it is styled from here through `content-class` and a
+        global rule: a scoped one only reaches elements this component renders itself.
+      -->
+      <w-menu
+        v-model="isOpen"
+        :dark="dark"
+        fit
+        anchor="bottom left"
+        self="top left"
+        :offset="[0, 8]"
+        content-class="w-select-menu w-field w-select-theme">
         <div
           :id="`${selectId}-listbox`"
           role="listbox"
           :aria-multiselectable="multiple || undefined"
-          class="py-1">
+          class="w-select-list">
           <!--
             The options are plain <div>s, not buttons: focus never leaves the combobox. Keyboard
             users move a virtual cursor (`aria-activedescendant`) instead, which is the pattern for
@@ -159,24 +148,14 @@
             :key="idx"
             role="option"
             :aria-selected="String(isSelected(opt.value))"
-            class="w-select-option flex w-full cursor-pointer flex-nowrap items-center gap-2 px-4 text-start hover:bg-black/5 dark:hover:bg-white/8"
+            class="w-select-option"
             :class="[
-              optionsDense ? 'min-h-8 py-1 text-body2' : 'min-h-10 py-2',
-              isSelected(opt.value) ? selectedOptionClass : '',
-              idx === activeIndex ? 'bg-black/8 dark:bg-white/12' : ''
+              optionsDense ? 'w-select-option--dense' : '',
+              idx === activeIndex ? 'w-select-option--active' : '',
+              idx === activeIndex && cursorByKeyboard ? 'w-select-option--keyboard' : ''
             ]"
             @click.stop="select(opt.value)"
-            @mousemove="activeIndex = idx">
-            <!--
-              A check, not a checkbox. The icon takes the row's own font size unless told otherwise,
-              which made a 14px square that read as a rendering fault rather than a control. Drawn for
-              a single selection too: colour alone is a weak marker, and the one the row used to rely
-              on could not be strong enough on a dark panel to carry the state by itself. The column is
-              held open when nothing is drawn, so labels line up whatever is selected.
-            -->
-            <span class="flex w-5 shrink-0 justify-center">
-              <w-icon v-if="isSelected(opt.value)" name="mdi:check" size="20px" />
-            </span>
+            @mousemove="pointAt(idx)">
             <span class="min-w-0 flex-1">
               <!--
                 `option` customises the row's content only. Selection mechanics (the check and the
@@ -188,10 +167,24 @@
                 <span class="block truncate">{{ opt.label }}</span>
               </slot>
             </span>
+            <!--
+              A tick as well as the lit cap: colour alone is a weak marker, and a multiple selection
+              lights several caps at once. Inline for the same reason as the chevron above.
+            -->
+            <svg
+              v-if="isSelected(opt.value)"
+              class="w-select-tick"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
           </div>
-          <div
-            v-if="!filteredOptions.length"
-            class="px-4 py-2 text-body2 text-black/54 dark:text-white/60">
+          <div v-if="!filteredOptions.length" class="w-select-empty">
             {{ noOptionsLabel }}
           </div>
         </div>
@@ -209,17 +202,15 @@
       Where a rule exists the space stays reserved even with nothing to say, so the form does not
       shift the moment a message appears -- which is the reason to hold it at all.
     -->
-    <div
-      v-if="showsBottom"
-      class="min-h-5 px-1 pt-1 text-caption"
-      :class="errorMessage ? 'text-negative' : 'text-black/54 dark:text-white/60'">
+    <div v-if="showsBottom" class="w-field-help" :class="errorMessage ? 'w-field-help--error' : ''">
       {{ errorMessage || hint }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, nextTick, ref, useId, useSlots, watch } from 'vue'
+import { computed, inject, nextTick, ref, useId, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import WChip from './WChip.vue'
 import WMenu from './WMenu.vue'
 import WSpinner from './WSpinner.vue'
@@ -233,9 +224,12 @@ import WSpinner from './WSpinner.vue'
  *
  * Typing narrows `options` in place with `useInput`. A list too long to hand over whole -- users
  * to search on the server -- is narrowed by the caller instead, with `remoteFilter`.
+ *
+ * A plain select is a keycap: a raised face on a 1px skirt, sinking a pixel as it is pressed and
+ * staying down while its list is open, with its label above it. The list is a raised panel of its
+ * own, the selection in it a cap lit in the site's primary colour. A filtering select (`useInput`)
+ * is a text field, so it is WInput's recessed well instead (`.w-field-well` in `tailwind.css`).
  */
-const slots = useSlots()
-
 const props = defineProps({
   modelValue: {
     type: null,
@@ -278,17 +272,8 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  outlined: {
-    type: Boolean,
-    default: false
-  },
   /** Shows the selection but does not open. Keeps full contrast, unlike `disable`. */
   readonly: {
-    type: Boolean,
-    default: false
-  },
-  /** Filled control with no ring, which brightens when open. */
-  standout: {
     type: Boolean,
     default: false
   },
@@ -415,15 +400,19 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'create', 'filter'])
 
 const isOpen = ref(false)
-/** Pointer-over, for the ring: the ring is an inline style, so CSS `:hover` cannot reach it. */
-const isHovered = ref(false)
 /** Index of the option the keyboard cursor is on; -1 when there is none. */
 const activeIndex = ref(-1)
+/**
+ * Whether the keyboard put the cursor where it is. Only then is it ringed, as a focused option
+ * would be: under the pointer it is just the hover well, and a ring following the mouse is noise.
+ */
+const cursorByKeyboard = ref(false)
 
 // -> A popup closed by any route (click-away, selection, Escape) leaves no stale cursor behind
 watch(isOpen, (open) => {
   if (!open) {
     activeIndex.value = -1
+    cursorByKeyboard.value = false
   }
 })
 
@@ -492,10 +481,28 @@ const selectedValues = computed(() => {
   if (props.multiple) {
     return Array.isArray(props.modelValue) ? props.modelValue : []
   }
-  return props.modelValue === null || props.modelValue === undefined ? [] : [props.modelValue]
+  if (props.modelValue === null || props.modelValue === undefined) {
+    /*
+      Nothing chosen -- unless an option IS that value. The audit filters offer "All kinds" as
+      `null`, and reading null as no selection drew the field blank and left the option unticked.
+    */
+    return normalizedOptions.value.some((o) => o.value === props.modelValue)
+      ? [props.modelValue]
+      : []
+  }
+  return [props.modelValue]
 })
 
 const hasSelection = computed(() => selectedValues.value.length > 0)
+
+const { t } = useI18n()
+
+/**
+ * What an empty select says: the caller's `placeholder`, or "Choose…". A blank field read as
+ * broken rather than as waiting for a choice. Not for a filtering select, whose input shows the
+ * caller's placeholder alone -- there the field is plainly a box to type in.
+ */
+const placeholderText = computed(() => props.placeholder || t('common.field.choose'))
 
 /** Whether the selection is being drawn as chips, which is a different thing from being able to. */
 const showsChips = computed(() => props.useChips && hasSelection.value)
@@ -505,7 +512,7 @@ const displayText = computed(() => {
     return props.displayValue
   }
   if (!hasSelection.value) {
-    return props.placeholder
+    return placeholderText.value
   }
   return selectedValues.value
     .map((v) => {
@@ -602,6 +609,11 @@ async function revealActive() {
   document.getElementById(optionId(activeIndex.value))?.scrollIntoView({ block: 'nearest' })
 }
 
+function pointAt(idx) {
+  activeIndex.value = idx
+  cursorByKeyboard.value = false
+}
+
 function moveActive(delta) {
   const count = filteredOptions.value.length
   if (count === 0) {
@@ -638,6 +650,7 @@ function onKeydown(ev) {
     case 'ArrowDown':
     case 'ArrowUp': {
       ev.preventDefault()
+      cursorByKeyboard.value = true
       const delta = ev.key === 'ArrowDown' ? 1 : -1
       if (isOpen.value) {
         moveActive(delta)
@@ -650,6 +663,7 @@ function onKeydown(ev) {
     case 'End':
       if (isOpen.value) {
         ev.preventDefault()
+        cursorByKeyboard.value = true
         activeIndex.value = ev.key === 'Home' ? 0 : count - 1
         revealActive()
       }
@@ -738,102 +752,311 @@ const showsBottom = computed(
     (!props.hideBottomSpace && (props.hint || props.rules.length > 0))
 )
 
-/*
-  Matches WInput: a labelled outlined field floats its label onto the outline. A `standout` control
-  carries its state in its fill and draws no outline at all, so there is nothing for a label to rise
-  into and it keeps its label above.
-*/
-const hasFloatingLabel = computed(() => Boolean(props.label) && props.outlined && !props.standout)
-
-/*
-  Open counts as focus for this control. A selection, a placeholder or a leading icon each occupy the
-  resting position, so the label has to be up out of the way -- see the note in WInput.
-*/
-const isFloating = computed(
-  () =>
-    isOpen.value ||
-    hasSelection.value ||
-    Boolean(props.displayValue) ||
-    Boolean(props.placeholder) ||
-    Boolean(slots.prepend)
-)
-
-const floatColorClass = computed(() => {
-  if (errorMessage.value) {
-    return 'text-negative'
+const controlClasses = computed(() => {
+  const locked = props.readonly || isDisabled.value
+  // -> readonly keeps the pointer from promising anything; disabled takes pointer events away entirely
+  const cursor = props.readonly ? 'cursor-default' : isDisabled.value ? '' : 'cursor-pointer'
+  if (!props.useInput) {
+    return [
+      /*
+        The button reset, for the button only. On the filtering variant's <div> it would cost the
+        well its padding and floor: it zeroes both, from later in the same layer.
+      */
+      'w-unstyled w-select-trigger',
+      props.dense ? 'w-select-trigger--dense' : '',
+      isOpen.value ? 'w-select-trigger--open' : '',
+      errorMessage.value ? 'w-select-trigger--error' : '',
+      locked ? 'w-select-trigger--locked' : '',
+      isDisabled.value ? 'pointer-events-none opacity-60' : '',
+      cursor
+    ]
   }
-  // -> Lightened brand blue on a dark field, matching WInput
-  return isOpen.value ? 'text-primary dark:text-primary-light' : 'text-black/60 dark:text-white/70'
+  return [
+    'w-field-well',
+    props.dense ? 'w-field-well--dense' : '',
+    // -> Chips wrap onto a second line, which needs the well to pad them top and bottom
+    showsChips.value ? 'py-1' : '',
+    errorMessage.value ? 'w-field-well--error' : '',
+    // -> Disabled and readonly alike: WInput's locked field
+    locked ? 'w-field-well--locked' : '',
+    cursor
+  ]
 })
-
-/*
-  Brand blue is a *dark* colour, so on the dark panel it sat at roughly 3:1 against `dark-3` and the
-  selected row read as the least legible one in the list. The lightened blue is the same colour the
-  floating label and `.w-section-header` switch to on dark, and it carries the emphasis without the
-  contrast loss. `dark` is checked separately from the `dark:` variant because a menu opened from a
-  dark surface renders dark whatever the app theme -- which is exactly the admin sidebar's case.
-*/
-const selectedOptionClass = computed(() =>
-  props.dark ? 'text-primary-light' : 'text-primary dark:text-primary-light'
-)
-
-const controlClasses = computed(() => [
-  props.dense ? 'w-input-control--dense min-h-9 px-2 py-1' : 'min-h-11 px-3 py-2',
-  // -> Its own surface, white or a dark well, matching WInput; see the note there
-  standoutClass.value ??
-    (props.outlined ? 'bg-white dark:bg-black/20' : 'rounded-b-none bg-black/4 dark:bg-white/6'),
-  isDisabled.value ? 'pointer-events-none opacity-60' : '',
-  // -> readonly keeps full contrast; only the pointer affordance goes away
-  props.readonly ? 'cursor-default' : isDisabled.value ? '' : 'cursor-pointer',
-  // -> Says the field is not the reader's to change; see the stripe rule in `tailwind.css`
-  props.readonly || isDisabled.value ? 'w-input-control--locked' : '',
-  // -> Room for the floated label above, matched below so the control stays centred in its row; see
-  //    the fuller note in WInput
-  hasFloatingLabel.value ? (showsBottom.value ? 'relative mt-2' : 'relative my-2') : ''
-])
-
-/** A standout control carries its state in its fill, so it takes no ring at all (see below). */
-const standoutClass = computed(() => {
-  if (!props.standout) {
-    return null
-  }
-  if (props.dark) {
-    return isOpen.value ? 'bg-white/22 text-white' : 'bg-white/10 text-white'
-  }
-  return isOpen.value ? 'bg-black/16 dark:bg-white/22' : 'bg-black/6 dark:bg-white/10'
-})
-
-/**
- * Same inset-ring frame as WInput, so a select and a text field sitting in one form agree on their
- * resting and active states. "Active" here is the open dropdown, which is this control's equivalent
- * of focus. See WInput for why this is an inline style rather than classes.
- */
-const frameColor = computed(() =>
-  errorMessage.value
-    ? 'var(--color-negative)'
-    : isOpen.value
-      ? 'var(--color-primary)'
-      : isHovered.value && !isDisabled.value && !props.readonly
-        ? 'var(--w-input-ring-hover)'
-        : 'var(--w-input-ring)'
-)
-
-const frameWidth = computed(() => (errorMessage.value || isOpen.value ? 2 : 1))
-
-const controlStyle = computed(() => {
-  // -> A floating label needs a frame it can interrupt, which the fieldset draws instead
-  if (props.standout || hasFloatingLabel.value) {
-    return {}
-  }
-  return {
-    boxShadow: props.outlined
-      ? `inset 0 0 0 ${frameWidth.value}px ${frameColor.value}`
-      : `inset 0 -${frameWidth.value}px 0 0 ${frameColor.value}`
-  }
-})
-
-const outlineStyle = computed(() => ({
-  borderColor: frameColor.value,
-  borderWidth: `${frameWidth.value}px`
-}))
 </script>
+
+<!--
+  Unscoped: the palette has to reach the popup panel, which is WMenu's element rather than one this
+  component renders, so a scoped rule would never match it.
+-->
+<style>
+/*
+  The option palette, on the popup panel. The keycap surface itself -- face, skirt, edges -- is
+  `--w-key-*` on `.w-field` in `tailwind.css`, shared with WInput's end cap.
+
+  The lit cap -- the selected option -- is the site's primary colour, `--w-select-on`, with its darker
+  face, skirt, inner edge and glow mixed from it rather than written out, as WBtnToggle's keycaps do.
+  The mixes reproduce the design's shades of its blue (#1976D2): the face's lower half #1566B8, the
+  skirt #0D4A87 on a light surface and #08305A on a dark one. Declared on the same element as the
+  mixes that read it, since a custom property that names another resolves where it is declared.
+*/
+.w-select-theme {
+  --w-select-opt-hover: rgb(24 28 36 / 0.05);
+  --w-select-opt-in: rgb(24 28 36 / 0.1);
+
+  --w-select-on: var(--color-primary);
+  --w-select-on-top2: color-mix(in srgb, var(--w-select-on) 87%, black);
+  --w-select-on-skirt: color-mix(in srgb, var(--w-select-on) 64%, black);
+  --w-select-on-edge: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--w-select-on) 33%, black) 35%,
+    transparent
+  );
+  --w-select-on-glow: color-mix(in srgb, var(--w-select-on) 55%, transparent);
+}
+
+/*
+  `--dark` is the `dark` prop, for a field on a surface that is dark in both themes; the panel opened
+  from one is a `.w-dark-surface` itself, since the prop is passed on to WMenu.
+*/
+body.body--dark .w-select-theme,
+.w-dark-surface .w-select-theme,
+.w-select-theme.w-dark-surface,
+.w-select-theme.w-field--dark {
+  --w-select-opt-hover: rgb(0 0 0 / 0.22);
+  --w-select-opt-in: rgb(0 0 0 / 0.4);
+  --w-select-on-skirt: color-mix(in srgb, var(--w-select-on) 42%, black);
+}
+
+/*
+  The popup: a raised panel of the same material as the field, standing on the same skirt. Unlayered,
+  so it outranks the surface, radius and shadow utilities WMenu puts on every panel.
+*/
+.w-select-menu {
+  padding: 5px;
+  border-radius: 11px;
+  color: var(--w-field-ink);
+  background: linear-gradient(180deg, var(--w-key-top1), var(--w-key-top2));
+  box-shadow:
+    inset 0 1px 0 var(--w-key-hi),
+    inset 0 0 0 1px var(--w-key-seam),
+    0 1px 0 var(--w-key-skirt),
+    0 2px 1px var(--w-key-drop),
+    0 10px 20px -10px var(--w-key-drop);
+  transform-origin: top center;
+}
+
+/*
+  Drops into place from the field rather than WMenu's plain scale-in. While it runs the animation
+  outranks the transition's starting values, and Vue waits out the longer of the two, so WMenu's own
+  enter transition needs no switching off. Leaving is still WMenu's fade.
+*/
+.w-select-menu.w-menu-enter-active {
+  animation: w-select-pop 0.16s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes w-select-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-select-menu.w-menu-enter-active {
+    animation: none;
+  }
+}
+</style>
+
+<style scoped>
+/*
+  The keycap: a face lit from above (the radial gradient), a bright top edge, and a 1px skirt drawn as
+  a hard shadow, over a soft drop. Pressing sinks it onto its skirt, and it stays down while its list
+  is open. `--w-select-ring` is the error halo, empty until there is an error, so that every state's
+  shadow carries it without restating it.
+*/
+.w-select-trigger {
+  --w-select-ring: 0 0 transparent;
+  gap: 10px;
+  min-height: 40px;
+  /* -> Vertical padding only matters once chips wrap onto a second line */
+  padding: 4px 12px 4px 14px;
+  border-radius: 9px;
+  color: var(--w-field-ink);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  background: radial-gradient(130% 100% at 50% 0%, var(--w-key-top1) 0%, var(--w-key-top2) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--w-key-hi),
+    inset 0 -2px 3px rgb(0 0 0 / 0.05),
+    0 1px 0 var(--w-key-skirt),
+    0 2px 1px var(--w-key-drop),
+    0 4px 8px -4px var(--w-key-drop),
+    var(--w-select-ring);
+  transition:
+    transform 0.1s cubic-bezier(0.3, 0.7, 0.4, 1),
+    box-shadow 0.1s cubic-bezier(0.3, 0.7, 0.4, 1),
+    filter 0.15s;
+}
+
+/* -> The design's 40px cap, down to the 36px a dense text field stands at beside it */
+.w-select-trigger--dense {
+  min-height: 36px;
+}
+
+/*
+  The text field's error edge and halo, since the design draws no error for the select itself --
+  outside the cap rather than inside it, as a raised control has no well to draw in.
+*/
+.w-select-trigger--error {
+  --w-select-ring: var(--w-field-err-ring);
+}
+
+/* -> Locked (readonly or disabled): a cap that is not the reader's to press neither lights nor sinks */
+.w-select-trigger:not(.w-select-trigger--locked):hover {
+  filter: brightness(var(--w-key-hover));
+}
+
+.w-select-trigger:not(.w-select-trigger--locked):active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 var(--w-key-hi),
+    inset 0 -1px 2px rgb(0 0 0 / 0.05),
+    0 0 0 var(--w-key-skirt),
+    0 1px 1px var(--w-key-drop),
+    var(--w-select-ring);
+}
+
+/* -> After `:hover` and `:active` at their specificity, so an open cap neither brightens nor moves */
+.w-select-trigger--open.w-select-trigger:not(.w-select-trigger--locked) {
+  filter: none;
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 var(--w-key-hi),
+    inset 0 -1px 2px rgb(0 0 0 / 0.05),
+    0 0 0 var(--w-key-skirt),
+    0 1px 1px var(--w-key-drop),
+    0 2px 6px -3px var(--w-key-drop),
+    var(--w-select-ring);
+}
+
+.w-select-trigger:focus-visible {
+  outline: 2px solid var(--w-select-on);
+  outline-offset: 4px;
+}
+
+.w-select-placeholder {
+  color: var(--w-field-ph);
+  font-weight: 400;
+}
+
+.w-select-chevron {
+  flex: none;
+  display: flex;
+  color: var(--w-field-sub);
+  transition: color 0.15s;
+}
+
+.w-select-chevron svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+.w-select-chevron--open {
+  color: var(--w-field-acc);
+}
+
+.w-select-chevron--open svg {
+  transform: rotate(180deg);
+}
+
+.w-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/*
+  An option is flat on the panel until the pointer or the keyboard cursor is on it, when it sinks into
+  a faint well; the selected one is a cap of its own, lit in the primary colour.
+*/
+.w-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  /* -> Vertical padding only matters for an `option` slot that runs to two lines */
+  padding: 4px 10px 4px 12px;
+  border-radius: 7px;
+  color: var(--w-field-ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    box-shadow 0.12s;
+}
+
+.w-select-option--dense {
+  min-height: 32px;
+  padding-block: 2px;
+}
+
+.w-select-option--active {
+  background-color: var(--w-select-opt-hover);
+  box-shadow: inset 0 1px 2px var(--w-select-opt-in);
+}
+
+/* -> The design's focus ring on an option; the keyboard cursor is this list's focus */
+.w-select-option--keyboard {
+  outline: 2px solid var(--w-select-on);
+  outline-offset: 1px;
+}
+
+/* -> After `--active` and above it, so the cursor resting on the selection does not dull it */
+.w-select-option[aria-selected='true'] {
+  color: #fff;
+  font-weight: 600;
+  background: radial-gradient(
+    130% 100% at 50% 0%,
+    var(--w-select-on) 0%,
+    var(--w-select-on-top2) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    inset 0 0 0 1px var(--w-select-on-edge),
+    0 1px 0 var(--w-select-on-skirt),
+    0 0 16px -5px var(--w-select-on-glow);
+}
+
+.w-select-tick {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.w-select-empty {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--w-field-sub);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-select-trigger,
+  .w-select-chevron,
+  .w-select-chevron svg,
+  .w-select-option {
+    transition-duration: 0.01ms;
+  }
+}
+</style>

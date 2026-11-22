@@ -172,7 +172,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-select
-                  outlined
                   v-model="state.config.hstsDuration"
                   :options="hstsDurations"
                   option-value="value"
@@ -237,7 +236,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   v-model.number="state.config.authRateLimitMax"
                   dense
                   :suffix="t(`admin.security.rateLimitMaxSuffix`)"
@@ -253,7 +251,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   v-model="state.config.authRateLimitWindow"
                   dense
                   :placeholder="t(`admin.security.durationPlaceholder`)"
@@ -269,7 +266,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   v-model="state.config.authRateLimitBan"
                   dense
                   :placeholder="t(`admin.security.durationPlaceholder`)"
@@ -313,7 +309,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
-                outlined
                 v-model="state.humanUploadMaxFileSize"
                 dense
                 :aria-label="t(`admin.security.maxUploadSize`)" />
@@ -328,7 +323,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
-                outlined
                 v-model.number="state.config.uploadMaxFiles"
                 dense
                 :suffix="t(`admin.security.maxUploadBatchSuffix`)"
@@ -366,7 +360,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.corsMode"
                 :options="corsModes"
                 option-value="value"
@@ -387,7 +380,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.corsConfig"
                   dense
                   type="textarea"
@@ -405,7 +397,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.corsConfig"
                   dense
                   :aria-label="t(`admin.security.corsRegex`)" />
@@ -427,7 +418,6 @@
               }}</w-item-label>
               <w-input
                 class="mt-2"
-                outlined
                 dense
                 type="textarea"
                 :rows="3"

@@ -17,7 +17,6 @@
             <w-input
               ref="iptTitle"
               v-model="state.title"
-              outlined
               dense
               :rules="titleValidation"
               hide-bottom-space
@@ -32,7 +31,6 @@
           <w-item-section>
             <w-input
               v-model="state.path"
-              outlined
               dense
               :rules="pathValidation"
               hide-bottom-space

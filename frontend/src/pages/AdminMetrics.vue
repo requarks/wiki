@@ -79,7 +79,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 240px">
               <w-input
-                outlined
                 dense
                 v-model="state.config.path"
                 :placeholder="`/metrics`"

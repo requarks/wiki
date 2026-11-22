@@ -9,7 +9,6 @@
     <div class="page-feedback-toolbar">
       <w-input
         class="page-feedback-search"
-        outlined
         dense
         hide-bottom-space
         clearable
@@ -23,7 +22,6 @@
       </w-input>
       <w-select
         class="page-feedback-sort"
-        outlined
         dense
         emit-value
         map-options

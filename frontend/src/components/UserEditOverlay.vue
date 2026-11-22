@@ -93,7 +93,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.user.name"
                       :disable="!canManage"
                       dense
@@ -113,7 +112,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.user.email"
                       :disable="!canManage"
                       dense
@@ -129,7 +127,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.user.handle"
                       :disable="!canManage"
                       dense
@@ -150,7 +147,6 @@
                     </w-item-section>
                     <w-item-section>
                       <w-input
-                        outlined
                         v-model="state.user.meta.location"
                         :disable="!canManage"
                         dense
@@ -166,7 +162,6 @@
                     </w-item-section>
                     <w-item-section>
                       <w-input
-                        outlined
                         v-model="state.user.meta.jobTitle"
                         :disable="!canManage"
                         dense
@@ -182,7 +177,6 @@
                     </w-item-section>
                     <w-item-section>
                       <w-input
-                        outlined
                         v-model="state.user.meta.pronouns"
                         :disable="!canManage"
                         dense
@@ -201,7 +195,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-select
-                      outlined
                       v-model="state.user.prefs.timezone"
                       :disable="!canManage"
                       :options="timezones"
@@ -223,7 +216,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-select
-                      outlined
                       v-model="state.user.prefs.dateFormat"
                       :disable="!canManage"
                       emit-value
@@ -290,7 +282,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-select
-                      outlined
                       v-model="state.user.prefs.locale"
                       :disable="!canManage"
                       :options="languages"
@@ -440,7 +431,6 @@
                 <w-card-header>{{ t('admin.users.notes') }}</w-card-header>
                 <w-card-section class="pt-0">
                   <w-input
-                    outlined
                     v-model="state.user.meta.notes"
                     :disable="!canManage"
                     type="textarea"
@@ -659,7 +649,6 @@
                   <blueprint-icon icon="join" />
                   <w-item-section>
                     <w-select
-                      outlined
                       :options="assignableGroups"
                       v-model="state.groupToAdd"
                       map-options

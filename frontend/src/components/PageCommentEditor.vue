@@ -45,7 +45,6 @@
       <w-input
         ref="inputEl"
         type="textarea"
-        outlined
         hide-bottom-space
         :rows="rows"
         :model-value="modelValue"
@@ -79,7 +78,6 @@
     <div class="flex flex-wrap gap-2 pt-2" v-if="guest">
       <div class="flex-1" style="min-width: min(220px, 100%)">
         <w-input
-          outlined
           dense
           hide-bottom-space
           :model-value="authorName"
@@ -89,7 +87,6 @@
       </div>
       <div class="flex-1" style="min-width: min(220px, 100%)">
         <w-input
-          outlined
           dense
           type="email"
           :model-value="authorEmail"

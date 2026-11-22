@@ -17,7 +17,6 @@
             <w-input
               ref="iptSearch"
               v-model="state.query"
-              outlined
               dense
               clearable
               :label="t(`iconPicker.search`)"
@@ -30,7 +29,6 @@
             <w-select
               v-model="state.setFilter"
               :options="setOptions"
-              outlined
               dense
               options-dense
               emit-value
@@ -84,7 +82,6 @@
           ref="iptImage"
           class="mt-4"
           v-model="state.image"
-          outlined
           dense
           prefix="img:"
           :label="t(`iconPicker.imageUrl`)"

@@ -61,7 +61,6 @@
             <w-item-section style="flex: 0 0 160px">
               <w-input
                 v-model="state.config.emailDelay"
-                outlined
                 dense
                 placeholder="3m"
                 :aria-label="t(`admin.notifications.emailDelay`)" />
@@ -78,7 +77,6 @@
               <w-input
                 v-model="state.config.retentionDays"
                 type="number"
-                outlined
                 dense
                 :suffix="t(`admin.notifications.days`)"
                 :aria-label="t(`admin.notifications.retentionDays`)" />
@@ -95,7 +93,6 @@
               <w-input
                 v-model="state.config.mailBatchSize"
                 type="number"
-                outlined
                 dense
                 :aria-label="t(`admin.notifications.mailBatchSize`)" />
             </w-item-section>

@@ -194,7 +194,6 @@
                   :options="aspectOptions"
                   emit-value
                   map-options
-                  outlined
                   dense
                   dark
                   :label="t(`fileman.imageEditorAspect`)"
@@ -205,7 +204,6 @@
                   class="flex-1"
                   :model-value="String(state.region.width)"
                   type="number"
-                  outlined
                   dense
                   suffix="px"
                   :label="t(`fileman.resizeImageWidth`)"
@@ -214,7 +212,6 @@
                   class="flex-1"
                   :model-value="String(state.region.height)"
                   type="number"
-                  outlined
                   dense
                   suffix="px"
                   :label="t(`fileman.resizeImageHeight`)"
@@ -229,7 +226,6 @@
                   class="flex-1"
                   :model-value="sizeFields.fields.width"
                   type="number"
-                  outlined
                   dense
                   suffix="px"
                   :label="t(`fileman.resizeImageWidth`)"
@@ -250,7 +246,6 @@
                   class="flex-1"
                   :model-value="sizeFields.fields.height"
                   type="number"
-                  outlined
                   dense
                   suffix="px"
                   :label="t(`fileman.resizeImageHeight`)"
@@ -262,7 +257,6 @@
                 <w-input
                   :model-value="sizeFields.fields.percent"
                   type="number"
-                  outlined
                   dense
                   suffix="%"
                   :label="t(`fileman.resizeImagePercent`)"
@@ -317,7 +311,6 @@
                   :model-value="String(state.pad[side])"
                   :class="`is-${side}`"
                   type="number"
-                  outlined
                   dense
                   suffix="px"
                   :label="t(PAD_LABELS[side])"

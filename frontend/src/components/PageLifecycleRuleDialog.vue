@@ -11,7 +11,6 @@
           ref="iptName"
           v-model="state.name"
           :label="t(`editor.lifecycle.name`)"
-          outlined
           dense />
         <div class="w-section-header">{{ t('editor.lifecycle.trigger') }}</div>
         <!-- -> Centred, not top-aligned: an outlined input carries vertical margins the select has not -->
@@ -23,7 +22,6 @@
             :aria-label="t(`editor.lifecycle.trigger`)"
             emit-value
             map-options
-            outlined
             dense />
           <w-input
             class="w-28 flex-none"
@@ -33,7 +31,6 @@
             :max="MAX_TRIGGER_DAYS"
             :aria-label="t(`editor.lifecycle.days`)"
             :suffix="t(`editor.lifecycle.daysSuffix`)"
-            outlined
             dense />
         </div>
         <div class="w-section-header">{{ t('editor.lifecycle.actions') }}</div>
@@ -50,24 +47,17 @@
             <w-input
               v-model="state.bannerMessage"
               :label="t(`editor.lifecycle.bannerMessage`)"
-              outlined
               dense>
               <template #prepend>
                 <w-icon :name="state.bannerIcon" size="20px" />
               </template>
               <template #append>
-                <w-btn
-                  flat
-                  dense
-                  round
-                  icon="la:icons"
-                  color="primary"
-                  :aria-label="t(`editor.lifecycle.bannerIcon`)">
+                <w-field-cap icon="la:icons" :aria-label="t(`editor.lifecycle.bannerIcon`)">
                   <w-tooltip>{{ t('editor.lifecycle.bannerIcon') }}</w-tooltip>
                   <w-menu content-class="shadow-7" anchor="bottom right" self="top right">
                     <icon-picker-dialog v-model="state.bannerIcon" />
                   </w-menu>
-                </w-btn>
+                </w-field-cap>
               </template>
             </w-input>
           </div>
@@ -90,7 +80,6 @@
                 })
               "
               :disable="!mayMove"
-              outlined
               dense />
           </div>
           <w-checkbox
@@ -107,7 +96,6 @@
               :label="t(`editor.lifecycle.tags`)"
               :placeholder="t(`editor.lifecycle.tagsPlaceholder`)"
               :disable="!mayTag"
-              outlined
               dense
               options-dense
               use-input
@@ -127,7 +115,6 @@
               :max="MAX_REMOVE_AFTER"
               :aria-label="t(`editor.lifecycle.removeAfter`)"
               :suffix="t(`editor.lifecycle.removeAfterSuffix`)"
-              outlined
               dense />
             <div v-if="onlyRemove" class="text-caption opacity-70">
               {{ t('editor.lifecycle.removeOnly') }}

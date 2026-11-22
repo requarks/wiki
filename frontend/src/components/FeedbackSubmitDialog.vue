@@ -26,7 +26,6 @@
         -->
         <w-input
           ref="iptTitle"
-          outlined
           dense
           hide-bottom-space
           :model-value="state.title"
@@ -80,7 +79,6 @@
       <w-card-section v-else class="flex flex-col gap-4">
         <w-input
           ref="iptFormTitle"
-          outlined
           dense
           hide-bottom-space
           :model-value="state.title"
@@ -94,7 +92,6 @@
           :max-length="CONTENT_MAX" />
         <w-select
           v-if="offersCategories"
-          outlined
           dense
           multiple
           use-chips

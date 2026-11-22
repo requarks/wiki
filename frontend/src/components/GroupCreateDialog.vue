@@ -11,7 +11,6 @@
           <w-item-section>
             <w-input
               v-model="state.groupName"
-              outlined
               dense
               :rules="groupNameValidation"
               hide-bottom-space

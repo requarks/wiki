@@ -24,7 +24,6 @@
         </div>
         <div class="mt-4">
           <w-select
-            outlined
             dense
             v-model="state.retentionDays"
             :options="retentionOptions"

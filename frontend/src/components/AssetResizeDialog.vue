@@ -13,10 +13,8 @@
       <w-form ref="resizeForm" class="py-2" @submit="resize">
         <!-- SIZE -->
         <w-item>
-          <!-- -> Top-aligned, since the caption below would pull a centred icon off the fields, and
-                then lowered to centre on them: an outlined field starts below its row's top, the
-                space above it held for the floating label. As in LocaleAliasesDialog. -->
-          <blueprint-icon icon="width" class="self-start mt-1.5" />
+          <!-- -> Lined up with the fields, caption and all, by the labelled-field row rule in `tailwind.css` -->
+          <blueprint-icon icon="width" />
           <w-item-section>
             <div class="flex flex-nowrap items-start gap-2">
               <w-input
@@ -24,7 +22,6 @@
                 class="flex-1"
                 :model-value="size.fields.width"
                 type="number"
-                outlined
                 dense
                 suffix="px"
                 :label="t(`fileman.resizeImageWidth`)"
@@ -55,7 +52,6 @@
                 class="flex-1"
                 :model-value="size.fields.height"
                 type="number"
-                outlined
                 dense
                 suffix="px"
                 :label="t(`fileman.resizeImageHeight`)"
@@ -69,7 +65,6 @@
                 class="w-28 shrink-0"
                 :model-value="size.fields.percent"
                 type="number"
-                outlined
                 dense
                 suffix="%"
                 :label="t(`fileman.resizeImagePercent`)"
@@ -128,7 +123,6 @@
               ref="iptFileName"
               class="mt-3"
               v-model="fileName"
-              outlined
               dense
               :label="t(`fileman.resizeImageFileName`)"
               :hint="t(`fileman.resizeImageFileNameHint`)"

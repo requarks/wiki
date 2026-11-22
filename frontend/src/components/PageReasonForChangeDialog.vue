@@ -19,7 +19,6 @@
             <w-input
               ref="iptReason"
               v-model="state.reason"
-              outlined
               dense
               :rules="reasonValidation"
               hide-bottom-space

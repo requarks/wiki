@@ -43,7 +43,6 @@
             <w-input
               v-model="state.hook.name"
               :disable="!canManage"
-              outlined
               dense
               :rules="hookNameValidation"
               hide-bottom-space
@@ -58,7 +57,6 @@
             <w-select
               v-model="state.hook.events"
               :disable="!canManage"
-              outlined
               :options="EVENT_DEFINITIONS"
               multiple
               map-options
@@ -79,7 +77,6 @@
                     })
                   }}
                 </span>
-                <span v-else>&nbsp;</span>
               </template>
               <template #option="{ opt }">
                 <span class="flex flex-nowrap items-center gap-2">
@@ -103,7 +100,6 @@
               v-model="state.hook.url"
               :disable="!canManage"
               class="mt-2"
-              outlined
               dense
               :rules="hookUrlValidation"
               hide-bottom-space
@@ -167,7 +163,6 @@
               v-model="state.hook.authHeader"
               :disable="!canManage"
               class="mt-2"
-              outlined
               dense
               :aria-label="t(`admin.webhooks.authHeader`)" />
           </w-item-section>

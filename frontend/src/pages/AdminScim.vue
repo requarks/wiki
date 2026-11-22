@@ -172,7 +172,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   dense
                   v-model.number="state.config.rateLimitMax"
                   :suffix="t(`admin.scim.rateLimitMaxSuffix`)"
@@ -188,7 +187,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   dense
                   v-model="state.config.rateLimitWindow"
                   :placeholder="t(`admin.scim.durationPlaceholder`)"
@@ -204,7 +202,6 @@
               </w-item-section>
               <w-item-section style="flex: 0 0 200px">
                 <w-input
-                  outlined
                   dense
                   v-model="state.config.rateLimitBan"
                   :placeholder="t(`admin.scim.durationPlaceholder`)"
@@ -229,7 +226,6 @@
               </w-item-label>
               <w-input
                 class="mt-2"
-                outlined
                 dense
                 type="textarea"
                 :rows="4"

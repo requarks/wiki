@@ -28,13 +28,11 @@
         <div class="flex flex-col">
           <w-input
             ref="iptRelLabel"
-            outlined
             dense
             :label="t(`editor.pageRel.label`)"
             v-model="state.label" />
           <w-input
             v-if="state.pos !== `center`"
-            outlined
             dense
             :label="t(`editor.pageRel.caption`)"
             v-model="state.caption" />

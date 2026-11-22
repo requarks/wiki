@@ -77,7 +77,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.group.name"
                       dense
                       :rules="groupNameValidation"
@@ -97,7 +96,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.group.redirectOnLogin"
                       dense
                       :rules="redirectRules"
@@ -117,7 +115,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.group.redirectOnFirstLogin"
                       dense
                       :rules="redirectRules"
@@ -137,7 +134,6 @@
                   </w-item-section>
                   <w-item-section>
                     <w-input
-                      outlined
                       v-model="state.group.redirectOnLogout"
                       dense
                       :rules="redirectRules"
@@ -336,7 +332,6 @@
                       <div class="text-caption">Applies to...</div>
                       <w-select
                         class="mt-1"
-                        standout
                         v-model="rule.sites"
                         emit-value
                         map-options
@@ -355,7 +350,6 @@
                       </w-select>
                       <w-select
                         class="mt-2"
-                        standout
                         v-model="rule.locales"
                         emit-value
                         map-options
@@ -384,7 +378,6 @@
                       <div class="text-caption">Pattern</div>
                       <w-select
                         class="mt-1"
-                        standout
                         v-model="rule.match"
                         emit-value
                         map-options
@@ -409,7 +402,6 @@
                       <w-select
                         v-if="isTagMatch(rule.match)"
                         class="mt-2"
-                        standout
                         v-model="rule.tags"
                         :options="sortedTags"
                         dense
@@ -429,7 +421,6 @@
                       <w-input
                         v-else
                         class="mt-2"
-                        standout
                         v-model="rule.path"
                         dense
                         :prefix="
@@ -659,7 +650,6 @@
           </w-btn>
           <w-input
             class="denser fill-outline mr-2"
-            outlined
             v-model="state.usersFilter"
             :placeholder="t(`admin.groups.filterUsers`)"
             dense>

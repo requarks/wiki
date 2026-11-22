@@ -48,7 +48,6 @@
                   }}</w-item-label>
                   <w-input
                     class="mt-2"
-                    outlined
                     dense
                     autocomplete="off"
                     spellcheck="false"
@@ -68,7 +67,6 @@
                   }}</w-item-label>
                   <w-input
                     class="mt-2"
-                    outlined
                     dense
                     type="textarea"
                     :rows="2"
@@ -93,7 +91,6 @@
                 </w-item-section>
                 <w-item-section side>
                   <w-select
-                    outlined
                     dense
                     emit-value
                     map-options

@@ -14,7 +14,6 @@
       <w-card-section v-if="content !== null" class="pb-0">
         <w-input
           v-model="state.content"
-          outlined
           dense
           autofocus
           :label="t('editor.blockParams.value')"

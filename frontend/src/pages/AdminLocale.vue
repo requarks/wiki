@@ -79,7 +79,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.primary"
                 :options="primaryOptions"
                 option-value="code"

@@ -60,11 +60,8 @@
               :options="matchOptions"
               :aria-label="t('tags.matchMode')"
               toggle-color="primary"
-              color="white"
-              text-color="black"
-              push
-              no-caps
-              dense />
+              depth
+              no-caps />
             <!--
               How the list below is ordered, which is a different question from how the selection is
               combined -- hence a second group rather than more segments in the first. Alphabetical by
@@ -77,10 +74,7 @@
               :options="sortOptions"
               :aria-label="t('tags.sortTags')"
               toggle-color="primary"
-              color="white"
-              text-color="black"
-              push
-              dense />
+              depth />
             <w-btn
               push
               color="white"
@@ -159,7 +153,6 @@
           <div class="layout-tags-toolbar">
             <w-input
               class="layout-tags-within"
-              outlined
               dense
               clearable
               hide-bottom-space
@@ -178,7 +171,6 @@
             <w-select
               v-if="hasMultipleLocales"
               class="layout-tags-locale"
-              outlined
               dense
               options-dense
               hide-bottom-space
@@ -192,7 +184,6 @@
             <div class="layout-tags-orderby">
               <span class="text-caption whitespace-nowrap">{{ t('tags.orderBy') }}</span>
               <w-select
-                outlined
                 dense
                 options-dense
                 hide-bottom-space
@@ -212,10 +203,7 @@
                 :options="orderDirectionOptions"
                 :aria-label="t('tags.orderBy')"
                 toggle-color="primary"
-                color="white"
-                text-color="black"
-                push
-                dense />
+                depth />
             </div>
           </div>
 

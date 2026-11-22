@@ -13,7 +13,6 @@
           ref="iptFilter"
           v-model="state.filter"
           dense
-          outlined
           transparent
           clearable
           hide-bottom-space

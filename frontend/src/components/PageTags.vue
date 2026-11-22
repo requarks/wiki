@@ -28,7 +28,6 @@
     <w-select
       class="mt-4"
       v-if="props.edit"
-      outlined
       v-model="pageStore.tags"
       :options="sortedTags"
       dense

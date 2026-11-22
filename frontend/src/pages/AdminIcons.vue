@@ -179,7 +179,6 @@
           <w-input
             class="mt-4"
             v-model="state.availableFilter"
-            outlined
             dense
             clearable
             :label="t(`admin.icons.filterSets`)"

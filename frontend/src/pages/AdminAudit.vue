@@ -65,27 +65,22 @@
       <div class="col-span-12">
         <w-card>
           <!--
-            Every child is now one control on one line, so they align on their own box rather than on
-            a taller neighbour's.
+            Bottom-aligned: a field's label stands above its box, so the fields' columns are a label
+            line taller than the buttons', and only their bottom edges -- the boxes' own -- line up with
+            a button's. The buttons are 36px, the height of a dense field, so their tops agree as well.
           -->
-          <w-card-section class="flex flex-wrap items-center gap-3">
+          <w-card-section class="flex flex-wrap items-end gap-3">
             <!--
               The user filter is a picker rather than a dropdown: an instance can have more accounts
               than a select should ever hold, and the search dialog already exists for exactly this.
-              It carries its own label inline, since a button has no floating-label chrome to put one
-              in and a caption line above it would stand this column a line taller than the four
-              beside it.
-
-              `my-2` matches what an outlined WInput/WSelect gives its own control (see
-              `controlClasses` there) to leave room for the floated label. Without it a bare button
-              in this row bottom-aligns 8px below the fields, which is exactly what it did.
+              It carries its own label inline, since a button has no label line above it.
 
               The colour is per theme because `primary-light` is a 60% primary / 40% white mix: it
               reads at 6.9:1 on the dark card and 2.4:1 on the white one, where it is a pale blue on
               white. Full `primary` carries the light theme, as it does for every other flat button
               on a card.
             -->
-            <div class="my-2 flex min-w-[220px] flex-1 items-center gap-2">
+            <div class="flex min-w-[220px] flex-1 items-center gap-2">
               <w-btn
                 class="acrylic-btn"
                 flat
@@ -106,7 +101,6 @@
             </div>
             <div class="min-w-[160px] flex-1">
               <w-select
-                outlined
                 dense
                 v-model="state.filterKind"
                 :options="kindOptions"
@@ -116,7 +110,6 @@
             </div>
             <div class="min-w-[220px] flex-1">
               <w-select
-                outlined
                 dense
                 v-model="state.filterAction"
                 :options="actionOptions"
@@ -131,7 +124,6 @@
             -->
             <div class="min-w-[200px] flex-1">
               <w-input
-                outlined
                 dense
                 type="datetime-local"
                 v-model="state.filterFrom"
@@ -139,14 +131,12 @@
             </div>
             <div class="min-w-[200px] flex-1">
               <w-input
-                outlined
                 dense
                 type="datetime-local"
                 v-model="state.filterTo"
                 :label="t('admin.audit.field.to')" />
             </div>
-            <!-- -> Same `my-2` as the user button above, for the same reason -->
-            <div class="my-2 flex-none">
+            <div class="flex-none">
               <w-btn
                 class="acrylic-btn"
                 flat

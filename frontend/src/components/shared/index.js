@@ -29,6 +29,7 @@ import WDate from './WDate.vue'
 import WDialog from './WDialog.vue'
 import WDrawer from './WDrawer.vue'
 import WExpansionItem from './WExpansionItem.vue'
+import WFieldCap from './WFieldCap.vue'
 import WFooter from './WFooter.vue'
 import WForm from './WForm.vue'
 import WHeader from './WHeader.vue'
@@ -90,6 +91,7 @@ export const sharedComponents = {
   WDialog,
   WDrawer,
   WExpansionItem,
+  WFieldCap,
   WFooter,
   WForm,
   WHeader,

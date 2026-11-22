@@ -19,7 +19,6 @@
           </w-item-section>
           <w-item-section>
             <w-select
-              outlined
               v-model="state.timezone"
               :options="timezones"
               option-value="value"
@@ -40,7 +39,6 @@
           </w-item-section>
           <w-item-section>
             <w-select
-              outlined
               v-model="state.dateFormat"
               emit-value
               map-options

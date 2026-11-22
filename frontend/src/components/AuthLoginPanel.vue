@@ -83,7 +83,6 @@
           ref="loginEmailIpt"
           v-model="state.username"
           autofocus
-          outlined
           :label="
             t(`auth.fields.` + (selectedStrategy.activeStrategy?.strategy?.usernameType ?? `email`))
           "
@@ -100,7 +99,6 @@
         <w-input
           class="mt-2"
           v-model="state.password"
-          outlined
           :label="t(`auth.fields.password`)"
           :rules="loginPasswordValidation"
           lazy-rules="ondemand"
@@ -190,7 +188,6 @@
         <w-input
           ref="forgotEmailIpt"
           v-model="state.username"
-          outlined
           :rules="userEmailValidation"
           lazy-rules="ondemand"
           hide-bottom-space
@@ -257,7 +254,6 @@
         <w-input
           v-model="state.newPassword"
           autofocus
-          outlined
           :label="t(`auth.changePwd.newPassword`)"
           type="password"
           autocomplete="new-password"
@@ -275,7 +271,6 @@
         <w-input
           class="mt-2"
           v-model="state.newPasswordVerify"
-          outlined
           :label="t(`auth.changePwd.newPasswordVerify`)"
           type="password"
           autocomplete="new-password"
@@ -313,7 +308,6 @@
         <w-input
           ref="registerNameIpt"
           v-model="state.newName"
-          outlined
           :rules="userNameValidation"
           lazy-rules="ondemand"
           hide-bottom-space
@@ -325,7 +319,6 @@
           class="mt-2"
           type="email"
           v-model="state.newEmail"
-          outlined
           :rules="userEmailValidation"
           lazy-rules="ondemand"
           hide-bottom-space
@@ -336,7 +329,6 @@
         <w-input
           class="mt-2"
           v-model="state.newPassword"
-          outlined
           :label="t(`auth.fields.password`)"
           type="password"
           autocomplete="new-password"
@@ -354,7 +346,6 @@
         <w-input
           class="mt-2"
           v-model="state.newPasswordVerify"
-          outlined
           :label="t(`auth.fields.verifyPassword`)"
           type="password"
           autocomplete="new-password"
@@ -395,7 +386,6 @@
           v-if="!state.changePwdForced"
           ref="changePwdCurrentIpt"
           v-model="state.password"
-          outlined
           type="password"
           :rules="loginPasswordValidation"
           lazy-rules="ondemand"
@@ -408,7 +398,6 @@
           class="mt-2"
           ref="changePwdNewPwdIpt"
           v-model="state.newPassword"
-          outlined
           :label="t(`auth.changePwd.newPassword`)"
           type="password"
           autocomplete="new-password"
@@ -426,7 +415,6 @@
         <w-input
           class="mt-2"
           v-model="state.newPasswordVerify"
-          outlined
           :label="t(`auth.changePwd.newPasswordVerify`)"
           type="password"
           autocomplete="new-password"

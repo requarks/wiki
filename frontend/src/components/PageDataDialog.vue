@@ -17,7 +17,6 @@
           option-value="id"
           map-options
           emit-value
-          standout
           dense
           style="flex: 1 0 auto" />
         <w-btn
@@ -41,10 +40,10 @@
       style="height: calc(100% - 50px - 75px - 48px)">
       <w-card-section v-if="state.mode === `visual`">
         <div class="gap-2">
-          <w-input label="Attribute Text" dense outlined>
+          <w-input label="Attribute Text" dense>
             <template v-slot:before><w-icon name="la:font" color="primary" /></template>
           </w-input>
-          <w-input label="Attribute Number" dense outlined type="number">
+          <w-input label="Attribute Number" dense type="number">
             <template v-slot:before><w-icon name="la:infinity" color="primary" /></template>
           </w-input>
           <div class="py-1">

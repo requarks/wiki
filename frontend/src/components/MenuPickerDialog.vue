@@ -8,7 +8,6 @@
       <w-card-section class="py-2">
         <w-input
           v-model="state.search"
-          outlined
           dense
           :placeholder="t(`navEdit.menuTargetSearch`)"
           :aria-label="t(`navEdit.menuTargetSearch`)"

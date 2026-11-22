@@ -112,7 +112,6 @@
               <w-item-section>
                 <w-select
                   dark
-                  standout
                   dense
                   hide-bottom-space
                   v-model="adminStore.currentSiteId"

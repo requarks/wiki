@@ -21,10 +21,9 @@
         <template v-if="state.displayMode === `menus`">
           <w-input
             class="denser mr-4"
-            outlined
             v-model="state.search"
             dense
-            :class="dark.isActive ? `bg-dark text-white` : `bg-white`">
+           >
             <template #prepend><w-icon class="opacity-50" name="la:search" size="20px" /></template>
           </w-input>
           <w-separator class="mr-4" vertical />

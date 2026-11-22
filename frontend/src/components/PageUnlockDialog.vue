@@ -12,7 +12,6 @@
             <w-input
               ref="iptPassword"
               v-model="state.password"
-              outlined
               dense
               type="password"
               autocomplete="current-password"

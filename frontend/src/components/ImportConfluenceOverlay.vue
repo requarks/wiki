@@ -49,7 +49,6 @@
                 </w-item-section>
                 <w-item-section side>
                   <w-select
-                    outlined
                     dense
                     emit-value
                     map-options
@@ -112,7 +111,6 @@
                   </div>
                   <w-input
                     v-model="space.prefix"
-                    outlined
                     dense
                     style="width: 180px"
                     spellcheck="false"
@@ -314,7 +312,6 @@
                   </w-item-section>
                   <w-item-section side>
                     <w-select
-                      outlined
                       dense
                       emit-value
                       map-options

@@ -190,7 +190,6 @@
               <div class="mt-2 flex items-center gap-2">
                 <w-input
                   class="min-w-0 flex-1"
-                  outlined
                   dense
                   v-model="state.site.guidelinesPath"
                   :prefix="`/`"
@@ -338,7 +337,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
-                outlined
                 dense
                 v-model.number="state.config.maxResultChars"
                 :suffix="t(`admin.mcp.charsSuffix`)"
@@ -354,7 +352,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
-                outlined
                 dense
                 v-model.number="state.config.rateLimitBurst"
                 :suffix="t(`admin.mcp.callsSuffix`)"
@@ -370,7 +367,6 @@
             </w-item-section>
             <w-item-section style="flex: 0 0 200px">
               <w-input
-                outlined
                 dense
                 v-model.number="state.config.rateLimitPerMinute"
                 :suffix="t(`admin.mcp.perMinuteSuffix`)"

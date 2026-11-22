@@ -4,20 +4,19 @@
       <span>{{ t('profile.liveNotes') }}</span>
       <w-space />
       <!--
-        Dense, and pulled into the heading's own line height, so it does not make it taller. Its size,
-        weight and colour are set back, since a field inherits them and the heading's are its own.
+        Dense, and pulled into the heading's own line height, so it does not make it taller. Its size
+        and weight are set back, since a field inherits them and the heading's are its own; the well
+        draws its own colours in either theme.
       -->
       <w-input
         v-if="notesEnabled"
         v-model="state.search"
         class="-my-1 text-sm font-normal"
         style="width: 240px; max-width: 50vw"
-        outlined
         dense
         clearable
         :placeholder="t(`profile.liveNotesSearch`)"
-        :aria-label="t(`profile.liveNotesSearch`)"
-        :class="dark.isActive ? `bg-dark text-white` : `bg-white text-black`">
+        :aria-label="t(`profile.liveNotesSearch`)">
         <template #prepend><w-icon class="opacity-50" name="la:search" size="20px" /></template>
       </w-input>
     </div>

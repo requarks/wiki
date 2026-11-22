@@ -279,7 +279,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.current.label"
                   dense
                   hide-bottom-space
@@ -301,12 +300,12 @@
                   :options="visibilityOptions" />
               </w-item-section>
             </w-item>
-            <w-item class="items-center" v-if="state.current.visibilityLimited">
+            <w-item v-if="state.current.visibilityLimited">
               <w-space />
-              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <!-- -> `self-center`: WItem's own `items-stretch` outranks an `items-center` on the row -->
+              <div class="text-caption mr-4 self-center">{{ t('navEdit.selectGroups') }}</div>
               <w-select
                 style="width: 100%; max-width: calc(50% - 34px)"
-                outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
                 option-value="id"
@@ -349,7 +348,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.current.label"
                   dense
                   hide-bottom-space
@@ -365,7 +363,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.current.icon"
                   dense
                   :aria-label="t(`navEdit.icon`)">
@@ -376,18 +373,12 @@
                       inside it never existed and the control did nothing. It was also just the glyph,
                       with no hit area of its own. Same fix as the page-properties dialog.
                     -->
-                    <w-btn
-                      flat
-                      dense
-                      round
-                      icon="la:icons"
-                      color="primary"
-                      :aria-label="t(`iconPicker.open`)">
+                    <w-field-cap icon="la:icons" :aria-label="t(`iconPicker.open`)">
                       <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                       <w-menu content-class="shadow-7">
                         <icon-picker-dialog v-model="state.current.icon" />
                       </w-menu>
-                    </w-btn>
+                    </w-field-cap>
                   </template>
                 </w-input>
               </w-item-section>
@@ -425,7 +416,6 @@
                 </w-item-section>
                 <w-item-section>
                   <w-input
-                    outlined
                     v-model="state.current.target"
                     dense
                     hide-bottom-space
@@ -437,16 +427,12 @@
                         the icon picker's button one row up, for the same reason -- both open a chooser
                         for the field they sit in.
                       -->
-                      <w-btn
-                        flat
-                        dense
-                        round
+                      <w-field-cap
                         icon="la:folder-open"
-                        color="primary"
                         :aria-label="t(`common.actions.browse`)"
                         @click="browseTarget">
                         <w-tooltip>{{ t('common.actions.browse') }}</w-tooltip>
-                      </w-btn>
+                      </w-field-cap>
                     </template>
                   </w-input>
                 </w-item-section>
@@ -484,12 +470,12 @@
                   :options="visibilityOptions" />
               </w-item-section>
             </w-item>
-            <w-item class="items-center" v-if="state.current.visibilityLimited">
+            <w-item v-if="state.current.visibilityLimited">
               <w-space />
-              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <!-- -> `self-center`: WItem's own `items-stretch` outranks an `items-center` on the row -->
+              <div class="text-caption mr-4 self-center">{{ t('navEdit.selectGroups') }}</div>
               <w-select
                 style="width: 100%; max-width: calc(50% - 34px)"
-                outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
                 option-value="id"
@@ -548,7 +534,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.current.label"
                   dense
                   hide-bottom-space
@@ -564,24 +549,17 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.current.icon"
                   dense
                   :aria-label="t(`navEdit.icon`)">
                   <template #append>
                     <!-- -> The link panel's icon picker, for the reason given there -->
-                    <w-btn
-                      flat
-                      dense
-                      round
-                      icon="la:icons"
-                      color="primary"
-                      :aria-label="t(`iconPicker.open`)">
+                    <w-field-cap icon="la:icons" :aria-label="t(`iconPicker.open`)">
                       <w-tooltip>{{ t('iconPicker.open') }}</w-tooltip>
                       <w-menu content-class="shadow-7">
                         <icon-picker-dialog v-model="state.current.icon" />
                       </w-menu>
-                    </w-btn>
+                    </w-field-cap>
                   </template>
                 </w-input>
               </w-item-section>
@@ -610,7 +588,6 @@
                     @click="browseMenuTarget" />
                   <w-input
                     class="min-w-0 flex-1"
-                    outlined
                     :model-value="menuTargetLabel"
                     dense
                     readonly
@@ -665,12 +642,12 @@
                   :options="visibilityOptions" />
               </w-item-section>
             </w-item>
-            <w-item class="items-center" v-if="state.current.visibilityLimited">
+            <w-item v-if="state.current.visibilityLimited">
               <w-space />
-              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <!-- -> `self-center`: WItem's own `items-stretch` outranks an `items-center` on the row -->
+              <div class="text-caption mr-4 self-center">{{ t('navEdit.selectGroups') }}</div>
               <w-select
                 style="width: 100%; max-width: calc(50% - 34px)"
-                outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
                 option-value="id"
@@ -714,12 +691,12 @@
                   :options="visibilityOptions" />
               </w-item-section>
             </w-item>
-            <w-item class="items-center" v-if="state.current.visibilityLimited">
+            <w-item v-if="state.current.visibilityLimited">
               <w-space />
-              <div class="text-caption mr-4">{{ t('navEdit.selectGroups') }}</div>
+              <!-- -> `self-center`: WItem's own `items-stretch` outranks an `items-center` on the row -->
+              <div class="text-caption mr-4 self-center">{{ t('navEdit.selectGroups') }}</div>
               <w-select
                 style="width: 100%; max-width: calc(50% - 34px)"
-                outlined
                 v-model="state.current.visibilityGroups"
                 :options="state.groups"
                 option-value="id"

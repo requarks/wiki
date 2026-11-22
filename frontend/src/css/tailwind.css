@@ -435,12 +435,6 @@ body.body--dark,
   In `@layer components`, so utility classes (which come later in the layer order) still win: a
   `text-sm` or `bg-primary` on the same element overrides these baselines rather than fighting them.
 */
-@media (prefers-reduced-motion: reduce) {
-  .w-input-control {
-    transition-duration: 0.01ms;
-  }
-}
-
 @layer components {
   /*
     Border-box sizing. Preflight would normally supply this; with it switched off, a bordered
@@ -510,62 +504,378 @@ body.body--dark,
   }
 
   /*
-    Shared frame for the form controls (WInput, WSelect). Lives here rather than in a component's
-    scoped style because both components use it, and a scoped rule would only match the one it was
-    declared in. The ring itself is an inline box-shadow on each control; this supplies the resting
-    colour and the transition that animates between resting and active.
+    The form field: WInput, and WSelect around it. Lives here rather than in a component's scoped
+    style because both components use it, and a scoped rule would only match the one it was declared
+    in.
+
+    `.w-field` carries the palette, on a field's root -- and on anything else that has to agree with
+    it, such as a select's popup. `--dark` is the `dark` prop of a control on a surface that is dark in
+    both themes, for when it is not inside a `.w-dark-surface` to say so.
+
+    The accent and the error colour are the theme's, mixed rather than written out: `--color-primary`
+    is the site's own, and `--color-negative` is swapped for an orange for a reader with a red-green
+    colour-vision deficiency (`helpers/accessibility.js`), so a fixed red here would undo that. The
+    mixes reproduce the design's shades of its own blue and red -- the dark focus edge #3D8FE0, the
+    error text #C62828 and #FF8A80, the dark error edge #EF5350.
   */
-  .w-input-control {
-    --w-input-ring: rgb(0 0 0 / 0.24);
-    /* Pointer-over: a full-strength edge, so the field reads as reachable before it is focused */
-    --w-input-ring-hover: var(--color-black);
+  .w-field {
+    --w-field-ink: #23262b;
+    --w-field-sub: #5a5e66;
+    --w-field-ph: #6b7079;
+    --w-field-acc: var(--color-primary);
+    --w-field-err: color-mix(in srgb, var(--color-negative) 80%, black);
+
+    --w-field-well: #f8f9fb;
+    --w-field-well-focus: #fff;
     /*
-      The band a filled field draws just inside its frame (see `controlStyle` in WInput), in the
-      card's own surface colour so that it reads as a gap between the frame and the grey fill.
+      The field's edge in each state, named so that an end cap (`.w-field-cap`) can draw the same
+      one round itself: 1px at rest and under the pointer, 1.5px focused or invalid.
     */
-    --w-input-inset: var(--color-white);
-    /* .36s cubic-bezier(.4,0,.2,1) is Quasar's own field transition, kept so the timing matches */
-    transition:
-      box-shadow 0.36s cubic-bezier(0.4, 0, 0.2, 1),
-      background-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+    --w-field-edge: rgb(24 28 36 / 0.11);
+    --w-field-edge-hover: rgb(24 28 36 / 0.18);
+    --w-field-edge-focus: var(--color-primary);
+    --w-field-edge-err: var(--color-negative);
+    --w-field-well-sh:
+      inset 0 0 0 1px var(--w-field-edge), inset 0 2px 3px rgb(24 28 36 / 0.1),
+      inset 0 1px 1px rgb(24 28 36 / 0.06);
+    --w-field-well-sh-hover:
+      inset 0 0 0 1px var(--w-field-edge-hover), inset 0 2px 3px rgb(24 28 36 / 0.12),
+      inset 0 1px 1px rgb(24 28 36 / 0.06);
+    --w-field-focus-sh:
+      inset 0 0 0 1.5px var(--w-field-edge-focus), inset 0 2px 3px rgb(24 28 36 / 0.08),
+      0 0 0 4px color-mix(in srgb, var(--color-primary) 16%, transparent);
+    --w-field-err-sh:
+      inset 0 0 0 1.5px var(--w-field-edge-err), inset 0 2px 3px rgb(24 28 36 / 0.08),
+      0 0 0 4px color-mix(in srgb, var(--color-negative) 12%, transparent);
+    /* -> The same error edge and halo, drawn outside a raised control rather than in a well */
+    --w-field-err-ring:
+      0 0 0 1.5px var(--color-negative),
+      0 0 0 4.5px color-mix(in srgb, var(--color-negative) 12%, transparent);
+
+    --w-field-dis: #f0f2f5;
+    --w-field-dis-sh: inset 0 0 0 1px rgb(24 28 36 / 0.07);
+
+    /*
+      A raised key: the keycap select's face and a field's end cap (`.w-field-cap`) -- a face lit
+      from above, `top1` to `top2`, standing on a 1px skirt over a soft drop.
+    */
+    --w-key-top1: #f6f7f9;
+    --w-key-top2: #e9ebef;
+    --w-key-skirt: #b3b7be;
+    --w-key-hi: rgb(255 255 255 / 0.95);
+    --w-key-seam: rgb(24 28 36 / 0.14);
+    --w-key-drop: rgb(24 28 36 / 0.22);
+    --w-key-hover: 1.035;
   }
 
-  body.body--dark .w-input-control,
-  .w-dark-surface .w-input-control {
-    --w-input-ring: rgb(255 255 255 / 0.3);
-    --w-input-ring-hover: var(--color-white);
-    --w-input-inset: var(--color-dark-3);
+  body.body--dark .w-field,
+  .w-dark-surface .w-field,
+  .w-field.w-dark-surface,
+  .w-field.w-field--dark {
+    --w-field-ink: #ecedef;
+    --w-field-sub: #a3a7af;
+    --w-field-ph: #8a9099;
+    /* -> `primary` is picked to read on white; on a dark field it needs the lightened mix */
+    --w-field-acc: var(--color-primary-light);
+    --w-field-err: color-mix(in srgb, var(--color-negative) 55%, white);
+
+    --w-field-well: #161a1f;
+    --w-field-well-focus: #13161a;
+    --w-field-edge: rgb(0 0 0 / 0.45);
+    --w-field-edge-hover: rgb(255 255 255 / 0.08);
+    --w-field-edge-focus: color-mix(in srgb, var(--color-primary) 85%, white);
+    --w-field-edge-err: color-mix(in srgb, var(--color-negative) 85%, white);
+    --w-field-well-sh:
+      inset 0 0 0 1px var(--w-field-edge), inset 0 2px 4px rgb(0 0 0 / 0.45),
+      0 1px 0 rgb(255 255 255 / 0.06);
+    --w-field-well-sh-hover:
+      inset 0 0 0 1px var(--w-field-edge-hover), inset 0 2px 4px rgb(0 0 0 / 0.5),
+      0 1px 0 rgb(255 255 255 / 0.06);
+    --w-field-focus-sh:
+      inset 0 0 0 1.5px var(--w-field-edge-focus), inset 0 2px 4px rgb(0 0 0 / 0.4),
+      0 0 0 4px color-mix(in srgb, var(--color-primary) 32%, transparent);
+    --w-field-err-sh:
+      inset 0 0 0 1.5px var(--w-field-edge-err), inset 0 2px 4px rgb(0 0 0 / 0.4),
+      0 0 0 4px color-mix(in srgb, var(--color-negative) 22%, transparent);
+    --w-field-err-ring:
+      0 0 0 1.5px color-mix(in srgb, var(--color-negative) 85%, white),
+      0 0 0 4.5px color-mix(in srgb, var(--color-negative) 22%, transparent);
+
+    --w-field-dis: #1b1f25;
+    --w-field-dis-sh: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+
+    --w-key-top1: #3a3d44;
+    --w-key-top2: #2b2e33;
+    /* -> WBtnToggle's lifted skirt rather than the design's #050607, so every kind of cap agrees */
+    --w-key-skirt: #141619;
+    --w-key-hi: rgb(255 255 255 / 0.12);
+    --w-key-seam: rgb(0 0 0 / 0.6);
+    --w-key-drop: rgb(0 0 0 / 0.65);
+    --w-key-hover: 1.14;
+  }
+
+  /* -> Above the control, 4px over it: the design's 8px read as a label floating free of its field */
+  .w-field-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--w-field-sub);
   }
 
   /*
-    A field that cannot be typed into, hatched.
+    A row whose content is a labelled field lines up what flanks it -- the leading icon, a drag
+    handle, a trailing button -- with the FIELD rather than with the row. Centred on the row, a flank
+    stood on the middle of label, field and any help line together, and so level with none of them.
 
-    Nothing else said so. A disabled control has `opacity-60`, which reads as "dimmer" rather than
-    "locked" and says nothing at all about a READONLY one -- and readonly is the case that matters
-    here, since a profile whose name comes from an identity provider draws its fields at full
-    contrast with a live-looking cursor. The hatching is the one state a glance can tell apart from
-    an empty field.
+    Each such section is laid over the field's box: past the label line (16px and its 4px gap), as
+    tall as the field (40px, 36px dense), its content centred in it. Content taller than that, the 40px
+    icon beside a dense field, overflows it evenly, so it is still centred on the field -- and the
+    section takes up no more room than label and field do, so it never stretches the row. A help line
+    under the field is below all of this and moves nothing.
 
-    A background-image over the control's own background-color, so it composes with whichever fill
-    the variant chose (white, the dark well, `bg-black/4`) instead of replacing it. Hard stops rather
-    than a soft gradient: the stripe is barely there as it is, and an interpolated edge would blur it
-    into a flat tint at this alpha. Band and gap are the same 4px, so it reads as one alternating
-    pattern rather than as lines ruled across a field -- an 8px period, fine enough to show on a 36px
-    dense field and coarse enough not to moire on a full-height one.
+    Not the section that holds the field itself, which is laid out as any other; and a row with no
+    labelled field keeps its flanks centred as before.
   */
-  .w-input-control--locked {
-    --w-input-stripe: rgb(0 0 0 / 0.03);
-    background-image: repeating-linear-gradient(
-      -45deg,
-      var(--w-input-stripe) 0 4px,
-      transparent 4px 8px
-    );
+  .w-item:has(.w-field-label) > .w-item-section--side:not(:has(.w-field-label)) {
+    align-self: flex-start;
+    justify-content: center;
+    height: 40px;
+    margin-top: 20px;
   }
 
-  /* -> Higher alpha than the light-mode value, since white over a dark fill separates less */
-  body.body--dark .w-input-control--locked,
-  .w-dark-surface .w-input-control--locked {
-    --w-input-stripe: rgb(255 255 255 / 0.045);
+  .w-item:has(.w-field-label):has(.w-field-well--dense, .w-select-trigger--dense)
+    > .w-item-section--side:not(:has(.w-field-label)) {
+    height: 36px;
+  }
+
+  /*
+    The line under the control that a hint or an error occupies, 6px below it. Reserved at its own
+    height whenever it is shown, so a message appearing shifts nothing.
+  */
+  .w-field-help {
+    min-height: 22px;
+    padding-top: 6px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--w-field-sub);
+  }
+
+  .w-field-help--error {
+    font-weight: 500;
+    color: var(--w-field-err);
+  }
+
+  /*
+    The recessed well a value is typed into: sunk into the surface, its top edge in shadow, and lit up
+    -- a white floor, an edge and a halo in the accent -- while anything in it has focus.
+
+    `color` is the secondary ink, for whatever sits in the well beside the value (an icon, a clear
+    cross), which takes the accent with the field's focus; the value itself is `.w-field-input`.
+    Min-heights rather than heights, so a select's chips can wrap onto a second line.
+  */
+  .w-field-well {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 9px;
+    color: var(--w-field-sub);
+    background-color: var(--w-field-well);
+    box-shadow: var(--w-field-well-sh);
+    transition:
+      box-shadow 0.15s,
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  .w-field-well:hover {
+    box-shadow: var(--w-field-well-sh-hover);
+  }
+
+  .w-field-well:focus-within {
+    color: var(--w-field-acc);
+    background-color: var(--w-field-well-focus);
+    box-shadow: var(--w-field-focus-sh);
+  }
+
+  /* -> The design's 40px well, down to the 36px a dense row has always held */
+  .w-field-well--dense {
+    min-height: 36px;
+  }
+
+  /* -> A textarea, or wrapped chips: the content sets the height, so the well pads it top and bottom */
+  .w-field-well--multiline {
+    align-items: stretch;
+    padding-block: 8px;
+  }
+
+  /*
+    For a field on a surface that is not flat -- a translucent (acrylic) menu, where the well's floor
+    would sit as an opaque slab on a panel meant to be see-through. Only the floor goes; the edges and
+    the focus ring stay, so it still reads as a field.
+  */
+  .w-field-well.w-field-well--transparent {
+    background-color: transparent;
+  }
+
+  /* -> After `:hover` and `:focus-within`, and above them, so an invalid field stays red under both */
+  .w-field-well.w-field-well--error {
+    box-shadow: var(--w-field-err-sh);
+  }
+
+  /*
+    A field that cannot be typed into -- disabled, or readonly: a profile whose name comes from an
+    identity provider, say. The design's locked field, for both: a flat floor and a faint edge in place
+    of the well, the value in the secondary ink, and no hover, since there is nothing to reach for.
+    Secondary rather than the design's own grey, which measured 2.9:1 on this floor in light mode and
+    3.5:1 in dark -- too dim to read; this is 5.8:1 and 6.9:1, and still clearly quieter than a live value.
+  */
+  .w-field-well.w-field-well--locked {
+    color: var(--w-field-sub);
+    background-color: var(--w-field-dis);
+    box-shadow: var(--w-field-dis-sh);
+    cursor: not-allowed;
+  }
+
+  /*
+    A readonly field still takes focus -- it is how its value gets selected and copied -- so it still
+    shows where focus is: the accent edge and halo over the flat floor.
+  */
+  .w-field-well.w-field-well--locked:focus-within {
+    box-shadow: var(--w-field-focus-sh);
+  }
+
+  /*
+    Qualified with the well: the input is also `.w-unstyled`, which resets `color` and `font` to
+    `inherit` from later in this same layer, and would otherwise win the tie.
+  */
+  .w-field-well .w-field-input {
+    color: var(--w-field-ink);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+
+  .w-field-well .w-field-input::placeholder {
+    color: var(--w-field-ph);
+    font-weight: 400;
+    opacity: 1;
+  }
+
+  .w-field-well--locked .w-field-input {
+    color: var(--w-field-sub);
+    cursor: not-allowed;
+  }
+
+  /* -> Static text against the value: a leading `/`, a unit. Secondary ink, even while focused */
+  .w-field-affix {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--w-field-sub);
+  }
+
+  /*
+    A field's end cap (WFieldCap): a key that IS the trailing end of the well -- full height, out to
+    the well's edge through its 12px of padding, rounded on the well's own corners -- so that the action
+    reads as a button belonging to the field rather than an icon lying in it among the value.
+
+    Raised only within the field's own outline. A skirt or a drop beneath it, as the keycap select
+    has, stood a pixel proud of the field's bottom edge and made the key look dropped out of line with
+    it. So the lift is all inside: the face lit from above, a highlight under its top edge and a darker
+    line over its bottom one. Pressing it pushes the face in rather than moving the key.
+
+    It draws the field's own edge -- top, right and bottom, in whichever state the field is in -- so
+    the outline runs on unbroken round field and key, and a 1px divider at rest on its left, where it
+    meets the value. `--w-field-cap-edge` and `--w-field-cap-edge-w` are that edge, set per state below.
+
+    Qualified with the well, as the input is: the button is also `.w-unstyled`, which zeroes padding
+    and the background from later in this same layer.
+  */
+  .w-field-well .w-field-cap {
+    --w-field-cap-edge: var(--w-field-edge);
+    --w-field-cap-edge-w: 1px;
+    --w-field-cap-face:
+      inset 0 calc(var(--w-field-cap-edge-w) + 1px) 0 var(--w-key-hi),
+      inset 0 calc(-1 * var(--w-field-cap-edge-w) - 1px) 0 var(--w-key-seam);
+
+    flex: none;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 40px;
+    margin-right: -12px;
+    padding: 0 12px;
+    border-radius: 0 9px 9px 0;
+    color: var(--w-field-ink);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+    cursor: pointer;
+    background: radial-gradient(130% 100% at 50% 0%, var(--w-key-top1) 0%, var(--w-key-top2) 100%);
+    /* -> Listed edge first, so it paints over the face's lines where they meet */
+    box-shadow:
+      inset 0 var(--w-field-cap-edge-w) 0 var(--w-field-cap-edge),
+      inset calc(-1 * var(--w-field-cap-edge-w)) 0 0 var(--w-field-cap-edge),
+      inset 0 calc(-1 * var(--w-field-cap-edge-w)) 0 var(--w-field-cap-edge),
+      inset 1px 0 0 var(--w-field-edge),
+      var(--w-field-cap-face);
+    transition:
+      box-shadow 0.15s,
+      filter 0.15s;
+  }
+
+  .w-field-well--dense .w-field-cap {
+    min-width: 36px;
+  }
+
+  /* -> The field's edge in its other states, so the outline stays one line round both */
+  .w-field-well:hover .w-field-cap {
+    --w-field-cap-edge: var(--w-field-edge-hover);
+  }
+
+  .w-field-well:focus-within .w-field-cap {
+    --w-field-cap-edge: var(--w-field-edge-focus);
+    --w-field-cap-edge-w: 1.5px;
+  }
+
+  .w-field-well.w-field-well--error .w-field-cap {
+    --w-field-cap-edge: var(--w-field-edge-err);
+    --w-field-cap-edge-w: 1.5px;
+  }
+
+  .w-field-well .w-field-cap:not(:disabled):hover {
+    filter: brightness(var(--w-key-hover));
+  }
+
+  /* -> Pushed in: the highlight gives way to a shadow under the top edge */
+  .w-field-well .w-field-cap:not(:disabled):active {
+    --w-field-cap-face: inset 0 calc(var(--w-field-cap-edge-w) + 1px) 3px var(--w-key-seam);
+    filter: none;
+  }
+
+  .w-field-well .w-field-cap:focus-visible {
+    z-index: 1;
+    outline: 2px solid var(--w-field-acc);
+    outline-offset: 2px;
+  }
+
+  .w-field-well .w-field-cap:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .w-field-well .w-field-cap {
+      transition-duration: 0.01ms;
+    }
   }
 
   /*
@@ -579,144 +889,13 @@ body.body--dark,
     Chromium and Safari only; Firefox draws no indicator for these types, so there is nothing there
     for the rule to match.
   */
-  body.body--dark .w-input-control input::-webkit-calendar-picker-indicator,
-  .w-dark-surface .w-input-control input::-webkit-calendar-picker-indicator {
+  body.body--dark .w-field-well input::-webkit-calendar-picker-indicator,
+  .w-dark-surface .w-field-well input::-webkit-calendar-picker-indicator {
     filter: invert(0.75);
   }
 
-  /*
-    The Material notched outline, for an outlined field that carries a label: at rest the label stands
-    in the middle of the field, and on focus or once there is a value it rises into the top border.
-    Shared by WInput and WSelect, for the reason given above.
-
-    Drawn as a fieldset whose legend cuts the notch. A fieldset is the only element that interrupts
-    its own top border for a child, which is what makes a REAL gap rather than a patch -- so the label
-    needs no background of its own and works over a white card, a grey `alt-card` section or a dark
-    surface alike. The legend widening from nothing to the label's width IS the notch opening.
-
-    Three measurements interlock, so changing one means checking the others:
-      - the outline sits 6px above the control, putting its top border through the label's middle
-      - the outline's side padding plus the legend span's places the gap's left edge
-      - the label's own `left` has to land inside that gap, or it sits on solid border
-  */
-  .w-input-outline {
-    position: absolute;
-    inset: -6px 0 0;
-    margin: 0;
-    padding: 0 0.5rem;
-    border-style: solid;
-    border-radius: inherit;
-    /* -> Clicks belong to the field underneath */
-    pointer-events: none;
-    min-inline-size: 0;
-    transition: border-color 0.36s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .w-input-outline legend {
-    float: unset;
-    display: block;
-    width: auto;
-    height: 0.6875rem;
-    padding: 0;
-    font-size: 0.75rem;
-    /* -> Hidden, but still occupying the top border, which is what interrupts it */
-    visibility: hidden;
-    white-space: nowrap;
-    max-width: 0.01px;
-    transition: max-width 0.05s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /*
-    3px, and it has to stay in step with the outline's side padding above.
-
-    This padding is what becomes the visible gap either side of the label, but it is measured around
-    the SPAN's text, which starts one border-width inboard of the label's own `left`. So the numbers
-    are chosen to make the span's text land exactly where the label's does -- outline padding + 1px
-    border + 3px equals the label's `left`, at both densities -- and then equal padding either side
-    gives an equal gap either side. Change one of the three and the gap goes lopsided.
-  */
-  .w-input-outline legend > span {
-    display: inline-block;
-    padding: 0 0.1875rem;
-    opacity: 0;
-  }
-
-  /* -> Qualified with `legend` so it outranks the resting rule above rather than tying on specificity */
-  .w-input-outline legend.w-input-outline-notch--open {
-    max-width: 100%;
-    /* -> Opens a beat after the label starts moving, so the gap appears under it rather than ahead */
-    transition: max-width 0.1s 0.05s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /*
-    The label itself. At rest it is centred in the field at the field's own text size, sitting exactly
-    where the text will appear; floated, it shrinks and rises onto the outline. Pointer events are off
-    so a click at rest reaches the field rather than the label.
-  */
-  .w-input-float {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    /*
-      Sized at the FLOATED size and scaled UP to rest, rather than the other way round.
-
-      The notch is cut from a legend laid out at this same 0.75rem, and a transform-scaled 0.875rem
-      label is not exactly the width of a 0.75rem one -- hinting differs -- so scaling down to float
-      left the gap wider than the text it was cut for. Floated is therefore the untransformed state,
-      where label and notch are the same string at the same size and cannot disagree; 1.1667 is 14/12,
-      which brings the resting label back to the field's own text size.
-    */
-    font-size: 0.75rem;
-    transform: translateY(-50%) scale(1.1667);
-    /*
-      Scaling about the left edge at mid-height: the box is translated up by half its own height, and
-      growing it about that same midline keeps the resting text centred in the field and its left edge
-      aligned with where the field's text begins.
-    */
-    transform-origin: left center;
-    max-width: calc(100% - 1.5rem);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    pointer-events: none;
-    /*
-      `top` is in here deliberately. It carries the whole vertical move -- from the middle of the
-      field to its top edge -- and leaving it out is what made the label JUMP: only the transform and
-      the font size were animating, and the transform is identical in both states.
-    */
-    transition:
-      top 0.2s var(--ease-standard),
-      transform 0.2s var(--ease-standard),
-      color 0.2s var(--ease-standard);
-  }
-
-  /*
-    Floated is simply the unscaled state.
-
-    Animating `font-size` instead would re-lay the text out on every frame, and since `translateY(-50%)`
-    resolves against the element's own height, that height changing under the transform made the label
-    drift as well as shrink. A scale is one operation on a box whose layout never changes.
-  */
-  .w-input-float--up {
-    top: 0;
-    transform: translateY(-50%) scale(1);
-  }
-
-  /* -> A dense field's text starts 8px in rather than 12px, so its label and notch follow */
-  .w-input-control--dense .w-input-outline {
-    padding: 0 0.25rem;
-  }
-
-  .w-input-control--dense .w-input-float {
-    left: 0.5rem;
-    max-width: calc(100% - 1rem);
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .w-input-outline,
-    .w-input-outline legend,
-    .w-input-outline legend.w-input-outline-notch--open,
-    .w-input-float {
+    .w-field-well {
       transition-duration: 0.01ms;
     }
   }

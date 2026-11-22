@@ -12,7 +12,6 @@
             <w-input
               ref="iptName"
               v-model="state.name"
-              outlined
               dense
               :rules="nameValidation"
               hide-bottom-space
@@ -26,7 +25,6 @@
           <w-item-section>
             <w-select
               v-model="state.expiration"
-              outlined
               :options="expirations"
               map-options
               option-value="value"

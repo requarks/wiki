@@ -123,7 +123,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.loginRedirect"
                 dense
                 :rules="[
@@ -144,7 +143,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.welcomeRedirect"
                 dense
                 :rules="[
@@ -166,7 +164,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.logoutRedirect"
                 dense
                 :rules="[

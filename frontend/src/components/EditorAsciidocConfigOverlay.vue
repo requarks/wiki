@@ -61,7 +61,6 @@
             <w-item-section avatar>
               <w-select
                 style="width: 200px"
-                outlined
                 v-model="state.config.math"
                 :options="mathEngines"
                 emit-value

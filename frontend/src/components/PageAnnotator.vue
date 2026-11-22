@@ -114,7 +114,6 @@
       <w-input
         ref="noteInput"
         type="textarea"
-        outlined
         dense
         hide-bottom-space
         :rows="3"

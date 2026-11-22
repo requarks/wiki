@@ -11,23 +11,14 @@
         </div>
       </w-card-section>
       <!--
-        `self-start` on both icons: each field shows a hint line underneath, so the row is taller than
-        the field and the icon belongs against the first of them, not the middle of both. See the note
-        in `ApiKeyCreateDialog`.
-
-        The 6px with it lands the icon where the New Site dialog's puts it. What an icon lines up with
-        is the field's TEXT LINE, not its outline: a floating label takes the top of the box, so the
-        text sits about 3px below the outline's middle and an icon centred on the outline reads as
-        riding high. The fields there get that for free -- they pass `hide-bottom-space`, so the
-        section is exactly the field and plain centring finds the text -- while these have a hint line
-        under them and have to be told.
+        -> The icons line up with their fields by themselves, hint line and all: a row with a labelled
+           field centres what flanks it on the field's box (`.w-field-label` in `tailwind.css`).
       -->
       <div class="pb-2">
         <w-item>
-          <blueprint-icon icon="rename" class="self-start mt-1.5" />
+          <blueprint-icon icon="rename" />
           <w-item-section>
             <w-input
-              outlined
               dense
               v-model="state.customName"
               :label="t('localeAliasesDialog.nameLabel')"
@@ -37,10 +28,9 @@
           </w-item-section>
         </w-item>
         <w-item>
-          <blueprint-icon icon="code" class="self-start mt-1.5" />
+          <blueprint-icon icon="code" />
           <w-item-section>
             <w-input
-              outlined
               dense
               v-model="state.customCode"
               :label="t('localeAliasesDialog.codeLabel')"

@@ -66,7 +66,6 @@
           <div class="section-header">{{ t('search.filters') }}</div>
           <div class="p-2">
             <w-input
-              outlined
               dense
               :placeholder="t(`search.filterPath`)"
               prefix="/"
@@ -77,7 +76,6 @@
             </w-input>
             <w-select
               class="mt-2"
-              outlined
               v-model="state.selectedTags"
               :options="tags"
               dense
@@ -110,7 +108,6 @@
             <w-select
               v-if="hasMultipleLocales"
               class="mt-2"
-              outlined
               v-model="state.params.filterLocale"
               emit-value
               map-options
@@ -126,7 +123,6 @@
             </w-select>
             <w-select
               class="mt-2"
-              outlined
               v-model="state.params.filterEditor"
               emit-value
               map-options
@@ -137,7 +133,6 @@
             </w-select>
             <w-select
               class="mt-2"
-              outlined
               v-model="state.params.filterPublishState"
               emit-value
               map-options

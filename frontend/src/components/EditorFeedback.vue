@@ -16,7 +16,6 @@
             <w-item-section>
               <!-- -> The same title the header edits in place, as on a blog -->
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 :model-value="pageStore.title"
@@ -33,7 +32,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 :model-value="pageStore.description"
@@ -131,7 +129,6 @@
             <w-item-section side>
               <w-select
                 class="editor-feedback-select"
-                outlined
                 dense
                 emit-value
                 map-options
@@ -151,7 +148,6 @@
             <w-item-section side>
               <w-input
                 class="editor-feedback-number"
-                outlined
                 dense
                 hide-bottom-space
                 type="number"
@@ -187,14 +183,12 @@
               v-for="(category, index) of state.categories"
               :key="index">
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 :model-value="category.label"
                 :label="t('editor.feedback.categoryLabel')"
                 @update:model-value="setCategory(index, 'label', $event)" />
               <w-input
-                outlined
                 dense
                 hide-bottom-space
                 monospaced

@@ -113,7 +113,6 @@
                   <div v-if="editingAnnotationId === annotation.id">
                     <w-input
                       type="textarea"
-                      outlined
                       dense
                       hide-bottom-space
                       :rows="2"

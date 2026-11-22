@@ -25,7 +25,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.name"
-          outlined
           dense
           hide-bottom-space
           :aria-label="t(`profile.displayName`)"
@@ -42,7 +41,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.email"
-          outlined
           dense
           :aria-label="t(`profile.email`)"
           readonly />
@@ -58,7 +56,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.handle"
-          outlined
           dense
           hide-bottom-space
           prefix="@"
@@ -78,7 +75,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.location"
-          outlined
           dense
           hide-bottom-space
           :aria-label="t(`profile.location`)"
@@ -95,7 +91,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.jobTitle"
-          outlined
           dense
           hide-bottom-space
           :aria-label="t(`profile.jobTitle`)"
@@ -112,7 +107,6 @@
       <w-item-section>
         <w-input
           v-model="state.config.pronouns"
-          outlined
           dense
           hide-bottom-space
           :aria-label="t(`profile.pronouns`)"
@@ -134,7 +128,6 @@
         -->
         <w-select
           v-model="state.config.timezone"
-          outlined
           :options="timezones"
           dense
           options-dense
@@ -152,7 +145,6 @@
       <w-item-section>
         <w-select
           v-model="state.config.dateFormat"
-          outlined
           emit-value
           map-options
           dense
@@ -205,7 +197,6 @@
       <w-item-section>
         <w-select
           v-model="state.config.locale"
-          outlined
           emit-value
           map-options
           dense

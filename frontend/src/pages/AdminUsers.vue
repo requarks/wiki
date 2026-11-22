@@ -14,10 +14,9 @@
         <w-input
           v-if="canList"
           class="denser mr-2"
-          outlined
           v-model="state.search"
           dense
-          :class="dark.isActive ? `bg-dark text-white` : `bg-white`">
+         >
           <template #prepend><w-icon class="opacity-50" name="la:search" size="20px" /></template>
         </w-input>
         <w-btn

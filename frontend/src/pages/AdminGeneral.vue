@@ -58,7 +58,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.title"
                 dense
                 :rules="rulesTitle"
@@ -75,7 +74,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.description"
                 dense
                 :aria-label="t(`admin.general.siteDescription`)" />
@@ -90,7 +88,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.hostname"
                 dense
                 :rules="rulesHostname"
@@ -112,7 +109,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.company"
                 dense
                 :aria-label="t(`admin.general.companyName`)" />
@@ -127,7 +123,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.contentLicense"
                 :options="contentLicenses"
                 option-value="value"
@@ -147,7 +142,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.footerExtra"
                 dense
                 :aria-label="t(`admin.general.footerExtra`)">
@@ -569,7 +563,6 @@
               </w-item-section>
               <w-item-section>
                 <w-input
-                  outlined
                   v-model="state.config.banner.title"
                   dense
                   :aria-label="t(`admin.general.bannerTitle`)" />
@@ -619,7 +612,6 @@
               <w-item-section>
                 <w-select
                   v-model="state.config.maintenance.bypassGroups"
-                  outlined
                   dense
                   :options="state.groups"
                   multiple
@@ -697,7 +689,6 @@
             </w-item-section>
             <w-item-section>
               <w-select
-                outlined
                 v-model="state.config.uploads.conflictBehavior"
                 :options="uploadConflictBehaviors"
                 option-value="value"
@@ -717,7 +708,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.uploads.pastedDestination"
                 dense
                 :placeholder="t(`admin.general.pastedDestinationPlaceholder`)"
@@ -738,7 +728,6 @@
             </w-item-section>
             <w-item-section>
               <w-input
-                outlined
                 v-model="state.config.pageExtensions"
                 dense
                 :aria-label="t(`admin.general.pageExtensions`)" />
