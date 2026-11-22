@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 
 import { pick } from 'es-toolkit/object'
+import { validate as uuidValidate } from 'uuid'
 
 import { useSiteStore } from './site'
 import { useEditorStore } from './editor'
@@ -48,6 +49,35 @@ const DUPLICATED_PAGE_PROPS = [
   'showToc',
   'tags',
   'tocDepth'
+]
+
+/**
+ * The page properties a page started from a template takes from it, as `pageFromTemplate` reads them.
+ *
+ * Not `DUPLICATED_PAGE_PROPS`, for two reasons. A template is named by a link, and the link's author
+ * is not the person saving the page: carrying the template's scripts, CSS or password would hand
+ * them to whoever opens the link, out of sight in the properties panel, and a saver holding
+ * `write:scripts` would store a script written by somebody who may not. And how a template is kept
+ * out of the way -- a draft, not browsable, not searchable -- says something about the template and
+ * nothing about the pages made from it, which start published and visible like any new page. Nor
+ * `relations`, which point the new page at somewhere the author did not pick either.
+ *
+ * What is left is what an author can see on the page they are about to save: its text, icon, tags
+ * and display options.
+ */
+const TEMPLATE_PAGE_PROPS = [
+  'allowBacklinks',
+  'allowComments',
+  'allowContributions',
+  'allowGlossaryLinks',
+  'allowRatings',
+  'icon',
+  'iconColor',
+  'showLastEditedBy',
+  'showSidebar',
+  'showTags',
+  'showToc',
+  'tags'
 ]
 
 /**
@@ -959,6 +989,99 @@ export const usePageStore = defineStore('page', {
         })
       } catch (err) {
         console.warn(err)
+        throw err
+      }
+    },
+    /**
+     * PAGE - CREATE FROM TEMPLATE
+     *
+     * What `/_create?template=` opens: a new page whose text and visible properties come from another
+     * page, so that a link -- from an issue tracker, say -- can start every page of a kind from the
+     * same structure. Not a duplicate: see `TEMPLATE_PAGE_PROPS` for what is carried and why less is
+     * carried than a copy takes.
+     *
+     * The template is read with the reader's own permissions, through the same request a page view
+     * makes, so a link can never put in front of somebody a source they could not have opened
+     * themselves. Nothing is written: as with a duplicate, the editor opens on an unsaved page.
+     *
+     * @param template The template's id, or its path in `locale`. Anything shaped like a UUID is
+     *   taken as an id -- a page whose path is one UUID-shaped segment is reached by its id instead.
+     * @param editor The editor the link named, if it named one. It has to be the template's: a
+     *   markdown template cannot open in another editor, and picking one of the two silently would
+     *   leave the link's author not knowing which they got.
+     * @throws `ERR_TEMPLATE_NOT_FOUND`, `ERR_TEMPLATE_LOCKED`, `ERR_TEMPLATE_NO_SOURCE`, or
+     *   `ERR_TEMPLATE_EDITOR_MISMATCH` with `templateEditor` set on the error.
+     */
+    async pageFromTemplate({ template, editor, path, locale, title }) {
+      const siteStore = useSiteStore()
+      const isId = uuidValidate(template)
+      let pageData
+      try {
+        pageData = await API_CLIENT.get(
+          `sites/${siteStore.id}/pages/${isId ? template : pagePathHash(template)}`,
+          {
+            searchParams: {
+              withContent: true,
+              // -> A path is only a page within a locale; an id is a page wherever it is
+              ...(!isId && locale && { locale })
+            }
+          }
+        ).json()
+      } catch (err) {
+        if (err.response?.status === 404) {
+          throw new Error('ERR_TEMPLATE_NOT_FOUND')
+        }
+        throw err
+      }
+      if (!pageData?.id) {
+        throw new Error('ERR_TEMPLATE_NOT_FOUND')
+      }
+      // -> Both answer without the body, which is the one thing a template is for
+      if (pageData.isLocked) {
+        throw new Error('ERR_TEMPLATE_LOCKED')
+      }
+      if (!Object.hasOwn(pageData, 'content')) {
+        throw new Error('ERR_TEMPLATE_NO_SOURCE')
+      }
+      if (editor && editor !== pageData.editor) {
+        const err = new Error('ERR_TEMPLATE_EDITOR_MISMATCH')
+        err.templateEditor = pageData.editor
+        throw err
+      }
+      await this.pageCreate({
+        editor: pageData.editor,
+        path,
+        locale,
+        title,
+        description: pageData.description,
+        content: pageData.content,
+        props: {
+          ...pick(pageData, TEMPLATE_PAGE_PROPS),
+          tocDepth: pick(pageData.tocDepth, ['min', 'max'])
+        },
+        fromNavigate: true
+      })
+    },
+    /**
+     * Where the page at this path stands, if there is one this reader may see: `{ path, locale }`, or
+     * null.
+     *
+     * What a create link asks before opening the editor, so that following the same link twice opens
+     * the page the first visit made rather than a second one that would be refused on save. A page
+     * the reader may not see answers null like an absent one, and the link carries on to the editor
+     * -- where saving is refused as it always was, telling them nothing a 404 had not.
+     */
+    async pageExistsAt(path, locale) {
+      const siteStore = useSiteStore()
+      try {
+        const pageData = await API_CLIENT.get(`sites/${siteStore.id}/pages/${pagePathHash(path)}`, {
+          searchParams: { ...(locale && { locale }) }
+        }).json()
+        return pageData?.id ? { path: pageData.path, locale: pageData.locale } : null
+      } catch (err) {
+        if (err.response?.status === 404) {
+          return null
+        }
         throw err
       }
     },
