@@ -1,6 +1,7 @@
 import { validate as uuidValidate } from 'uuid'
 
 import { mayOnPage } from '../api/pages.ts'
+import { isCrossOrigin } from '../helpers/common.ts'
 import { effectiveMaintenance } from '../helpers/maintenance.ts'
 
 import type { FastifyInstance, FastifyRequest } from 'fastify'
@@ -19,7 +20,9 @@ import type { WebSocket } from 'ws'
  * the private draft it is meant to be.
  *
  * The handshake is the only place authorization happens: a socket is checked once, when it opens, and
- * a permission taken away mid-session takes effect the next time the editor is opened.
+ * a permission taken away mid-session takes effect the next time the editor is opened. It is
+ * authenticated by the session cookie alone, so it is refused first of all when a page on another
+ * host opened it (`isCrossOrigin`) — otherwise a sibling subdomain could join a room as its visitor.
  */
 async function routes(app: FastifyInstance) {
   app.get<{ Params: { siteId: string; pageId: string } }>(
@@ -45,6 +48,9 @@ async function routes(app: FastifyInstance) {
         how the editor tells "you may not edit this" apart from "the connection dropped" and knows not
         to reconnect. See `composables/collab.js`.
       */
+      if (isCrossOrigin(req)) {
+        return socket.close(4403, 'Connections from another origin are refused')
+      }
       if (!uuidValidate(siteId) || !uuidValidate(pageId)) {
         return socket.close(4400, 'Invalid site or page id')
       }
@@ -93,6 +99,9 @@ async function routes(app: FastifyInstance) {
       // -> Before the first `await`, for the reason given on the page route above
       const session = WIKI.collab.capture(socket)
 
+      if (isCrossOrigin(req)) {
+        return socket.close(4403, 'Connections from another origin are refused')
+      }
       if (!uuidValidate(siteId) || !WIKI.models.liveNotes.isValidKey(noteKey)) {
         return socket.close(4400, 'Invalid site id or note key')
       }

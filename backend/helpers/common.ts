@@ -240,6 +240,32 @@ export function originOf(req: FastifyRequest): string {
 }
 
 /**
+ * Whether a browser opened this request from a page on another host.
+ *
+ * Every websocket route asks this before anything else, because a websocket handshake is not subject
+ * to CORS: a page anywhere may open one to this server, and the browser attaches the wiki's session
+ * cookie whenever that page is on the same SITE — a sibling subdomain — which `SameSite=Lax` does
+ * not stop. Only the `Origin` header tells such a handshake apart from the wiki's own.
+ *
+ * The host is compared, not the scheme. The host has to be right already, since it is what picks the
+ * site; `req.protocol` is only right with `trustProxy` on, and a wiki behind a TLS-terminating proxy
+ * without it would otherwise refuse its own editors. A request with no `Origin` at all is not a
+ * browser's, and carries no cookie a browser attached on somebody else's behalf.
+ */
+export function isCrossOrigin(req: FastifyRequest): boolean {
+  const origin = req.headers.origin
+  if (!origin) {
+    return false
+  }
+  try {
+    return new URL(origin).host !== req.host.toLowerCase()
+  } catch {
+    // -> `null` (a sandboxed frame, a file) or anything else that is not a URL
+    return true
+  }
+}
+
+/**
  * Escape a string for use as HTML text or inside a double-quoted attribute.
  *
  * Both at once, which is why the set is all five: an attribute needs the quotes and text needs the

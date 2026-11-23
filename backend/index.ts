@@ -355,6 +355,9 @@ async function initHTTPServer() {
     upgrade handler is installed on the HTTP server itself, and before the routes below because a
     route declaring `websocket: true` needs it already there.
 
+    A handshake is not subject to CORS, so every websocket route refuses one opened from another host
+    (`isCrossOrigin` in `helpers/common.ts`) before anything else — a new route included.
+
     `maxPayload` bounds a single frame: these carry keystrokes and cursor positions, and the largest
     legitimate one is a client handing over a document it edited while offline.
   */
@@ -453,7 +456,10 @@ async function initHTTPServer() {
     cookie: {
       httpOnly: true,
       maxAge: SESSION_MAX_AGE_DAYS * 24 * 60 * 60 * 1000,
-      secure: 'auto'
+      secure: 'auto',
+      // -> Said outright rather than left to the browser, whose default for a cookie that names none
+      //    is not Lax everywhere. The login flow is built on it — see `AUTH_FLOW_COOKIE`
+      sameSite: 'lax'
     },
     saveUninitialized: false,
     store: {

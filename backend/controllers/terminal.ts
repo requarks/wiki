@@ -1,3 +1,5 @@
+import { isCrossOrigin } from '../helpers/common.ts'
+
 import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { WebSocket } from 'ws'
 
@@ -36,6 +38,10 @@ async function routes(app: FastifyInstance) {
         code and reason to the page — which is how the terminal can print why it was turned away and
         know not to offer a reconnect. See `pages/AdminTerminal.vue`.
       */
+      // -> Cookie-authenticated, so a page on another host must not be the one opening it
+      if (isCrossOrigin(req)) {
+        return socket.close(4403, 'Connections from another origin are refused')
+      }
       if (!req.session?.authenticated) {
         return socket.close(4401, 'Authentication is required')
       }
