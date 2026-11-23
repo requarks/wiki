@@ -15,7 +15,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, notExists, or, sql } f
 import { nanoid } from 'nanoid'
 import { flatten, uniq } from 'es-toolkit/array'
 import { detectImageMime, resizeImageToSquareJpeg } from '../helpers/images.ts'
-import { buildTotpUri, generateTotpSecret, verifyTotpCode } from '../helpers/totp.ts'
+import { buildTotpUri, generateTotpSecret, matchTotpStep } from '../helpers/totp.ts'
 import { CustomError } from '../helpers/common.ts'
 import { fetchPublic } from '../helpers/publicFetch.ts'
 import { HANDLE_PATTERN } from './comments.ts'
@@ -263,7 +263,7 @@ function clearTfa(auth: Record<string, any>): boolean {
   for (const [strategyId, config] of Object.entries(auth)) {
     if (config?.tfaIsActive || config?.tfaSecret) {
       wasActive = wasActive || Boolean(config.tfaIsActive)
-      auth[strategyId] = { ...config, tfaIsActive: false, tfaSecret: '' }
+      auth[strategyId] = { ...config, tfaIsActive: false, tfaSecret: '', tfaLastStep: null }
     }
   }
   return wasActive
@@ -1584,7 +1584,9 @@ class Users {
     user.auth[strategyId] = {
       ...user.auth[strategyId],
       tfaSecret: secret,
-      tfaIsActive: false
+      tfaIsActive: false,
+      // -> Steps used up against the old secret say nothing about the new one
+      tfaLastStep: null
     }
     await WIKI.db
       .update(usersTable)
@@ -1642,7 +1644,7 @@ class Users {
       throw new Error('ERR_TFA_ENFORCED')
     }
 
-    auth[strategyId] = { ...auth[strategyId], tfaIsActive: false, tfaSecret: '' }
+    auth[strategyId] = { ...auth[strategyId], tfaIsActive: false, tfaSecret: '', tfaLastStep: null }
     await WIKI.db
       .update(usersTable)
       .set({ auth, updatedAt: sql`now()` })
@@ -1651,11 +1653,51 @@ class Users {
   }
 
   /**
-   * Whether a security code matches the 2FA secret stored for a user under one strategy.
+   * Check a security code against the 2FA secret stored for a user under one strategy, and use it up.
+   *
+   * A code is accepted once (RFC 6238 §5.2). The time step it matched is recorded as `tfaLastStep`,
+   * and that step and every one before it are refused from then on — otherwise a code seen over a
+   * shoulder or on a shared screen would open a second login for as long as the drift window kept it
+   * valid. The check and the record are one conditional update, so two logins racing with the same
+   * code cannot both get through; the secret is part of the condition too, so a code checked against
+   * a secret that a restarted setup has just replaced does not count.
+   *
+   * `user.auth` is updated in place as well, because callers go on to save the whole blob
+   * (`enableTfa()`) and would otherwise write the step back out.
+   *
+   * @returns False for a wrong code and for one already used — the two are not told apart to the
+   *          caller, who refuses both the same way
    */
-  verifyTfaCode(user: any, strategyId: string, securityCode: string): boolean {
+  async acceptTfaCode(user: any, strategyId: string, securityCode: string): Promise<boolean> {
     const secret = ((user.auth ?? {}) as Record<string, any>)[strategyId]?.tfaSecret
-    return Boolean(secret) && verifyTotpCode(secret, securityCode)
+    const step = secret ? matchTotpStep(secret, securityCode) : null
+    if (step === null) {
+      return false
+    }
+
+    const result = await WIKI.db
+      .update(usersTable)
+      .set({
+        auth: sql`${usersTable.auth} || jsonb_build_object(${strategyId}::text, (${usersTable.auth} -> ${strategyId}::text) || jsonb_build_object('tfaLastStep', ${step}::bigint))`,
+        updatedAt: sql`now()`
+      })
+      .where(
+        and(
+          eq(usersTable.id, user.id),
+          sql`${usersTable.auth} -> ${strategyId}::text ->> 'tfaSecret' = ${secret}`,
+          // -> Absent until a code is first accepted, and null once a new secret replaces the old
+          sql`coalesce((${usersTable.auth} -> ${strategyId}::text ->> 'tfaLastStep')::bigint, -1) < ${step}::bigint`
+        )
+      )
+    if ((result.rowCount ?? 0) < 1) {
+      WIKI.models.flags.authDebug(
+        `User ${user.id} <${user.email}> submitted a 2FA code that was already used`
+      )
+      return false
+    }
+
+    user.auth[strategyId] = { ...user.auth[strategyId], tfaLastStep: step }
+    return true
   }
 
   /**
@@ -2358,7 +2400,7 @@ class Users {
     if (strategyId !== expectedStrategyId) {
       throw new Error('ERR_INVALID_STRATEGY')
     }
-    if (!this.verifyTfaCode(user, strategyId, securityCode)) {
+    if (!(await this.acceptTfaCode(user, strategyId, securityCode))) {
       await countTfaFailure(continuationToken)
       WIKI.models.flags.authDebug(`User ${user.id} <${user.email}> submitted an incorrect 2FA code`)
       throw new Error('ERR_TFA_INCORRECT_TOKEN')
@@ -2449,7 +2491,7 @@ class Users {
     if (strategyId !== expectedStrategyId) {
       throw new Error('ERR_INVALID_STRATEGY')
     }
-    if (!this.verifyTfaCode(user, strategyId, securityCode)) {
+    if (!(await this.acceptTfaCode(user, strategyId, securityCode))) {
       await countTfaFailure(continuationToken)
       throw new Error('ERR_TFA_INCORRECT_TOKEN')
     }

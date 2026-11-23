@@ -3618,7 +3618,7 @@
   "error.ERR_TFA_ALREADY_ACTIVE": "2FA is already enabled on this account. Turn it off before setting it up again.",
   "error.ERR_TFA_ENFORCED": "2FA cannot be turned off, as it is required on this account.",
   "error.ERR_TFA_FAILED": "The security code could not be verified.",
-  "error.ERR_TFA_INCORRECT_TOKEN": "This security code is incorrect.",
+  "error.ERR_TFA_INCORRECT_TOKEN": "This security code is incorrect or has already been used.",
   "error.ERR_TFA_INVALID_REQUEST": "Missing or incomplete security code.",
   "error.ERR_TFA_NOT_ACTIVE": "2FA is not enabled on this account.",
   "error.ERR_TOKEN_EXCHANGE_FAILED": "The provider refused to complete the sign-in.",

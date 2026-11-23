@@ -130,38 +130,45 @@ export function buildTotpUri({
 }
 
 /**
- * Whether a code is one the secret currently produces, allowing for clock drift.
+ * Which time step a code belongs to, if it is one the secret currently produces, allowing for clock
+ * drift.
+ *
+ * The step rather than a yes or no, because a correct code is not enough on its own: RFC 6238 §5.2
+ * has a code accepted once, so the caller records the step it was accepted for and refuses that step
+ * and every earlier one afterwards (`users.acceptTfaCode()`).
  *
  * Compared byte-wise in constant time. That matters less here than for a password — a wrong code is
  * one of a million and expires in seconds — but the comparison is free to get right.
  *
  * @param secret Base32 secret stored for the user
  * @param code The six digits the user typed
- * @returns False for anything that is not six digits, or for a secret that will not decode
+ * @returns The 30-second counter value the code was generated for, or null for a code that matches
+ *          none in the window, anything that is not six digits, or a secret that will not decode
  */
-export function verifyTotpCode(secret: string, code: string): boolean {
+export function matchTotpStep(secret: string, code: string): number | null {
   if (!secret || !/^[0-9]{6}$/.test(code)) {
-    return false
+    return null
   }
 
   let secretKey: Buffer
   try {
     secretKey = base32Decode(secret)
   } catch {
-    return false
+    return null
   }
   if (secretKey.length < 1) {
-    return false
+    return null
   }
 
   const expected = Buffer.from(code, 'utf8')
   const counter = Math.floor(Date.now() / 1000 / periodSeconds)
-  let matched = false
+  let matched: number | null = null
   for (let drift = -allowedDrift; drift <= allowedDrift; drift++) {
     // -> Every candidate is compared, rather than returning on the first hit, so that the work done
-    //    does not depend on which window the code came from
+    //    does not depend on which window the code came from. Should two steps produce the same code,
+    //    the later one wins, since recording it shuts out more.
     if (timingSafeEqual(Buffer.from(codeAt(secretKey, counter + drift), 'utf8'), expected)) {
-      matched = true
+      matched = counter + drift
     }
   }
   return matched
