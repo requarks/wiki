@@ -147,6 +147,50 @@ export function findBlockRegions(text) {
   return regions.sort((a, b) => a.start - b.start)
 }
 
+/**
+ * The block whose body a line sits in, for the editor to write what it inserts there in the form that
+ * block reads -- an image dropped into a gallery is an address on a line, not an image.
+ *
+ * The innermost component open at that line, by the same stack `findBlockRegions` keeps, so a block
+ * nested in a gallery is not taken for the gallery. `block` is null when that component is not a
+ * block. The opening and closing lines are not the body. `fenced` says the line is inside a fenced
+ * code block -- which, with a block open around it, is a fence in that block's body, the form in which
+ * a block is handed its body exactly as written.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @returns {{ block: string|null, fenced: boolean } | null} Null outside every block's body.
+ */
+export function blockBodyAt(text, line) {
+  const lines = text.split('\n')
+  const open = []
+
+  for (const index of linesOutsideFences(lines)) {
+    if (index >= line - 1) {
+      break
+    }
+    const component = COMPONENT_OPENING.exec(lines[index])
+    if (component) {
+      open.push({ block: OPENING.exec(lines[index])?.[2] ?? null, fence: component[1] })
+      continue
+    }
+    const closing = CLOSING.exec(lines[index])
+    if (closing && open.length > 0 && closing[1].length >= open.at(-1).fence.length) {
+      open.pop()
+    }
+  }
+  if (open.length < 1) {
+    return null
+  }
+  const fenced = !isOutsideFences(lines, line - 1)
+  // -> A line of its own that closes the component is its edge, not its body
+  const closing = CLOSING.exec(lines[line - 1] ?? '')
+  if (!fenced && closing && closing[1].length >= open.at(-1).fence.length) {
+    return null
+  }
+  return { block: open.at(-1).block, fenced }
+}
+
 /** A block's opening line up to the end of its name, which may be partly typed or not typed at all. */
 const OPENING_NAME = /^(:{2,})block-([a-z0-9-]*)/
 

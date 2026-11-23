@@ -511,6 +511,7 @@ import {
   toggleHeading,
   toggleList
 } from '@/editor/visual/commands'
+import { insertGalleryItems } from '@/editor/visual/gallery'
 import { applyImageEdit, applyImageSrc, findImage, imageClasses } from '@/editor/visual/images'
 import { applyLink, removeLink } from '@/editor/visual/links'
 import { chooseSlashItem, highlightSlashItem } from '@/editor/visual/slash'
@@ -1083,7 +1084,11 @@ function insertAssetClb(opts) {
   switch (opts.type) {
     case 'asset': {
       const isImage = opts.mimeType?.startsWith('image/')
-      markdown = `${isImage ? '!' : ''}[${opts.title}](${assetPath(opts.folderPath, opts.fileName)})`
+      const url = assetPath(opts.folderPath, opts.fileName)
+      if (isImage && insertIntoGallery([url])) {
+        return
+      }
+      markdown = `${isImage ? '!' : ''}[${opts.title}](${url})`
       break
     }
     case 'page': {
@@ -1581,12 +1586,42 @@ function insertFilesAsAssets(files) {
     notify({ type: 'warning', message: t('editor.pendingAssetsNotInSuggestions') })
     return
   }
-  const markup = files.map((file) => {
-    const blobUrl = editorStore.addPendingAsset(file)
-    const name = file.name ?? ''
-    return file.type?.startsWith('image/') ? `![${name}](${blobUrl})` : `[${name}](${blobUrl})`
-  })
-  insertMarkdown(markup.join('\n\n'), { block: true })
+  const added = files.map((file) => ({
+    name: file.name ?? '',
+    url: editorStore.addPendingAsset(file),
+    isImage: Boolean(file.type?.startsWith('image/'))
+  }))
+  // -> Into a gallery, the images go in as its list and anything else after them as usual
+  const images = added.filter((file) => file.isImage)
+  const others = insertIntoGallery(images.map((file) => file.url))
+    ? added.filter((file) => !file.isImage)
+    : added
+  if (others.length > 0) {
+    const markup = others.map((file) => `${file.isImage ? '!' : ''}[${file.name}](${file.url})`)
+    insertMarkdown(markup.join('\n\n'), { block: true })
+  }
+}
+
+/**
+ * Images into the gallery the caret is in, as the list of addresses it reads -- see
+ * `editor/visual/gallery.js`.
+ *
+ * @param {string[]} urls
+ * @returns {boolean} Whether the caret was in a gallery, and so whether they went in.
+ */
+function insertIntoGallery(urls) {
+  if (!editor || urls.length < 1) {
+    return false
+  }
+  const view = editor.view
+  const list = editor.parseFragment(urls.map((url) => `- ${url}`).join('\n')).firstChild
+  const tr = insertGalleryItems(view.state, list)
+  if (!tr) {
+    return false
+  }
+  view.dispatch(tr.scrollIntoView())
+  view.focus()
+  return true
 }
 
 function filesOf(transfer) {

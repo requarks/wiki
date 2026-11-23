@@ -425,6 +425,7 @@ import {
   blockAttributeContext,
   blockNameContext,
   blockOpeningLine,
+  blockBodyAt,
   blockSnippet,
   blockValues,
   findBlockContent,
@@ -805,7 +806,7 @@ async function uploadNoteImages(files) {
         headers: { 'content-type': file.type },
         body: file
       }).json()
-      markup.push(`![${file.name}](${resp.url})`)
+      markup.push({ name: file.name, url: resp.url, isImage: true })
     } catch (err) {
       notify({
         type: 'negative',
@@ -824,8 +825,9 @@ async function uploadNoteImages(files) {
   if (!range || markup.length < 1) {
     return
   }
-  // -> One per line, as files dropped onto a page are
-  editor.executeEdits('', [{ range, text: markup.join('\n'), forceMoveMarkers: true }])
+  editor.executeEdits('', [
+    { range, text: filesMarkup(markup, range.getStartPosition()), forceMoveMarkers: true }
+  ])
 }
 
 /**
@@ -835,8 +837,8 @@ async function uploadNoteImages(files) {
  * reasoning about that form lives, and a page the way the link picker writes one.
  *
  * An image goes in as one and anything else as a link -- a PDF picked from the file manager is a link
- * to a PDF, not a broken picture -- which is the same distinction `insertFilesAsAssets` draws for a
- * file that arrives by drop.
+ * to a PDF, not a broken picture -- and an image picked into a gallery as an address: `filesMarkup`,
+ * which a file that arrives by drop goes through too.
  */
 function insertAssetClb(opts) {
   // -> A pick the Image Properties dialog asked for is the dialog's, not the cursor's
@@ -846,8 +848,16 @@ function insertAssetClb(opts) {
   let content = ''
   switch (opts.type) {
     case 'asset': {
-      const isImage = opts.mimeType?.startsWith('image/')
-      content = `${isImage ? '!' : ''}[${opts.title}](${assetPath(opts.folderPath, opts.fileName)})`
+      content = filesMarkup(
+        [
+          {
+            name: opts.title,
+            url: assetPath(opts.folderPath, opts.fileName),
+            isImage: opts.mimeType?.startsWith('image/')
+          }
+        ],
+        editor.getPosition()
+      )
       break
     }
     case 'page': {
@@ -1799,12 +1809,48 @@ function insertFilesAsAssets(files) {
     })
     return
   }
-  const markup = files.map((file) => {
-    const blobUrl = editorStore.addPendingAsset(file)
-    return `${file.type.startsWith('image/') ? '!' : ''}[${file.name}](${blobUrl})`
-  })
-  // -> One per line: two images on the same line is rarely what was meant by dropping two files
-  insertAtCursor({ content: markup.join('\n') })
+  const markup = files.map((file) => ({
+    name: file.name,
+    url: editorStore.addPendingAsset(file),
+    isImage: file.type.startsWith('image/')
+  }))
+  insertAtCursor({ content: filesMarkup(markup, editor.getPosition()) })
+}
+
+/**
+ * Markdown for files going into the page at `position`: an image as one, anything else as a link with
+ * its name for text.
+ *
+ * One per line: two images on the same line is rarely what was meant by dropping two files.
+ *
+ * Except an image going into a gallery's body, which is written the way the gallery reads its list --
+ * an address on a line, as a list item (`- /media/photo.png`) so that the lines stay apart once
+ * markdown has had them. In a fence there, which hands the gallery its body untouched, the bare address
+ * instead: the dash would be read as an address of its own. Either way it needs a line to itself, so a
+ * caret in the middle of one breaks out of it first.
+ *
+ * @param {Array<{ name: string, url: string, isImage: boolean }>} files
+ * @param {import('monaco-editor').IPosition} position
+ */
+function filesMarkup(files, position) {
+  const model = editor.getModel()
+  const body = blockBodyAt(model.getValue(), position.lineNumber)
+  const gallery = body?.block === 'gallery' ? body : null
+  const markup = files
+    .map((file) => {
+      if (gallery && file.isImage) {
+        return gallery.fenced ? file.url : `- ${file.url}`
+      }
+      return `${file.isImage ? '!' : ''}[${file.name}](${file.url})`
+    })
+    .join('\n')
+  if (!gallery) {
+    return markup
+  }
+  const line = model.getLineContent(position.lineNumber)
+  const before = line.slice(0, position.column - 1).trim().length > 0 ? '\n' : ''
+  const after = line.slice(position.column - 1).trim().length > 0 ? '\n' : ''
+  return `${before}${markup}${after}`
 }
 
 /** Whether a paste or drop is carrying files, as opposed to text. */

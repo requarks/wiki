@@ -359,6 +359,7 @@ import { assetPath } from '@/helpers/assets'
 import { blockAsciidoc, isCanvasBlock, lockedValues } from '@/helpers/blocks'
 import {
   blockAttributeContext,
+  blockBodyAt,
   blockNameContext,
   blockOpeningLine,
   blockSnippet,
@@ -581,8 +582,9 @@ function insertAssets() {
  * reasoning about that form lives, and a page the way the link picker writes one.
  *
  * An image goes in as a BLOCK macro (`image::`) on a line of its own, which is what an inserted
- * picture almost always wants to be, and anything else as a link — a PDF picked from the file manager
- * is a link to a PDF, not a broken picture.
+ * picture almost always wants to be -- or into a gallery as an address, see `insertFiles` -- and
+ * anything else as a link — a PDF picked from the file manager is a link to a PDF, not a broken
+ * picture.
  */
 function insertAssetClb(opts) {
   // -> A pick the Image Properties dialog asked for is the dialog's, not the cursor's
@@ -594,7 +596,7 @@ function insertAssetClb(opts) {
     case 'asset': {
       const path = assetPath(opts.folderPath, opts.fileName)
       if (opts.mimeType?.startsWith('image/')) {
-        insertOnOwnLine(`image::${path}[${escapeMacroText(opts.title)}]`)
+        insertFiles([{ name: opts.title, url: path, isImage: true }], { focus: false })
         setTimeout(() => editor.focus(), 500)
         return
       }
@@ -1375,16 +1377,67 @@ function insertFilesAsAssets(files) {
     })
     return
   }
-  const markup = files.map((file) => {
-    const blobUrl = editorStore.addPendingAsset(file)
-    const name = escapeMacroText(file.name)
-    return file.type.startsWith('image/')
-      ? `image::${blobUrl}[${name}]`
-      : `link:${blobUrl}[${name}]`
-  })
-  // -> One per line: two images on the same line is rarely what was meant by dropping two files, and
-  //    a block image macro is only one when it has a line to itself
-  insertOnOwnLine(markup.join('\n'))
+  insertFiles(
+    files.map((file) => ({
+      name: file.name,
+      url: editorStore.addPendingAsset(file),
+      isImage: file.type.startsWith('image/')
+    }))
+  )
+}
+
+/** A line that is an item of an unordered list, `* item` or `- item`. */
+const LIST_ITEM = /^[ \t]*(?:\*+|-)[ \t]+\S/
+
+/**
+ * Files going into the page at the cursor: an image as a block macro, anything else as a link with its
+ * name for text.
+ *
+ * One per line: two images on the same line is rarely what was meant by dropping two files, and a
+ * block image macro is only one when it has a line to itself.
+ *
+ * Except an image going into a gallery's body, which is written the way the gallery reads its list --
+ * an address on a line, as a list item (`* /media/photo.png`) so that the lines stay apart once
+ * AsciiDoc has had them. In a listing there, which hands the gallery its body untouched, the bare
+ * address instead: the star would be read as an address of its own. A list item needs a line of its
+ * own, and does not interrupt a paragraph the way it does in markdown -- written straight under one,
+ * it is that paragraph's next line, star and all -- so it is set apart from one by a blank line.
+ *
+ * @param {Array<{ name: string, url: string, isImage: boolean }>} files
+ * @param {{ focus?: boolean }} [options]
+ */
+function insertFiles(files, { focus = true } = {}) {
+  const model = editor.getModel()
+  const position = editor.getPosition()
+  const body = blockBodyAt(model.getValue(), position.lineNumber)
+  const gallery = body?.block === 'gallery' ? body : null
+  const markup = files
+    .map((file) => {
+      if (gallery && file.isImage) {
+        return gallery.fenced ? file.url : `* ${file.url}`
+      }
+      const name = escapeMacroText(file.name)
+      return file.isImage ? `image::${file.url}[${name}]` : `link:${file.url}[${name}]`
+    })
+    .join('\n')
+  if (!gallery) {
+    insertOnOwnLine(markup, { focus })
+    return
+  }
+  const line = model.getLineContent(position.lineNumber)
+  const head = line.slice(0, position.column - 1)
+  // -> What will stand right above the first item: the start of this line, or the line before it
+  const above = head.trim()
+    ? head
+    : position.lineNumber > 1
+      ? model.getLineContent(position.lineNumber - 1)
+      : ''
+  let before = head.trim() ? '\n' : ''
+  if (!gallery.fenced && above.trim() && !LIST_ITEM.test(above)) {
+    before += '\n'
+  }
+  const after = line.slice(position.column - 1).trim() ? '\n' : ''
+  insertAtCursor({ content: `${before}${markup}${after}`, focus })
 }
 
 /** Whether a paste or drop is carrying files, as opposed to text. */

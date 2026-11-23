@@ -250,6 +250,49 @@ export function findBlockRegions(text) {
   )
 }
 
+/**
+ * The block whose body a line sits in, for the editor to write what it inserts there in the form that
+ * block reads -- an image dropped into a gallery is an address on a line, not an image.
+ *
+ * The innermost delimited block open at that line, by a stack: a delimiter line closes the block on top
+ * when it is that block's own delimiter and opens a new one otherwise, which is how AsciiDoc reads the
+ * alternation. `block` is null for a delimited block no `[block-…]` line names. The attribute line and
+ * both delimiters are not the body. `fenced` says the line is inside a verbatim block -- with a block
+ * open around it, a listing in that block's body, which hands the block its body exactly as written.
+ *
+ * @param {string} text The page source.
+ * @param {number} line 1-based.
+ * @returns {{ block: string|null, fenced: boolean } | null} Null outside every block's body.
+ */
+export function blockBodyAt(text, line) {
+  const lines = text.split('\n')
+  const open = []
+
+  for (const index of linesOutsideVerbatim(lines)) {
+    if (index >= line - 1) {
+      break
+    }
+    const delimiter = DELIMITER.exec(lines[index])?.[1]
+    if (!delimiter) {
+      continue
+    }
+    if (open.at(-1)?.delimiter === delimiter) {
+      open.pop()
+    } else {
+      const name = OPENING.exec(lines[index - 1] ?? '')?.[1].slice('block-'.length) ?? null
+      open.push({ block: name, delimiter })
+    }
+  }
+  if (open.length < 1) {
+    return null
+  }
+  const fenced = !isOutsideVerbatim(lines, line - 1)
+  if (!fenced && closes(lines[line - 1] ?? '', open.at(-1).delimiter)) {
+    return null
+  }
+  return { block: open.at(-1).block, fenced }
+}
+
 /** An attribute line up to the end of the block's name, which may be partly typed or not at all. */
 const OPENING_NAME = /^\[block-([a-z\d-]*)/
 
