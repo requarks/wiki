@@ -272,23 +272,37 @@ async function loadSubmission(id) {
   }
   state.loading++
   try {
-    state.selected = await API_CLIENT.get(
+    const submission = await API_CLIENT.get(
       `sites/${siteStore.id}/approvals/submissions/${id}`
     ).json()
+    if (route.params.submissionId === id) {
+      state.selected = submission
+    }
   } catch (err) {
-    notify({
-      type: 'negative',
-      message: t('inbox.reviewLoadFailed'),
-      caption: apiErrorMessage(err)
-    })
-    /*
-      Reviewed by somebody else already, or never this reviewer's to see. Back to the queue, and with
-      `replace` so the dead address does not sit in the history for the back button to return to.
-    */
+    if (route.params.submissionId !== id) {
+      return
+    }
     state.selected = null
-    router.replace(REVIEW_PATH)
+    // A reviewer may have decided the suggestion since this notification was sent. The page ID
+    // survives a move, and the page route still checks the reader's access.
+    const pageId = route.query.pageId
+    if (
+      err?.response?.status === 404 &&
+      typeof pageId === 'string' &&
+      /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(pageId)
+    ) {
+      router.replace(`/i/${pageId}`)
+    } else {
+      notify({
+        type: 'negative',
+        message: t('inbox.reviewLoadFailed'),
+        caption: apiErrorMessage(err)
+      })
+      router.replace(REVIEW_PATH)
+    }
+  } finally {
+    state.loading--
   }
-  state.loading--
 }
 
 function openSubmission(submission) {

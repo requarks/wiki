@@ -272,7 +272,10 @@ function iconOf(entry) {
  */
 function targetOf(entry) {
   if (entry.category === 'reviewRequested' && entry.data.submissionId) {
-    return `/_inbox/review/${entry.data.submissionId}`
+    return {
+      path: `/_inbox/review/${entry.data.submissionId}`,
+      query: entry.pageId ? { pageId: entry.pageId } : {}
+    }
   }
   if (!entry.pageId) {
     return null
