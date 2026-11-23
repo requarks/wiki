@@ -5,6 +5,7 @@ import { TeX } from '@mathjax/src/js/input/tex.js'
 import { SVG } from '@mathjax/src/js/output/svg.js'
 import { liteAdaptor } from '@mathjax/src/js/adaptors/liteAdaptor.js'
 import { RegisterHTMLHandler } from '@mathjax/src/js/handlers/html.js'
+import { SafeHandler } from '@mathjax/src/js/ui/safe/SafeHandler.js'
 import { MathJaxNewcmFont } from '@mathjax/mathjax-newcm-font/js/svg.js'
 import { MathJaxMhchemFontExtension } from '@mathjax/mathjax-mhchem-font-extension/js/svg.js'
 /*
@@ -88,7 +89,16 @@ const PACKAGES = [
  * MathJax has no notion of and where its own stylesheet in the page would not reach.
  */
 const adaptor = liteAdaptor()
-RegisterHTMLHandler(adaptor)
+/*
+  Leaving out the `html` package is not enough to keep a link out of a formula: `\mmlToken` in `base`
+  sets any MathML attribute a token takes, `href` among them, and the SVG output draws that as an
+  `<a href>` with a hit box over the glyph -- a `javascript:` link, handed to `unsafeSVG`. MathJax's
+  safe extension is what filters those attributes. `URLs: 'none'` rather than its default `'safe'`,
+  because the default's scheme check misses `java<TAB>script:`, which the browser reads as
+  `javascript:`, and because a formula has no business linking anywhere. The same filter clamps
+  `mathsize` and drops any style but the harmless ones, so a token cannot grow to cover the page.
+*/
+SafeHandler(RegisterHTMLHandler(adaptor))
 
 const output = new SVG({
   fontData: MathJaxNewcmFont,
@@ -123,7 +133,9 @@ const document_ = mathjax.document('', {
       throw err
     }
   }),
-  OutputJax: output
+  OutputJax: output,
+  // -> See `SafeHandler` above for why no URL at all
+  safeOptions: { allow: { URLs: 'none' } }
 })
 
 /**
