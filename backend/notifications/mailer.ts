@@ -93,7 +93,11 @@ async function loadSites(): Promise<Map<string, SiteInfo>> {
 /** Where an entry leads, from the site the mail is about. */
 function urlOf(baseUrl: string, row: DueRow): string {
   if (row.category === 'reviewRequested' && row.data.submissionId) {
-    return `${baseUrl}/_inbox/review/${row.data.submissionId}`
+    const reviewUrl = new URL(`${baseUrl}/_inbox/review/${row.data.submissionId}`)
+    if (row.pageId) {
+      reviewUrl.searchParams.set('pageId', row.pageId)
+    }
+    return reviewUrl.href
   }
   if (!row.pageId) {
     // -> The page has gone: the inbox still says what it was
