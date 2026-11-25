@@ -897,6 +897,7 @@ const editorStore = useEditorStore()
 const pageStore = usePageStore()
 const siteStore = useSiteStore()
 const userStore = useUserStore()
+const initialLocale = props.pickLocale || pageStore.locale
 
 // ROUTER
 
@@ -959,7 +960,7 @@ const state = reactive({
     a view of the tree, and the tree holds every translation side by side -- unfiltered, it listed all
     of them at once. Starts on the locale of the page it was opened from.
   */
-  locale: props.pickLocale || pageStore.locale,
+  locale: initialLocale,
   search: '',
   /** Drives the search pill's inversion, as HeaderSearch does it. */
   searchIsFocused: false,
@@ -1709,7 +1710,8 @@ function moveFolder(folderId) {
       itemTitle: node?.title ?? '',
       folderPath: node?.folderPath ?? '',
       itemFileName: node?.fileName ?? '',
-      locale: state.locale
+      locale: state.locale,
+      lockLocale: props.lockPickLocale
     }
   }).onOk(async (opts) => {
     /*
@@ -1811,6 +1813,9 @@ function findFolderIdByPath(path) {
  * @param folder The folder as the API answered with it — where it is now, and which locale it is in.
  */
 async function goToFolder({ id, folderPath, fileName, locale }) {
+  if (props.lockPickLocale && locale !== initialLocale) {
+    throw new Error('The folder is outside the locale locked for this picker.')
+  }
   const path = folderPath ? `${folderPath}/${fileName}` : fileName
   // -> Where the reader is being taken is a folder, so the bin, if it was open, is left for it
   state.isRecycleBin = false
@@ -2420,7 +2425,8 @@ function duplicateFolder(folderId) {
       itemTitle: node?.title ?? '',
       folderPath: node?.folderPath ?? '',
       itemFileName: node?.fileName ?? '',
-      locale: state.locale
+      locale: state.locale,
+      lockLocale: props.lockPickLocale
     }
   }).onOk(async (opts) => {
     /*
