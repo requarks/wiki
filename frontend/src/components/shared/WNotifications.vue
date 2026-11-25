@@ -12,7 +12,19 @@
           :class="n.classes">
           <w-icon :name="n.icon" size="sm" class="shrink-0" />
           <div class="min-w-0 flex-1 py-1">
-            <div class="text-body2 break-words">{{ n.message }}</div>
+            <div class="text-body2 break-words">
+              {{ n.message }}
+              <template v-for="(link, index) of n.links" :key="link.href">
+                <span v-if="index > 0">, </span>
+                <a
+                  :href="link.href"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="underline underline-offset-2">
+                  {{ link.label }}
+                </a>
+              </template>
+            </div>
             <div v-if="n.caption" class="text-caption break-words opacity-75">{{ n.caption }}</div>
           </div>
           <button

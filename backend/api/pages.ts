@@ -1798,6 +1798,11 @@ async function routes(app: FastifyInstance) {
                         locale: { type: 'string' },
                         path: { type: 'string' },
                         title: { type: 'string' },
+                        url: {
+                          type: 'string',
+                          description:
+                            "The source page's URL, including its site's hostname and locale prefix when configured."
+                        },
                         reason: {
                           type: 'string',
                           enum: ['forbidden', 'locked', 'notInSource', 'failed']
@@ -1907,7 +1912,16 @@ async function routes(app: FastifyInstance) {
                 skippedCount: relink.skipped.length,
                 // -> Named only where the caller may read the page: a page they may not edit may well
                 //    be one whose title they are not allowed to know either
-                skipped: relink.skipped.filter((skip) => mayOnPage(req, 'read:pages', skip)),
+                skipped: relink.skipped
+                  .filter((skip) => mayOnPage(req, 'read:pages', skip))
+                  .map((skip) => {
+                    const hostname = WIKI.sites[skip.siteId]?.hostname
+                    const origin = hostname && hostname !== '*' ? `//${hostname}` : ''
+                    return {
+                      ...skip,
+                      url: `${origin}${WIKI.models.pages.urlFor(skip.siteId, skip.locale, skip.path)}`
+                    }
+                  }),
                 // -> Counts only: the terms are in a glossary the mover need not be able to read
                 glossary: {
                   updated: relink.glossary.updated.length,

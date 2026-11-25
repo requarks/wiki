@@ -13,7 +13,7 @@ import { notify } from '@/composables/notify'
  * The glossary terms the page documented are reported on the same terms: following it is good news,
  * and losing it (a move to another locale) is something to go and fix, so that one stays.
  *
- * @param {{ updated: number, skippedCount: number, skipped: { title: string }[], glossary?: { updated: number, cleared: number } } | null} relinked
+ * @param {{ updated: number, skippedCount: number, skipped: { locale: string, path: string, title: string, url: string }[], glossary?: { updated: number, cleared: number } } | null} relinked
  * @param {Function} t The caller's `t` from `useI18n`
  */
 export function notifyRelinked(relinked, t) {
@@ -27,13 +27,18 @@ export function notifyRelinked(relinked, t) {
     })
   }
   if (relinked.skippedCount > 0) {
+    const links = relinked.skipped.map((page) => ({
+      label: page.title,
+      href: page.url
+    }))
     notify({
       type: 'warning',
       message: t('pageRenameDialog.updateLinksSkipped', {
         count: relinked.skippedCount,
         // -> Only the pages the server would name to this reader; the count covers the rest
-        pages: relinked.skipped.map((page) => page.title).join(', ') || '—'
+        pages: links.length > 0 ? ' ' : '—'
       }),
+      links,
       timeout: 0
     })
   }

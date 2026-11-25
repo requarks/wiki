@@ -14,7 +14,7 @@ import { reactive } from 'vue'
  * a save that fails on every keystroke, say -- otherwise fills the screen with identical toasts.
  */
 
-/** @type {Array<{ id: number, type: string, message: string, caption: string|null, icon: string, timeout: number, count: number }>} */
+/** @type {Array<{ id: number, type: string, message: string, caption: string|null, icon: string, links: { label: string, href: string }[], timeout: number, count: number }>} */
 export const queue = reactive([])
 
 let seq = 0
@@ -63,8 +63,8 @@ function schedule(n) {
 }
 
 /** Two notifications are the same notification when they would render identically. */
-function groupKey({ type, message, caption, icon }) {
-  return JSON.stringify([type, message, caption, icon])
+function groupKey({ type, message, caption, icon, links }) {
+  return JSON.stringify([type, message, caption, icon, links])
 }
 
 /**
@@ -75,6 +75,7 @@ function groupKey({ type, message, caption, icon }) {
  * @param {string} opts.message
  * @param {string} [opts.caption] Secondary line, rendered smaller and dimmed.
  * @param {string} [opts.icon] Iconify reference, overriding the type preset.
+ * @param {{ label: string, href: string }[]} [opts.links] Links rendered after the message.
  * @param {number} [opts.timeout=5000] Auto-dismiss delay in ms; 0 disables auto-dismiss.
  * @returns {() => void} Dismisses this notification.
  */
@@ -84,6 +85,7 @@ export function notify(opts) {
     message = '',
     caption = null,
     icon,
+    links = [],
     timeout
   } = typeof opts === 'string' ? { message: opts } : (opts ?? {})
 
@@ -91,7 +93,7 @@ export function notify(opts) {
   // -> `timeout: 0` must survive as 0 (never auto-dismiss), so this cannot be `timeout || DEFAULT`
   const resolvedTimeout = Number.isFinite(timeout) ? timeout : DEFAULT_TIMEOUT
   const resolvedIcon = icon ?? preset.icon
-  const key = groupKey({ type, message, caption, icon: resolvedIcon })
+  const key = groupKey({ type, message, caption, icon: resolvedIcon, links })
 
   /*
     A repeat of a notification already on screen bumps its count instead of stacking a second copy,
@@ -113,6 +115,7 @@ export function notify(opts) {
     message,
     caption,
     icon: resolvedIcon,
+    links,
     classes: preset.classes,
     timeout: resolvedTimeout,
     count: 1
