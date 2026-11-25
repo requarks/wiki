@@ -23,6 +23,7 @@
       </w-card-section>
       <w-card-section v-if="content === null || (definition.props ?? []).length > 0">
         <block-props-form
+          :block="definition.block"
           :fields="definition.props ?? []"
           :values="state.values"
           :locked="Object.keys(locked)" />

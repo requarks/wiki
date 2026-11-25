@@ -107,6 +107,7 @@
                 <div class="w-section-header">{{ state.selected.name }}</div>
                 <block-props-form
                   class="px-4 pt-4"
+                  :block="state.selected.block"
                   :fields="state.selected.props"
                   :values="state.values"
                   :locked="Object.keys(lockedValues(state.selected))" />

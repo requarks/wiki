@@ -2987,6 +2987,7 @@
   "editor.blockPicker.noInlineBlocks": "No inline blocks are enabled for this site. They are managed in the administration area.",
   "editor.blockPicker.noProps": "This block takes no properties — insert it as it is.",
   "editor.blockPicker.propLocked": "Set by the site administrator — this value can't be changed.",
+  "editor.blockPicker.selectFolder": "Select This Folder",
   "editor.blockPicker.selectHint": "Pick a block on the left to fill in its properties.",
   "editor.blockPicker.title": "Insert Block",
   "editor.blog.depth": "Depth",

@@ -15,7 +15,7 @@
         <!-- -> Same gate the sidebar's locale button uses in `MainLayout`: with the site's locale menu
              off, switching locale is not something a reader is offered anywhere -->
         <w-btn
-          v-if="siteStore.locales.showMenu"
+          v-if="siteStore.locales.showMenu && !lockPickLocale"
           class="fileman-locale mr-2 acrylic-btn"
           flat
           color="white"
@@ -232,7 +232,7 @@
                 </div>
                 <span v-else>{{ item.value }}</span>
               </div>
-              <template v-if="insertMode">
+              <template v-if="insertMode && canInsertSelected">
                 <w-separator class="my-4" />
                 <w-btn
                   class="w-full"
@@ -459,7 +459,7 @@
               same call on the same selection, in the one place that is always on screen.
             -->
               <w-btn
-                v-if="insertMode && !detailsPaneShown && state.currentFileId"
+                v-if="insertMode && !detailsPaneShown && canInsertSelected"
                 class="ml-2"
                 flat
                 dense
@@ -469,6 +469,16 @@
                 :aria-label="t(`common.actions.insert`)"
                 icon="la:plus-circle"
                 @click="insertItem()" />
+              <w-btn
+                v-if="pickType === 'folder'"
+                class="ml-2"
+                flat
+                dense
+                no-caps
+                color="primary"
+                :label="t('editor.blockPicker.selectFolder')"
+                icon="la:check"
+                @click="pickFolder" />
             </template>
           </template>
         </w-toolbar>
@@ -604,7 +614,11 @@
                         <w-list dense style="min-width: 150px">
                           <w-item
                             clickable
-                            v-if="insertMode && item.type !== `folder`"
+                            v-if="
+                              insertMode &&
+                              item.type !== `folder` &&
+                              (!pickType || item.type === pickType)
+                            "
                             @click="insertItem(item)">
                             <w-item-section side>
                               <w-icon name="la:plus-circle" color="primary" />
@@ -850,6 +864,23 @@ import FolderDeleteDialog from '@/components/FolderDeleteDialog.vue'
 import FolderRenameDialog from '@/components/FolderRenameDialog.vue'
 import LocaleSelectorMenu from '@/components/LocaleSelectorMenu.vue'
 
+const props = defineProps({
+  pickType: {
+    type: String,
+    default: ''
+  },
+  pickLocale: {
+    type: String,
+    default: ''
+  },
+  lockPickLocale: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['pick', 'close'])
+
 // -> d3 and everything else the graph draws with is fetched the first time it is opened, not with the
 //    file manager
 const PageGraph = defineAsyncComponent(() => import('@/components/PageGraph.vue'))
@@ -928,7 +959,7 @@ const state = reactive({
     a view of the tree, and the tree holds every translation side by side -- unfiltered, it listed all
     of them at once. Starts on the locale of the page it was opened from.
   */
-  locale: pageStore.locale,
+  locale: props.pickLocale || pageStore.locale,
   search: '',
   /** Drives the search pill's inversion, as HeaderSearch does it. */
   searchIsFocused: false,
@@ -1016,7 +1047,16 @@ const treeComp = ref(null)
 
 // COMPUTED
 
-const insertMode = computed(() => siteStore.overlayOpts?.insertMode ?? false)
+const insertMode = computed(
+  () => Boolean(props.pickType) || (siteStore.overlayOpts?.insertMode ?? false)
+)
+
+const canInsertSelected = computed(() => {
+  const item = state.fileList.find((entry) => entry.id === state.currentFileId)
+  return Boolean(
+    item && item.type !== 'folder' && (!props.pickType || item.type === props.pickType)
+  )
+})
 
 /**
  * Whether the folder tree is a panel over the list rather than a column beside it.
@@ -1111,6 +1151,9 @@ const listCounts = computed(() => {
 const files = computed(() => {
   return filteredFiles.value
     .filter((f) => {
+      if (props.pickType && f.type !== 'folder' && f.type !== props.pickType) {
+        return false
+      }
       // -> Show Folders Filter
       if (f.type === 'folder' && !state.shouldShowFolders) {
         return false
@@ -1309,7 +1352,11 @@ function dismissTreeOverlay(ev) {
 }
 
 function close() {
-  siteStore.overlay = null
+  if (props.pickType) {
+    emit('close')
+  } else {
+    siteStore.overlay = null
+  }
 }
 
 /**
@@ -1396,10 +1443,20 @@ function insertItem(item) {
   if (!item) {
     item = state.fileList.find((f) => f.id === state.currentFileId)
   }
+  if (props.pickType) {
+    if (item?.type === props.pickType) {
+      emit('pick', { ...toRaw(item), locale: state.locale })
+    }
+    return
+  }
   // -> The item's own folder rather than the one selected: a search lists matches from anywhere
   editorStore.lastInsertFolder = { folderPath: item.folderPath ?? '', locale: state.locale }
   EVENT_BUS.emit('insertAsset', toRaw(item))
   close()
+}
+
+function pickFolder() {
+  emit('pick', { folderPath: folderPath.value.replace(/^\/|\/$/g, ''), locale: state.locale })
 }
 
 async function treeLazyLoad(nodeId, isCurrent, { done, fail }) {
@@ -2204,6 +2261,10 @@ function selectItem(item) {
 }
 
 function doubleClickItem(item) {
+  if (props.pickType && item.type === 'folder') {
+    selectItem(item)
+    return
+  }
   if (insertMode.value) {
     insertItem(item)
   } else {
@@ -2686,14 +2747,14 @@ onMounted(async () => {
     since gone needs no check: no node is found for it and the manager stays at the root.
   */
   const lastInsert =
-    insertMode.value && siteStore.overlayOpts?.folderPath == null
+    !props.pickType && insertMode.value && siteStore.overlayOpts?.folderPath == null
       ? editorStore.lastInsertFolder
       : null
   if (lastInsert) {
     state.locale = lastInsert.locale
   }
   const startPath =
-    siteStore.overlayOpts?.folderPath ??
+    (props.pickType ? null : siteStore.overlayOpts?.folderPath) ??
     lastInsert?.folderPath ??
     pageStore.path.split('/').slice(0, -1).join('/')
   const startParts = startPath ? startPath.split('/') : []
