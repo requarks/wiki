@@ -17,7 +17,7 @@
         <!-- -> Only where there is a choice to make: one active locale is most wikis, and a button
                 that can only say `en` is noise on all of them -->
         <w-btn
-          v-if="siteStore.locales.active.length > 1"
+          v-if="siteStore.locales.active.length > 1 && !lockLocale"
           class="acrylic-btn -my-2"
           flat
           dense
@@ -267,6 +267,11 @@ const props = defineProps({
     type: String,
     required: false,
     default: null
+  },
+  /** Keep a destination in the locale of the picker that opened this dialog. */
+  lockLocale: {
+    type: Boolean,
+    default: false
   }
 })
 

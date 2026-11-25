@@ -1,8 +1,11 @@
 <template>
-  <div v-if="fields.length < 1" class="text-caption text-black/60 dark:text-white/70">
+  <div
+    v-if="fields.length < 1"
+    v-bind="$attrs"
+    class="text-caption text-black/60 dark:text-white/70">
     {{ t('editor.blockPicker.noProps') }}
   </div>
-  <w-form v-else class="gap-4">
+  <w-form v-else v-bind="$attrs" class="gap-4">
     <div v-for="field of fields" :key="field.name" class="flex flex-nowrap items-start gap-2">
       <div class="min-w-0 flex-1">
         <!--
@@ -74,7 +77,16 @@
           :label="field.label ?? field.name"
           :aria-label="field.label ?? field.name"
           :required="field.required"
-          :hint="field.hint" />
+          :hint="field.hint">
+          <template v-if="pickerFor(field) && !isLocked(field)" #append>
+            <w-field-cap
+              icon="la:folder-open"
+              :aria-label="t('common.actions.browse')"
+              @click="browse(field)">
+              <w-tooltip>{{ t('common.actions.browse') }}</w-tooltip>
+            </w-field-cap>
+          </template>
+        </w-input>
       </div>
       <!--
         -> Centred on the field's box rather than on the row, which also holds the label above it and
@@ -116,12 +128,29 @@
       </div>
     </div>
   </w-form>
+  <w-dialog v-model="pickerOpen" class="main-overlay" full-width full-height>
+    <file-manager
+      v-if="pickerOpen"
+      :pick-type="pickerType"
+      :pick-locale="pickerLocale"
+      :lock-pick-locale="pickerType === 'folder' || isLocaleLocked"
+      @pick="takePick"
+      @close="pickerOpen = false" />
+  </w-dialog>
 </template>
 
 <script setup>
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { blockPickerType, blockPickValues } from '@/helpers/blockFilePicker'
+import { usePageStore } from '@/stores/page'
+import { useSiteStore } from '@/stores/site'
+
 import IconPickerDialog from '@/components/IconPickerDialog.vue'
+
+const FileManager = defineAsyncComponent(() => import('@/components/FileManager.vue'))
+defineOptions({ inheritAttrs: false })
 
 /**
  * The form a block's props make: one field per prop, in the order the block declares them.
@@ -145,6 +174,11 @@ import IconPickerDialog from '@/components/IconPickerDialog.vue'
 // PROPS
 
 const props = defineProps({
+  /** Built-in block being edited; omitted in the administrator's site-wide configuration. */
+  block: {
+    type: String,
+    default: ''
+  },
   /** The props the block declares, as the API describes them. */
   fields: {
     type: Array,
@@ -176,6 +210,39 @@ const props = defineProps({
 // I18N
 
 const { t } = useI18n()
+const pageStore = usePageStore()
+const siteStore = useSiteStore()
+
+const pickerOpen = ref(false)
+const pickerType = ref('')
+const pickerLocale = ref('')
+const pickerField = ref('')
+
+const isLocaleLocked = computed(() => props.locked.includes('locale'))
+
+function pickerFor(field) {
+  return blockPickerType(props.block, field.name)
+}
+
+function browse(field) {
+  pickerField.value = field.name
+  pickerType.value = pickerFor(field)
+  pickerLocale.value =
+    pickerType.value === 'page' ? props.values.locale || pageStore.locale : pageStore.locale
+  pickerOpen.value = true
+}
+
+function takePick(item) {
+  Object.assign(
+    props.values,
+    blockPickValues(pickerType.value, pickerField.value, item, {
+      siteId: siteStore.id,
+      primaryLocale: siteStore.locales.primary,
+      localeLocked: isLocaleLocked.value
+    })
+  )
+  pickerOpen.value = false
+}
 
 /** Whether this field's choices are `{ label, value }` objects rather than plain strings. */
 function hasValueOptions(field) {
