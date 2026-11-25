@@ -1,5 +1,4 @@
 import { notify } from '@/composables/notify'
-import { useSiteStore } from '@/stores/site'
 
 /**
  * Tell the mover what became of the pages linking to a page they just moved.
@@ -14,7 +13,7 @@ import { useSiteStore } from '@/stores/site'
  * The glossary terms the page documented are reported on the same terms: following it is good news,
  * and losing it (a move to another locale) is something to go and fix, so that one stays.
  *
- * @param {{ updated: number, skippedCount: number, skipped: { locale: string, path: string, title: string }[], glossary?: { updated: number, cleared: number } } | null} relinked
+ * @param {{ updated: number, skippedCount: number, skipped: { locale: string, path: string, title: string, url: string }[], glossary?: { updated: number, cleared: number } } | null} relinked
  * @param {Function} t The caller's `t` from `useI18n`
  */
 export function notifyRelinked(relinked, t) {
@@ -28,10 +27,9 @@ export function notifyRelinked(relinked, t) {
     })
   }
   if (relinked.skippedCount > 0) {
-    const siteStore = useSiteStore()
     const links = relinked.skipped.map((page) => ({
       label: page.title,
-      href: `${siteStore.localeUrlPrefix(page.locale)}/${page.path}`
+      href: page.url
     }))
     notify({
       type: 'warning',
