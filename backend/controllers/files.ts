@@ -1,6 +1,7 @@
 import { mayReadAsset } from '../helpers/assetAccess.ts'
 import { attachmentDisposition } from '../helpers/common.ts'
 import { deliveryOf } from '../models/assets.ts'
+import type { ContentRange } from '../models/assets.ts'
 import type { FastifyInstance } from 'fastify'
 
 /**
@@ -22,6 +23,46 @@ const FILE_CACHE = 'private, max-age=600, must-revalidate'
  */
 function directAccessCacheSeconds(expiresInSeconds: number): number {
   return Math.max(1, Math.min(600, Math.floor(expiresInSeconds / 2)))
+}
+
+/**
+ * The types a `Range` request is honoured for: audio and video, the files a browser seeks in. A
+ * structured-syntax suffix (`video/lottie+json`) is data rather than media, and gets compressed.
+ */
+const SEEKABLE_TYPE = /^(audio|video)\/[^+;]+$/i
+
+/**
+ * The part of a file a `Range` header asks for (RFC 9110, section 14.1.2).
+ *
+ * Only a single range of bytes is honoured. Anything else — another unit, several ranges, a header
+ * that does not parse — is answered with the whole file, which the RFC allows a server to do with
+ * any range it chooses to ignore, and which is what every browser can take.
+ *
+ * @returns The range, clamped to the file; null to send all of it; false when the range starts past
+ *   the end of the file, which is answered 416
+ */
+function parseRange(header: string, size: number): ContentRange | null | false {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim())
+  if (!match || (!match[1] && !match[2])) {
+    return null
+  }
+  if (!match[1]) {
+    // -> A suffix: the last N bytes of the file, or all of it when it is shorter than that
+    const length = Number(match[2])
+    if (length === 0 || size === 0) {
+      return false
+    }
+    return { start: Math.max(0, size - length), end: size - 1 }
+  }
+  const start = Number(match[1])
+  const end = match[2] ? Number(match[2]) : Infinity
+  if (end < start) {
+    return null
+  }
+  if (start >= size) {
+    return false
+  }
+  return { start, end: Math.min(end, size - 1) }
 }
 
 /**
@@ -58,10 +99,10 @@ async function routes(app: FastifyInstance) {
     const { download, csp } = deliveryOf(asset)
 
     /*
-      Hand the reader straight to the store where the site has said to, which is the whole point of
-      keeping content in one: the bytes never touch this server. Resolved before the ETag below,
-      because the two are answers to different questions — an ETag says "you already have the bytes",
-      and there are no bytes here to have.
+    Hand the reader straight to the store where the site has said to, which is the whole point of
+    keeping content in one: the bytes never touch this server. Resolved before the ETag below,
+    because the two are answers to different questions — an ETag says "you already have the bytes",
+    and there are no bytes here to have.
     */
     const directUrl = await WIKI.models.storage.directAccessUrlFor(
       { ...asset, siteId: site.id },
@@ -79,8 +120,8 @@ async function routes(app: FastifyInstance) {
     }
 
     /*
-      The ID and the timestamp together, because either one alone lies: a file replaced at the same
-      path is a different asset under the same URL, and one edited in place keeps its ID.
+    The ID and the timestamp together, because either one alone lies: a file replaced at the same
+    path is a different asset under the same URL, and one edited in place keeps its ID.
     */
     const etag = `"${asset.id}-${asset.updatedAt.getTime()}"`
     reply.header('ETag', etag)
@@ -96,19 +137,51 @@ async function routes(app: FastifyInstance) {
       return reply.code(304).send()
     }
 
-    const content = await WIKI.models.assets.readContent(asset)
+    /*
+    Ranges are what let a browser seek in a video or an audio file: without them it can only play
+    from the start, and jumping ahead means waiting for everything before that point to download.
+    Only offered for media, which is where they matter and which is never compressed — a range
+    counts the bytes as stored, and cannot be applied to a compressed copy of a file. An `If-Range`
+    that no longer names this file asks for the whole of it instead.
+    */
+    const seekable = SEEKABLE_TYPE.test(asset.mimeType)
+    if (seekable) {
+    reply.header('Accept-Ranges', 'bytes')
+    }
+    const ifRange = req.headers['if-range']
+    const rangeHeader = seekable && (!ifRange || ifRange === etag) ? req.headers.range : undefined
+
+    const content = await WIKI.models.assets.readContent(
+      asset,
+      rangeHeader ? (size) => parseRange(rangeHeader, size) : undefined
+    )
     if (!content) {
       // -> The path resolved to a row that is no longer there, so the resolution was a stale one
       WIKI.models.assets.forgetPath(site.id, asset.folderPath, asset.fileName)
       return reply.notFound('File not found')
     }
 
+    if (content.range === false) {
+      reply.header('Content-Range', `bytes */${content.size}`)
+      return reply.code(416).send()
+    }
+
     if (download) {
       reply.header('Content-Disposition', attachmentDisposition(asset.fileName))
     }
+    if (content.range) {
+      reply.code(206)
+      reply.header(
+        'Content-Range',
+        `bytes ${content.range.start}-${content.range.end}/${content.size}`
+      )
+    }
     // -> Set by hand because the body may be a stream, which Fastify would otherwise send chunked —
     //    and a download with no length is a download with no progress bar
-    reply.header('Content-Length', content.size)
+    reply.header(
+      'Content-Length',
+      content.range ? content.range.end - content.range.start + 1 : content.size
+    )
     return reply.type(asset.mimeType).send(content.body)
   })
 }
