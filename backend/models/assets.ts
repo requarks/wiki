@@ -158,6 +158,20 @@ export interface Asset {
  */
 export interface AssetAtPath extends Asset {}
 
+/** A span of a file's bytes, both ends inclusive, as HTTP's `Content-Range` counts them. */
+export interface ContentRange {
+  start: number
+  end: number
+}
+
+/**
+ * What part of a file to read: a range, null for all of it, or false for none — a range that does not
+ * fit the file, which is answered without reading anything.
+ */
+export type ContentRangeSelection = ContentRange | null | false
+
+export type ContentRangeSelector = (size: number) => ContentRangeSelection
+
 /**
  * Reduce whatever a client called the file to something safe to store, address and serve.
  *
@@ -1491,14 +1505,17 @@ class Assets {
   /**
    * An asset's bytes, ready to be sent — from the disk cache, or from the database and into it.
    *
+   * @param selectRange Picks the part of the file to send once its size is known, for a reader that
+   *   asked for one (an HTTP `Range` request). Its answer comes back as `range`, and `body` then holds
+   *   only those bytes — read off the cached file at that offset rather than all of it.
    * @returns A stream when the cache holds the file, the buffer when it had to be read, and null when
    *   there is no such asset, i.e. when a cached path resolution has outlived the row behind it
    */
-  async readContent(asset: {
-    id: string
-    updatedAt: Date
-  }): Promise<{ body: Readable | Buffer; size: number } | null> {
-    const cached = await this.readContentCache(asset)
+  async readContent(
+    asset: { id: string; updatedAt: Date },
+    selectRange?: ContentRangeSelector
+  ): Promise<{ body: Readable | Buffer; size: number; range: ContentRangeSelection } | null> {
+    const cached = await this.readContentCache(asset, selectRange)
     if (cached) {
       return cached
     }
@@ -1508,7 +1525,18 @@ class Assets {
       return null
     }
     await this.writeContentCache(asset, content.data)
-    return { body: content.data, size: content.data.length }
+    const size = content.data.length
+    const range = selectRange?.(size) ?? null
+    return {
+      body:
+        range === false
+          ? Buffer.alloc(0)
+          : range
+            ? content.data.subarray(range.start, range.end + 1)
+            : content.data,
+      size,
+      range
+    }
   }
 
   /**
@@ -1537,10 +1565,10 @@ class Assets {
    * @returns Null when this instance has not cached the file, which is the normal state of a fresh
    *   container and the state of every entry after a change to the file
    */
-  async readContentCache(asset: {
-    id: string
-    updatedAt: Date
-  }): Promise<{ body: Readable; size: number } | null> {
+  async readContentCache(
+    asset: { id: string; updatedAt: Date },
+    selectRange?: ContentRangeSelector
+  ): Promise<{ body: Readable | Buffer; size: number; range: ContentRangeSelection } | null> {
     let handle
     try {
       handle = await fs.open(this.contentCachePath(asset), 'r')
@@ -1549,7 +1577,19 @@ class Assets {
     }
     try {
       const { size } = await handle.stat()
-      return { body: handle.createReadStream({ autoClose: true }), size }
+      const range = selectRange?.(size) ?? null
+      if (range === false) {
+        await handle.close()
+        return { body: Buffer.alloc(0), size, range }
+      }
+      return {
+        body: handle.createReadStream({
+          autoClose: true,
+          ...(range ? { start: range.start, end: range.end } : {})
+        }),
+        size,
+        range
+      }
     } catch {
       await handle.close().catch(() => {})
       return null
